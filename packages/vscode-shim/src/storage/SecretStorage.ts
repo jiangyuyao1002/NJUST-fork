@@ -1,25 +1,34 @@
+import * as crypto from "crypto"
 import * as fs from "fs"
+import * as os from "os"
 import * as path from "path"
 import { EventEmitter } from "../classes/EventEmitter.js"
 import { ensureDirectoryExists } from "../utils/paths.js"
 import type { SecretStorage, SecretStorageChangeEvent } from "../types.js"
 
+const ENCRYPTION_ALGORITHM = "aes-256-gcm"
+const KEY_LENGTH = 32
+const IV_LENGTH = 16
+const AUTH_TAG_LENGTH = 16
+const SALT = "njust-ai-cj-secret-storage-v1"
+
 /**
  * File-based implementation of VSCode's SecretStorage interface
  *
- * Stores secrets in a JSON file on disk. While not encrypted like VSCode's
- * native keychain integration, this provides a simple, cross-platform solution
- * suitable for CLI applications.
+ * Stores secrets in an encrypted file on disk using AES-256-GCM encryption.
+ * The encryption key is derived from the machine ID (hostname + username) using scrypt.
  *
  * **Security Notes:**
- * - Secrets are stored as plain JSON (not encrypted)
- * - File permissions should be set restrictive (0600)
- * - For production, consider using environment variables instead
- * - Suitable for development and non-critical secrets
+ * - Secrets are encrypted at rest using AES-256-GCM
+ * - Encryption key is derived from machine-specific identifiers
+ * - File permissions are set restrictive (0600) on Unix-like systems
+ * - On Windows, file ACLs depend on system defaults
+ * - For production environments, consider using VS Code's native SecretStorage
+ *   which integrates with the OS keychain
  *
  * @example
  * ```typescript
- * const storage = new FileSecretStorage('/path/to/secrets.json')
+ * const storage = new FileSecretStorage('/path/to/storage')
  *
  * // Store a secret
  * await storage.store('apiKey', 'sk-...')
@@ -37,6 +46,7 @@ export class FileSecretStorage implements SecretStorage {
 	private secrets: Record<string, string> = {}
 	private _onDidChange = new EventEmitter<SecretStorageChangeEvent>()
 	private filePath: string
+	private encryptionKey: Buffer | null = null
 
 	/**
 	 * Create a new FileSecretStorage
@@ -49,13 +59,19 @@ export class FileSecretStorage implements SecretStorage {
 	}
 
 	/**
-	 * Load secrets from the JSON file
+	 * Load secrets from the encrypted JSON file
 	 */
 	private loadFromFile(): void {
 		try {
 			if (fs.existsSync(this.filePath)) {
-				const content = fs.readFileSync(this.filePath, "utf-8")
-				this.secrets = JSON.parse(content)
+				const encryptedContent = fs.readFileSync(this.filePath, "utf-8")
+				try {
+					const decryptedContent = this.decrypt(encryptedContent)
+					this.secrets = JSON.parse(decryptedContent)
+				} catch {
+					console.warn(`Failed to decrypt secrets from ${this.filePath}, starting fresh`)
+					this.secrets = {}
+				}
 			}
 		} catch (error) {
 			console.warn(`Failed to load secrets from ${this.filePath}:`, error)
@@ -64,7 +80,7 @@ export class FileSecretStorage implements SecretStorage {
 	}
 
 	/**
-	 * Save secrets to the JSON file with restrictive permissions
+	 * Save secrets to the encrypted JSON file with restrictive permissions
 	 */
 	private saveToFile(): void {
 		try {
@@ -72,8 +88,10 @@ export class FileSecretStorage implements SecretStorage {
 			const dir = path.dirname(this.filePath)
 			ensureDirectoryExists(dir)
 
-			// Write the file
-			fs.writeFileSync(this.filePath, JSON.stringify(this.secrets, null, 2))
+			// Encrypt the secrets before writing
+			const plaintext = JSON.stringify(this.secrets, null, 2)
+			const encryptedContent = this.encrypt(plaintext)
+			fs.writeFileSync(this.filePath, encryptedContent)
 
 			// Set restrictive permissions (owner read/write only) on Unix-like systems
 			if (process.platform !== "win32") {
@@ -134,5 +152,67 @@ export class FileSecretStorage implements SecretStorage {
 	clearAll(): void {
 		this.secrets = {}
 		this.saveToFile()
+	}
+
+	/**
+	 * Generate a machine-specific identifier for encryption key derivation.
+	 * Uses hostname and username to create a unique identifier per machine/user.
+	 */
+	private getMachineId(): string {
+		try {
+			const hostname = os.hostname() || "unknown-host"
+			const username = os.userInfo().username || "unknown-user"
+			const platform = process.platform || "unknown-platform"
+			return `${username}@${hostname}:${platform}`
+		} catch {
+			// os.userInfo() can throw on Windows when running as a service
+			// account or in containerized environments without a real user.
+			return `unknown@${os.hostname() || "unknown-host"}:${process.platform || "unknown"}`
+		}
+	}
+
+	/**
+	 * Derive an encryption key from the machine ID using scrypt.
+	 * The key is cached to avoid repeated derivation.
+	 */
+	private getEncryptionKey(): Buffer {
+		if (!this.encryptionKey) {
+			const machineId = this.getMachineId()
+			this.encryptionKey = crypto.scryptSync(machineId, SALT, KEY_LENGTH)
+		}
+		return this.encryptionKey
+	}
+
+	/**
+	 * Encrypt plaintext using AES-256-GCM.
+	 * Returns a base64-encoded string containing IV, auth tag, and ciphertext.
+	 */
+	private encrypt(plaintext: string): string {
+		const key = this.getEncryptionKey()
+		const iv = crypto.randomBytes(IV_LENGTH)
+		const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv)
+		const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
+		const authTag = cipher.getAuthTag()
+		return Buffer.concat([iv, authTag, encrypted]).toString("base64")
+	}
+
+	/**
+	 * Decrypt ciphertext that was encrypted with encrypt().
+	 * Returns the original plaintext string.
+	 * Throws if decryption fails (e.g., tampered data, wrong key).
+	 */
+	private decrypt(ciphertext: string): string {
+		try {
+			const key = this.getEncryptionKey()
+			const data = Buffer.from(ciphertext, "base64")
+			const iv = data.subarray(0, IV_LENGTH)
+			const authTag = data.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH)
+			const encrypted = data.subarray(IV_LENGTH + AUTH_TAG_LENGTH)
+			const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, iv)
+			decipher.setAuthTag(authTag)
+			return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8")
+		} catch {
+			throw new Error("Failed to decrypt secrets - data may be corrupted or tampered")
+		}
 	}
 }

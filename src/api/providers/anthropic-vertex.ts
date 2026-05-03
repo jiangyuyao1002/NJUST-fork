@@ -116,7 +116,8 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 		for await (const chunk of stream) {
 			switch (chunk.type) {
 				case "message_start": {
-					const usage = chunk.message!.usage
+					if (!chunk.message?.usage) continue
+					const usage = chunk.message.usage
 
 					yield {
 						type: "usage",
@@ -129,30 +130,34 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 					break
 				}
 				case "message_delta": {
+					if (!chunk.usage) continue
 					yield {
 						type: "usage",
 						inputTokens: 0,
-						outputTokens: chunk.usage!.output_tokens || 0,
+						outputTokens: chunk.usage.output_tokens || 0,
 					}
 
 					break
 				}
 				case "content_block_start": {
-					switch (chunk.content_block!.type) {
+					const contentBlock = chunk.content_block
+					if (!contentBlock) continue
+
+					switch (contentBlock.type) {
 						case "text": {
-							if (chunk.index! > 0) {
+							if (chunk.index && chunk.index > 0) {
 								yield { type: "text", text: "\n" }
 							}
 
-							yield { type: "text", text: chunk.content_block!.text }
+							yield { type: "text", text: contentBlock.text }
 							break
 						}
 						case "thinking": {
-							if (chunk.index! > 0) {
+							if (chunk.index && chunk.index > 0) {
 								yield { type: "reasoning", text: "\n" }
 							}
 
-							yield { type: "reasoning", text: (chunk.content_block as any).thinking }
+							yield { type: "reasoning", text: (contentBlock as any).thinking }
 							break
 						}
 						case "tool_use": {
@@ -160,8 +165,8 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 							yield {
 								type: "tool_call_partial",
 								index: chunk.index,
-								id: chunk.content_block!.id,
-								name: chunk.content_block!.name,
+								id: contentBlock.id,
+								name: contentBlock.name,
 								arguments: undefined,
 							}
 							break
@@ -171,13 +176,16 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 					break
 				}
 				case "content_block_delta": {
-					switch (chunk.delta!.type) {
+					const delta = chunk.delta
+					if (!delta) continue
+
+					switch (delta.type) {
 						case "text_delta": {
-							yield { type: "text", text: chunk.delta!.text }
+							yield { type: "text", text: delta.text }
 							break
 						}
 						case "thinking_delta": {
-							yield { type: "reasoning", text: (chunk.delta as any).thinking }
+							yield { type: "reasoning", text: (delta as any).thinking }
 							break
 						}
 						case "input_json_delta": {
@@ -187,7 +195,7 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 								index: chunk.index,
 								id: undefined,
 								name: undefined,
-								arguments: (chunk.delta as any).partial_json,
+								arguments: (delta as any).partial_json,
 							}
 							break
 						}

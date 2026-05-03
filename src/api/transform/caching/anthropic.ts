@@ -1,14 +1,15 @@
 import OpenAI from "openai"
 
+import type { CacheableTextPart } from "./types"
+
 export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.ChatCompletionMessageParam[]): OpenAI.Chat.ChatCompletionMessageParam[] {
 	// Shallow clone to avoid mutating the caller's array.
 	const result = [...messages]
 
 	result[0] = {
 		role: "system",
-		// @ts-ignore-next-line
 		content: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
-	}
+	} as unknown as OpenAI.Chat.ChatCompletionMessageParam
 
 	// Ensure user messages have content in array format before adding breakpoints
 	for (let i = 0; i < result.length; i++) {
@@ -31,15 +32,14 @@ export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.
 				// at the end. But if it wasn't there, and the user added a
 				// image_url type message, it would pop a text part before
 				// it and then move it after to the end.
-				let lastTextPart = msg.content.filter((part) => part.type === "text").pop()
+				let lastTextPart = msg.content.filter((part) => part.type === "text").pop() as CacheableTextPart | undefined
 
 				if (!lastTextPart) {
 					lastTextPart = { type: "text", text: "..." }
 					msg.content.push(lastTextPart)
 				}
 
-				// @ts-ignore-next-line
-				lastTextPart["cache_control"] = { type: "ephemeral" }
+				;(lastTextPart as CacheableTextPart).cache_control = { type: "ephemeral" }
 			}
 		})
 

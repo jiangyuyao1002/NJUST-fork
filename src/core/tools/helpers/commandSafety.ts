@@ -79,7 +79,7 @@ export function checkCommandSafety(command: string): CommandSafetyResult {
 	}
 
 	const firstToken = trimmed.split(/\s/)[0].replace(/^\.\//, "")
-	const hasChainOrPipe = /[|;&]/.test(trimmed)
+	const hasChainOrPipe = /[|;&]|\$\(|`/.test(trimmed)
 	if (ALLOWLISTED_PREFIXES.has(firstToken) && !hasChainOrPipe) {
 		const shellAnalysis = analyzeBashCommand(trimmed)
 		return {

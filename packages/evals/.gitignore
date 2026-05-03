@@ -1,6 +1,11 @@
-# .env
-!.env.development
-!.env.test
+# .env - ignore all environment files with secrets
+.env
+.env.development
+.env.test
+.env.*.local
+
+# Keep sample file for reference
+!.env.sample
 
 # docker
 .docker/*

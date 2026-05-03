@@ -1,5 +1,7 @@
 import OpenAI from "openai"
 
+import type { CacheableTextPart } from "./types"
+
 export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.ChatCompletionMessageParam[]): OpenAI.Chat.ChatCompletionMessageParam[] {
 	// Shallow clone to avoid mutating the caller's array.
 	// Individual messages are cloned when their content needs to be modified.
@@ -9,9 +11,8 @@ export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.
 	result[0] = {
 		role: "system",
 		content: systemPrompt,
-		// @ts-ignore-next-line
 		cache_control: { type: "ephemeral" },
-	}
+	} as OpenAI.Chat.ChatCompletionMessageParam
 
 	// Add cache_control to the last two user messages for conversation context caching
 	const lastTwoUserIndices: number[] = []
@@ -29,11 +30,10 @@ export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.
 
 		const content = result[idx].content
 		if (Array.isArray(content)) {
-			let lastTextPart = content.filter((part) => part.type === "text").pop()
+			let lastTextPart = content.filter((part) => part.type === "text").pop() as CacheableTextPart | undefined
 
 			if (lastTextPart && lastTextPart.text && lastTextPart.text.length > 0) {
-				// @ts-ignore-next-line
-				lastTextPart["cache_control"] = { type: "ephemeral" }
+				;(lastTextPart as CacheableTextPart).cache_control = { type: "ephemeral" }
 			}
 		}
 	}

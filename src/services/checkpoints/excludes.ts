@@ -193,7 +193,10 @@ const getLfsPatterns = async (workspacePath: string) => {
 				.filter((line) => line.includes("filter=lfs"))
 				.map((line) => line.split(" ")[0].trim())
 		}
-	} catch (error) {}
+	} catch (error) {
+		// .gitattributes read/access errors should not block checkpoint creation
+		console.warn(`Failed to read .gitattributes for LFS patterns: ${error instanceof Error ? error.message : String(error)}`)
+	}
 
 	return []
 }

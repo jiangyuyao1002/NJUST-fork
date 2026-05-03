@@ -1,6 +1,7 @@
 import * as fs from "fs/promises"
 import * as path from "path"
 
+import { validateRegexPattern } from "../../utils/safeRegex"
 import { Task } from "../task/Task"
 import { getTaskDirectoryPath } from "../../utils/storage"
 
@@ -316,13 +317,19 @@ export class ReadCommandOutputTool extends BaseTool<"read_command_output"> {
 	): Promise<{ content: string; matchCount: number }> {
 		const CHUNK_SIZE = 64 * 1024 // 64KB chunks for bounded memory
 
-		// Create case-insensitive regex for search
+		// Validate pattern for ReDoS safety before constructing RegExp
+		const validation = validateRegexPattern(pattern)
 		let regex: RegExp
-		try {
-			regex = new RegExp(pattern, "i")
-		} catch {
-			// If invalid regex, treat as literal string
+		if (!validation.valid) {
+			// Pattern is unsafe or invalid, treat as literal string
 			regex = new RegExp(this.escapeRegExp(pattern), "i")
+		} else {
+			try {
+				regex = new RegExp(pattern, "i")
+			} catch {
+				// If invalid regex, treat as literal string
+				regex = new RegExp(this.escapeRegExp(pattern), "i")
+			}
 		}
 
 		const fileHandle = await fs.open(artifactPath, "r")
