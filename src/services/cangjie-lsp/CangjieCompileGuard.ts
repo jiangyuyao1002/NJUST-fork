@@ -168,6 +168,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			}
 			this.outputChannel.appendLine(`[CompileGuard] ✅ Build passed (${buildMode}) after save burst (${savedLabel})`)
 			this.onSuccessfulBuild?.({ cwd, docUri: docUri ?? undefined })
+			this.onCjpmBuildSucceededForLsp?.({ cwd })
 		} else {
 			this.outputChannel.appendLine(
 				`[CompileGuard] ❌ Build failed (${buildMode}, ${result.errorCount} error(s)) after save burst (${savedLabel})`,
@@ -265,6 +266,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 		let final: CompileResult
 		if (result.success) {
 			this.publishCompileDiagnostics(cwd, result.errorLocations, result.output, true)
+			this.onCjpmBuildSucceededForLsp?.({ cwd })
 			this.lastCjpmTomlHash = this.computeTomlHash(cwd)
 			if (useIncremental) {
 				this.incrementalAvailable = true
@@ -282,6 +284,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			fullResult.incremental = false
 			if (fullResult.success) {
 				this.publishCompileDiagnostics(cwd, fullResult.errorLocations, fullResult.output, true)
+				this.onCjpmBuildSucceededForLsp?.({ cwd })
 				this.lastCjpmTomlHash = this.computeTomlHash(cwd)
 			} else {
 				this.publishCompileDiagnostics(cwd, fullResult.errorLocations, fullResult.output, false)
