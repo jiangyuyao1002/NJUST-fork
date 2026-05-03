@@ -8,9 +8,9 @@ describe("consolidateCommands", () => {
 	describe("command sequences", () => {
 		it("should consolidate command and command_output messages", () => {
 			const messages: ClineMessage[] = [
-				{ type: "ask", ask: "command", text: "ls", ts: 1000 },
-				{ type: "ask", ask: "command_output", text: "file1.txt", ts: 1001 },
-				{ type: "ask", ask: "command_output", text: "file2.txt", ts: 1002 },
+				{ id: "1", type: "ask", ask: "command", text: "ls", ts: 1000 },
+				{ id: "2", type: "ask", ask: "command_output", text: "file1.txt", ts: 1001 },
+				{ id: "3", type: "ask", ask: "command_output", text: "file2.txt", ts: 1002 },
 			]
 
 			const result = consolidateCommands(messages)
@@ -22,10 +22,10 @@ describe("consolidateCommands", () => {
 
 		it("should handle multiple command sequences", () => {
 			const messages: ClineMessage[] = [
-				{ type: "ask", ask: "command", text: "ls", ts: 1000 },
-				{ type: "ask", ask: "command_output", text: "output1", ts: 1001 },
-				{ type: "ask", ask: "command", text: "pwd", ts: 1002 },
-				{ type: "ask", ask: "command_output", text: "output2", ts: 1003 },
+				{ id: "1", type: "ask", ask: "command", text: "ls", ts: 1000 },
+				{ id: "2", type: "ask", ask: "command_output", text: "output1", ts: 1001 },
+				{ id: "3", type: "ask", ask: "command", text: "pwd", ts: 1002 },
+				{ id: "4", type: "ask", ask: "command_output", text: "output2", ts: 1003 },
 			]
 
 			const result = consolidateCommands(messages)
@@ -37,8 +37,8 @@ describe("consolidateCommands", () => {
 
 		it("should handle command without output", () => {
 			const messages: ClineMessage[] = [
-				{ type: "ask", ask: "command", text: "ls", ts: 1000 },
-				{ type: "say", say: "text", text: "some text", ts: 1001 },
+				{ id: "1", type: "ask", ask: "command", text: "ls", ts: 1000 },
+				{ id: "2", type: "say", say: "text", text: "some text", ts: 1001 },
 			]
 
 			const result = consolidateCommands(messages)
@@ -51,9 +51,9 @@ describe("consolidateCommands", () => {
 
 		it("should handle duplicate outputs (ask and say with same text)", () => {
 			const messages: ClineMessage[] = [
-				{ type: "ask", ask: "command", text: "ls", ts: 1000 },
-				{ type: "ask", ask: "command_output", text: "same output", ts: 1001 },
-				{ type: "say", say: "command_output", text: "same output", ts: 1002 },
+				{ id: "1", type: "ask", ask: "command", text: "ls", ts: 1000 },
+				{ id: "2", type: "ask", ask: "command_output", text: "same output", ts: 1001 },
+				{ id: "3", type: "say", say: "command_output", text: "same output", ts: 1002 },
 			]
 
 			const result = consolidateCommands(messages)
@@ -67,12 +67,13 @@ describe("consolidateCommands", () => {
 		it("should consolidate use_mcp_server and mcp_server_response messages", () => {
 			const messages: ClineMessage[] = [
 				{
+					id: "1",
 					type: "ask",
 					ask: "use_mcp_server",
 					text: JSON.stringify({ server: "test", tool: "myTool" }),
 					ts: 1000,
 				},
-				{ type: "say", say: "mcp_server_response", text: "response data", ts: 1001 },
+				{ id: "2", type: "say", say: "mcp_server_response", text: "response data", ts: 1001 },
 			]
 
 			const result = consolidateCommands(messages)
@@ -87,6 +88,7 @@ describe("consolidateCommands", () => {
 		it("should handle MCP request without response", () => {
 			const messages: ClineMessage[] = [
 				{
+					id: "1",
 					type: "ask",
 					ask: "use_mcp_server",
 					text: JSON.stringify({ server: "test" }),
@@ -103,13 +105,14 @@ describe("consolidateCommands", () => {
 		it("should handle multiple MCP responses", () => {
 			const messages: ClineMessage[] = [
 				{
+					id: "1",
 					type: "ask",
 					ask: "use_mcp_server",
 					text: JSON.stringify({ server: "test" }),
 					ts: 1000,
 				},
-				{ type: "say", say: "mcp_server_response", text: "response1", ts: 1001 },
-				{ type: "say", say: "mcp_server_response", text: "response2", ts: 1002 },
+				{ id: "2", type: "say", say: "mcp_server_response", text: "response1", ts: 1001 },
+				{ id: "3", type: "say", say: "mcp_server_response", text: "response2", ts: 1002 },
 			]
 
 			const result = consolidateCommands(messages)
@@ -123,10 +126,10 @@ describe("consolidateCommands", () => {
 	describe("mixed messages", () => {
 		it("should preserve non-command, non-MCP messages", () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "text", text: "before", ts: 1000 },
-				{ type: "ask", ask: "command", text: "ls", ts: 1001 },
-				{ type: "ask", ask: "command_output", text: "output", ts: 1002 },
-				{ type: "say", say: "text", text: "after", ts: 1003 },
+				{ id: "1", type: "say", say: "text", text: "before", ts: 1000 },
+				{ id: "2", type: "ask", ask: "command", text: "ls", ts: 1001 },
+				{ id: "3", type: "ask", ask: "command_output", text: "output", ts: 1002 },
+				{ id: "4", type: "say", say: "text", text: "after", ts: 1003 },
 			]
 
 			const result = consolidateCommands(messages)

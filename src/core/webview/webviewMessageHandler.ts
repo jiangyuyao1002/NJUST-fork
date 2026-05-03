@@ -1209,7 +1209,8 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			}
 			break
 		case "openFile":
-			let filePath: string = message.text!
+			if (!message.text) break
+			let filePath: string = message.text
 			if (!path.isAbsolute(filePath)) {
 				filePath = path.join(getCurrentCwd(), filePath)
 			}

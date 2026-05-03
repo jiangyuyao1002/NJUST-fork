@@ -106,7 +106,7 @@ export class ToolRegistryImpl implements IToolRegistry {
 				this.getAllTools()
 					.filter((tool) => {
 						try {
-							return tool.isConcurrencySafe({} as never)
+							return tool.isConcurrencySafe(undefined as never)
 						} catch {
 							return false
 						}

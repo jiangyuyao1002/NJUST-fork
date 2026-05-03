@@ -4,7 +4,7 @@ import { detectAgentState } from "../agent-state.js"
 import { taskCompleted } from "../events.js"
 
 function createMessage(overrides: Partial<ClineMessage>): ClineMessage {
-	return { ts: Date.now() + Math.random() * 1000, type: "say", ...overrides }
+	return { id: `msg-${Date.now()}-${Math.random()}`, ts: Date.now() + Math.random() * 1000, type: "say", ...overrides }
 }
 
 describe("taskCompleted", () => {

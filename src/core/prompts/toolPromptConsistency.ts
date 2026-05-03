@@ -20,15 +20,11 @@ export interface ConsistencyCheckResult {
 
 const TOOL_PROMPT_KEYWORDS: Record<string, RegExp> = {
 	codebase_search: /codebase_search/,
-	execute_command: /execute_command/,
 	read_file: /read_file/,
-	write_to_file: /write_to_file/,
 	search_files: /search_files/,
 	list_files: /list_files/,
 	apply_diff: /apply_diff/,
 	use_mcp_tool: /use_mcp_tool/,
-	web_search: /web_search/,
-	web_fetch: /web_fetch/,
 	ask_followup_question: /ask_followup_question/,
 	attempt_completion: /attempt_completion/,
 }

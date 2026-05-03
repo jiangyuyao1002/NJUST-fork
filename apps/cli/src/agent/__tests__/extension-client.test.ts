@@ -11,7 +11,7 @@ import { AgentLoopState, detectAgentState } from "../agent-state.js"
 import { createMockClient } from "../extension-client.js"
 
 function createMessage(overrides: Partial<ClineMessage>): ClineMessage {
-	return { ts: Date.now() + Math.random() * 1000, type: "say", ...overrides }
+	return { id: `msg-${Date.now()}-${Math.random()}`, ts: Date.now() + Math.random() * 1000, type: "say", ...overrides }
 }
 
 function createStateMessage(messages: ClineMessage[], mode?: string): ExtensionMessage {

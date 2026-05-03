@@ -1,36 +1,11 @@
 /**
- * TaskLifecycle — Manages task initialization, resumption, and termination.
+ * TaskLifecycle — Task lifecycle utilities.
  *
  * Extracted from Task.ts to decompose the monolithic file.
- * Encapsulates lifecycle state transitions and validation logic.
- *
- * Phase 1: Standalone lifecycle utilities + LifecycleManager state machine.
- * Full extraction of `startTask` and `resumeTaskFromHistory` from Task.ts
- * is deferred to Phase 2.
+ * Runtime state machine is in TaskStateMachine.ts (TaskState enum).
  */
 
-import type { ClineMessage, TaskStatus } from "@njust-ai-cj/types"
-
-// ─── Lifecycle States ────────────────────────────────────────────────────────
-
-export enum LifecyclePhase {
-	/** Task created but not yet initialized */
-	CREATED = "created",
-	/** Task is initializing (loading history, building context) */
-	INITIALIZING = "initializing",
-	/** Task is running (active API request loop) */
-	RUNNING = "running",
-	/** Task is paused (waiting for user input) */
-	PAUSED = "paused",
-	/** Task is resuming from saved state */
-	RESUMING = "resuming",
-	/** Task is being aborted */
-	ABORTING = "aborting",
-	/** Task has completed */
-	COMPLETED = "completed",
-	/** Task has errored */
-	ERRORED = "errored",
-}
+import type { ClineMessage } from "@njust-ai-cj/types"
 
 // ─── History Message Cleanup ─────────────────────────────────────────────────
 
@@ -125,20 +100,6 @@ export function checkSubtaskBudget(
 		usagePercent,
 	}
 }
-
-// ─── Lifecycle State Machine ─────────────────────────────────────────────────
-
-const VALID_TRANSITIONS: Record<LifecyclePhase, LifecyclePhase[]> = {
-	[LifecyclePhase.CREATED]: [LifecyclePhase.INITIALIZING],
-	[LifecyclePhase.INITIALIZING]: [LifecyclePhase.RUNNING, LifecyclePhase.RESUMING, LifecyclePhase.ERRORED],
-	[LifecyclePhase.RUNNING]: [LifecyclePhase.PAUSED, LifecyclePhase.ABORTING, LifecyclePhase.COMPLETED, LifecyclePhase.ERRORED],
-	[LifecyclePhase.PAUSED]: [LifecyclePhase.RUNNING, LifecyclePhase.ABORTING, LifecyclePhase.COMPLETED],
-	[LifecyclePhase.RESUMING]: [LifecyclePhase.RUNNING, LifecyclePhase.ABORTING, LifecyclePhase.ERRORED],
-	[LifecyclePhase.ABORTING]: [LifecyclePhase.COMPLETED],
-	[LifecyclePhase.COMPLETED]: [],
-	[LifecyclePhase.ERRORED]: [LifecyclePhase.INITIALIZING],
-}
-
 
 // ─── Dispose Helpers ─────────────────────────────────────────────────────────
 

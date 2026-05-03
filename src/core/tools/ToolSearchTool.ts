@@ -118,7 +118,7 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 			}
 
 			lines.push(`Read-only: ${tool.isReadOnly() ? "yes" : "no"}`)
-			lines.push(`Concurrent-safe: ${tool.isConcurrencySafe({} as any) ? "yes" : "no"}`)
+			lines.push(`Concurrent-safe: ${tool.isConcurrencySafe(undefined as any) ? "yes" : "no"}`)
 
 			return lines.join("\n")
 		})

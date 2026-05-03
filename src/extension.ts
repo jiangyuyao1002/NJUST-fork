@@ -17,7 +17,6 @@ if (fs.existsSync(envPath)) {
 	}
 }
 
-import type { } from "@njust-ai-cj/types"
 import { customToolRegistry } from "@njust-ai-cj/core"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
@@ -244,12 +243,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		await context.secrets.store(DEVICE_TOKEN_KEY, deviceToken)
 		// Clean up legacy storage
 		await context.globalState.update("njustCloudDeviceToken", undefined)
-		const debug = vscode.workspace.getConfiguration(Package.name).get<boolean>("debug")
-		if (debug) {
-			outputChannel.appendLine(`[CloudAgent] Generated device token (debug): ${deviceToken.slice(0, 8)}...`)
-		} else {
-			outputChannel.appendLine("[CloudAgent] Device token generated and saved to SecretStorage.")
-		}
+		outputChannel.appendLine("[CloudAgent] Device token generated and saved to SecretStorage.")
 		setDeviceToken(deviceToken)
 	}
 

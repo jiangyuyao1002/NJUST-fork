@@ -24,12 +24,13 @@ const ALLOWED_TRANSITIONS: Record<TaskState, ReadonlySet<TaskState>> = {
 	[TaskState.PROCESSING_TOOLS]: new Set([
 		TaskState.PREPARING,
 		TaskState.WAITING_APPROVAL,
+		TaskState.COMPLETED,
 		TaskState.ERROR,
 	]),
 	[TaskState.COMPACTING]: new Set([TaskState.PREPARING, TaskState.ERROR]),
 	[TaskState.RECOVERING_MAX_TOKENS]: new Set([TaskState.PREPARING, TaskState.ERROR]),
 	[TaskState.WAITING_APPROVAL]: new Set([TaskState.PREPARING, TaskState.ERROR, TaskState.COMPLETED]),
-	[TaskState.COMPLETED]: new Set([]),
+	[TaskState.COMPLETED]: new Set([TaskState.PREPARING, TaskState.PROCESSING_TOOLS]),
 	[TaskState.ERROR]: new Set([]),
 }
 
@@ -47,7 +48,7 @@ export class TaskStateMachine {
 	}
 
 	canTransition(to: TaskState): boolean {
-		return ALLOWED_TRANSITIONS[this._state].has(to)
+		return this._state === to || ALLOWED_TRANSITIONS[this._state].has(to)
 	}
 
 	transition(to: TaskState): void {
@@ -68,6 +69,7 @@ export class TaskStateMachine {
 	 * Prefer {@link transition} for normal flows.
 	 */
 	force(to: TaskState, source?: string): void {
+		if (this._state === to) return
 		if (this._forceLocked) {
 			console.error(
 				`[TaskStateMachine] force() rejected (concurrent): ${this._state} -> ${to}` +

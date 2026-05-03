@@ -16,6 +16,7 @@ describe("consolidateTokenUsage", () => {
 			cost?: number
 		},
 	): ClineMessage => ({
+		id: `msg-${ts}`,
 		ts,
 		type: "say",
 		say: "api_req_started",
@@ -84,6 +85,7 @@ describe("consolidateTokenUsage", () => {
 			const messages: ClineMessage[] = [
 				createApiReqMessage(1000, { tokensIn: 100, tokensOut: 50 }),
 				{
+					id: "msg-1001",
 					ts: 1001,
 					type: "say",
 					say: "condense_context",
@@ -100,7 +102,7 @@ describe("consolidateTokenUsage", () => {
 
 	describe("invalid data handling", () => {
 		it("should handle messages with invalid JSON", () => {
-			const messages: ClineMessage[] = [{ ts: 1000, type: "say", say: "api_req_started", text: "invalid json" }]
+			const messages: ClineMessage[] = [{ id: "msg-1000", ts: 1000, type: "say", say: "api_req_started", text: "invalid json" }]
 
 			// Should not throw
 			const result = consolidateTokenUsage(messages)
@@ -109,7 +111,7 @@ describe("consolidateTokenUsage", () => {
 
 		it("should skip non-api_req_started messages", () => {
 			const messages: ClineMessage[] = [
-				{ ts: 1000, type: "say", say: "text", text: "hello" },
+				{ id: "msg-1000", ts: 1000, type: "say", say: "text", text: "hello" },
 				createApiReqMessage(1001, { tokensIn: 100, tokensOut: 50 }),
 			]
 

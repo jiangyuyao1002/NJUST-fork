@@ -570,7 +570,6 @@ export class TaskExecutor {
 			metadata,
 		)
 		h.stateMachine.force(TaskState.STREAMING)
-		h.stateMachine.force(TaskState.STREAMING)
 
 		// Wrap with backpressure controller to prevent unbounded buffering
 		const controlledStream = new BackpressureController(stream as unknown as AsyncGenerator<any>, 1000, 250)

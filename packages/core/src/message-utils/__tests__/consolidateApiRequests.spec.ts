@@ -7,6 +7,7 @@ import { consolidateApiRequests } from "../consolidateApiRequests.js"
 describe("consolidateApiRequests", () => {
 	// Helper function to create a basic api_req_started message
 	const createApiReqStarted = (ts: number, data: Record<string, unknown> = {}): ClineMessage => ({
+		id: `msg-${ts}-start`,
 		ts,
 		type: "say",
 		say: "api_req_started",
@@ -15,6 +16,7 @@ describe("consolidateApiRequests", () => {
 
 	// Helper function to create a basic api_req_finished message
 	const createApiReqFinished = (ts: number, data: Record<string, unknown> = {}): ClineMessage => ({
+		id: `msg-${ts}-finish`,
 		ts,
 		type: "say",
 		say: "api_req_finished",
@@ -23,6 +25,7 @@ describe("consolidateApiRequests", () => {
 
 	// Helper function to create a regular text message
 	const createTextMessage = (ts: number, text: string): ClineMessage => ({
+		id: `msg-${ts}-text`,
 		ts,
 		type: "say",
 		say: "text",
@@ -110,7 +113,7 @@ describe("consolidateApiRequests", () => {
 
 	it("should handle invalid JSON in message text", () => {
 		const messages: ClineMessage[] = [
-			{ ts: 1000, type: "say", say: "api_req_started", text: "invalid json" },
+			{ id: "msg-1000", ts: 1000, type: "say", say: "api_req_started", text: "invalid json" },
 			createApiReqFinished(1001, { cost: 0.01 }),
 		]
 
