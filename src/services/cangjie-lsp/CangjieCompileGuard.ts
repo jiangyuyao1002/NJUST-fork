@@ -168,7 +168,6 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			}
 			this.outputChannel.appendLine(`[CompileGuard] ✅ Build passed (${buildMode}) after save burst (${savedLabel})`)
 			this.onSuccessfulBuild?.({ cwd, docUri: docUri ?? undefined })
-			this.onCjpmBuildSucceededForLsp?.({ cwd })
 		} else {
 			this.outputChannel.appendLine(
 				`[CompileGuard] ❌ Build failed (${buildMode}, ${result.errorCount} error(s)) after save burst (${savedLabel})`,
