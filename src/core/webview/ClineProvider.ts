@@ -3,7 +3,7 @@ import * as path from "path"
 import fs from "fs/promises"
 import EventEmitter from "events"
 
-import { Anthropic } from "@anthropic-ai/sdk"
+
 import delay from "delay"
 import axios from "axios"
 import pWaitFor from "p-wait-for"
@@ -50,13 +50,11 @@ import {
 	isRetiredProvider,
 } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { aggregateTaskCostsRecursive, type AggregatedCosts } from "./aggregateTaskCosts"
-
 import { Package } from "../../shared/package"
 import { formatLanguage } from "../../shared/language"
 import { findLast } from "../../shared/array"
 import { supportPrompt } from "../../shared/support-prompt"
-import { GlobalFileNames } from "../../shared/globalFileNames"
+
 import { Mode, defaultModeSlug, getModeBySlug } from "../../shared/modes"
 import { experimentDefault } from "../../shared/experiments"
 import { WebviewMessage } from "../../shared/WebviewMessage"
@@ -64,22 +62,21 @@ import { EMBEDDING_MODEL_PROFILES } from "../../shared/embeddingModels"
 import { ProfileValidator } from "../../shared/ProfileValidator"
 
 import { Terminal } from "../../integrations/terminal/Terminal"
-import { downloadTask, getTaskFileName } from "../../integrations/misc/export-markdown"
-import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
+
 import { getTheme } from "../../integrations/theme/getTheme"
 import WorkspaceTracker from "../../integrations/workspace/WorkspaceTracker"
 
 import { McpHub } from "../../services/mcp/McpHub"
 import { McpServerManager } from "../../services/mcp/McpServerManager"
 import type { IMcpHubService } from "../../services/mcp/interfaces/IMcpHubService"
-import { ShadowCheckpointService } from "../../services/checkpoints/ShadowCheckpointService"
+
 import { CodeIndexManager } from "../../services/code-index/manager"
 import { cangjieDiagnosticModeSwitch } from "../../services/cangjie-lsp/cangjieDiagnosticModeSwitch"
-import { NO_TASK_KEY, pruneStaleRegistrations } from "../../services/cangjie-lsp/cangjieGeneratedTestCleanup"
+
 import type { IndexProgressUpdate } from "../../services/code-index/interfaces/manager"
 import { SkillsManager } from "../../services/skills/SkillsManager"
 
-import { fileExistsAtPath } from "../../utils/fs"
+
 import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
 import { getWorkspaceGitInfo } from "../../utils/git"
 import { getWorkspacePath } from "../../utils/path"
@@ -103,6 +100,9 @@ import { AgentOrchestrator } from "../agent/AgentOrchestrator"
 
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { WebviewMessageRouter } from "./WebviewMessageRouter"
+import { PendingEditManager } from "./PendingEditManager"
+import { WebviewContentProvider } from "./WebviewContentProvider"
+import { mergeAllowedCommands, mergeDeniedCommands } from "./commandListUtils"
 import type { ClineMessage, TodoItem } from "@njust-ai-cj/types"
 import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore } from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
@@ -118,16 +118,6 @@ import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
 
 export type ClineProviderEvents = {
 	clineCreated: [cline: Task]
-}
-
-interface PendingEditOperation {
-	messageTs: number
-	editedContent: string
-	images?: string[]
-	messageIndex: number
-	apiConversationHistoryIndex: number
-	timeoutId: NodeJS.Timeout
-	createdAt: number
 }
 
 export class ClineProvider
@@ -160,13 +150,10 @@ export class ClineProvider
 	private currentWorkspacePath: string | undefined
 	private _disposed = false
 
-	private recentTasksCache?: string[]
 	public readonly taskHistoryStore: TaskHistoryStore
-	private taskHistoryStoreInitialized = false
-	private globalStateWriteThroughTimer: ReturnType<typeof setTimeout> | null = null
-	private static readonly GLOBAL_STATE_WRITE_THROUGH_DEBOUNCE_MS = 5000 // 5 seconds
-	private pendingOperations: Map<string, PendingEditOperation> = new Map()
-	private static readonly PENDING_OPERATION_TIMEOUT_MS = 30000 // 30 seconds
+	public readonly taskHistory: TaskHistoryService
+	private readonly pendingEditManager: PendingEditManager
+	private readonly webviewContentProvider: WebviewContentProvider
 
 	/**
 	 * Monotonically increasing sequence number for clineMessages state pushes.
@@ -191,6 +178,11 @@ export class ClineProvider
 		super()
 		this.currentWorkspacePath = getWorkspacePath()
 		this.messageRouter = new WebviewMessageRouter(this)
+		this.pendingEditManager = new PendingEditManager({ log: (msg) => this.log(msg) })
+		this.webviewContentProvider = new WebviewContentProvider({
+			extensionUri: this.contextProxy.extensionUri,
+			getValues: () => this.contextProxy.getValues(),
+		})
 
 		ClineProvider.activeInstances.add(this)
 
@@ -201,10 +193,22 @@ export class ClineProvider
 		// since per-task files are authoritative and globalState is only for downgrade compat.
 		this.taskHistoryStore = new TaskHistoryStore(this.contextProxy.globalStorageUri.fsPath, {
 			onWrite: async () => {
-				this.scheduleGlobalStateWriteThrough()
+				this.taskHistory.scheduleGlobalStateWriteThrough()
 			},
 		})
-		this.initializeTaskHistoryStore().catch((error) => {
+		const provider = this
+		this.taskHistory = new TaskHistoryService({
+			context: this.context,
+			contextProxy: this.contextProxy,
+			taskHistoryStore: this.taskHistoryStore,
+			outputChannel: this.outputChannel,
+			get cwd() { return provider.cwd },
+			get isViewLaunched() { return provider.isViewLaunched },
+			clineStack: this.clineStack,
+			postMessageToWebview: (msg) => provider.postMessageToWebview(msg),
+			removeClineFromStack: () => provider.removeClineFromStack(),
+		} as any)
+		this.taskHistory.initialize().catch((error) => {
 			this.log(`Failed to initialize TaskHistoryStore: ${error}`)
 		})
 
@@ -321,53 +325,6 @@ export class ClineProvider
 			() => instance.off(NJUST_AI_CJEventName.TaskSpawned, onTaskSpawned),
 			() => instance.off(NJUST_AI_CJEventName.TaskTokenUsageUpdated, onTaskTokenUsageUpdated),
 		])
-	}
-
-	private async initializeTaskHistoryStore(): Promise<void> {
-		try {
-			await this.taskHistoryStore.initialize()
-
-			// Migration: backfill per-task files from globalState on first run
-			const migrationKey = "taskHistoryMigratedToFiles"
-			const alreadyMigrated = this.context.globalState.get<boolean>(migrationKey)
-
-			if (!alreadyMigrated) {
-				const legacyHistory = this.context.globalState.get<HistoryItem[]>("taskHistory") ?? []
-
-				if (legacyHistory.length > 0) {
-					this.log(`[initializeTaskHistoryStore] Migrating ${legacyHistory.length} entries from globalState`)
-					await this.taskHistoryStore.migrateFromGlobalState(legacyHistory)
-				}
-
-				await this.context.globalState.update(migrationKey, true)
-				this.log("[initializeTaskHistoryStore] Migration complete")
-			}
-
-			this.taskHistoryStoreInitialized = true
-
-			try {
-				const { filesRemoved, taskEntriesRemoved } = pruneStaleRegistrations((id) => {
-					if (id === NO_TASK_KEY) return false
-					const h = this.taskHistoryStore.get(id)
-					if (!h || h.status === "completed") return false
-					return true
-				})
-				if (filesRemoved > 0) {
-					this.outputChannel.appendLine(
-						`[CangjieTestCleanup] 启动修剪：移除 ${filesRemoved} 个生成测试文件（${taskEntriesRemoved} 个任务桶）。`,
-					)
-				}
-			} catch (e) {
-				this.log(`[CangjieTestCleanup] prune failed: ${e instanceof Error ? e.message : String(e)}`)
-			}
-
-			// Push task history to webview now that it's ready,
-			// so the UI that loaded with an empty list gets updated.
-			const items = this.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task)
-			this.postMessageToWebview({ type: "taskHistoryUpdated", taskHistory: items })
-		} catch (error) {
-			this.log(`[initializeTaskHistoryStore] Error: ${error instanceof Error ? error.message : String(error)}`)
-		}
 	}
 
 	/**
@@ -529,55 +486,7 @@ export class ClineProvider
 			apiConversationHistoryIndex: number
 		},
 	): void {
-		// Clear any existing operation with the same ID
-		this.clearPendingEditOperation(operationId)
-
-		// Create timeout for automatic cleanup
-		const timeoutId = setTimeout(() => {
-			this.clearPendingEditOperation(operationId)
-			this.log(`[setPendingEditOperation] Automatically cleared stale pending operation: ${operationId}`)
-		}, ClineProvider.PENDING_OPERATION_TIMEOUT_MS)
-
-		// Store the operation
-		this.pendingOperations.set(operationId, {
-			...editData,
-			timeoutId,
-			createdAt: Date.now(),
-		})
-
-		this.log(`[setPendingEditOperation] Set pending operation: ${operationId}`)
-	}
-
-	/**
-	 * Gets a pending edit operation by ID
-	 */
-	private getPendingEditOperation(operationId: string): PendingEditOperation | undefined {
-		return this.pendingOperations.get(operationId)
-	}
-
-	/**
-	 * Clears a specific pending edit operation
-	 */
-	private clearPendingEditOperation(operationId: string): boolean {
-		const operation = this.pendingOperations.get(operationId)
-		if (operation) {
-			clearTimeout(operation.timeoutId)
-			this.pendingOperations.delete(operationId)
-			this.log(`[clearPendingEditOperation] Cleared pending operation: ${operationId}`)
-			return true
-		}
-		return false
-	}
-
-	/**
-	 * Clears all pending edit operations
-	 */
-	private clearAllPendingEditOperations(): void {
-		for (const [operationId, operation] of this.pendingOperations) {
-			clearTimeout(operation.timeoutId)
-		}
-		this.pendingOperations.clear()
-		this.log(`[clearAllPendingEditOperations] Cleared all pending operations`)
+		this.pendingEditManager.set(operationId, editData)
 	}
 
 	/*
@@ -610,7 +519,7 @@ export class ClineProvider
 		this.log("Cleared all tasks")
 
 		// Clear all pending edit operations to prevent memory leaks
-		this.clearAllPendingEditOperations()
+		this.pendingEditManager.clearAll()
 		this.log("Cleared pending operations")
 
 		if (this.view && "dispose" in this.view) {
@@ -637,7 +546,7 @@ export class ClineProvider
 		this.skillsManager = undefined
 		this.customModesManager?.dispose()
 		this.taskHistoryStore.dispose()
-		this.flushGlobalStateWriteThrough()
+		this.taskHistory.flushGlobalStateWriteThrough()
 		this.log("Disposed all disposables")
 		ClineProvider.activeInstances.delete(this)
 
@@ -821,8 +730,8 @@ export class ClineProvider
 		webviewView.webview.options = { enableScripts: true, localResourceRoots: resourceRoots }
 		webviewView.webview.html =
 			this.contextProxy.extensionMode === vscode.ExtensionMode.Development
-				? await this.getHMRHtmlContent(webviewView.webview)
-				: await this.getHtmlContent(webviewView.webview)
+				? await this.webviewContentProvider.getHMRHtmlContent(webviewView.webview)
+				: await this.webviewContentProvider.getHtmlContent(webviewView.webview)
 	}
 
 	private attachWebviewLifecycleListeners(
@@ -1024,12 +933,12 @@ export class ClineProvider
 
 	private async applyPendingEditIfPresent(task: Task): Promise<void> {
 		const operationId = `task-${task.taskId}`
-		const pendingEdit = this.getPendingEditOperation(operationId)
+		const pendingEdit = this.pendingEditManager.get(operationId)
 		if (!pendingEdit) {
 			return
 		}
 
-		this.clearPendingEditOperation(operationId)
+		this.pendingEditManager.clear(operationId)
 		this.log(`[createTaskWithHistoryItem] Processing pending edit after checkpoint restoration`)
 		setTimeout(async () => {
 			try {
@@ -1062,181 +971,6 @@ export class ClineProvider
 		} catch {
 			// View disposed, drop message silently
 		}
-	}
-
-	private async getHMRHtmlContent(webview: vscode.Webview): Promise<string> {
-		let localPort = "5173"
-
-		try {
-			const fs = require("fs")
-			const path = require("path")
-			const portFilePath = path.resolve(__dirname, "../../.vite-port")
-
-			if (fs.existsSync(portFilePath)) {
-				localPort = fs.readFileSync(portFilePath, "utf8").trim()
-				console.log(`[ClineProvider:Vite] Using Vite server port from ${portFilePath}: ${localPort}`)
-			} else {
-				console.log(
-					`[ClineProvider:Vite] Port file not found at ${portFilePath}, using default port: ${localPort}`,
-				)
-			}
-		} catch (err) {
-			console.error("[ClineProvider:Vite] Failed to read Vite port file:", err)
-		}
-
-		const localServerUrl = `localhost:${localPort}`
-
-		// Check if local dev server is running.
-		try {
-			await axios.get(`http://${localServerUrl}`)
-		} catch (error) {
-			vscode.window.showErrorMessage(t("common:errors.hmr_not_running"))
-			return this.getHtmlContent(webview)
-		}
-
-		const nonce = getNonce()
-
-		const openRouterBaseUrl = this.contextProxy.getValues().openRouterBaseUrl || "https://openrouter.ai"
-		const openRouterDomain = openRouterBaseUrl.match(/^(https?:\/\/[^\/]+)/)?.[1] || "https://openrouter.ai"
-
-		const stylesUri = getUri(webview, this.contextProxy.extensionUri, [
-			"webview-ui",
-			"build",
-			"assets",
-			"index.css",
-		])
-
-		const codiconsUri = getUri(webview, this.contextProxy.extensionUri, ["assets", "codicons", "codicon.css"])
-		const materialIconsUri = getUri(webview, this.contextProxy.extensionUri, [
-			"assets",
-			"vscode-material-icons",
-			"icons",
-		])
-		const imagesUri = getUri(webview, this.contextProxy.extensionUri, ["assets", "images"])
-		const audioUri = getUri(webview, this.contextProxy.extensionUri, ["webview-ui", "audio"])
-
-		const file = "src/index.tsx"
-		const scriptUri = `http://${localServerUrl}/${file}`
-
-		const reactRefresh = /*html*/ `
-			<script nonce="${nonce}" type="module">
-				import RefreshRuntime from "http://localhost:${localPort}/@react-refresh"
-				RefreshRuntime.injectIntoGlobalHook(window)
-				window.$RefreshReg$ = () => {}
-				window.$RefreshSig$ = () => (type) => type
-				window.__vite_plugin_react_preamble_installed__ = true
-			</script>
-		`
-
-		const csp = [
-			"default-src 'none'",
-			`font-src ${webview.cspSource} data:`,
-			`style-src ${webview.cspSource} 'unsafe-inline' http://${localServerUrl} http://0.0.0.0:${localPort}`,
-			`img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:`,
-			`media-src ${webview.cspSource} blob:`,
-			`script-src 'unsafe-eval' ${webview.cspSource} http://${localServerUrl} http://0.0.0.0:${localPort} 'nonce-${nonce}'`,
-			`connect-src ${webview.cspSource} ${openRouterDomain} ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort}`,
-		]
-
-		return /*html*/ `
-			<!DOCTYPE html>
-			<html lang="en">
-				<head>
-					<meta charset="utf-8">
-					<meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-					<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
-					<link rel="stylesheet" type="text/css" href="${stylesUri}">
-					<link href="${codiconsUri}" rel="stylesheet" />
-					<script nonce="${nonce}">
-						window.IMAGES_BASE_URI = "${imagesUri}"
-						window.AUDIO_BASE_URI = "${audioUri}"
-						window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
-					</script>
-					<title>NJUST_AI_CJ</title>
-				</head>
-				<body>
-					<div id="root"></div>
-					${reactRefresh}
-					<script type="module" src="${scriptUri}"></script>
-				</body>
-			</html>
-		`
-	}
-
-	/**
-	 * Defines and returns the HTML that should be rendered within the webview panel.
-	 *
-	 * @remarks This is also the place where references to the React webview build files
-	 * are created and inserted into the webview HTML.
-	 *
-	 * @param webview A reference to the extension webview
-	 * @param extensionUri The URI of the directory containing the extension
-	 * @returns A template string literal containing the HTML that should be
-	 * rendered within the webview panel
-	 */
-	private async getHtmlContent(webview: vscode.Webview): Promise<string> {
-		// Get the local path to main script run in the webview,
-		// then convert it to a uri we can use in the webview.
-
-		// The CSS file from the React build output
-		const stylesUri = getUri(webview, this.contextProxy.extensionUri, [
-			"webview-ui",
-			"build",
-			"assets",
-			"index.css",
-		])
-
-		const scriptUri = getUri(webview, this.contextProxy.extensionUri, ["webview-ui", "build", "assets", "index.js"])
-		const codiconsUri = getUri(webview, this.contextProxy.extensionUri, ["assets", "codicons", "codicon.css"])
-		const materialIconsUri = getUri(webview, this.contextProxy.extensionUri, [
-			"assets",
-			"vscode-material-icons",
-			"icons",
-		])
-		const imagesUri = getUri(webview, this.contextProxy.extensionUri, ["assets", "images"])
-		const audioUri = getUri(webview, this.contextProxy.extensionUri, ["webview-ui", "audio"])
-
-		// Use a nonce to only allow a specific script to be run.
-		/*
-		content security policy of your webview to only allow scripts that have a specific nonce
-		create a content security policy meta tag so that only loading scripts with a nonce is allowed
-		As your extension grows you will likely want to add custom styles, fonts, and/or images to your webview. If you do, you will need to update the content security policy meta tag to explicitly allow for these resources. E.g.
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; font-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
-		- 'unsafe-inline' is required for styles due to vscode-webview-toolkit's dynamic style injection
-		- since we pass base64 images to the webview, we need to specify img-src ${webview.cspSource} data:;
-
-		in meta tag we add nonce attribute: A cryptographic nonce (only used once) to allow scripts. The server must generate a unique nonce value each time it transmits a policy. It is critical to provide a nonce that cannot be guessed as bypassing a resource's policy is otherwise trivial.
-		*/
-		const nonce = getNonce()
-
-		const openRouterBaseUrl = this.contextProxy.getValues().openRouterBaseUrl || "https://openrouter.ai"
-		const openRouterDomain = openRouterBaseUrl.match(/^(https?:\/\/[^\/]+)/)?.[1] || "https://openrouter.ai"
-
-		// Tip: Install the es6-string-html VS Code extension to enable code highlighting below
-		return /*html*/ `
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-            <meta name="theme-color" content="#000000">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:; media-src ${webview.cspSource} blob:; script-src ${webview.cspSource} 'wasm-unsafe-eval' 'nonce-${nonce}' 'strict-dynamic'; connect-src ${webview.cspSource} ${openRouterDomain} https://api.requesty.ai;">
-            <link rel="stylesheet" type="text/css" href="${stylesUri}">
-			<link href="${codiconsUri}" rel="stylesheet" />
-			<script nonce="${nonce}">
-				window.IMAGES_BASE_URI = "${imagesUri}"
-				window.AUDIO_BASE_URI = "${audioUri}"
-				window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
-			</script>
-            <title>NJUST_AI_CJ</title>
-          </head>
-          <body>
-            <noscript>You need to enable JavaScript to run this app.</noscript>
-            <div id="root"></div>
-            <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
-          </body>
-        </html>
-      `
 	}
 
 	/**
@@ -1630,191 +1364,33 @@ export class ClineProvider
 
 	// Task history
 
-	async getTaskWithId(id: string): Promise<{
-		historyItem: HistoryItem
-		taskDirPath: string
-		apiConversationHistoryFilePath: string
-		uiMessagesFilePath: string
-		apiConversationHistory: Anthropic.MessageParam[]
-	}> {
-		const historyItem =
-			this.taskHistoryStore.get(id) ?? (this.getGlobalState("taskHistory") ?? []).find((item) => item.id === id)
-
-		if (!historyItem) {
-			throw new Error("Task not found")
-		}
-
-		const { getTaskDirectoryPath } = await import("../../utils/storage")
-		const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
-		const taskDirPath = await getTaskDirectoryPath(globalStoragePath, id)
-		const apiConversationHistoryFilePath = path.join(taskDirPath, GlobalFileNames.apiConversationHistory)
-		const uiMessagesFilePath = path.join(taskDirPath, GlobalFileNames.uiMessages)
-		const fileExists = await fileExistsAtPath(apiConversationHistoryFilePath)
-
-		let apiConversationHistory: Anthropic.MessageParam[] = []
-
-		if (fileExists) {
-			try {
-				apiConversationHistory = JSON.parse(await fs.readFile(apiConversationHistoryFilePath, "utf8"))
-			} catch (error) {
-				console.warn(
-					`[getTaskWithId] api_conversation_history.json corrupted for task ${id}, returning empty history: ${error instanceof Error ? error.message : String(error)}`,
-				)
-			}
-		} else {
-			console.warn(
-				`[getTaskWithId] api_conversation_history.json missing for task ${id}, returning empty history`,
-			)
-		}
-
-		return {
-			historyItem,
-			taskDirPath,
-			apiConversationHistoryFilePath,
-			uiMessagesFilePath,
-			apiConversationHistory,
-		}
+	async getTaskWithId(id: string) {
+		return this.taskHistory.getTaskWithId(id)
 	}
 
-	async getTaskWithAggregatedCosts(taskId: string): Promise<{
-		historyItem: HistoryItem
-		aggregatedCosts: AggregatedCosts
-	}> {
-		const { historyItem } = await this.getTaskWithId(taskId)
-
-		const aggregatedCosts = await aggregateTaskCostsRecursive(taskId, async (id: string) => {
-			const result = await this.getTaskWithId(id)
-			return result.historyItem
-		})
-
-		return { historyItem, aggregatedCosts }
+	async getTaskWithAggregatedCosts(taskId: string) {
+		return this.taskHistory.getTaskWithAggregatedCosts(taskId)
 	}
 
 	async showTaskWithId(id: string) {
-		if (id !== this.getCurrentTask()?.taskId) {
-			// Non-current task.
-			const { historyItem } = await this.getTaskWithId(id)
-			await this.createTaskWithHistoryItem(historyItem) // Clears existing task.
-		}
-
-		await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+		await this.taskHistory.showTaskWithId(id, (item) => this.createTaskWithHistoryItem(item))
 	}
 
 	async exportTaskWithId(id: string) {
-		const { historyItem, apiConversationHistory } = await this.getTaskWithId(id)
-		const fileName = getTaskFileName(historyItem.ts)
-		const defaultUri = await resolveDefaultSaveUri(this.contextProxy, "lastTaskExportPath", fileName, {
-			useWorkspace: false,
-			fallbackDir: path.join(os.homedir(), "Downloads"),
-		})
-		const saveUri = await downloadTask(historyItem.ts, apiConversationHistory, defaultUri)
-
-		if (saveUri) {
-			await saveLastExportPath(this.contextProxy, "lastTaskExportPath", saveUri)
-		}
+		await this.taskHistory.exportTaskWithId(id)
 	}
 
-	/* Condenses a task's message history to use fewer tokens. */
 	async condenseTaskContext(taskId: string) {
-		let task: Task | undefined
-		for (let i = this.clineStack.length - 1; i >= 0; i--) {
-			if (this.clineStack[i].taskId === taskId) {
-				task = this.clineStack[i]
-				break
-			}
-		}
-		if (!task) {
-			throw new Error(`Task with id ${taskId} not found in stack`)
-		}
-		await task.condenseContext()
-		await this.postMessageToWebview({ type: "condenseTaskContextResponse", text: taskId })
+		await this.taskHistory.condenseTaskContext(taskId)
 	}
 
-	// this function deletes a task from task history, and deletes its checkpoints and delete the task folder
-	// If the task has subtasks (childIds), they will also be deleted recursively
 	async deleteTaskWithId(id: string, cascadeSubtasks: boolean = true) {
-		try {
-			// get the task directory full path and history item
-			const { taskDirPath, historyItem } = await this.getTaskWithId(id)
-
-			// Collect all task IDs to delete (parent + all subtasks)
-			const allIdsToDelete: string[] = [id]
-
-			if (cascadeSubtasks) {
-				// Recursively collect all child IDs
-				const collectChildIds = async (taskId: string): Promise<void> => {
-					try {
-						const { historyItem: item } = await this.getTaskWithId(taskId)
-						if (item.childIds && item.childIds.length > 0) {
-							for (const childId of item.childIds) {
-								allIdsToDelete.push(childId)
-								await collectChildIds(childId)
-							}
-						}
-					} catch (error) {
-						// Child task may already be deleted or not found, continue
-						console.log(`[deleteTaskWithId] child task ${taskId} not found, skipping`)
-					}
-				}
-
-				await collectChildIds(id)
-			}
-
-			// Remove from stack if any of the tasks to delete are in the current task stack
-			for (const taskId of allIdsToDelete) {
-				if (taskId === this.getCurrentTask()?.taskId) {
-					// Close the current task instance; delegation flows will be handled via metadata if applicable.
-					await this.removeClineFromStack()
-					break
-				}
-			}
-
-			// Delete all tasks from state in one batch
-			await this.taskHistoryStore.deleteMany(allIdsToDelete)
-			this.recentTasksCache = undefined
-
-			// Delete associated shadow repositories or branches and task directories
-			const globalStorageDir = this.contextProxy.globalStorageUri.fsPath
-			const workspaceDir = this.cwd
-			const { getTaskDirectoryPath } = await import("../../utils/storage")
-			const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
-
-			for (const taskId of allIdsToDelete) {
-				try {
-					await ShadowCheckpointService.deleteTask({ taskId, globalStorageDir, workspaceDir })
-				} catch (error) {
-					console.error(
-						`[deleteTaskWithId${taskId}] failed to delete associated shadow repository or branch: ${error instanceof Error ? error.message : String(error)}`,
-					)
-				}
-
-				// Delete the task directory
-				try {
-					const dirPath = await getTaskDirectoryPath(globalStoragePath, taskId)
-					await fs.rm(dirPath, { recursive: true, force: true })
-					console.log(`[deleteTaskWithId${taskId}] removed task directory`)
-				} catch (error) {
-					console.error(
-						`[deleteTaskWithId${taskId}] failed to remove task directory: ${error instanceof Error ? error.message : String(error)}`,
-					)
-				}
-			}
-
-			await this.postStateToWebview()
-		} catch (error) {
-			// If task is not found, just remove it from state
-			if (error instanceof Error && error.message === "Task not found") {
-				await this.deleteTaskFromState(id)
-				return
-			}
-			throw error
-		}
+		await this.taskHistory.deleteTaskWithId(id, cascadeSubtasks)
+		await this.postStateToWebview()
 	}
 
 	async deleteTaskFromState(id: string) {
-		await this.taskHistoryStore.delete(id)
-		this.recentTasksCache = undefined
-
+		await this.taskHistory.deleteTaskFromState(id)
 		await this.postStateToWebview()
 	}
 
@@ -1846,70 +1422,18 @@ export class ClineProvider
 		this.postMessageToWebview({ type: "state", state: rest })
 	}
 
-	/**
-	 * Merges allowed commands from global state and workspace configuration
-	 * with proper validation and deduplication.
-	 */
-	private mergeAllowedCommands(globalStateCommands?: string[], workspaceCommands?: string[]): string[] {
-		return this.mergeCommandLists(globalStateCommands, workspaceCommands, "allowed")
-	}
-
-	/**
-	 * Merges denied commands from global state and workspace configuration
-	 * with proper validation and deduplication.
-	 */
-	private mergeDeniedCommands(globalStateCommands?: string[], workspaceCommands?: string[]): string[] {
-		return this.mergeCommandLists(globalStateCommands, workspaceCommands, "denied")
-	}
-
-	/**
-	 * Common utility for merging command lists from global state and workspace configuration.
-	 * Global state takes precedence over workspace configuration.
-	 */
-	private mergeCommandLists(
-		globalStateCommands?: string[],
-		workspaceCommands?: string[],
-		commandType?: "allowed" | "denied",
-	): string[] {
-		try {
-			const validGlobalCommands = this.normalizeCommandList(globalStateCommands)
-			const validWorkspaceCommands = this.normalizeCommandList(workspaceCommands)
-			return [...new Set([...validGlobalCommands, ...validWorkspaceCommands])]
-		} catch (error) {
-			if (commandType) {
-				console.error(`Error merging ${commandType} commands:`, error)
-			}
-			return []
+	private getMergedCommandLists(allowedCommands?: string[], deniedCommands?: string[]): { allowedCommands: string[]; deniedCommands: string[] } {
+		const workspaceConfig = vscode.workspace.getConfiguration(Package.name)
+		return {
+			allowedCommands: mergeAllowedCommands(allowedCommands, workspaceConfig.get<string[]>("allowedCommands") || []),
+			deniedCommands: mergeDeniedCommands(deniedCommands, workspaceConfig.get<string[]>("deniedCommands") || []),
 		}
-	}
-
-	private normalizeCommandList(commands?: string[]): string[] {
-		if (!Array.isArray(commands) || commands.length === 0) {
-			return []
-		}
-
-		const normalized: string[] = []
-		for (const cmd of commands) {
-			if (typeof cmd === "string") {
-				const trimmed = cmd.trim()
-				if (trimmed.length > 0) normalized.push(trimmed)
-			}
-		}
-		return normalized
 	}
 
 	async getStateToPostToWebview(): Promise<ExtensionState> {
 		const state = await this.getState()
 		const commandLists = this.getMergedCommandLists(state.allowedCommands, state.deniedCommands)
 		return await this.buildWebviewState(state, commandLists)
-	}
-
-	private getMergedCommandLists(allowedCommands?: string[], deniedCommands?: string[]): { allowedCommands: string[]; deniedCommands: string[] } {
-		const workspaceConfig = vscode.workspace.getConfiguration(Package.name)
-		return {
-			allowedCommands: this.mergeAllowedCommands(allowedCommands, workspaceConfig.get<string[]>("allowedCommands") || []),
-			deniedCommands: this.mergeDeniedCommands(deniedCommands, workspaceConfig.get<string[]>("deniedCommands") || []),
-		}
 	}
 
 	private async buildWebviewState(
@@ -1946,7 +1470,7 @@ export class ClineProvider
 			clineMessages: currentTask?.clineMessages || [],
 			currentTaskTodos: currentTask?.todoList || [],
 			messageQueue: currentTask?.messageQueueService?.messages,
-			taskHistory: this.taskHistoryStoreInitialized ? this.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task) : [],
+			taskHistory: this.taskHistory.initialized ? this.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task) : [],
 			soundEnabled: state.soundEnabled ?? false,
 			ttsEnabled: state.ttsEnabled ?? false,
 			ttsSpeed: state.ttsSpeed ?? 1.0,
@@ -2119,7 +1643,7 @@ export class ClineProvider
 			allowedMaxCost: stateValues.allowedMaxCost,
 			autoCondenseContext: stateValues.autoCondenseContext ?? true,
 			autoCondenseContextPercent: stateValues.autoCondenseContextPercent ?? DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
-			taskHistory: this.taskHistoryStoreInitialized ? this.taskHistoryStore.getAll() : [],
+			taskHistory: this.taskHistory.initialized ? this.taskHistoryStore.getAll() : [],
 			allowedCommands: stateValues.allowedCommands,
 			deniedCommands: stateValues.deniedCommands,
 			soundEnabled: stateValues.soundEnabled ?? false,
@@ -2222,80 +1746,11 @@ export class ClineProvider
 	 * @returns The updated task history array
 	 */
 	async updateTaskHistory(item: HistoryItem, options: { broadcast?: boolean } = {}): Promise<HistoryItem[]> {
-		const { broadcast = true } = options
-
-		const history = await this.taskHistoryStore.upsert(item)
-		this.recentTasksCache = undefined
-
-		// Broadcast the updated history to the webview if requested.
-		// Prefer per-item updates to avoid repeatedly cloning/sending the full history.
-		if (broadcast && this.isViewLaunched) {
-			const updatedItem = this.taskHistoryStore.get(item.id) ?? item
-			await this.postMessageToWebview({ type: "taskHistoryItemUpdated", taskHistoryItem: updatedItem })
-		}
-
-		return history
+		return this.taskHistory.updateTaskHistory(item, options)
 	}
 
-	/**
-	 * Schedule a debounced write-through of task history to globalState.
-	 * Only used for backward compatibility during the transition period.
-	 * Per-task files are authoritative; globalState is the downgrade fallback.
-	 */
-	private scheduleGlobalStateWriteThrough(): void {
-		if (this.globalStateWriteThroughTimer) {
-			clearTimeout(this.globalStateWriteThroughTimer)
-		}
-
-		this.globalStateWriteThroughTimer = setTimeout(async () => {
-			this.globalStateWriteThroughTimer = null
-			try {
-				const items = this.taskHistoryStore.getAll()
-				await this.updateGlobalState("taskHistory", items)
-			} catch (err) {
-				this.log(
-					`[scheduleGlobalStateWriteThrough] Failed: ${err instanceof Error ? err.message : String(err)}`,
-				)
-			}
-		}, ClineProvider.GLOBAL_STATE_WRITE_THROUGH_DEBOUNCE_MS)
-	}
-
-	/**
-	 * Flush any pending debounced globalState write-through immediately.
-	 */
-	private flushGlobalStateWriteThrough(): void {
-		if (this.globalStateWriteThroughTimer) {
-			clearTimeout(this.globalStateWriteThroughTimer)
-			this.globalStateWriteThroughTimer = null
-		}
-
-		const items = this.taskHistoryStore.getAll()
-		this.updateGlobalState("taskHistory", items).catch((err) => {
-			this.log(`[flushGlobalStateWriteThrough] Failed: ${err instanceof Error ? err.message : String(err)}`)
-		})
-	}
-
-	/**
-	 * Broadcasts a task history update to the webview.
-	 * This sends a lightweight message with just the task history, rather than the full state.
-	 * @param history The task history to broadcast (if not provided, reads from the store)
-	 */
 	public async broadcastTaskHistoryUpdate(history?: HistoryItem[]): Promise<void> {
-		if (!this.isViewLaunched) {
-			return
-		}
-
-		const taskHistory = history ?? this.taskHistoryStore.getAll()
-
-		// Sort and filter the history the same way as getStateToPostToWebview
-		const sortedHistory = taskHistory
-			.filter((item: HistoryItem) => item.ts && item.task)
-			.sort((a: HistoryItem, b: HistoryItem) => b.ts - a.ts)
-
-		await this.postMessageToWebview({
-			type: "taskHistoryUpdated",
-			taskHistory: sortedHistory,
-		})
+		return this.taskHistory.broadcastTaskHistoryUpdate(history)
 	}
 
 	// ContextProxy
@@ -2453,48 +1908,7 @@ export class ClineProvider
 	}
 
 	public getRecentTasks(): string[] {
-		if (this.recentTasksCache) {
-			return this.recentTasksCache
-		}
-
-		const history = this.taskHistoryStore.getAll()
-		const workspaceTasks: HistoryItem[] = []
-
-		for (const item of history) {
-			if (!item.ts || !item.task || item.workspace !== this.cwd) {
-				continue
-			}
-
-			workspaceTasks.push(item)
-		}
-
-		if (workspaceTasks.length === 0) {
-			this.recentTasksCache = []
-			return this.recentTasksCache
-		}
-
-		workspaceTasks.sort((a, b) => b.ts - a.ts)
-		let recentTaskIds: string[] = []
-
-		if (workspaceTasks.length >= 100) {
-			// If we have at least 100 tasks, return tasks from the last 7 days.
-			const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-
-			for (const item of workspaceTasks) {
-				// Stop when we hit tasks older than 7 days.
-				if (item.ts < sevenDaysAgo) {
-					break
-				}
-
-				recentTaskIds.push(item.id)
-			}
-		} else {
-			// Otherwise, return the most recent 100 tasks (or all if less than 100).
-			recentTaskIds = workspaceTasks.slice(0, Math.min(100, workspaceTasks.length)).map((item) => item.id)
-		}
-
-		this.recentTasksCache = recentTaskIds
-		return this.recentTasksCache
+		return this.taskHistory.getRecentTasks()
 	}
 
 	// When initializing a new task, (not from history but from a tool command
