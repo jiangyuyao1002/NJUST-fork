@@ -2,7 +2,7 @@
  * TaskStackManager — Task stack lifecycle management (LIFO ordering).
  *
  * Extracted from ClineProvider.ts to decompose the monolithic provider.
- * Manages clineStack array, event listener bindings, and delegation repair.
+ * Manages the task stack, event listener bindings, and delegation repair.
  */
 
 import type * as vscode from "vscode"

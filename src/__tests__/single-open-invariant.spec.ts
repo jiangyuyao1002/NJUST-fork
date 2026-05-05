@@ -156,11 +156,11 @@ describe("Single-open-task invariant", () => {
 	})
 
 	it("IPC StartNewTask path closes current before new task", async () => {
-		const removeClineFromStack = vi.fn().mockResolvedValue(undefined)
+		const stackPop = vi.fn().mockResolvedValue(undefined)
 		const createTask = vi.fn().mockResolvedValue({ taskId: "ipc-1" })
 		const provider = {
 			context: {} as any,
-			removeClineFromStack,
+			stack: { pop: stackPop },
 			postStateToWebview: vi.fn(),
 			postMessageToWebview: vi.fn(),
 			createTask,
@@ -185,7 +185,7 @@ describe("Single-open-task invariant", () => {
 		})
 
 		expect(taskId).toBe("ipc-1")
-		expect(removeClineFromStack).toHaveBeenCalledTimes(1)
+		expect(stackPop).toHaveBeenCalledTimes(1)
 		expect(createTask).toHaveBeenCalled()
 	})
 })

@@ -613,7 +613,7 @@ describe("ClineProvider", () => {
 		// get the stack size before the abort call
 		const stackSizeBeforeAbort = provider.getTaskStackSize()
 
-		// call the removeClineFromStack method so it will call the current cline abort and remove it from the stack
+		// call stack.pop() so it will call the current cline abort and remove it from the stack
 		await provider.stack.pop()
 
 		// get the stack size after the abort call

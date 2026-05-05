@@ -1728,10 +1728,6 @@ export class ClineProvider
 		return this.stack.taskIds
 	}
 
-	async removeClineFromStack(options?: { skipDelegationRepair?: boolean }): Promise<void> {
-		await this.stack.pop(options)
-	}
-
 	public getRecentTasks(): string[] {
 		return this.taskHistory.getRecentTasks()
 	}
@@ -2363,7 +2359,7 @@ export class ClineProvider
 
 		// 3) Close child instance if still open (single-open-task invariant).
 		//    This MUST happen BEFORE updating the child's status to "completed" because
-		//    removeClineFromStack() → abortTask(true) → saveClineMessages() writes
+		//    stack.pop() → abortTask(true) → saveClineMessages() writes
 		//    the historyItem with initialStatus (typically "active"), which would
 		//    overwrite a "completed" status set earlier.
 		const current = this.getCurrentTask()
