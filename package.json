@@ -12,7 +12,7 @@
     "lint": "turbo lint --log-order grouped --output-logs new-only",
     "check-types": "turbo check-types --log-order grouped --output-logs new-only",
     "test": "turbo test --log-order grouped --output-logs new-only",
-    "test:coverage": "vitest run --coverage --config src/vitest.config.ts",
+    "test:coverage": "pnpm exec vitest run --coverage --config src/vitest.config.ts",
     "format": "turbo format --log-order grouped --output-logs new-only",
     "build": "turbo build --log-order grouped --output-logs new-only",
     "bundle": "turbo bundle --log-order grouped --output-logs new-only",
@@ -50,7 +50,8 @@
     "tsx": "^4.19.3",
 		"turbo": "^2.5.6",
 		"typescript": "5.8.3",
-		"vitest": "^3.2.3"
+		"vitest": "^3.2.3",
+		"@vitest/coverage-v8": "^3.2.3"
 	},
   "pnpm": {
     "onlyBuiltDependencies": [
