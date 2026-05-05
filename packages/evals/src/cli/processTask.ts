@@ -137,8 +137,9 @@ export const processTaskInContainer = async ({
 				await execFileAsync("docker", args, { maxBuffer: 50 * 1024 * 1024 })
 				logger.info(`container process completed successfully`)
 				return
-			} catch (error: any) {
-				const code = error?.code ?? error?.status
+			} catch (error: unknown) {
+				const err = error as { code?: number; status?: number }
+				const code = err.code ?? err.status
 				if (code !== undefined) {
 					logger.error(
 						`container process failed with exit code: ${code} (attempt ${attempt + 1}/${maxRetries + 1})`,
@@ -155,6 +156,6 @@ export const processTaskInContainer = async ({
 
 		logger.error(`all ${maxRetries + 1} attempts failed, giving up`)
 	} finally {
-		try { fs.unlinkSync(envFilePath) } catch {}
+		try { fs.unlinkSync(envFilePath) } catch { /* cleanup in finally, ignore errors */ }
 	}
 }
