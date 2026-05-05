@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config"
+import { defineConfig, defaultExclude } from "vitest/config"
 import path from "path"
 import { resolveVerbosity } from "./utils/vitest-verbosity"
 
@@ -8,6 +8,7 @@ export default defineConfig({
 	test: {
 		globals: true,
 		setupFiles: [path.resolve(__dirname, "./vitest.setup.ts")],
+		exclude: [...defaultExclude, "webview-ui/**"],
 		watch: false,
 		reporters,
 		silent,
