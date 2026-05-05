@@ -446,7 +446,7 @@ describe("ClineProvider Task History Synchronization", () => {
 			expect(initialRecent).toContain("cache-seed")
 
 			// Prime cache and verify internal cache is set.
-			expect((provider as unknown as { recentTasksCache?: string[] }).recentTasksCache).toEqual(initialRecent)
+			expect((provider.taskHistory as unknown as { _recentTasksCache?: string[] })._recentTasksCache).toEqual(initialRecent)
 
 			await provider.updateTaskHistory(
 				createHistoryItem({
@@ -459,7 +459,7 @@ describe("ClineProvider Task History Synchronization", () => {
 			)
 
 			// Direct assertion for invalidation side-effect.
-			expect((provider as unknown as { recentTasksCache?: string[] }).recentTasksCache).toBeUndefined()
+			expect((provider.taskHistory as unknown as { _recentTasksCache?: string[] })._recentTasksCache).toBeUndefined()
 
 			const recomputedRecent = provider.getRecentTasks()
 			expect(recomputedRecent).toContain("cache-new")

@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { API } from "../extension/api"
 import * as ProfileValidatorMod from "../shared/ProfileValidator"
+import type { TaskStackManager } from "../core/webview/TaskStackManager"
 
 // Mock Task class used by ClineProvider to avoid heavy startup
 vi.mock("../core/task/Task", () => {
@@ -36,12 +37,22 @@ describe("Single-open-task invariant", () => {
 		// Allow profile
 		vi.spyOn(ProfileValidatorMod.ProfileValidator, "isProfileAllowed").mockReturnValue(true)
 
-		const removeClineFromStack = vi.fn().mockResolvedValue(undefined)
-		const addClineToStack = vi.fn().mockResolvedValue(undefined)
+		const stackPop = vi.fn().mockResolvedValue(undefined)
+		const stackPush = vi.fn().mockResolvedValue(undefined)
 
 		const provider = {
 			// Simulate an existing task present in stack
-			clineStack: [{ taskId: "existing-1" }],
+			stack: {
+				pop: stackPop,
+				push: stackPush,
+				current: { taskId: "existing-1" },
+				size: 1,
+				root: { taskId: "existing-1" },
+				taskIds: ["existing-1"],
+				getStack: vi.fn().mockReturnValue([{ taskId: "existing-1" }]),
+				bindEventForwarders: vi.fn(),
+				rehydrate: vi.fn().mockResolvedValue(undefined),
+			} as unknown as TaskStackManager,
 			setValues: vi.fn(),
 			getState: vi.fn().mockResolvedValue({
 				apiConfiguration: { apiProvider: "anthropic", consecutiveMistakeLimit: 0 },
@@ -50,8 +61,6 @@ describe("Single-open-task invariant", () => {
 				checkpointTimeout: 60,
 				cloudUserInfo: null,
 			}),
-			removeClineFromStack,
-			addClineToStack,
 			setProviderProfile: vi.fn(),
 			log: vi.fn(),
 			getStateToPostToWebview: vi.fn(),
@@ -69,19 +78,28 @@ describe("Single-open-task invariant", () => {
 
 		await (ClineProvider.prototype as any).createTask.call(provider, "New task")
 
-		expect(removeClineFromStack).toHaveBeenCalledTimes(1)
-		expect(addClineToStack).toHaveBeenCalledTimes(1)
+		expect(stackPop).toHaveBeenCalledTimes(1)
+		expect(stackPush).toHaveBeenCalledTimes(1)
 	})
 
 	it("History resume path always closes current before rehydration (non-rehydrating case)", async () => {
-		const removeClineFromStack = vi.fn().mockResolvedValue(undefined)
-		const addClineToStack = vi.fn().mockResolvedValue(undefined)
+		const stackPop = vi.fn().mockResolvedValue(undefined)
+		const stackPush = vi.fn().mockResolvedValue(undefined)
 		const updateGlobalState = vi.fn().mockResolvedValue(undefined)
 
 		const provider = {
 			getCurrentTask: vi.fn(() => undefined), // ensure not rehydrating
-			removeClineFromStack,
-			addClineToStack,
+			stack: {
+				pop: stackPop,
+				push: stackPush,
+				current: undefined,
+				size: 0,
+				root: undefined,
+				taskIds: [],
+				getStack: vi.fn().mockReturnValue([]),
+				bindEventForwarders: vi.fn(),
+				rehydrate: vi.fn().mockResolvedValue(undefined),
+			} as unknown as TaskStackManager,
 			updateGlobalState,
 			log: vi.fn(),
 			customModesManager: { getCustomModes: vi.fn().mockResolvedValue([]) },
@@ -109,6 +127,15 @@ describe("Single-open-task invariant", () => {
 				getProviderSettings: vi.fn(() => ({})),
 			},
 			postStateToWebview: vi.fn(),
+			restoreHistoryModeAndProfile: vi.fn().mockResolvedValue(undefined),
+			createTaskInstanceFromHistory: vi.fn().mockResolvedValue({
+				taskId: "hist-1",
+				start: vi.fn(),
+				on: vi.fn(),
+				off: vi.fn(),
+				emit: vi.fn(),
+			}),
+			applyPendingEditIfPresent: vi.fn().mockResolvedValue(undefined),
 		} as unknown as ClineProvider
 
 		const historyItem = {
@@ -124,8 +151,8 @@ describe("Single-open-task invariant", () => {
 
 		const task = await (ClineProvider.prototype as any).createTaskWithHistoryItem.call(provider, historyItem)
 		expect(task).toBeTruthy()
-		expect(removeClineFromStack).toHaveBeenCalledTimes(1)
-		expect(addClineToStack).toHaveBeenCalledTimes(1)
+		expect(stackPop).toHaveBeenCalledTimes(1)
+		expect(stackPush).toHaveBeenCalledTimes(1)
 	})
 
 	it("IPC StartNewTask path closes current before new task", async () => {

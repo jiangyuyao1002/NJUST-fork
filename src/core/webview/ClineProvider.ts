@@ -103,6 +103,8 @@ import { WebviewMessageRouter } from "./WebviewMessageRouter"
 import { PendingEditManager } from "./PendingEditManager"
 import { WebviewContentProvider } from "./WebviewContentProvider"
 import { mergeAllowedCommands, mergeDeniedCommands } from "./commandListUtils"
+import { TaskStackManager } from "./TaskStackManager"
+import { TaskHistoryService } from "./TaskHistoryService"
 import type { ClineMessage, TodoItem } from "@njust-ai-cj/types"
 import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore } from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
@@ -139,14 +141,13 @@ export class ClineProvider
 	private webviewDisposables: vscode.Disposable[] = []
 	private readonly messageRouter: WebviewMessageRouter
 	private view?: vscode.WebviewView | vscode.WebviewPanel
-	private clineStack: Task[] = []
+	public readonly stack: TaskStackManager
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private codeIndexManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
 	protected mcpHub?: IMcpHubService // Change from private to protected
 	protected skillsManager?: SkillsManager
 	private taskCreationCallback: (task: Task) => void
-	private taskEventListeners: WeakMap<Task, Array<() => void>> = new WeakMap()
 	private currentWorkspacePath: string | undefined
 	private _disposed = false
 
@@ -184,6 +185,19 @@ export class ClineProvider
 			getValues: () => this.contextProxy.getValues(),
 		})
 
+		// Initialize TaskStackManager first - needed by TaskHistoryService
+		const provider = this
+		this.stack = new TaskStackManager({
+			outputChannel: this.outputChannel,
+			emit: (event, ...args) => provider.emit(event as any, ...args) as boolean,
+			getState: () => provider.getState(),
+			getTaskWithId: (id) => provider.getTaskWithId(id),
+			updateTaskHistory: (item, options) => provider.updateTaskHistory(item, options),
+			createTaskWithHistoryItem: (historyItem, options) =>
+				provider.createTaskWithHistoryItem(historyItem, options),
+			performPreparationTasks: (task) => provider.performPreparationTasks(task),
+		})
+
 		ClineProvider.activeInstances.add(this)
 
 		this.updateGlobalState("codebaseIndexModels", EMBEDDING_MODEL_PROFILES)
@@ -196,18 +210,16 @@ export class ClineProvider
 				this.taskHistory.scheduleGlobalStateWriteThrough()
 			},
 		})
-		const provider = this
 		this.taskHistory = new TaskHistoryService({
 			context: this.context,
-			contextProxy: this.contextProxy,
+			contextProxy: this.contextProxy as any,
 			taskHistoryStore: this.taskHistoryStore,
 			outputChannel: this.outputChannel,
 			get cwd() { return provider.cwd },
 			get isViewLaunched() { return provider.isViewLaunched },
-			clineStack: this.clineStack,
-			postMessageToWebview: (msg) => provider.postMessageToWebview(msg),
-			removeClineFromStack: () => provider.removeClineFromStack(),
-		} as any)
+			stack: this.stack,
+			postMessageToWebview: (msg: ExtensionMessage) => provider.postMessageToWebview(msg),
+		})
 		this.taskHistory.initialize().catch((error) => {
 			this.log(`Failed to initialize TaskHistoryStore: ${error}`)
 		})
@@ -248,83 +260,8 @@ export class ClineProvider
 		// We do something fairly similar for the IPC-based API.
 		this.taskCreationCallback = (instance: Task) => {
 			this.emit(NJUST_AI_CJEventName.TaskCreated, instance)
-			this.bindTaskEventForwarders(instance)
+			this.stack.bindEventForwarders(instance)
 		}
-	}
-
-	/**
-	 * Initialize the TaskHistoryStore and migrate from globalState if needed.
-	 */
-	private bindTaskEventForwarders(instance: Task): void {
-		const onTaskStarted = () => this.emit(NJUST_AI_CJEventName.TaskStarted, instance.taskId)
-		const onTaskCompleted = (taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage) =>
-			this.emit(NJUST_AI_CJEventName.TaskCompleted, taskId, tokenUsage, toolUsage, { isSubtask: false })
-		const onTaskAborted = async () => {
-			this.emit(NJUST_AI_CJEventName.TaskAborted, instance.taskId)
-			try {
-				if (instance.abortReason === "streaming_failed") {
-					const current = this.getCurrentTask()
-					if (current && current.instanceId !== instance.instanceId) {
-						this.log(
-							`[onTaskAborted] Skipping rehydrate: current instance ${current.instanceId} != aborted ${instance.instanceId}`,
-						)
-						return
-						}
-					const { historyItem } = await this.getTaskWithId(instance.taskId)
-					await this.createTaskWithHistoryItem({ ...historyItem, rootTask: instance.rootTask, parentTask: instance.parentTask })
-				}
-			} catch (error) {
-				this.log(
-					`[onTaskAborted] Failed to rehydrate after streaming failure: ${
-						error instanceof Error ? error.message : String(error)
-					}`,
-				)
-			}
-		}
-		const onTaskFocused = () => this.emit(NJUST_AI_CJEventName.TaskFocused, instance.taskId)
-		const onTaskUnfocused = () => this.emit(NJUST_AI_CJEventName.TaskUnfocused, instance.taskId)
-		const onTaskActive = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskActive, taskId)
-		const onTaskInteractive = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskInteractive, taskId)
-		const onTaskResumable = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskResumable, taskId)
-		const onTaskIdle = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskIdle, taskId)
-		const onTaskPaused = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskPaused, taskId)
-		const onTaskUnpaused = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskUnpaused, taskId)
-		const onTaskSpawned = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskSpawned, taskId)
-		const onTaskUserMessage = (taskId: string) => this.emit(NJUST_AI_CJEventName.TaskUserMessage, taskId)
-		const onTaskTokenUsageUpdated = (taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage) =>
-			this.emit(NJUST_AI_CJEventName.TaskTokenUsageUpdated, taskId, tokenUsage, toolUsage)
-
-		instance.on(NJUST_AI_CJEventName.TaskStarted, onTaskStarted)
-		instance.on(NJUST_AI_CJEventName.TaskCompleted, onTaskCompleted)
-		instance.on(NJUST_AI_CJEventName.TaskAborted, onTaskAborted)
-		instance.on(NJUST_AI_CJEventName.TaskFocused, onTaskFocused)
-		instance.on(NJUST_AI_CJEventName.TaskUnfocused, onTaskUnfocused)
-		instance.on(NJUST_AI_CJEventName.TaskActive, onTaskActive)
-		instance.on(NJUST_AI_CJEventName.TaskInteractive, onTaskInteractive)
-		instance.on(NJUST_AI_CJEventName.TaskResumable, onTaskResumable)
-		instance.on(NJUST_AI_CJEventName.TaskIdle, onTaskIdle)
-		instance.on(NJUST_AI_CJEventName.TaskPaused, onTaskPaused)
-		instance.on(NJUST_AI_CJEventName.TaskUnpaused, onTaskUnpaused)
-		instance.on(NJUST_AI_CJEventName.TaskSpawned, onTaskSpawned)
-		instance.on(NJUST_AI_CJEventName.TaskUserMessage, onTaskUserMessage)
-		instance.on(NJUST_AI_CJEventName.TaskTokenUsageUpdated, onTaskTokenUsageUpdated)
-
-		this.taskEventListeners.set(instance, [
-			() => instance.off(NJUST_AI_CJEventName.TaskStarted, onTaskStarted),
-			() => instance.off(NJUST_AI_CJEventName.TaskCompleted, onTaskCompleted),
-			() => instance.off(NJUST_AI_CJEventName.TaskAborted, onTaskAborted),
-			() => instance.off(NJUST_AI_CJEventName.TaskFocused, onTaskFocused),
-			() => instance.off(NJUST_AI_CJEventName.TaskUnfocused, onTaskUnfocused),
-			() => instance.off(NJUST_AI_CJEventName.TaskActive, onTaskActive),
-			() => instance.off(NJUST_AI_CJEventName.TaskInteractive, onTaskInteractive),
-			() => instance.off(NJUST_AI_CJEventName.TaskResumable, onTaskResumable),
-			() => instance.off(NJUST_AI_CJEventName.TaskIdle, onTaskIdle),
-			() => instance.off(NJUST_AI_CJEventName.TaskUserMessage, onTaskUserMessage),
-			() => instance.off(NJUST_AI_CJEventName.TaskPaused, onTaskPaused),
-			() => instance.off(NJUST_AI_CJEventName.TaskUnpaused, onTaskUnpaused),
-			() => instance.off(NJUST_AI_CJEventName.TaskSpawned, onTaskSpawned),
-			() => instance.off(NJUST_AI_CJEventName.TaskTokenUsageUpdated, onTaskTokenUsageUpdated),
-		])
 	}
 
 	/**
@@ -349,26 +286,6 @@ export class ClineProvider
 
 	public async initializeCloudProfileSyncWhenReady(): Promise<void> {}
 
-	// Adds a new Task instance to clineStack, marking the start of a new task.
-	// The instance is pushed to the top of the stack (LIFO order).
-	// When the task is completed, the top instance is removed, reactivating the
-	// previous task.
-	async addClineToStack(task: Task) {
-		// Add this cline instance into the stack that represents the order of
-		// all the called tasks.
-		this.clineStack.push(task)
-		task.emit(NJUST_AI_CJEventName.TaskFocused)
-
-		// Perform special setup provider specific tasks.
-		await this.performPreparationTasks(task)
-
-		// Ensure getState() resolves correctly.
-		const state = await this.getState()
-
-		if (!state || typeof state.mode !== "string") {
-			throw new Error(t("common:errors.retrieve_current_mode"))
-		}
-	}
 
 	async performPreparationTasks(cline: Task) {
 		// LMStudio: We need to force model loading in order to read its context
@@ -389,87 +306,6 @@ export class ClineProvider
 		}
 	}
 
-	// Removes and destroys the top Cline instance (the current finished task),
-	// activating the previous one (resuming the parent task).
-	async removeClineFromStack(options?: { skipDelegationRepair?: boolean }) {
-		if (this.clineStack.length === 0) {
-			return
-		}
-
-		// Pop the top Cline instance from the stack.
-		let task = this.clineStack.pop()
-
-		if (task) {
-			// Capture delegation metadata before abort/dispose, since abortTask(true)
-			// is async and the task reference is cleared afterwards.
-			const childTaskId = task.taskId
-			const parentTaskId = task.parentTaskId
-
-			task.emit(NJUST_AI_CJEventName.TaskUnfocused)
-
-			try {
-				// Abort the running task and set isAbandoned to true so
-				// all running promises will exit as well.
-				await task.abortTask(true)
-			} catch (e) {
-				const msg = e instanceof Error ? e.message : String(e)
-				this.log(
-					`[ClineProvider#removeClineFromStack] abortTask() failed ${task.taskId}.${task.instanceId}: ${msg}`,
-				)
-			}
-
-			// Remove event listeners before clearing the reference.
-			const cleanupFunctions = this.taskEventListeners.get(task)
-
-			if (cleanupFunctions) {
-				cleanupFunctions.forEach((cleanup) => cleanup())
-				this.taskEventListeners.delete(task)
-			}
-
-			// Make sure no reference kept, once promises end it will be
-			// garbage collected.
-			task = undefined
-
-			// Delegation-aware parent metadata repair:
-			// If the popped task was a delegated child, repair the parent's metadata
-			// so it transitions from "delegated" back to "active" and becomes resumable
-			// from the task history list.
-			// Skip when called from delegateParentAndOpenChild() during nested delegation
-			// transitions (A→B→C), where the caller intentionally replaces the active
-			// child and will update the parent to point at the new child.
-			if (parentTaskId && childTaskId && !options?.skipDelegationRepair) {
-				try {
-					const { historyItem: parentHistory } = await this.getTaskWithId(parentTaskId)
-
-					if (parentHistory.status === "delegated" && parentHistory.awaitingChildId === childTaskId) {
-						await this.updateTaskHistory({
-							...parentHistory,
-							status: "active",
-							awaitingChildId: undefined,
-						})
-						this.log(
-							`[ClineProvider#removeClineFromStack] Repaired parent ${parentTaskId} metadata: delegated → active (child ${childTaskId} removed)`,
-						)
-					}
-				} catch (err) {
-					// Non-fatal: log but do not block the pop operation.
-					this.log(
-						`[ClineProvider#removeClineFromStack] Failed to repair parent metadata for ${parentTaskId} (non-fatal): ${
-							err instanceof Error ? err.message : String(err)
-						}`,
-					)
-				}
-			}
-		}
-	}
-
-	getTaskStackSize(): number {
-		return this.clineStack.length
-	}
-
-	public getCurrentTaskStack(): string[] {
-		return this.clineStack.map((cline) => cline.taskId)
-	}
 
 	// Pending Edit Operations Management
 
@@ -512,8 +348,8 @@ export class ClineProvider
 		this.log("Disposing ClineProvider...")
 
 		// Clear all tasks from the stack.
-		while (this.clineStack.length > 0) {
-			await this.removeClineFromStack()
+		while (this.stack.size > 0) {
+			await this.stack.pop()
 		}
 
 		this.log("Cleared all tasks")
@@ -679,7 +515,7 @@ export class ClineProvider
 		// But don't clear if there's already an active task (e.g., resumed via IPC/bridge).
 		const currentTask = this.getCurrentTask()
 		if (!currentTask || currentTask.abandoned || currentTask.abort) {
-			await this.removeClineFromStack()
+			await this.stack.pop()
 		}
 	}
 
@@ -791,7 +627,7 @@ export class ClineProvider
 		const isRehydratingCurrentTask = this.getCurrentTask()?.taskId === historyItem.id
 
 		if (!isRehydratingCurrentTask) {
-			await this.removeClineFromStack()
+			await this.stack.pop()
 		}
 
 		await this.restoreHistoryModeAndProfile(historyItem, skipProfileRestoreFromHistory)
@@ -799,9 +635,9 @@ export class ClineProvider
 		const task = await this.createTaskInstanceFromHistory(historyItem, options)
 
 		if (isRehydratingCurrentTask) {
-			await this.rehydrateCurrentTaskInPlace(task)
+			await this.stack.rehydrate(task)
 		} else {
-			await this.addClineToStack(task)
+			await this.stack.push(task)
 			this.log(
 				`[createTaskWithHistoryItem] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
 			)
@@ -909,27 +745,6 @@ export class ClineProvider
 		})
 	}
 
-	private async rehydrateCurrentTaskInPlace(task: Task): Promise<void> {
-		const stackIndex = this.clineStack.length - 1
-		const oldTask = this.clineStack[stackIndex]
-		try {
-			await oldTask.abortTask(true)
-		} catch (e) {
-			const msg = e instanceof Error ? e.message : String(e)
-			this.log(
-				`[createTaskWithHistoryItem] abortTask() failed for old task ${oldTask.taskId}.${oldTask.instanceId}: ${msg}`,
-			)
-		}
-		const cleanupFunctions = this.taskEventListeners.get(oldTask)
-		if (cleanupFunctions) {
-			cleanupFunctions.forEach((cleanup) => cleanup())
-			this.taskEventListeners.delete(oldTask)
-		}
-		this.clineStack[stackIndex] = task
-		task.emit(NJUST_AI_CJEventName.TaskFocused)
-		await this.performPreparationTasks(task)
-		this.log(`[createTaskWithHistoryItem] rehydrated task ${task.taskId}.${task.instanceId} in-place (flicker-free)`)
-	}
 
 	private async applyPendingEditIfPresent(task: Task): Promise<void> {
 		const operationId = `task-${task.taskId}`
@@ -1372,8 +1187,10 @@ export class ClineProvider
 		return this.taskHistory.getTaskWithAggregatedCosts(taskId)
 	}
 
-	async showTaskWithId(id: string) {
-		await this.taskHistory.showTaskWithId(id, (item) => this.createTaskWithHistoryItem(item))
+	async showTaskWithId(id: string): Promise<void> {
+		await this.taskHistory.showTaskWithId(id, async (item) => {
+			await this.createTaskWithHistoryItem(item)
+		})
 	}
 
 	async exportTaskWithId(id: string) {
@@ -1797,7 +1614,7 @@ export class ClineProvider
 		await this.contextProxy.resetAllState()
 		await this.providerSettingsManager.resetAllConfigs()
 		await this.customModesManager.resetCustomModes()
-		await this.removeClineFromStack()
+		await this.stack.pop()
 		await this.postMessageToWebview({ type: "action", action: "resetLogin" })
 		await this.postStateToWebview()
 		await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
@@ -1900,11 +1717,19 @@ export class ClineProvider
 	 */
 
 	public getCurrentTask(): Task | undefined {
-		if (this.clineStack.length === 0) {
-			return undefined
-		}
+		return this.stack.current
+	}
 
-		return this.clineStack[this.clineStack.length - 1]
+	getTaskStackSize(): number {
+		return this.stack.size
+	}
+
+	public getCurrentTaskStack(): string[] {
+		return this.stack.taskIds
+	}
+
+	async removeClineFromStack(options?: { skipDelegationRepair?: boolean }): Promise<void> {
+		await this.stack.pop(options)
 	}
 
 	public getRecentTasks(): string[] {
@@ -1970,7 +1795,7 @@ export class ClineProvider
 		// Single-open-task invariant: always enforce for user-initiated top-level tasks
 		if (!parentTask) {
 			try {
-				await this.removeClineFromStack()
+				await this.stack.pop()
 			} catch {
 				// Non-fatal
 			}
@@ -1989,18 +1814,18 @@ export class ClineProvider
 			task: text,
 			images,
 			experiments,
-			rootTask: this.clineStack.length > 0 ? this.clineStack[0] : undefined,
+			rootTask: this.stack.root,
 			parentTask,
-			taskNumber: this.clineStack.length + 1,
+			taskNumber: this.stack.size + 1,
 			onCreated: this.taskCreationCallback,
 			initialTodos: options.initialTodos,
-			// Ensure this task is present in clineStack before startTask() emits
+			// Ensure this task is present in stack before startTask() emits
 			// its initial state update, so state.currentTaskId is available ASAP.
 			startTask: false,
 			...options,
 		})
 
-		await this.addClineToStack(task)
+		await this.stack.push(task)
 		task.start()
 
 		this.log(
@@ -2101,10 +1926,10 @@ export class ClineProvider
 	// Clear the current task without treating it as a subtask.
 	// This is used when the user cancels a task that is not a subtask.
 	public async clearTask(): Promise<void> {
-		if (this.clineStack.length > 0) {
-			const task = this.clineStack[this.clineStack.length - 1]
-			console.log(`[clearTask] clearing task ${task.taskId}.${task.instanceId}`)
-			await this.removeClineFromStack()
+		if (this.stack.size > 0) {
+			const task = this.stack.current
+			console.log(`[clearTask] clearing task ${task?.taskId}.${task?.instanceId}`)
+			await this.stack.pop()
 		}
 	}
 
@@ -2305,7 +2130,7 @@ export class ClineProvider
 		//    This ensures we never have >1 tasks open at any time during delegation.
 		//    Await abort completion to ensure clean disposal and prevent unhandled rejections.
 		try {
-			await this.removeClineFromStack({ skipDelegationRepair: true })
+			await this.stack.pop({ skipDelegationRepair: true })
 		} catch (error) {
 			this.log(
 				`[delegateParentAndOpenChild] Error during parent disposal (non-fatal): ${
@@ -2543,7 +2368,7 @@ export class ClineProvider
 		//    overwrite a "completed" status set earlier.
 		const current = this.getCurrentTask()
 		if (current?.taskId === childTaskId) {
-			await this.removeClineFromStack()
+			await this.stack.pop()
 		}
 
 		// 4) Update child metadata to "completed" status.

@@ -1,11 +1,10 @@
 /**
  * Task stack helpers (in-memory LIFO) for tests and future refactors.
  *
- * Runtime open tasks live in `ClineProvider`’s `clineStack`; mutate only via
- * `addClineToStack` / `removeClineFromStack` / `rehydrateCurrentTaskInPlace` (see
- * `docs/task-planning-readthrough.md` stack audit section).
+ * Runtime open tasks live in `ClineProvider.stack` (TaskStackManager); mutate only via
+ * `stack.push` / `stack.pop` / `stack.rehydrate` (see `docs/task-planning-readthrough.md` stack audit section).
  *
- * Not the same as `core/webview/TaskCenter.ts` (extracted stack module draft, not wired to `clineStack` yet).
+ * Not the same as `core/webview/TaskCenter.ts` (extracted stack module draft, not wired to `TaskStackManager` yet).
  */
 
 import type { TaskLike } from "@njust-ai-cj/types"

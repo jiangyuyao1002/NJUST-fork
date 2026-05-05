@@ -13,6 +13,7 @@ import type { HistoryItem, ExtensionMessage } from "@njust-ai-cj/types"
 
 import type { Task } from "../task/Task"
 import type { TaskHistoryStore } from "../task-persistence"
+import type { TaskStackManager } from "./TaskStackManager"
 import { fileExistsAtPath } from "../../utils/fs"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { downloadTask, getTaskFileName } from "../../integrations/misc/export-markdown"
@@ -32,9 +33,8 @@ export interface TaskHistoryHost {
 	readonly outputChannel: vscode.OutputChannel
 	readonly cwd: string
 	isViewLaunched: boolean
-	clineStack: Task[]
+	readonly stack: TaskStackManager
 	postMessageToWebview(message: ExtensionMessage): Promise<void>
-	removeClineFromStack(): Promise<void>
 }
 
 export class TaskHistoryService {
@@ -159,7 +159,7 @@ export class TaskHistoryService {
 	}
 
 	async showTaskWithId(id: string, createTaskWithHistoryItem: (item: HistoryItem) => Promise<void>): Promise<void> {
-		const currentTask = this.host.clineStack.length > 0 ? this.host.clineStack[this.host.clineStack.length - 1] : undefined
+		const currentTask = this.host.stack.current
 		if (id !== currentTask?.taskId) {
 			const { historyItem } = await this.getTaskWithId(id)
 			await createTaskWithHistoryItem(historyItem)
@@ -184,9 +184,10 @@ export class TaskHistoryService {
 
 	async condenseTaskContext(taskId: string): Promise<void> {
 		let task: Task | undefined
-		for (let i = this.host.clineStack.length - 1; i >= 0; i--) {
-			if (this.host.clineStack[i].taskId === taskId) {
-				task = this.host.clineStack[i]
+		const stack = this.host.stack.getStack()
+		for (let i = stack.length - 1; i >= 0; i--) {
+			if (stack[i].taskId === taskId) {
+				task = stack[i]
 				break
 			}
 		}
@@ -224,9 +225,9 @@ export class TaskHistoryService {
 			}
 
 			for (const taskId of allIdsToDelete) {
-				const currentTask = this.host.clineStack.length > 0 ? this.host.clineStack[this.host.clineStack.length - 1] : undefined
+				const currentTask = this.host.stack.current
 				if (taskId === currentTask?.taskId) {
-					await this.host.removeClineFromStack()
+					await this.host.stack.pop()
 					break
 				}
 			}
@@ -360,7 +361,7 @@ export class TaskHistoryService {
 			this._globalStateWriteThroughTimer = null
 			try {
 				const items = this.host.taskHistoryStore.getAll()
-				await this.host.context.globalState.update("taskHistory", items)
+				await this.host.contextProxy.setValue("taskHistory", items)
 			} catch (err) {
 				this.log(
 					`[scheduleGlobalStateWriteThrough] Failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -376,7 +377,7 @@ export class TaskHistoryService {
 		}
 
 		const items = this.host.taskHistoryStore.getAll()
-		this.host.context.globalState.update("taskHistory", items).catch((err) => {
+		this.host.contextProxy.setValue("taskHistory", items).catch((err: unknown) => {
 			this.log(`[flushGlobalStateWriteThrough] Failed: ${err instanceof Error ? err.message : String(err)}`)
 		})
 	}

@@ -3,6 +3,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
 import { ClineProvider } from "../core/webview/ClineProvider"
+import type { TaskStackManager } from "../core/webview/TaskStackManager"
 
 /** Minimal parent task surface used by delegateParentAndOpenChild (flush + lineage). */
 function createDelegationParentStub(overrides: { taskId?: string } = {}) {
@@ -22,7 +23,7 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 
 		const childStart = vi.fn()
 		const updateTaskHistory = vi.fn()
-		const removeClineFromStack = vi.fn().mockResolvedValue(undefined)
+		const stackPop = vi.fn().mockResolvedValue(undefined)
 		const createTask = vi.fn().mockResolvedValue({ taskId: "child-1", start: childStart })
 		const handleModeSwitch = vi.fn().mockResolvedValue(undefined)
 		const getTaskWithId = vi.fn().mockImplementation(async (id: string) => {
@@ -53,7 +54,9 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 		const provider = {
 			emit: providerEmit,
 			getCurrentTask: vi.fn(() => parentTask),
-			removeClineFromStack,
+			stack: {
+				pop: stackPop,
+			} as unknown as TaskStackManager,
 			createTask,
 			getTaskWithId,
 			updateTaskHistory,
@@ -76,7 +79,8 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 		expect(child.taskId).toBe("child-1")
 
 		// Invariant: parent closed before child creation
-		expect(removeClineFromStack).toHaveBeenCalledTimes(1)
+		expect(stackPop).toHaveBeenCalledTimes(1)
+		expect(stackPop).toHaveBeenCalledWith({ skipDelegationRepair: true })
 		// Child task is created with startTask: false and initialStatus: "active"
 		expect(createTask).toHaveBeenCalledWith("Do something", undefined, parentTask, {
 			initialTodos: [],
@@ -118,7 +122,7 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 		const updateTaskHistory = vi.fn(async () => {
 			callOrder.push("updateTaskHistory")
 		})
-		const removeClineFromStack = vi.fn().mockResolvedValue(undefined)
+		const stackPop = vi.fn().mockResolvedValue(undefined)
 		const createTask = vi.fn(async () => {
 			callOrder.push("createTask")
 			return { taskId: "child-1", start: childStart }
@@ -138,7 +142,9 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 		const provider = {
 			emit: vi.fn(),
 			getCurrentTask: vi.fn(() => parentTask),
-			removeClineFromStack,
+			stack: {
+				pop: stackPop,
+			} as unknown as TaskStackManager,
 			createTask,
 			getTaskWithId,
 			updateTaskHistory,

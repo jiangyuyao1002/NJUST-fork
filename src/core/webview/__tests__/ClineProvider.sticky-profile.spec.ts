@@ -311,7 +311,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 			}
 
 			// Add task to provider stack
-			await provider.addClineToStack(mockTask as any)
+			await provider.stack.push(mockTask as any)
 
 			// Populate the store so persistStickyProviderProfileToCurrentTask finds the task
 			await provider.taskHistoryStore.upsert({
@@ -372,7 +372,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 			}
 
 			// Add task to provider stack
-			await provider.addClineToStack(mockTask as any)
+			await provider.stack.push(mockTask as any)
 
 			// Mock getGlobalState to return task history
 			vi.spyOn(provider as any, "getGlobalState").mockReturnValue([
@@ -427,7 +427,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 				updateApiConfiguration: vi.fn(),
 			}
 
-			await provider.addClineToStack(mockTask as any)
+			await provider.stack.push(mockTask as any)
 
 			// No history item exists yet
 			vi.spyOn(provider as any, "getGlobalState").mockReturnValue([])
@@ -700,7 +700,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 			})
 
 			// Add task to provider stack
-			await provider.addClineToStack(mockTask as any)
+			await provider.stack.push(mockTask as any)
 
 			// Mock providerSettingsManager.activateProfile
 			vi.spyOn(provider.providerSettingsManager, "activateProfile").mockResolvedValue({
@@ -759,7 +759,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 			}
 
 			// Add task 1 to stack
-			await provider.addClineToStack(task1 as any)
+			await provider.stack.push(task1 as any)
 
 			// Mock getGlobalState to return task history for both tasks
 			const taskHistory = [
@@ -846,7 +846,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 			}
 
 			// Add task to provider stack
-			await provider.addClineToStack(mockTask as any)
+			await provider.stack.push(mockTask as any)
 
 			// Populate the store
 			await provider.taskHistoryStore.upsert({

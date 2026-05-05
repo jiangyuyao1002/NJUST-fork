@@ -259,7 +259,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				}),
 			} as any
 
-			await provider.addClineToStack(mockTask)
+			await provider.stack.push(mockTask as any)
 
 			// Save settings with SAME provider and model (simulating Save button click)
 			await provider.upsertProviderProfile(
@@ -304,7 +304,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				}),
 			} as any
 
-			await provider.addClineToStack(mockTask)
+			await provider.stack.push(mockTask as any)
 
 			// Change provider to anthropic
 			await provider.upsertProviderProfile(
@@ -340,7 +340,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				}),
 			} as any
 
-			await provider.addClineToStack(mockTask)
+			await provider.stack.push(mockTask as any)
 
 			// Change model to different model
 			await provider.upsertProviderProfile(
@@ -396,7 +396,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				}),
 			} as any
 
-			await provider.addClineToStack(mockTask)
+			await provider.stack.push(mockTask as any)
 
 			// Mock activateProfile to return same provider/model but different non-model setting
 			;(provider as any).providerSettingsManager.activateProfile = vi.fn().mockResolvedValue({
@@ -438,7 +438,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				}),
 			} as any
 
-			await provider.addClineToStack(mockTask)
+			await provider.stack.push(mockTask as any)
 
 			// Mock activateProfile to return different provider
 			;(provider as any).providerSettingsManager.activateProfile = vi.fn().mockResolvedValue({
@@ -477,7 +477,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				}),
 			} as any
 
-			await provider.addClineToStack(mockTask)
+			await provider.stack.push(mockTask as any)
 
 			// Mock activateProfile to return different model
 			;(provider as any).providerSettingsManager.activateProfile = vi.fn().mockResolvedValue({
@@ -518,7 +518,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				}),
 			} as any
 
-			await provider.addClineToStack(mockTask)
+			await provider.stack.push(mockTask as any)
 
 			// First switch: A -> B (openrouter -> anthropic)
 			;(provider as any).providerSettingsManager.activateProfile = vi.fn().mockResolvedValue({
