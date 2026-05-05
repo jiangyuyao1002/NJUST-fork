@@ -105,7 +105,13 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "mcp__claude-vision__extract_text",
-      "Bash(gh repo *)"
+      "Bash(gh repo *)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm test *)",
+      "Bash(netstat -ano)",
+      "Bash(curl *)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }

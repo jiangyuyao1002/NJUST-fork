@@ -66,3 +66,4 @@ plans/
 roo-cli-*.tar.gz*
 cangjie_lsp_*.txt
 log.txt
+.aider*
