@@ -155,7 +155,7 @@ function extractFilePathsFromPatch(patchContent: string): string[] {
 		for (const marker of UNIFIED_DIFF_MARKERS) {
 			if (line.startsWith(marker)) {
 				// Extract path, handling optional tab-separated timestamp (e.g., "--- a/file.txt\t2024-01-01")
-				let rawPath = line.substring(marker.length).split("\t")[0].trim()
+				const rawPath = line.substring(marker.length).split("\t")[0].trim()
 				// Skip /dev/null entries (used for new/deleted files in unified diff)
 				if (rawPath && rawPath !== "/dev/null") {
 					filePaths.push(rawPath)

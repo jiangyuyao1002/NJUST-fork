@@ -257,7 +257,7 @@ export class TaskResultAggregator {
 	 * If total tokens exceed the budget, proportionally truncate each section.
 	 */
 	private applyTokenBudget(sections: AggregatedSection[]): void {
-		let totalTokens = sections.reduce((sum, s) => sum + s.tokenCount, 0)
+		const totalTokens = sections.reduce((sum, s) => sum + s.tokenCount, 0)
 		if (totalTokens <= MAX_AGGREGATED_TOKENS) return
 
 		// Proportionally truncate each section

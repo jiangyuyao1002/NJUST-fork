@@ -228,7 +228,7 @@ export class TaskLifecycleHandler {
 				responseImages = images
 			}
 
-			let existingApiConversationHistory: ApiMessage[] = await t.getSavedApiConversationHistory()
+			const existingApiConversationHistory: ApiMessage[] = await t.getSavedApiConversationHistory()
 
 			let modifiedOldUserContent: Anthropic.Messages.ContentBlockParam[]
 			let modifiedApiConversationHistory: ApiMessage[]
@@ -310,7 +310,7 @@ export class TaskLifecycleHandler {
 				throw new Error("Unexpected: No existing API conversation history")
 			}
 
-			let newUserContent: Anthropic.Messages.ContentBlockParam[] = [...modifiedOldUserContent]
+			const newUserContent: Anthropic.Messages.ContentBlockParam[] = [...modifiedOldUserContent]
 
 			const agoText = ((): string => {
 				const timestamp = lastClineMessage?.ts ?? Date.now()

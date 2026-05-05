@@ -578,7 +578,7 @@ const STYLE_FEW_SHOT_MAX_PER_MODULE = 1
 let styleFewShotCache: { key: string; value: string | null; time: number } | null = null
 
 type CjpmTomlMetaCacheEntry = { mtimeMs: number; value: { info: CjpmProjectInfo | null; cjpmRawHash: string }; time: number }
-let cjpmTomlMetaCache = new Map<string, CjpmTomlMetaCacheEntry>()
+const cjpmTomlMetaCache = new Map<string, CjpmTomlMetaCacheEntry>()
 
 function topLevelModuleFromRel(rel: string): string {
 	const normalized = rel.replace(/\\/g, "/")
@@ -1000,7 +1000,7 @@ async function parseCjpmToml(cwd: string): Promise<CjpmProjectInfo | null> {
 // ---------------------------------------------------------------------------
 
 const PACKAGE_TREE_CACHE_TTL_MS = 60_000
-let packageTreeCache = new Map<string, { value: PackageNode | null; time: number }>()
+const packageTreeCache = new Map<string, { value: PackageNode | null; time: number }>()
 
 function getPackageTreeCacheKey(cwd: string, srcDir: string, rootPackageName?: string): string {
 	return `${cwd}|${srcDir}|${rootPackageName ?? "default"}`

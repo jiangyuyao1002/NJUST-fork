@@ -30,7 +30,7 @@ export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.
 
 		const content = result[idx].content
 		if (Array.isArray(content)) {
-			let lastTextPart = content.filter((part) => part.type === "text").pop() as CacheableTextPart | undefined
+			const lastTextPart = content.filter((part) => part.type === "text").pop() as CacheableTextPart | undefined
 
 			if (lastTextPart && lastTextPart.text && lastTextPart.text.length > 0) {
 				;(lastTextPart as CacheableTextPart).cache_control = { type: "ephemeral" }

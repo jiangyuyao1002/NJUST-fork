@@ -640,7 +640,7 @@ export function getFixDirectiveForLearning(errorMessage: string): string | null 
  * Prefixes with the matched error category when available.
  */
 export function normalizeErrorPattern(errorSnippet: string): string {
-	let s = errorSnippet
+	const s = errorSnippet
 		// eslint-disable-next-line no-control-regex
 		.replace(/\x1b\[[0-9;]*m/g, "")
 		.replace(/==>\s+\S+:\d+:\d+:\s*/g, "")

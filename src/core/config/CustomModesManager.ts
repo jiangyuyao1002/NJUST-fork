@@ -796,7 +796,7 @@ export class CustomModesManager {
 				? path.join(baseDir, `rules-${slug}`)
 				: path.join(baseDir, NJUST_AI_CONFIG_DIR, `rules-${slug}`)
 
-			let rulesFiles: RuleFile[] = []
+			const rulesFiles: RuleFile[] = []
 			try {
 				const stats = await fs.stat(modeRulesDir)
 				if (stats.isDirectory()) {

@@ -17,14 +17,14 @@ export function inferCangjiePackageFromSrcLayout(documentUri: vscode.Uri): strin
 	const normSrc = srcDir.replace(/\\/g, "/").toLowerCase()
 
 	if (normDir === normTest || normDir.startsWith(normTest + "/")) {
-		let rel = path.relative(testDir, dir)
+		const rel = path.relative(testDir, dir)
 		if (rel.startsWith("..") || path.isAbsolute(rel)) return undefined
 		if (!rel || rel === ".") return "main"
 		return rel.split(path.sep).join(".")
 	}
 
 	if (normDir === normSrc || normDir.startsWith(normSrc + "/")) {
-		let rel = path.relative(srcDir, dir)
+		const rel = path.relative(srcDir, dir)
 		if (rel.startsWith("..") || path.isAbsolute(rel)) return undefined
 		if (!rel || rel === ".") return "main"
 		return rel.split(path.sep).join(".")

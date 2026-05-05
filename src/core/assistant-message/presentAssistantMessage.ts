@@ -116,7 +116,7 @@ export async function presentAssistantMessage(cline: Task) {
 	// with an explicit while-loop. Each iteration processes one content block (or
 	// an eager batch). The loop exits when there is nothing left to process or when
 	// we must wait for more streaming data.
-	// eslint-disable-next-line no-constant-condition
+	 
 	while (true) {
 
 	if (cline.currentStreamingContentIndex >= cline.assistantMessageContent.length) {

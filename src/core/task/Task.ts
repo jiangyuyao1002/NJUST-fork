@@ -1535,7 +1535,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, isProtected })
 		}
 
-		let timeouts: NodeJS.Timeout[] = []
+		const timeouts: NodeJS.Timeout[] = []
 
 		// Automatically approve if the ask according to the user's settings.
 		const provider = this.hostRef.deref()

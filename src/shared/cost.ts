@@ -21,7 +21,7 @@ export function resolveOpenAiUsageForCost(args: {
 	cacheReadTokens: number
 	nonCachedInputTokens: number
 } {
-	let cw = Math.max(0, args.cacheWriteTokens || 0)
+	const cw = Math.max(0, args.cacheWriteTokens || 0)
 	let cr = Math.max(0, args.cacheReadTokens || 0)
 	let total = Math.max(0, args.inputTokensReported || 0)
 

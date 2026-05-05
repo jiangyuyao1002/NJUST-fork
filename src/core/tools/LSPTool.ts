@@ -33,7 +33,7 @@ const ACTION_COMMAND_MAP: Record<LSPAction, string> = {
  */
 async function getVscodeModule(): Promise<typeof import("vscode") | undefined> {
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		 
 		return require("vscode")
 	} catch {
 		return undefined

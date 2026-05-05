@@ -2,7 +2,7 @@ import axios from "axios"
 import * as cheerio from "cheerio"
 import dns from "node:dns/promises"
 import net from "node:net"
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const TurndownService = require("turndown")
 
 import { BaseTool, type ToolCallbacks } from "./BaseTool"

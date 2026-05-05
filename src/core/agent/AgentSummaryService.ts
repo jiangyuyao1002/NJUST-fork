@@ -78,7 +78,7 @@ export class AgentSummaryService {
 	 */
 	private buildSummary(messages: string[]): AgentProgressSummary {
 		let text = ""
-		let toolOps: string[] = []
+		const toolOps: string[] = []
 
 		for (let i = messages.length - 1; i >= 0 && toolOps.length < 3; i--) {
 			const msg = messages[i]!

@@ -79,7 +79,7 @@ export class GrepTool extends BaseTool<"grep"> {
 
 		try {
 			// Build file pattern: combine include/exclude
-			let filePattern = include
+			const filePattern = include
 			// Note: ripgrep --glob supports negation with '!' prefix
 			// If exclude is provided but no include, we still pass exclude as a negated glob
 			// However regexSearchFiles only supports a single glob; for exclude we would need

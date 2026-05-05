@@ -841,7 +841,7 @@ export class TaskExecutor {
 
 			// Add environment details as its own text block, separate from tool
 			// results.
-			let finalUserContent = [...contentWithoutEnvDetails, { type: "text" as const, text: environmentDetails }]
+			const finalUserContent = [...contentWithoutEnvDetails, { type: "text" as const, text: environmentDetails }]
 			// Only add user message to conversation history if:
 			// 1. This is the first attempt (retryAttempt === 0), AND
 			// 2. The original userContent was not empty (empty signals delegation resume where
@@ -872,7 +872,7 @@ export class TaskExecutor {
 
 			let assistantMessage = ""
 			let reasoningMessage = ""
-			let pendingGroundingSources: GroundingSource[] = []
+			const pendingGroundingSources: GroundingSource[] = []
 			try {
 				let cacheWriteTokens = 0
 				let cacheReadTokens = 0
@@ -1998,7 +1998,7 @@ export class TaskExecutor {
 					// apiConversationHistory at line 1876. Since the assistant failed to respond,
 					// we need to remove that message before retrying to avoid having two consecutive
 					// user messages (which would cause tool_result validation errors).
-					let state = await t.hostRef.deref()?.getState()
+					const state = await t.hostRef.deref()?.getState()
 					if (t.apiConversationHistory.length > 0) {
 						const lastMessage = t.apiConversationHistory[t.apiConversationHistory.length - 1]
 						if (lastMessage.role === "user") {

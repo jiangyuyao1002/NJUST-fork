@@ -55,7 +55,7 @@ export class DualSchemaAdapter {
 		if (this.zodSchema && !this.cachedJsonSchema) {
 			try {
 				// Lazy import to avoid bundling zod-to-json-schema when not needed
-				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				 
 				const { zodToJsonSchema } = require("zod-to-json-schema")
 				this.cachedJsonSchema = zodToJsonSchema(this.zodSchema, {
 					target: "openApi3",

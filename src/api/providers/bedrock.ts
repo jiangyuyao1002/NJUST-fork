@@ -954,7 +954,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 			// Check if the original model ID had a region prefix
 			if (originalModelId && result.modelId !== originalModelId) {
 				// If the model ID changed after parsing, it had a region prefix
-				let prefix = originalModelId.replace(result.modelId, "")
+				const prefix = originalModelId.replace(result.modelId, "")
 				result.crossRegionInference = AwsBedrockHandler.isSystemInferenceProfile(prefix)
 			}
 

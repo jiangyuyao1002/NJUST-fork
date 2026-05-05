@@ -318,7 +318,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 	override async handlePartial(task: Task, block: ToolUse<"write_to_file">): Promise<void> {
 		const na = block.nativeArgs as { path?: string; content?: string } | undefined
 		const relPath: string | undefined = block.params.path ?? na?.path
-		let newContent: string | undefined = block.params.content ?? na?.content
+		const newContent: string | undefined = block.params.content ?? na?.content
 
 		// Wait for path to stabilize before showing UI (prevents truncated paths)
 		if (!this.hasPathStabilized(relPath) || newContent === undefined) {
