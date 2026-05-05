@@ -186,7 +186,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const autoApproveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 	const userRespondedRef = useRef<boolean>(false)
 	const [currentFollowUpTs, setCurrentFollowUpTs] = useState<number | null>(null)
-	const cappedSetAggregatedCostsMap = useCallback(
+	const _cappedSetAggregatedCostsMap = useCallback(
 		(updater: (prev: typeof aggregatedCostsMap) => typeof aggregatedCostsMap) => {
 			setAggregatedCostsMap((prev) => {
 				const next = updater(prev)

@@ -1,7 +1,7 @@
 import { memo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { VSCodeBadge } from "@vscode/webview-ui-toolkit/react"
-import { FoldVertical, Sparkles } from "lucide-react"
+import { Sparkles } from "lucide-react"
 
 import type { ContextCondense } from "@njust-ai-cj/types"
 
