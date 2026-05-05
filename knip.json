@@ -9,19 +9,68 @@
 		"src/extension.ts",
 		"scripts/**",
 		"apps/cli/scripts/**",
-		"apps/web-roo-code/next-sitemap.config.cjs"
+		"apps/web-roo-code/next-sitemap.config.cjs",
+		".arts/**",
+		".vscode/**",
+		"test-mcp-*.mjs",
+		"test-mcp-*.cjs"
 	],
 	"workspaces": {
 		"src": {
 			"entry": ["extension.ts"],
-			"project": ["**/*.ts"]
+			"project": ["**/*.ts"],
+			"ignore": [
+				"core/agent/**",
+				"core/feature-flags/*",
+				"core/stream/*",
+				"services/memory/*",
+				"services/rate-limiter/*",
+				"api/transform/BaseFormatConverter.ts",
+				"core/config/ModeConfigService.ts",
+				"core/prompts/config.ts",
+				"core/prompts/types/PromptGenerationConfig.ts",
+				"core/prompts/versioning/PromptVersionRegistry.ts",
+				"core/prompts/tools/native-tools/apply_diff.ts",
+				"core/prompts/tools/native-tools/edit_file.ts",
+				"core/prompts/tools/native-tools/search_replace.ts",
+				"core/task/ApiRequestHandler.ts",
+				"core/task/interfaces/ITaskEventEmitter.ts",
+				"core/task/TaskMetrics.ts",
+				"core/task/TaskResultAggregator.ts",
+				"core/task/TaskStack.ts",
+				"core/tools/helpers/ToolErrorClassifier.ts",
+				"core/tools/permissions/PermissionContext.ts",
+				"core/webview/WebviewHost.ts",
+				"services/marketplace/index.ts",
+				"services/mcp/McpConfigLoader.ts",
+				"services/mcp/McpConnectionManager.ts",
+				"services/mcp/transport/TransportFactory.ts",
+				"services/tree-sitter/cangjieSourceScanner.ts"
+			]
 		},
 		"webview-ui": {
 			"entry": ["src/index.tsx"],
-			"project": ["src/**/*.{ts,tsx}", "../src/shared/*.ts"]
+			"project": ["src/**/*.{ts,tsx}", "../src/shared/*.ts"],
+			"ignore": [
+				"src/hooks/useCloudUpsell.ts",
+				"src/components/cloud/CloudUpsellDialog.tsx",
+				"src/components/cloud/CloudView.tsx",
+				"src/components/common/VersionIndicator.tsx",
+				"src/components/plan/PlanView.tsx"
+			]
 		},
-		"packages/{build,config-eslint,config-typescript,evals,ipc,telemetry,types,vscode-shim}": {
+		"packages/{build,config-eslint,config-typescript,evals,telemetry,types,vscode-shim}": {
 			"project": ["src/**/*.ts"]
+		},
+		"packages/ipc": {
+			"project": ["src/**/*.ts"],
+			"ignore": [
+				"src/index.d.ts",
+				"src/ipc-client.d.ts",
+				"src/ipc-client.ts",
+				"src/ipc-server.d.ts",
+				"src/ipc-server.ts"
+			]
 		},
 		"apps/{cli,web-roo-code}": {
 			"entry": ["src/index.ts"],

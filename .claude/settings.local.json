@@ -111,7 +111,9 @@
       "Bash(netstat -ano)",
       "Bash(curl *)",
       "Bash(echo \"EXIT_CODE=$?\")",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(xxd packages/types/src/mode.ts)",
+      "Bash(npx --yes vitest run src/core/webview/__tests__/handlers/)"
     ]
   }
 }
