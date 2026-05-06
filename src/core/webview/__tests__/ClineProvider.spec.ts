@@ -2256,9 +2256,9 @@ describe("getTelemetryProperties", () => {
 		expect(properties).toHaveProperty("modelId", "claude-sonnet-4-20250514")
 	})
 
-	test("getTelemetryProperties includes cloudIsAuthenticated as false (cloud stripped)", async () => {
+	test("getTelemetryProperties does not include cloudIsAuthenticated (cloud stripped)", async () => {
 		const properties = await provider.getTelemetryProperties()
-		expect(properties).toHaveProperty("cloudIsAuthenticated", false)
+		expect(properties).not.toHaveProperty("cloudIsAuthenticated")
 	})
 })
 

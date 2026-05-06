@@ -24,7 +24,7 @@ describe("Task.ask queued message drain", () => {
 		;(task as any).cancelAutoApprovalTimeout = vi.fn(() => {})
 		;(task as any).checkpointSave = vi.fn(async () => {})
 		;(task as any).emit = vi.fn()
-		;(task as any).providerRef = { deref: () => undefined }
+		;(task as any).hostRef = { deref: () => undefined }
 
 		const askPromise = task.ask("followup", "Q?", false)
 
@@ -53,7 +53,7 @@ describe("Task.ask queued message drain", () => {
 		;(task as any).cancelAutoApprovalTimeout = vi.fn(() => {})
 		;(task as any).checkpointSave = vi.fn(async () => {})
 		;(task as any).emit = vi.fn()
-		;(task as any).providerRef = { deref: () => undefined }
+		;(task as any).hostRef = { deref: () => undefined }
 
 		const askPromise = task.ask("command_output", "command is still running...", false)
 		;(task as any).messageQueueService.addMessage("1+1=?")

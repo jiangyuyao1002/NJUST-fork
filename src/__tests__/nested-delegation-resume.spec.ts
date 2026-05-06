@@ -13,6 +13,12 @@ vi.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureTaskCompleted: vi.fn(),
+			startSpan: vi.fn().mockReturnValue({
+				traceId: "test-trace-id",
+				spanId: "test-span-id",
+				end: vi.fn(),
+			}),
+			captureEvent: vi.fn(),
 		},
 	},
 }))
@@ -156,6 +162,7 @@ describe("Nested delegation resume (A → B → C)", () => {
 			removeClineFromStack,
 			createTaskWithHistoryItem,
 			updateTaskHistory,
+			stack: { pop: vi.fn().mockResolvedValue(undefined) },
 			// Wire through provider method so attemptCompletionTool can call it
 			reopenParentFromDelegation: vi.fn(async (params: any) => {
 				return await (ClineProvider.prototype as any).reopenParentFromDelegation.call(provider, params)
@@ -181,6 +188,13 @@ describe("Nested delegation resume (A → B → C)", () => {
 			userMessageContent: [],
 			consecutiveMistakeCount: 0,
 			emitFinalTokenUsageUpdate: vi.fn(),
+			markTaskCompleted: vi.fn(),
+			didToolFailInCurrentTurn: false,
+			taskMode: "code",
+			todoList: [],
+			api: undefined,
+			cwd: "/tmp",
+			parentTraceId: undefined,
 		} as unknown as Task
 
 		const blockC = {
@@ -198,7 +212,7 @@ describe("Nested delegation resume (A → B → C)", () => {
 		})
 
 		await attemptCompletionTool.handle(clineC, blockC, {
-			askApproval: vi.fn(),
+			askApproval: vi.fn().mockResolvedValue(true),
 			handleError,
 			pushToolResult: vi.fn(),
 			askFinishSubTaskApproval,
@@ -228,6 +242,13 @@ describe("Nested delegation resume (A → B → C)", () => {
 			userMessageContent: [],
 			consecutiveMistakeCount: 0,
 			emitFinalTokenUsageUpdate: vi.fn(),
+			markTaskCompleted: vi.fn(),
+			didToolFailInCurrentTurn: false,
+			taskMode: "code",
+			todoList: [],
+			api: undefined,
+			cwd: "/tmp",
+			parentTraceId: undefined,
 		} as unknown as Task
 
 		const blockB = {
@@ -239,7 +260,7 @@ describe("Nested delegation resume (A → B → C)", () => {
 		} as any
 
 		await attemptCompletionTool.handle(clineB, blockB, {
-			askApproval: vi.fn(),
+			askApproval: vi.fn().mockResolvedValue(true),
 			handleError,
 			pushToolResult: vi.fn(),
 			askFinishSubTaskApproval,

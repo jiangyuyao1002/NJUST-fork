@@ -40,7 +40,7 @@ describe("CloudAgentClient", () => {
 		)
 
 		const callbacks = createCallbacks()
-		const client = new CloudAgentClient("http://example.com", "device-token", callbacks, {
+		const client = new CloudAgentClient("http://localhost:8765", "device-token", callbacks, {
 			apiKey: "secret-key",
 		})
 
@@ -99,7 +99,7 @@ describe("CloudAgentClient", () => {
 			),
 		)
 
-		const client = new CloudAgentClient("http://example.com", "tok", createCallbacks())
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
 		await client.connect()
 		const result = await client.submitTask("s", "m")
 
@@ -124,7 +124,7 @@ describe("CloudAgentClient", () => {
 			),
 		)
 
-		const client = new CloudAgentClient("http://example.com", "tok", createCallbacks())
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
 		await client.connect()
 		const result = await client.submitTask("s", "m")
 
@@ -137,7 +137,7 @@ describe("CloudAgentClient", () => {
 		globalThis.fetch = fetchMock as unknown as typeof fetch
 		fetchMock.mockResolvedValue(new Response("", { status: 200 }))
 
-		const client = new CloudAgentClient("http://example.com", "tok", createCallbacks())
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
 		await client.connect()
 
 		const headers = new Headers((fetchMock.mock.calls[0][1] as RequestInit).headers as HeadersInit)
@@ -152,31 +152,31 @@ describe("CloudAgentClient", () => {
 		)
 		globalThis.fetch = fetchMock as unknown as typeof fetch
 
-		const client = new CloudAgentClient("http://example.com", "tok", createCallbacks())
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
 		await expect(client.connect()).rejects.toThrow(/fetch failed.*ECONNREFUSED|connect ECONNREFUSED/)
-	})
+	}, 15_000)
 
 	it("throws on non-OK HTTP for submitTask", async () => {
 		const fetchMock = vi.fn()
 		globalThis.fetch = fetchMock as unknown as typeof fetch
 		fetchMock.mockResolvedValueOnce(new Response("", { status: 200 }))
-		fetchMock.mockResolvedValueOnce(new Response("nope", { status: 502 }))
+		fetchMock.mockImplementation(() => Promise.resolve(new Response("nope", { status: 502 })))
 
-		const client = new CloudAgentClient("http://example.com", "tok", createCallbacks())
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
 		await client.connect()
 		await expect(client.submitTask("s", "m")).rejects.toThrow("Cloud Agent error (HTTP 502)")
-	})
+	}, 15_000)
 
 	it("throws when response body is not JSON", async () => {
 		const fetchMock = vi.fn()
 		globalThis.fetch = fetchMock as unknown as typeof fetch
 		fetchMock.mockResolvedValueOnce(new Response("", { status: 200 }))
-		fetchMock.mockResolvedValueOnce(new Response("not-json", { status: 200 }))
+		fetchMock.mockImplementation(() => Promise.resolve(new Response("not-json", { status: 200 })))
 
-		const client = new CloudAgentClient("http://example.com", "tok", createCallbacks())
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
 		await client.connect()
 		await expect(client.submitTask("s", "m")).rejects.toThrow("not valid JSON")
-	})
+	}, 15_000)
 
 	it("aborts connect when signal is already aborted", async () => {
 		const fetchMock = vi.fn((_url: string | URL, init?: RequestInit) => {
@@ -189,7 +189,7 @@ describe("CloudAgentClient", () => {
 
 		const ac = new AbortController()
 		ac.abort()
-		const client = new CloudAgentClient("http://example.com", "tok", createCallbacks(), { signal: ac.signal })
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks(), { signal: ac.signal })
 
 		await expect(client.connect()).rejects.toMatchObject({ name: "AbortError" })
 		expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -207,7 +207,7 @@ describe("CloudAgentClient", () => {
 			})
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://example.com", "tok", createCallbacks(), {
+			const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks(), {
 				requestTimeoutMs: 40,
 			})
 

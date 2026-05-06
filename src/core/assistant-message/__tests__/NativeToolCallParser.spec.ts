@@ -427,11 +427,11 @@ describe("NativeToolCallParser", () => {
 
 			it("does not rewrite existing tool names through compatibility aliases", () => {
 				const toolCall = {
-					id: "toolu_apply_diff_1",
-					name: "apply_diff" as const,
+					id: "toolu_write_to_file_1",
+					name: "write_to_file" as const,
 					arguments: JSON.stringify({
 						path: "src/a.ts",
-						diff: "<<<<<<< SEARCH\nold\n=======\nnew\n>>>>>>> REPLACE",
+						content: "new content",
 					}),
 				}
 
@@ -440,10 +440,10 @@ describe("NativeToolCallParser", () => {
 				expect(result).not.toBeNull()
 				expect(result?.type).toBe("tool_use")
 				if (result?.type === "tool_use") {
-					expect(result.name).toBe("apply_diff")
+					expect(result.name).toBe("write_to_file")
 					expect(result.nativeArgs).toEqual({
 						path: "src/a.ts",
-						diff: "<<<<<<< SEARCH\nold\n=======\nnew\n>>>>>>> REPLACE",
+						content: "new content",
 					})
 				}
 			})

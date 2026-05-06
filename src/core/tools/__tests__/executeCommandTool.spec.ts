@@ -148,24 +148,24 @@ describe("executeCommandTool", () => {
 	 * This verifies that HTML entities are properly converted to their actual characters
 	 */
 	describe("HTML entity unescaping", () => {
-		it("leaves &lt; &gt; sequences unchanged in current implementation", () => {
+		it("unescapes &lt; and &gt; to angle brackets", () => {
 			const input = "echo &lt;test&gt;"
-			expect(unescapeHtmlEntities(input)).toBe(input)
+			expect(unescapeHtmlEntities(input)).toBe("echo <test>")
 		})
 
-		it("leaves &gt; in output redirection form unchanged", () => {
+		it("unescapes &gt; in output redirection form", () => {
 			const input = "echo test &gt; output.txt"
-			expect(unescapeHtmlEntities(input)).toBe(input)
+			expect(unescapeHtmlEntities(input)).toBe("echo test > output.txt")
 		})
 
-		it("leaves &amp; unchanged", () => {
+		it("unescapes &amp; to ampersand", () => {
 			const input = "echo foo &amp;&amp; echo bar"
-			expect(unescapeHtmlEntities(input)).toBe(input)
+			expect(unescapeHtmlEntities(input)).toBe("echo foo && echo bar")
 		})
 
-		it("leaves mixed entities unchanged (regex does not match these patterns)", () => {
+		it("unescapes mixed entities", () => {
 			const input = "grep -E 'pattern' &lt;file.txt &gt;output.txt 2&gt;&amp;1"
-			expect(unescapeHtmlEntities(input)).toBe(input)
+			expect(unescapeHtmlEntities(input)).toBe("grep -E 'pattern' <file.txt >output.txt 2>&1")
 		})
 	})
 

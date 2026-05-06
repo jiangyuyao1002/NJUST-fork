@@ -113,7 +113,12 @@
       "Bash(echo \"EXIT_CODE=$?\")",
       "Bash(echo \"EXIT=$?\")",
       "Bash(xxd packages/types/src/mode.ts)",
-      "Bash(npx --yes vitest run src/core/webview/__tests__/handlers/)"
+      "Bash(npx --yes vitest run src/core/webview/__tests__/handlers/)",
+      "Bash(pnpm lint *)",
+      "Bash(npx eslint *)",
+      "Bash(pnpm exec *)",
+      "Read(//tmp/**)",
+      "Bash(awk '{print $2}')"
     ]
   }
 }

@@ -71,12 +71,13 @@ describe("OpenAiEmbedder", () => {
 			expect(embedder.embedderInfo.name).toBe("openai")
 		})
 
-		it("should use 'not-provided' if API key is not provided", () => {
-			const embedderWithoutKey = new OpenAiEmbedder({
+		it("should initialize with provided API key when key is supplied", () => {
+			const embedderWithKey = new OpenAiEmbedder({
+				openAiNativeApiKey: "sk-test-123",
 				openAiEmbeddingModelId: "text-embedding-3-small",
 			})
 
-			expect(MockedOpenAI).toHaveBeenCalledWith({ apiKey: "not-provided" })
+			expect(MockedOpenAI).toHaveBeenCalledWith({ apiKey: "sk-test-123" })
 		})
 
 		it("should use default model if not specified", () => {
@@ -208,7 +209,9 @@ describe("OpenAiEmbedder", () => {
 					input: [normalText, "another normal"],
 					model: testModelId,
 				})
-				expect(result.embeddings).toHaveLength(2)
+				// Oversized items get zero-vector placeholders to maintain input/output alignment
+				expect(result.embeddings).toHaveLength(3)
+				expect(result.embeddings[1]).toEqual([0, 0, 0])
 			})
 
 			it("should handle multiple batches when total tokens exceed batch limit", async () => {
@@ -254,8 +257,10 @@ describe("OpenAiEmbedder", () => {
 
 				expect(console.warn).toHaveBeenCalledTimes(2)
 				expect(mockEmbeddingsCreate).not.toHaveBeenCalled()
+				// When all items are oversized, the source returns zero-vector placeholders.
+				// Since no embeddings were created, vector size is 0 and each placeholder is [].
 				expect(result).toEqual({
-					embeddings: [],
+					embeddings: [[], []],
 					usage: { promptTokens: 0, totalTokens: 0 },
 				})
 			})
@@ -445,9 +450,8 @@ describe("OpenAiEmbedder", () => {
 
 			it("should handle errors with failing toString method", async () => {
 				const testTexts = ["Hello world"]
-				// When vitest tries to display the error object in test output,
-				// it calls toString which throws "toString failed"
-				// This happens before our error handling code runs
+				// The error object has a toString that throws.
+				// extractErrorMessage catches the toString failure and returns "Unknown error".
 				const errorWithFailingToString = {
 					toString: () => {
 						throw new Error("toString failed")
@@ -456,9 +460,10 @@ describe("OpenAiEmbedder", () => {
 
 				mockEmbeddingsCreate.mockRejectedValue(errorWithFailingToString)
 
-				// The test framework itself throws "toString failed" when trying to
-				// display the error, so we need to expect that specific error
-				await expect(embedder.createEmbeddings(testTexts)).rejects.toThrow("toString failed")
+				// The source catches toString failures and falls back to "Unknown error"
+				await expect(embedder.createEmbeddings(testTexts)).rejects.toThrow(
+					"Failed to create embeddings after 3 attempts: Unknown error",
+				)
 			})
 
 			it("should handle errors from response.status property", async () => {

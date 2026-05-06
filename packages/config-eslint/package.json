@@ -4,6 +4,7 @@
 	"type": "module",
 	"exports": {
 		"./base": "./base.js",
+		"./base-strict": "./base-strict.js",
 		"./react": "./react.js",
 		"./next-js": "./next.js"
 	},

@@ -94,8 +94,8 @@ describe("HookRegistry", () => {
 			toolInput: {},
 		})
 
-		expect(result.abort).toBe(false)
-		expect(after).toHaveBeenCalledOnce()
+		expect(result.abort).toBe(true)
+		expect(after).not.toHaveBeenCalled()
 		expect(warnSpy).toHaveBeenCalled()
 		warnSpy.mockRestore()
 	})

@@ -8,6 +8,7 @@ vi.mock("../../task/Task")
 vi.mock("../../tools/validateToolUse", () => ({
 	validateToolUse: vi.fn(),
 	isValidToolName: vi.fn(() => false),
+	mergeToolParamsForValidation: vi.fn(),
 }))
 vi.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
@@ -27,6 +28,7 @@ describe("presentAssistantMessage - Unknown Tool Handling", () => {
 			taskId: "test-task-id",
 			instanceId: "test-instance",
 			abort: false,
+			forceTaskState: vi.fn(),
 			presentAssistantMessageLocked: false,
 			presentAssistantMessageHasPendingUpdates: false,
 			currentStreamingContentIndex: 0,

@@ -190,7 +190,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 	 * OpenRouter may include metadata.raw with the actual upstream provider error.
 	 * @param error The error object (not wrapped - receives the error directly)
 	 */
-	private handleStreamingError(error: OpenRouterError, modelId: string, operation: string): never {
+	private handleStreamingError(error: OpenRouterError, _modelId: string, _operation: string): never {
 		const rawString = error?.metadata?.raw
 		const parsedError = extractErrorFromMetadataRaw(rawString)
 		const rawErrorMessage = parsedError || error?.message || "Unknown error"
@@ -207,7 +207,8 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 	): AsyncGenerator<ApiStreamChunk> {
 		const model = await this.fetchModel()
 
-		let { id: modelId, maxTokens, temperature, topP, reasoning } = model
+		const { id: modelId, maxTokens, temperature, topP } = model
+		let reasoning = model.reasoning
 
 		// Reset reasoning_details accumulator for this request
 		this.currentReasoningDetails = []

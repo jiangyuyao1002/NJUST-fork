@@ -257,48 +257,37 @@ describe("MessageEnhancer", () => {
 	})
 
 	describe("captureTelemetry", () => {
-		it("should capture telemetry when TelemetryService is available", () => {
-			const mockTaskId = "task-123"
+		it("should be a no-op (telemetry removed)", () => {
 			const mockCaptureEvent = vi.fn()
 			vi.mocked(TelemetryService.instance).captureEvent = mockCaptureEvent
 
-			MessageEnhancer.captureTelemetry(mockTaskId, true)
+			MessageEnhancer.captureTelemetry("task-123", true)
 
-			expect(TelemetryService.hasInstance).toHaveBeenCalled()
-			expect(mockCaptureEvent).toHaveBeenCalledWith(expect.any(String), {
-				taskId: mockTaskId,
-				includeTaskHistory: true,
-			})
+			expect(mockCaptureEvent).not.toHaveBeenCalled()
 		})
 
 		it("should handle missing TelemetryService gracefully", () => {
 			vi.mocked(TelemetryService).hasInstance = vi.fn().mockReturnValue(false)
 
-			// Should not throw
 			expect(() => MessageEnhancer.captureTelemetry("task-123", true)).not.toThrow()
 		})
 
-		it("should work without task ID", () => {
+		it("should be a no-op without task ID", () => {
 			const mockCaptureEvent = vi.fn()
 			vi.mocked(TelemetryService.instance).captureEvent = mockCaptureEvent
 
 			MessageEnhancer.captureTelemetry(undefined, false)
 
-			expect(mockCaptureEvent).toHaveBeenCalledWith(expect.any(String), {
-				includeTaskHistory: false,
-			})
+			expect(mockCaptureEvent).not.toHaveBeenCalled()
 		})
 
-		it("should default includeTaskHistory to false when not provided", () => {
+		it("should be a no-op when called with only task ID", () => {
 			const mockCaptureEvent = vi.fn()
 			vi.mocked(TelemetryService.instance).captureEvent = mockCaptureEvent
 
 			MessageEnhancer.captureTelemetry("task-123")
 
-			expect(mockCaptureEvent).toHaveBeenCalledWith(expect.any(String), {
-				taskId: "task-123",
-				includeTaskHistory: false,
-			})
+			expect(mockCaptureEvent).not.toHaveBeenCalled()
 		})
 	})
 

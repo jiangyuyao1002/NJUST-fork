@@ -49,6 +49,7 @@ vi.mock("../../../integrations/terminal/TerminalRegistry")
 vi.mock("../../../integrations/terminal/Terminal")
 vi.mock("../../../utils/path")
 vi.mock("../../../utils/git")
+vi.mock("../../prompts/getFullModeDetails")
 vi.mock("../../prompts/responses")
 vi.mock("../../tools/validateToolUse")
 

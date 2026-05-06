@@ -19,16 +19,22 @@ describe("microcompactMessages", () => {
 	it("compacts oversized historical tool_result content", () => {
 		const huge = Array.from({ length: 1800 }, (_, i) => `line-${i}: ${"x".repeat(40)}`).join("\n")
 		const messages: ApiMessage[] = [
-			{ role: "user", content: "turn-1" },
+			{ role: "user", content: "filler-1" },
+			{ role: "assistant", content: "filler-2" },
+			{ role: "user", content: "filler-3" },
+			{ role: "assistant", content: "filler-4" },
 			{
 				role: "user",
 				content: [{ type: "tool_result", tool_use_id: "tool-1", content: huge } as any],
 			},
+			{ role: "user", content: "after-1" },
+			{ role: "assistant", content: "after-2" },
+			{ role: "user", content: "after-3" },
 			{ role: "user", content: "turn-current" },
 		]
 
 		const result = microcompactMessages(messages)
-		const compacted = ((result[1].content as any[])[0]?.content as string) ?? ""
+		const compacted = ((result[4].content as any[])[0]?.content as string) ?? ""
 		expect(compacted.length).toBeLessThan(huge.length)
 		expect(compacted).toContain("tool result compacted")
 	})
@@ -56,7 +62,7 @@ describe("microcompactMessages", () => {
 		// Create enough messages to trigger different age penalty levels
 		const messages: ApiMessage[] = []
 		for (let i = 0; i < 25; i++) {
-			const huge = Array.from({ length: 100 }, (_, j) => `line-${j}: ${"x".repeat(40)}`).join("\n")
+			const huge = Array.from({ length: 400 }, (_, j) => `line-${j}: ${"x".repeat(40)}`).join("\n")
 			messages.push({
 				role: "user",
 				content: [{ type: "tool_result", tool_use_id: `tool-${i}`, content: huge } as any],
@@ -84,18 +90,24 @@ describe("microcompactMessages", () => {
 	})
 
 	it("handles tool_result with non-string content", () => {
-		const contentObj = { data: Array.from({ length: 100 }, (_, i) => ({ id: i, value: "x".repeat(50) })) }
+		const contentObj = { data: Array.from({ length: 500 }, (_, i) => ({ id: i, value: "x".repeat(50) })) }
 		const messages: ApiMessage[] = [
-			{ role: "user", content: "turn-1" },
+			{ role: "user", content: "filler-1" },
+			{ role: "assistant", content: "filler-2" },
+			{ role: "user", content: "filler-3" },
+			{ role: "assistant", content: "filler-4" },
 			{
 				role: "user",
 				content: [{ type: "tool_result", tool_use_id: "tool-1", content: contentObj } as any],
 			},
+			{ role: "user", content: "after-1" },
+			{ role: "assistant", content: "after-2" },
+			{ role: "user", content: "after-3" },
 			{ role: "user", content: "turn-current" },
 		]
 
 		const result = microcompactMessages(messages)
-		const compacted = ((result[1].content as any[])[0]?.content as string) ?? ""
+		const compacted = ((result[4].content as any[])[0]?.content as string) ?? ""
 		// Should be compacted since JSON is large
 		expect(compacted.length).toBeLessThan(JSON.stringify(contentObj).length)
 	})
@@ -129,6 +141,11 @@ describe("microcompactMessages", () => {
 				role: "user",
 				content: [{ type: "tool_result", tool_use_id: "tool-2", content: huge } as any],
 			},
+			{ role: "assistant", content: "filler-1" },
+			{ role: "user", content: "filler-2" },
+			{ role: "assistant", content: "filler-3" },
+			{ role: "user", content: "filler-4" },
+			{ role: "assistant", content: "filler-5" },
 		]
 
 		const result = microcompactMessages(messages)

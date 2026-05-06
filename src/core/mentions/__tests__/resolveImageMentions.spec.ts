@@ -2,6 +2,10 @@ import * as path from "path"
 
 import { resolveImageMentions } from "../resolveImageMentions"
 
+vi.mock("fs/promises", () => ({
+	realpath: vi.fn((p: string) => Promise.resolve(p)),
+}))
+
 vi.mock("../../tools/helpers/imageHelpers", () => ({
 	isSupportedImageFormat: vi.fn((ext: string) =>
 		[".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico", ".tiff", ".tif", ".avif"].includes(

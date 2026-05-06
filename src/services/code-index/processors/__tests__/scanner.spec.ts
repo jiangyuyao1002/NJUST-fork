@@ -222,7 +222,7 @@ describe("DirectoryScanner", () => {
 			;(mockCacheManager.getAllHashes as any).mockReturnValue({ "old/file.js": "old-hash" })
 
 			await scanner.scanDirectory("/test")
-			expect(mockVectorStore.deletePointsByFilePath).toHaveBeenCalledWith("old/file.js")
+			expect(mockVectorStore.deletePointsByMultipleFilePaths).toHaveBeenCalledWith(["old/file.js"])
 			expect(mockCacheManager.deleteHash).toHaveBeenCalledWith("old/file.js")
 		})
 
@@ -455,7 +455,7 @@ describe("DirectoryScanner", () => {
 			await scanner.scanDirectory("/test", undefined, undefined, undefined, controller.signal)
 
 			// Deleted file cleanup should not have run
-			expect(mockVectorStore.deletePointsByFilePath).not.toHaveBeenCalled()
+			expect(mockVectorStore.deletePointsByMultipleFilePaths).not.toHaveBeenCalled()
 		})
 	})
 })

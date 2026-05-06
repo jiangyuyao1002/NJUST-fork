@@ -3,6 +3,13 @@ import { describe, expect, it } from "vitest"
 import { PersistentRetryManager } from "../PersistentRetry"
 
 describe("PersistentRetryManager", () => {
+	beforeEach(() => {
+		vi.spyOn(Math, "random").mockReturnValue(0.5)
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
 	it("allows retries then blocks after per-category limit", () => {
 		const manager = new PersistentRetryManager({
 			maxPerCategoryRetries: { timeout: 2 },

@@ -506,7 +506,6 @@ export class TaskExecutor {
 		const modelInfo = modelSnapshot.info
 
 		let allTools: OpenAI.Chat.ChatCompletionTool[] = []
-		let allowedFunctionNames: string[] | undefined
 		const provider = h.hostRef.deref()
 		if (!provider) {
 			throw new Error("Provider reference lost during tool building")
@@ -527,7 +526,7 @@ export class TaskExecutor {
 			includeAllToolsWithRestrictions: supportsAllowedFunctionNames,
 		})
 		allTools = toolsResult.tools
-		allowedFunctionNames = toolsResult.allowedFunctionNames
+		const allowedFunctionNames = toolsResult.allowedFunctionNames
 
 		if (mode) {
 			h.cachedToolDefinitions = { mode, tools: allTools, time: Date.now() }
@@ -667,7 +666,7 @@ export class TaskExecutor {
 			} else {
 				const { response } = await h.ask(
 					"api_req_failed",
-					error instanceof Error ? error.message : String(error) ?? JSON.stringify(serializeError(error), null, 2),
+					error instanceof Error ? error.message : String(error),
 				)
 
 				if (response !== "yesButtonClicked") {
@@ -1525,7 +1524,7 @@ export class TaskExecutor {
 						// Determine cancellation reason
 						const cancelReason: ClineApiReqCancelReason = t.abort ? "user_cancelled" : "streaming_failed"
 
-						const rawErrorMessage = error instanceof Error ? error.message : String(error) ?? JSON.stringify(serializeError(error), null, 2)
+						const rawErrorMessage = error instanceof Error ? error.message : String(error)
 						const streamingFailedMessage = t.abort
 							? undefined
 							: `${i18nT("common:interruption.streamTerminatedByProvider")}: ${rawErrorMessage}`

@@ -73,7 +73,7 @@ describe("CacheManager", () => {
 		})
 
 		it("should set up debounced save function", () => {
-			expect(debounce).toHaveBeenCalledWith(expect.any(Function), 1500)
+			expect(debounce).toHaveBeenCalledWith(expect.any(Function), 500, { maxWait: 2000 })
 		})
 	})
 

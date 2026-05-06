@@ -285,7 +285,7 @@ export async function presentAssistantMessage(cline: Task) {
 				const errorString = `Error ${action}: ${JSON.stringify(serializeError(error))}`
 				await cline.say(
 					"error",
-					`Error ${action}:\n${error instanceof Error ? error.message : String(error) ?? JSON.stringify(serializeError(error), null, 2)}`,
+					`Error ${action}:\n${error instanceof Error ? error.message : String(error)}`,
 				)
 				pushToolResult(formatResponse.toolError(errorString))
 			}
@@ -442,7 +442,7 @@ export async function presentAssistantMessage(cline: Task) {
 								const errorString = `Error ${action}: ${JSON.stringify(serializeError(err))}`
 								await cline.say(
 									"error",
-									`Error ${action}:\n${err instanceof Error ? err.message : String(err) ?? JSON.stringify(serializeError(err), null, 2)}`,
+									`Error ${action}:\n${err instanceof Error ? err.message : String(err)}`,
 								)
 								pushToolResult(formatResponse.toolError(errorString), { isError: true })
 								if (toolBlock.name === "execute_command") {
@@ -791,7 +791,7 @@ export async function presentAssistantMessage(cline: Task) {
 
 				await cline.say(
 					"error",
-					`Error ${action}:\n${error instanceof Error ? error.message : String(error) ?? JSON.stringify(serializeError(error), null, 2)}`,
+					`Error ${action}:\n${error instanceof Error ? error.message : String(error)}`,
 				)
 
 				pushToolResult(formatResponse.toolError(errorString))

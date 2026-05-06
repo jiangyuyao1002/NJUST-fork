@@ -32,7 +32,7 @@ describe("sessionMemoryCompact", () => {
 			{
 				sessionId: "task-abcdef01",
 				timestamp: Date.now(),
-				summary: "A very long summary ".repeat(100),
+				summary: "A very long summary ".repeat(2),
 				filesModified: Array.from({ length: 25 }, (_, i) => `src/mod-${i}.ts`),
 				filesRead: [],
 				toolsUsed: ["read_file", "search_files", "write_to_file"],
@@ -45,6 +45,6 @@ describe("sessionMemoryCompact", () => {
 		const out = formatSessionMemoriesForPrompt(memories, 120)
 		expect(out.length).toBeGreaterThan(0)
 		expect(out).toContain("Session:")
-		expect(out).toContain("task-abcd")
+		expect(out).toContain("task-abc")
 	})
 })

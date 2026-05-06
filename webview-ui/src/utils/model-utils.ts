@@ -59,7 +59,7 @@ export const calculateTokenDistribution = (
 	// Calculate percentages relative to the context window for consistent visualization.
 	// When usage exceeds the window, the bar will overflow (clipped by overflow-hidden
 	// in the UI) giving users an accurate sense of how far over the limit they are.
-	const denominator = safeContextWindow > 0 ? safeContextWindow : 1
+	const denominator = safeContextWindow > 0 ? safeContextWindow : reservedForOutput
 
 	return {
 		currentPercent: (safeContextTokens / denominator) * 100,

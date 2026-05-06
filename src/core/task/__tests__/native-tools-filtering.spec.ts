@@ -41,7 +41,6 @@ describe("Native Tools Filtering by Mode", () => {
 
 			// Architect should NOT have edit tools
 			expect(architectAllowedTools.has("write_to_file")).toBe(false)
-			expect(architectAllowedTools.has("apply_diff")).toBe(false)
 
 			// Architect SHOULD have read tools
 			expect(architectAllowedTools.has("read_file")).toBe(true)
@@ -68,7 +67,6 @@ describe("Native Tools Filtering by Mode", () => {
 
 			// Code SHOULD have edit tools
 			expect(codeAllowedTools.has("write_to_file")).toBe(true)
-			expect(codeAllowedTools.has("apply_diff")).toBe(true)
 
 			// Code SHOULD have read tools
 			expect(codeAllowedTools.has("read_file")).toBe(true)

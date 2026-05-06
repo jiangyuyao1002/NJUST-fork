@@ -118,7 +118,7 @@ function scheduleCangjieToolchainGapCheck(): void {
 		if (bad.length === 0) return
 		lastCangjieToolchainGapWarn = Date.now()
 		const detail = bad.map((b) => b.label).join(", ")
-		void vscode.window
+		await vscode.window
 			.showWarningMessage(`仓颉工具链不完整或不可运行：${detail}`, "验证 SDK", "打开工具设置")
 			.then((c) => {
 				if (c === "验证 SDK") void vscode.commands.executeCommand("njust-ai-cj.cangjieVerifySdk")
@@ -126,7 +126,11 @@ function scheduleCangjieToolchainGapCheck(): void {
 					void vscode.commands.executeCommand("workbench.action.openSettings", `${Package.name}.cangjieTools`)
 				}
 			})
-	})()
+	})().catch((err) => {
+		outputChannel?.appendLine(
+			`[CangjieToolchain] Gap check failed: ${err instanceof Error ? err.message : String(err)}`,
+		)
+	})
 }
 
 // This method is called when your extension is activated.
@@ -274,7 +278,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const cangjieLintConfig = new CangjieLintConfig(outputChannel)
 	context.subscriptions.push(cangjieLintConfig)
-	void cangjieLintConfig.initialize()
+	void cangjieLintConfig.initialize().catch((err) => {
+		outputChannel.appendLine(
+			`[CangjieLintConfig] Initialize failed: ${err instanceof Error ? err.message : String(err)}`,
+		)
+	})
 
 	let cangjieMetricsCollector: CangjieMetricsCollector | undefined
 	const metricsCwd = vscode.workspace.workspaceFolders?.find((f) =>
@@ -345,7 +353,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	})
 
 	void checkAndPromptSdkSetup(context, outputChannel).catch(() => {})
-	scheduleCangjieToolchainGapCheck()
+	void scheduleCangjieToolchainGapCheck()
 
 	void cangjieLspClient.start().catch((error) => {
 		const message = error instanceof Error ? error.message : String(error)
@@ -586,14 +594,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(
 			vscode.languages.registerCallHierarchyProvider(
 				{ language: "cangjie", scheme: "file" },
-				new CangjieCallHierarchyProvider(cangjieSymbolIndex) as any,
+				new CangjieCallHierarchyProvider(cangjieSymbolIndex),
 			),
 		)
 
 		context.subscriptions.push(
 			vscode.languages.registerTypeHierarchyProvider(
 				{ language: "cangjie", scheme: "file" },
-				new CangjieTypeHierarchyProvider(cangjieSymbolIndex) as any,
+				new CangjieTypeHierarchyProvider(cangjieSymbolIndex),
 			),
 		)
 
@@ -628,7 +636,14 @@ export async function activate(context: vscode.ExtensionContext) {
 			const legacyToken = mcpServerConfig.get<string>("mcpServer.authToken", "")
 			if (legacyToken && legacyToken.trim()) {
 				authToken = legacyToken.trim()
-				context.secrets.store(MCP_AUTH_TOKEN_SECRET_KEY, authToken).then(() => {}, () => {})
+				context.secrets.store(MCP_AUTH_TOKEN_SECRET_KEY, authToken).then(
+					() => {},
+					(err: unknown) => {
+						outputChannel.appendLine(
+							`[McpToolsServer] Failed to persist auth token: ${err instanceof Error ? err.message : String(err)}`,
+						)
+					},
+				)
 			}
 		}
 

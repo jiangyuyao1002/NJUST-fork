@@ -3,48 +3,142 @@
 import type * as vscode from "vscode"
 import type { AuthState } from "@njust-ai-cj/types"
 
-vi.mock("vscode", () => ({
-	window: {
-		createOutputChannel: vi.fn().mockReturnValue({
-			appendLine: vi.fn(),
-		}),
-		registerWebviewViewProvider: vi.fn(),
-		registerUriHandler: vi.fn(),
-		tabGroups: {
-			onDidChangeTabs: vi.fn(),
-		},
-		onDidChangeActiveTextEditor: vi.fn(),
-	},
-	workspace: {
-		registerTextDocumentContentProvider: vi.fn(),
-		getConfiguration: vi.fn().mockReturnValue({
-			get: vi.fn().mockReturnValue([]),
-		}),
-		createFileSystemWatcher: vi.fn().mockReturnValue({
-			onDidCreate: vi.fn(),
-			onDidChange: vi.fn(),
-			onDidDelete: vi.fn(),
+vi.mock("vscode", () => {
+	const mockRegFn = () =>
+		vi.fn().mockReturnValue({
 			dispose: vi.fn(),
-		}),
-		onDidChangeWorkspaceFolders: vi.fn(),
-	},
-	languages: {
-		registerCodeActionsProvider: vi.fn(),
-	},
-	commands: {
-		executeCommand: vi.fn(),
-	},
-	env: {
-		language: "en",
-	},
-	ExtensionMode: {
-		Production: 1,
-	},
-}))
+		})
+	const mockFolder = {
+		uri: { fsPath: "/test/workspace", scheme: "file", path: "/test/workspace" },
+		name: "workspace",
+		index: 0,
+	}
+	return {
+		window: {
+			createOutputChannel: vi.fn().mockReturnValue({ appendLine: vi.fn() }),
+			registerWebviewViewProvider: vi.fn(),
+			registerUriHandler: vi.fn(),
+			tabGroups: { onDidChangeTabs: vi.fn() },
+			onDidChangeActiveTextEditor: vi.fn(),
+			createStatusBarItem: vi.fn().mockReturnValue({ show: vi.fn(), dispose: vi.fn() }),
+			showInformationMessage: vi.fn().mockResolvedValue(undefined),
+			showErrorMessage: vi.fn().mockResolvedValue(undefined),
+			showWarningMessage: vi.fn().mockResolvedValue(undefined),
+			createTerminal: vi.fn(),
+			activeTextEditor: undefined,
+		},
+		workspace: {
+			registerTextDocumentContentProvider: vi.fn(),
+			getConfiguration: vi.fn().mockReturnValue({ get: vi.fn().mockReturnValue("") }),
+			createFileSystemWatcher: vi
+				.fn()
+				.mockReturnValue({ onDidCreate: vi.fn(), onDidChange: vi.fn(), onDidDelete: vi.fn(), dispose: vi.fn() }),
+			onDidChangeWorkspaceFolders: vi.fn(),
+			onDidChangeConfiguration: vi.fn(),
+			onDidSaveTextDocument: vi.fn(),
+			getWorkspaceFolder: vi.fn().mockReturnValue(mockFolder),
+			workspaceFolders: [mockFolder],
+		},
+		languages: {
+			registerCodeActionsProvider: vi.fn(),
+			createDiagnosticCollection: vi.fn().mockReturnValue({ set: vi.fn(), clear: vi.fn(), delete: vi.fn() }),
+			onDidChangeDiagnostics: vi.fn(),
+			registerInlineCompletionItemProvider: mockRegFn(),
+			registerDocumentSymbolProvider: vi.fn(),
+			registerFoldingRangeProvider: vi.fn(),
+			registerHoverProvider: vi.fn(),
+			registerCodeLensProvider: vi.fn(),
+			registerDocumentSemanticTokensProvider: vi.fn(),
+			registerInlayHintsProvider: vi.fn(),
+			registerDefinitionProvider: vi.fn(),
+			registerReferenceProvider: vi.fn(),
+			registerRenameProvider: vi.fn(),
+			registerCallHierarchyProvider: vi.fn(),
+			registerTypeHierarchyProvider: vi.fn(),
+			registerWorkspaceSymbolProvider: vi.fn(),
+		},
+		debug: {
+			registerDebugAdapterDescriptorFactory: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+			registerDebugConfigurationProvider: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+			startDebugging: vi.fn().mockResolvedValue(undefined),
+		},
+		commands: {
+			executeCommand: vi.fn(),
+			registerCommand: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+		},
+		chat: {
+			createChatParticipant: vi.fn().mockReturnValue({
+				iconPath: undefined,
+				followupProvider: undefined,
+				onDidReceiveFeedback: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+			}),
+		},
+		ChatResultFeedbackKind: { Helpful: 1, Unhelpful: 2 },
+		lm: {
+			registerTool: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+		},
+		env: { language: "en" },
+		ExtensionMode: { Production: 1 },
+		Uri: {
+			parse: vi.fn(),
+			file: vi.fn(() => ({ fsPath: "/test", with: vi.fn() })),
+			joinPath: vi.fn(() => ({ fsPath: "/test" })),
+		},
+		EventEmitter: vi.fn().mockImplementation(() => ({ event: vi.fn(), fire: vi.fn(), dispose: vi.fn() })),
+	}
+})
 
 vi.mock("@dotenvx/dotenvx", () => ({
 	config: vi.fn(),
 }))
+
+// Mock vscode-languageclient/node to prevent deep import of "vscode" after vi.resetModules()
+vi.mock("vscode-languageclient/node", () => ({
+	LanguageClient: vi.fn(),
+	TransportKind: { stdio: 0 },
+}))
+
+// Mock all cangjie-lsp modules to prevent deep vscode dependency chains after resetModules.
+// Use mockResolvedValue for functions that extension.ts awaits or calls .then() on.
+const mockAsyncFn = () => vi.fn().mockResolvedValue(undefined)
+const mockConstructor = () =>
+	vi.fn().mockImplementation(() => ({
+		initialize: vi.fn().mockResolvedValue(undefined),
+		dispose: vi.fn(),
+		onCangjieActivated: vi.fn(),
+		start: vi.fn().mockResolvedValue(undefined),
+	}))
+vi.mock("../services/cangjie-lsp/CangjieLspClient", () => ({ CangjieLspClient: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieLspStatusBar", () => ({ CangjieLspStatusBar: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CjfmtFormatter", () => ({ CjfmtFormatter: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CjlintDiagnostics", () => ({ CjlintDiagnostics: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CjpmTaskProvider", () => ({ CjpmTaskProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/cangjieCommands", () => ({ registerCangjieCommands: vi.fn() }))
+vi.mock("../services/cangjie-lsp/cangjieGeneratedTestCleanup", () => ({ cleanupOrphanedTestFiles: mockAsyncFn(), initTestCleanup: mockAsyncFn() }))
+vi.mock("../services/cangjie-lsp/CangjieCodeActionProvider", () => ({ CangjieCodeActionProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieSdkSetup", () => ({ checkAndPromptSdkSetup: mockAsyncFn() }))
+vi.mock("../services/cangjie-lsp/cangjieToolUtils", () => ({ probeCangjieToolchain: mockAsyncFn(), invalidateCangjieToolEnvCache: vi.fn() }))
+vi.mock("../services/cangjie-lsp/CangjieDocumentSymbolProvider", () => ({ CangjieDocumentSymbolProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieFoldingRangeProvider", () => ({ CangjieFoldingRangeProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieHoverProvider", () => ({ CangjieHoverProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieTestCodeLensProvider", () => ({ CangjieTestCodeLensProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieDebugAdapterFactory", () => ({ CangjieDebugAdapterFactory: mockConstructor(), CangjieDebugConfigurationProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieSymbolIndex", () => ({ CangjieSymbolIndex: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieDefinitionProvider", () => ({ CangjieDefinitionProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieReferenceProvider", () => ({ CangjieReferenceProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieEnhancedRenameProvider", () => ({ CangjieEnhancedRenameProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieMacroProvider", () => ({ CangjieMacroCodeLensProvider: mockConstructor(), CangjieMacroHoverProvider: mockConstructor(), registerMacroCommands: vi.fn() }))
+vi.mock("../services/cangjie-lsp/CangjieSemanticTokensProvider", () => ({ CangjieSemanticTokensProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieInlayHintsProvider", () => ({ CangjieInlayHintsProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieCallHierarchyProvider", () => ({ CangjieCallHierarchyProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieTypeHierarchyProvider", () => ({ CangjieTypeHierarchyProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieWorkspaceSymbolProvider", () => ({ CangjieWorkspaceSymbolProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieCompileGuard", () => ({ CangjieCompileGuard: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/cangjieRulesHotReload", () => ({ registerCangjieRulesHotReload: vi.fn() }))
+vi.mock("../services/cangjie-lsp/cangjieDiagnosticModeSwitch", () => ({ cangjieDiagnosticModeSwitch: vi.fn() }))
+vi.mock("../services/cangjie-lsp/CangjieLintConfig", () => ({ CangjieLintConfig: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieMetricsCollector", () => ({ CangjieMetricsCollector: mockConstructor() }))
+vi.mock("../services/cloud-agent/deviceToken", () => ({ setDeviceToken: vi.fn() }))
 
 // Mock fs so the extension module can safely check for optional .env.
 vi.mock("fs", () => ({
@@ -58,6 +152,7 @@ vi.mock("@njust-ai-cj/telemetry", () => ({
 			setProvider: vi.fn(),
 			shutdown: vi.fn(),
 		}),
+		hasInstance: vi.fn().mockReturnValue(false),
 		get instance() {
 			return {
 				register: vi.fn(),
@@ -202,7 +297,10 @@ describe("extension.ts", () => {
 				get: vi.fn().mockReturnValue(undefined),
 				update: vi.fn(),
 			},
+			globalStorageUri: { fsPath: "/test/global-storage", scheme: "file", path: "/test/global-storage" },
+			storageUri: { fsPath: "/test/storage", scheme: "file", path: "/test/storage" },
 			subscriptions: [],
+			secrets: { get: vi.fn(), store: vi.fn(), delete: vi.fn(), onDidChange: vi.fn() },
 		} as unknown as vscode.ExtensionContext
 	})
 

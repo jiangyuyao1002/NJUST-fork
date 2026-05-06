@@ -7,7 +7,7 @@ import TaskHeader from "@src/components/chat/TaskHeader"
 
 // Mock formatLargeNumber function
 vi.mock("@/utils/format", () => ({
-	formatLargeNumber: vi.fn((num) => num.toLocaleString()),
+	formatLargeNumber: vi.fn((num) => String(num)),
 }))
 
 // Mock VSCodeBadge component for all tests

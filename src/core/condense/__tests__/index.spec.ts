@@ -901,15 +901,14 @@ describe("summarizeConversation", () => {
 			taskId,
 		})
 
-		// Verify that createMessage was called with the SUMMARY_PROMPT (which contains CRITICAL instructions), messages array, and optional metadata
+		// Verify that createMessage was called with the compact prompt (which contains CRITICAL instructions), messages array, and optional metadata
 		expect(mockApiHandler.createMessage).toHaveBeenCalledWith(
-			expect.stringContaining("You are a helpful AI assistant tasked with summarizing conversations."),
+			expect.stringContaining("CRITICAL: Respond with TEXT ONLY. Do NOT call any tools."),
 			expect.any(Array),
 			undefined, // metadata is undefined when not passed to summarizeConversation
 		)
 		// Verify the CRITICAL instructions are included in the prompt
 		const actualPrompt = (mockApiHandler.createMessage as Mock).mock.calls[0][0]
-		expect(actualPrompt).toContain("CRITICAL: This is a summarization-only request")
 		expect(actualPrompt).toContain("CRITICAL: This summarization request is a SYSTEM OPERATION")
 
 		// Check that maybeRemoveImageBlocks was called with the correct messages
@@ -1217,13 +1216,13 @@ describe("summarizeConversation with custom settings", () => {
 			customCondensingPrompt: "  ",
 		})
 
-		// Verify the default SUMMARY_PROMPT was used (contains CRITICAL instructions)
+		// Verify the default compact prompt was used (contains CRITICAL instructions)
 		let createMessageCalls = (mockMainApiHandler.createMessage as Mock).mock.calls
 		expect(createMessageCalls.length).toBe(1)
 		expect(createMessageCalls[0][0]).toContain(
-			"You are a helpful AI assistant tasked with summarizing conversations.",
+			"CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.",
 		)
-		expect(createMessageCalls[0][0]).toContain("CRITICAL: This is a summarization-only request")
+		expect(createMessageCalls[0][0]).toContain("CRITICAL: This summarization request is a SYSTEM OPERATION")
 
 		// Reset mock and test with undefined
 		vi.clearAllMocks()
@@ -1235,13 +1234,13 @@ describe("summarizeConversation with custom settings", () => {
 			isAutomaticTrigger: false,
 		})
 
-		// Verify the default SUMMARY_PROMPT was used again (contains CRITICAL instructions)
+		// Verify the default compact prompt was used again (contains CRITICAL instructions)
 		createMessageCalls = (mockMainApiHandler.createMessage as Mock).mock.calls
 		expect(createMessageCalls.length).toBe(1)
 		expect(createMessageCalls[0][0]).toContain(
-			"You are a helpful AI assistant tasked with summarizing conversations.",
+			"CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.",
 		)
-		expect(createMessageCalls[0][0]).toContain("CRITICAL: This is a summarization-only request")
+		expect(createMessageCalls[0][0]).toContain("CRITICAL: This summarization request is a SYSTEM OPERATION")
 	})
 
 	/**

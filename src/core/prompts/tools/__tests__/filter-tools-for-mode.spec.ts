@@ -20,7 +20,6 @@ describe("filterNativeToolsForMode - disabledTools", () => {
 		makeTool("execute_command"),
 		makeTool("read_file"),
 		makeTool("write_to_file"),
-		makeTool("apply_diff"),
 		makeTool("edit"),
 	]
 
@@ -35,7 +34,6 @@ describe("filterNativeToolsForMode - disabledTools", () => {
 		expect(resultNames).not.toContain("execute_command")
 		expect(resultNames).toContain("read_file")
 		expect(resultNames).toContain("write_to_file")
-		expect(resultNames).toContain("apply_diff")
 	})
 
 	it("does not remove any tools when disabledTools is empty", () => {
@@ -49,7 +47,6 @@ describe("filterNativeToolsForMode - disabledTools", () => {
 		expect(resultNames).toContain("execute_command")
 		expect(resultNames).toContain("read_file")
 		expect(resultNames).toContain("write_to_file")
-		expect(resultNames).toContain("apply_diff")
 	})
 
 	it("does not remove any tools when disabledTools is undefined", () => {

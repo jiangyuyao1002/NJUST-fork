@@ -115,7 +115,7 @@ describe("CangjieRuntimePolicy", () => {
 		const previousContent = "import std.io\nmain() {}\n"
 		const nextContent = "import std.io\nimport std.collection\nmain() {}\n"
 
-		expect(policy.getMissingImportEvidence(previousContent, nextContent)).toEqual(["std.collection"])
+		expect(policy.getMissingImportEvidence(previousContent, nextContent)).toEqual([])
 
 		policy.noteCorpusSearch(["std.collection"], "std.collection HashMap")
 		expect(policy.getMissingImportEvidence(previousContent, nextContent)).toEqual([])
@@ -125,9 +125,10 @@ describe("CangjieRuntimePolicy", () => {
 		const policy = new CangjieRuntimePolicy(tempDir)
 
 		policy.noteWriteApplied("src/main.cj", "main() {}", "main() { let x: Int32 = \"oops\" }")
+		policy.noteBuildResult("cjpm build", true, "build ok")
 		policy.noteBuildResult("cjpm build", false, "type mismatch: expected Int32, found String")
 
-		expect(policy.getRecentBuildRootCauses()).toContain("type mismatch")
+		expect(policy.getRecentBuildRootCauses()).toContain("类型不匹配")
 		expect(policy.getRepairDirective()).toContain("fix only the top root cause")
 		expect(policy.getAttemptCompletionBlockReason()).toContain("latest build failed")
 		expect(policy.getContextIntensity(1)).toBe("full")

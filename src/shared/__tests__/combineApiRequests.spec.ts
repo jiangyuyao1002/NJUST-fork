@@ -337,15 +337,9 @@ describe("combineApiRequests", () => {
 			})
 		})
 
-		it("should handle non-object JSON in api_req_started message", () => {
-			const startMessage: ClineMessage = {
-				id: 'test',
-				type: "say",
-				say: "api_req_started",
-				text: '"just a string"', // Valid JSON, but not an object
-				ts: 1000,
-			}
-			const finishMessage = createFinishMessage('{"cost":0.005}', 1001)
+	it("should handle non-object JSON in api_req_started message", () => {
+			const startMessage = createStartMessage('"just a string"', 1000)
+			const finishMessage = createFinishMessage('{"cost": 0.005}', 1001)
 
 			const messages: ClineMessage[] = [startMessage, finishMessage]
 
@@ -354,15 +348,10 @@ describe("combineApiRequests", () => {
 			// Should have one message (the combined one)
 			expect(result).toHaveLength(1)
 
-			// The current implementation spreads string characters into the object
-			// This test validates the actual behavior
-			// FIXME: spreading string JSON into object keys is unintended side-effect
-			// of the merge logic; update this test when the implementation is fixed
+			// The implementation uses finishData when startData is not a valid object
 			const parsedText = JSON.parse(result[0].text || "{}")
 			// Check that the cost property exists (from finish message)
 			expect(parsedText.cost).toBe(0.005)
-			// Check that string characters got spread (actual implementation behavior)
-			expect(typeof parsedText["0"]).toBe("string")
 		})
 
 		it("should handle non-object JSON in api_req_finished message", () => {
@@ -382,13 +371,10 @@ describe("combineApiRequests", () => {
 			// Should have one message (the combined one)
 			expect(result).toHaveLength(1)
 
-			// The current implementation spreads string characters into the object
-			// This test validates the actual behavior
+			// The implementation uses startData when finishData is not a valid object
 			const parsedText = JSON.parse(result[0].text || "{}")
 			// Check that request property exists (from start message)
 			expect(parsedText.request).toBe("GET /api/data")
-			// Check that string characters got spread (actual implementation behavior)
-			expect(typeof parsedText["0"]).toBe("string")
 		})
 
 		it("should properly merge nested JSON objects", () => {

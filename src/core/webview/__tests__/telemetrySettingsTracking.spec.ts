@@ -138,17 +138,17 @@ describe("Telemetry Settings Tracking", () => {
 	})
 
 	describe("TelemetryService.captureTelemetrySettingsChanged", () => {
-		it("should call captureEvent with correct parameters", () => {
+		it("should call emit with correct parameters", () => {
 			// Create a real instance to test the method
-			const mockCaptureEvent = vi.fn()
 			const service = new (TelemetryService as any)([])
-			service.captureEvent = mockCaptureEvent
+			const mockEmit = vi.fn()
+			service.emit = mockEmit
 
 			service.captureTelemetrySettingsChanged("enabled", "disabled")
 
-			expect(mockCaptureEvent).toHaveBeenCalledWith(TelemetryEventName.TELEMETRY_SETTINGS_CHANGED, {
-				previousSetting: "enabled",
-				newSetting: "disabled",
+			expect(mockEmit).toHaveBeenCalledWith("telemetry_settings_changed", {
+				previous: "enabled",
+				current: "disabled",
 			})
 		})
 	})

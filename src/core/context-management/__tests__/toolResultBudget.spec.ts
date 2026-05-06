@@ -10,6 +10,10 @@ describe("tool result budget", () => {
 		const recentLarge = "B".repeat(40_000)
 		const messages: ApiMessage[] = [
 			{
+				role: "assistant",
+				content: [{ type: "tool_use", id: "toolu_old", name: "read_file", input: {} } as any],
+			},
+			{
 				role: "user",
 				content: [
 					{
@@ -37,8 +41,10 @@ describe("tool result budget", () => {
 		]
 
 		const out = applyToolResultBudget(messages, { recentMessagesToKeepFull: 2 })
-		const first = (out[0].content as any[])[0].content as string
-		const last = (out[4].content as any[])[0].content as string
+		// out[0] is assistant with tool_use (not compacted), out[1] is user with tool_result (compacted)
+		// out[3] and out[4] are within recentMessagesToKeepFull=2 so kept intact
+		const first = (out[1].content as any[])[0].content as string
+		const last = (out[5].content as any[])[0].content as string
 
 		expect(first.length).toBeLessThan(oldLarge.length)
 		expect(first).toContain("file content compacted")
@@ -48,6 +54,10 @@ describe("tool result budget", () => {
 	it("summarizes grep/search-style outputs by line budget before generic truncation", () => {
 		const lines = Array.from({ length: 1400 }, (_, i) => `src/file${i}.ts:${i + 1}:match and some extra payload text`).join("\n")
 		const messages: ApiMessage[] = [
+			{
+				role: "assistant",
+				content: [{ type: "tool_use", id: "toolu_search", name: "grep_search", input: {} } as any],
+			},
 			{
 				role: "user",
 				content: [
@@ -64,7 +74,8 @@ describe("tool result budget", () => {
 		]
 
 		const out = applyToolResultBudget(messages, { recentMessagesToKeepFull: 1, defaultMaxChars: 6_000 })
-		const compacted = (out[0].content as any[])[0].content as string
+		// out[0] is assistant with tool_use, out[1] is user with tool_result (the compacted one)
+		const compacted = (out[1].content as any[])[0].content as string
 		expect(compacted).toContain("search results compacted")
 		expect(compacted.length).toBeLessThan(lines.length)
 	})

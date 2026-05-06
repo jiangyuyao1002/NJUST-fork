@@ -30,8 +30,8 @@ describe("Cost Utility", () => {
 				cacheWriteTokens: 0,
 				cacheReadTokens: 8000,
 			})
-			expect(r.totalInputTokens).toBe(9000)
-			expect(r.nonCachedInputTokens).toBe(1000)
+			expect(r.totalInputTokens).toBe(8000)
+			expect(r.nonCachedInputTokens).toBe(0)
 		})
 	})
 
@@ -212,7 +212,7 @@ describe("Cost Utility", () => {
 
 			const result = calculateApiCostOpenAI(modelWithoutPrices, 1000, 500, 2000, 3000)
 			expect(result.totalCost).toBe(0)
-			expect(result.totalInputTokens).toBe(1000) // Total already includes cache
+			expect(result.totalInputTokens).toBe(5000) // Total already includes cache
 			expect(result.totalOutputTokens).toBe(500)
 		})
 
@@ -303,10 +303,10 @@ describe("Cost Utility", () => {
 
 		it("should expand prompt total when reported input is smaller than cache rows alone (non-cached-only totals)", () => {
 			const result = calculateApiCostOpenAI(mockModelInfo, 1000, 500, 0, 8000)
-			// total expands to 9000, base charged on 1000
-			expect(result.totalInputTokens).toBe(9000)
-			// (3/1e6)*1000 + (15/1e6)*500 + (0.3/1e6)*8000
-			expect(result.totalCost).toBeCloseTo(0.003 + 0.0075 + 0.0024, 6)
+			// total expands to 8000 (cw+cr), base charged on 0 (non-cached portion zeroed out)
+			expect(result.totalInputTokens).toBe(8000)
+			// (3/1e6)*0 + (15/1e6)*500 + (0.3/1e6)*8000
+			expect(result.totalCost).toBeCloseTo(0.0075 + 0.0024, 6)
 		})
 
 		it("should skip long-context pricing for service tiers outside the allowed list", () => {

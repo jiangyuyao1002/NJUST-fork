@@ -135,6 +135,10 @@ describe("taskEventBus (global singleton)", () => {
 	})
 })
 
+vi.mock("../../../utils/debugLog", () => ({
+	debugLog: (...args: unknown[]) => console.debug(...args),
+}))
+
 describe("enableTaskEventBusDebugLogging", () => {
 	it("installs middleware on the global bus", () => {
 		// Cleanup previous state

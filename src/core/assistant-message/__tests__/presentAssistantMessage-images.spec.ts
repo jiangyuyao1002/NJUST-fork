@@ -9,6 +9,7 @@ import { Task } from "../../task/Task"
 vi.mock("../../task/Task")
 vi.mock("../../tools/validateToolUse", () => ({
 	validateToolUse: vi.fn(),
+	mergeToolParamsForValidation: vi.fn((block: any) => ({ ...block.params })),
 	isValidToolName: vi.fn((toolName: string) =>
 		["read_file", "write_to_file", "ask_followup_question", "attempt_completion", "use_mcp_tool"].includes(
 			toolName,
@@ -20,6 +21,7 @@ vi.mock("@njust-ai-cj/telemetry", () => ({
 		instance: {
 			captureToolUsage: vi.fn(),
 			captureConsecutiveMistakeError: vi.fn(),
+			startSpan: vi.fn(),
 		},
 	},
 }))
@@ -42,6 +44,7 @@ describe("presentAssistantMessage - Image Handling in Native Tool Calling", () =
 			didRejectTool: false,
 			didAlreadyUseTool: false,
 			consecutiveMistakeCount: 0,
+			forceTaskState: vi.fn(),
 			api: {
 				getModel: () => ({ id: "test-model", info: {} }),
 			},

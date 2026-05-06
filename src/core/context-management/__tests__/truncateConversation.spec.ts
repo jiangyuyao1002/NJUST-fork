@@ -160,15 +160,26 @@ describe("truncateConversation", () => {
 	})
 
 	it("prioritizes error recovery messages for retention", () => {
+		// Use enough messages so smart truncation can find candidates beyond the protected zone
 		const messages: ApiMessage[] = [
 			makeMsg("user", "start", 0),
-			makeMsg("assistant", "normal response", 1),
-			makeMsg("user", "error recovery message", 2),
-			makeMsg("assistant", "retry succeeded", 3),
-			makeMsg("user", "end", 4),
+			makeMsg("assistant", "response 1", 1),
+			makeMsg("user", "message 1", 2),
+			makeMsg("assistant", "response 2", 3),
+			makeMsg("user", "message 2", 4),
+			makeMsg("assistant", "response 3", 5),
+			makeMsg("user", "message 3", 6),
+			makeMsg("assistant", "response 4", 7),
+			makeMsg("user", "message 4", 8),
+			makeMsg("assistant", "response 5", 9),
+			makeMsg("user", "message 5", 10),
+			makeMsg("assistant", "response 6", 11),
+			makeMsg("user", "error recovery message", 12),
+			makeMsg("assistant", "retry succeeded", 13),
+			makeMsg("user", "end", 14),
 		]
 		const result = truncateConversation(messages, 0.5, "task-1")
-		// Error recovery messages should not be truncated
+		// Error recovery messages should not be truncated (protected in smart truncation)
 		const errorRecoveryMsg = result.messages.find((m) =>
 			typeof m.content === "string" && m.content.includes("error recovery")
 		)

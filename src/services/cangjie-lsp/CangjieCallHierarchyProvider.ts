@@ -4,7 +4,6 @@ import { findClosingBrace, type CangjieDefKind } from "../../services/tree-sitte
 
 const CALLABLE_KINDS: Set<CangjieDefKind> = new Set(["func", "main", "init", "macro", "operator"])
 
-// @ts-expect-error TS2420 - VSCode API version mismatch
 export class CangjieCallHierarchyProvider implements vscode.CallHierarchyProvider {
 	constructor(private readonly index: CangjieSymbolIndex) {}
 
@@ -28,7 +27,7 @@ export class CangjieCallHierarchyProvider implements vscode.CallHierarchyProvide
 		}]
 	}
 
-	async provideIncomingCalls(
+	async provideCallHierarchyIncomingCalls(
 		item: vscode.CallHierarchyItem,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.CallHierarchyIncomingCall[]> {
@@ -61,7 +60,7 @@ export class CangjieCallHierarchyProvider implements vscode.CallHierarchyProvide
 		return calls
 	}
 
-	async provideOutgoingCalls(
+	async provideCallHierarchyOutgoingCalls(
 		item: vscode.CallHierarchyItem,
 		token: vscode.CancellationToken,
 	): Promise<vscode.CallHierarchyOutgoingCall[]> {

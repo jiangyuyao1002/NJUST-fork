@@ -418,7 +418,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 				expect(await fileExistsAtPath(nestedGitDir)).toBe(true)
 
 				vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(({ args }) => {
-					const searchPattern = args[4]
+					const searchPattern = args[5]
 
 					if (searchPattern.includes(".git/HEAD")) {
 						// Return the HEAD file path, not the .git directory

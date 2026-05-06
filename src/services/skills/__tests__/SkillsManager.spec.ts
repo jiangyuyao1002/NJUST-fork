@@ -167,6 +167,9 @@ describe("SkillsManager", () => {
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === pdfSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -218,6 +221,9 @@ Instructions here...`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === codeReviewDir) {
 					return { isDirectory: () => true }
 				}
@@ -268,6 +274,9 @@ Instructions here...`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === refactoringDir) {
 					return { isDirectory: () => true }
 				}
@@ -318,6 +327,9 @@ Instructions here...`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === invalidSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -363,6 +375,9 @@ name: invalid-skill
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === mySkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -404,6 +419,9 @@ description: Name doesn't match directory
 			mockReaddir.mockImplementation(async (dir: string) => (dir === globalSkillsDir ? invalidNames : []))
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (invalidNames.some((name) => pathArg === p(globalSkillsDir, name))) {
 					return { isDirectory: () => true }
 				}
@@ -440,6 +458,9 @@ description: Invalid name format
 			mockReaddir.mockImplementation(async (dir: string) => (dir === globalSkillsDir ? [longName] : []))
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === longDir) return { isDirectory: () => true }
 				throw new Error("Not found")
 			})
@@ -465,6 +486,9 @@ description: Too long name
 			mockRealpath.mockImplementation(async (pathArg: string) => pathArg)
 			mockReaddir.mockImplementation(async (dir: string) => (dir === globalSkillsDir ? ["valid-name"] : []))
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === skillDir) return { isDirectory: () => true }
 				throw new Error("Not found")
 			})
@@ -490,6 +514,9 @@ description: "   "
 			mockRealpath.mockImplementation(async (pathArg: string) => pathArg)
 			mockReaddir.mockImplementation(async (dir: string) => (dir === globalSkillsDir ? ["valid-name"] : []))
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === skillDir) return { isDirectory: () => true }
 				throw new Error("Not found")
 			})
@@ -531,6 +558,9 @@ description: ${longDescription}
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === sharedSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -583,6 +613,9 @@ Instructions here...`
 
 			// fs.stat follows symlinks, so it returns the target directory info
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === myAliasDir) {
 					return { isDirectory: () => true }
 				}
@@ -634,6 +667,9 @@ Instructions here...`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === agentSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -685,6 +721,9 @@ Instructions here...`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === projectAgentSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -737,6 +776,9 @@ Instructions here...`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === agentSkillDir || pathArg === rooSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -794,6 +836,9 @@ description: Roo version (should take priority)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === agentCodeSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -850,6 +895,9 @@ Instructions here...`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === genericSkillDir || pathArg === codeSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -907,6 +955,9 @@ Instructions`
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === globalSharedSkillDir || pathArg === projectSharedSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -951,6 +1002,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === genericTestSkillDir || pathArg === codeTestSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -991,6 +1045,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === architectOnlyDir) {
 					return { isDirectory: () => true }
 				}
@@ -1033,6 +1090,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === testSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -1108,6 +1168,9 @@ description: A test skill
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === testSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -1153,6 +1216,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === testSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -1319,6 +1385,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === testSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -1381,6 +1450,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === sourceDir) {
 					return { isDirectory: () => true }
 				}
@@ -1438,6 +1510,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === sourceDir) {
 					return { isDirectory: () => true }
 				}
@@ -1494,6 +1569,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === sourceDir) {
 					return { isDirectory: () => true }
 				}
@@ -1545,6 +1623,9 @@ Instructions`)
 
 			const testSkillDir = p(globalSkillsDir, "test-skill")
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === testSkillDir) {
 					return { isDirectory: () => true }
 				}
@@ -1603,6 +1684,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === sourceDir) {
 					return { isDirectory: () => true }
 				}
@@ -1659,6 +1743,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === sourceDir) {
 					return { isDirectory: () => true }
 				}
@@ -1722,6 +1809,9 @@ Instructions`)
 			})
 
 			mockStat.mockImplementation(async (pathArg: string) => {
+				if (pathArg.endsWith("SKILL.md")) {
+					return { isDirectory: () => false, size: 100 }
+				}
 				if (pathArg === sourceDir || pathArg === p(sourceSkillsDir, "another-skill")) {
 					return { isDirectory: () => true }
 				}

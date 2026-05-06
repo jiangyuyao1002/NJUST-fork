@@ -185,17 +185,15 @@ export class ClineProvider
 			getValues: () => this.contextProxy.getValues(),
 		})
 
-		// Initialize TaskStackManager first - needed by TaskHistoryService
-		const provider = this
 		this.stack = new TaskStackManager({
 			outputChannel: this.outputChannel,
-			emit: (event, ...args) => provider.emit(event as any, ...args) as boolean,
-			getState: () => provider.getState(),
-			getTaskWithId: (id) => provider.getTaskWithId(id),
-			updateTaskHistory: (item, options) => provider.updateTaskHistory(item, options),
+			emit: (event, ...args) => this.emit(event as any, ...args) as boolean,
+			getState: () => this.getState(),
+			getTaskWithId: (id) => this.getTaskWithId(id),
+			updateTaskHistory: (item, options) => this.updateTaskHistory(item, options),
 			createTaskWithHistoryItem: (historyItem, options) =>
-				provider.createTaskWithHistoryItem(historyItem, options),
-			performPreparationTasks: (task) => provider.performPreparationTasks(task),
+				this.createTaskWithHistoryItem(historyItem, options),
+			performPreparationTasks: (task) => this.performPreparationTasks(task),
 		})
 
 		ClineProvider.activeInstances.add(this)
@@ -210,6 +208,9 @@ export class ClineProvider
 				this.taskHistory.scheduleGlobalStateWriteThrough()
 			},
 		})
+		// TaskHistoryService config uses getters; object-literal `this` would not refer to ClineProvider.
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const provider = this
 		this.taskHistory = new TaskHistoryService({
 			context: this.context,
 			contextProxy: this.contextProxy as any,

@@ -4,7 +4,6 @@ import type { SymbolEntry } from "./CangjieSymbolIndex"
 
 const TYPE_KINDS = new Set(["class", "struct", "interface", "enum", "extend", "type_alias"])
 
-// @ts-expect-error TS2420 - VSCode API version mismatch
 export class CangjieTypeHierarchyProvider implements vscode.TypeHierarchyProvider {
 	constructor(private readonly index: CangjieSymbolIndex) {}
 
@@ -19,7 +18,7 @@ export class CangjieTypeHierarchyProvider implements vscode.TypeHierarchyProvide
 		return [this.symbolToItem(sym)]
 	}
 
-	async provideSupertypes(
+	async provideTypeHierarchySupertypes(
 		item: vscode.TypeHierarchyItem,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.TypeHierarchyItem[]> {
@@ -50,7 +49,7 @@ export class CangjieTypeHierarchyProvider implements vscode.TypeHierarchyProvide
 		}
 	}
 
-	async provideSubtypes(
+	async provideTypeHierarchySubtypes(
 		item: vscode.TypeHierarchyItem,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.TypeHierarchyItem[]> {

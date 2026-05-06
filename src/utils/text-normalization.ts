@@ -96,6 +96,6 @@ const HTML_ENTITIES: Record<string, string> = {
 
 export function unescapeHtmlEntities(text: string): string {
 	if (!text) return text
-	return text.replace(/&(?:#[xX]?[\\da-fA-F]+|\\w+);/g,
+	return text.replace(/&(?:#[xX]?[\da-fA-F]+|\w+);/g,
 		(match) => HTML_ENTITIES[match] ?? match)
 }
