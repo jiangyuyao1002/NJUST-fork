@@ -31,7 +31,7 @@ const ALLOWED_TRANSITIONS: Record<TaskState, ReadonlySet<TaskState>> = {
 	[TaskState.RECOVERING_MAX_TOKENS]: new Set([TaskState.PREPARING, TaskState.ERROR]),
 	[TaskState.WAITING_APPROVAL]: new Set([TaskState.PREPARING, TaskState.ERROR, TaskState.COMPLETED]),
 	[TaskState.COMPLETED]: new Set([TaskState.PREPARING, TaskState.PROCESSING_TOOLS]),
-	[TaskState.ERROR]: new Set([]),
+	[TaskState.ERROR]: new Set([TaskState.PREPARING, TaskState.RECOVERING_MAX_TOKENS]),
 }
 
 export class TaskStateMachine {

@@ -27,4 +27,16 @@ describe("TaskStateMachine", () => {
 		sm.force(TaskState.ERROR)
 		expect(sm.state).toBe(TaskState.ERROR)
 	})
+
+	it("should allow ERROR -> PREPARING for retry recovery", () => {
+		const sm = new TaskStateMachine()
+		sm.force(TaskState.ERROR)
+		expect(sm.canTransition(TaskState.PREPARING)).toBe(true)
+	})
+
+	it("should allow ERROR -> RECOVERING_MAX_TOKENS for token recovery", () => {
+		const sm = new TaskStateMachine()
+		sm.force(TaskState.ERROR)
+		expect(sm.canTransition(TaskState.RECOVERING_MAX_TOKENS)).toBe(true)
+	})
 })

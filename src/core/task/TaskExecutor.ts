@@ -606,13 +606,15 @@ export class TaskExecutor {
 		} catch (error: any) {
 			h.isWaitingForFirstChunk = false
 			h.currentRequestAbortController = undefined
-			h.stateMachine.force(TaskState.ERROR)
 
 			const recovery = await h.errorRecovery.handleApiError(error, retryAttempt)
 			if (recovery.action === "retry") {
 				yield* this.attemptApiRequest(recovery.nextAttempt)
 				return
 			}
+
+			// Only enter ERROR state when error is truly unrecoverable
+			h.stateMachine.force(TaskState.ERROR)
 
 			if (autoApprovalEnabled) {
 				h.stateMachine.force(TaskState.RECOVERING_MAX_TOKENS)
