@@ -26,6 +26,7 @@ import { BaseTerminal } from "../../integrations/terminal/BaseTerminal"
 import { BaseTool, ToolCallbacks, type ValidationResult } from "./BaseTool"
 import { recordSecurityMetric } from "../security/metrics"
 import { checkCommandSafety } from "./helpers/commandSafety"
+import { logger } from "../../shared/logger"
 
 /** Uses {@link checkCommandSafety} so high-risk detection stays aligned with permission classifiers. */
 function isHighRiskShellCommand(command: string): boolean {
@@ -117,7 +118,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			const safetyCheck = checkCommandSafety(canonicalCommand)
 
 			if (safetyCheck.requiresConfirmation) {
-				console.warn("[Security] execute_command: high-risk pattern; user must approve in UI:", canonicalCommand)
+				logger.warn("ExecuteCommandTool", "execute_command: high-risk pattern; user must approve in UI:", canonicalCommand)
 				recordSecurityMetric("execute_command_high_risk", {
 					cmd: canonicalCommand.slice(0, 240),
 					riskLevel: safetyCheck.riskLevel,
@@ -340,7 +341,7 @@ export async function executeCommandInTerminal(
 				})
 			})
 			.catch((error) => {
-				console.error("[ExecuteCommandTool] Failed to publish command output:", error)
+				logger.error("ExecuteCommandTool", "Failed to publish command output:", error)
 			})
 
 		return commandOutputSayChain

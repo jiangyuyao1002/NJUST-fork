@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 
+import { logger } from "./logger"
 import {
 	type GroupEntry,
 	type ModeConfig,
@@ -181,7 +182,7 @@ export async function getAllModesWithPrompts(context: vscode.ExtensionContext): 
 export function getRoleDefinition(modeSlug: string, customModes?: ModeConfig[]): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
-		console.warn(`No mode found for slug: ${modeSlug}`)
+		logger.warn("Modes", `No mode found for slug: ${modeSlug}`)
 		return ""
 	}
 	return mode.roleDefinition
@@ -191,7 +192,7 @@ export function getRoleDefinition(modeSlug: string, customModes?: ModeConfig[]):
 export function getDescription(modeSlug: string, customModes?: ModeConfig[]): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
-		console.warn(`No mode found for slug: ${modeSlug}`)
+		logger.warn("Modes", `No mode found for slug: ${modeSlug}`)
 		return ""
 	}
 	return mode.description ?? ""
@@ -201,7 +202,7 @@ export function getDescription(modeSlug: string, customModes?: ModeConfig[]): st
 export function getWhenToUse(modeSlug: string, customModes?: ModeConfig[]): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
-		console.warn(`No mode found for slug: ${modeSlug}`)
+		logger.warn("Modes", `No mode found for slug: ${modeSlug}`)
 		return ""
 	}
 	return mode.whenToUse ?? ""
@@ -211,7 +212,7 @@ export function getWhenToUse(modeSlug: string, customModes?: ModeConfig[]): stri
 export function getCustomInstructions(modeSlug: string, customModes?: ModeConfig[]): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
-		console.warn(`No mode found for slug: ${modeSlug}`)
+		logger.warn("Modes", `No mode found for slug: ${modeSlug}`)
 		return ""
 	}
 	return mode.customInstructions ?? ""

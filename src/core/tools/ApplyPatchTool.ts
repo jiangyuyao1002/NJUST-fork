@@ -23,6 +23,7 @@ import {
 	CRITICAL_SIGNATURE_MODULES,
 	resolveRootPackageName,
 } from "./cangjiePreflightCheck"
+import { logger } from "../../shared/logger"
 
 interface ApplyPatchParams {
 	patch: string
@@ -601,7 +602,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			try {
 				await fs.unlink(absolutePath)
 			} catch (error) {
-				console.error(`Failed to delete original file after move: ${error}`)
+				logger.error("ApplyPatchTool", `Failed to delete original file after move: ${error}`)
 			}
 
 			await task.fileContextTracker.trackFileContext(change.movePath, "roo_edited" as RecordSource)

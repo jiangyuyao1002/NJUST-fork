@@ -15,6 +15,7 @@ import { toolResultCache } from "./helpers/ToolResultCache"
 import { recordSecurityMetric, startTraceSpan } from "../security/metrics"
 import { RetryableError } from "./errors"
 import { DualSchemaAdapter, type JSONSchema } from "./DualSchemaAdapter"
+import { logger } from "../../shared/logger"
 
 // ── Progress data types (Task 4.1) ───────────────────────────────────
 /**
@@ -411,7 +412,7 @@ export abstract class BaseTool<TName extends ToolName> {
 					toolSpan.end("ok", { stage: "partial_ignored" })
 					return
 				}
-				console.error(`Error in handlePartial:`, error)
+				logger.error("BaseTool", "Error in handlePartial:", error)
 				await callbacks.handleError(
 					`handling partial ${this.name}`,
 					error instanceof Error ? error : new Error(String(error)),
@@ -444,7 +445,7 @@ export abstract class BaseTool<TName extends ToolName> {
 				throw new Error("Tool call is missing native arguments (nativeArgs).")
 			}
 		} catch (error) {
-			console.error(`Error parsing parameters:`, error)
+			logger.error("BaseTool", "Error parsing parameters:", error)
 			const errorMessage = `Failed to parse ${this.name} parameters: ${error instanceof Error ? error.message : String(error)}`
 			await callbacks.handleError(`parsing ${this.name} args`, new Error(errorMessage))
 			toolSpan.end("error", { stage: "parse", error: errorMessage })
@@ -516,7 +517,7 @@ export abstract class BaseTool<TName extends ToolName> {
 					params = preResult.modifiedInput as ToolParams<TName>
 				}
 			} catch (hookErr) {
-				console.warn(`[BaseTool] Pre-hook error (ignored):`, hookErr)
+				logger.warn("BaseTool", "Pre-hook error (ignored):", hookErr)
 			}
 		}
 
@@ -536,7 +537,7 @@ export abstract class BaseTool<TName extends ToolName> {
 					hookContext,
 				)
 			} catch (hookErr) {
-				console.warn(`[BaseTool] PermissionDenied hook error (ignored):`, hookErr)
+				logger.warn("BaseTool", "PermissionDenied hook error (ignored):", hookErr)
 			}
 			return
 		}
@@ -558,7 +559,7 @@ export abstract class BaseTool<TName extends ToolName> {
 					params = preResult.modifiedInput as ToolParams<TName>
 				}
 			} catch (hookErr) {
-				console.warn(`[BaseTool] Pre-hook error (ignored):`, hookErr)
+				logger.warn("BaseTool", "Pre-hook error (ignored):", hookErr)
 			}
 		}
 
@@ -572,13 +573,13 @@ export abstract class BaseTool<TName extends ToolName> {
 		if (cacheKey) {
 			const cached = toolResultCache.get(cacheKey)
 			if (cached !== undefined) {
-				console.log(`[ToolCache] hit tool=${this.name}`)
+				logger.info("BaseTool", `ToolCache hit tool=${this.name}`)
 				recordSecurityMetric("tool_cache_hit", { tool: this.name })
 				originalPushToolResult(cached)
 				toolSpan.end("ok", { stage: "cache", cacheHit: true })
 				return
 			}
-			console.log(`[ToolCache] miss tool=${this.name}`)
+			logger.info("BaseTool", `ToolCache miss tool=${this.name}`)
 			recordSecurityMetric("tool_cache_miss", { tool: this.name })
 		}
 
@@ -607,8 +608,9 @@ export abstract class BaseTool<TName extends ToolName> {
 						const persistPromise = persistToolResult(content, task.taskId, toolUseId, task.cwd)
 							.then((stored) => {
 								const message = formatStoredResultMessage(stored)
-								console.log(
-									`[ToolResultStorage] Persisted ${this.name} result (${stored.totalChars} chars) to ${stored.filePath}`,
+								logger.info(
+									"BaseTool",
+									`ToolResultStorage: Persisted ${this.name} result (${stored.totalChars} chars) to ${stored.filePath}`,
 								)
 								if (cacheKey) {
 									toolResultCache.set(cacheKey, message)
@@ -617,7 +619,7 @@ export abstract class BaseTool<TName extends ToolName> {
 							})
 							.catch((err) => {
 								// If persistence fails, fall back to token truncation
-								console.error(`[ToolResultStorage] Failed to persist result:`, err)
+								logger.error("BaseTool", "ToolResultStorage: Failed to persist result:", err)
 								const tokens = estimateTokens(content)
 								if (tokens > singleMax) {
 									const truncated = truncateToolResult(content, singleMax)
@@ -640,8 +642,9 @@ export abstract class BaseTool<TName extends ToolName> {
 					const tokens = estimateTokens(content)
 					if (tokens > singleMax) {
 						const truncated = truncateToolResult(content, singleMax)
-						console.log(
-							`[ToolResultBudget] Truncated ${this.name} result: ${tokens} -> ~${singleMax} tokens`,
+						logger.info(
+							"BaseTool",
+							`ToolResultBudget: Truncated ${this.name} result: ${tokens} -> ~${singleMax} tokens`,
 						)
 						if (cacheKey) {
 							toolResultCache.set(cacheKey, truncated)
@@ -674,7 +677,7 @@ export abstract class BaseTool<TName extends ToolName> {
 				}
 
 				if (retryable && attempt > 1) {
-					console.log(`[ToolRetry] success tool=${this.name} attempts=${attempt}`)
+					logger.info("BaseTool", `ToolRetry: success tool=${this.name} attempts=${attempt}`)
 					recordSecurityMetric("tool_retry_success", { tool: this.name, attempts: attempt })
 				}
 
@@ -682,7 +685,7 @@ export abstract class BaseTool<TName extends ToolName> {
 				try {
 					await hookManager.runPostHooks(this.name, params as Record<string, unknown>, capturedResult, hookContext)
 				} catch (hookErr) {
-					console.warn(`[BaseTool] Post-hook error (ignored):`, hookErr)
+					logger.warn("BaseTool", "Post-hook error (ignored):", hookErr)
 				}
 				toolSpan.end("ok", { stage: "execute", attempts: attempt })
 				return
@@ -694,7 +697,7 @@ export abstract class BaseTool<TName extends ToolName> {
 				const backoff = 200 * 2 ** (attempt - 1)
 				const jitter = Math.floor(Math.random() * 75)
 				const waitMs = backoff + jitter
-				console.warn(`[ToolRetry] retry tool=${this.name} attempt=${attempt} waitMs=${waitMs}`)
+				logger.warn("BaseTool", `ToolRetry: retry tool=${this.name} attempt=${attempt} waitMs=${waitMs}`)
 				recordSecurityMetric("tool_retry", { tool: this.name, attempt, waitMs })
 				await new Promise((resolve) => setTimeout(resolve, waitMs))
 			}
@@ -707,7 +710,7 @@ export abstract class BaseTool<TName extends ToolName> {
 			const error = lastError instanceof Error ? lastError : new Error(String(lastError))
 			await hookManager.runFailureHooks(this.name, params as Record<string, unknown>, error, hookContext)
 		} catch (hookErr) {
-			console.warn(`[BaseTool] Failure-hook error (ignored):`, hookErr)
+			logger.warn("BaseTool", "Failure-hook error (ignored):", hookErr)
 		}
 		toolSpan.end("error", {
 			stage: "execute",

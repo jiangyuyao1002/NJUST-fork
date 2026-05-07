@@ -1,3 +1,5 @@
+import { logger } from "./logger"
+
 // Support prompts
 type PromptParams = Record<string, string | any[]>
 
@@ -19,7 +21,7 @@ export const createPrompt = (template: string, params: PromptParams): string => 
 			}
 			return String(value)
 		} else {
-			console.warn(`[support-prompt] Missing variable: ${key}`)
+			logger.warn("SupportPrompt", `Missing variable: ${key}`)
 			return match // Keep original placeholder, don't silently clear
 		}
 	})

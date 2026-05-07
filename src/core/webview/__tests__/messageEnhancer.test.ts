@@ -4,6 +4,16 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { MessageEnhancer } from "../messageEnhancer"
 import * as singleCompletionHandlerModule from "../../../utils/single-completion-handler"
 import { ProviderSettingsManager } from "../../config/ProviderSettingsManager"
+import { logger } from "../../../shared/logger"
+
+vi.mock("../../../shared/logger", () => ({
+	logger: {
+		error: vi.fn(),
+		warn: vi.fn(),
+		info: vi.fn(),
+		debug: vi.fn(),
+	},
+}))
 
 // Mock dependencies
 vi.mock("../../../utils/single-completion-handler")
@@ -313,8 +323,6 @@ describe("MessageEnhancer", () => {
 		})
 
 		it("should handle malformed messages gracefully", () => {
-			const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
 			// Create messages that will cause errors when accessed
 			const malformedMessages = [
 				null,
@@ -328,14 +336,10 @@ describe("MessageEnhancer", () => {
 
 			// Should return empty string and log error
 			expect(history).toBe("")
-			expect(consoleSpy).toHaveBeenCalledWith("Failed to extract task history:", expect.any(Error))
-
-			consoleSpy.mockRestore()
+			expect(logger.error).toHaveBeenCalledWith("MessageEnhancer", "Failed to extract task history:", expect.any(Error))
 		})
 
 		it("should handle messages with circular references", () => {
-			const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
 			// Create a message with circular reference
 			const circularMessage: any = { type: "ask", text: "Test" }
 			circularMessage.self = circularMessage
@@ -347,8 +351,6 @@ describe("MessageEnhancer", () => {
 
 			// Should handle gracefully
 			expect(history).toBe("User: Test")
-
-			consoleSpy.mockRestore()
 		})
 	})
 })

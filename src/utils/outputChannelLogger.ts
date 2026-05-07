@@ -1,5 +1,7 @@
 import * as vscode from "vscode"
 
+import { logger } from "../shared/logger"
+
 export type LogFunction = (...args: unknown[]) => void
 
 /**
@@ -46,6 +48,9 @@ export function createOutputChannelLogger(outputChannel: vscode.OutputChannel): 
 export function createDualLogger(outputChannelLog: LogFunction): LogFunction {
 	return (...args: unknown[]) => {
 		outputChannelLog(...args)
-		console.log(...args)
+		if (args.length === 0) return
+		const message = String(args[0])
+		const rest = args.slice(1)
+		logger.info("OutputChannel", message, ...rest)
 	}
 }

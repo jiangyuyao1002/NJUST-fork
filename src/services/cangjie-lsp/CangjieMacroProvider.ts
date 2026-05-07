@@ -6,6 +6,7 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv, CJC_CONFIG_KEY } from "./cangjieToolUtils"
 import type { CangjieSymbolIndex } from "./CangjieSymbolIndex"
+import { logger } from "../../shared/logger"
 
 const execFileAsync = promisify(execFile)
 
@@ -177,7 +178,7 @@ export function registerMacroCommands(context: vscode.ExtensionContext, outputCh
 
 					let expanded = stdout
 					if (stderr && stderr.trim()) {
-						console.warn(`[CangjieMacro] cjc stderr:\n${stderr}`)
+						logger.warn("CangjieMacro", `cjc stderr:\n${stderr}`)
 					}
 					if (!expanded || expanded.trim().length === 0) {
 						vscode.window.showInformationMessage("宏展开未产生输出（可能 cjc 不支持 --expand-macros 标志）。")

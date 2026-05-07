@@ -19,6 +19,7 @@ import { getCommand } from "../../../utils/commands"
 import { handleCheckpointRestoreOperation } from "../checkpointRestoreHandler"
 import { resolveIncomingImages } from "./shared-utils"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
+import { logger } from "../../../shared/logger"
 
 export function registerTaskHandlers(router: MessageRouter): void {
 	router.register("webviewDidLaunch", handleWebviewDidLaunch)
@@ -122,7 +123,7 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 			await provider.postStateToWebview()
 		}
 	} catch (e) {
-		console.error("Error in delete message:", e)
+		logger.error("TaskMessageHandler", "Error in delete message:", e)
 		vscode.window.showErrorMessage(t("common:errors.message.error_deleting_message", { error: e instanceof Error ? e.message : String(e) }))
 	}
 }
@@ -195,7 +196,7 @@ async function doEditConfirm(context: MessageHandlerContext, messageTs: number, 
 		await provider.postStateToWebview()
 		await currentCline.submitUserMessage(editedContent, images)
 	} catch (e) {
-		console.error("Error in edit message:", e)
+		logger.error("TaskMessageHandler", "Error in edit message:", e)
 		vscode.window.showErrorMessage(t("common:errors.message.error_editing_message", { error: e instanceof Error ? e.message : String(e) }))
 	}
 }
@@ -280,18 +281,18 @@ async function handleDeleteMultipleTasksWithIds(context: MessageHandlerContext, 
 	if (!Array.isArray(ids)) return
 	const BATCH = 20
 	const results: { id: string; success: boolean }[] = []
-	console.log(`Batch deletion started: ${ids.length} tasks total`)
+	logger.info("TaskMessageHandler", `Batch deletion started: ${ids.length} tasks total`)
 	for (let i = 0; i < ids.length; i += BATCH) {
 		const batch = ids.slice(i, i + BATCH)
 		const r = await Promise.all(batch.map(async (id: string) => {
 			try { await provider.deleteTaskWithId(id); return { id, success: true } }
-			catch (e) { console.log(`Failed to delete task ${id}: ${e instanceof Error ? e.message : String(e)}`); return { id, success: false } }
+			catch (e) { logger.info("TaskMessageHandler", `Failed to delete task ${id}: ${e instanceof Error ? e.message : String(e)}`); return { id, success: false } }
 		}))
 		results.push(...r)
 		await provider.postStateToWebview()
 	}
 	const ok = results.filter((r) => r.success).length
-	console.log(`Batch deletion completed: ${ok}/${ids.length} tasks successful, ${ids.length - ok} tasks failed`)
+	logger.info("TaskMessageHandler", `Batch deletion completed: ${ok}/${ids.length} tasks successful, ${ids.length - ok} tasks failed`)
 }
 
 async function handleExportTaskWithId(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -306,7 +307,7 @@ async function handleGetTaskWithAggregatedCosts(context: MessageHandlerContext, 
 		const result = await provider.getTaskWithAggregatedCosts(taskId)
 		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: taskId, historyItem: result.historyItem, aggregatedCosts: result.aggregatedCosts })
 	} catch (error) {
-		console.error("Error getting task with aggregated costs:", error)
+		logger.error("TaskMessageHandler", "Error getting task with aggregated costs:", error)
 		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: message.text, error: error instanceof Error ? error.message : String(error) })
 	}
 }

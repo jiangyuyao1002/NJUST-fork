@@ -1,6 +1,8 @@
 import * as vscode from "vscode"
 import pWaitFor from "p-wait-for"
 
+import { logger } from "../../shared/logger"
+
 import type { RooTerminalCallbacks, RooTerminalProcessResultPromise } from "./types"
 import { BaseTerminal } from "./BaseTerminal"
 import { TerminalProcess } from "./TerminalProcess"
@@ -63,7 +65,7 @@ export class Terminal extends BaseTerminal {
 			// Set up event handlers
 			process.once("continue", () => resolve())
 			process.once("error", (error) => {
-				console.error(`[Terminal ${this.id}] error:`, error)
+				logger.error("Terminal", `[Terminal ${this.id}] error:`, error)
 				reject(error)
 			})
 
@@ -79,7 +81,7 @@ export class Terminal extends BaseTerminal {
 					process.run(command)
 				})
 				.catch(() => {
-					console.log(`[Terminal ${this.id}] Shell integration not available. Command execution aborted.`)
+					logger.info("Terminal", `[Terminal ${this.id}] Shell integration not available. Command execution aborted.`)
 
 					// Clean up temporary directory if shell integration is not available
 					ShellIntegrationManager.zshCleanupTmpDir(this.id)

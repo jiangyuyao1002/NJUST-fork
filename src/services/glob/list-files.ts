@@ -7,6 +7,7 @@ import ignore from "ignore"
 import { arePathsEqual } from "../../utils/path"
 import { getBinPath } from "../../services/ripgrep"
 import { DIRS_TO_IGNORE } from "./constants"
+import { logger } from "../../shared/logger"
 
 /**
  * Context object for directory scanning operations
@@ -101,7 +102,7 @@ async function getFirstLevelDirectories(dirPath: string, ignoreInstance: ReturnT
 			}
 		}
 	} catch (err) {
-		console.warn(`Could not read directory ${absolutePath}: ${err}`)
+		logger.warn("ListFiles", `Could not read directory ${absolutePath}: ${err}`)
 	}
 
 	return directories
@@ -341,7 +342,7 @@ async function createIgnoreInstance(dirPath: string): Promise<ReturnType<typeof 
 			ignoreInstance.add(content)
 		} catch (err) {
 			// Continue if we can't read a .gitignore file
-			console.warn(`Could not read .gitignore at ${gitignoreFile}: ${err}`)
+			logger.warn("ListFiles", `Could not read .gitignore at ${gitignoreFile}: ${err}`)
 		}
 	}
 
@@ -493,7 +494,7 @@ async function listFilteredDirectories(
 			}
 		} catch (err) {
 			// Continue if we can't read a directory
-			console.warn(`Could not read directory ${currentPath}: ${err}`)
+			logger.warn("ListFiles", `Could not read directory ${currentPath}: ${err}`)
 		}
 
 		return false // Limit not reached
@@ -658,7 +659,7 @@ async function execRipgrep(rgPath: string, args: string[], limit: number): Promi
 		// Set timeout to avoid hanging
 		const timeoutId = setTimeout(() => {
 			rgProcess.kill()
-			console.warn("ripgrep timed out, returning partial results")
+			logger.warn("ListFiles", "ripgrep timed out, returning partial results")
 			resolve(results.slice(0, limit))
 		}, 10_000)
 
@@ -676,7 +677,7 @@ async function execRipgrep(rgPath: string, args: string[], limit: number): Promi
 
 		// Process stderr but don't fail on non-zero exit codes
 		rgProcess.stderr.on("data", (data) => {
-			console.error(`ripgrep stderr: ${data}`)
+			logger.error("ListFiles", `ripgrep stderr: ${data}`)
 		})
 
 		// Handle process completion
@@ -689,7 +690,7 @@ async function execRipgrep(rgPath: string, args: string[], limit: number): Promi
 
 			// Log non-zero exit codes but don't fail
 			if (code !== 0 && code !== null && code !== 143 /* SIGTERM */) {
-				console.warn(`ripgrep process exited with code ${code}, returning partial results`)
+				logger.warn("ListFiles", `ripgrep process exited with code ${code}, returning partial results`)
 			}
 
 			resolve(results.slice(0, limit))

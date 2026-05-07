@@ -158,7 +158,9 @@ describe("CacheManager", () => {
 			// Wait for any pending promises
 			await new Promise((resolve) => setTimeout(resolve, 0))
 
-			expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to save cache:", expect.any(Error))
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				expect.stringContaining("[CacheManager] Failed to save cache"),
+			)
 
 			consoleErrorSpy.mockRestore()
 		})
@@ -185,9 +187,7 @@ describe("CacheManager", () => {
 			await cacheManager.clearCacheFile()
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				"Failed to clear cache file:",
-				expect.any(Error),
-				mockCachePath,
+				expect.stringContaining("[CacheManager] Failed to clear cache file"),
 			)
 
 			consoleErrorSpy.mockRestore()

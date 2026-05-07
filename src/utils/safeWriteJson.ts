@@ -4,6 +4,8 @@ import * as path from "path"
 import * as lockfile from "proper-lockfile"
 import { JsonStreamStringify } from "json-stream-stringify"
 
+import { logger } from "../shared/logger"
+
 /**
  * Options for safeWriteJson function
  */
@@ -47,7 +49,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 		// Verify directory exists after creation attempt
 		await fs.access(dirPath)
 	} catch (dirError: any) {
-		console.error(`Failed to create or access directory for ${absoluteFilePath}:`, dirError)
+		logger.error("SafeWriteJson", `Failed to create or access directory for ${absoluteFilePath}:`, dirError)
 		throw dirError
 	}
 
@@ -65,7 +67,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 				maxTimeout: 1000, // Maximum time to wait for any single retry (in ms)
 			},
 			onCompromised: (err) => {
-				console.error(`Lock at ${absoluteFilePath} was compromised:`, err)
+				logger.error("SafeWriteJson", `Lock at ${absoluteFilePath} was compromised:`, err)
 				throw err
 			},
 		})
@@ -73,7 +75,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 		// If lock acquisition fails, we throw immediately.
 		// The releaseLock remains a no-op, so the finally block in the main file operations
 		// try-catch-finally won't try to release an unacquired lock if this path is taken.
-		console.error(`Failed to acquire lock for ${absoluteFilePath}:`, lockError)
+		logger.error("SafeWriteJson", `Failed to acquire lock for ${absoluteFilePath}:`, lockError)
 		// Propagate the lock acquisition error
 		throw lockError
 	}
@@ -128,14 +130,11 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 			} catch (unlinkBackupError) {
 				// Log this error, but do not re-throw. The main operation was successful.
 				// actualTempBackupFilePath remains set, indicating an orphaned backup.
-				console.error(
-					`Successfully wrote ${absoluteFilePath}, but failed to clean up backup ${actualTempBackupFilePath}:`,
-					unlinkBackupError,
-				)
+				logger.error("SafeWriteJson", `Successfully wrote ${absoluteFilePath}, but failed to clean up backup ${actualTempBackupFilePath}:`, unlinkBackupError)
 			}
 		}
 	} catch (originalError) {
-		console.error(`Operation failed for ${absoluteFilePath}: [Original Error Caught]`, originalError)
+		logger.error("SafeWriteJson", `Operation failed for ${absoluteFilePath}: [Original Error Caught]`, originalError)
 
 		const newFileToCleanupWithinCatch = actualTempNewFilePath
 		const backupFileToRollbackOrCleanupWithinCatch = actualTempBackupFilePath
@@ -148,10 +147,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 				actualTempBackupFilePath = null
 			} catch (rollbackError) {
 				// actualTempBackupFilePath (outer scope) remains pointing to backupFileToRollbackOrCleanupWithinCatch
-				console.error(
-					`[Catch] Failed to restore backup ${backupFileToRollbackOrCleanupWithinCatch} to ${absoluteFilePath}:`,
-					rollbackError,
-				)
+				logger.error("SafeWriteJson", `[Catch] Failed to restore backup ${backupFileToRollbackOrCleanupWithinCatch} to ${absoluteFilePath}:`, rollbackError)
 			}
 		}
 
@@ -160,10 +156,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 			try {
 				await fs.unlink(newFileToCleanupWithinCatch)
 			} catch (cleanupError) {
-				console.error(
-					`[Catch] Failed to clean up temporary new file ${newFileToCleanupWithinCatch}:`,
-					cleanupError,
-				)
+				logger.error("SafeWriteJson", `[Catch] Failed to clean up temporary new file ${newFileToCleanupWithinCatch}:`, cleanupError)
 			}
 		}
 
@@ -172,10 +165,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 			try {
 				await fs.unlink(actualTempBackupFilePath)
 			} catch (cleanupError) {
-				console.error(
-					`[Catch] Failed to clean up temporary backup file ${actualTempBackupFilePath}:`,
-					cleanupError,
-				)
+				logger.error("SafeWriteJson", `[Catch] Failed to clean up temporary backup file ${actualTempBackupFilePath}:`, cleanupError)
 			}
 		}
 		throw originalError // This MUST be the error that rejects the promise.
@@ -187,7 +177,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 			await releaseLock()
 		} catch (unlockError) {
 			// Do not re-throw here, as the originalError from the try/catch (if any) is more important.
-			console.error(`Failed to release lock for ${absoluteFilePath}:`, unlockError)
+			logger.error("SafeWriteJson", `Failed to release lock for ${absoluteFilePath}:`, unlockError)
 		}
 	}
 }

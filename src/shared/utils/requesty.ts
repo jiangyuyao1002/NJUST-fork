@@ -1,3 +1,5 @@
+import { logger } from "../logger"
+
 export const REQUESTY_BASE_URL = "https://router.requesty.ai/v1"
 
 type URLType = "router" | "app" | "api"
@@ -49,7 +51,7 @@ export const toRequestyServiceUrl = (baseUrl?: string | null, service: URLType =
 	} catch (error) {
 		// If the provided baseUrl is invalid, fall back to the default
 		if (baseUrl && baseUrl !== REQUESTY_BASE_URL) {
-			console.warn(`Invalid base URL "${baseUrl}", falling back to default`)
+			logger.warn("Requesty", `Invalid base URL "${baseUrl}", falling back to default`)
 		}
 		return replaceCname(REQUESTY_BASE_URL, service)
 	}

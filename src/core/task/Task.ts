@@ -74,6 +74,7 @@ import { DEFAULT_MODE_SLUG } from "../../shared/mode-constants"
 import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
 import { DiffStrategy, type ToolUse, type ToolParamName, toolParamNames } from "../../shared/tools"
 import { getModelMaxOutputTokens } from "../../shared/api"
+import { logger } from "../../shared/logger"
 
 // services
 import { McpServerManager } from "../../services/mcp/McpServerManager"
@@ -471,8 +472,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				block.type === "tool_result" && block.tool_use_id === toolResult.tool_use_id,
 		)
 		if (existingResult) {
-			console.warn(
-				`[Task#pushToolResultToUserContent] Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`,
+			logger.warn("Task",
+				`pushToolResultToUserContent: Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`,
 			)
 			return false
 		}
@@ -656,7 +657,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.cangjieRuntimePolicy = new CangjieRuntimePolicy(this.cwd)
 
 		this.rooIgnoreController.initialize().catch((error) => {
-			console.error("Failed to initialize RooIgnoreController:", error)
+			logger.error("Task", "Failed to initialize RooIgnoreController:", error)
 		})
 
 		this.apiConfiguration = apiConfiguration
@@ -855,8 +856,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					this.updateApiConfiguration(newState.apiConfiguration)
 				}
 			} catch (error) {
-				console.error(
-					`[Task#${this.taskId}.${this.instanceId}] Failed to update API configuration on profile change:`,
+				logger.error("Task",
+					`Failed to update API configuration on profile change for task ${this.taskId}.${this.instanceId}:`,
 					error,
 				)
 			}
@@ -1260,8 +1261,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				timeout: 30_000, // 30 second timeout as safety net
 			}).catch(() => {
 				// If timeout or abort, log and proceed anyway to avoid hanging
-				console.warn(
-					`[Task#${this.taskId}] flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved`,
+				logger.warn("Task",
+					`flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved for task ${this.taskId}`,
 				)
 			})
 		}
@@ -1291,8 +1292,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// Clear the pending content since it's now saved
 			this.userMessageContent = []
 		} else {
-			console.warn(
-				`[Task#${this.taskId}] flushPendingToolResultsToHistory: save failed, retaining pending tool results in memory`,
+			logger.warn("Task",
+				`flushPendingToolResultsToHistory: save failed for task ${this.taskId}, retaining pending tool results in memory`,
 			)
 		}
 
@@ -1309,7 +1310,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			})
 			return true
 		} catch (error) {
-			console.error("Failed to save API conversation history:", error)
+			logger.error("Task", "Failed to save API conversation history:", error)
 			return false
 		}
 	}
@@ -1324,8 +1325,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		for (let attempt = 0; attempt < delays.length; attempt++) {
 			await new Promise<void>((resolve) => setTimeout(resolve, delays[attempt]))
-			console.warn(
-				`[Task#${this.taskId}] retrySaveApiConversationHistory: retry attempt ${attempt + 1}/${delays.length}`,
+			logger.warn("Task",
+				`retrySaveApiConversationHistory: retry attempt ${attempt + 1}/${delays.length} for task ${this.taskId}`,
 			)
 
 			const success = await this.saveApiConversationHistory()
@@ -1411,7 +1412,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			await this.notifier?.updateTaskHistory(historyItem)
 			return true
 		} catch (error) {
-			console.error("Failed to save Roo messages:", error)
+			logger.error("Task", "Failed to save Roo messages:", error)
 			return false
 		}
 	}
@@ -1706,7 +1707,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this.clineMessages[lastFollowUpIndex].isAnswered = true
 				// Save the updated messages
 				this.saveClineMessages().catch((error) => {
-					console.error("Failed to save answered follow-up state:", error)
+					logger.error("Task", "Failed to save answered follow-up state:", error)
 				})
 			}
 		}
@@ -1721,7 +1722,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this.clineMessages[lastToolAskIndex].isAnswered = true
 				void this.updateClineMessage(this.clineMessages[lastToolAskIndex])
 				this.saveClineMessages().catch((error) => {
-					console.error("Failed to save answered tool-ask state:", error)
+					logger.error("Task", "Failed to save answered tool-ask state:", error)
 				})
 			}
 		}
@@ -1831,10 +1832,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// hydrated yet, causing it to interpret the message as a new task request.
 				this.handleWebviewAskResponse("messageResponse", text, images)
 			} else {
-				console.error("[Task#submitUserMessage] Provider reference lost")
+				logger.error("Task", "submitUserMessage: Provider reference lost")
 			}
 		} catch (error) {
-			console.error("[Task#submitUserMessage] Failed to submit user message:", error)
+			logger.error("Task", "submitUserMessage: Failed to submit user message:", error)
 		}
 	}
 
@@ -2008,7 +2009,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			const servers = mcpHub.getServers()
 			return countEnabledMcpTools(servers)
 		} catch (error) {
-			console.error("[Task#getEnabledMcpToolsCount] Error counting MCP tools:", error)
+			logger.error("Task", "getEnabledMcpToolsCount: Error counting MCP tools:", error)
 			return { enabledToolCount: 0, enabledServerCount: 0 }
 		}
 	}
@@ -2051,7 +2052,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 */
 	public cancelCurrentRequest(): void {
 		if (this.currentRequestAbortController) {
-			console.log(`[Task#${this.taskId}.${this.instanceId}] Aborting current HTTP request`)
+			logger.info("Task", `Aborting current HTTP request for task ${this.taskId}.${this.instanceId}`)
 			this.currentRequestAbortController.abort()
 			this.currentRequestAbortController = undefined
 		}
@@ -2478,13 +2479,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				if (queued) {
 					setTimeout(() => {
 						this.submitUserMessage(queued.text, queued.images).catch((err) =>
-							console.error(`[Task] Failed to submit queued message:`, err),
+							logger.error("Task", "Failed to submit queued message:", err),
 						)
 					}, 0)
 				}
 			}
 		} catch (e) {
-			console.error(`[Task] Queue processing error:`, e)
+			logger.error("Task", "Queue processing error:", e)
 		}
 	}
 }

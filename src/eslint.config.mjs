@@ -11,16 +11,22 @@ export default [
 			"prefer-const": "error",
 			// 存量告警较多时：先 warn，分批清零后再改为 error（与 P0-1 决策矩阵一致）。
 			"@typescript-eslint/no-unused-vars": [
-				"warn",
+				"error",
 				{
 					argsIgnorePattern: "^_",
 					varsIgnorePattern: "^_",
-					caughtErrors: "none",
+					caughtErrorsIgnorePattern: "^_",
 				},
 			],
 			"@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: true }],
-			"@typescript-eslint/no-require-imports": "off",
-			"@typescript-eslint/ban-ts-comment": "off",
+			"@typescript-eslint/no-require-imports": "warn",
+			"@typescript-eslint/ban-ts-comment": ["warn", { "ts-expect-error": false, "ts-ignore": true, "ts-nocheck": true }],
+			"no-console": ["warn", { allow: ["error", "warn"] }],
+			// NOTE: The following rules require type information (parserOptions.project)
+			// They are disabled until parserOptions are properly configured
+			// "@typescript-eslint/no-floating-promises": "error",
+			// "@typescript-eslint/require-await": "warn",
+			// "@typescript-eslint/prefer-optional-chain": "warn",
 		},
 	},
 	{

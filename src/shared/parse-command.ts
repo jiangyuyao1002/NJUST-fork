@@ -1,5 +1,7 @@
 import { parse } from "shell-quote"
 
+import { logger } from "./logger"
+
 export type ShellToken = string | { op: string } | { command: string }
 
 /**
@@ -119,7 +121,7 @@ function parseCommandLine(command: string): string[] {
 		tokens = parse(processedCommand) as ShellToken[]
 	} catch (error: any) {
 		// If shell-quote fails to parse, fall back to simple splitting
-		console.warn("shell-quote parse error:", error.message, "for command:", processedCommand)
+		logger.warn("ParseCommand", "shell-quote parse error:", error.message, "for command:", processedCommand)
 
 		// Simple fallback: split by common operators
 		const fallbackCommands = processedCommand

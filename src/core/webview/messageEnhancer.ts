@@ -3,6 +3,7 @@ import { supportPrompt } from "../../shared/support-prompt"
 import { singleCompletionHandler } from "../../utils/single-completion-handler"
 import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 import { ClineProvider } from "./ClineProvider"
+import { logger } from "../../shared/logger"
 
 export interface MessageEnhancerOptions {
 	text: string
@@ -120,7 +121,7 @@ export class MessageEnhancer {
 				.join("\n")
 		} catch (error) {
 			// Log error but don't fail the enhancement
-			console.error("Failed to extract task history:", error)
+			logger.error("MessageEnhancer", "Failed to extract task history:", error)
 			return ""
 		}
 	}

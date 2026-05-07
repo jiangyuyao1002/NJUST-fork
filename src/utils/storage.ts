@@ -3,6 +3,7 @@ import * as path from "path"
 import * as fs from "fs/promises"
 import { constants as fsConstants } from "fs"
 
+import { logger } from "../shared/logger"
 import { Package } from "../shared/package"
 import { t } from "../i18n"
 
@@ -20,7 +21,7 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 		const config = vscode.workspace.getConfiguration(Package.name)
 		customStoragePath = config.get<string>("customStoragePath", "")
 	} catch (error) {
-		console.warn("Could not access VSCode configuration - using default path")
+		logger.warn("StorageProvider", "Could not access VSCode configuration - using default path")
 		return defaultPath
 	}
 
@@ -39,7 +40,7 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 		return customStoragePath
 	} catch (error) {
 		// If path is unusable, report error and fall back to default path
-		console.error(`Custom storage path is unusable: ${error instanceof Error ? error.message : String(error)}`)
+		logger.error("StorageProvider", `Custom storage path is unusable: ${error instanceof Error ? error.message : String(error)}`)
 		if (vscode.window) {
 			vscode.window.showErrorMessage(t("common:errors.custom_storage_path_unusable", { path: customStoragePath }))
 		}
@@ -83,7 +84,7 @@ export async function getCacheDirectoryPath(globalStoragePath: string): Promise<
  */
 export async function promptForCustomStoragePath(): Promise<void> {
 	if (!vscode.window || !vscode.workspace) {
-		console.error("VS Code API not available")
+		logger.error("StorageProvider", "VS Code API not available")
 		return
 	}
 
@@ -92,7 +93,7 @@ export async function promptForCustomStoragePath(): Promise<void> {
 		const currentConfig = vscode.workspace.getConfiguration(Package.name)
 		currentPath = currentConfig.get<string>("customStoragePath", "")
 	} catch (error) {
-		console.error("Could not access configuration")
+		logger.error("StorageProvider", "Could not access configuration")
 		return
 	}
 
@@ -145,7 +146,7 @@ export async function promptForCustomStoragePath(): Promise<void> {
 				vscode.window.showInformationMessage(t("common:info.default_storage_path"))
 			}
 		} catch (error) {
-			console.error("Failed to update configuration", error)
+			logger.error("StorageProvider", "Failed to update configuration", error)
 		}
 	}
 }

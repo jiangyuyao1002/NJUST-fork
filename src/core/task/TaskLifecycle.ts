@@ -6,6 +6,7 @@
  */
 
 import type { ClineMessage } from "@njust-ai-cj/types"
+import { logger } from "../../shared/logger"
 
 // ─── History Message Cleanup ─────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export function safeDispose(label: string, fn: () => void): void {
 	try {
 		fn()
 	} catch (error) {
-		console.error(`Error during dispose (${label}):`, error)
+		logger.error("TaskLifecycle", `Error during dispose (${label}):`, error)
 	}
 }
 

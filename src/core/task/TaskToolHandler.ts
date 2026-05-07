@@ -9,6 +9,7 @@
  * management (currently in Task + ToolExecutionContext).
  */
 import type { Anthropic } from "@anthropic-ai/sdk"
+import { logger } from "../../shared/logger"
 
 export interface TaskToolHandlerContext {
 	userMessageContent: Anthropic.Messages.ContentBlockParam[]
@@ -29,8 +30,8 @@ export class TaskToolHandler {
 				block.type === "tool_result" && block.tool_use_id === toolResult.tool_use_id,
 		)
 		if (existingResult) {
-			console.warn(
-				`[Task#pushToolResultToUserContent] Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`,
+			logger.warn("TaskToolHandler",
+				`Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`,
 			)
 			return false
 		}

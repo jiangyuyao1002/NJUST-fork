@@ -10,6 +10,7 @@ import { ContextProxy } from "../../../core/config/ContextProxy"
 import { RouterName } from "../../../shared/api"
 import { getCacheDirectoryPath } from "../../../utils/storage"
 import { fileExistsAtPath } from "../../../utils/fs"
+import { logger } from "../../../shared/logger"
 import { safeWriteJson } from "../../../utils/safeWriteJson"
 
 import { getOpenRouterModelEndpoints } from "./openrouter"
@@ -84,7 +85,7 @@ export const getModelEndpoints = async ({
 			await writeModelEndpoints(key, modelProviders)
 
 		} catch (error) {
-			console.error(`[getModelProviders] error writing ${key} endpoints to file cache`, error)
+			logger.error("ModelEndpointCache", `Error writing ${key} endpoints to file cache`, error)
 		}
 
 		return modelProviders
@@ -94,7 +95,7 @@ export const getModelEndpoints = async ({
 		modelProviders = await readModelEndpoints(router)
 
 	} catch (error) {
-		console.error(`[getModelProviders] error reading ${key} endpoints from file cache`, error)
+		logger.error("ModelEndpointCache", `Error reading ${key} endpoints from file cache`, error)
 	}
 
 	return modelProviders ?? {}

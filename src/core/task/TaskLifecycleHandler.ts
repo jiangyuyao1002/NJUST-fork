@@ -33,6 +33,7 @@ import { deleteGeneratedCangjieTestFilesForTask } from "../../services/cangjie-l
 import { TerminalRegistry } from "../../integrations/terminal/TerminalRegistry"
 import { OutputInterceptor } from "../../integrations/terminal/OutputInterceptor"
 import { safeDispose } from "./TaskLifecycle"
+import { logger } from "../../shared/logger"
 
 // ── Host type ────────────────────────────────────────────────────────────
 // Structural contract: Task implements this shape at runtime.
@@ -379,8 +380,8 @@ export class TaskLifecycleHandler {
 			cacheBreaks: globalPromptCacheBreakDetector.getTotalBreaks(),
 			cacheBreaksBySource: breakSummary,
 		}
-		console.log(
-			`[Task Session Summary] trigger=${payload.trigger} task=${payload.taskId} cacheRequests=${payload.cacheRequests} cacheHitRate=${payload.cacheHitRate.toFixed(3)} cacheRead=${payload.cacheReadTokens} cacheCreate=${payload.cacheCreationTokens} estSavings=${(payload.estimatedSavingsPercent * 100).toFixed(1)}% cacheBreaks=${payload.cacheBreaks} breakBySource=${JSON.stringify(payload.cacheBreaksBySource)}`,
+		logger.info("TaskLifecycleHandler",
+			`Task Session Summary: trigger=${payload.trigger} task=${payload.taskId} cacheRequests=${payload.cacheRequests} cacheHitRate=${payload.cacheHitRate.toFixed(3)} cacheRead=${payload.cacheReadTokens} cacheCreate=${payload.cacheCreationTokens} estSavings=${(payload.estimatedSavingsPercent * 100).toFixed(1)}% cacheBreaks=${payload.cacheBreaks} breakBySource=${JSON.stringify(payload.cacheBreaksBySource)}`,
 		)
 
 		getTaskDirectoryPath(t.globalStoragePath, t.taskId)
@@ -389,7 +390,7 @@ export class TaskLifecycleHandler {
 				await fs.appendFile(metricsPath, `${JSON.stringify(payload)}\n`, "utf8")
 			})
 			.catch((error: any) => {
-				console.error(`[Task Session Summary] failed to persist metrics for task ${t.taskId}:`, error)
+				logger.error("TaskLifecycleHandler", `Failed to persist metrics for task ${t.taskId}:`, error)
 			})
 	}
 
@@ -416,12 +417,12 @@ export class TaskLifecycleHandler {
 		try {
 			await t.saveClineMessages()
 		} catch (error) {
-			console.error(`Error saving messages during abort for task ${t.taskId}.${t.instanceId}:`, error)
+			logger.error("TaskLifecycleHandler", `Error saving messages during abort for task ${t.taskId}.${t.instanceId}:`, error)
 		}
 		try {
 			t.dispose()
 		} catch (error) {
-			console.error(`Error during task ${t.taskId}.${t.instanceId} disposal:`, error)
+			logger.error("TaskLifecycleHandler", `Error during task ${t.taskId}.${t.instanceId} disposal:`, error)
 		}
 	}
 
@@ -435,20 +436,20 @@ export class TaskLifecycleHandler {
 		}
 		t.isDisposed = true
 
-		console.log(`[Task#dispose] disposing task ${t.taskId}.${t.instanceId}`)
+		logger.info("TaskLifecycleHandler", `Disposing task ${t.taskId}.${t.instanceId}`)
 		this.emitTaskSessionMetricsSummary(t.abort ? "abort" : "dispose")
 		clearMcpInstructionsDelta(t.taskId)
 
 		try {
 			deleteGeneratedCangjieTestFilesForTask(t.taskId)
 		} catch (e) {
-			console.error("Error deleting generated Cangjie test files:", e)
+			logger.error("TaskLifecycleHandler", "Error deleting generated Cangjie test files:", e)
 		}
 
 		try {
 			t.cancelCurrentRequest()
 		} catch (error) {
-			console.error("Error cancelling current request:", error)
+			logger.error("TaskLifecycleHandler", "Error cancelling current request:", error)
 		}
 
 		try {
@@ -460,7 +461,7 @@ export class TaskLifecycleHandler {
 				t.providerProfileChangeListener = undefined
 			}
 		} catch (error) {
-			console.error("Error removing provider profile change listener:", error)
+			logger.error("TaskLifecycleHandler", "Error removing provider profile change listener:", error)
 		}
 
 		try {
@@ -470,25 +471,25 @@ export class TaskLifecycleHandler {
 			}
 			t.messageQueueService.dispose()
 		} catch (error) {
-			console.error("Error disposing message queue:", error)
+			logger.error("TaskLifecycleHandler", "Error disposing message queue:", error)
 		}
 
 		try {
 			t.removeAllListeners()
 		} catch (error) {
-			console.error("Error removing event listeners:", error)
+			logger.error("TaskLifecycleHandler", "Error removing event listeners:", error)
 		}
 
 		try {
 			TerminalRegistry.releaseTerminalsForTask(t.taskId)
 		} catch (error) {
-			console.error("Error releasing terminals:", error)
+			logger.error("TaskLifecycleHandler", "Error releasing terminals:", error)
 		}
 
 		void getTaskDirectoryPath(t.globalStoragePath, t.taskId)
 			.then((taskDir: string) => OutputInterceptor.cleanup(path.join(taskDir, "command-output")))
 			.catch((error: any) => {
-				console.error("Error cleaning up command output artifacts:", error)
+				logger.error("TaskLifecycleHandler", "Error cleaning up command output artifacts:", error)
 			})
 
 		safeDispose("RooIgnoreController", () => {
@@ -503,7 +504,7 @@ export class TaskLifecycleHandler {
 
 		safeDispose("DiffViewProvider", () => {
 			if (t.isStreaming && t.diffViewProvider.isEditing) {
-				t.diffViewProvider.revertChanges().catch(console.error)
+				t.diffViewProvider.revertChanges().catch((error: any) => logger.error("TaskLifecycleHandler", "DiffViewProvider revertChanges failed:", error))
 			}
 		})
 	}

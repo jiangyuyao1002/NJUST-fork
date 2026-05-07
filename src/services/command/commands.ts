@@ -4,6 +4,7 @@ import { Dirent } from "fs"
 import matter from "gray-matter"
 import { getGlobalRooDirectory, getProjectRooDirectoryForCwd } from "../roo-config"
 import { getBuiltInCommands, getBuiltInCommand } from "./built-in-commands"
+import { logger } from "../../shared/logger"
 
 /**
  * Maximum depth for resolving symlinks to prevent cyclic symlink loops
@@ -341,7 +342,7 @@ async function scanCommandDirectory(
 					})
 				}
 			} catch (error) {
-				console.warn(`Failed to read command file ${resolvedPath}:`, error)
+				logger.warn("Commands", `Failed to read command file ${resolvedPath}:`, error)
 			}
 		}
 	} catch {

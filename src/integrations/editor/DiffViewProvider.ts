@@ -7,6 +7,7 @@ import delay from "delay"
 
 import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
 
+import { logger } from "../../shared/logger"
 import { createDirectoriesForFile } from "../../utils/fs"
 import { arePathsEqual, getReadablePath } from "../../utils/path"
 import { formatResponse } from "../../core/prompts/responses"
@@ -101,7 +102,7 @@ export class DiffViewProvider {
 				try {
 					await vscode.window.tabGroups.close(tab)
 				} catch (err) {
-					console.error(`Failed to close tab ${tab.label}`, err)
+					logger.error("DiffViewProvider", `Failed to close tab ${tab.label}`, err)
 				}
 			}
 			this.documentWasOpen = true
@@ -244,7 +245,7 @@ export class DiffViewProvider {
 				await delay(safeDelayMs)
 			} catch (error) {
 				// Log error but continue - delay failure shouldn't break the save operation
-				console.warn(`Failed to apply write delay: ${error}`)
+				logger.warn("DiffViewProvider", `Failed to apply write delay: ${error}`)
 			}
 
 			const postDiagnostics = vscode.languages.getDiagnostics()
@@ -440,7 +441,7 @@ export class DiffViewProvider {
 				vscode.window.tabGroups.close(tab).then(
 					() => undefined,
 					(err) => {
-						console.error(`Failed to close diff tab ${tab.label}`, err)
+						logger.error("DiffViewProvider", `Failed to close diff tab ${tab.label}`, err)
 					},
 				),
 			)
@@ -689,7 +690,7 @@ export class DiffViewProvider {
 			try {
 				await delay(safeDelayMs)
 			} catch (error) {
-				console.warn(`Failed to apply write delay: ${error}`)
+				logger.warn("DiffViewProvider", `Failed to apply write delay: ${error}`)
 			}
 
 			const postDiagnostics = vscode.languages.getDiagnostics()

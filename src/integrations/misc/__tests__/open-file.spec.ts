@@ -93,7 +93,7 @@ describe("openFile", () => {
 
 			// Should log a warning about decode failure
 			expect(console.warn).toHaveBeenCalledWith(
-				"Failed to decode file path: URIError: URI malformed. Using original path.",
+				"[OpenFile] Failed to decode file path: URIError: URI malformed. Using original path.",
 			)
 
 			// Should still attempt to open the file with the original path

@@ -2,6 +2,7 @@ import axios from "axios"
 
 import type { ModelInfo } from "@njust-ai-cj/types"
 
+import { logger } from "../../../shared/logger"
 import { parseApiPrice } from "../../../shared/cost"
 
 export async function getUnboundModels(apiKey?: string | null): Promise<Record<string, ModelInfo>> {
@@ -34,7 +35,7 @@ export async function getUnboundModels(apiKey?: string | null): Promise<Record<s
 			models[rawModel.id] = modelInfo
 		}
 	} catch (error) {
-		console.error(`Error fetching Unbound models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		logger.error("Unbound", `Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 	}
 
 	return models

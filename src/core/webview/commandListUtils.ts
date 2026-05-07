@@ -2,6 +2,8 @@
  * Command list utilities for merging and normalizing allowed/denied command lists.
  */
 
+import { logger } from "../../shared/logger"
+
 /**
  * Normalizes a command list by filtering invalid entries and trimming whitespace.
  */
@@ -35,7 +37,7 @@ export function mergeCommandLists(
 		return [...new Set([...validGlobalCommands, ...validWorkspaceCommands])]
 	} catch (error) {
 		if (commandType) {
-			console.error(`Error merging ${commandType} commands:`, error)
+			logger.error("CommandListUtils", `Error merging ${commandType} commands:`, error)
 		}
 		return []
 	}

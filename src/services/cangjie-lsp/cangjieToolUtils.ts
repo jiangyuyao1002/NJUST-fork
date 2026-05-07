@@ -4,6 +4,7 @@ import * as fs from "fs"
 import { execFile } from "child_process"
 import { promisify } from "util"
 import { Package } from "../../shared/package"
+import { logger } from "../../shared/logger"
 
 const execFileAsync = promisify(execFile)
 
@@ -146,8 +147,8 @@ export function resolveCangjieToolPath(
 		}
 	}
 
-	console.warn(
-		`[cangjieToolUtils] Cannot locate ${toolName}: no configured path, ` +
+	logger.warn("CangjieToolUtils",
+		`Cannot locate ${toolName}: no configured path, ` +
 		`CANGJIE_HOME not set, and not found in well-known install locations. ` +
 		`Falling back to bare "${exeName}" — commands may fail with ENOENT.`,
 	)

@@ -4,6 +4,7 @@ import { IEmbedder } from "./interfaces/embedder"
 import { IVectorStore } from "./interfaces/vector-store"
 import { CodeIndexConfigManager } from "./config-manager"
 import { CodeIndexStateManager } from "./state-manager"
+import { logger } from "../../shared/logger"
 
 /**
  * Service responsible for searching the code index.
@@ -65,7 +66,7 @@ export class CodeIndexSearchService {
 			const results = await this.vectorStore.search(vector, normalizedPrefix, minScore, maxResults)
 			return results
 		} catch (error) {
-			console.error("[CodeIndexSearchService] Error during search:", error)
+			logger.error("CodeIndexSearchService", "Error during search:", error)
 			this.stateManager.setSystemState("Error", `Search failed: ${(error as Error).message}`)
 
 			throw error // Re-throw the error after setting state

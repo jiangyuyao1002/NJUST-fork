@@ -411,7 +411,7 @@ describe("LMStudio Fetcher", () => {
 			expect(MockedLMStudioClientConstructor).not.toHaveBeenCalled()
 			expect(mockListLoaded).not.toHaveBeenCalled()
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				`Error fetching LMStudio models: ${JSON.stringify(networkError, Object.getOwnPropertyNames(networkError), 2)}`,
+				expect.stringContaining("Error fetching LMStudio models"),
 			)
 			expect(result).toEqual({})
 			consoleErrorSpy.mockRestore()
@@ -429,7 +429,7 @@ describe("LMStudio Fetcher", () => {
 			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/v1/models`)
 			expect(MockedLMStudioClientConstructor).not.toHaveBeenCalled()
 			expect(mockListLoaded).not.toHaveBeenCalled()
-			expect(consoleInfoSpy).toHaveBeenCalledWith(`Error connecting to LMStudio at ${baseUrl}`)
+			expect(consoleInfoSpy).toHaveBeenCalledWith(expect.stringContaining("Error connecting to LMStudio"))
 			expect(result).toEqual({})
 			consoleInfoSpy.mockRestore()
 		})
@@ -448,7 +448,7 @@ describe("LMStudio Fetcher", () => {
 			expect(MockedLMStudioClientConstructor).toHaveBeenCalledWith({ baseUrl: lmsUrl })
 			expect(mockListLoaded).toHaveBeenCalledTimes(1)
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				`Error fetching LMStudio models: ${JSON.stringify(listError, Object.getOwnPropertyNames(listError), 2)}`,
+				expect.stringContaining("Error fetching LMStudio models"),
 			)
 			expect(result).toEqual({})
 			consoleErrorSpy.mockRestore()

@@ -2,6 +2,7 @@ import { RooModelsResponseSchema, type ModelInfo, type ModelRecord } from "@njus
 
 import { parseApiPrice } from "../../../shared/cost"
 
+import { logger } from "../../../shared/logger"
 import { DEFAULT_HEADERS } from "../constants"
 import { resolveVersionedSettings, type VersionedSettings } from "./versionedSettings"
 
@@ -48,7 +49,7 @@ export async function getRooModels(baseUrl: string, apiKey?: string): Promise<Mo
 					errorBody = "(unable to read response body)"
 				}
 
-				console.error(`[getRooModels] HTTP error:`, {
+				logger.error("RooModels", "HTTP error:", {
 					status: response.status,
 					statusText: response.statusText,
 					url,
@@ -65,8 +66,8 @@ export async function getRooModels(baseUrl: string, apiKey?: string): Promise<Mo
 			const parsed = RooModelsResponseSchema.safeParse(data)
 
 			if (!parsed.success) {
-				console.error("Error fetching NJUST_AI_CJ Cloud models: Unexpected response format", data)
-				console.error("Validation errors:", parsed.error.format())
+				logger.error("RooModels", "Error fetching NJUST_AI_CJ Cloud models: Unexpected response format", data)
+				logger.error("RooModels", "Validation errors:", parsed.error.format())
 				throw new Error("Failed to fetch NJUST_AI_CJ Cloud models: Unexpected response format.")
 			}
 
@@ -162,7 +163,7 @@ export async function getRooModels(baseUrl: string, apiKey?: string): Promise<Mo
 		}
 	} catch (error: any) {
 		// Enhanced error logging
-		console.error("[getRooModels] Error fetching NJUST_AI_CJ Cloud models:", {
+		logger.error("RooModels", "Error fetching NJUST_AI_CJ Cloud models:", {
 			message: error.message || String(error),
 			name: error.name,
 			stack: error.stack,

@@ -1,3 +1,5 @@
+import { logger } from "../shared/logger"
+
 interface Say {
 	speak: (text: string, voice?: string, speed?: number, callback?: (err?: string) => void) => void
 	stop: () => void
@@ -34,7 +36,7 @@ export const playTts = async (message: string, options: PlayTtsOptions = {}) => 
 		await processQueue()
 	} catch (error) {
 		// TTS playback errors are non-critical — log but don't throw
-		console.warn(`TTS playback interrupted: ${error instanceof Error ? error.message : String(error)}`)
+		logger.warn("Tts", `TTS playback interrupted: ${error instanceof Error ? error.message : String(error)}`)
 	}
 }
 

@@ -1,5 +1,6 @@
 import { normalizeDeferredResponse } from "./normalizeDeferredResponse"
 import { parseWorkspaceOps } from "./parseWorkspaceOps"
+import { logger } from "../../shared/logger"
 import { ApiRetryExecutor, type ApiRetryOptions } from "../../api/retry/ApiRetryStrategy"
 import { analyzeErrorForRetry } from "../../api/retry/ApiErrorClassifier"
 import type {
@@ -108,11 +109,11 @@ export class CloudAgentClient {
 			}
 			if (!resp.ok) {
 				const t = await resp.text().catch(() => "")
-				console.warn(`[CloudAgentClient] deferred/abort HTTP ${resp.status}: ${t.slice(0, 300)}`)
+				logger.warn("CloudAgentClient", `deferred/abort HTTP ${resp.status}: ${t.slice(0, 300)}`)
 			}
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e)
-			console.warn(`[CloudAgentClient] deferred/abort failed: ${msg}`)
+			logger.warn("CloudAgentClient", `deferred/abort failed: ${msg}`)
 		} finally {
 			if (timer) clearTimeout(timer)
 		}
@@ -226,7 +227,7 @@ export class CloudAgentClient {
 				}
 			},
 			shouldRetryCloudAgent,
-			(info) => console.warn(`[CloudAgentClient] connect retry #${info.attempt + 1} after ${info.delayMs}ms`),
+			(info) => logger.warn("CloudAgentClient", `connect retry #${info.attempt + 1} after ${info.delayMs}ms`),
 		)
 	}
 
@@ -275,12 +276,12 @@ export class CloudAgentClient {
 				return this.parseJsonResponse(resp)
 			},
 			shouldRetryCloudAgent,
-			(info) => console.warn(`[CloudAgentClient] submitTask retry #${info.attempt + 1} after ${info.delayMs}ms`),
+			(info) => logger.warn("CloudAgentClient", `submitTask retry #${info.attempt + 1} after ${info.delayMs}ms`),
 		)
 
 		const { operations: workspaceOps, error: workspaceOpsError } = parseWorkspaceOps(data)
 		if (workspaceOpsError !== undefined) {
-			console.warn(`[CloudAgentClient] Invalid workspace_ops in /v1/run response: ${workspaceOpsError}`)
+			logger.warn("CloudAgentClient", `Invalid workspace_ops in /v1/run response: ${workspaceOpsError}`)
 		}
 
 		for (const log of data.logs || []) {
@@ -355,7 +356,7 @@ export class CloudAgentClient {
 				return { success: data.success, output: data.output ?? "" }
 			},
 			shouldRetryCloudAgent,
-			(info) => console.warn(`[CloudAgentClient] compile retry #${info.attempt + 1} after ${info.delayMs}ms`),
+			(info) => logger.warn("CloudAgentClient", `compile retry #${info.attempt + 1} after ${info.delayMs}ms`),
 		)
 	}
 
@@ -410,7 +411,7 @@ export class CloudAgentClient {
 				}
 			},
 			shouldRetryCloudAgent,
-			(info) => console.warn(`[CloudAgentClient] fetchDeferred(${endpoint}) retry #${info.attempt + 1} after ${info.delayMs}ms`),
+			(info) => logger.warn("CloudAgentClient", `fetchDeferred(${endpoint}) retry #${info.attempt + 1} after ${info.delayMs}ms`),
 		)
 	}
 

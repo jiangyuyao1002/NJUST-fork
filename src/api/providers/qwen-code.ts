@@ -12,6 +12,7 @@ import type { ApiHandlerOptions } from "../../shared/api"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { ApiStream } from "../transform/stream"
 
+import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 
@@ -79,9 +80,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			const credsStr = await fs.readFile(keyFile, "utf-8")
 			return JSON.parse(credsStr)
 		} catch (error) {
-			console.error(
-				`Error reading or parsing credentials file at ${getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)}`,
-			)
+			logger.error("QwenCode", `Error reading or parsing credentials file at ${getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)}`)
 			throw new Error(`Failed to load Qwen OAuth credentials: ${error}`)
 		}
 	}
@@ -147,7 +146,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 		try {
 			await fs.writeFile(filePath, JSON.stringify(newCredentials, null, 2))
 		} catch (error) {
-			console.error("Failed to save refreshed credentials:", error)
+			logger.error("QwenCode", "Failed to save refreshed credentials:", error)
 			// Continue with the refreshed token in memory even if file write fails
 		}
 

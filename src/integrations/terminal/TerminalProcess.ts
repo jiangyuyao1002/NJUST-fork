@@ -1,6 +1,8 @@
 import * as vscode from "vscode"
 import { inspect } from "util"
 
+import { logger } from "../../shared/logger"
+
 import type { ExitCodeDetails } from "./types"
 import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { Terminal } from "./Terminal"
@@ -45,9 +47,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 		if (!isShellIntegrationAvailable) {
 			terminal.sendText(command, true)
 
-			console.warn(
-				"[TerminalProcess] Shell integration not available. Command sent without knowledge of response.",
-			)
+			logger.warn("TerminalProcess", "Shell integration not available. Command sent without knowledge of response.")
 
 			this.emit(
 				"no_shell_integration",
@@ -132,7 +132,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 			stream = await streamAvailable
 		} catch (error) {
 			// Stream timeout or other error occurred
-			console.error("[Terminal Process] Stream error:", error instanceof Error ? error.message : String(error))
+			logger.error("TerminalProcess", "Stream error:", error instanceof Error ? error.message : String(error))
 
 			// Emit completed event with error message
 			this.emit(
@@ -212,7 +212,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 				"VSCE output start escape sequence (]633;C or ]133;C) not received, but the stream has started. Upstream VSCE Bug?"
 
 			const inspectPreOutput = inspect(preOutput, { colors: false, breakLength: Infinity })
-			console.error(`[Terminal Process] ${errorMsg} preOutput: ${inspectPreOutput}`)
+			logger.error("TerminalProcess", `${errorMsg} preOutput: ${inspectPreOutput}`)
 
 			// Emit no_shell_integration event
 			this.emit("no_shell_integration", errorMsg)

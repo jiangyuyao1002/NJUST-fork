@@ -6,6 +6,8 @@
 import * as vscode from "vscode"
 import { Package } from "../shared/package"
 
+import { logger } from "../shared/logger"
+
 let _debugEnabled: boolean | undefined
 
 function isDebugEnabled(): boolean {
@@ -22,6 +24,9 @@ export function invalidateDebugCache(): void {
 
 export function debugLog(...args: unknown[]): void {
 	if (isDebugEnabled()) {
-		console.debug(...args)
+		if (args.length === 0) return
+		const message = String(args[0])
+		const rest = args.slice(1)
+		logger.debug("DebugLog", message, ...rest)
 	}
 }

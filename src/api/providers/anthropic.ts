@@ -13,6 +13,7 @@ import {
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import type { ApiHandlerOptions } from "../../shared/api"
+import { logger } from "../../shared/logger"
 
 import { ApiStream } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
@@ -116,10 +117,9 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 				split && split.length >= 2 ? split.slice(1).join(SYSTEM_PROMPT_DYNAMIC_BOUNDARY) : ""
 			const cacheBreakEvent = globalPromptCacheBreakDetector.check(staticPartText, dynamicPartText)
 			if (cacheBreakEvent) {
-				console.log(
-					`[PromptCacheBreak] Detected cache break: source=${cacheBreakEvent.changeSource}, ` +
-						`staticChanged=${cacheBreakEvent.staticPartChanged}, dynamicChanged=${cacheBreakEvent.dynamicPartChanged}, ` +
-						`totalBreaks=${globalPromptCacheBreakDetector.getTotalBreaks()}`,
+				logger.info(
+					"Anthropic",
+					`Cache break detected: source=${cacheBreakEvent.changeSource}, staticChanged=${cacheBreakEvent.staticPartChanged}, dynamicChanged=${cacheBreakEvent.dynamicPartChanged}, totalBreaks=${globalPromptCacheBreakDetector.getTotalBreaks()}`,
 				)
 			}
 

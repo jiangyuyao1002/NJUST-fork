@@ -10,6 +10,7 @@ import {
 } from "@njust-ai-cj/types"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
+import { logger } from "../../../shared/logger"
 import { parseApiPrice } from "../../../shared/cost"
 
 /**
@@ -104,7 +105,7 @@ export async function getOpenRouterModels(options?: ApiHandlerOptions): Promise<
 		const data = result.success ? result.data.data : response.data.data
 
 		if (!result.success) {
-			console.error("OpenRouter models response is invalid", result.error.format())
+			logger.error("OpenRouter", "Models response is invalid", result.error.format())
 		}
 
 		for (const model of data) {
@@ -127,9 +128,7 @@ export async function getOpenRouterModels(options?: ApiHandlerOptions): Promise<
 			models[id] = parsedModel
 		}
 	} catch (error) {
-		console.error(
-			`Error fetching OpenRouter models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-		)
+		logger.error("OpenRouter", `Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 	}
 
 	return models
@@ -152,7 +151,7 @@ export async function getOpenRouterModelEndpoints(
 		const data = result.success ? result.data.data : response.data.data
 
 		if (!result.success) {
-			console.error("OpenRouter model endpoints response is invalid", result.error.format())
+			logger.error("OpenRouter", "Model endpoints response is invalid", result.error.format())
 		}
 
 		const { id, architecture, endpoints } = data
@@ -172,9 +171,7 @@ export async function getOpenRouterModelEndpoints(
 			})
 		}
 	} catch (error) {
-		console.error(
-			`Error fetching OpenRouter model endpoints: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-		)
+		logger.error("OpenRouter", `Error fetching model endpoints: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 	}
 
 	return models

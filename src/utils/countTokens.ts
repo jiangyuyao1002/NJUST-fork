@@ -1,6 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import workerpool from "workerpool"
 
+import { logger } from "../shared/logger"
 import { countTokensResultSchema } from "../workers/types"
 import { tiktoken } from "./tiktoken"
 
@@ -60,7 +61,7 @@ export async function countTokensDetailed(
 		return { total: result.count, strategy: "tiktoken" }
 	} catch (error) {
 		pool = null
-		console.error(error)
+		logger.error("CountTokens", String(error))
 		return { total: await tiktoken(content), strategy: "tiktoken" }
 	}
 }

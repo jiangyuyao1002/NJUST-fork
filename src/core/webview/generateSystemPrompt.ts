@@ -8,6 +8,7 @@ import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-
 import { Package } from "../../shared/package"
 
 import { ClineProvider } from "./ClineProvider"
+import { logger } from "../../shared/logger"
 
 export const generateSystemPrompt = async (provider: ClineProvider, message: WebviewMessage) => {
 	const {
@@ -36,7 +37,7 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 		const tempApiHandler = buildApiHandler(apiConfiguration)
 		modelInfo = tempApiHandler.getModel().info
 	} catch (error) {
-		console.error("Error fetching model info for system prompt preview:", error)
+		logger.error("GenerateSystemPrompt", "Error fetching model info for system prompt preview:", error)
 	}
 
 	const systemPrompt = await SYSTEM_PROMPT(

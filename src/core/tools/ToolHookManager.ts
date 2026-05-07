@@ -14,6 +14,7 @@ import type {
 	LifecycleHookContext,
 	HookExecutionOrder,
 } from "./toolHooks"
+import { logger } from "../../shared/logger"
 
 /**
  * Manages registration and execution of all hook types.
@@ -143,7 +144,7 @@ export class ToolHookManager {
 					currentInput = result.modifiedInput
 				}
 			} catch (err) {
-				console.warn(`[ToolHookManager] Pre-hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "Pre-hook error (ignored):", err)
 				// Hook failure does not block execution
 			}
 		}
@@ -165,7 +166,7 @@ export class ToolHookManager {
 			try {
 				await hook(toolName, input, result, context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] Post-hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "Post-hook error (ignored):", err)
 			}
 		}
 	}
@@ -183,7 +184,7 @@ export class ToolHookManager {
 			try {
 				await hook(toolName, input, error, context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] Failure-hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "Failure-hook error (ignored):", err)
 			}
 		}
 	}
@@ -203,7 +204,7 @@ export class ToolHookManager {
 			try {
 				await hook(toolName, input, reason, context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] PermissionDenied hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "PermissionDenied hook error (ignored):", err)
 			}
 		}
 	}
@@ -216,7 +217,7 @@ export class ToolHookManager {
 			try {
 				await hook(context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] SessionStart hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "SessionStart hook error (ignored):", err)
 			}
 		}
 	}
@@ -229,7 +230,7 @@ export class ToolHookManager {
 			try {
 				await hook(context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] SessionEnd hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "SessionEnd hook error (ignored):", err)
 			}
 		}
 	}
@@ -242,7 +243,7 @@ export class ToolHookManager {
 			try {
 				await hook(context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] Setup hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "Setup hook error (ignored):", err)
 			}
 		}
 	}
@@ -255,7 +256,7 @@ export class ToolHookManager {
 			try {
 				await hook(context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] Stop hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "Stop hook error (ignored):", err)
 			}
 		}
 	}
@@ -272,7 +273,7 @@ export class ToolHookManager {
 			try {
 				await hook(parentTaskId, agentType, context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] SubagentStart hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "SubagentStart hook error (ignored):", err)
 			}
 		}
 	}
@@ -290,7 +291,7 @@ export class ToolHookManager {
 			try {
 				await hook(parentTaskId, agentType, success, context)
 			} catch (err) {
-				console.warn(`[ToolHookManager] SubagentStop hook error (ignored):`, err)
+				logger.warn("ToolHookManager", "SubagentStop hook error (ignored):", err)
 			}
 		}
 	}

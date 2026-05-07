@@ -2,6 +2,8 @@ import * as path from "path"
 
 import * as vscode from "vscode"
 
+import { logger } from "../../shared/logger"
+
 export class ShellIntegrationManager {
 	public static terminalTmpDirs: Map<number, string> = new Map()
 
@@ -15,7 +17,7 @@ export class ShellIntegrationManager {
 		const os = require("os")
 		const path = require("path")
 		const tmpDir = path.join(os.tmpdir(), `roo-zdotdir-${Math.random().toString(36).substring(2, 15)}`)
-		console.info(`[TerminalRegistry] Creating temporary directory for ZDOTDIR: ${tmpDir}`)
+		logger.info("ShellIntegrationManager", `Creating temporary directory for ZDOTDIR: ${tmpDir}`)
 
 		// Save original ZDOTDIR as ROO_ZDOTDIR
 		if (process.env.ZDOTDIR) {
@@ -26,7 +28,7 @@ export class ShellIntegrationManager {
 		vscode.workspace.fs
 			.createDirectory(vscode.Uri.file(tmpDir))
 			.then(() => {
-				console.info(`[TerminalRegistry] Created temporary directory for ZDOTDIR at ${tmpDir}`)
+				logger.info("ShellIntegrationManager", `Created temporary directory for ZDOTDIR at ${tmpDir}`)
 
 				// Create .zshrc in the temporary directory
 				const zshrcPath = `${tmpDir}/.zshrc`
@@ -44,20 +46,20 @@ export class ShellIntegrationManager {
 	[ -f "$ZDOTDIR/.zlogin" ] && source "$ZDOTDIR/.zlogin"
 	[ "$ZDOTDIR" = "$HOME" ] && unset ZDOTDIR
 	`
-				console.info(`[TerminalRegistry] Creating .zshrc file at ${zshrcPath} with content:\n${zshrcContent}`)
+				logger.info("ShellIntegrationManager", `Creating .zshrc file at ${zshrcPath} with content:\n${zshrcContent}`)
 				vscode.workspace.fs.writeFile(vscode.Uri.file(zshrcPath), Buffer.from(zshrcContent)).then(
 					// Success handler
 					() => {
-						console.info(`[TerminalRegistry] Successfully created .zshrc file at ${zshrcPath}`)
+						logger.info("ShellIntegrationManager", `Successfully created .zshrc file at ${zshrcPath}`)
 					},
 					// Error handler
 					(error: Error) => {
-						console.error(`[TerminalRegistry] Error creating .zshrc file at ${zshrcPath}: ${error}`)
+						logger.error("ShellIntegrationManager", `Error creating .zshrc file at ${zshrcPath}: ${error}`)
 					},
 				)
 			})
 			.then(undefined, (error: Error) => {
-				console.error(`[TerminalRegistry] Error creating temporary directory at ${tmpDir}: ${error}`)
+				logger.error("ShellIntegrationManager", `Error creating temporary directory at ${tmpDir}: ${error}`)
 			})
 
 		return tmpDir
@@ -73,8 +75,8 @@ export class ShellIntegrationManager {
 			return false
 		}
 
-		const logPrefix = `[TerminalRegistry] Cleaning up temporary directory for terminal ${terminalId}`
-		console.info(`${logPrefix}: ${tmpDir}`)
+		const logPrefix = `Cleaning up temporary directory for terminal ${terminalId}`
+		logger.info("ShellIntegrationManager", `${logPrefix}: ${tmpDir}`)
 
 		try {
 			// Use fs to remove the directory and its contents
@@ -84,25 +86,23 @@ export class ShellIntegrationManager {
 			// Remove .zshrc file
 			const zshrcPath = path.join(tmpDir, ".zshrc")
 			if (fs.existsSync(zshrcPath)) {
-				console.info(`${logPrefix}: Removing .zshrc file at ${zshrcPath}`)
+				logger.info("ShellIntegrationManager", `Removing .zshrc file at ${zshrcPath}`)
 				fs.unlinkSync(zshrcPath)
 			}
 
 			// Remove the directory
 			if (fs.existsSync(tmpDir)) {
-				console.info(`${logPrefix}: Removing directory at ${tmpDir}`)
+				logger.info("ShellIntegrationManager", `Removing directory at ${tmpDir}`)
 				fs.rmdirSync(tmpDir)
 			}
 
 			// Remove it from the map
 			this.terminalTmpDirs.delete(terminalId)
-			console.info(`${logPrefix}: Removed terminal ${terminalId} from temporary directory map`)
+			logger.info("ShellIntegrationManager", `Removed terminal ${terminalId} from temporary directory map`)
 
 			return true
 		} catch (error: unknown) {
-			console.error(
-				`[TerminalRegistry] Error cleaning up temporary directory ${tmpDir}: ${error instanceof Error ? error.message : String(error)}`,
-			)
+			logger.error("ShellIntegrationManager", `Error cleaning up temporary directory ${tmpDir}: ${error instanceof Error ? error.message : String(error)}`)
 
 			return false
 		}

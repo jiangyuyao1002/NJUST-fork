@@ -492,26 +492,24 @@ describe("OpenAICompatibleEmbedder", () => {
 					"Failed to create embeddings after 3 attempts: API connection failed",
 				)
 
-				expect(console.error).toHaveBeenCalledWith(
-					expect.stringContaining("OpenAI Compatible embedder error"),
-					apiError,
-				)
-			})
+			expect(console.error).toHaveBeenCalledWith(
+				expect.stringContaining("[OpenAICompatibleEmbedder] OpenAI Compatible embedder error"),
+			)
+		})
 
-			it("should handle batch processing errors", async () => {
-				const testTexts = ["text1", "text2"]
-				const batchError = new Error("Batch processing failed")
+		it("should handle batch processing errors", async () => {
+			const testTexts = ["text1", "text2"]
+			const batchError = new Error("Batch processing failed")
 
-				mockEmbeddingsCreate.mockRejectedValue(batchError)
+			mockEmbeddingsCreate.mockRejectedValue(batchError)
 
-				await expect(embedder.createEmbeddings(testTexts)).rejects.toThrow(
-					"Failed to create embeddings after 3 attempts: Batch processing failed",
-				)
+			await expect(embedder.createEmbeddings(testTexts)).rejects.toThrow(
+				"Failed to create embeddings after 3 attempts: Batch processing failed",
+			)
 
-				expect(console.error).toHaveBeenCalledWith(
-					expect.stringContaining("OpenAI Compatible embedder error"),
-					expect.any(Error),
-				)
+			expect(console.error).toHaveBeenCalledWith(
+				expect.stringContaining("[OpenAICompatibleEmbedder] OpenAI Compatible embedder error"),
+			)
 			})
 
 			it("should handle empty text arrays", async () => {

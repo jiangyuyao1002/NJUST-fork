@@ -3,6 +3,7 @@ import {
 	MIN_DEFERRED_PROTOCOL_VERSION,
 } from "./deferredConstants"
 import type { DeferredResponse, DeferredToolCall } from "./types"
+import { logger } from "../../shared/logger"
 
 function pickNonEmptyString(...candidates: unknown[]): string | undefined {
 	for (const v of candidates) {
@@ -25,8 +26,8 @@ function parseArgumentsField(raw: unknown): Record<string, unknown> {
 		if (!s) return {}
 		try {
 			if (s.length > 10485760) {
-			console.error(
-				`[normalizeDeferredResponse] Arguments string exceeds size limit ` +
+			logger.error("CloudAgent",
+				`Arguments string exceeds size limit ` +
 				`(${s.length} > 10485760), dropping to prevent OOM.`,
 			)
 			return { _arguments_parse_failed: true as const, _raw_arguments: s.slice(0, 200) + "..." }

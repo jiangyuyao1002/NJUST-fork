@@ -4,6 +4,7 @@ import * as fs from "fs/promises"
 import { convertTheme } from "monaco-vscode-textmate-theme-converter/lib/cjs"
 
 import { Package } from "../../shared/package"
+import { logger } from "../../shared/logger"
 
 const defaultThemes: Record<string, string> = {
 	"Default Dark Modern": "dark_modern",
@@ -138,7 +139,7 @@ export function mergeJson(
 		}
 		return copyOfFirst
 	} catch (e) {
-		console.error("Error merging JSON", e, copyOfFirst, second)
+		logger.error("MergeJson", "Error merging JSON", e, copyOfFirst, second)
 		return {
 			...copyOfFirst,
 			...second,

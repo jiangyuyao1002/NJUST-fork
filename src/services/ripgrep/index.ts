@@ -6,6 +6,7 @@ import * as vscode from "vscode"
 
 import { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
 import { fileExistsAtPath } from "../../utils/fs"
+import { logger } from "../../shared/logger"
 /*
 This file provides functionality to perform regex searches on files using ripgrep.
 Inspired by: https://github.com/DiscreteTom/vscode-ripgrep-utils
@@ -174,7 +175,7 @@ export async function regexSearchFiles(
 	try {
 		output = await execRipgrep(rgPath, args)
 	} catch (error) {
-		console.error("Error executing ripgrep:", error)
+		logger.error("Ripgrep", "Error executing ripgrep:", error)
 		return "No results found"
 	}
 
@@ -223,7 +224,7 @@ export async function regexSearchFiles(
 					}
 				}
 			} catch (error) {
-				console.error("Error parsing ripgrep output:", error)
+				logger.error("Ripgrep", "Error parsing ripgrep output:", error)
 			}
 		}
 	})

@@ -9,6 +9,7 @@ import { ICodeParser, CodeBlock } from "../interfaces"
 import { scannerExtensions, shouldUseFallbackChunking } from "../shared/supported-extensions"
 import { MAX_BLOCK_CHARS, MIN_BLOCK_CHARS, MIN_CHUNK_REMAINDER_CHARS, MAX_CHARS_TOLERANCE_FACTOR } from "../constants"
 import { sanitizeErrorMessage } from "../shared/validation-helpers"
+import { logger } from "../../../shared/logger"
 
 /**
  * Implementation of the code parser interface
@@ -52,7 +53,7 @@ export class CodeParser implements ICodeParser {
 				content = await readFile(filePath, "utf8")
 				fileHash = this.createFileHash(content)
 			} catch (error) {
-				console.error(`Error reading file ${filePath}:`, error)
+				logger.error("Parser", `Error reading file ${filePath}:`, error)
 				return []
 			}
 		}
@@ -112,7 +113,7 @@ export class CodeParser implements ICodeParser {
 				try {
 					await pendingLoad
 				} catch (error) {
-					console.error(`Error in pending parser load for ${filePath}:`, error)
+					logger.error("Parser", `Error in pending parser load for ${filePath}:`, error)
 					return []
 				}
 			} else {
@@ -124,7 +125,7 @@ export class CodeParser implements ICodeParser {
 						this.loadedParsers = { ...this.loadedParsers, ...newParsers }
 					}
 				} catch (error) {
-					console.error(`Error loading language parser for ${filePath}:`, error)
+					logger.error("Parser", `Error loading language parser for ${filePath}:`, error)
 					return []
 				} finally {
 					this.pendingLoads.delete(ext)
@@ -134,7 +135,7 @@ export class CodeParser implements ICodeParser {
 
 		const language = this.loadedParsers[ext]
 		if (!language) {
-			console.warn(`No parser available for file extension: ${ext}`)
+			logger.warn("Parser", `No parser available for file extension: ${ext}`)
 			return []
 		}
 

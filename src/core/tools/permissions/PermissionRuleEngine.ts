@@ -2,6 +2,7 @@ import * as fs from "fs/promises"
 import { PermissionRule, PermissionAction, PermissionSource, SOURCE_PRIORITY } from "./PermissionRule"
 import { recordSecurityMetric } from "../../security/metrics"
 import { BashCommandAnalyzer, StaticPatternClassifier, type RiskLevel } from "./BashCommandAnalyzer"
+import { logger } from "../../../shared/logger"
 import type { ClassifierStrategy, ClassifierContext, ClassifyResult, ClassifierChainConfig } from "./ClassifierStrategy"
 
 function summarizeParamsForAudit(toolName: string, params: Record<string, unknown>): string {
@@ -259,14 +260,16 @@ export class PermissionRuleEngine {
 			case "bypass": {
 				const audit = summarizeParamsForAudit(toolName, params)
 				if (toolMeta.isDestructive || BYPASS_HARDENED_TOOLS.has(toolName)) {
-					console.warn(
-						`[Security] Permission mode is "bypass" but tool=${toolName} is hardened: requiring confirmation. params=${audit}`,
+					logger.warn(
+						"PermissionRuleEngine",
+						`Permission mode is "bypass" but tool=${toolName} is hardened: requiring confirmation. params=${audit}`,
 					)
 					recordSecurityMetric("permission_bypass_hardened_ask", { tool: toolName, paramSummary: audit })
 					return "ask"
 				}
-				console.warn(
-					`[Security] Permission mode is "bypass": auto-allowing tool=${toolName} (all permission checks skipped). params=${audit}`,
+				logger.warn(
+					"PermissionRuleEngine",
+					`Permission mode is "bypass": auto-allowing tool=${toolName} (all permission checks skipped). params=${audit}`,
 				)
 				recordSecurityMetric("permission_bypass_allow", { tool: toolName, paramSummary: audit })
 				return "allow"
@@ -292,7 +295,7 @@ export class PermissionRuleEngine {
 				continue
 			}
 			if (rule.action === "deny") {
-				console.log(`[Permission] deny tool=${toolName} rule=${rule.id}`)
+				logger.info("PermissionRuleEngine", `deny tool=${toolName} rule=${rule.id}`)
 				recordSecurityMetric("permission_deny", { tool: toolName, rule: rule.id })
 				this.recordDenial(toolName)
 				return "deny"
@@ -331,8 +334,9 @@ export class PermissionRuleEngine {
 		if (threshold > 0) {
 			const denials = this.getDenialCount(toolName)
 			if (denials >= threshold) {
-				console.warn(
-					`[Permission] auto-downgrade tool=${toolName} after ${denials} consecutive denials → ask`,
+				logger.warn(
+					"PermissionRuleEngine",
+					`auto-downgrade tool=${toolName} after ${denials} consecutive denials → ask`,
 				)
 				recordSecurityMetric("permission_auto_downgrade", { tool: toolName, denials })
 				return "ask"
@@ -460,8 +464,9 @@ export class PermissionRuleEngine {
 
 			try {
 				if (typeof classifier.classifySync !== "function") {
-					console.warn(
-						`[Permission] classifier ${classifier.name} has no classifySync — skipped in sync path. Use evaluateAsync().`,
+					logger.warn(
+						"PermissionRuleEngine",
+						`classifier ${classifier.name} has no classifySync — skipped in sync path. Use evaluateAsync().`,
 					)
 					continue
 				}
@@ -470,7 +475,7 @@ export class PermissionRuleEngine {
 
 				if (result && result.confidence >= minConfidenceThreshold) {
 					if (result.action === "deny") {
-						console.log(`[Permission] deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
+						logger.info("PermissionRuleEngine", `deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
 						recordSecurityMetric("permission_deny", {
 							tool: toolName,
 							classifier: classifier.name,
@@ -479,12 +484,12 @@ export class PermissionRuleEngine {
 						return "deny"
 					}
 					if (result.action === "ask") {
-						console.log(`[Permission] ask tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
+						logger.info("PermissionRuleEngine", `ask tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
 						return "ask"
 					}
 				}
 			} catch (err) {
-				console.warn(`[Permission] classifier ${classifier.name} error (ignored):`, err)
+				logger.warn("PermissionRuleEngine", `classifier ${classifier.name} error (ignored):`, err)
 			}
 		}
 
@@ -517,7 +522,7 @@ export class PermissionRuleEngine {
 
 				if (result.confidence >= minConfidenceThreshold) {
 					if (result.action === "deny") {
-						console.log(`[Permission] deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
+						logger.info("PermissionRuleEngine", `deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
 						recordSecurityMetric("permission_deny", {
 							tool: toolName,
 							classifier: classifier.name,
@@ -530,7 +535,7 @@ export class PermissionRuleEngine {
 					}
 				}
 			} catch (err) {
-				console.warn(`[Permission] classifier ${classifier.name} error (ignored):`, err)
+				logger.warn("PermissionRuleEngine", `classifier ${classifier.name} error (ignored):`, err)
 			}
 		}
 

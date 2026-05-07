@@ -1,6 +1,16 @@
 import * as vscode from "vscode"
 
 import { createOutputChannelLogger, createDualLogger } from "../outputChannelLogger"
+import { logger } from "../../shared/logger"
+
+vitest.mock("../../shared/logger", () => ({
+	logger: {
+		error: vitest.fn(),
+		warn: vitest.fn(),
+		info: vitest.fn(),
+		debug: vitest.fn(),
+	},
+}))
 
 // Mock VSCode output channel
 const mockOutputChannel = {
@@ -70,7 +80,6 @@ describe("outputChannelLogger", () => {
 
 	describe("createDualLogger", () => {
 		it("should log to both output channel and console", () => {
-			const consoleSpy = vitest.spyOn(console, "log").mockImplementation(() => {})
 			const outputChannelLogger = createOutputChannelLogger(mockOutputChannel)
 			const dualLogger = createDualLogger(outputChannelLogger)
 
@@ -79,9 +88,7 @@ describe("outputChannelLogger", () => {
 			expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(2)
 			expect(mockOutputChannel.appendLine).toHaveBeenNthCalledWith(1, "test message")
 			expect(mockOutputChannel.appendLine).toHaveBeenNthCalledWith(2, "42")
-			expect(consoleSpy).toHaveBeenCalledWith("test message", 42)
-
-			consoleSpy.mockRestore()
+			expect(logger.info).toHaveBeenCalledWith("OutputChannel", "test message", 42)
 		})
 	})
 })

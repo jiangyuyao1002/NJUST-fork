@@ -5,6 +5,7 @@ import { customToolRegistry } from "@njust-ai-cj/core"
 import { type Mode, FileRestrictionError, getModeBySlug, getGroupName } from "../../shared/modes"
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS, TOOL_ALIASES } from "../../shared/tools"
 import { isAllowedCangjieCommand } from "../task/CangjieRuntimePolicy"
+import { logger } from "../../shared/logger"
 
 /**
  * Merge `params` with typed `nativeArgs` for mode and schema validation.
@@ -180,7 +181,7 @@ function doesFileMatchRegex(filePath: string, pattern: string): boolean {
 		const regex = new RegExp(pattern)
 		return regex.test(filePath)
 	} catch (error) {
-		console.error(`Invalid regex pattern: ${pattern}`, error)
+		logger.error("ValidateToolUse", `Invalid regex pattern: ${pattern}`, error)
 		return false
 	}
 }

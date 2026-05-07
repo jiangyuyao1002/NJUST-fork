@@ -4,6 +4,7 @@ import { getModelQueryPrefix } from "../../../shared/embeddingModels"
 import { MAX_ITEM_TOKENS } from "../constants"
 import { t } from "../../../i18n"
 import { withValidationErrorHandling, sanitizeErrorMessage } from "../shared/validation-helpers"
+import { logger } from "../../../shared/logger"
 
 // Timeout constants for Ollama API requests
 const OLLAMA_EMBEDDING_TIMEOUT_MS = 60000 // 60 seconds for embedding requests
@@ -48,13 +49,13 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 					const prefixedText = `${queryPrefix}${text}`
 					const estimatedTokens = Math.ceil(prefixedText.length / 4)
 					if (estimatedTokens > MAX_ITEM_TOKENS) {
-						console.warn(
-							t("embeddings:textWithPrefixExceedsTokenLimit", {
-								index,
-								estimatedTokens,
-								maxTokens: MAX_ITEM_TOKENS,
-							}),
-						)
+						logger.warn("OllamaEmbedder",
+								t("embeddings:textWithPrefixExceedsTokenLimit", {
+									index,
+									estimatedTokens,
+									maxTokens: MAX_ITEM_TOKENS,
+								}),
+							)
 						// Return original text if adding prefix would exceed limit
 						return text
 					}
@@ -112,7 +113,7 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 			}
 		} catch (error: any) {
 			// Log the original error for debugging purposes
-			console.error("Ollama embedding failed:", error)
+			logger.error("OllamaEmbedder", "Ollama embedding failed:", error)
 
 			// Handle specific error types with better messages
 			if (error.name === "AbortError") {

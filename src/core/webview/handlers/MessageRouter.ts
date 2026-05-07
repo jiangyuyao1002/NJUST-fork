@@ -1,5 +1,6 @@
 import type { ClineProvider } from "../ClineProvider"
 import type { WebviewMessage, GlobalState } from "@njust-ai-cj/types"
+import { logger } from "../../../shared/logger"
 
 export type MessageHandler = (context: MessageHandlerContext, message: WebviewMessage) => Promise<void>
 
@@ -23,7 +24,7 @@ export class MessageRouter {
 		if (handler) {
 			await handler(context, message)
 		} else {
-			console.warn(`Unknown message type: ${message.type}`)
+			logger.warn("MessageRouter", `Unknown message type: ${message.type}`)
 		}
 	}
 }

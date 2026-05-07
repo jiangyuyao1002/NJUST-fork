@@ -1,6 +1,7 @@
 import * as fs from "fs/promises"
 import * as path from "path"
 import { LanguageParser, loadRequiredLanguageParsers } from "./languageParser"
+import { logger } from "../../shared/logger"
 import { fileExistsAtPath } from "../../utils/fs"
 import { parseMarkdown } from "./markdownParser"
 import { parseCangjie } from "./cangjieParser"
@@ -349,7 +350,7 @@ async function parseFile(
 		// Process the captures
 		return processCaptures(captures, lines, extLang)
 	} catch (error) {
-		console.log(`Error parsing file: ${error}\n`)
+		logger.error("TreeSitter", `Error parsing file:`, error)
 		// Return null on parsing error to avoid showing error messages in the output
 		return null
 	}

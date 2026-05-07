@@ -11,6 +11,7 @@ import { normalizeToolSchema } from "../../utils/json-schema"
 import { ApiStream } from "../transform/stream"
 import { convertToVsCodeLmMessages, extractTextCountFromMessage } from "../transform/vscode-lm-format"
 
+import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 
@@ -82,7 +83,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 						this.client = null
 						this.ensureCleanState()
 					} catch (error) {
-						console.error("Error during configuration change cleanup:", error)
+						logger.error("VsCodeLm", "Error during configuration change cleanup:", error)
 					}
 				}
 			})
@@ -116,7 +117,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 		} catch (error) {
 			// Handle errors during client initialization
 			const errorMessage = error instanceof Error ? error.message : "Unknown error"
-			console.error("NJUST_AI_CJ <Language Model API>: Client initialization failed:", errorMessage)
+			logger.error("VsCodeLm", "Client initialization failed:", errorMessage)
 			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to initialize client: ${errorMessage}`)
 		}
 	}
@@ -226,7 +227,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 	private async internalCountTokens(text: string | vscode.LanguageModelChatMessage): Promise<number> {
 		// Check for required dependencies
 		if (!this.client) {
-			console.warn("NJUST_AI_CJ <Language Model API>: No client available for token counting")
+			logger.warn("VsCodeLm", "No client available for token counting")
 			return 0
 		}
 
@@ -262,18 +263,18 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				const countMessage = extractTextCountFromMessage(text)
 				tokenCount = await this.client.countTokens(countMessage, cancellationToken)
 			} else {
-				console.warn("NJUST_AI_CJ <Language Model API>: Invalid input type for token counting")
+				logger.warn("VsCodeLm", "Invalid input type for token counting")
 				return 0
 			}
 
 			// Validate the result
 			if (typeof tokenCount !== "number") {
-				console.warn("NJUST_AI_CJ <Language Model API>: Non-numeric token count received:", tokenCount)
+				logger.warn("VsCodeLm", "Non-numeric token count received:", tokenCount)
 				return 0
 			}
 
 			if (tokenCount < 0) {
-				console.warn("NJUST_AI_CJ <Language Model API>: Negative token count received:", tokenCount)
+				logger.warn("VsCodeLm", "Negative token count received:", tokenCount)
 				return 0
 			}
 
@@ -286,7 +287,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			}
 
 			const errorMessage = error instanceof Error ? error.message : "Unknown error"
-			console.warn("NJUST_AI_CJ <Language Model API>: Token counting failed:", errorMessage)
+			logger.warn("VsCodeLm", "Token counting failed:", errorMessage)
 
 			// Log additional error details if available
 			if (error instanceof Error && error.stack) {
@@ -331,7 +332,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				this.client = await this.createClient(selector)
 			} catch (error) {
 				const message = error instanceof Error ? error.message : "Unknown error"
-				console.error("NJUST_AI_CJ <Language Model API>: Client creation failed:", message)
+				logger.error("VsCodeLm", "Client creation failed:", message)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to create client: ${message}`)
 			}
 		}
@@ -411,7 +412,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				if (chunk instanceof vscode.LanguageModelTextPart) {
 					// Validate text part value
 					if (typeof chunk.value !== "string") {
-						console.warn("NJUST_AI_CJ <Language Model API>: Invalid text part value received:", chunk.value)
+						logger.warn("VsCodeLm", "Invalid text part value received:", chunk.value)
 						continue
 					}
 
@@ -424,18 +425,18 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 					try {
 						// Validate tool call parameters
 						if (!chunk.name || typeof chunk.name !== "string") {
-							console.warn("NJUST_AI_CJ <Language Model API>: Invalid tool name received:", chunk.name)
+							logger.warn("VsCodeLm", "Invalid tool name received:", chunk.name)
 							continue
 						}
 
 						if (!chunk.callId || typeof chunk.callId !== "string") {
-							console.warn("NJUST_AI_CJ <Language Model API>: Invalid tool callId received:", chunk.callId)
+							logger.warn("VsCodeLm", "Invalid tool callId received:", chunk.callId)
 							continue
 						}
 
 						// Ensure input is a valid object
 						if (!chunk.input || typeof chunk.input !== "object") {
-							console.warn("NJUST_AI_CJ <Language Model API>: Invalid tool input received:", chunk.input)
+							logger.warn("VsCodeLm", "Invalid tool input received:", chunk.input)
 							continue
 						}
 
@@ -458,12 +459,12 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 							}
 						}
 					} catch (error) {
-						console.error("NJUST_AI_CJ <Language Model API>: Failed to process tool call:", error)
+						logger.error("VsCodeLm", "Failed to process tool call:", error)
 						// Continue processing other chunks even if one fails
 						continue
 					}
 				} else {
-					console.warn("NJUST_AI_CJ <Language Model API>: Unknown chunk type received:", chunk)
+					logger.warn("VsCodeLm", "Unknown chunk type received:", chunk)
 				}
 			}
 
@@ -484,7 +485,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			}
 
 			if (error instanceof Error) {
-				console.error("NJUST_AI_CJ <Language Model API>: Stream error details:", {
+				logger.error("VsCodeLm", "Stream error details:", {
 					message: error.message,
 					stack: error.stack,
 					name: error.name,
@@ -495,12 +496,12 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			} else if (typeof error === "object" && error !== null) {
 				// Handle error-like objects
 				const errorDetails = JSON.stringify(error, null, 2)
-				console.error("NJUST_AI_CJ <Language Model API>: Stream error object:", errorDetails)
+				logger.error("VsCodeLm", "Stream error object:", errorDetails)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorDetails}`)
 			} else {
 				// Fallback for unknown error types
 				const errorMessage = String(error)
-				console.error("NJUST_AI_CJ <Language Model API>: Unknown stream error:", errorMessage)
+				logger.error("VsCodeLm", "Unknown stream error:", errorMessage)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorMessage}`)
 			}
 		}
@@ -521,7 +522,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			// Log any missing properties for debugging
 			for (const [prop, value] of Object.entries(requiredProps)) {
 				if (!value && value !== 0) {
-					console.warn(`NJUST_AI_CJ <Language Model API>: Client missing ${prop} property`)
+					logger.warn("VsCodeLm", `Client missing ${prop} property`)
 				}
 			}
 
@@ -595,9 +596,7 @@ export async function getVsCodeLmModels() {
 		const models = (await vscode.lm.selectChatModels({})) || []
 		return models.filter((model) => !VSCODE_LM_STATIC_BLACKLIST.includes(model.id))
 	} catch (error) {
-		console.error(
-			`Error fetching VS Code LM models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-		)
+		logger.error("VsCodeLm", `Error fetching VS Code LM models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 		return []
 	}
 }

@@ -13,6 +13,8 @@
 import * as vscode from "vscode"
 import { Package } from "../shared/package"
 
+import { logger } from "../shared/logger"
+
 /**
  * Proxy configuration state
  */
@@ -363,6 +365,6 @@ function log(message: string): void {
 		outputChannel.appendLine(logMessage)
 	}
 	if (consoleLoggingEnabled) {
-		console.log(logMessage)
+		logger.info("NetworkProxy", message)
 	}
 }

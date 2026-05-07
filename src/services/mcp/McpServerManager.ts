@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import { McpHub } from "./McpHub"
 import type { IMcpHubClient } from "./interfaces/IMcpHubClient"
 import type { IMcpHubService } from "./interfaces/IMcpHubService"
+import { logger } from "../../shared/logger"
 
 /**
  * Singleton manager for MCP server instances.
@@ -68,7 +69,7 @@ export class McpServerManager {
 	static notifyProviders(message: any): void {
 		this.providers.forEach((provider) => {
 			provider.postMessageToWebview(message).catch((error) => {
-				console.error("Failed to notify provider:", error)
+				logger.error("McpServerManager", "Failed to notify provider:", error)
 			})
 		})
 	}

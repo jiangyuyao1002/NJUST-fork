@@ -2,6 +2,7 @@ import axios from "axios"
 
 import type { ModelInfo } from "@njust-ai-cj/types"
 
+import { logger } from "../../../shared/logger"
 import { parseApiPrice } from "../../../shared/cost"
 import { toRequestyServiceUrl } from "../../../shared/utils/requesty"
 
@@ -48,7 +49,7 @@ export async function getRequestyModels(baseUrl?: string, apiKey?: string): Prom
 			models[rawModel.id] = modelInfo
 		}
 	} catch (error) {
-		console.error(`Error fetching Requesty models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		logger.error("Requesty", `Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 	}
 
 	return models

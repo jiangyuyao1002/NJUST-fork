@@ -2,6 +2,7 @@ import fs from "fs/promises"
 import { join } from "path"
 
 import { fileExistsAtPath } from "../../utils/fs"
+import { logger } from "../../shared/logger"
 
 const getBuildArtifactPatterns = () => [
 	".gradle/",
@@ -195,7 +196,7 @@ const getLfsPatterns = async (workspacePath: string) => {
 		}
 	} catch (error) {
 		// .gitattributes read/access errors should not block checkpoint creation
-		console.warn(`Failed to read .gitattributes for LFS patterns: ${error instanceof Error ? error.message : String(error)}`)
+		logger.warn("Checkpoints", `Failed to read .gitattributes for LFS patterns: ${error instanceof Error ? error.message : String(error)}`)
 	}
 
 	return []

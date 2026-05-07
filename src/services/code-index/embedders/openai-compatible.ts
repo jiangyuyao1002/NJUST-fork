@@ -11,6 +11,7 @@ import { t } from "../../../i18n"
 import { withValidationErrorHandling, HttpError, formatEmbeddingError } from "../shared/validation-helpers"
 import { Mutex } from "async-mutex"
 import { handleOpenAIError } from "../../../api/providers/utils/openai-error-handler"
+import { logger } from "../../../shared/logger"
 
 interface EmbeddingItem {
 	embedding: string | number[]
@@ -103,13 +104,13 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
 					const prefixedText = `${queryPrefix}${text}`
 					const estimatedTokens = Math.ceil(prefixedText.length / 4)
 					if (estimatedTokens > MAX_ITEM_TOKENS) {
-						console.warn(
-							t("embeddings:textWithPrefixExceedsTokenLimit", {
-								index,
-								estimatedTokens,
-								maxTokens: MAX_ITEM_TOKENS,
-							}),
-						)
+						logger.warn("OpenAICompatibleEmbedder",
+								t("embeddings:textWithPrefixExceedsTokenLimit", {
+									index,
+									estimatedTokens,
+									maxTokens: MAX_ITEM_TOKENS,
+								}),
+							)
 						// Return original text if adding prefix would exceed limit
 						return text
 					}
@@ -131,13 +132,13 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
 				const itemTokens = Math.ceil(text.length / 4)
 
 				if (itemTokens > this.maxItemTokens) {
-					console.warn(
-						t("embeddings:textExceedsTokenLimit", {
-							index: i,
-							itemTokens,
-							maxTokens: this.maxItemTokens,
-						}),
-					)
+					logger.warn("OpenAICompatibleEmbedder",
+							t("embeddings:textExceedsTokenLimit", {
+								index: i,
+								itemTokens,
+								maxTokens: this.maxItemTokens,
+							}),
+						)
 					processedIndices.push(i)
 					continue
 				}
@@ -323,20 +324,20 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
 						const globalDelay = await this.getGlobalRateLimitDelay()
 						const delayMs = Math.max(baseDelay, globalDelay)
 
-						console.warn(
-							t("embeddings:rateLimitRetry", {
-								delayMs,
-								attempt: attempts + 1,
-								maxRetries: MAX_RETRIES,
-							}),
-						)
+						logger.warn("OpenAICompatibleEmbedder",
+								t("embeddings:rateLimitRetry", {
+									delayMs,
+									attempt: attempts + 1,
+									maxRetries: MAX_RETRIES,
+								}),
+							)
 						await new Promise((resolve) => setTimeout(resolve, delayMs))
 						continue
 					}
 				}
 
 				// Log the error for debugging
-				console.error(`OpenAI Compatible embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
+				logger.error("OpenAICompatibleEmbedder", `OpenAI Compatible embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
 
 				// Format and throw the error
 				throw formatEmbeddingError(error, MAX_RETRIES)

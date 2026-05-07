@@ -350,10 +350,9 @@ describe("OpenAiEmbedder", () => {
 					"Failed to create embeddings after 3 attempts: API connection failed",
 				)
 
-				expect(console.error).toHaveBeenCalledWith(
-					expect.stringContaining("OpenAI embedder error"),
-					expect.any(Error),
-				)
+			expect(console.error).toHaveBeenCalledWith(
+				expect.stringContaining("[OpenAIEmbedder] OpenAI embedder error"),
+			)
 			})
 
 			it("should handle empty text arrays", async () => {

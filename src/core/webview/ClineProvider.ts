@@ -104,7 +104,7 @@ import { PendingEditManager } from "./PendingEditManager"
 import { WebviewContentProvider } from "./WebviewContentProvider"
 import { mergeAllowedCommands, mergeDeniedCommands } from "./commandListUtils"
 import { TaskStackManager } from "./TaskStackManager"
-import { TaskHistoryService } from "./TaskHistoryService"
+import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
 import type { ClineMessage, TodoItem } from "@njust-ai-cj/types"
 import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore } from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
@@ -112,6 +112,7 @@ import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
+import { logger } from "../../shared/logger"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -208,19 +209,21 @@ export class ClineProvider
 				this.taskHistory.scheduleGlobalStateWriteThrough()
 			},
 		})
-		// TaskHistoryService config uses getters; object-literal `this` would not refer to ClineProvider.
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const provider = this
-		this.taskHistory = new TaskHistoryService({
-			context: this.context,
-			contextProxy: this.contextProxy as any,
-			taskHistoryStore: this.taskHistoryStore,
-			outputChannel: this.outputChannel,
-			get cwd() { return provider.cwd },
-			get isViewLaunched() { return provider.isViewLaunched },
-			stack: this.stack,
-			postMessageToWebview: (msg: ExtensionMessage) => provider.postMessageToWebview(msg),
-		})
+		// Use Object.defineProperties with arrow function getters to preserve lexical `this`
+		// (object-literal getters would bind `this` to the config object, not ClineProvider).
+		this.taskHistory = new TaskHistoryService(
+			Object.defineProperties({
+				context: this.context,
+				contextProxy: this.contextProxy as any,
+				taskHistoryStore: this.taskHistoryStore,
+				outputChannel: this.outputChannel,
+				stack: this.stack,
+				postMessageToWebview: (msg: ExtensionMessage) => this.postMessageToWebview(msg),
+			} as TaskHistoryHost, {
+				cwd: { get: () => this.cwd, enumerable: true, configurable: true },
+				isViewLaunched: { get: () => this.isViewLaunched, enumerable: true, configurable: true },
+			})
+		)
 		this.taskHistory.initialize().catch((error) => {
 			this.log(`Failed to initialize TaskHistoryStore: ${error}`)
 		})
@@ -1839,7 +1842,7 @@ export class ClineProvider
 			return
 		}
 
-		console.log(`[cancelTask] cancelling task ${task.taskId}.${task.instanceId}`)
+		logger.info("ClineProvider", `cancelTask: cancelling task ${task.taskId}.${task.instanceId}`)
 
 		let historyItem: HistoryItem | undefined
 		try {
@@ -1889,7 +1892,7 @@ export class ClineProvider
 				timeout: 3_000,
 			},
 		).catch(() => {
-			console.error("Failed to abort task")
+			logger.error("ClineProvider", "cancelTask: Failed to abort task")
 		})
 
 		// Defensive safeguard: if current instance already changed, skip rehydrate
@@ -1925,7 +1928,7 @@ export class ClineProvider
 	public async clearTask(): Promise<void> {
 		if (this.stack.size > 0) {
 			const task = this.stack.current
-			console.log(`[clearTask] clearing task ${task?.taskId}.${task?.instanceId}`)
+			logger.info("ClineProvider", `clearTask: clearing task ${task?.taskId}.${task?.instanceId}`)
 			await this.stack.pop()
 		}
 	}
@@ -2103,12 +2106,13 @@ export class ClineProvider
 			const flushSuccess = await parent.flushPendingToolResultsToHistory()
 
 			if (!flushSuccess) {
-				console.warn(`[delegateParentAndOpenChild] Flush failed for parent ${parentTaskId}, retrying...`)
+				logger.warn("ClineProvider", `delegateParentAndOpenChild: Flush failed for parent ${parentTaskId}, retrying...`)
 				const retrySuccess = await parent.retrySaveApiConversationHistory()
 
 				if (!retrySuccess) {
-					console.error(
-						`[delegateParentAndOpenChild] CRITICAL: Parent ${parentTaskId} API history not persisted to disk. Child return may produce stale state.`,
+					logger.error(
+						"ClineProvider",
+						`delegateParentAndOpenChild: CRITICAL: Parent ${parentTaskId} API history not persisted to disk. Child return may produce stale state.`,
 					)
 					vscode.window.showWarningMessage(
 						"Warning: Parent task state could not be saved. The parent task may lose recent context when resumed.",
@@ -2454,15 +2458,15 @@ export class ClineProvider
 
 			// Specific error for no webview available
 			const error = new Error("No webview available for URI conversion")
-			console.error(error.message)
+			logger.error("ClineProvider", "No webview available for URI conversion")
 			// Fallback to file URI if no webview available
 			return fileUri.toString()
 		} catch (error) {
 			// More specific error handling
 			if (error instanceof TypeError) {
-				console.error("Invalid file path provided for URI conversion:", error)
+				logger.error("ClineProvider", "Invalid file path provided for URI conversion:", error)
 			} else {
-				console.error("Failed to convert to webview URI:", error)
+				logger.error("ClineProvider", "Failed to convert to webview URI:", error)
 			}
 			// Return file URI as fallback
 			return vscode.Uri.file(filePath).toString()

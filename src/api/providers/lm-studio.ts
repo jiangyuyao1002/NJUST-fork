@@ -6,6 +6,7 @@ import { type ModelInfo, openAiModelInfoSaneDefaults, LMSTUDIO_DEFAULT_TEMPERATU
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
+import { logger } from "../../shared/logger"
 import { TagMatcher } from "../../utils/tag-matcher"
 
 import { convertToOpenAiMessages } from "../transform/openai-format"
@@ -75,7 +76,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 		try {
 			inputTokens = await this.countTokens([{ type: "text", text: systemPrompt }, ...toContentBlocks(messages)])
 		} catch (err) {
-			console.error("[LmStudio] Failed to count input tokens:", err)
+			logger.error("LmStudio", "Failed to count input tokens:", err)
 			inputTokens = 0
 		}
 
@@ -153,7 +154,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 			try {
 				outputTokens = await this.countTokens([{ type: "text", text: assistantText }])
 			} catch (err) {
-				console.error("[LmStudio] Failed to count output tokens:", err)
+				logger.error("LmStudio", "Failed to count output tokens:", err)
 				outputTokens = 0
 			}
 

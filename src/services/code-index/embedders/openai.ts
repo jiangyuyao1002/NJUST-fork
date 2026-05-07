@@ -12,6 +12,7 @@ import { getModelQueryPrefix } from "../../../shared/embeddingModels"
 import { t } from "../../../i18n"
 import { withValidationErrorHandling, formatEmbeddingError, HttpError } from "../shared/validation-helpers"
 import { handleOpenAIError } from "../../../api/providers/utils/openai-error-handler"
+import { logger } from "../../../shared/logger"
 
 /**
  * Estimates token count with character-set awareness.
@@ -77,13 +78,13 @@ export class OpenAiEmbedder extends OpenAiNativeHandler implements IEmbedder {
 					const prefixedText = `${queryPrefix}${text}`
 					const estimatedTokens = estimateTokens(prefixedText)
 					if (estimatedTokens > MAX_ITEM_TOKENS) {
-						console.warn(
-							t("embeddings:textWithPrefixExceedsTokenLimit", {
-								index,
-								estimatedTokens,
-								maxTokens: MAX_ITEM_TOKENS,
-							}),
-						)
+						logger.warn("OpenAIEmbedder",
+								t("embeddings:textWithPrefixExceedsTokenLimit", {
+									index,
+									estimatedTokens,
+									maxTokens: MAX_ITEM_TOKENS,
+								}),
+							)
 						// Return original text if adding prefix would exceed limit
 						return text
 					}
@@ -102,13 +103,13 @@ export class OpenAiEmbedder extends OpenAiNativeHandler implements IEmbedder {
 		for (let i = 0; i < processedTexts.length; i++) {
 			const itemTokens = estimateTokens(processedTexts[i])
 			if (itemTokens > MAX_ITEM_TOKENS) {
-				console.warn(
-					t("embeddings:textExceedsTokenLimit", {
-						index: i,
-						itemTokens,
-						maxTokens: MAX_ITEM_TOKENS,
-					}),
-				)
+				logger.warn("OpenAIEmbedder",
+						t("embeddings:textExceedsTokenLimit", {
+							index: i,
+							itemTokens,
+							maxTokens: MAX_ITEM_TOKENS,
+						}),
+					)
 				oversizeItems.push({ originalIndex: i })
 			} else {
 				embeddableQueue.push({ originalIndex: i, text: processedTexts[i] })
@@ -187,19 +188,19 @@ export class OpenAiEmbedder extends OpenAiNativeHandler implements IEmbedder {
 				const httpError = error as HttpError
 				if (httpError?.status === 429 && hasMoreAttempts) {
 					const delayMs = INITIAL_DELAY_MS * Math.pow(2, attempts)
-					console.warn(
-						t("embeddings:rateLimitRetry", {
-							delayMs,
-							attempt: attempts + 1,
-							maxRetries: MAX_RETRIES,
-						}),
-					)
+					logger.warn("OpenAIEmbedder",
+							t("embeddings:rateLimitRetry", {
+								delayMs,
+								attempt: attempts + 1,
+								maxRetries: MAX_RETRIES,
+							}),
+						)
 					await new Promise((resolve) => setTimeout(resolve, delayMs))
 					continue
 				}
 
 				// Log the error for debugging
-				console.error(`OpenAI embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
+				logger.error("OpenAIEmbedder", `OpenAI embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
 
 				// Format and throw the error
 				throw formatEmbeddingError(error, MAX_RETRIES)

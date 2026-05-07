@@ -24,6 +24,7 @@ import { getEffectiveApiHistory } from "../condense"
 import { validateAndFixToolResultIds } from "./validateToolResultIds"
 import { restoreTodoListForTask } from "../tools/UpdateTodoListTool"
 import type { ApiHandler } from "../../api"
+import { logger } from "../../shared/logger"
 
 /**
  * Minimal surface the message manager needs from its owning Task.
@@ -135,8 +136,8 @@ export class TaskMessageManager {
 				interval: 50,
 				timeout: 30_000,
 			}).catch(() => {
-				console.warn(
-					`[Task#${this.ctx.taskId}] flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved`,
+				logger.warn("TaskMessageManager",
+					`flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved for task ${this.ctx.taskId}`,
 				)
 			})
 		}
@@ -162,8 +163,8 @@ export class TaskMessageManager {
 		if (saved) {
 			this.ctx.userMessageContent = []
 		} else {
-			console.warn(
-				`[Task#${this.ctx.taskId}] flushPendingToolResultsToHistory: save failed, retaining pending tool results in memory`,
+			logger.warn("TaskMessageManager",
+				`flushPendingToolResultsToHistory: save failed for task ${this.ctx.taskId}, retaining pending tool results in memory`,
 			)
 		}
 
@@ -179,7 +180,7 @@ export class TaskMessageManager {
 			})
 			return true
 		} catch (error) {
-			console.error("Failed to save API conversation history:", error)
+			logger.error("TaskMessageManager", "Failed to save API conversation history:", error)
 			return false
 		}
 	}
@@ -189,8 +190,8 @@ export class TaskMessageManager {
 
 		for (let attempt = 0; attempt < delays.length; attempt++) {
 			await new Promise<void>((resolve) => setTimeout(resolve, delays[attempt]))
-			console.warn(
-				`[Task#${this.ctx.taskId}] retrySaveApiConversationHistory: retry attempt ${attempt + 1}/${delays.length}`,
+			logger.warn("TaskMessageManager",
+				`retrySaveApiConversationHistory: retry attempt ${attempt + 1}/${delays.length} for task ${this.ctx.taskId}`,
 			)
 
 			const success = await this.saveApiConversationHistory()
@@ -258,7 +259,7 @@ export class TaskMessageManager {
 			await this.ctx.notifier?.updateTaskHistory(historyItem)
 			return true
 		} catch (error) {
-			console.error("Failed to save Roo messages:", error)
+			logger.error("TaskMessageManager", "Failed to save Roo messages:", error)
 			return false
 		}
 	}

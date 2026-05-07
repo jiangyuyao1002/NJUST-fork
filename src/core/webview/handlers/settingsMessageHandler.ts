@@ -20,6 +20,7 @@ import { importSettingsWithFeedback, exportSettings } from "../../config/importE
 import { debugLog } from "../../../utils/debugLog"
 
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
+import { logger } from "../../../shared/logger"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -184,7 +185,7 @@ async function handleGetVSCodeSetting(context: MessageHandlerContext, message: W
 				value: vscode.workspace.getConfiguration().get(setting),
 			})
 		} catch (error) {
-			console.error(`Failed to get VSCode setting ${message.setting}:`, error)
+			logger.error("SettingsMessageHandler", `Failed to get VSCode setting ${message.setting}:`, error)
 			await provider.postMessageToWebview({
 				type: "vsCodeSetting",
 				setting,
@@ -312,7 +313,7 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 
 	const safeGetModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
 		try { return await getModels(options) } catch (error) {
-			console.error(`Failed to fetch models for ${options.provider}:`, error)
+			logger.error("SettingsMessageHandler", `Failed to fetch models for ${options.provider}:`, error)
 			throw error
 		}
 	}
@@ -355,7 +356,7 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 			routerModels[routerName] = result.value.models
 		} else {
 			const errorMessage = result.reason instanceof Error ? result.reason.message : String(result.reason)
-			console.error(`Error fetching models for ${routerName}:`, result.reason)
+			logger.error("SettingsMessageHandler", `Error fetching models for ${routerName}:`, result.reason)
 			routerModels[routerName] = {}
 			provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: false, error: errorMessage, values: { provider: routerName } })
 		}

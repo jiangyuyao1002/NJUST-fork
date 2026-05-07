@@ -11,6 +11,7 @@
 
 import { ApiProviderError } from "@njust-ai-cj/types"
 import i18n from "../../../i18n/setup"
+import { logger } from "../../../shared/logger"
 import { redactApiSecrets } from "../../../utils/redactApiSecrets"
 
 /**
@@ -54,7 +55,7 @@ export function handleProviderError(
 		const msg = redactApiSecrets(String(rawMsg))
 
 		// Log the original error details for debugging
-		console.error(`[${providerName}] API error:`, {
+		logger.error(providerName, "API error:", {
 			message: msg,
 			name: error.name,
 			stack: error.stack ? redactApiSecrets(error.stack) : undefined,
@@ -104,7 +105,7 @@ export function handleProviderError(
 	}
 
 	// Non-Error: wrap with provider-specific prefix
-	console.error(`[${providerName}] Non-Error exception:`, redactApiSecrets(String(error)))
+	logger.error(providerName, "Non-Error exception:", redactApiSecrets(String(error)))
 	const wrapped = new ApiProviderError(
 		redactApiSecrets(`${providerName} ${messagePrefix} error: ${String(error)}`),
 	)

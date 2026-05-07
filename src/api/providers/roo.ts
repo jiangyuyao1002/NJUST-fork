@@ -6,6 +6,7 @@ import { rooDefaultModelId, getApiProtocol, type ImageGenerationApiMethod } from
 
 import { Package } from "../../shared/package"
 import type { ApiHandlerOptions } from "../../shared/api"
+import { logger } from "../../shared/logger"
 import { ApiStream } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
 import { convertToOpenAiMessages } from "../transform/openai-format"
@@ -63,7 +64,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 		this.fetcherBaseURL = baseURL.endsWith("/v1") ? baseURL.slice(0, -3) : baseURL
 
 		this.loadDynamicModels(this.fetcherBaseURL, sessionToken).catch((error) => {
-			console.error("[RooHandler] Failed to load dynamic models:", error)
+			logger.error("RooHandler", "Failed to load dynamic models:", error)
 		})
 	}
 
@@ -324,7 +325,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 				hasTaskId: Boolean(metadata?.taskId),
 			}
 
-			console.error(`[RooHandler] Error during message streaming: ${JSON.stringify(errorContext)}`)
+			logger.error("RooHandler", `Error during message streaming: ${JSON.stringify(errorContext)}`)
 
 			throw error
 		}
@@ -345,7 +346,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 			})
 		} catch (error) {
 			// Enhanced error logging with more context
-			console.error("[RooHandler] Error loading dynamic models:", {
+			logger.error("RooHandler", "Error loading dynamic models:", {
 				error: error instanceof Error ? error.message : String(error),
 				stack: error instanceof Error ? error.stack : undefined,
 				baseURL,

@@ -1,3 +1,5 @@
+import { logger } from "../../shared/logger"
+
 export enum TaskState {
 	IDLE = "IDLE",
 	PREPARING = "PREPARING",
@@ -71,9 +73,8 @@ export class TaskStateMachine {
 	force(to: TaskState, source?: string): void {
 		if (this._state === to) return
 		if (this._forceLocked) {
-			// eslint-disable-next-line no-console -- defensive guard, no logger available in state machine
-			console.warn(
-				`[TaskStateMachine] force() rejected (concurrent): ${this._state} -> ${to}` +
+			logger.warn("TaskStateMachine",
+				`force() rejected (concurrent): ${this._state} -> ${to}` +
 				(source ? ` [source: ${source}]` : ""),
 			)
 			return
@@ -81,8 +82,8 @@ export class TaskStateMachine {
 		this._forceLocked = true
 		try {
 			if (!this.canTransition(to)) {
-				console.warn(
-					`[TaskStateMachine] Unsafe transition: ${this._state} -> ${to}` +
+				logger.warn("TaskStateMachine",
+					`Unsafe transition: ${this._state} -> ${to}` +
 					(source ? ` [source: ${source}]` : ""),
 				)
 			}

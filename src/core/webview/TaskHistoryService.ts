@@ -21,6 +21,7 @@ import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
 import { ShadowCheckpointService } from "../../services/checkpoints/ShadowCheckpointService"
 import { pruneStaleRegistrations, NO_TASK_KEY } from "../../services/cangjie-lsp/cangjieGeneratedTestCleanup"
 import { aggregateTaskCostsRecursive, type AggregatedCosts } from "./aggregateTaskCosts"
+import { logger } from "../../shared/logger"
 
 export interface TaskHistoryHost {
 	readonly context: vscode.ExtensionContext
@@ -125,13 +126,15 @@ export class TaskHistoryService {
 			try {
 				apiConversationHistory = JSON.parse(await fs.readFile(apiConversationHistoryFilePath, "utf8"))
 			} catch (error) {
-				console.warn(
-					`[getTaskWithId] api_conversation_history.json corrupted for task ${id}, returning empty history: ${error instanceof Error ? error.message : String(error)}`,
+				logger.warn(
+					"TaskHistoryService",
+					`getTaskWithId: api_conversation_history.json corrupted for task ${id}, returning empty history: ${error instanceof Error ? error.message : String(error)}`,
 				)
 			}
 		} else {
-			console.warn(
-				`[getTaskWithId] api_conversation_history.json missing for task ${id}, returning empty history`,
+			logger.warn(
+				"TaskHistoryService",
+				`getTaskWithId: api_conversation_history.json missing for task ${id}, returning empty history`,
 			)
 		}
 
@@ -217,7 +220,7 @@ export class TaskHistoryService {
 							}
 						}
 					} catch (error) {
-						console.log(`[deleteTaskWithId] child task ${taskId} not found, skipping`)
+						logger.info("TaskHistoryService", `deleteTaskWithId: child task ${taskId} not found, skipping`)
 					}
 				}
 
@@ -244,18 +247,20 @@ export class TaskHistoryService {
 				try {
 					await ShadowCheckpointService.deleteTask({ taskId, globalStorageDir, workspaceDir })
 				} catch (error) {
-					console.error(
-						`[deleteTaskWithId${taskId}] failed to delete associated shadow repository or branch: ${error instanceof Error ? error.message : String(error)}`,
+					logger.error(
+						"TaskHistoryService",
+						`deleteTaskWithId: failed to delete associated shadow repository or branch: ${error instanceof Error ? error.message : String(error)}`,
 					)
 				}
 
 				try {
 					const dirPath = await getTaskDirectoryPath(globalStoragePath, taskId)
 					await fs.rm(dirPath, { recursive: true, force: true })
-					console.log(`[deleteTaskWithId${taskId}] removed task directory`)
+					logger.info("TaskHistoryService", `deleteTaskWithId: removed task directory for ${taskId}`)
 				} catch (error) {
-					console.error(
-						`[deleteTaskWithId${taskId}] failed to remove task directory: ${error instanceof Error ? error.message : String(error)}`,
+					logger.error(
+						"TaskHistoryService",
+						`deleteTaskWithId: failed to remove task directory: ${error instanceof Error ? error.message : String(error)}`,
 					)
 				}
 			}

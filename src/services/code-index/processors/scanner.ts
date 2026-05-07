@@ -28,6 +28,7 @@ import {
 import { isPathInIgnoredDirectory } from "../../glob/ignore-utils"
 import { sanitizeErrorMessage } from "../shared/validation-helpers"
 import { Package } from "../../../shared/package"
+import { logger } from "../../../shared/logger"
 
 export class DirectoryScanner implements IDirectoryScanner {
 	private readonly batchSegmentThreshold: number
@@ -248,7 +249,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 					if (error instanceof DOMException && error.name === "AbortError") {
 						throw error
 				}
-				console.error(`Error processing file ${filePath} in workspace ${scanWorkspace}:`, error)
+				logger.error("DirectoryScanner", `Error processing file ${filePath} in workspace ${scanWorkspace}:`, error)
 				if (onError) {
 						onError(
 							error instanceof Error
@@ -338,10 +339,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 					await this.cacheManager.deleteHash(fp)
 				}
 			} catch (error: any) {
-				console.error(
-					`[DirectoryScanner] Failed to batch-delete ${deletedFilePaths.length} files from workspace ${scanWorkspace}:`,
-					error,
-				)
+				logger.error("DirectoryScanner", `Failed to batch-delete ${deletedFilePaths.length} files from workspace ${scanWorkspace}:`, error)
 				if (onError) {
 					onError(
 						error instanceof Error
@@ -398,10 +396,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 							deleteError?.status || deleteError?.response?.status || deleteError?.statusCode
 						const errorMessage = deleteError instanceof Error ? deleteError.message : String(deleteError)
 
-						console.error(
-								`[DirectoryScanner] Failed to delete points for ${uniqueFilePaths.length} files before upsert in workspace ${scanWorkspace}:`,
-								deleteError,
-							)
+						logger.error("DirectoryScanner", `Failed to delete points for ${uniqueFilePaths.length} files before upsert in workspace ${scanWorkspace}:`, deleteError)
 
 							// Re-throw with workspace context
 						throw new Error(
@@ -446,10 +441,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 				success = true
 			} catch (error) {
 				lastError = error as Error
-				console.error(
-					`[DirectoryScanner] Error processing batch (attempt ${attempts}) in workspace ${scanWorkspace}:`,
-					error,
-				)
+				logger.error("DirectoryScanner", `Error processing batch (attempt ${attempts}) in workspace ${scanWorkspace}:`, error)
 
 				if (attempts < MAX_BATCH_RETRIES) {
 					const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempts - 1)
@@ -459,7 +451,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 		}
 
 		if (!success && lastError) {
-			console.error(`[DirectoryScanner] Failed to process batch after ${MAX_BATCH_RETRIES} attempts`)
+			logger.error("DirectoryScanner", `Failed to process batch after ${MAX_BATCH_RETRIES} attempts`)
 			if (onError) {
 				// Preserve the original error message from embedders which now have detailed i18n messages
 				const errorMessage = lastError.message || "Unknown error"

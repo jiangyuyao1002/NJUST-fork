@@ -1,5 +1,7 @@
 import { truncateOutput, applyRunLengthEncoding } from "../misc/extract-text"
 
+import { logger } from "../../shared/logger"
+
 import type {
 	RooTerminalProvider,
 	RooTerminal,
@@ -80,9 +82,7 @@ export abstract class BaseTerminal implements RooTerminal {
 			if (!this.process) {
 				this.running = false
 
-				console.warn(
-					`[Terminal ${this.provider}/${this.id}] process is undefined, so cannot set terminal stream (probably user-initiated non-Roo command)`,
-				)
+				logger.warn("BaseTerminal", `[Terminal ${this.provider}/${this.id}] process is undefined, so cannot set terminal stream (probably user-initiated non-Roo command)`)
 
 				return
 			}

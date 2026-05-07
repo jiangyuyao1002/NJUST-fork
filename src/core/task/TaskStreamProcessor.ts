@@ -24,6 +24,7 @@ import { buildNativeToolsArrayWithRestrictions } from "./build-tools"
 import type { ApiMessage } from "../task-persistence"
 import { getLastGlobalApiRequestTime } from "./globalApiTiming"
 import { PersistentRetryManager } from "./PersistentRetry"
+import { logger } from "../../shared/logger"
 
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
 const FORCED_CONTEXT_REDUCTION_PERCENT = 75 // Keep 75% of context (remove 25%) on context window errors
@@ -47,7 +48,7 @@ export class TaskStreamProcessor {
 		try {
 			return await this.task.fileContextTracker.getFilesReadByRoo()
 		} catch (error) {
-			console.error(`[Task#${context}] Failed to get files read by Roo:`, error)
+			logger.error("TaskStreamProcessor", `Failed to get files read by Roo:`, error)
 			return undefined
 		}
 	}
@@ -128,10 +129,10 @@ export class TaskStreamProcessor {
 			// Check persistent retry budget before proceeding
 			const retryCheck = this.persistentRetry.canRetry(errorCategory)
 			if (!retryCheck.allowed) {
-				console.warn(
-					`[Task#${this.task.taskId}] Persistent retry denied for '${errorCategory}': ${retryCheck.reason}` +
-						(retryCheck.shouldFallback ? " → suggesting model fallback" : ""),
-				)
+		logger.warn("TaskStreamProcessor",
+				`Persistent retry denied for '${errorCategory}' on task ${this.task.taskId}: ${retryCheck.reason}` +
+					(retryCheck.shouldFallback ? " → suggesting model fallback" : ""),
+			)
 			}
 
 			const state = await this.task.providerRef.deref()?.getState()
@@ -216,10 +217,10 @@ export class TaskStreamProcessor {
 			// Log persistent retry stats after each backoff for diagnostics
 			const stats = this.persistentRetry.getStats()
 			if (stats.totalRetries > 0) {
-				console.log(
-					`[Task#${this.task.taskId}] Persistent retry stats: total=${stats.totalRetries}, ` +
-						`exhausted=${stats.isExhausted}, category='${errorCategory}' count=${stats.records.get(errorCategory)?.count ?? 0}`,
-				)
+		logger.info("TaskStreamProcessor",
+				`Persistent retry stats for task ${this.task.taskId}: total=${stats.totalRetries}, ` +
+					`exhausted=${stats.isExhausted}, category='${errorCategory}' count=${stats.records.get(errorCategory)?.count ?? 0}`,
+			)
 			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err)
@@ -228,7 +229,7 @@ export class TaskStreamProcessor {
 				return
 			}
 
-			console.error("Exponential backoff failed:", err)
+			logger.error("TaskStreamProcessor", "Exponential backoff failed:", err)
 		}
 	}
 
@@ -311,8 +312,8 @@ export class TaskStreamProcessor {
 		const currentProfileId = this.getCurrentProfileId(state)
 
 		// Log the context window error for debugging
-		console.warn(
-			`[Task#${this.task.taskId}] Context window exceeded for model ${this.task.api.getModel().id}. ` +
+		logger.warn("TaskStreamProcessor",
+			`Context window exceeded for task ${this.task.taskId}, model ${this.task.api.getModel().id}. ` +
 				`Current tokens: ${contextTokens}, Context window: ${contextWindow}. ` +
 				`Forcing truncation to ${FORCED_CONTEXT_REDUCTION_PERCENT}% of current context.`,
 		)

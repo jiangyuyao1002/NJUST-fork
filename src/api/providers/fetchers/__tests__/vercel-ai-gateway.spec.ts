@@ -91,7 +91,7 @@ describe("Vercel AI Gateway Fetchers", () => {
 
 			expect(models).toEqual({})
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Error fetching Vercel AI Gateway models"),
+				expect.stringContaining("Error fetching models"),
 			)
 			consoleErrorSpy.mockRestore()
 		})

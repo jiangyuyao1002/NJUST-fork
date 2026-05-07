@@ -1653,7 +1653,7 @@ describe("Cline", () => {
 				// Should log error but not throw
 				task.submitUserMessage("test message")
 
-				expect(consoleErrorSpy).toHaveBeenCalledWith("[Task#submitUserMessage] Provider reference lost")
+				expect(consoleErrorSpy).toHaveBeenCalledWith("[Task] submitUserMessage: Provider reference lost")
 				expect(handleResponseSpy).not.toHaveBeenCalled()
 
 				// Restore console.error
@@ -1751,7 +1751,7 @@ describe("Cline", () => {
 			await expect(task.abortTask()).resolves.not.toThrow()
 
 			// Verify error was logged
-			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Error during task"), mockError)
+			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("[TaskLifecycleHandler] Error during task"))
 
 			// Verify abort flag is still set
 			expect(task.abort).toBe(true)

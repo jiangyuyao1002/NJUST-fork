@@ -5,6 +5,7 @@ import type { ModelInfo } from "@njust-ai-cj/types"
 import { VERCEL_AI_GATEWAY_VISION_ONLY_MODELS, VERCEL_AI_GATEWAY_VISION_AND_TOOLS_MODELS } from "@njust-ai-cj/types"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
+import { logger } from "../../../shared/logger"
 import { parseApiPrice } from "../../../shared/cost"
 
 /**
@@ -63,7 +64,7 @@ export async function getVercelAiGatewayModels(options?: ApiHandlerOptions): Pro
 		const data = result.success ? result.data.data : response.data.data
 
 		if (!result.success) {
-			console.error(`Vercel AI Gateway models response is invalid ${JSON.stringify(result.error.format())}`)
+			logger.error("VercelAiGateway", `Models response is invalid ${JSON.stringify(result.error.format())}`)
 		}
 
 		for (const model of data) {
@@ -78,9 +79,7 @@ export async function getVercelAiGatewayModels(options?: ApiHandlerOptions): Pro
 			models[id] = parseVercelAiGatewayModel({ id, model })
 		}
 	} catch (error) {
-		console.error(
-			`Error fetching Vercel AI Gateway models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-		)
+		logger.error("VercelAiGateway", `Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 	}
 
 	return models

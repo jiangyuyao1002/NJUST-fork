@@ -4,6 +4,8 @@ import { promises as fs } from "fs"
 import { exec } from "child_process"
 import { promisify } from "util"
 
+import { logger } from "../shared/logger"
+
 import type { GitRepositoryInfo, GitCommit } from "@njust-ai-cj/types"
 
 import { truncateOutput } from "../integrations/misc/extract-text"
@@ -222,13 +224,13 @@ export async function searchCommits(query: string, cwd: string): Promise<GitComm
 	try {
 		const isInstalled = await checkGitInstalled()
 		if (!isInstalled) {
-			console.error("Git is not installed")
+			logger.error("Git", "Git is not installed")
 			return []
 		}
 
 		const isRepo = await checkGitRepo(cwd)
 		if (!isRepo) {
-			console.error("Not a git repository")
+			logger.error("Git", "Not a git repository")
 			return []
 		}
 
@@ -271,7 +273,7 @@ export async function searchCommits(query: string, cwd: string): Promise<GitComm
 
 		return commits
 	} catch (error) {
-		console.error("Error searching commits:", error)
+		logger.error("Git", "Error searching commits:", error)
 		return []
 	}
 }
@@ -312,7 +314,7 @@ export async function getCommitInfo(hash: string, cwd: string): Promise<string> 
 		const output = summary + "\n\n" + diff.trim()
 		return truncateOutput(output, GIT_OUTPUT_LINE_LIMIT)
 	} catch (error) {
-		console.error("Error getting commit info:", error)
+		logger.error("Git", "Error getting commit info:", error)
 		return `Failed to get commit info: ${error instanceof Error ? error.message : String(error)}`
 	}
 }
@@ -341,7 +343,7 @@ export async function getWorkingState(cwd: string): Promise<string> {
 		const output = `Working directory changes:\n\n${status}\n\n${diff}`.trim()
 		return truncateOutput(output, lineLimit)
 	} catch (error) {
-		console.error("Error getting working state:", error)
+		logger.error("Git", "Error getting working state:", error)
 		return `Failed to get working state: ${error instanceof Error ? error.message : String(error)}`
 	}
 }
@@ -392,7 +394,7 @@ export async function getGitStatus(cwd: string, maxFiles: number = 20): Promise<
 
 		return output.join("\n")
 	} catch (error) {
-		console.error("Error getting git status:", error)
+		logger.error("Git", "Error getting git status:", error)
 		return null
 	}
 }

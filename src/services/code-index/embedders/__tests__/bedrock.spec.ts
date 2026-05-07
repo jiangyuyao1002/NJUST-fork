@@ -502,10 +502,9 @@ describe("BedrockEmbedder", () => {
 					"Failed to create embeddings after 3 attempts: API connection failed",
 				)
 
-				expect(console.error).toHaveBeenCalledWith(
-					expect.stringContaining("Bedrock embedder error"),
-					expect.any(Error),
-				)
+			expect(console.error).toHaveBeenCalledWith(
+				expect.stringContaining("[BedrockEmbedder] Bedrock embedder error"),
+			)
 			})
 
 			it("should handle empty text arrays", async () => {

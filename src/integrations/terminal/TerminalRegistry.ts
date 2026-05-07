@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 
+import { logger } from "../../shared/logger"
 import { arePathsEqual } from "../../utils/path"
 
 import { RooTerminal, RooTerminalProvider } from "./types"
@@ -52,7 +53,7 @@ export class TerminalRegistry {
 					const stream = e.execution.read()
 					const terminal = this.getTerminalByVSCETerminal(e.terminal)
 
-					console.info("[onDidStartTerminalShellExecution]", {
+					logger.info("TerminalRegistry", "onDidStartTerminalShellExecution", {
 						command: e.execution?.commandLine?.value,
 						terminalId: terminal?.id,
 					})
@@ -61,10 +62,7 @@ export class TerminalRegistry {
 						terminal.setActiveStream(stream)
 						terminal.busy = true // Mark terminal as busy when shell execution starts
 					} else {
-						console.error(
-							"[onDidStartTerminalShellExecution] Shell execution started, but not from a Roo-registered terminal:",
-							e,
-						)
+						logger.error("TerminalRegistry", "onDidStartTerminalShellExecution - Shell execution started, but not from a Roo-registered terminal:", e)
 					}
 				},
 			)
@@ -79,36 +77,27 @@ export class TerminalRegistry {
 					const process = terminal?.process
 					const exitDetails = TerminalProcess.interpretExitCode(e.exitCode)
 
-					console.info("[onDidEndTerminalShellExecution]", {
+					logger.info("TerminalRegistry", "onDidEndTerminalShellExecution", {
 						command: e.execution?.commandLine?.value,
 						terminalId: terminal?.id,
 						...exitDetails,
 					})
 
 					if (!terminal) {
-						console.error(
-							"[onDidEndTerminalShellExecution] Shell execution ended, but not from a Roo-registered terminal:",
-							e,
-						)
+						logger.error("TerminalRegistry", "onDidEndTerminalShellExecution - Shell execution ended, but not from a Roo-registered terminal:", e)
 
 						return
 					}
 
 					if (!terminal.running) {
-						console.error(
-							"[TerminalRegistry] Shell execution end event received, but process is not running for terminal:",
-							{ terminalId: terminal?.id, command: process?.command, exitCode: e.exitCode },
-						)
+						logger.error("TerminalRegistry", "Shell execution end event received, but process is not running for terminal:", { terminalId: terminal?.id, command: process?.command, exitCode: e.exitCode })
 
 						terminal.busy = false
 						return
 					}
 
 					if (!process) {
-						console.error(
-							"[TerminalRegistry] Shell execution end event received on running terminal, but process is undefined:",
-							{ terminalId: terminal.id, exitCode: e.exitCode },
-						)
+						logger.error("TerminalRegistry", "Shell execution end event received on running terminal, but process is undefined:", { terminalId: terminal.id, exitCode: e.exitCode })
 
 						return
 					}
@@ -123,7 +112,7 @@ export class TerminalRegistry {
 				this.disposables.push(endDisposable)
 			}
 		} catch (error) {
-			console.error("[TerminalRegistry] Error setting up shell execution handlers:", error)
+			logger.error("TerminalRegistry", "Error setting up shell execution handlers:", error)
 		}
 	}
 
@@ -197,10 +186,8 @@ export class TerminalRegistry {
 			})
 
 			if (terminal) {
-				console.log(
-					`[TerminalRegistry] Reusing persistent shell session for task ${taskId} ` +
-					`(terminal cwd: ${terminal.getCurrentWorkingDirectory()}, requested cwd: ${cwd})`,
-				)
+				logger.info("TerminalRegistry", `Reusing persistent shell session for task ${taskId} ` +
+					`(terminal cwd: ${terminal.getCurrentWorkingDirectory()}, requested cwd: ${cwd})`)
 			}
 		}
 

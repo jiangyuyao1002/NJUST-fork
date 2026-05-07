@@ -637,8 +637,7 @@ describe("CodeIndexManager - handleSettingsChange regression", () => {
 
 			// Assert - error should be logged
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				"Failed to clear error state during recovery:",
-				expect.any(Error),
+				expect.stringContaining("[CodeIndexManager] Failed to clear error state during recovery"),
 			)
 
 			// Assert - service instances should still be cleared

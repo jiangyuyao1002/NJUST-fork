@@ -5,6 +5,7 @@ import type { HistoryItem } from "@njust-ai-cj/types"
 
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getStorageBasePath } from "../../utils/storage"
+import { logger } from "../../shared/logger"
 
 export const WORKSPACE_STATE_KEY = "cangjie.generatedTestFiles"
 export const NO_TASK_KEY = "__no_task__"
@@ -43,7 +44,7 @@ async function loadHistoryIndexMap(globalStorageUriFsPath: string): Promise<Map<
 			}
 		}
 	} catch (e) {
-		console.warn("[CangjieTestCleanup] 读取任务历史索引失败（孤儿清理将跳过非 __no_task__ 的精确判断）:", e)
+		logger.warn("CangjieTestCleanup", "读取任务历史索引失败（孤儿清理将跳过非 __no_task__ 的精确判断）:", e)
 	}
 	return m
 }
@@ -90,7 +91,7 @@ function removeTaskEntryAndDeleteFiles(taskId: string): number {
 				removed++
 			}
 		} catch (e) {
-			console.warn(`[CangjieTestCleanup] 删除失败 ${p}:`, e)
+			logger.warn("CangjieTestCleanup", `删除失败 ${p}:`, e)
 		}
 	}
 	return removed

@@ -28,6 +28,7 @@ import { getEnvironmentDetails } from "../environment/getEnvironmentDetails"
 import { summarizeConversation } from "../condense"
 
 import type { Task } from "./Task"
+import { logger } from "../../shared/logger"
 
 /**
  * TaskRequestBuilder handles system prompt generation, prompt caching,
@@ -115,7 +116,7 @@ export class TaskRequestBuilder {
 
 			// Wait for MCP servers to be connected before generating system prompt
 			await pWaitFor(() => !mcpHub!.isConnecting, { timeout: 10_000 }).catch(() => {
-				console.error("MCP servers failed to connect in time")
+				logger.error("TaskRequestBuilder", "MCP servers failed to connect in time")
 			})
 		}
 
@@ -376,15 +377,15 @@ export class TaskRequestBuilder {
 				const elapsed = Date.now() - startTime
 				const failures = results.filter((r) => r.status === "rejected")
 				if (failures.length > 0) {
-					console.warn(
-						`[Prefetch] System prompt data prefetched in ${elapsed}ms with ${failures.length} failure(s)`,
-						failures.map((f) => (f as PromiseRejectedResult).reason),
-					)
+			logger.warn("TaskRequestBuilder",
+					`System prompt data prefetched in ${elapsed}ms with ${failures.length} failure(s)`,
+					failures.map((f) => (f as PromiseRejectedResult).reason),
+				)
 				} else {
-					console.log(`[Prefetch] System prompt data prefetched in ${elapsed}ms`)
+					logger.info("TaskRequestBuilder", `System prompt data prefetched in ${elapsed}ms`)
 				}
 			} catch (error) {
-				console.warn(`[Prefetch] System prompt prefetch failed:`, error)
+				logger.warn("TaskRequestBuilder", "System prompt prefetch failed:", error)
 			}
 		})().finally(() => {
 			this.prefetchInFlight = undefined
@@ -407,7 +408,7 @@ export class TaskRequestBuilder {
 		try {
 			return await this.task.fileContextTracker.getFilesReadByRoo()
 		} catch (error) {
-			console.error(`[Task#${context}] Failed to get files read by Roo:`, error)
+			logger.error("TaskRequestBuilder", `Failed to get files read by Roo:`, error)
 			return undefined
 		}
 	}

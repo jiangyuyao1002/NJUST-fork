@@ -10,6 +10,7 @@ import { CodeIndexOrchestrator } from "./orchestrator"
 import { CacheManager } from "./cache-manager"
 import { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
 import fs from "fs/promises"
+import { logger } from "../../shared/logger"
 import ignore from "ignore"
 import path from "path"
 import { t } from "../../i18n"
@@ -286,7 +287,7 @@ export class CodeIndexManager {
 			this._stateManager.setSystemState("Standby", "")
 		} catch (error) {
 			// Log error but continue with recovery - clearing service instances is more important
-			console.error("Failed to clear error state during recovery:", error)
+			logger.error("CodeIndexManager", "Failed to clear error state during recovery:", error)
 		} finally {
 			// Force re-initialization by clearing service instances
 			// This ensures a clean slate even if state update failed
@@ -377,7 +378,7 @@ export class CodeIndexManager {
 			ignoreInstance.add(".gitignore")
 		} catch (error) {
 			// Should never happen: reading file failed even though it exists
-			console.error("Unexpected error loading .gitignore:", error)
+			logger.error("CodeIndexManager", "Unexpected error loading .gitignore:", error)
 		}
 
 		// Create RooIgnoreController instance
@@ -455,7 +456,7 @@ export class CodeIndexManager {
 					await this._recreateServices()
 				} catch (error) {
 				// Error state already set in _recreateServices
-				console.error("Failed to recreate services:", error)
+				logger.error("CodeIndexManager", "Failed to recreate services:", error)
 				// Re-throw the error so the caller knows validation failed
 				throw error
 			}

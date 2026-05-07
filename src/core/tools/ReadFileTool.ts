@@ -39,6 +39,7 @@ import {
 import { fileReadCache } from "./helpers/FileReadCache"
 import { toolResultCache } from "./helpers/ToolResultCache"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { logger } from "../../shared/logger"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -786,7 +787,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 		const modelInfo = task.api.getModel().info
 
 		// Temporary indicator for testing legacy format detection
-		console.warn("[read_file] Legacy format detected - using backward compatibility path")
+		logger.warn("ReadFileTool", "Legacy format detected - using backward compatibility path")
 
 		if (!fileEntries || fileEntries.length === 0) {
 			task.consecutiveMistakeCount++

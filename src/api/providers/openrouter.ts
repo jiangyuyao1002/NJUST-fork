@@ -37,6 +37,7 @@ import { handleOpenAIError } from "./utils/openai-error-handler"
 import { generateImageWithProvider, ImageGenerationResult } from "./utils/image-generation"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { globalCostTracker } from "../../utils/costTracker"
+import { logger } from "../../shared/logger"
 import { requireApiKey } from "../interfaces/api-key-validator"
 
 // Add custom interface for OpenRouter params.
@@ -156,7 +157,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 
 		// Load models asynchronously to populate cache before getModel() is called
 		this.loadDynamicModels().catch((error) => {
-			console.error("[OpenRouterHandler] Failed to load dynamic models:", error)
+			logger.error("OpenRouter", "Failed to load dynamic models:", error)
 		})
 	}
 
@@ -174,7 +175,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 			this.models = models
 			this.endpoints = endpoints
 		} catch (error) {
-			console.error("[OpenRouterHandler] Error loading dynamic models:", {
+			logger.error("OpenRouter", "Error loading dynamic models:", {
 				error: error instanceof Error ? error.message : String(error),
 				stack: error instanceof Error ? error.stack : undefined,
 			})

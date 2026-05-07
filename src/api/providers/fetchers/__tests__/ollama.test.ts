@@ -261,7 +261,7 @@ describe("Ollama Fetcher", () => {
 			expect(mockedAxios.get).toHaveBeenCalledTimes(1)
 			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/api/tags`, { headers: {} })
 			expect(mockedAxios.post).not.toHaveBeenCalled()
-			expect(consoleInfoSpy).toHaveBeenCalledWith(`Failed connecting to Ollama at ${baseUrl}`)
+			expect(consoleInfoSpy).toHaveBeenCalledWith(expect.stringContaining("Failed connecting to Ollama"))
 			expect(result).toEqual({})
 
 			consoleInfoSpy.mockRestore() // Restore original console.info

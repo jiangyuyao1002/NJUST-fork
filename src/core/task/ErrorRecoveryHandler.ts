@@ -3,6 +3,7 @@ import { mapErrorToRecoveryAction, shouldRetryCapacityError, type RecoveryAction
 import { appendRetryEvent } from "../errors/retryPersistence"
 import { reactiveCompactMessages } from "../context-management/reactiveCompact"
 import { TaskState } from "./TaskStateMachine"
+import { logger } from "../../shared/logger"
 
 import type { Task } from "./Task"
 
@@ -68,10 +69,10 @@ export class ErrorRecoveryHandler {
 					// For max_output_tokens: preserve partial output and add continuation cue.
 					// The StreamingToolExecutor's withheld results (if any) are kept in place —
 					// they will be drained and included in the next API request by Task.ts.
-					console.warn(
-						`[Task#${this.task.taskId}] max_output_tokens hit (attempt ${retryAttempt + 1}/3). ` +
-							`Preserving partial output and adding continuation cue...`,
-					)
+				logger.warn("ErrorRecoveryHandler",
+					`max_output_tokens hit for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
+						`Preserving partial output and adding continuation cue...`,
+				)
 					await this.addContinuationCue()
 				}
 
@@ -79,8 +80,8 @@ export class ErrorRecoveryHandler {
 			}
 			case "context_window_recover": {
 				this.task.forceTaskState(TaskState.COMPACTING)
-				console.warn(
-					`[Task#${this.task.taskId}] Context window exceeded for model ${this.task.api.getModel().id}. ` +
+				logger.warn("ErrorRecoveryHandler",
+					`Context window exceeded for task ${this.task.taskId}, model ${this.task.api.getModel().id}. ` +
 						`Retry attempt ${retryAttempt + 1}. ` +
 						`Attempting automatic truncation...`,
 				)
@@ -99,8 +100,8 @@ export class ErrorRecoveryHandler {
 			case "strip_media_retry": {
 				// media_too_large: scan conversation for large media content,
 				// remove image/file blocks, then retry.
-				console.warn(
-					`[Task#${this.task.taskId}] Media too large (attempt ${retryAttempt + 1}/2). ` +
+				logger.warn("ErrorRecoveryHandler",
+					`Media too large for task ${this.task.taskId} (attempt ${retryAttempt + 1}/2). ` +
 						`Stripping media content from messages...`,
 				)
 				await this.stripLargeMediaFromHistory()
@@ -111,8 +112,8 @@ export class ErrorRecoveryHandler {
 				// model_overloaded (503): exponential backoff starting at 5s, max 120s.
 				// After 3 failures, the strategy map returns "none" → fallback candidate.
 				const backoffMs = Math.min(5000 * Math.pow(2, retryAttempt), 120_000)
-				console.warn(
-					`[Task#${this.task.taskId}] Model overloaded (attempt ${retryAttempt + 1}/3). ` +
+				logger.warn("ErrorRecoveryHandler",
+					`Model overloaded for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
 						`Backing off for ${backoffMs / 1000}s...`,
 				)
 				await this.delay(backoffMs)
@@ -129,8 +130,8 @@ export class ErrorRecoveryHandler {
 					retryAttempt >= 1
 						? "\n\nExample of correct tool use: {\"tool\": \"tool_name\", \"parameters\": {\"param1\": \"value1\"}}"
 						: ""
-				console.warn(
-					`[Task#${this.task.taskId}] Invalid tool use (attempt ${retryAttempt + 1}/3). ` +
+				logger.warn("ErrorRecoveryHandler",
+					`Invalid tool use for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
 						`Injecting correction hint...`,
 				)
 				await this.task.addToApiConversationHistory({
@@ -142,8 +143,8 @@ export class ErrorRecoveryHandler {
 	
 			case "content_policy_reject": {
 				// content_policy: do NOT retry. Notify user that content was rejected.
-				console.warn(
-					`[Task#${this.task.taskId}] Content rejected by safety/policy filter. No retry.`,
+				logger.warn("ErrorRecoveryHandler",
+					`Content rejected by safety/policy filter for task ${this.task.taskId}. No retry.`,
 				)
 				await this.task.say(
 					"error",
@@ -155,8 +156,8 @@ export class ErrorRecoveryHandler {
 	
 			case "partial_continue": {
 				// partial_response: keep existing content, send "continue" to resume generation.
-				console.warn(
-					`[Task#${this.task.taskId}] Partial response received (attempt ${retryAttempt + 1}/3). ` +
+				logger.warn("ErrorRecoveryHandler",
+					`Partial response received for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
 						`Sending continuation request...`,
 				)
 				await this.addContinuationCue()
@@ -167,8 +168,8 @@ export class ErrorRecoveryHandler {
 				// server_error (500): exponential backoff with diagnostics logging.
 				const backoffMs = Math.min(2000 * Math.pow(2, retryAttempt), 60_000)
 				const errorMsg = error instanceof Error ? error.message : String(error)
-				console.error(
-					`[Task#${this.task.taskId}] Server error 500 (attempt ${retryAttempt + 1}/5). ` +
+				logger.error("ErrorRecoveryHandler",
+					`Server error 500 for task ${this.task.taskId} (attempt ${retryAttempt + 1}/5). ` +
 						`Diagnostics: ${errorMsg}. ` +
 						`Backing off for ${backoffMs / 1000}s...`,
 				)
@@ -179,8 +180,8 @@ export class ErrorRecoveryHandler {
 			case "unknown_single_retry": {
 				// unknown: log the full error, try once, then give up.
 				const errorMsg = error instanceof Error ? error.stack || error.message : String(error)
-				console.warn(
-					`[Task#${this.task.taskId}] Unknown error (single retry). Full error: ${errorMsg}`,
+				logger.warn("ErrorRecoveryHandler",
+					`Unknown error for task ${this.task.taskId} (single retry). Full error: ${errorMsg}`,
 				)
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
@@ -188,8 +189,8 @@ export class ErrorRecoveryHandler {
 			case "model_fallback": {
 				// Retries exhausted for model_overloaded / timeout → suggest model fallback
 				const classified2 = classifyApiError(error)
-				console.warn(
-					`[Task#${this.task.taskId}] Retries exhausted for ${classified2} errors. ` +
+				logger.warn("ErrorRecoveryHandler",
+					`Retries exhausted for ${classified2} errors on task ${this.task.taskId}. ` +
 						`Recommending model fallback...`,
 				)
 				return {

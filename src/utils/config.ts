@@ -1,3 +1,5 @@
+import { logger } from "../shared/logger"
+
 export type InjectableConfigType =
 	| string
 	| {
@@ -54,7 +56,7 @@ export async function injectVariables<C extends InjectableConfigType>(
 				const nestedValue = value[name]
 
 				if (nestedValue == null) {
-					console.warn(`[injectVariables] variable "${name}" referenced but not found in "${key}"`)
+					logger.warn("InjectVariables", `variable "${name}" referenced but not found in "${key}"`)
 					return propNotFoundValue ?? match
 				}
 

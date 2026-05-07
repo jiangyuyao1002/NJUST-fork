@@ -10,6 +10,7 @@ import axios from "axios"
 import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
 import { t } from "../../i18n"
+import { logger } from "../../shared/logger"
 
 export interface WebviewContentProviderHost {
 	readonly extensionUri: vscode.Uri
@@ -33,14 +34,13 @@ export class WebviewContentProvider {
 
 			if (fs.existsSync(portFilePath)) {
 				localPort = fs.readFileSync(portFilePath, "utf8").trim()
-				console.log(`[WebviewContentProvider:Vite] Using Vite server port from ${portFilePath}: ${localPort}`)
+				logger.info("WebviewContentProvider", `Using Vite server port from ${portFilePath}: ${localPort}`)
 			} else {
-				console.log(
-					`[WebviewContentProvider:Vite] Port file not found at ${portFilePath}, using default port: ${localPort}`,
+				logger.info("WebviewContentProvider", `Port file not found at ${portFilePath}, using default port: ${localPort}`,
 				)
 			}
 		} catch (err) {
-			console.error("[WebviewContentProvider:Vite] Failed to read Vite port file:", err)
+			logger.error("WebviewContentProvider", "Failed to read Vite port file:", err)
 		}
 
 		const localServerUrl = `localhost:${localPort}`

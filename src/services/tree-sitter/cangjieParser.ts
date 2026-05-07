@@ -13,6 +13,7 @@
 
 import * as vscode from "vscode"
 import { execFile } from "child_process"
+import { logger } from "../../shared/logger"
 import { promisify } from "util"
 import * as path from "path"
 import * as fs from "fs"
@@ -365,8 +366,8 @@ export function findClosingBrace(lines: string[], openLine: number): number {
 	}
 	// No matching brace found -- return last line as best-effort boundary.
 	// This prevents the entire file tail from collapsing into one span.
-	console.warn(
-		`[cangjieParser] findClosingBrace: unmatched { at line ${openLine}, treating file end as boundary`,
+	logger.warn("CangjieParser",
+		`findClosingBrace: unmatched { at line ${openLine}, treating file end as boundary`,
 	)
 	return Math.max(openLine, lines.length - 1)
 }

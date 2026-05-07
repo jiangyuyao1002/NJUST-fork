@@ -72,6 +72,7 @@ import { processUserContentMentions } from "../mentions/processUserContentMentio
 import { debugLog } from "../../utils/debugLog"
 import { TokenBucketRateLimiter } from "../../services/rate-limiter/TokenBucketRateLimiter"
 import { BackpressureController } from "../stream/BackpressureController"
+import { logger } from "../../shared/logger"
 
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000
 
@@ -315,8 +316,8 @@ export class TaskExecutor {
 			systemPromptParts.perToolHashes,
 		)
 		if (cacheBreak) {
-			console.log(
-				`[Prompt Cache] break source=${cacheBreak.changeSource} staticChanged=${cacheBreak.staticPartChanged} dynamicChanged=${cacheBreak.dynamicPartChanged} changedTools=${(cacheBreak.changedTools ?? []).join(",") || "none"}`,
+			logger.info("TaskExecutor",
+				`Prompt Cache break: source=${cacheBreak.changeSource} staticChanged=${cacheBreak.staticPartChanged} dynamicChanged=${cacheBreak.dynamicPartChanged} changedTools=${(cacheBreak.changedTools ?? []).join(",") || "none"}`,
 			)
 		}
 		const { contextTokens } = tokenUsage
@@ -575,7 +576,7 @@ export class TaskExecutor {
 		const iterator = controlledStream[Symbol.asyncIterator]()
 
 		abortSignal.addEventListener("abort", () => {
-			console.log(`[Task#${h.taskId}.${h.instanceId}] AbortSignal triggered for current request`)
+			logger.info("TaskExecutor", `AbortSignal triggered for current request, task ${h.taskId}.${h.instanceId}`)
 			h.currentRequestAbortController = undefined
 		})
 
@@ -699,8 +700,8 @@ export class TaskExecutor {
 		const parentRemaining = contextWindow - (parentUsage.contextTokens || 0)
 		const myTokens = myUsage.contextTokens || 0
 		if (parentRemaining > 0 && myTokens > parentRemaining * 0.8) {
-			console.warn(
-				`[Task#${h.taskId}] SubTask token usage (${myTokens}) approaching parent's remaining budget (${parentRemaining}). ` +
+			logger.warn("TaskExecutor",
+				`SubTask token usage (${myTokens}) approaching parent's remaining budget (${parentRemaining}) for task ${h.taskId}. ` +
 					`Consider completing this subtask soon.`,
 			)
 		}
@@ -1081,8 +1082,8 @@ export class TaskExecutor {
 										// be added to assistantMessageContent, causing API 400 errors:
 										// "tool_use ids must be unique"
 										if (t.streamingToolCallIndices.has(event.id)) {
-											console.warn(
-												`[Task#${t.taskId}] Ignoring duplicate tool_call_start for ID: ${event.id} (tool: ${event.name})`,
+											logger.warn("TaskExecutor",
+												`Ignoring duplicate tool_call_start for ID: ${event.id} (tool: ${event.name}) on task ${t.taskId}`,
 											)
 											continue
 										}
@@ -1211,7 +1212,7 @@ export class TaskExecutor {
 								})
 
 								if (!toolUse) {
-									console.error(`Failed to parse tool call for task ${t.taskId}:`, chunk)
+									logger.error("TaskExecutor", `Failed to parse tool call for task ${t.taskId}:`, chunk)
 									break
 								}
 
@@ -1253,7 +1254,7 @@ export class TaskExecutor {
 						}
 
 						if (t.abort) {
-							console.log(`aborting stream, t.abandoned = ${t.abandoned}`)
+							logger.info("TaskExecutor", `Aborting stream for task ${t.taskId}, abandoned = ${t.abandoned}`)
 
 							if (!t.abandoned) {
 								// Only need to gracefully abort if this instance
@@ -1384,9 +1385,9 @@ export class TaskExecutor {
 								const cacheSummary = globalCacheMetrics.getSummary()
 
 								const latencyMs = Date.now() - requestStartedAt
-								console.log(
-									`[Task Metrics] task=${t.taskId} mode=${await t.getTaskMode()} latencyMs=${latencyMs} input=${tokens.input} output=${tokens.output} cacheCreate=${tokens.cacheWrite} cacheRead=${tokens.cacheRead} contextTokens=${t.getTokenUsage().contextTokens ?? 0} cacheHitRate=${cacheSummary.cacheHitRate.toFixed(3)} estSavings=${(cacheSummary.estimatedSavingsPercent * 100).toFixed(1)}% requests=${cacheSummary.totalRequests}`,
-								)
+							logger.info("TaskExecutor",
+								`Task Metrics: task=${t.taskId} mode=${await t.getTaskMode()} latencyMs=${latencyMs} input=${tokens.input} output=${tokens.output} cacheCreate=${tokens.cacheWrite} cacheRead=${tokens.cacheRead} contextTokens=${t.getTokenUsage().contextTokens ?? 0} cacheHitRate=${cacheSummary.cacheHitRate.toFixed(3)} estSavings=${(cacheSummary.estimatedSavingsPercent * 100).toFixed(1)}% requests=${cacheSummary.totalRequests}`,
+							)
 								const runtimeTokenUsage = t.getTokenUsage()
 								const runtimeContextTokens = runtimeTokenUsage.contextTokens ?? 0
 								const runtimeModel = t.api.getModel().info
@@ -1442,8 +1443,8 @@ export class TaskExecutor {
 							while (!item.done) {
 								// Check for timeout
 								if (performance.now() - startTime > timeoutMs) {
-									console.warn(
-										`[Background Usage Collection] Timed out after ${timeoutMs}ms for model: ${modelId}, processed ${chunkCount} chunks`,
+									logger.warn("TaskExecutor",
+										`Background Usage Collection timed out after ${timeoutMs}ms for model: ${modelId}, processed ${chunkCount} chunks`,
 									)
 									// Clean up the iterator before breaking
 									if (iterator.return) {
@@ -1485,12 +1486,12 @@ export class TaskExecutor {
 									lastApiReqIndex,
 								)
 							} else {
-								console.warn(
-									`[Background Usage Collection] Suspicious: request ${apiReqIndex} is complete, but no usage info was found. Model: ${modelId}`,
+								logger.warn("TaskExecutor",
+									`Background Usage Collection: request ${apiReqIndex} is complete, but no usage info was found. Model: ${modelId}`,
 								)
 							}
 						} catch (error) {
-							console.error("Error draining stream for usage data:", error)
+							logger.error("TaskExecutor", "Error draining stream for usage data:", error)
 							// Still try to capture whatever usage data we have collected so far
 							if (
 								bgInputTokens > 0 ||
@@ -1514,7 +1515,7 @@ export class TaskExecutor {
 
 					// Start the background task and handle any errors
 					drainStreamInBackgroundToFindAllUsage(lastApiReqIndex).catch((error) => {
-						console.error("Background usage collection failed:", error)
+						logger.error("TaskExecutor", "Background usage collection failed:", error)
 					})
 				} catch (error) {
 					// Abandoned happens when extension is no longer waiting for the
@@ -1539,8 +1540,8 @@ export class TaskExecutor {
 						} else {
 							// Stream failed - log the error and retry with the same content
 							// The existing rate limiting will prevent rapid retries
-							console.error(
-								`[Task#${t.taskId}.${t.instanceId}] Stream failed, will retry: ${streamingFailedMessage}`,
+							logger.error("TaskExecutor",
+								`Stream failed for task ${t.taskId}.${t.instanceId}, will retry: ${streamingFailedMessage}`,
 							)
 
 							// Apply exponential backoff similar to first-chunk errors when auto-resubmit is enabled
@@ -1550,8 +1551,8 @@ export class TaskExecutor {
 
 								// Check if task was aborted during the backoff
 								if (t.abort) {
-									console.log(
-										`[Task#${t.taskId}.${t.instanceId}] Task aborted during mid-stream retry backoff`,
+									logger.info("TaskExecutor",
+										`Task aborted during mid-stream retry backoff for task ${t.taskId}.${t.instanceId}`,
 									)
 									// Abort the entire task
 									t.abortReason = "user_cancelled"
@@ -1577,8 +1578,8 @@ export class TaskExecutor {
 						aborted: t.abort || t.abandoned,
 					})
 					if (profile) {
-						console.log(
-							`[Query Profiler] task=${profile.taskId} model=${profile.modelId} ttftMs=${profile.ttftMs ?? -1} e2eMs=${profile.e2eMs ?? -1} aborted=${profile.aborted}`,
+						logger.info("TaskExecutor",
+							`Query Profiler: task=${profile.taskId} model=${profile.modelId} ttftMs=${profile.ttftMs ?? -1} e2eMs=${profile.e2eMs ?? -1} aborted=${profile.aborted}`,
 						)
 					}
 					// Clean up the abort controller when streaming completes
@@ -1741,10 +1742,10 @@ export class TaskExecutor {
 							if (mcpBlock.id) {
 								const sanitizedId = sanitizeToolUseId(mcpBlock.id)
 								// Pre-flight deduplication: Skip if we've already added this ID
-								if (seenToolUseIds.has(sanitizedId)) {
-									console.warn(
-										`[Task#${t.taskId}] Pre-flight deduplication: Skipping duplicate MCP tool_use ID: ${sanitizedId} (tool: ${mcpBlock.name})`,
-									)
+							if (seenToolUseIds.has(sanitizedId)) {
+								logger.warn("TaskExecutor",
+									`Pre-flight deduplication: Skipping duplicate MCP tool_use ID: ${sanitizedId} (tool: ${mcpBlock.name}) on task ${t.taskId}`,
+								)
 									continue
 								}
 								seenToolUseIds.add(sanitizedId)
@@ -1763,8 +1764,8 @@ export class TaskExecutor {
 								const sanitizedId = sanitizeToolUseId(toolCallId)
 								// Pre-flight deduplication: Skip if we've already added this ID
 								if (seenToolUseIds.has(sanitizedId)) {
-									console.warn(
-										`[Task#${t.taskId}] Pre-flight deduplication: Skipping duplicate tool_use ID: ${sanitizedId} (tool: ${toolUse.name})`,
+									logger.warn("TaskExecutor",
+										`Pre-flight deduplication: Skipping duplicate tool_use ID: ${sanitizedId} (tool: ${toolUse.name}) on task ${t.taskId}`,
 									)
 									continue
 								}
@@ -1888,11 +1889,11 @@ export class TaskExecutor {
 								),
 						)
 
-						console.error(
-							`[TaskExecutor][${requestProfileId}] userMessageContentReady timed out after ${USER_MESSAGE_CONTENT_READY_TIMEOUT_MS}ms ` +
-								`(taskId=${t.taskId}, instance=${t.instanceId}, contentIndex=${t.currentStreamingContentIndex}, ` +
-								`blocks=${t.assistantMessageContent.length}, pendingTools=${pendingToolBlocks.length})`,
-						)
+					logger.error("TaskExecutor",
+						`userMessageContentReady timed out after ${USER_MESSAGE_CONTENT_READY_TIMEOUT_MS}ms ` +
+							`(taskId=${t.taskId}, instance=${t.instanceId}, contentIndex=${t.currentStreamingContentIndex}, ` +
+							`blocks=${t.assistantMessageContent.length}, pendingTools=${pendingToolBlocks.length})`,
+					)
 
 						for (const block of pendingToolBlocks) {
 							t.pushToolResultToUserContent({
@@ -2021,8 +2022,8 @@ export class TaskExecutor {
 
 						// Check if task was aborted during the backoff
 						if (t.abort) {
-							console.log(
-								`[Task#${t.taskId}.${t.instanceId}] Task aborted during empty-assistant retry backoff`,
+							logger.info("TaskExecutor",
+								`Task aborted during empty-assistant retry backoff for task ${t.taskId}.${t.instanceId}`,
 							)
 							break
 						}
@@ -2085,8 +2086,8 @@ export class TaskExecutor {
 					const h = this.host
 				// exception. Log it, notify the user, and end the task gracefully.
 				const errMsg = error instanceof Error ? error.message : String(error)
-				console.error(
-					`[TaskExecutor#${h.taskId}] Unhandled error in request loop :`,
+				logger.error("TaskExecutor",
+					`Unhandled error in request loop for task ${h.taskId}:`,
 					errMsg,
 					error instanceof Error ? error.stack : "",
 				)
@@ -2094,8 +2095,8 @@ export class TaskExecutor {
 				// presentAssistantMessageLocked may be stuck true if the exception
 				// escaped the while loop without reaching the finally block.
 				if (h.presentAssistantMessageLocked) {
-					console.warn(
-						`[TaskExecutor#${h.taskId}] Force-releasing stuck presentAssistantMessageLocked`,
+					logger.warn("TaskExecutor",
+						`Force-releasing stuck presentAssistantMessageLocked for task ${h.taskId}`,
 					)
 					h.presentAssistantMessageLocked = false
 				}

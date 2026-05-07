@@ -1,3 +1,4 @@
+import { logger } from "./logger"
 import type { ModelInfo } from "@njust-ai-cj/types"
 import type { ServiceTier } from "@njust-ai-cj/types"
 
@@ -36,11 +37,7 @@ export function resolveOpenAiUsageForCost(args: {
 			if (total === 0 || Math.abs(total - sumParts) <= tolerance) {
 				total = sumParts
 			} else if (total < sumParts - tolerance) {
-				console.warn(
-					`[Cost Audit] Token mismatch beyond tolerance: reported=${total}, ` +
-					`sumParts=${sumParts} (miss=${miss}, cached=${cachedD}, writes=${cw}), ` +
-					`tolerance=${tolerance}`,
-				)
+				logger.warn("Cost", `Token mismatch beyond tolerance: reported=${total}, sumParts=${sumParts} (miss=${miss}, cached=${cachedD}, writes=${cw}), tolerance=${tolerance}`)
 				// Total likely excludes cached portion; reconstruct billable prompt size
 				total = sumParts
 			}

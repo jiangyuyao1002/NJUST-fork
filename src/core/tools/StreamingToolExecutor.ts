@@ -1,6 +1,7 @@
 import type { ToolUse } from "../../shared/tools"
 import type { Task } from "../task/Task"
 import { ConcurrentToolExecutor } from "./ConcurrentToolExecutor"
+import { logger } from "../../shared/logger"
 import { toolRegistry } from "./ToolRegistry"
 import { classifyToolCategory, ToolExecutionScheduler } from "../task/ToolExecutionOrchestrator"
 import type { AdaptiveConcurrencyController } from "./AdaptiveConcurrencyController"
@@ -119,7 +120,7 @@ export class StreamingToolExecutor {
 			// Each tool in the batch has already pushed its own result (success or error).
 			// Log the aggregate error but don't re-throw — doing so would trigger the
 			// serial fallback path and re-execute already-completed tools.
-			console.error("[StreamingToolExecutor] eager batch completed with errors:", err)
+			logger.error("StreamingToolExecutor", "eager batch completed with errors:", err)
 		}
 	}
 

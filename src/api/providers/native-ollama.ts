@@ -5,6 +5,7 @@ import { ModelInfo, openAiModelInfoSaneDefaults, DEEP_SEEK_DEFAULT_TEMPERATURE }
 import { ApiStream } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import type { ApiHandlerOptions } from "../../shared/api"
+import { logger } from "../../shared/logger"
 import { getOllamaModels } from "./fetchers/ollama"
 import { TagMatcher } from "../../utils/tag-matcher"
 import { redactApiSecrets } from "../../utils/redactApiSecrets"
@@ -309,7 +310,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 					}
 				}
 			} catch (streamError: any) {
-				console.error("Error processing Ollama stream:", redactApiSecrets(streamError?.message || String(streamError)))
+				logger.error("Ollama", "Error processing Ollama stream:", redactApiSecrets(streamError?.message || String(streamError)))
 				throw new Error(redactApiSecrets(`Ollama stream processing error: ${streamError.message || "Unknown error"}`))
 			} finally {
 				// Flush accumulated matcher content on error to avoid losing partial output
@@ -332,7 +333,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 				)
 			}
 
-			console.error(redactApiSecrets(`Ollama API error (${statusCode || "unknown"}): ${errorMessage}`))
+			logger.error("Ollama", redactApiSecrets(`Ollama API error (${statusCode || "unknown"}): ${errorMessage}`))
 			throw new Error(redactApiSecrets(`Ollama API error (${statusCode || "unknown"}): ${errorMessage}`))
 		}
 	}

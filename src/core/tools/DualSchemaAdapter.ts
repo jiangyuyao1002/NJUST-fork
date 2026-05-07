@@ -1,4 +1,5 @@
 import { type ZodSchema } from "zod"
+import { logger } from "../../shared/logger"
 
 /**
  * A standard JSON Schema representation.
@@ -62,7 +63,7 @@ export class DualSchemaAdapter {
 				}) as JSONSchema
 			} catch {
 				// zod-to-json-schema not installed — fall back to undefined
-				console.warn("[DualSchemaAdapter] zod-to-json-schema not available; JSON Schema conversion skipped.")
+				logger.warn("DualSchemaAdapter", "zod-to-json-schema not available; JSON Schema conversion skipped.")
 				return undefined
 			}
 		}
