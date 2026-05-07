@@ -640,7 +640,8 @@ export async function activate(context: vscode.ExtensionContext) {
 					() => {},
 					(err: unknown) => {
 						outputChannel.appendLine(
-							`[McpToolsServer] Failed to persist auth token: ${err instanceof Error ? err.message : String(err)}`,
+							`[McpToolsServer] Failed to persist auth token to secret storage: ${err instanceof Error ? err.message : String(err)}. ` +
+							`MCP server authentication will not survive VS Code restart until this is resolved.`,
 						)
 					},
 				)

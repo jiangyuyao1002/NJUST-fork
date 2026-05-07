@@ -75,9 +75,9 @@ describe("ContextWindowProgress Logic", () => {
 		expect(result.reservedForOutput).toBe(8192) // ANTHROPIC_DEFAULT_MAX_TOKENS
 		expect(result.availableSize).toBe(0) // max(0, 0 - 1000 - 8192) = 0
 
-		// With zero context window, denominator is 1, so percentages are scaled
-		expect(result.currentPercent).toBe(100000) // 1000/1 * 100
-		expect(result.reservedPercent).toBe(819200) // 8192/1 * 100
+		// With zero context window, denominator falls back to reservedForOutput (8192)
+		expect(result.currentPercent).toBeCloseTo((1000 / 8192) * 100, 5) // (1000/8192)*100 ≈ 12.207
+		expect(result.reservedPercent).toBe(100) // (8192/8192)*100 = 100
 	})
 
 	test("handles case where tokens exceed context window", () => {

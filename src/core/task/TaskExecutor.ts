@@ -613,17 +613,16 @@ export class TaskExecutor {
 			}
 
 			// Only enter ERROR state when error is truly unrecoverable
-			h.stateMachine.force(TaskState.ERROR)
-
 			if (autoApprovalEnabled) {
 				h.stateMachine.force(TaskState.RECOVERING_MAX_TOKENS)
 				if (unattendedRetryEnabled && retryAttempt >= unattendedMaxRetryAttempts) {
 					const { classifyApiError } = await import("../errors/apiErrorClassifier")
 					const errorType = classifyApiError(error)
 					if (persistentRetryHandler.isEligible(errorType)) {
-						console.log(
-							`[Task#${h.taskId}] Normal retry limit reached. Entering persistent retry for ${errorType}...`,
-						)
+						const host = h.hostRef.deref()
+						if (host?.log) {
+							host.log(`[Task#${h.taskId}] Normal retry limit reached. Entering persistent retry for ${errorType}...`)
+						}
 						try {
 							await persistentRetryHandler.waitForRetry(
 								errorType,
@@ -664,6 +663,7 @@ export class TaskExecutor {
 				yield* this.attemptApiRequest(retryAttempt + 1)
 				return
 			} else {
+				h.stateMachine.force(TaskState.ERROR)
 				const { response } = await h.ask(
 					"api_req_failed",
 					error instanceof Error ? error.message : String(error),

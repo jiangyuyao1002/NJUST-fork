@@ -71,7 +71,8 @@ export class TaskStateMachine {
 	force(to: TaskState, source?: string): void {
 		if (this._state === to) return
 		if (this._forceLocked) {
-			console.error(
+			// eslint-disable-next-line no-console -- defensive guard, no logger available in state machine
+			console.warn(
 				`[TaskStateMachine] force() rejected (concurrent): ${this._state} -> ${to}` +
 				(source ? ` [source: ${source}]` : ""),
 			)
