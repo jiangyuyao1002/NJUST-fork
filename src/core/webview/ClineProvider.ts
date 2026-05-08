@@ -1282,6 +1282,17 @@ export class ClineProvider
 			alwaysAllowModeSwitch: state.alwaysAllowModeSwitch ?? false,
 			alwaysAllowSubtasks: state.alwaysAllowSubtasks ?? false,
 			allowedMaxRequests: state.allowedMaxRequests,
+			bypassWarningActive: (state.autoApprovalEnabled ?? false) &&
+				(state.alwaysAllowExecute ?? false) &&
+				(state.alwaysAllowWrite ?? false) &&
+				(state.alwaysAllowWriteOutsideWorkspace ?? false) &&
+				(state.alwaysAllowWriteProtected ?? false) &&
+				(state.alwaysAllowReadOnly ?? false) &&
+				(state.alwaysAllowReadOnlyOutsideWorkspace ?? false) &&
+				(state.alwaysAllowMcp ?? false) &&
+				(state.alwaysAllowModeSwitch ?? false) &&
+				(state.alwaysAllowSubtasks ?? false) &&
+				!((this.getGlobalState("bypassWarningDismissedAt") ?? 0) || false),
 			allowedMaxCost: state.allowedMaxCost,
 			autoCondenseContext: state.autoCondenseContext ?? true,
 			autoCondenseContextPercent: state.autoCondenseContextPercent ?? DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,

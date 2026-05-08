@@ -3,9 +3,13 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import type { ModelInfo } from "@njust-ai-cj/types"
 
 import type { ApiHandler, ApiHandlerCreateMessageMetadata } from "../index"
+
 import { ApiStream } from "../transform/stream"
 import { countTokens, countTokensDetailed, type TokenCountResult } from "../../utils/countTokens"
 import { isMcpTool } from "../../utils/mcp-name"
+import { computeBackoffMs, delayMs, DEFAULT_API_RETRY_OPTIONS, type ApiRetryOptions } from "../retry/ApiRetryStrategy"
+import { analyzeErrorForRetry } from "../retry/ApiErrorClassifier"
+import { taskEventBus } from "../../core/events/TaskEventBus"
 
 /**
  * Base class for API providers that implements common functionality.
@@ -148,5 +152,44 @@ export abstract class BaseProvider implements ApiHandler {
 		}
 
 		return countTokensDetailed(content, { useWorker: true })
+	}
+
+	/**
+	 * Wraps an async operation with exponential backoff retry.
+	 * Retries network errors, 429 (honoring Retry-After), and 5xx.
+	 * Does NOT retry 4xx client errors or auth failures.
+	 */
+	protected async withRetry<T>(
+		operation: () => Promise<T>,
+		retryConfig?: Partial<ApiRetryOptions>,
+		context?: { taskId?: string; provider?: string },
+	): Promise<T> {
+		const config = { ...DEFAULT_API_RETRY_OPTIONS, ...retryConfig }
+		let lastError: unknown
+
+		for (let attempt = 0; attempt < config.maxAttempts; attempt++) {
+			try {
+				return await operation()
+			} catch (error) {
+				lastError = error
+				const decision = analyzeErrorForRetry(error)
+				if (!decision.shouldRetry || attempt >= config.maxAttempts - 1) {
+					throw error
+				}
+				const delay = computeBackoffMs(attempt, config, decision.retryAfterSeconds)
+				taskEventBus.emit("task:llm-retry", {
+					taskId: context?.taskId,
+					data: {
+						attempt: attempt + 1,
+						delayMs: delay,
+						category: decision.category,
+						provider: context?.provider ?? this.constructor.name,
+					},
+				})
+				await delayMs(delay)
+			}
+		}
+
+		throw lastError
 	}
 }

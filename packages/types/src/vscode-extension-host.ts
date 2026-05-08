@@ -105,6 +105,7 @@ export interface ExtensionMessage {
 		| "planUpdate"
 		| "transcriptionResult"
 		| "transcriptionError"
+		| "bypassWarningDismissed"
 		| "taskMetrics"
 	text?: string
 	/** For fileContent: { path, content, error? } */
@@ -309,6 +310,7 @@ export type ExtensionState = Pick<
 	cloudUserInfo: CloudUserInfo | null
 	cloudIsAuthenticated: boolean
 	cloudAuthSkipModel?: boolean // Flag indicating auth completed without model selection (user should pick 3rd-party provider)
+	bypassWarningActive?: boolean
 	cloudApiUrl?: string
 	cloudOrganizations?: CloudOrganizationMembership[]
 	sharingEnabled: boolean
@@ -429,6 +431,7 @@ export interface WebviewMessage {
 		| "openMention"
 		| "cancelTask"
 		| "cancelAutoApproval"
+		| "bypassWarningDismissed"
 		| "updateVSCodeSetting"
 		| "getVSCodeSetting"
 		| "vsCodeSetting"

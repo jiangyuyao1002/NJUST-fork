@@ -127,6 +127,12 @@ export class PermissionRuleEngine {
 
 	// ── Mode management ──────────────────────────────────────────────
 
+	/**
+	 * TODO: When agent system permissionMode is wired to runtime,
+	 * move bypassWarningActive calculation from ClineProvider to here.
+	 * The current implementation is in ClineProvider.getStateToPostToWebview().
+	 */
+
 	setMode(mode: PermissionMode): void {
 		this.mode = mode
 	}
