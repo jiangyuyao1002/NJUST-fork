@@ -8,6 +8,9 @@ import { ModelFallbackManager, type FallbackConfig } from "../core/task/ModelFal
 
 import { providerRegistry } from "./registry/ProviderRegistry"
 
+// Auto-register all built-in providers (side-effect import)
+import "./providers/register-all"
+
 export interface SingleCompletionHandler {
 	completePrompt(prompt: string): Promise<string>
 }

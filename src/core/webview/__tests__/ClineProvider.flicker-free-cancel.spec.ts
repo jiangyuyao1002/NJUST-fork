@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import * as vscode from "vscode"
 
 import { ClineProvider } from "../ClineProvider"
 import { Task } from "../../task/Task"
-import { ContextProxy } from "../../config/ContextProxy"
+import type { ExtensionContext, OutputChannel } from "vscode"
 import type { ProviderSettings, HistoryItem } from "@njust-ai-cj/types"
 
 // Mock dependencies
@@ -73,12 +72,23 @@ vi.mock("../../../shared/embeddingModels", () => ({
 	EMBEDDING_MODEL_PROFILES: [],
 }))
 
+interface MockTask {
+	taskId: string
+	instanceId: string
+	emit: ReturnType<typeof vi.fn>
+	abortTask?: ReturnType<typeof vi.fn>
+	abandoned?: boolean
+	dispose?: ReturnType<typeof vi.fn>
+	on: ReturnType<typeof vi.fn>
+	off: ReturnType<typeof vi.fn>
+}
+
 describe("ClineProvider flicker-free cancel", () => {
 	let provider: ClineProvider
-	let mockContext: any
-	let mockOutputChannel: any
-	let mockTask1: any
-	let mockTask2: any
+	let mockContext: ExtensionContext
+	let mockOutputChannel: OutputChannel
+	let mockTask1: MockTask
+	let mockTask2: MockTask
 
 	const mockApiConfig: ProviderSettings = {
 		apiProvider: "anthropic",
@@ -107,13 +117,18 @@ describe("ClineProvider flicker-free cancel", () => {
 				keys: vi.fn().mockReturnValue([]),
 			},
 			extensionUri: { fsPath: "/test/extension" },
-		}
+			extensionPath: "/test/extension",
+			subscriptions: [],
+			extension: {
+				packageJSON: { version: "1.0.0" },
+			},
+		} as unknown as ExtensionContext
 
 		// Setup mock output channel
 		mockOutputChannel = {
 			appendLine: vi.fn(),
 			dispose: vi.fn(),
-		}
+		} as unknown as OutputChannel
 
 		// Setup mock context proxy
 		const mockContextProxy = {
@@ -126,6 +141,7 @@ describe("ClineProvider flicker-free cancel", () => {
 		}
 
 		// Create provider instance
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", mockContextProxy as any)
 
 		// Mock provider methods
@@ -137,6 +153,7 @@ describe("ClineProvider flicker-free cancel", () => {
 		provider.postStateToWebview = vi.fn().mockResolvedValue(undefined)
 		provider.postStateToWebviewWithoutTaskHistory = vi.fn().mockResolvedValue(undefined)
 		// Mock private method using any cast
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		;(provider as any).updateGlobalState = vi.fn().mockResolvedValue(undefined)
 		provider.activateProviderProfile = vi.fn().mockResolvedValue(undefined)
 		provider.performPreparationTasks = vi.fn().mockResolvedValue(undefined)
@@ -176,11 +193,13 @@ describe("ClineProvider flicker-free cancel", () => {
 		}
 
 		// Mock Task constructor
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(Task).mockImplementation(() => mockTask2 as any)
 	})
 
 	it("should not remove current task from stack when rehydrating same taskId", async () => {
 		// Setup: Add a task to the stack first
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		await provider.stack.push(mockTask1 as any)
 
 		// Spy on stack.pop to verify it's NOT called (rehydration path)
@@ -214,6 +233,7 @@ describe("ClineProvider flicker-free cancel", () => {
 
 	it("should remove task from stack when creating different task", async () => {
 		// Setup: Add a task to the stack first
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		await provider.stack.push(mockTask1 as any)
 
 		// Spy on stack.pop to verify it IS called
@@ -274,7 +294,9 @@ describe("ClineProvider flicker-free cancel", () => {
 			off: vi.fn(),
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		await provider.stack.push(mockParentTask as any)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		await provider.stack.push(mockTask1 as any)
 
 		// Act: Rehydrate the current (top) task
