@@ -9,7 +9,9 @@ const DIFF_PARAMETER_DESCRIPTION = `A string containing one or more search/repla
 [exact content to find]
 =======
 [new content to replace with]
->>>>>>> REPLACE`
+>>>>>>> REPLACE
+
+Multiple blocks are allowed in one diff string for making several changes at once.`
 
 export const apply_diff = {
 	type: "function",

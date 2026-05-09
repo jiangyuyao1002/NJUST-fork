@@ -160,6 +160,10 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	private async loadDynamicModels(): Promise<void> {
 		try {
 			const [models, endpoints] = await Promise.all([

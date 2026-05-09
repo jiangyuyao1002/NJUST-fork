@@ -24,7 +24,7 @@ const TASK_PARAMETER_DESCRIPTION = `A clear, detailed description of the task fo
 
 const AGENT_TYPE_PARAMETER_DESCRIPTION = `The type of sub-agent to spawn, which determines available tools:
 - "explore": Read-only tools for code search and understanding (read_file, search_files, list_files, codebase_search)
-- "implement": Full write permissions for code changes (read_file, write_to_file, apply_diff, execute_command, search_files)
+- "implement": Full write permissions for code changes (read_file, write_to_file, apply_patch, execute_command, search_files)
 - "verify": Testing and validation tools (read_file, execute_command, search_files, list_files)
 - "custom": Inherits parent task tools (default)`
 

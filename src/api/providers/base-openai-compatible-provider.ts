@@ -40,6 +40,10 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 
 	protected client: OpenAI
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	/**
 	 * Retries only the transport/setup phase (before any chunks are yielded).
 	 * Mid-stream failures are handled by the task loop.

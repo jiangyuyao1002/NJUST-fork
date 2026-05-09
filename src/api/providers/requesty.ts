@@ -72,6 +72,10 @@ export class RequestyHandler extends BaseProvider implements SingleCompletionHan
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	public async fetchModel() {
 		this.models = await getModels({ provider: "requesty", baseUrl: this.baseURL })
 		return this.getModel()

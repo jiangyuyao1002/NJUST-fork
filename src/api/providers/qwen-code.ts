@@ -62,6 +62,10 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 		this.options = options
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	private ensureClient(): OpenAI {
 		if (!this.client) {
 			// Create the client instance with dummy key initially

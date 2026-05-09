@@ -69,6 +69,10 @@ export abstract class OpenAICompatibleHandler extends BaseProvider implements Si
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	/**
 	 * Get the language model for the configured model ID.
 	 */

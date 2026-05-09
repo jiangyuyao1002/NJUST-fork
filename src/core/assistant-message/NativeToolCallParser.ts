@@ -97,7 +97,89 @@ export class NativeToolCallParser {
 				return { todos: rawArgs.trim() }
 			}
 		}
+
+		// Try extracting JSON from markdown code blocks
+		const codeBlockMatch = rawArgs.match(/```(?:json)?\s*([\s\S]*?)```/)
+		if (codeBlockMatch) {
+			try { return JSON.parse(codeBlockMatch[1].trim()) } catch { /* ignore */ }
+		}
+
+		// Try extracting the first JSON object
+		const jsonObjectMatch = rawArgs.match(/(\{[\s\S]*\})/)
+		if (jsonObjectMatch) {
+			try { return JSON.parse(jsonObjectMatch[1]) } catch { /* ignore */ }
+		}
+
+		// Try completing missing closing braces
+		const trimmed = rawArgs.trim()
+		if (trimmed.startsWith("{") && !trimmed.endsWith("}")) {
+			try { return JSON.parse(trimmed + "}") } catch { /* ignore */ }
+			const openBraces = (trimmed.match(/\{/g) || []).length
+			const closeBraces = (trimmed.match(/\}/g) || []).length
+			if (openBraces > closeBraces) {
+				try { return JSON.parse(trimmed + "}".repeat(openBraces - closeBraces)) } catch { /* ignore */ }
+			}
+		}
+
 		return null
+	}
+
+	/**
+	 * Maps common parameter name aliases to the canonical names for each tool.
+	 * Models sometimes use shorthand or alternate names that don't match the schema.
+	 */
+	private static readonly PARAM_ALIASES: Record<string, Record<string, string>> = {
+		edit:                    { file: "file_path", path: "file_path", filename: "file_path" },
+		search_and_replace:      { file: "file_path", path: "file_path", filename: "file_path" },
+		edit_file:               { file: "file_path", path: "file_path", filename: "file_path" },
+		search_replace:          { file: "file_path", path: "file_path", filename: "file_path" },
+		read_file:               { file: "path", filepath: "path", filename: "path" },
+		write_to_file:           { file: "path", filepath: "path", filename: "path" },
+		apply_diff:              { file: "path", filepath: "path", filename: "path" },
+		search_files:            { file: "path", filepath: "path", filename: "path" },
+		list_files:              { file: "path", filepath: "path", filename: "path" },
+		execute_command:         { cmd: "command", shell: "command", run: "command" },
+		ask_followup_question:   { q: "question", text: "question" },
+		attempt_completion:      { answer: "result", message: "result", response: "result" },
+	}
+
+	/**
+	 * Remap parameter name aliases to canonical names for the given tool.
+	 */
+	private static remapParamAliases(toolName: string, args: Record<string, unknown>): void {
+		const aliases = NativeToolCallParser.PARAM_ALIASES[toolName]
+		if (!aliases) return
+
+		for (const [oldKey, newKey] of Object.entries(aliases)) {
+			if (oldKey in args && !(newKey in args)) {
+				args[newKey] = args[oldKey]
+				delete args[oldKey]
+			}
+		}
+	}
+
+	/**
+	 * Coerce string values to their expected types (numbers, booleans).
+	 */
+	private static coerceArgTypes(args: Record<string, unknown>): void {
+		const intKeys = ["offset", "limit", "timeout", "anchor_line", "max_levels",
+			"max_lines", "contextLines", "expected_replacements", "count"]
+		for (const key of intKeys) {
+			if (typeof args[key] === "string") {
+				const n = Number(args[key])
+				if (Number.isFinite(n)) args[key] = Math.trunc(n)
+			}
+		}
+
+		const boolKeys = ["recursive", "replace_all", "include_siblings",
+			"include_header", "include_siblings"]
+		for (const key of boolKeys) {
+			if (typeof args[key] === "string") {
+				const lower = (args[key] as string).toLowerCase().trim()
+				if (lower === "true") args[key] = true
+				else if (lower === "false") args[key] = false
+			}
+		}
 	}
 
 	private static coerceOptionalBoolean(value: unknown): boolean | undefined {
@@ -750,6 +832,12 @@ export class NativeToolCallParser {
 					throw parseError
 				}
 			}
+
+			// Remap common parameter name aliases to canonical names
+			this.remapParamAliases(resolvedName, args)
+
+			// Coerce string values to expected types (numbers, booleans)
+			this.coerceArgTypes(args)
 
 			// Build stringified params for display/logging.
 			// Tool execution MUST use nativeArgs (typed) and does not support legacy fallbacks.

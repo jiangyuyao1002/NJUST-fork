@@ -87,4 +87,8 @@ export abstract class RouterProvider extends BaseProvider {
 	protected supportsTemperature(modelId: string): boolean {
 		return !modelId.startsWith("openai/o3-mini")
 	}
+
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
 }

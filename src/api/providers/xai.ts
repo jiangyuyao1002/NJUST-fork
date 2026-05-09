@@ -35,6 +35,10 @@ export class XAIHandler extends BaseProvider implements SingleCompletionHandler 
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	override getModel() {
 		const id =
 			this.options.apiModelId && this.options.apiModelId in xaiModels

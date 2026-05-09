@@ -40,6 +40,10 @@ export class DeepSeekHandler extends OpenAiHandler {
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	override getModel() {
 		const id = this.options.apiModelId ?? deepSeekDefaultModelId
 		const info = deepSeekModels[id as keyof typeof deepSeekModels] || deepSeekModels[deepSeekDefaultModelId]

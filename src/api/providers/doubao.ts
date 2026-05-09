@@ -61,6 +61,10 @@ export class DoubaoHandler extends OpenAiHandler {
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	override getModel() {
 		const id = this.options.apiModelId ?? doubaoDefaultModelId
 		const info = doubaoModels[id as keyof typeof doubaoModels] ?? doubaoCustomModelInfo

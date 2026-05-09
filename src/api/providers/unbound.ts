@@ -66,6 +66,10 @@ export class UnboundHandler extends BaseProvider implements SingleCompletionHand
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	public async fetchModel() {
 		this.models = await getModels({ provider: "unbound", apiKey: this.options.unboundApiKey })
 		return this.getModel()

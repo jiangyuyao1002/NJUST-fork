@@ -24,14 +24,24 @@ export abstract class BaseProvider implements ApiHandler {
 	abstract getModel(): { id: string; info: ModelInfo }
 
 	/**
+	 * Whether this provider supports OpenAI strict mode for tool schemas.
+	 * Override and return false for non-OpenAI providers that reject strict mode.
+	 */
+	protected shouldUseStrictMode(): boolean {
+		return true
+	}
+
+	/**
 	 * Converts an array of tools to be compatible with OpenAI's strict mode.
 	 * Filters for function tools, applies schema conversion to their parameters,
-	 * and ensures all tools have consistent strict: true values.
+	 * and ensures all tools have consistent strict values.
 	 */
 	protected convertToolsForOpenAI(tools: any[] | undefined): any[] | undefined {
 		if (!tools) {
 			return undefined
 		}
+
+		const useStrict = this.shouldUseStrictMode()
 
 		return tools.map((tool) => {
 			if (tool.type !== "function") {
@@ -46,10 +56,10 @@ export abstract class BaseProvider implements ApiHandler {
 				...tool,
 				function: {
 					...tool.function,
-					strict: !isMcp,
-					parameters: isMcp
-						? tool.function.parameters
-						: this.convertToolSchemaForOpenAI(tool.function.parameters),
+					strict: useStrict && !isMcp,
+					parameters: useStrict && !isMcp
+						? this.convertToolSchemaForOpenAI(tool.function.parameters)
+						: tool.function.parameters,
 				},
 			}
 		})

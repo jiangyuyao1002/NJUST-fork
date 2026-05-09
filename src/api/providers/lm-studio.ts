@@ -37,6 +37,10 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 		})
 	}
 
+	protected override shouldUseStrictMode(): boolean {
+		return false
+	}
+
 	override async *createMessage(
 		systemPrompt: string,
 		messages: Anthropic.Messages.MessageParam[],

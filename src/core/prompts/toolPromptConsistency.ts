@@ -11,6 +11,7 @@
  */
 
 import type OpenAI from "openai"
+import { TOOL_ALIASES } from "../../shared/tools"
 
 export interface ConsistencyCheckResult {
 	ok: boolean
@@ -23,10 +24,21 @@ const TOOL_PROMPT_KEYWORDS: Record<string, RegExp> = {
 	read_file: /read_file/,
 	search_files: /search_files/,
 	list_files: /list_files/,
-	apply_diff: /apply_diff/,
+	apply_patch: /apply_patch/,
 	use_mcp_tool: /use_mcp_tool/,
 	ask_followup_question: /ask_followup_question/,
 	attempt_completion: /attempt_completion/,
+}
+
+/**
+ * Reverse map: canonical tool name -> list of alias names.
+ * Built once at module load for O(1) lookup.
+ */
+const CANONICAL_TO_ALIASES: Map<string, string[]> = new Map()
+for (const [alias, canonical] of Object.entries(TOOL_ALIASES)) {
+	const existing = CANONICAL_TO_ALIASES.get(canonical) ?? []
+	existing.push(alias)
+	CANONICAL_TO_ALIASES.set(canonical, existing)
 }
 
 /**
@@ -52,7 +64,15 @@ export function checkToolPromptConsistency(
 		const mentionedInPrompt = pattern.test(systemPrompt)
 		const isAvailable = availableNames.has(toolName)
 
-		if (mentionedInPrompt && !isAvailable) {
+		// Check if the prompt mentions an alias whose canonical tool is available,
+		// or if the prompt mentions a canonical tool whose alias is available.
+		const canonicalOfMentioned = TOOL_ALIASES[toolName]
+		const aliasesOfMentioned = CANONICAL_TO_ALIASES.get(toolName) ?? []
+		const isAvailableViaAlias =
+			(canonicalOfMentioned !== undefined && availableNames.has(canonicalOfMentioned)) ||
+			aliasesOfMentioned.some((a) => availableNames.has(a))
+
+		if (mentionedInPrompt && !isAvailable && !isAvailableViaAlias) {
 			mentionedButUnavailable.push(toolName)
 		}
 		if (isAvailable && !mentionedInPrompt) {
