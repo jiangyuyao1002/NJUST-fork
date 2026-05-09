@@ -24,8 +24,7 @@ interface UIState {
 	showTodoViewer: boolean
 
 	// Autocomplete picker state
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	pickerState: AutocompletePickerState<any>
+	pickerState: AutocompletePickerState
 }
 
 interface UIActions {
@@ -47,8 +46,7 @@ interface UIActions {
 	setShowTodoViewer: (show: boolean) => void
 
 	// Picker state actions
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	setPickerState: (state: AutocompletePickerState<any>) => void
+	setPickerState: (state: AutocompletePickerState) => void
 
 	// Reset all UI state to defaults
 	resetUIState: () => void

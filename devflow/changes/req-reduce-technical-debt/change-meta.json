@@ -1,0 +1,39 @@
+{
+  "changeId": "req-reduce-technical-debt",
+  "requirementId": "req-reduce-technical-debt",
+  "outputPolicy": {
+    "documentLanguage": "en"
+  },
+  "sourceRoadmap": {
+    "itemId": null,
+    "roadmapVersion": null,
+    "roadmapSkillVersion": null
+  },
+  "spec": {
+    "primaryCapability": "cap-technical-debt-remediation",
+    "secondaryCapabilities": [],
+    "changeType": "create",
+    "specFiles": [
+      "devflow/specs/capabilities/technical-debt-remediation.md"
+    ],
+    "expectedDelta": [
+      "Systematic identification of technical debt across codebase",
+      "Resolution of HIGH priority issues (async constructor, silent error swallowing, type safety)",
+      "Resolution of MEDIUM priority issues (incomplete implementations, architecture concerns)",
+      "Verification that fixes don't introduce new debt"
+    ],
+    "affectedInvariants": [
+      "No regression: existing tests must continue to pass",
+      "Type safety: new code must not introduce `any` types",
+      "Error handling: errors must be caught and handled explicitly"
+    ],
+    "gapsClosed": [],
+    "newGaps": [],
+    "syncStatus": "synced",
+    "notes": [
+      "Initial technical debt identification from comprehensive codebase analysis",
+      "28 TODO comments, ~25+ any types, 15+ @ts-ignore, 30+ eslint-disable found",
+      "Priority: HIGH for critical issues, MEDIUM for others"
+    ]
+  }
+}

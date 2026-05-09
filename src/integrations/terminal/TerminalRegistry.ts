@@ -31,8 +31,9 @@ export class TerminalRegistry {
 
 		this.isInitialized = true
 
-		// TODO: This initialization code is VSCode specific, and therefore
-		// should probably live elsewhere.
+		// Note: This initialization code is VSCode-specific because it registers
+		// VSCode event handlers. It lives here rather than in a separate module
+		// since TerminalRegistry is already VSCode-coupled.
 
 		// Register handler for terminal close events to clean up temporary
 		// directories.

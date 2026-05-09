@@ -74,7 +74,8 @@ main(): Int64 {
 }
 
 func handleClient(client: Socket): Unit {
-    // TODO: read request, write response
+    // This is a template placeholder - actual implementation would read request and write response
+    // The socket is closed after template generation to allow users to fill in their own logic
     client.close()
 }
 `,

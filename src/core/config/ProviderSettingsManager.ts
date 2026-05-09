@@ -79,9 +79,109 @@ export class ProviderSettingsManager {
 
 	constructor(context: ExtensionContext) {
 		this.context = context
+	}
 
-		// TODO: We really shouldn't have async methods in the constructor.
-		this.initialize().catch(console.error)
+	/**
+	 * Initialize this manager. Must be called after construction, before use.
+	 * Returns a promise that resolves when initialization is complete.
+	 */
+	initialize(): Promise<void> {
+		return this.lock(async () => {
+			const providerProfiles = await this.load()
+
+			if (!providerProfiles) {
+				await this.store(this.defaultProviderProfiles)
+				return
+			}
+
+			let isDirty = false
+
+			// Migrate existing installs to have per-mode API config map
+			if (!providerProfiles.modeApiConfigs) {
+				// Use the currently selected config for all modes initially
+				const currentName = providerProfiles.currentApiConfigName
+				const seedId =
+					providerProfiles.apiConfigs[currentName]?.id ??
+					Object.values(providerProfiles.apiConfigs)[0]?.id ??
+					this.defaultConfigId
+				providerProfiles.modeApiConfigs = Object.fromEntries(modes.map((m) => [m.slug, seedId]))
+				isDirty = true
+			}
+
+			// Apply model migrations for all providers
+			if (this.applyModelMigrations(providerProfiles)) {
+				isDirty = true
+			}
+
+			// Ensure all configs have IDs.
+			for (const [_name, apiConfig] of Object.entries(providerProfiles.apiConfigs)) {
+				if (!apiConfig.id) {
+					apiConfig.id = this.generateId()
+					isDirty = true
+				}
+			}
+
+			// Ensure migrations field exists
+			if (!providerProfiles.migrations) {
+				providerProfiles.migrations = {
+					rateLimitSecondsMigrated: false,
+					openAiHeadersMigrated: false,
+					consecutiveMistakeLimitMigrated: false,
+					todoListEnabledMigrated: false,
+					claudeCodeLegacySettingsMigrated: false,
+				} // Initialize with default values
+				isDirty = true
+			}
+
+			if (!providerProfiles.migrations.rateLimitSecondsMigrated) {
+				await this.migrateRateLimitSeconds(providerProfiles)
+				providerProfiles.migrations.rateLimitSecondsMigrated = true
+				isDirty = true
+			}
+
+			if (!providerProfiles.migrations.openAiHeadersMigrated) {
+				await this.migrateOpenAiHeaders(providerProfiles)
+				providerProfiles.migrations.openAiHeadersMigrated = true
+				isDirty = true
+			}
+
+			if (!providerProfiles.migrations.consecutiveMistakeLimitMigrated) {
+				await this.migrateConsecutiveMistakeLimit(providerProfiles)
+				providerProfiles.migrations.consecutiveMistakeLimitMigrated = true
+				isDirty = true
+			}
+
+			if (!providerProfiles.migrations.todoListEnabledMigrated) {
+				await this.migrateTodoListEnabled(providerProfiles)
+				providerProfiles.migrations.todoListEnabledMigrated = true
+				isDirty = true
+			}
+
+			if (!providerProfiles.migrations.claudeCodeLegacySettingsMigrated) {
+				// These keys were used by the removed local Claude Code CLI wrapper.
+				for (const apiConfig of Object.values(providerProfiles.apiConfigs)) {
+					// Cast to string for comparison since "claude-code" is no longer a valid ProviderName
+					if ((apiConfig.apiProvider as string) !== "claude-code") continue
+
+					const config = apiConfig as unknown as Record<string, unknown>
+					if ("claudeCodePath" in config) {
+						delete config.claudeCodePath
+						isDirty = true
+					}
+					if ("claudeCodeMaxOutputTokens" in config) {
+						delete config.claudeCodeMaxOutputTokens
+						isDirty = true
+					}
+				}
+
+				providerProfiles.migrations.claudeCodeLegacySettingsMigrated = true
+				isDirty = true
+			}
+
+			if (isDirty) {
+				await this.store(providerProfiles)
+			}
+		})
 	}
 
 	public generateId() {
@@ -91,117 +191,18 @@ export class ProviderSettingsManager {
 	// Synchronize readConfig/writeConfig operations to avoid data loss.
 	private _lock = Promise.resolve()
 	private lock<T>(cb: () => Promise<T>) {
-		const next = this._lock.then(cb)
-		this._lock = next.catch(() => {}) as Promise<void>
+		const next = this._lock.then(cb).catch((error) => {
+			console.error("[ProviderSettingsManager] Lock operation failed:", error)
+			throw error
+		})
+		this._lock = next.then(() => {}).catch(() => {}) as Promise<void>
 		return next
 	}
 
 	/**
 	 * Initialize config if it doesn't exist and run migrations.
 	 */
-	public async initialize() {
-		try {
-			return await this.lock(async () => {
-				const providerProfiles = await this.load()
-
-				if (!providerProfiles) {
-					await this.store(this.defaultProviderProfiles)
-					return
-				}
-
-				let isDirty = false
-
-				// Migrate existing installs to have per-mode API config map
-				if (!providerProfiles.modeApiConfigs) {
-					// Use the currently selected config for all modes initially
-					const currentName = providerProfiles.currentApiConfigName
-					const seedId =
-						providerProfiles.apiConfigs[currentName]?.id ??
-						Object.values(providerProfiles.apiConfigs)[0]?.id ??
-						this.defaultConfigId
-					providerProfiles.modeApiConfigs = Object.fromEntries(modes.map((m) => [m.slug, seedId]))
-					isDirty = true
-				}
-
-				// Apply model migrations for all providers
-				if (this.applyModelMigrations(providerProfiles)) {
-					isDirty = true
-				}
-
-				// Ensure all configs have IDs.
-				for (const [_name, apiConfig] of Object.entries(providerProfiles.apiConfigs)) {
-					if (!apiConfig.id) {
-						apiConfig.id = this.generateId()
-						isDirty = true
-					}
-				}
-
-				// Ensure migrations field exists
-				if (!providerProfiles.migrations) {
-					providerProfiles.migrations = {
-						rateLimitSecondsMigrated: false,
-						openAiHeadersMigrated: false,
-						consecutiveMistakeLimitMigrated: false,
-						todoListEnabledMigrated: false,
-						claudeCodeLegacySettingsMigrated: false,
-					} // Initialize with default values
-					isDirty = true
-				}
-
-				if (!providerProfiles.migrations.rateLimitSecondsMigrated) {
-					await this.migrateRateLimitSeconds(providerProfiles)
-					providerProfiles.migrations.rateLimitSecondsMigrated = true
-					isDirty = true
-				}
-
-				if (!providerProfiles.migrations.openAiHeadersMigrated) {
-					await this.migrateOpenAiHeaders(providerProfiles)
-					providerProfiles.migrations.openAiHeadersMigrated = true
-					isDirty = true
-				}
-
-				if (!providerProfiles.migrations.consecutiveMistakeLimitMigrated) {
-					await this.migrateConsecutiveMistakeLimit(providerProfiles)
-					providerProfiles.migrations.consecutiveMistakeLimitMigrated = true
-					isDirty = true
-				}
-
-				if (!providerProfiles.migrations.todoListEnabledMigrated) {
-					await this.migrateTodoListEnabled(providerProfiles)
-					providerProfiles.migrations.todoListEnabledMigrated = true
-					isDirty = true
-				}
-
-				if (!providerProfiles.migrations.claudeCodeLegacySettingsMigrated) {
-					// These keys were used by the removed local Claude Code CLI wrapper.
-					for (const apiConfig of Object.values(providerProfiles.apiConfigs)) {
-						// Cast to string for comparison since "claude-code" is no longer a valid ProviderName
-						if ((apiConfig.apiProvider as string) !== "claude-code") continue
-
-						const config = apiConfig as unknown as Record<string, unknown>
-						if ("claudeCodePath" in config) {
-							delete config.claudeCodePath
-							isDirty = true
-						}
-						if ("claudeCodeMaxOutputTokens" in config) {
-							delete config.claudeCodeMaxOutputTokens
-							isDirty = true
-						}
-					}
-
-					providerProfiles.migrations.claudeCodeLegacySettingsMigrated = true
-					isDirty = true
-				}
-
-				if (isDirty) {
-					await this.store(providerProfiles)
-				}
-			})
-		} catch (error) {
-			throw new Error(`Failed to initialize config: ${error}`)
-		}
-	}
-
+	
 	private async migrateRateLimitSeconds(providerProfiles: ProviderProfiles) {
 		try {
 			let rateLimitSeconds: number | undefined

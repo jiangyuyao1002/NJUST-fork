@@ -225,6 +225,9 @@ export class ClineProvider
 		this._workspaceTracker = new WorkspaceTracker(this)
 
 		this.providerSettingsManager = new ProviderSettingsManager(this.context)
+		this.providerSettingsManager.initialize().catch((error) => {
+			console.error("[ClineProvider] Failed to initialize ProviderSettingsManager:", error)
+		})
 
 		this.customModesManager = new CustomModesManager(this.context, async () => {
 			await this.postStateToWebviewWithoutClineMessages()

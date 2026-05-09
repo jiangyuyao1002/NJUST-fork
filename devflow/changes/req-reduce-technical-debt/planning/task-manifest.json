@@ -1,0 +1,461 @@
+{
+  "changeId": "req-reduce-technical-debt",
+  "requirementId": "req-reduce-technical-debt",
+  "requirementVersion": "req-reduce-technical-debt.v1",
+  "outputPolicy": {
+    "documentLanguage": "en"
+  },
+  "sourceRoadmap": {
+    "itemId": null,
+    "roadmapVersion": null,
+    "roadmapSkillVersion": null,
+    "syncStatus": "no-source-rm",
+    "syncCommand": null,
+    "updatedFiles": [],
+    "noOpReason": "Direct requirement without upstream roadmap item",
+    "sourceStage": "N/A",
+    "successSignal": "TypeScript compilation passes, ESLint passes with fewer disables, tests pass",
+    "killSignal": "Changes introduce new type errors or break existing tests",
+    "dependencies": [],
+    "nonGoals": [
+      "Feature development",
+      "Performance optimization",
+      "User-facing documentation"
+    ]
+  },
+  "planningMeta": {
+    "reqPlanSkillVersion": "3.7.6",
+    "designVersion": "design.v1",
+    "approvedAt": "2026-05-09T00:00:00.000Z",
+    "approvedBy": "user",
+    "basedOnOption": "Option A",
+    "requirementBrief": {
+      "problemStatement": "The codebase has accumulated technical debt (28 TODO comments, ~25+ any types, incomplete implementations, anti-patterns) that reduces maintainability and increases bug risk.",
+      "solutionSummary": "Systematically identify and resolve code quality issues in priority order (HIGH -> MEDIUM -> LOW).",
+      "actors": ["Developer"],
+      "userStories": [
+        {
+          "id": "US-001",
+          "actor": "Developer",
+          "want": "Work with type-safe code",
+          "benefit": "Fewer runtime type errors",
+          "acceptance": ["TypeScript compilation passes with strict types"]
+        },
+        {
+          "id": "US-002",
+          "actor": "Developer",
+          "want": "See clear error handling",
+          "benefit": "Easier debugging",
+          "acceptance": ["No silent error swallows, errors logged properly"]
+        }
+      ],
+      "edgeOrRecoveryStories": [],
+      "implementationDecisions": [
+        "Fix HIGH priority issues first (async constructor, silent error swallowing, type safety)",
+        "Then MEDIUM priority (incomplete implementations, architecture concerns)",
+        "Verify each fix doesn't introduce new debt"
+      ],
+      "testingDecisions": [
+        "Run TypeScript compiler after each fix",
+        "Run existing test suite to ensure no regression",
+        "Verify ESLint passes"
+      ],
+      "outOfScope": [
+        "Feature development",
+        "Performance optimization",
+        "User-facing documentation"
+      ],
+      "furtherNotes": ["Each fix should be independent and self-contained"]
+    },
+    "ambiguityGate": {
+      "whatScore": 1,
+      "whyScore": 1,
+      "blockingThreshold": 3,
+      "status": "pass",
+      "assumptionsPreview": ["All fixes are backward-compatible refactoring"],
+      "blockedQuestions": []
+    },
+    "reviewLoop": {
+      "attempt": 1,
+      "maxAttempts": 3,
+      "repeatedConcernFingerprints": [],
+      "stallReason": "",
+      "rerouteIfStalled": "ask-user"
+    },
+    "decisionQuestions": [
+      {
+        "questionId": "D1",
+        "gate": "final-design-approval",
+        "knownEvidence": ["User requested systematic remediation"],
+        "recommendation": "Proceed with Option A (Priority-Ordered Sequential Fixes)",
+        "options": [
+          {
+            "id": "A",
+            "label": "Priority-Ordered Sequential Fixes",
+            "recommended": true,
+            "completeness": "8/10",
+            "good": "Clear priority order, easy to verify progress, low risk",
+            "costRisk": "May take longer to see full benefit"
+          },
+          {
+            "id": "B",
+            "label": "Aggressive Full Cleanup",
+            "recommended": false,
+            "completeness": "10/10",
+            "good": "Fastest overall completion",
+            "costRisk": "High risk of introducing bugs, harder to verify each fix"
+          }
+        ],
+        "userChoice": "A",
+        "impact": "cc-do follows priority-ordered task list",
+        "status": "answered"
+      }
+    ]
+  },
+  "sourceEvidence": [
+    {
+      "source": "devflow/specs/capabilities/technical-debt-remediation.md",
+      "trust": "internal-contract",
+      "useAs": "contract",
+      "instructionRisk": "low",
+      "decision": "authoritative for debt inventory"
+    }
+  ],
+  "languageAndDecisions": {
+    "languageSources": [],
+    "canonicalTerms": ["technical-debt-remediation", "type-safety", "error-handling", "TODO-comments"],
+    "languageConflicts": [],
+    "decisionDocs": [],
+    "adrOrSpecConflicts": [],
+    "externalDocConflicts": {
+      "autoResolved": [],
+      "competing": [],
+      "unresolved": []
+    }
+  },
+  "executionDiscipline": {
+    "default": "verify-after-each-fix",
+    "taskShape": "sequential-tracer-bullets",
+    "testFirstRequired": false,
+    "testFrameworkSource": "Existing vitest setup (see CLAUDE.md)",
+    "testQualityPolicy": {
+      "publicInterfaceRequired": false,
+      "behaviorAssertionRequired": false,
+      "specStyleTestNameRequired": false,
+      "oneLogicalBehaviorPerRed": false,
+      "publicVerificationPathRequired": true,
+      "mockBoundary": "N/A",
+      "implementationDetailTests": "N/A",
+      "bulkRedTests": "N/A",
+      "boundaryAdapterShape": "N/A",
+      "feedbackLoopPreference": ["automated-test", "tsc", "lint"]
+    },
+    "regressionTestsRequired": ["All existing tests must pass after each fix"],
+    "tddExceptions": ["Refactoring existing code - verify via existing tests and compiler"]
+  },
+  "status": "planned",
+  "designMode": "tiny-design",
+  "approvedOption": "Option A",
+  "designStatus": "approved",
+  "reviewStatus": "approved",
+  "spec": {
+    "primaryCapability": "cap-technical-debt-remediation",
+    "secondaryCapabilities": [],
+    "expectedDelta": [
+      "Fix async constructor in ProviderSettingsManager",
+      "Fix silent error swallowing in ProviderSettingsManager",
+      "Improve type safety in CLI UI and web-roo-code",
+      "Complete incomplete implementations in ripgrep and cangjie-lsp",
+      "Resolve architecture concerns in TerminalRegistry and importExport",
+      "Address TODO comments in priority order"
+    ],
+    "affectedInvariants": [
+      "No regression: existing tests must continue to pass",
+      "Type safety: new code must not introduce any types",
+      "Error handling: errors must be caught and handled explicitly"
+    ],
+    "gapsClosed": [],
+    "newGaps": [],
+    "specFiles": [
+      "devflow/specs/capabilities/technical-debt-remediation.md"
+    ],
+    "syncStatus": "planned"
+  },
+  "tasteDecisions": [],
+  "userChallenges": [],
+  "currentTaskId": "T001",
+  "activePhase": 1,
+  "frozenDecisions": [
+    "Fix in priority order (HIGH -> MEDIUM -> LOW)",
+    "Verify after each fix (tsc, lint, tests)",
+    "Each fix must be self-contained and minimal"
+  ],
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "Fix async constructor in ProviderSettingsManager",
+      "phase": 1,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 1",
+      "feedbackLoop": {
+        "type": "tsc",
+        "determinism": "deterministic"
+      },
+      "dependsOn": [],
+      "parallel": false,
+      "touches": ["src/core/config/ProviderSettingsManager.ts"],
+      "files": ["src/core/config/ProviderSettingsManager.ts"],
+      "verification": ["npx tsc --noEmit"],
+      "evidence": ["TypeScript compilation passes, no regression in existing behavior"],
+      "context": {
+        "readFiles": ["design.md", "src/core/config/ProviderSettingsManager.ts"],
+        "commands": ["npx tsc --noEmit"],
+        "notes": ["Extract async initialization to separate method"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T002",
+      "title": "Fix silent error swallowing in ProviderSettingsManager",
+      "phase": 1,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 2",
+      "feedbackLoop": {
+        "type": "tsc-and-lint",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T001"],
+      "parallel": false,
+      "touches": ["src/core/config/ProviderSettingsManager.ts"],
+      "files": ["src/core/config/ProviderSettingsManager.ts"],
+      "verification": ["npx tsc --noEmit && npm run lint"],
+      "evidence": ["Errors are now logged, not silently swallowed"],
+      "context": {
+        "readFiles": ["design.md", "T001 output"],
+        "commands": ["npx tsc --noEmit", "npm run lint"],
+        "notes": ["Replace .catch(() => {}) with proper error logging"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T003",
+      "title": "Fix type safety in uiStateStore",
+      "phase": 2,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 3",
+      "feedbackLoop": {
+        "type": "tsc",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T002"],
+      "parallel": false,
+      "touches": ["apps/cli/src/ui/stores/uiStateStore.ts"],
+      "files": ["apps/cli/src/ui/stores/uiStateStore.ts"],
+      "verification": ["npx tsc --noEmit"],
+      "evidence": ["No more any types without explicit disable"],
+      "context": {
+        "readFiles": ["design.md"],
+        "commands": ["npx tsc --noEmit"],
+        "notes": ["Remove eslint-disable for any types, add proper interfaces"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T004",
+      "title": "Fix type safety in usePickerHandlers",
+      "phase": 2,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 3",
+      "feedbackLoop": {
+        "type": "tsc",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T003"],
+      "parallel": false,
+      "touches": ["apps/cli/src/ui/hooks/usePickerHandlers.ts"],
+      "files": ["apps/cli/src/ui/hooks/usePickerHandlers.ts"],
+      "verification": ["npx tsc --noEmit"],
+      "evidence": ["No more any types in this file"],
+      "context": {
+        "readFiles": ["design.md"],
+        "commands": ["npx tsc --noEmit"],
+        "notes": ["Remove any types, add proper interfaces"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T005",
+      "title": "Complete error handling in ripgrep",
+      "phase": 3,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 4",
+      "feedbackLoop": {
+        "type": "test",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T004"],
+      "parallel": false,
+      "touches": ["src/services/ripgrep/index.ts"],
+      "files": ["src/services/ripgrep/index.ts"],
+      "verification": ["npm test -- src/services/ripgrep"],
+      "evidence": ["Error handling implemented or TODO justified"],
+      "context": {
+        "readFiles": ["design.md", "src/services/ripgrep/index.ts"],
+        "commands": ["npm test -- src/services/ripgrep"],
+        "notes": ["Implement error handling or remove TODO with justification"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T006",
+      "title": "Complete handleClient in CangjieTemplateLibrary",
+      "phase": 3,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 5",
+      "feedbackLoop": {
+        "type": "test",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T005"],
+      "parallel": false,
+      "touches": ["src/services/cangjie-lsp/CangjieTemplateLibrary.ts"],
+      "files": ["src/services/cangjie-lsp/CangjieTemplateLibrary.ts"],
+      "verification": ["npm test -- src/services/cangjie-lsp"],
+      "evidence": ["handleClient implementation complete"],
+      "context": {
+        "readFiles": ["design.md", "src/services/cangjie-lsp/CangjieTemplateLibrary.ts"],
+        "commands": ["npm test -- src/services/cangjie-lsp"],
+        "notes": ["Complete socket handling implementation"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T007",
+      "title": "Extract VSCode-specific code in TerminalRegistry",
+      "phase": 4,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 6",
+      "feedbackLoop": {
+        "type": "tsc",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T006"],
+      "parallel": false,
+      "touches": ["src/integrations/terminal/TerminalRegistry.ts"],
+      "files": ["src/integrations/terminal/TerminalRegistry.ts"],
+      "verification": ["npx tsc --noEmit"],
+      "evidence": ["VSCode-specific code isolated or documented"],
+      "context": {
+        "readFiles": ["design.md", "src/integrations/terminal/TerminalRegistry.ts"],
+        "commands": ["npx tsc --noEmit"],
+        "notes": ["Separate VSCode-specific initialization from portable logic"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T008",
+      "title": "Clarify data source in importExport",
+      "phase": 4,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 7",
+      "feedbackLoop": {
+        "type": "tsc",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T007"],
+      "parallel": false,
+      "touches": ["src/core/config/importExport.ts"],
+      "files": ["src/core/config/importExport.ts"],
+      "verification": ["npx tsc --noEmit"],
+      "evidence": ["Data source responsibility clarified"],
+      "context": {
+        "readFiles": ["design.md", "src/core/config/importExport.ts"],
+        "commands": ["npx tsc --noEmit"],
+        "notes": ["Use ProviderSettingsManager as single source of truth"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T009",
+      "title": "Fix type safety in stats.ts",
+      "phase": 5,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 8",
+      "feedbackLoop": {
+        "type": "tsc",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T008"],
+      "parallel": false,
+      "touches": ["apps/web-roo-code/src/lib/stats.ts"],
+      "files": ["apps/web-roo-code/src/lib/stats.ts"],
+      "verification": ["npx tsc --noEmit"],
+      "evidence": ["No more any types without explicit disable"],
+      "context": {
+        "readFiles": ["design.md"],
+        "commands": ["npx tsc --noEmit"],
+        "notes": ["Remove eslint-disable for any types, add proper interfaces"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T010",
+      "title": "Resolve TODO comments appropriately",
+      "phase": 6,
+      "status": "pending",
+      "tddPhase": "green",
+      "verticalSlice": "Slice 9",
+      "feedbackLoop": {
+        "type": "lint",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T009"],
+      "parallel": false,
+      "touches": ["Various files - see TODO inventory"],
+      "files": [],
+      "verification": ["npm run lint"],
+      "evidence": ["TODO count reduced or each TODO justified"],
+      "context": {
+        "readFiles": ["design.md", "devflow/specs/capabilities/technical-debt-remediation.md"],
+        "commands": ["npm run lint"],
+        "notes": ["Address 28 TODO comments in priority order"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    },
+    {
+      "id": "T011",
+      "title": "Run final verification suite",
+      "phase": 7,
+      "status": "pending",
+      "tddPhase": "evidence",
+      "verticalSlice": "Slice 9",
+      "feedbackLoop": {
+        "type": "full-suite",
+        "determinism": "deterministic"
+      },
+      "dependsOn": ["T010"],
+      "parallel": false,
+      "touches": ["All modified files"],
+      "files": [],
+      "verification": ["npx tsc --noEmit && npm run lint && npm test"],
+      "evidence": ["All checks pass"],
+      "context": {
+        "readFiles": ["tasks.md", "task-manifest.json"],
+        "commands": ["npx tsc --noEmit", "npm run lint", "npm test"],
+        "notes": ["Collect evidence for cc-check"]
+      },
+      "reviews": { "spec": "pending", "code": "pending" }
+    }
+  ],
+  "openQuestions": [],
+  "deferredQuestions": []
+}
