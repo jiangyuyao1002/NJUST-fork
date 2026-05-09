@@ -48,6 +48,10 @@ logs
 .vercel
 .roo/mcp.json
 
+# Claude Code local skills and settings
+.claude/skills/
+.claude/settings.local.json
+
 # Cangjie symbol index (auto-generated)
 .cangjie-index/
 
