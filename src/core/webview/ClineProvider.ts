@@ -104,6 +104,7 @@ import { readTaskMessages } from "../task-persistence/taskMessages"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
 import { logger } from "../../shared/logger"
+import { TIMING, LIMITS } from "../../shared/constants"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1377,9 +1378,9 @@ export class ClineProvider
 			hasOpenedModeSelector: this.getGlobalState("hasOpenedModeSelector") ?? false,
 			lockApiConfigAcrossModes: state.lockApiConfigAcrossModes ?? false,
 			alwaysAllowFollowupQuestions: state.alwaysAllowFollowupQuestions ?? false,
-			followupAutoApproveTimeoutMs: state.followupAutoApproveTimeoutMs ?? 60000,
+			followupAutoApproveTimeoutMs: state.followupAutoApproveTimeoutMs ?? TIMING.FOLLOWUP_AUTO_APPROVE_TIMEOUT_MS,
 			includeDiagnosticMessages: state.includeDiagnosticMessages ?? true,
-			maxDiagnosticMessages: state.maxDiagnosticMessages ?? 50,
+			maxDiagnosticMessages: state.maxDiagnosticMessages ?? LIMITS.MAX_DIAGNOSTIC_MESSAGES,
 			includeTaskHistoryInEnhance: state.includeTaskHistoryInEnhance ?? true,
 			includeCurrentTime: state.includeCurrentTime ?? true,
 			includeCurrentCost: state.includeCurrentCost ?? true,

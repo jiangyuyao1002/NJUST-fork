@@ -4,6 +4,7 @@ import axios from "axios"
 
 import {
 	type ModelInfo,
+	type OpenAiUsageMetrics,
 	azureOpenAiDefaultApiVersion,
 	openAiModelInfoSaneDefaults,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
@@ -270,11 +271,11 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 				text: message?.content || "",
 			}
 
-			yield this.processUsageMetrics(response.usage, modelInfo)
+			yield this.processUsageMetrics(response.usage ?? undefined, modelInfo)
 		}
 	}
 
-	protected processUsageMetrics(usage: any, _modelInfo?: ModelInfo): ApiStreamUsageChunk {
+	protected processUsageMetrics(usage: OpenAiUsageMetrics | undefined, _modelInfo?: ModelInfo): ApiStreamUsageChunk {
 		return {
 			type: "usage",
 			inputTokens: usage?.prompt_tokens || 0,
@@ -439,7 +440,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 				type: "text",
 				text: message?.content || "",
 			}
-			yield this.processUsageMetrics(response.usage)
+			yield this.processUsageMetrics(response.usage ?? undefined)
 		}
 	}
 

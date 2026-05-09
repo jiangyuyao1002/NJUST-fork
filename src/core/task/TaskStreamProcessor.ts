@@ -20,9 +20,10 @@ import type { ApiMessage } from "../task-persistence"
 import { getLastGlobalApiRequestTime } from "./globalApiTiming"
 import { PersistentRetryManager } from "./PersistentRetry"
 import { logger } from "../../shared/logger"
+import { TIMING, LIMITS } from "../../shared/constants"
 
-const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
-const FORCED_CONTEXT_REDUCTION_PERCENT = 75 // Keep 75% of context (remove 25%) on context window errors
+const MAX_EXPONENTIAL_BACKOFF_SECONDS = TIMING.MAX_EXPONENTIAL_BACKOFF_MS / 1000
+const FORCED_CONTEXT_REDUCTION_PERCENT = LIMITS.FORCED_CONTEXT_REDUCTION_PERCENT
 
 /**
  * TaskStreamProcessor handles stream-related helper logic extracted from Task.ts,

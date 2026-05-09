@@ -42,6 +42,7 @@ import { injectVariables } from "../../utils/config"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { logger } from "../../shared/logger"
+import { TIMING } from "../../shared/constants"
 
 // Discriminated union for connection states
 export type ConnectedMcpConnection = {
@@ -317,7 +318,7 @@ export class McpHub implements IMcpHubService {
 		const timer = setTimeout(async () => {
 			this.configChangeDebounceTimers.delete(key)
 			await this.handleConfigFileChange(filePath, source)
-		}, 500) // 500ms debounce
+		}, TIMING.MCP_CONFIG_CHANGE_DEBOUNCE_MS)
 
 		this.configChangeDebounceTimers.set(key, timer)
 	}

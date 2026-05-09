@@ -151,3 +151,39 @@ export type ModelInfo = z.infer<typeof modelInfoSchema>
 export type ModelRecord = Record<string, ModelInfo>
 
 export type RouterModels = Record<DynamicProvider | LocalProvider, ModelRecord>
+
+/**
+ * OpenAI-style usage metrics returned by most providers.
+ *
+ * Covers the union of fields accessed across all `processUsageMetrics`
+ * implementations in the codebase.  Fields are intentionally optional so
+ * that OpenAI SDK types like `CompletionUsage` can be passed without
+ * explicit casting.
+ */
+export interface OpenAiUsageMetrics {
+	prompt_tokens?: number
+	completion_tokens?: number
+	total_tokens?: number
+	cache_creation_input_tokens?: number
+	cache_read_input_tokens?: number
+	cached_tokens?: number
+	cache_write_tokens?: number
+	cache_read_tokens?: number
+	input_tokens?: number
+	output_tokens?: number
+	prompt_tokens_details?: {
+		cache_write_tokens?: number
+		cached_tokens?: number
+		cache_miss_tokens?: number
+		caching_tokens?: number
+	}
+	input_tokens_details?: {
+		cached_tokens?: number
+		cache_miss_tokens?: number
+	}
+	output_tokens_details?: {
+		reasoning_tokens?: number
+	}
+	prompt_cache_miss_tokens?: number
+	prompt_cache_hit_tokens?: number
+}

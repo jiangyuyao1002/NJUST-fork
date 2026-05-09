@@ -35,6 +35,7 @@ import { TerminalRegistry } from "../../integrations/terminal/TerminalRegistry"
 import { OutputInterceptor } from "../../integrations/terminal/OutputInterceptor"
 import { safeDispose } from "./TaskLifecycle"
 import { logger } from "../../shared/logger"
+import { isToolUseBlock } from "../assistant-message/types"
 
 // ── Host type ────────────────────────────────────────────────────────────
 // Structural contract: Task implements this shape at runtime.
@@ -244,12 +245,10 @@ export class TaskLifecycleHandler {
 					const content = Array.isArray(lastMessage.content)
 						? lastMessage.content
 						: [{ type: "text" as const, text: lastMessage.content }]
-					const hasToolUse = content.some((block: any) => block.type === "tool_use")
+					const hasToolUse = content.some(isToolUseBlock)
 
 					if (hasToolUse) {
-						const toolUseBlocks = content.filter(
-							(block: any) => block.type === "tool_use",
-						) as Anthropic.Messages.ToolUseBlock[]
+						const toolUseBlocks = content.filter(isToolUseBlock) as Anthropic.Messages.ToolUseBlock[]
 						const toolResponses: Anthropic.ToolResultBlockParam[] = toolUseBlocks.map((block) => ({
 							type: "tool_result" as const,
 							tool_use_id: block.id,
@@ -275,9 +274,7 @@ export class TaskLifecycleHandler {
 							? previousAssistantMessage.content
 							: [{ type: "text" as const, text: previousAssistantMessage.content }]
 
-						const toolUseBlocks = assistantContent.filter(
-							(block: any) => block.type === "tool_use",
-						) as Anthropic.Messages.ToolUseBlock[]
+						const toolUseBlocks = assistantContent.filter(isToolUseBlock) as Anthropic.Messages.ToolUseBlock[]
 
 						if (toolUseBlocks.length > 0) {
 							const existingToolResults = existingUserContent.filter(

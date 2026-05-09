@@ -7,6 +7,7 @@ import { Payload, VectorStoreSearchResult } from "../interfaces"
 import { DEFAULT_MAX_SEARCH_RESULTS, DEFAULT_SEARCH_MIN_SCORE, QDRANT_CODE_BLOCK_NAMESPACE } from "../constants"
 import { t } from "../../../i18n"
 import { logger } from "../../../shared/logger"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 /**
  * Qdrant implementation of the vector store interface
@@ -291,10 +292,10 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 				field_name: "type",
 				field_schema: "keyword",
 			})
-		} catch (indexError: any) {
-			const errorMessage = (indexError?.message || "").toLowerCase()
+		} catch (indexError: unknown) {
+			const errorMessage = getErrorMessage(indexError).toLowerCase()
 			if (!errorMessage.includes("already exists")) {
-				logger.warn("QdrantVectorStore", `Could not create payload index for type on ${this.collectionName}. Details:`, indexError?.message || indexError)
+				logger.warn("QdrantVectorStore", `Could not create payload index for type on ${this.collectionName}. Details:`, getErrorMessage(indexError))
 			}
 		}
 
@@ -305,10 +306,10 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 					field_name: `pathSegments.${i}`,
 					field_schema: "keyword",
 				})
-			} catch (indexError: any) {
-				const errorMessage = (indexError?.message || "").toLowerCase()
+			} catch (indexError: unknown) {
+				const errorMessage = getErrorMessage(indexError).toLowerCase()
 				if (!errorMessage.includes("already exists")) {
-					logger.warn("QdrantVectorStore", `Could not create payload index for pathSegments.${i} on ${this.collectionName}. Details:`, indexError?.message || indexError)
+					logger.warn("QdrantVectorStore", `Could not create payload index for pathSegments.${i} on ${this.collectionName}. Details:`, getErrorMessage(indexError))
 				}
 			}
 		}

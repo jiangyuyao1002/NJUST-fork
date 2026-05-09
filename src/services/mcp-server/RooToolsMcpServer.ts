@@ -14,6 +14,7 @@ import {
 	execCommand,
 	execApplyDiff,
 } from "./tool-executors"
+import { getErrorMessage } from "../../shared/error-utils"
 
 // ── Token-bucket rate limiter (no external deps) ──────────────────────────
 
@@ -88,8 +89,8 @@ export class RooToolsMcpServer {
 				try {
 					const result = await execReadFile(this.cwd, params)
 					return { content: [{ type: "text" as const, text: result }] }
-				} catch (e: any) {
-					return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], isError: true }
+				} catch (e: unknown) {
+					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }
 				}
 			},
 		)
@@ -105,8 +106,8 @@ export class RooToolsMcpServer {
 				try {
 					const result = await execWriteFile(this.cwd, params)
 					return { content: [{ type: "text" as const, text: result }] }
-				} catch (e: any) {
-					return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], isError: true }
+				} catch (e: unknown) {
+					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }
 				}
 			},
 		)
@@ -122,8 +123,8 @@ export class RooToolsMcpServer {
 				try {
 					const result = await execListFiles(this.cwd, params)
 					return { content: [{ type: "text" as const, text: result }] }
-				} catch (e: any) {
-					return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], isError: true }
+				} catch (e: unknown) {
+					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }
 				}
 			},
 		)
@@ -140,8 +141,8 @@ export class RooToolsMcpServer {
 				try {
 					const result = await execSearchFiles(this.cwd, params)
 					return { content: [{ type: "text" as const, text: result }] }
-				} catch (e: any) {
-					return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], isError: true }
+				} catch (e: unknown) {
+					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }
 				}
 			},
 		)
@@ -163,8 +164,8 @@ export class RooToolsMcpServer {
 						this.options.deniedCommands,
 					)
 					return { content: [{ type: "text" as const, text: result }] }
-				} catch (e: any) {
-					return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], isError: true }
+				} catch (e: unknown) {
+					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }
 				}
 			},
 		)
@@ -180,8 +181,8 @@ export class RooToolsMcpServer {
 				try {
 					const result = await execApplyDiff(this.cwd, params)
 					return { content: [{ type: "text" as const, text: result }] }
-				} catch (e: any) {
-					return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], isError: true }
+				} catch (e: unknown) {
+					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }
 				}
 			},
 		)

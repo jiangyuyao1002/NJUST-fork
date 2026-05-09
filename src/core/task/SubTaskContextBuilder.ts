@@ -129,8 +129,8 @@ export function generateParentContextSummary(
 		if (typeof content === "string") return content
 		if (Array.isArray(content)) {
 			return content
-				.filter((block: any) => block.type === "text" && typeof block.text === "string")
-				.map((block: any) => block.text)
+				.filter((block: { type: string; text?: string }) => block.type === "text" && typeof block.text === "string")
+				.map((block: { type: string; text?: string }) => block.text!)
 				.join("\n")
 		}
 		return ""
@@ -283,8 +283,8 @@ export function generateTaskResultSummary(
 		if (typeof content === "string") return content
 		if (Array.isArray(content)) {
 			return content
-				.filter((block: any) => block.type === "text" && typeof block.text === "string")
-				.map((block: any) => block.text)
+				.filter((block: { type: string; text?: string }) => block.type === "text" && typeof block.text === "string")
+				.map((block: { type: string; text?: string }) => block.text!)
 				.join("\n")
 		}
 		return ""

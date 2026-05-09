@@ -6,6 +6,7 @@ import { ApiStream } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import type { ApiHandlerOptions } from "../../shared/api"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 import { getOllamaModels } from "./fetchers/ollama"
 import { TagMatcher } from "../../utils/tag-matcher"
 import { redactApiSecrets } from "../../utils/redactApiSecrets"
@@ -310,9 +311,9 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 						outputTokens: totalOutputTokens,
 					}
 				}
-			} catch (streamError: any) {
-				logger.error("Ollama", "Error processing Ollama stream:", redactApiSecrets(streamError?.message || String(streamError)))
-				throw new Error(redactApiSecrets(`Ollama stream processing error: ${streamError.message || "Unknown error"}`))
+			} catch (streamError: unknown) {
+				logger.error("Ollama", "Error processing Ollama stream:", redactApiSecrets(getErrorMessage(streamError)))
+				throw new Error(redactApiSecrets(`Ollama stream processing error: ${getErrorMessage(streamError)}`))
 			} finally {
 				// Flush accumulated matcher content on error to avoid losing partial output
 				for (const chunk of matcher.final()) {

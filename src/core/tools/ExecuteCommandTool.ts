@@ -27,6 +27,7 @@ import { BaseTool, ToolCallbacks, type ValidationResult } from "./BaseTool"
 import { recordSecurityMetric } from "../security/metrics"
 import { checkCommandSafety } from "./helpers/commandSafety"
 import { logger } from "../../shared/logger"
+import { TIMING } from "../../shared/constants"
 
 /** Uses {@link checkCommandSafety} so high-risk detection stays aligned with permission classifiers. */
 function _isHighRiskShellCommand(command: string): boolean {
@@ -42,7 +43,7 @@ interface ExecuteCommandParams {
 	timeout?: number | null
 }
 
-const MIN_CLI_TIMEOUT_MS = 300_000 // 5 minutes floor for CLI mode
+const MIN_CLI_TIMEOUT_MS = TIMING.MIN_CLI_TIMEOUT_MS
 
 export function resolveAgentTimeoutMs(timeoutSeconds: number | null | undefined): number {
 	const requestedAgentTimeout = typeof timeoutSeconds === "number" && timeoutSeconds > 0 ? timeoutSeconds * 1000 : 0

@@ -86,7 +86,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 		await pWaitFor(() => busyTerminals.every((t) => !TerminalRegistry.isProcessHot(t.id)), {
 			interval: 100,
 			timeout: 5_000,
-		}).catch(() => {})
+		}).catch(() => { /* best-effort; timeout is expected when terminals stay busy */ })
 	}
 
 	// Reset, this lets us know when to wait for saved files to update terminals.

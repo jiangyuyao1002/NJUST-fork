@@ -130,7 +130,7 @@ export function truncateToolResult(result: string, budgetTokens: number): string
  */
 function isImageContent(content: unknown): boolean {
 	if (Array.isArray(content)) {
-		return content.some((block: any) => block.type === "image")
+		return content.some((block) => (block as unknown as Record<string, unknown>).type === "image")
 	}
 	return false
 }
@@ -215,8 +215,8 @@ export function applyToolResultBudget(
 			)
 
 			let modified = false
-			const newContent = message.content.map((block: any) => {
-				if (block.type !== "tool_result") return block
+			const newContent = message.content.map((block) => {
+				if ((block as unknown as Record<string, unknown>).type !== "tool_result") return block
 
 				const toolResultBlock = block as Anthropic.Messages.ToolResultBlockParam
 

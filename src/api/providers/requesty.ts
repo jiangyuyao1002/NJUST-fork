@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type ModelInfo, type ModelRecord, requestyDefaultModelId, requestyDefaultModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics, requestyDefaultModelId, requestyDefaultModelInfo } from "@njust-ai-cj/types"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { calculateApiCostOpenAI } from "../../shared/cost"
@@ -100,7 +100,7 @@ export class RequestyHandler extends BaseProvider implements SingleCompletionHan
 		return { id, info, ...params }
 	}
 
-	protected processUsageMetrics(usage: any, modelInfo?: ModelInfo): ApiStreamUsageChunk {
+	protected processUsageMetrics(usage: OpenAiUsageMetrics, modelInfo?: ModelInfo): ApiStreamUsageChunk {
 		const requestyUsage = usage as RequestyUsage
 		const inputTokens = requestyUsage?.prompt_tokens || 0
 		const outputTokens = requestyUsage?.completion_tokens || 0

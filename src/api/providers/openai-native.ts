@@ -30,6 +30,7 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 import { isMcpTool } from "../../utils/mcp-name"
 import { sanitizeOpenAiCallId } from "../../utils/tool-id"
 import { requireApiKey } from "../interfaces/api-key-validator"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export type OpenAiNativeModel = ReturnType<OpenAiNativeHandler["getModel"]>
 
@@ -481,24 +482,28 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 					yield outChunk
 				}
 			}
-		} catch (sdkErr: any) {
+		} catch (sdkErr: unknown) {
+			const err = sdkErr as Record<string, unknown>
+			const errMessage = getErrorMessage(sdkErr)
+			const errCode = err.code as string | undefined
+			const errStatus = err.status as number | undefined
 			// Only fallback to manual SSE for connection/stream errors
 			// For auth errors, invalid requests, etc., re-throw
 			const isConnectionError =
-				sdkErr.code === "ECONNREFUSED" ||
-				sdkErr.code === "ECONNRESET" ||
-				sdkErr.code === "ETIMEDOUT" ||
-				sdkErr.code === "ENOTFOUND" ||
-				sdkErr.name === "NetworkError" ||
-				sdkErr.message?.includes("network") ||
-				sdkErr.message?.includes("ECONN") ||
-				sdkErr.message?.includes("stream")
+				errCode === "ECONNREFUSED" ||
+				errCode === "ECONNRESET" ||
+				errCode === "ETIMEDOUT" ||
+				errCode === "ENOTFOUND" ||
+				(err.name as string) === "NetworkError" ||
+				errMessage?.includes("network") ||
+				errMessage?.includes("ECONN") ||
+				errMessage?.includes("stream")
 
 			const isStreamError =
-				sdkErr.status === 502 ||
-				sdkErr.status === 503 ||
-				sdkErr.status === 504 ||
-				sdkErr.message?.includes("stream")
+				errStatus === 502 ||
+				errStatus === 503 ||
+				errStatus === 504 ||
+				errMessage?.includes("stream")
 
 			if (isConnectionError || isStreamError) {
 				// For connection/stream errors, fallback to manual SSE via fetch

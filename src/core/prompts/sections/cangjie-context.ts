@@ -18,6 +18,7 @@ import {
 	getCompileHistoryRevision,
 } from "../../../services/cangjie-lsp/cangjieCompileHistory"
 import type { CangjieContextIntensity } from "../../task/CangjieRuntimePolicy"
+import { LIMITS } from "../../../shared/constants"
 
 let corpusSingleton: { instance: CangjieCorpusSemanticIndex; root: string } | null = null
 
@@ -2154,7 +2155,7 @@ function getContextSectionCacheTtlMs(): number {
 		return l3TtlConfigCache.value
 	}
 	const v = vscode.workspace.getConfiguration(Package.name).get<number>("cangjieContext.l3CacheTtlMs")
-	const value = typeof v === "number" && v >= 1000 && v <= 120_000 ? Math.floor(v) : 12_000
+	const value = typeof v === "number" && v >= LIMITS.CANGJIE_L3_CACHE_TTL_MIN_MS && v <= LIMITS.CANGJIE_L3_CACHE_TTL_MAX_MS ? Math.floor(v) : LIMITS.CANGJIE_L3_CACHE_TTL_DEFAULT_MS
 	l3TtlConfigCache = { value, fetchedAt: now }
 	return value
 }

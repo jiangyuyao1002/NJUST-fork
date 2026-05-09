@@ -6,6 +6,8 @@ import {
 	deepSeekDefaultModelId,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
+	type OpenAiUsageMetrics,
+	type ModelInfo,
 } from "@njust-ai-cj/types"
 
 import { shouldUseReasoningBudget, type ApiHandlerOptions } from "../../shared/api"
@@ -162,7 +164,7 @@ export class DeepSeekHandler extends OpenAiHandler {
 	}
 
 	// Override to handle DeepSeek's usage metrics, including caching.
-	protected override processUsageMetrics(usage: any, _modelInfo?: any): ApiStreamUsageChunk {
+	protected override processUsageMetrics(usage: OpenAiUsageMetrics, _modelInfo?: ModelInfo): ApiStreamUsageChunk {
 		const details = usage?.prompt_tokens_details
 		return {
 			type: "usage",

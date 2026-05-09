@@ -5,6 +5,7 @@ import * as lockfile from "proper-lockfile"
 import { JsonStreamStringify } from "json-stream-stringify"
 
 import { logger } from "../shared/logger"
+import { getErrorMessage } from "../shared/error-utils"
 
 /**
  * Options for safeWriteJson function
@@ -48,7 +49,7 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 
 		// Verify directory exists after creation attempt
 		await fs.access(dirPath)
-	} catch (dirError: any) {
+	} catch (dirError: unknown) {
 		logger.error("SafeWriteJson", `Failed to create or access directory for ${absoluteFilePath}:`, dirError)
 		throw dirError
 	}
@@ -103,10 +104,9 @@ async function safeWriteJson(filePath: string, data: any, options?: SafeWriteJso
 				`.${path.basename(absoluteFilePath)}.bak_${Date.now()}_${Math.random().toString(36).substring(2)}.tmp`,
 			)
 			await fs.rename(absoluteFilePath, actualTempBackupFilePath)
-		} catch (accessError: any) {
-			// Explicitly type accessError
-			if (accessError.code !== "ENOENT") {
-				// An error other than "file not found" occurred during access check.
+		} catch (accessError: unknown) {
+			const errCode = (accessError as NodeJS.ErrnoException)?.code
+			if (errCode !== "ENOENT") {
 				throw accessError
 			}
 			// Target file does not exist, so no backup is made. actualTempBackupFilePath remains null.

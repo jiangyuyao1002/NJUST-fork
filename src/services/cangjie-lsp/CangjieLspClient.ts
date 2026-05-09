@@ -532,7 +532,7 @@ export class CangjieLspClient {
 								this.firstCompletionLogged = true
 								this.extensionOutputChannel.appendLine(`[Perf] First completion response in ${Date.now() - t0}ms`)
 							}
-						}).catch(() => {})
+						}).catch(() => { /* best-effort perf logging */ })
 					}
 					return result
 				},
@@ -545,7 +545,7 @@ export class CangjieLspClient {
 								this.firstHoverLogged = true
 								this.extensionOutputChannel.appendLine(`[Perf] First hover response in ${Date.now() - t0}ms`)
 							}
-						}).catch(() => {})
+						}).catch(() => { /* best-effort perf logging */ })
 					}
 					return result
 				},

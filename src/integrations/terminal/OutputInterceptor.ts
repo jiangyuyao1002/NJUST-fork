@@ -390,7 +390,7 @@ export class OutputInterceptor {
 			const files = await fs.promises.readdir(storageDir)
 			for (const file of files) {
 				if (file.startsWith("cmd-")) {
-					await fs.promises.unlink(path.join(storageDir, file)).catch(() => {})
+					await fs.promises.unlink(path.join(storageDir, file)).catch(() => { /* best-effort cleanup */ })
 				}
 			}
 		} catch {
@@ -420,7 +420,7 @@ export class OutputInterceptor {
 			for (const file of files) {
 				const match = file.match(/^cmd-(\d+)\.txt$/)
 				if (match && !executionIds.has(match[1])) {
-					await fs.promises.unlink(path.join(storageDir, file)).catch(() => {})
+					await fs.promises.unlink(path.join(storageDir, file)).catch(() => { /* best-effort cleanup */ })
 				}
 			}
 		} catch {

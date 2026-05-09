@@ -8,6 +8,7 @@ import { GlobalFileNames } from "../../shared/globalFileNames"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { getStorageBasePath } from "../../utils/storage"
 import { logger } from "../../shared/logger"
+import { TIMING, LIMITS } from "../../shared/constants"
 
 /**
  * Index file format for fast startup reads.
@@ -46,7 +47,7 @@ export interface TaskHistoryStoreOptions {
 
 export class TaskHistoryStore {
 	/** Upper bound on in-memory task entries (disk remains authoritative). */
-	static readonly MAX_CACHED_TASKS = 2000
+	static readonly MAX_CACHED_TASKS = LIMITS.MAX_CACHED_TASKS
 
 	private readonly globalStoragePath: string
 	private readonly onWrite?: (items: HistoryItem[]) => Promise<void>
@@ -65,10 +66,10 @@ export class TaskHistoryStore {
 	private resolveInitialized!: () => void
 
 	/** Debounce window for index writes in milliseconds. */
-	private static readonly INDEX_WRITE_DEBOUNCE_MS = 2000
+	private static readonly INDEX_WRITE_DEBOUNCE_MS = TIMING.INDEX_WRITE_DEBOUNCE_MS
 
 	/** Periodic reconciliation interval in milliseconds. */
-	private static readonly RECONCILE_INTERVAL_MS = 5 * 60 * 1000
+	private static readonly RECONCILE_INTERVAL_MS = TIMING.RECONCILE_INTERVAL_MS
 
 	constructor(globalStoragePath: string, options?: TaskHistoryStoreOptions) {
 		this.globalStoragePath = globalStoragePath

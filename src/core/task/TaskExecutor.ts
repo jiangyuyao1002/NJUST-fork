@@ -38,7 +38,7 @@ import { resolveParallelNativeToolCalls } from "../../shared/parallelToolCalls"
 import { type ApiStream, GroundingSource } from "../../api/transform/stream"
 import type { SystemPromptParts } from "../prompts/system"
 import { checkToolPromptConsistency } from "../prompts/toolPromptConsistency"
-import { type AssistantMessageContent, presentAssistantMessage, markUserContentReadyIfDrained } from "../assistant-message"
+import { type AssistantMessageContent, presentAssistantMessage, markUserContentReadyIfDrained, isAnyToolUse, isToolUseBlock, type TypedBlock } from "../assistant-message"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
 import type { ApiMessage } from "../task-persistence"
 import { getModelMaxOutputTokens } from "../../shared/api"
@@ -48,7 +48,7 @@ import { globalPromptCacheBreakDetector } from "../prompts/promptCacheBreakDetec
 import { globalQueryProfiler } from "../../utils/queryProfiler"
 import { globalCacheMetrics } from "../../utils/cacheMetrics"
 import { sanitizeToolUseId } from "../../utils/tool-id"
-import type { ToolUse } from "../../shared/tools"
+import type { ToolUse, McpToolUse } from "../../shared/tools"
 import { getEnvironmentDetails } from "../environment/getEnvironmentDetails"
 import { clearRetryEvents } from "../errors/retryPersistence"
 import { manageContext, willManageContext } from "../context-management"
@@ -228,6 +228,9 @@ export interface TaskExecutorHost {
 	backoffAndAnnounce(retryAttempt: number, error: any): Promise<void>
 	maybeWaitForProviderRateLimit(retryAttempt: number): Promise<void>
 	attemptApiRequest(retryAttempt: number, options?: { skipProviderRateLimit?: boolean }): AsyncGenerator<any, void, unknown>
+
+	/** Delegate call to presentAssistantMessage(host) */
+	presentAssistantMessage(): Promise<void>
 
 	// Streaming lifecycle flags
 	didFinishAbortingStream: boolean
@@ -1111,12 +1114,12 @@ export class TaskExecutor {
 										}
 
 										// Store the ID for native protocol
-										;(partialToolUse as any).id = event.id
+										;partialToolUse.id = event.id
 
 										// Add to content and present
 										t.assistantMessageContent.push(partialToolUse)
 										t.userMessageContentReady = false
-										presentAssistantMessage(t as any)
+										t.presentAssistantMessage()
 									} else if (event.type === "tool_call_delta") {
 										// Process chunk using streaming JSON parser
 										const partialToolUse = this.toolCallParser.processStreamingChunk(
@@ -1129,13 +1132,13 @@ export class TaskExecutor {
 											const toolUseIndex = t.streamingToolCallIndices.get(event.id)
 											if (toolUseIndex !== undefined) {
 												// Store the ID for native protocol
-												;(partialToolUse as any).id = event.id
+												;partialToolUse.id = event.id
 
 												// Update the existing tool use with new partial data
 												t.assistantMessageContent[toolUseIndex] = partialToolUse
 
 												// Present updated tool use
-												presentAssistantMessage(t as any)
+												t.presentAssistantMessage()
 											}
 										}
 									} else if (event.type === "tool_call_end") {
@@ -1147,7 +1150,7 @@ export class TaskExecutor {
 
 										if (finalToolUse) {
 											// Store the tool call ID
-											;(finalToolUse as any).id = event.id
+											;finalToolUse.id = event.id
 
 											// Get the index and replace partial with final
 											if (toolUseIndex !== undefined) {
@@ -1168,14 +1171,14 @@ export class TaskExecutor {
 												if (enabled && (state?.autoApprovalEnabled ?? false)) {
 													const decision = t.toolExecution.streamingExecutor.shouldEagerExecute(t, latest)
 													if (decision === "eager") {
-														presentAssistantMessage(t as any)
+														t.presentAssistantMessage()
 														break
 													}
 												}
 											}
 
 											// Present the finalized tool call
-											presentAssistantMessage(t as any)
+											t.presentAssistantMessage()
 										} else if (toolUseIndex !== undefined) {
 											// finalizeStreamingToolCall returned null (malformed JSON or missing args)
 											// Mark the tool as non-partial so it's presented as complete, but execution
@@ -1184,7 +1187,7 @@ export class TaskExecutor {
 											if (existingToolUse && existingToolUse.type === "tool_use") {
 												existingToolUse.partial = false
 												// Ensure it has the ID for native protocol
-												;(existingToolUse as any).id = event.id
+												;existingToolUse.id = event.id
 											}
 
 											// Clean up tracking
@@ -1194,7 +1197,7 @@ export class TaskExecutor {
 											t.userMessageContentReady = false
 
 											// Present the tool call - validation will handle missing params
-											presentAssistantMessage(t as any)
+											t.presentAssistantMessage()
 										}
 									}
 								}
@@ -1227,7 +1230,7 @@ export class TaskExecutor {
 
 								// Present the tool call to user - presentAssistantMessage will execute
 								// tools sequentially and accumulate all results in userMessageContent
-								presentAssistantMessage(t as any)
+								t.presentAssistantMessage()
 								break
 							}
 							case "text": {
@@ -1247,7 +1250,7 @@ export class TaskExecutor {
 									})
 									t.userMessageContentReady = false
 								}
-								presentAssistantMessage(t as any)
+								t.presentAssistantMessage()
 								break
 							}
 						}
@@ -1617,7 +1620,7 @@ export class TaskExecutor {
 
 						if (finalToolUse) {
 							// Store the tool call ID
-							;(finalToolUse as any).id = event.id
+							;finalToolUse.id = event.id
 
 							// Get the index and replace partial with final
 							if (toolUseIndex !== undefined) {
@@ -1631,7 +1634,7 @@ export class TaskExecutor {
 							t.userMessageContentReady = false
 
 							// Present the finalized tool call
-							presentAssistantMessage(t as any)
+							t.presentAssistantMessage()
 						} else if (toolUseIndex !== undefined) {
 							// finalizeStreamingToolCall returned null (malformed JSON or missing args)
 							// We still need to mark the tool as non-partial so it gets executed
@@ -1640,7 +1643,7 @@ export class TaskExecutor {
 							if (existingToolUse && existingToolUse.type === "tool_use") {
 								existingToolUse.partial = false
 								// Ensure it has the ID for native protocol
-								;(existingToolUse as any).id = event.id
+								;existingToolUse.id = event.id
 							}
 
 							// Clean up tracking
@@ -1650,15 +1653,15 @@ export class TaskExecutor {
 							t.userMessageContentReady = false
 
 							// Present the tool call - validation will handle missing params
-							presentAssistantMessage(t as any)
+							t.presentAssistantMessage()
 						}
 					}
 				}
 
 				// IMPORTANT: Capture partialBlocks AFTER finalizeRawChunks() to avoid double-presentation.
 				// Tools finalized above are already presented, so we only want blocks still partial after finalization.
-				const partialBlocks = t.assistantMessageContent.filter((block: any) => block.partial)
-				partialBlocks.forEach((block: any) => (block.partial = false))
+				const partialBlocks = t.assistantMessageContent.filter((block) => block.partial)
+				partialBlocks.forEach((block) => (block.partial = false))
 
 				// Can't just do this b/c a tool could be in the middle of executing.
 				// t.assistantMessageContent.forEach((e) => (e.partial = false))
@@ -1697,9 +1700,7 @@ export class TaskExecutor {
 				// Check if we have any content to process (text or tool uses)
 				const hasTextContent = assistantMessage.length > 0
 
-				const hasToolUses = t.assistantMessageContent.some(
-					(block: any) => block.type === "tool_use" || block.type === "mcp_tool_use",
-				)
+				const hasToolUses = t.assistantMessageContent.some(isAnyToolUse)
 
 				if (hasTextContent || hasToolUses) {
 					// Reset counter when we get a successful response with content
@@ -1731,9 +1732,7 @@ export class TaskExecutor {
 					// Duplicate tool_use IDs cause Anthropic API 400 errors:
 					// "tool_use ids must be unique"
 					const seenToolUseIds = new Set<string>()
-					const toolUseBlocks = t.assistantMessageContent.filter(
-						(block: any) => block.type === "tool_use" || block.type === "mcp_tool_use",
-					)
+					const toolUseBlocks = t.assistantMessageContent.filter(isAnyToolUse)
 					for (const block of toolUseBlocks) {
 						if (block.type === "mcp_tool_use") {
 							// McpToolUse already has the original tool name (e.g., "mcp_serverName_toolName")
@@ -1804,7 +1803,7 @@ export class TaskExecutor {
 						// Find new_task index in assistantMessageContent (may differ from assistantContent
 						// due to text blocks being structured differently).
 						const executionNewTaskIndex = t.assistantMessageContent.findIndex(
-							(block: any) => block.type === "tool_use" && block.name === "new_task",
+							(block) => isToolUseBlock(block) && block.name === "new_task",
 						)
 						if (executionNewTaskIndex !== -1) {
 							t.assistantMessageContent.length = executionNewTaskIndex + 1
@@ -1845,7 +1844,7 @@ export class TaskExecutor {
 					// If there is content to update then it will complete and
 					// update `t.userMessageContentReady` to true, which we
 					// `pWaitFor` before making the next request.
-					presentAssistantMessage(t as any)
+					t.presentAssistantMessage()
 				}
 
 				if (hasTextContent || hasToolUses) {
@@ -1896,9 +1895,10 @@ export class TaskExecutor {
 					)
 
 						for (const block of pendingToolBlocks) {
+							const toolUseId = (block as ToolUse | McpToolUse).id ?? ""
 							t.pushToolResultToUserContent({
 								type: "tool_result",
-								tool_use_id: sanitizeToolUseId((block as any).id),
+								tool_use_id: sanitizeToolUseId(toolUseId),
 								content: formatResponse.toolError(
 									"Tool execution timed out — the handler did not return a result within the allowed window.",
 								),
@@ -1916,9 +1916,7 @@ export class TaskExecutor {
 
 					// If the model did not tool use, then we need to tell it to
 					// either use a tool or attempt_completion.
-					const didToolUse = t.assistantMessageContent.some(
-						(block: any) => block.type === "tool_use" || block.type === "mcp_tool_use",
-					)
+					const didToolUse = t.assistantMessageContent.some(isAnyToolUse)
 
 					if (!didToolUse) {
 						// Increment consecutive no-tool-use counter
@@ -1945,10 +1943,10 @@ export class TaskExecutor {
 								lastUserMsg &&
 								Array.isArray(lastUserMsg.content) &&
 								lastUserMsg.content.some(
-									(block: any) =>
-										block.type === "tool_result" &&
-										typeof block.content === "string" &&
-										block.content.includes("interrupted"),
+									(block) =>
+										(block as TypedBlock).type === "tool_result" &&
+										typeof (block as TypedBlock).content === "string" &&
+										((block as TypedBlock).content as string).includes("interrupted"),
 								)
 
 							t.userMessageContent.push({

@@ -25,8 +25,9 @@ import { GetModelsOptions } from "../../../shared/api"
 import { getOllamaModels } from "./ollama"
 import { getLMStudioModels } from "./lmstudio"
 import { getRooModels } from "./roo"
+import { TIMING } from "../../../shared/constants"
 
-const memoryCache = new NodeCache({ stdTTL: 5 * 60, checkperiod: 5 * 60 })
+const memoryCache = new NodeCache({ stdTTL: TIMING.MODEL_CACHE_TTL_S, checkperiod: TIMING.MODEL_CACHE_TTL_S })
 
 // Zod schema for validating ModelRecord structure from disk cache
 const modelRecordSchema = z.record(z.string(), modelInfoSchema)

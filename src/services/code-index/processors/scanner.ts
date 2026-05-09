@@ -390,9 +390,10 @@ export class DirectoryScanner implements IDirectoryScanner {
 				if (uniqueFilePaths.length > 0) {
 					try {
 						await this.qdrantClient.deletePointsByMultipleFilePaths(uniqueFilePaths)
-					} catch (deleteError: any) {
+					} catch (deleteError: unknown) {
+						const errorObj = deleteError as Record<string, unknown>
 						const _errorStatus =
-							deleteError?.status || deleteError?.response?.status || deleteError?.statusCode
+							errorObj?.status || (errorObj?.response as Record<string, unknown>)?.status || errorObj?.statusCode
 						const errorMessage = deleteError instanceof Error ? deleteError.message : String(deleteError)
 
 						logger.error("DirectoryScanner", `Failed to delete points for ${uniqueFilePaths.length} files before upsert in workspace ${scanWorkspace}:`, deleteError)

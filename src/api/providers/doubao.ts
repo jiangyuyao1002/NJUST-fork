@@ -8,6 +8,7 @@ import {
 	doubaoDefaultModelId,
 	doubaoSeedCodeCodingPlanModelId,
 	openAiModelInfoSaneDefaults,
+	type OpenAiUsageMetrics,
 	resolveDoubaoInferenceModelId,
 	type ModelInfo,
 } from "@njust-ai-cj/types"
@@ -153,7 +154,7 @@ export class DoubaoHandler extends OpenAiHandler {
 		}
 	}
 
-	protected override processUsageMetrics(usage: any, _modelInfo?: any): ApiStreamUsageChunk {
+	protected override processUsageMetrics(usage: OpenAiUsageMetrics, _modelInfo?: ModelInfo): ApiStreamUsageChunk {
 		return {
 			type: "usage",
 			inputTokens: usage?.prompt_tokens || 0,

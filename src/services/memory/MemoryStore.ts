@@ -53,7 +53,7 @@ export async function loadMemories(
 				const ttl = MEMORY_TTL[parsed.type] ?? MEMORY_TTL.session
 				if (Date.now() - parsed.timestamp > ttl) {
 					// Remove expired file silently
-					fs.unlink(path.join(dir, file)).catch(() => {})
+					fs.unlink(path.join(dir, file)).catch(() => { /* best-effort cleanup */ })
 					continue
 				}
 				entries.push(parsed)

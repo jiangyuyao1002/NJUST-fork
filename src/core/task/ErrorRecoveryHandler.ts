@@ -4,6 +4,7 @@ import { appendRetryEvent } from "../errors/retryPersistence"
 import { reactiveCompactMessages } from "../context-management/reactiveCompact"
 import { TaskState } from "./TaskStateMachine"
 import { logger } from "../../shared/logger"
+import type { TypedBlock } from "../assistant-message/types"
 
 import type { Task } from "./Task"
 
@@ -327,14 +328,15 @@ export class ErrorRecoveryHandler {
 		for (let i = 0; i < history.length; i++) {
 			const msg = history[i]
 			if (Array.isArray(msg.content)) {
-				const filtered = msg.content.map((block: any) => {
-					if (block.type === "image" || block.type === "image_url" || block.source?.type === "base64") {
+				const filtered = msg.content.map((block) => {
+					const b = block as unknown as TypedBlock
+					if (b.type === "image" || b.type === "image_url" || (b.source as Record<string, unknown>)?.type === "base64") {
 						modified = true
-						return { type: "text", text: "[Image removed: content too large for API]" }
+						return { type: "text" as const, text: "[Image removed: content too large for API]" }
 					}
 					return block
 				})
-				history[i] = { ...msg, content: filtered }
+				history[i] = { ...msg, content: filtered as typeof msg.content }
 			}
 		}
 

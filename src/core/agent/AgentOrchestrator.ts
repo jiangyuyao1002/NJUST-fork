@@ -8,6 +8,7 @@ import type { SharedContext, AgentInfo } from "./types"
 import { generateParentContextSummary } from "../task/SubTaskContextBuilder"
 import { DEFAULT_FORKED_CONTEXT_CONFIG } from "../task/SubTaskOptions"
 import type { ForkedContextConfig } from "../task/SubTaskOptions"
+import { TIMING } from "../../shared/constants"
 
 type ApiMessage = { role: string; content: any; ts?: number }
 
@@ -292,7 +293,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error("Agent task timed out after 10 minutes"))
-			}, 10 * 60 * 1000)
+			}, TIMING.AGENT_TASK_TIMEOUT_MS)
 
 			const poll = setInterval(() => {
 				try {

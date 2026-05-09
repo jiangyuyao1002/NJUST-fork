@@ -8,6 +8,7 @@ import { t } from "../../i18n"
 
 import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
 import type { ToolResponse, ToolUse, McpToolUse, PushToolResultOptions } from "../../shared/tools"
+import { getErrorMessage, wrapAsError } from "../../shared/error-utils"
 
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import { Task } from "../task/Task"
@@ -981,8 +982,8 @@ export async function presentAssistantMessage(cline: Task) {
 								if (customTool.parameters) {
 									try {
 										customToolArgs = customTool.parameters.parse(block.nativeArgs || block.params || {})
-									} catch (parseParamsError: any) {
-										const message = `Custom tool "${block.name}" argument validation failed: ${parseParamsError.message}`
+									} catch (parseParamsError: unknown) {
+										const message = `Custom tool "${block.name}" argument validation failed: ${getErrorMessage(parseParamsError)}`
 										console.error(message)
 										cline.consecutiveMistakeCount++
 										await cline.say("error", message)
@@ -1003,10 +1004,10 @@ export async function presentAssistantMessage(cline: Task) {
 									pushToolResult(result)
 									cline.consecutiveMistakeCount = 0
 								}
-							} catch (executionError: any) {
+							} catch (executionError: unknown) {
 								cline.consecutiveMistakeCount++
-								cline.recordToolError("custom_tool", executionError.message)
-								await handleError(`executing custom tool "${block.name}"`, executionError)
+								cline.recordToolError("custom_tool", getErrorMessage(executionError))
+								await handleError(`executing custom tool "${block.name}"`, wrapAsError(executionError))
 							}
 						} else {
 							// Not a custom tool - handle as unknown tool error

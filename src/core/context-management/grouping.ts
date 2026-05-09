@@ -1,4 +1,5 @@
 import type { ApiMessage } from "../task-persistence/apiMessages"
+import type { TypedBlock } from "../assistant-message/types"
 
 /**
  * Group messages into atomic API-round units that must not be split by truncation.
@@ -33,7 +34,7 @@ export function groupMessagesByApiTurn(messages: ApiMessage[]): ApiMessage[][] {
 
 export function hasToolResults(msg: ApiMessage): boolean {
 	if (!Array.isArray(msg.content)) return false
-	return msg.content.some((block: any) => block.type === "tool_result")
+	return msg.content.some((block) => (block as unknown as TypedBlock).type === "tool_result")
 }
 
 /**

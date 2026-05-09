@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type ModelInfo, type ModelRecord, unboundDefaultModelId, unboundDefaultModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics, unboundDefaultModelId, unboundDefaultModelInfo } from "@njust-ai-cj/types"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { calculateApiCostOpenAI } from "../../shared/cost"
@@ -94,7 +94,7 @@ export class UnboundHandler extends BaseProvider implements SingleCompletionHand
 		return { id, info, ...params }
 	}
 
-	protected processUsageMetrics(usage: any, modelInfo?: ModelInfo): ApiStreamUsageChunk {
+	protected processUsageMetrics(usage: OpenAiUsageMetrics, modelInfo?: ModelInfo): ApiStreamUsageChunk {
 		const unboundUsage = usage as UnboundUsage
 		const inputTokens = unboundUsage?.prompt_tokens || 0
 		const outputTokens = unboundUsage?.completion_tokens || 0

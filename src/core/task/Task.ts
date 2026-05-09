@@ -116,6 +116,7 @@ import { TaskSubtaskHandler } from "./TaskSubtaskHandler"
 import { type TaskSubtaskHost } from "./interfaces/TaskSubtaskHost"
 import { TaskToolHandler } from "./TaskToolHandler"
 import { TaskExecutor, type TaskExecutorHost } from "./TaskExecutor"
+import { presentAssistantMessage } from "../assistant-message"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
 import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
 
@@ -544,6 +545,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/** Accessor for the static lastGlobalApiRequestTime (used by TaskExecutor). */
 	public getLastGlobalApiRequestTimeValue(): number | undefined {
 		return getGlobalApiTime()
+	}
+
+	/** Delegate to presentAssistantMessage(this) — used by TaskExecutor. */
+	public async presentAssistantMessage(): Promise<void> {
+		return presentAssistantMessage(this)
 	}
 
 	public get taskState(): TaskState {

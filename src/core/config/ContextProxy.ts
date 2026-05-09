@@ -22,6 +22,7 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { logger } from "../../utils/logging"
 import { supportPrompt } from "../../shared/support-prompt"
+import { TIMING } from "../../shared/constants"
 
 type GlobalStateKey = keyof GlobalState
 type SecretStateKey = keyof SecretState
@@ -108,7 +109,7 @@ export class ContextProxy {
 				this.secretCache[key] = await this.originalContext.secrets.get(key)
 			} catch { /* ignore individual failures */ }
 		}
-	}, 5 * 60 * 1000) // Refresh every 5 minutes
+	}, TIMING.SECRET_REFRESH_INTERVAL_MS)
 
 	this._isInitialized = true
 	}

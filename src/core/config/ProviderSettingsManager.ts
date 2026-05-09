@@ -17,6 +17,7 @@ import {
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Mode, modes } from "../../shared/modes"
+import { getErrorMessage } from "../../shared/error-utils"
 import { buildApiHandler } from "../../api"
 
 // Type-safe model migrations mapping
@@ -195,7 +196,9 @@ export class ProviderSettingsManager {
 			console.error("[ProviderSettingsManager] Lock operation failed:", error)
 			throw error
 		})
-		this._lock = next.then(() => {}).catch(() => {}) as Promise<void>
+		// Suppress rejection — lock chain errors are logged above, and we only
+		// need the returned promise for serialisation; never reject the lock itself.
+		this._lock = next.then(() => {}, () => {}) as Promise<void>
 		return next
 	}
 
@@ -344,7 +347,7 @@ export class ProviderSettingsManager {
 				}))
 			})
 		} catch (error) {
-			throw new Error(`Failed to list configs: ${error}`)
+			throw new Error(`Failed to list configs: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -363,7 +366,7 @@ export class ProviderSettingsManager {
 
 				// For active providers, filter out settings from other providers.
 				// For retired providers, preserve full profile fields (including legacy
-				// provider-specific keys) to avoid data loss — passthrough() keeps
+				// provider-specific keys) to avoid data loss �?passthrough() keeps
 				// unknown keys that strict parse() would strip.
 				const filteredConfig =
 					typeof config.apiProvider === "string" && isRetiredProvider(config.apiProvider)
@@ -374,7 +377,7 @@ export class ProviderSettingsManager {
 				return id
 			})
 		} catch (error) {
-			throw new Error(`Failed to save config: ${error}`)
+			throw new Error(`Failed to save config: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -413,7 +416,7 @@ export class ProviderSettingsManager {
 				return { name, ...providerSettings }
 			})
 		} catch (error) {
-			throw new Error(`Failed to get profile: ${error instanceof Error ? error.message : error}`)
+			throw new Error(`Failed to get profile: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -433,7 +436,7 @@ export class ProviderSettingsManager {
 				return { name, ...providerSettings }
 			})
 		} catch (error) {
-			throw new Error(`Failed to activate profile: ${error instanceof Error ? error.message : error}`)
+			throw new Error(`Failed to activate profile: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -457,7 +460,7 @@ export class ProviderSettingsManager {
 				await this.store(providerProfiles)
 			})
 		} catch (error) {
-			throw new Error(`Failed to delete config: ${error}`)
+			throw new Error(`Failed to delete config: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -471,7 +474,7 @@ export class ProviderSettingsManager {
 				return name in providerProfiles.apiConfigs
 			})
 		} catch (error) {
-			throw new Error(`Failed to check config existence: ${error}`)
+			throw new Error(`Failed to check config existence: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -491,7 +494,7 @@ export class ProviderSettingsManager {
 				await this.store(providerProfiles)
 			})
 		} catch (error) {
-			throw new Error(`Failed to set mode config: ${error}`)
+			throw new Error(`Failed to set mode config: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -505,7 +508,7 @@ export class ProviderSettingsManager {
 				return modeApiConfigs?.[mode]
 			})
 		} catch (error) {
-			throw new Error(`Failed to get mode config: ${error}`)
+			throw new Error(`Failed to get mode config: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -547,13 +550,13 @@ export class ProviderSettingsManager {
 					} catch (error) {
 						// If we can't build the API handler or get model info, skip filtering
 						// to avoid accidental data loss from incomplete configurations
-						console.warn(`Skipping token field filtering for config '${name}': ${error}`)
+						console.warn(`Skipping token field filtering for config '${name}': ${getErrorMessage(error)}`)
 					}
 				}
 				return profiles
 			})
 		} catch (error) {
-			throw new Error(`Failed to export provider profiles: ${error}`)
+			throw new Error(`Failed to export provider profiles: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -561,7 +564,7 @@ export class ProviderSettingsManager {
 		try {
 			return await this.lock(() => this.store(providerProfiles))
 		} catch (error) {
-			throw new Error(`Failed to import provider profiles: ${error}`)
+			throw new Error(`Failed to import provider profiles: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -631,7 +634,7 @@ export class ProviderSettingsManager {
 				})
 			}
 
-			throw new Error(`Failed to read provider profiles from secrets: ${error}`)
+			throw new Error(`Failed to read provider profiles from secrets: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -671,7 +674,7 @@ export class ProviderSettingsManager {
 		try {
 			await this.context.secrets.store(this.secretsKey, JSON.stringify(providerProfiles, null, 2))
 		} catch (error) {
-			throw new Error(`Failed to write provider profiles to secrets: ${error}`)
+			throw new Error(`Failed to write provider profiles to secrets: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -876,7 +879,7 @@ export class ProviderSettingsManager {
 				}
 			})
 		} catch (error) {
-			throw new Error(`Failed to sync cloud profiles: ${error}`)
+			throw new Error(`Failed to sync cloud profiles: ${getErrorMessage(error)}`)
 		}
 	}
 }
