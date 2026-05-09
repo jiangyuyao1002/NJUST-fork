@@ -138,7 +138,7 @@ export function mergeJson(
 			}
 		}
 		return copyOfFirst
-	} catch {
+	} catch (e) {
 		logger.error("MergeJson", "Error merging JSON", e, copyOfFirst, second)
 		return {
 			...copyOfFirst,

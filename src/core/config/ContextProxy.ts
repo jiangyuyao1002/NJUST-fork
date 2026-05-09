@@ -496,7 +496,7 @@ export class ContextProxy {
 		if (values.apiProvider !== undefined && !isKnownProvider) {
 			logger.info(`[ContextProxy] Sanitizing invalid provider "${values.apiProvider}" - resetting to undefined`)
 			// Return a new values object without the invalid apiProvider
-			const { _apiProvider, ...restValues } = sanitizedValues
+			const { apiProvider: _apiProvider, ...restValues } = sanitizedValues
 			return restValues as NJUST_AI_CJSettings
 		}
 		return sanitizedValues

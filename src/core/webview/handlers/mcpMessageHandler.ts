@@ -52,7 +52,7 @@ async function handleOpenMcpSettings(context: MessageHandlerContext, _message: W
 }
 
 async function handleOpenProjectMcpSettings(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
-	const { _provider, getCurrentCwd } = context
+	const { getCurrentCwd } = context
 	if (!vscode.workspace.workspaceFolders?.length) {
 		vscode.window.showErrorMessage(t("common:errors.no_workspace")); return
 	}

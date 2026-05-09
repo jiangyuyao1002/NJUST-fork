@@ -293,7 +293,6 @@ export class TaskRequestBuilder {
 			cost,
 			newContextTokens = 0,
 			error,
-			_errorDetails,
 			condenseId,
 		} = await summarizeConversation({
 			messages: this.task.apiConversationHistory,

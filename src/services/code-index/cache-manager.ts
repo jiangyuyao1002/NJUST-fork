@@ -49,7 +49,7 @@ export class CacheManager implements ICacheManager {
 	private async _performSave(): Promise<void> {
 		try {
 			await safeWriteJson(this.cachePath.fsPath, this.fileHashes)
-		} catch {
+		} catch (error) {
 			logger.error("CacheManager", "Failed to save cache:", error)
 		}
 	}
@@ -61,7 +61,7 @@ export class CacheManager implements ICacheManager {
 		try {
 			await safeWriteJson(this.cachePath.fsPath, {})
 			this.fileHashes = {}
-		} catch {
+		} catch (error) {
 			logger.error("CacheManager", "Failed to clear cache file:", error, this.cachePath)
 		}
 	}

@@ -7,7 +7,7 @@ import {
 	parseCangjieWithFallback,
 	computeCangjieSignature,
 	extractCangjieDeclarationMeta,
-	type _CangjieDef,
+	type CangjieDef,
 	type CangjieDefKind,
 	type CangjieSymbolVisibility,
 } from "../tree-sitter/cangjieParser"

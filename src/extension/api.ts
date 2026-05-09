@@ -96,7 +96,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 						this.log(`[API] ResumeTask -> ${command.data}`)
 						try {
 							await this.resumeTask(command.data)
-						} catch {
+						} catch (error) {
 							const errorMessage = error instanceof Error ? error.message : String(error)
 							this.log(`[API] ResumeTask failed for taskId ${command.data}: ${errorMessage}`)
 							// Don't rethrow - we want to prevent IPC server crashes.
@@ -152,7 +152,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 						this.log(`[API] DeleteQueuedMessage -> ${command.data}`)
 						try {
 							this.deleteQueuedMessage(command.data)
-						} catch {
+						} catch (error) {
 							const errorMessage = error instanceof Error ? error.message : String(error)
 							this.log(`[API] DeleteQueuedMessage failed for messageId ${command.data}: ${errorMessage}`)
 						}

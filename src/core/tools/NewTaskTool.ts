@@ -124,7 +124,7 @@ export class NewTaskTool extends BaseTool<"new_task"> {
 			// Reflect delegation in tool result (no pause/unpause, no wait)
 			pushToolResult(`Delegated to child task ${child.taskId}`)
 			return
-		} catch {
+		} catch (error) {
 			await handleError("creating new task", error instanceof Error ? error : new Error(String(error)))
 			return
 		}

@@ -148,7 +148,7 @@ export async function checkAutoApproval({
 
 		try {
 			tool = JSON.parse(text || "{}")
-		} catch {
+		} catch (error) {
 			console.error("Failed to parse tool:", error)
 		}
 

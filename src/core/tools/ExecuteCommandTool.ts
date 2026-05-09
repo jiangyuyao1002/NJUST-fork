@@ -229,7 +229,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			}
 
 			return
-		} catch {
+		} catch (error) {
 			await handleError("executing command", error as Error)
 			return
 		}
@@ -518,7 +518,7 @@ export async function executeCommandInTerminal(
 		}
 
 		await Promise.race(racers)
-	} catch {
+	} catch (error) {
 		if (isUserTimedOut) {
 			const status: CommandExecutionStatus = { executionId, status: "timeout" }
 			provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })

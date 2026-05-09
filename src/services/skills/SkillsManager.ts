@@ -116,7 +116,7 @@ export class SkillsManager {
 			const fileContent = await fs.readFile(skillMdPath, "utf-8")
 
 			// Use gray-matter to parse frontmatter
-			const { data: frontmatter, content: _body } = matter(fileContent)
+			const { data: frontmatter, content: body } = matter(fileContent)
 
 			// Validate required fields (only name and description for now)
 			if (!frontmatter.name || typeof frontmatter.name !== "string") {
@@ -590,7 +590,7 @@ Add your skill instructions here.
 
 		// Read the current SKILL.md file
 		const fileContent = await fs.readFile(skill.path, "utf-8")
-		const { data: frontmatter, content: _body } = matter(fileContent)
+		const { data: frontmatter, content: body } = matter(fileContent)
 
 		// Update the frontmatter with new modeSlugs
 		if (newModeSlugs && newModeSlugs.length > 0) {

@@ -188,7 +188,7 @@ export async function searchWorkspaceFiles(
 		)
 
 		return verifiedResults
-	} catch {
+	} catch (error) {
 		logger.error("FileSearch", "Error in searchWorkspaceFiles:", error)
 		return []
 	}

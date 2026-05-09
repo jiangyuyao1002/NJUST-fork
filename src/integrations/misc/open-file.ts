@@ -145,7 +145,7 @@ export async function openFile(filePath: string, options: OpenFileOptions = {}) 
 			preview: false,
 			selection,
 		})
-	} catch {
+	} catch (error) {
 		if (error instanceof Error) {
 			vscode.window.showErrorMessage(t("common:errors.could_not_open_file", { errorMessage: error.message }))
 		} else {

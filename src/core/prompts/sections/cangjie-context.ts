@@ -169,22 +169,9 @@ function editorDocumentCacheKey(uri: vscode.Uri): string {
 	}
 }
 
-const _extractImports = extractImports
-const _isNonTrivialImportMapping = isNonTrivialImportMapping
-const _mapImportsToDocPaths = mapImportsToDocPaths
-
-const _collectActiveCangjieEditorSnapshot = collectActiveCangjieEditorSnapshot
-const _getActiveCangjieFileInfo = getActiveCangjieFileInfo
-
 // ---------------------------------------------------------------------------
 // Cross-file symbol resolution via CangjieSymbolIndex
 // ---------------------------------------------------------------------------
-
-const _resolveImportedSymbols = resolveImportedSymbols
-const _resolveImportToDirectory = resolveImportToDirectory
-
-const _extractTypeOutlineFromLines = extractTypeOutlineFromLines
-const _formatSymbolEntries = formatSymbolEntries
 
 // ---------------------------------------------------------------------------
 // Source-level package declaration verification
@@ -393,7 +380,7 @@ function sampleCangjieDiagnostics(
 	const maxW = opts?.maxWarnings ?? DIAG_SAMPLE_MAX_WARNINGS
 	const total = diags.length
 
-	const active = getActiveCangjieFileInfo()
+	const active = _getActiveCangjieFileInfo()
 	const activeUri = vscode.window.activeTextEditor?.document.uri.toString()
 	const normMemo = new Map<string, string>()
 	const normAgg = (msg: string) => {
@@ -657,7 +644,7 @@ function buildCangjieStyleFewShotSection(
 				fileCache.set(sym.filePath, lines)
 			}
 			const fullText = lines.join("\n")
-			const symbolImports = extractImports(fullText)
+			const symbolImports = _extractImports(fullText)
 			const importOverlap = symbolImports.filter((imp) => activeImportSet.has(imp)).length
 			score += importOverlap * 60
 			const rel = path.relative(cwd, sym.filePath).replace(/\\/g, "/")
@@ -2547,7 +2534,7 @@ export async function getCangjieContextSection(
 	const prioritized: PrioritizedCangjieSection[] = []
 	let treeSectionPromise: Promise<string | null> = Promise.resolve(null)
 
-	const activeFileInfo = getActiveCangjieFileInfo()
+	const activeFileInfo = _getActiveCangjieFileInfo()
 
 		// 0a. Project structure context (cjpm.toml) - L1 cache
 	const { info: projectInfo, cjpmRawHash } = await parseCjpmTomlWithMeta(cwd)
@@ -2593,7 +2580,7 @@ export async function getCangjieContextSection(
 	}
 
 	// Collect imports + symbols from visible editors (single pass)
-	const { imports, symbols: editorSymbolsSnapshot, activePreparse } = collectActiveCangjieEditorSnapshot()
+	const { imports, symbols: editorSymbolsSnapshot, activePreparse } = _collectActiveCangjieEditorSnapshot()
 	const rawDiagnostics = diagSnapshot.allCjDiags
 	const rawErrorCount = rawDiagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Error).length
 
@@ -2616,7 +2603,7 @@ export async function getCangjieContextSection(
 		} else {
 			heavyBundle = {
 				symbols: editorSymbolsSnapshot,
-				importedSymbols: resolveImportedSymbols(imports, cwd, projectInfo),
+				importedSymbols: _resolveImportedSymbols(imports, cwd, projectInfo),
 				stdlibHints: buildStdlibSignatureHintsSection(imports, docsBase, globalStoragePath),
 				workspaceSummary: projectInfo.isWorkspace ? buildWorkspaceSymbolSummary(projectInfo, cwd) : null,
 				fewShot: buildCangjieStyleFewShotSection(cwd, imports, rawDiagnostics, cjpmRawHash),
@@ -2632,7 +2619,7 @@ export async function getCangjieContextSection(
 
 		// 1. Import-based documentation context
 		if (includeHeavyContext && imports.length > 0 && docsBase && docsExist) {
-			const docMappings = mapImportsToDocPaths(imports)
+			const docMappings = _mapImportsToDocPaths(imports)
 			if (docMappings.length > 0) {
 				const importContext = docMappings
 					.map((m) => {
@@ -2763,7 +2750,7 @@ export async function getCangjieContextSection(
 				return {
 					content: c,
 					lines: c.split("\n"),
-					imports: extractImports(c),
+					imports: _extractImports(c),
 					defs: parseCangjieDefinitions(c),
 					diagnosticsByFile: diagSnapshot.byFile,
 				}
@@ -2846,7 +2833,7 @@ function formatSingleErrorLocationBlock(cwd: string, filePart: string, lineStr: 
 
 		// Include file's import list for context
 		if (filePath.endsWith(".cj")) {
-			const fileImports = extractImports(content)
+			const fileImports = _extractImports(content)
 			if (fileImports.length > 0) {
 				block += `\n  文件 import: ${fileImports.slice(0, 12).join(", ")}${fileImports.length > 12 ? " …" : ""}`
 			}
@@ -3109,7 +3096,7 @@ export async function buildStructuredEditingContext(pre?: StructuredEditingConte
 	const content = doc.getText()
 	const usePre = pre !== undefined && pre.content === content
 	const defs = usePre ? pre.defs : parseCangjieDefinitions(content)
-	const imports = usePre ? pre.imports : extractImports(content)
+	const imports = usePre ? pre.imports : _extractImports(content)
 	const lines = usePre ? pre.lines : content.split("\n")
 
 	const parts: string[] = []
@@ -3262,15 +3249,15 @@ export function buildCompileErrorCorpusSearch(
 
 // Re-export for testing and backward compatibility
 export {
-	extractImports,
-	mapImportsToDocPaths,
+	_extractImports,
+	_mapImportsToDocPaths,
 	CJC_ERROR_PATTERNS,
 	STDLIB_DOC_MAP,
 	matchCjcErrorPattern,
 	getMatchingCjcPatternsByCategory,
 	parseCjpmToml,
 	scanPackageHierarchy,
-	resolveImportedSymbols,
+	_resolveImportedSymbols,
 	verifyPackageDeclarations,
 	buildWorkspaceSymbolSummary,
 }

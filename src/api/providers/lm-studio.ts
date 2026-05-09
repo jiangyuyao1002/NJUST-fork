@@ -100,7 +100,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 			let results
 			try {
 				results = await this.client.chat.completions.create(params)
-			} catch {
+			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)
 			}
 
@@ -203,7 +203,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 			let response
 			try {
 				response = await this.client.chat.completions.create(params)
-			} catch {
+			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)
 			}
 			return response.choices[0]?.message.content || ""

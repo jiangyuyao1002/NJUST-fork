@@ -184,5 +184,5 @@ const _dynamicProviderExtras = {
 // Build the dynamic options union from the map, intersected with CommonFetchParams
 // so extra fields are always allowed while required ones are enforced.
 export type GetModelsOptions = {
-	[P in keyof typeof dynamicProviderExtras]: ({ provider: P } & (typeof dynamicProviderExtras)[P]) & CommonFetchParams
+	[P in keyof typeof _dynamicProviderExtras]: ({ provider: P } & (typeof _dynamicProviderExtras)[P]) & CommonFetchParams
 }[RouterName]

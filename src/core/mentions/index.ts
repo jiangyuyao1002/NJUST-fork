@@ -192,8 +192,8 @@ export async function parseMentions(
 					fileContextTracker,
 				)
 				contentBlocks.push(fileResult)
-			} catch {
-				const errorMsg = error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)
+			} catch (error) {
+				const errorMsg = error instanceof Error ? error.message : String(error)
 				contentBlocks.push({
 					type: mention.endsWith("/") ? "folder" : "file",
 					path: mentionPath,
@@ -204,29 +204,29 @@ export async function parseMentions(
 			try {
 				const problems = await getWorkspaceProblems(cwd, includeDiagnosticMessages, maxDiagnosticMessages)
 				parsedText += `\n\n<workspace_diagnostics>\n${problems}\n</workspace_diagnostics>`
-			} catch {
-				parsedText += `\n\n<workspace_diagnostics>\nError fetching diagnostics: ${error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)}\n</workspace_diagnostics>`
+			} catch (error) {
+				parsedText += `\n\n<workspace_diagnostics>\nError fetching diagnostics: ${error instanceof Error ? error.message : String(error)}\n</workspace_diagnostics>`
 			}
 		} else if (mention === "git-changes") {
 			try {
 				const workingState = await getWorkingState(cwd)
 				parsedText += `\n\n<git_working_state>\n${workingState}\n</git_working_state>`
-			} catch {
-				parsedText += `\n\n<git_working_state>\nError fetching working state: ${error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)}\n</git_working_state>`
+			} catch (error) {
+				parsedText += `\n\n<git_working_state>\nError fetching working state: ${error instanceof Error ? error.message : String(error)}\n</git_working_state>`
 			}
 		} else if (/^[a-f0-9]{7,40}$/.test(mention)) {
 			try {
 				const commitInfo = await getCommitInfo(mention, cwd)
 				parsedText += `\n\n<git_commit hash="${mention}">\n${commitInfo}\n</git_commit>`
-			} catch {
-				parsedText += `\n\n<git_commit hash="${mention}">\nError fetching commit info: ${error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)}\n</git_commit>`
+			} catch (error) {
+				parsedText += `\n\n<git_commit hash="${mention}">\nError fetching commit info: ${error instanceof Error ? error.message : String(error)}\n</git_commit>`
 			}
 		} else if (mention === "terminal") {
 			try {
 				const terminalOutput = await getLatestTerminalOutput()
 				parsedText += `\n\n<terminal_output>\n${terminalOutput}\n</terminal_output>`
-			} catch {
-				parsedText += `\n\n<terminal_output>\nError fetching terminal output: ${error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)}\n</terminal_output>`
+			} catch (error) {
+				parsedText += `\n\n<terminal_output>\nError fetching terminal output: ${error instanceof Error ? error.message : String(error)}\n</terminal_output>`
 			}
 		}
 	}
@@ -241,8 +241,8 @@ export async function parseMentions(
 			}
 			commandOutput += command.content
 			slashCommandHelp += `\n\n<command name="${commandName}">\n${commandOutput}\n</command>`
-		} catch {
-			slashCommandHelp += `\n\n<command name="${commandName}">\nError loading command '${commandName}': ${error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)}\n</command>`
+		} catch (error) {
+			slashCommandHelp += `\n\n<command name="${commandName}">\nError loading command '${commandName}': ${error instanceof Error ? error.message : String(error)}\n</command>`
 		}
 	}
 
@@ -313,8 +313,8 @@ async function getFileOrFolderContentWithMetadata(
 						linesShown: result.linesShown,
 					},
 				}
-			} catch {
-				const errorMsg = error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)
+			} catch (error) {
+				const errorMsg = error instanceof Error ? error.message : String(error)
 				return {
 					type: "file",
 					path: mentionPath,
@@ -394,8 +394,8 @@ async function getFileOrFolderContentWithMetadata(
 				content: `[read_file for '${mentionPath}']\nError: Unable to read (not a file or directory)`,
 			}
 		}
-	} catch {
-		const errorMsg = error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : String(error)
 		throw new Error(`Failed to access path "${mentionPath}": ${errorMsg}`)
 	}
 }

@@ -73,7 +73,7 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
 				baseURL: baseUrl,
 				apiKey: apiKey,
 			})
-		} catch {
+		} catch (error) {
 			// Use the error handler to transform ByteString conversion errors
 			throw handleOpenAIError(error, "OpenAI Compatible")
 		}
@@ -309,7 +309,7 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
 						totalTokens: response.usage?.total_tokens || 0,
 					},
 				}
-			} catch {
+			} catch (error) {
 				const hasMoreAttempts = attempts < MAX_RETRIES - 1
 
 				// Check if it's a rate limit error

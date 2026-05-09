@@ -209,7 +209,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 		mode,
 		customModes,
 		customModePrompts,
-		_experiments = {} as Record<ExperimentId, boolean>,
+		experiments: _experiments = {} as Record<ExperimentId, boolean>,
 		customInstructions: globalCustomInstructions,
 		language,
 	} = state ?? {}

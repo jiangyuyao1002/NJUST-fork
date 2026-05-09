@@ -238,7 +238,7 @@ export class CodeIndexOrchestrator {
 					throw new Error("Scan failed, is scanner initialized?")
 				}
 
-				const { _stats } = result
+				const { stats: _stats } = result
 
 				// Check if any blocks were actually indexed successfully
 				// If no blocks were indexed but blocks were found, it means all batches failed

@@ -74,7 +74,7 @@ export class RooIgnoreController {
 			} else {
 				this.rooIgnoreContent = undefined
 			}
-		} catch {
+		} catch (error) {
 			// Should never happen: reading file failed even though it exists
 			console.error("Unexpected error loading .rooignore:", error)
 		}
@@ -185,7 +185,7 @@ export class RooIgnoreController {
 				}))
 				.filter((x) => x.allowed)
 				.map((x) => x.path)
-		} catch {
+		} catch (error) {
 			console.error("Error filtering paths:", error)
 			return [] // Fail closed for security
 		}

@@ -37,7 +37,7 @@ const OllamaModelsResponseSchema = z.object({
 
 type OllamaModelsResponse = z.infer<typeof OllamaModelsResponseSchema>
 
-type OllamaModelInfoResponse = z.infer<typeof OllamaModelInfoResponseSchema>
+type OllamaModelInfoResponse = z.infer<typeof _OllamaModelInfoResponseSchema>
 
 export const parseOllamaModel = (rawModel: OllamaModelInfoResponse): ModelInfo | null => {
 	const contextKey = Object.keys(rawModel.model_info).find((k) => k.includes("context_length"))

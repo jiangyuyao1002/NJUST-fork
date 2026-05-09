@@ -151,7 +151,7 @@ export async function countFileLinesAndTokens(
 			try {
 				await processBuffer()
 				resolve({ lineCount, tokenEstimate, complete })
-			} catch {
+			} catch (err) {
 				reject(err)
 			}
 		})

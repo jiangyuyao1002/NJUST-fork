@@ -118,7 +118,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 			sendCheckpointInitWarn(task)
 		}
 		return service
-	} catch {
+	} catch (err) {
 		if ((err as any).name === "TimeoutError" && task.enableCheckpoints) {
 			sendCheckpointInitWarn(task, "INIT_TIMEOUT", task.checkpointTimeout)
 		}
@@ -186,7 +186,7 @@ async function checkGitInstallation(
 					log("[Task#getCheckpointService] caught unexpected error in say('checkpoint_saved')")
 					console.error(err)
 				})
-			} catch {
+			} catch (err) {
 				log("[Task#getCheckpointService] caught unexpected error in on('checkpoint'), disabling checkpoints")
 				console.error(err)
 				task.enableCheckpoints = false
@@ -197,12 +197,12 @@ async function checkGitInstallation(
 
 		try {
 			await service.initShadowGit()
-		} catch {
+		} catch (err) {
 			log(`[Task#getCheckpointService] initShadowGit -> ${err instanceof Error ? err.message : String(err)}`)
 			task.enableCheckpoints = false
 		}
 			task.checkpointServiceInitializing = false
-	} catch {
+	} catch (err) {
 		log(`[Task#getCheckpointService] Unexpected error during Git check: ${err instanceof Error ? err.message : String(err)}`)
 		console.error("Git check error:", err)
 		task.enableCheckpoints = false
@@ -315,7 +315,7 @@ export type CheckpointDiffOptions = {
 	mode: "from-init" | "checkpoint" | "to-current" | "full"
 }
 
-export async function checkpointDiff(task: Task, { _ts, _previousCommitHash, commitHash, mode }: CheckpointDiffOptions) {
+export async function checkpointDiff(task: Task, { ts: _ts, previousCommitHash: _previousCommitHash, commitHash, mode }: CheckpointDiffOptions) {
 	const service = await getCheckpointService(task)
 
 	if (!service) {

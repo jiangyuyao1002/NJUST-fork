@@ -50,7 +50,7 @@ export class PowerShellTool extends BaseTool<"execute_command"> {
 	}
 
 	async execute(params: PowerShellParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
-		const { command, cwd: _customCwd, _timeout } = params
+		const { command, cwd: _customCwd, timeout: _timeout } = params
 		const { handleError, pushToolResult, askApproval } = callbacks
 
 		try {
