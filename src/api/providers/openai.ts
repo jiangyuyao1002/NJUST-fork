@@ -169,9 +169,14 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 
 			let stream
 			try {
-				stream = await this.client.chat.completions.create(
-					requestOptions,
-					isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+				stream = await this.withRetry(
+					() =>
+						this.client.chat.completions.create(
+							requestOptions,
+							isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+						),
+					undefined,
+					{ taskId: metadata?.taskId, provider: this.providerName },
 				)
 			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)
@@ -364,9 +369,14 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 
 			let stream
 			try {
-				stream = await this.client.chat.completions.create(
-					requestOptions,
-					methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+				stream = await this.withRetry(
+					() =>
+						this.client.chat.completions.create(
+							requestOptions,
+							methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+						),
+					undefined,
+					{ taskId: metadata?.taskId, provider: this.providerName },
 				)
 			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)
@@ -398,9 +408,14 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 
 			let response
 			try {
-				response = await this.client.chat.completions.create(
-					requestOptions,
-					methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+				response = await this.withRetry(
+					() =>
+						this.client.chat.completions.create(
+							requestOptions,
+							methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+						),
+					undefined,
+					{ taskId: metadata?.taskId, provider: this.providerName },
 				)
 			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)

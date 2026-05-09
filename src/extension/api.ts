@@ -23,6 +23,7 @@ import {
 import { IpcServer } from "@njust-ai-cj/ipc"
 
 import { Package } from "../shared/package"
+import { logger } from "../shared/logger"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { openClineInNewTab } from "../activate/registerCommands"
 import { getCommands } from "../services/command/commands"
@@ -51,7 +52,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 		if (enableLogging) {
 			this.log = (...args: unknown[]) => {
 				this.outputChannelLog(...args)
-				console.log(args)
+				logger.info("API", args.map(String).join(" "))
 			}
 
 			this.logfile = path.join(os.tmpdir(), "roo-code-messages.log")

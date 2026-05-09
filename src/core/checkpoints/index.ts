@@ -3,6 +3,7 @@ import * as vscode from "vscode"
 
 import type { ClineApiReqInfo } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { logger } from "../../shared/logger"
 
 import { Task } from "../task/Task"
 
@@ -40,7 +41,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 	const checkpointTimeoutMs = task.checkpointTimeout * 1000
 
 	const log = (message: string) => {
-		console.log(message)
+		logger.info("Checkpoints", message)
 
 		try {
 			provider?.log(message)
@@ -49,7 +50,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 		}
 	}
 
-	console.log("[Task#getCheckpointService] initializing checkpoints service")
+	logger.info("Checkpoints", "[Task#getCheckpointService] initializing checkpoints service")
 
 	try {
 		const workspaceDir = task.cwd || getWorkspacePath()
@@ -89,7 +90,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 						sendCheckpointInitWarn(task, "WAIT_TIMEOUT", WARNING_THRESHOLD_MS / 1000)
 					}
 
-					console.log(
+					logger.info("Checkpoints",
 						`[Task#getCheckpointService] waiting for service to initialize (${Math.round(elapsed / 1000)}s)`,
 					)
 					return !!task.checkpointService && !!task?.checkpointService?.isInitialized

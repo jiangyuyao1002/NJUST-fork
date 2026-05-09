@@ -397,6 +397,6 @@ export class TaskHistoryService {
 
 	private log(message: string): void {
 		this.host.outputChannel.appendLine(message)
-		console.log(message)
+		logger.info("TaskHistoryService", message)
 	}
 }

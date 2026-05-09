@@ -21,7 +21,7 @@ export default [
 			"@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: true }],
 			"@typescript-eslint/no-require-imports": "warn",
 			"@typescript-eslint/ban-ts-comment": ["warn", { "ts-expect-error": false, "ts-ignore": true, "ts-nocheck": true }],
-			"no-console": ["warn", { allow: ["error", "warn"] }],
+			"no-console": ["error", { allow: ["error"] }],
 			// NOTE: The following rules require type information (parserOptions.project)
 			// They are disabled until parserOptions are properly configured
 			// "@typescript-eslint/no-floating-promises": "error",
@@ -53,6 +53,12 @@ export default [
 				__dirname: "readonly",
 				__filename: "readonly",
 			},
+		},
+	},
+	{
+		files: ["shared/logger.ts"],
+		rules: {
+			"no-console": "off",
 		},
 	},
 	{

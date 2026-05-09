@@ -172,7 +172,7 @@ export class NativeToolCallParser {
 		}
 
 		const boolKeys = ["recursive", "replace_all", "include_siblings",
-			"include_header", "include_siblings"]
+			"include_header"]
 		for (const key of boolKeys) {
 			if (typeof args[key] === "string") {
 				const lower = (args[key] as string).toLowerCase().trim()

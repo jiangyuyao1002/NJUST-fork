@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import i18next from "i18next"
+import { logger } from "../shared/logger"
 
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
@@ -66,7 +67,7 @@ if (!isTestEnv) {
 				})
 			})
 
-			console.log(`Loaded translations for languages: ${Object.keys(translations).join(", ")}`)
+			logger.info("i18n", `Loaded translations for languages: ${Object.keys(translations).join(", ")}`)
 		} catch (dirError) {
 			console.error(`Error processing directory ${localesDir}:`, dirError)
 		}

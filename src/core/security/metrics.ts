@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { logger } from "../../shared/logger"
 
 type SecurityMetricName =
 	| "tool_cache_hit"
@@ -19,12 +20,12 @@ export function recordSecurityMetric(name: SecurityMetricName, attrs: Record<str
 	const payload = Object.entries(attrs)
 		.map(([k, v]) => `${k}=${String(v)}`)
 		.join(" ")
-	console.log(`[SecurityMetric] ${name}${payload ? ` ${payload}` : ""}`)
+	logger.info("SecurityMetric", `[SecurityMetric] ${name}${payload ? ` ${payload}` : ""}`)
 
 	try {
 		TelemetryService.instance.captureEvent(`security.${name}`, attrs)
 	} catch (error) {
-		console.warn(`[SecurityMetric] telemetry capture failed for ${name}:`, error)
+		logger.warn("SecurityMetric", `telemetry capture failed for ${name}:`, error)
 	}
 }
 

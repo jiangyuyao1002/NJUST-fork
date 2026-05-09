@@ -720,7 +720,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			{ path: path.join(context.extensionPath, "../packages/types"), pattern: "**/*.ts" },
 		]
 
-		console.log(
+		logger.info("Extension",
 			`♻️♻️♻️ Core auto-reloading: Watching for changes in ${watchPaths.map(({ path }) => path).join(", ")}`,
 		)
 
@@ -733,10 +733,10 @@ export async function activate(context: vscode.ExtensionContext) {
 				clearTimeout(reloadTimeout)
 			}
 
-			console.log(`♻️ ${uri.fsPath} changed; scheduling reload...`)
+			logger.info("Extension", `♻️ ${uri.fsPath} changed; scheduling reload...`)
 
 			reloadTimeout = setTimeout(() => {
-				console.log(`♻️ Reloading host after debounce delay...`)
+				logger.info("Extension", `♻️ Reloading host after debounce delay...`)
 				vscode.commands.executeCommand("workbench.action.reloadWindow")
 			}, DEBOUNCE_DELAY)
 		}

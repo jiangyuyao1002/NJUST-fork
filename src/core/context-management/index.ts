@@ -495,7 +495,7 @@ function logCompactEvent(event: string, data: Record<string, unknown>): void {
 		timestamp: Date.now(),
 		...data,
 	})
-	console.log(`[CompactTelemetry] ${payload}`)
+	logger.info("CompactTelemetry", `${payload}`)
 }
 
 export async function manageContext({
@@ -668,11 +668,11 @@ export async function manageContext({
 				} else {
 				// Cache-aware check: skip compression if prompt cache hit rate is very high
 			if (effectiveCacheReadTokens !== undefined && shouldSkipCompactForCache(effectiveCacheReadTokens, cacheAwareTokensBase)) {
-				console.log(
-					`[Context Management] Skipping auto-compact: high prompt cache hit rate ` +
-					`(${((effectiveCacheReadTokens / Math.max(1, cacheAwareTokensBase)) * 100).toFixed(1)}%). ` +
-					`Compression would break cache and increase costs.`,
-				)
+			logger.info("ContextManagement",
+				`Skipping auto-compact: high prompt cache hit rate ` +
+				`(${((effectiveCacheReadTokens / Math.max(1, cacheAwareTokensBase)) * 100).toFixed(1)}%). ` +
+				`Compression would break cache and increase costs.`,
+			)
 				// Preserve cache by skipping condensation, but do not bypass hard context-window safety.
 				// If already over budget, fall through to truncation logic below.
 				if (prevContextTokens <= allowedTokens) {

@@ -17,7 +17,9 @@ function isDebugEnabled(): boolean {
 		_debugEnabled =
 			process.env.NODE_ENV === "development" ||
 			process.env.DEBUG !== undefined ||
-			process.env.VSCODE_DEBUG_MODE === "true"
+			(typeof process !== "undefined" &&
+			 process.env &&
+			 process.env.VSCODE_DEBUG_MODE === "true")
 	}
 	return _debugEnabled
 }

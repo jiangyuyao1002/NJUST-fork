@@ -7,6 +7,7 @@ import type { HistoryItem } from "@njust-ai-cj/types"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { getStorageBasePath } from "../../utils/storage"
+import { logger } from "../../shared/logger"
 
 /**
  * Index file format for fast startup reads.
@@ -94,7 +95,7 @@ export class TaskHistoryStore {
 			// If a WAL marker exists (unclean shutdown), reconciliation
 			// rebuilds the index from per-task files.
 			if (await this.hasWalMarker()) {
-				console.log("[TaskHistoryStore] WAL marker found — forcing full reconciliation")
+				logger.info("TaskHistoryStore", "[TaskHistoryStore] WAL marker found — forcing full reconciliation")
 			}
 			await this.reconcile()
 

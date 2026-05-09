@@ -1633,7 +1633,7 @@ export class ClineProvider
 
 	public log(message: string) {
 		this.outputChannel.appendLine(message)
-		console.log(message)
+		logger.info("ClineProvider", message)
 	}
 
 	// getters

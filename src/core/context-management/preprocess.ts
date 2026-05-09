@@ -1,5 +1,6 @@
 import { ApiMessage } from "../task-persistence/apiMessages"
 import { contextCollapseMessages } from "./contextCollapse"
+import { logger } from "../../shared/logger"
 
 export type PreprocessResult = {
 	messages: ApiMessage[]
@@ -123,7 +124,7 @@ function applyTimeBasedMicrocompact(
 	})
 
 	if (tokensSaved > 0) {
-		console.log(
+		logger.info("ContextManagement",
 			`[TIME-BASED MC] gap > ${TIME_BASED_GAP_THRESHOLD_MINUTES}min, ` +
 			`cleared ~${Math.round(tokensSaved / 4)} tokens from old tool results, ` +
 			`kept last ${keepSet.size}`,

@@ -8,6 +8,7 @@ import { ApiHandler, ApiHandlerCreateMessageMetadata } from "../../api"
 import { ApiMessage } from "../task-persistence/apiMessages"
 import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
 import { findLast } from "../../shared/array"
+import { logger } from "../../shared/logger"
 import { supportPrompt } from "../../shared/support-prompt"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { generateFoldedFileContext } from "./foldedFileContext"
@@ -420,7 +421,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 				summary = cacheResult.summary
 				cost = cacheResult.cost
 				outputTokens = cacheResult.outputTokens
-				console.log(
+				logger.info("Condense",
 					`[summarizeConversation] Cache-sharing path succeeded: outputTokens=${outputTokens}`,
 				)
 			}
