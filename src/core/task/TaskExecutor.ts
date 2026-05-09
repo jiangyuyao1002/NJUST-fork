@@ -257,6 +257,11 @@ export class TaskExecutor {
 			this.checkSubtaskTokenBudget()
 		}
 
+		// If we're in STREAMING state (e.g., previous stream was interrupted),
+		// transition to COMPLETED first to allow a clean PREPARING transition.
+		if (h.stateMachine.state === TaskState.STREAMING) {
+			h.stateMachine.force(TaskState.COMPLETED)
+		}
 		h.stateMachine.force(TaskState.PREPARING)
 		const state = await h.hostRef.deref()?.getState()
 
@@ -721,7 +726,8 @@ export class TaskExecutor {
 			const currentIncludeFileDetails = currentItem.includeFileDetails
 
 			if (t.abort) {
-				throw new Error(`[NJUST_AI_CJ#recursivelyMakeRooRequests] task ${t.taskId}.${t.instanceId} aborted`)
+				t.stateMachine.force(TaskState.ERROR)
+				throw new Error(`[NJUST_AI_CJ#recursivelyMakeClineRequests] task ${t.taskId}.${t.instanceId} aborted`)
 			}
 
 			if (t.consecutiveMistakeLimit > 0 && t.consecutiveMistakeCount >= t.consecutiveMistakeLimit) {
@@ -1581,8 +1587,9 @@ export class TaskExecutor {
 
 				// Need to call here in case the stream was aborted.
 				if (t.abort || t.abandoned) {
+					t.stateMachine.force(TaskState.ERROR)
 					throw new Error(
-						`[NJUST_AI_CJ#recursivelyMakeRooRequests] task ${t.taskId}.${t.instanceId} aborted`,
+						`[NJUST_AI_CJ#recursivelyMakeClineRequests] task ${t.taskId}.${t.instanceId} aborted`,
 					)
 				}
 
