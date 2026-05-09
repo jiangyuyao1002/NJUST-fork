@@ -71,3 +71,6 @@ roo-cli-*.tar.gz*
 cangjie_lsp_*.txt
 log.txt
 .aider*
+
+# Devflow planning and specs
+devflow/

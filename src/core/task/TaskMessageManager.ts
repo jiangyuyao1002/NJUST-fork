@@ -9,8 +9,8 @@
  * is reduced via further decoupling.
  */
 import type { Anthropic } from "@anthropic-ai/sdk"
-import type { ClineMessage } from "@njust-ai-cj/types"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import type { ClineMessage, ProviderSettings } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, getApiProtocol, getModelId, isRetiredProvider } from "@njust-ai-cj/types"
 import { defaultModeSlug } from "../../shared/modes"
 import {
 	type ApiMessage,
@@ -47,6 +47,8 @@ export interface TaskMessageContext {
 
 	readonly api: ApiHandler
 
+	apiConfiguration: ProviderSettings
+
 	_taskMode: string | undefined
 	_taskApiConfigName: string | undefined
 	taskApiConfigReady: Promise<void>
@@ -76,6 +78,8 @@ export class TaskMessageManager {
 	}
 
 	async addToApiConversationHistory(message: Anthropic.MessageParam, reasoning?: string): Promise<void> {
+		// Capture the encrypted_content / thought signatures from the provider (e.g., OpenAI Responses API, Google GenAI) if present.
+		// We only persist data reported by the current response body.
 		const handler = this.ctx.api as ApiHandler & {
 			getResponseId?: () => string | undefined
 			getEncryptedContent?: () => { encrypted_content: string; id?: string } | undefined
@@ -91,30 +95,150 @@ export class TaskMessageManager {
 			const reasoningSummary = handler.getSummary?.()
 			const reasoningDetails = handler.getReasoningDetails?.()
 
-			const extendedMessage: any = { ...message, ts: Date.now() }
+			// Only Anthropic's API expects/validates the special `thinking` content block signature.
+			// Other providers (notably Gemini 3) use different signature semantics (e.g. `thoughtSignature`)
+			// and require round-tripping the signature in their own format.
+			const modelId = getModelId(this.ctx.apiConfiguration)
+			const apiProvider = this.ctx.apiConfiguration.apiProvider
+			const apiProtocol = getApiProtocol(
+				apiProvider && !isRetiredProvider(apiProvider) ? apiProvider : undefined,
+				modelId,
+			)
+			const isAnthropicProtocol = apiProtocol === "anthropic"
 
-			if (responseId) {
-				extendedMessage.providerResponseId = responseId
+			// Start from the original assistant message
+			const messageWithTs: any = {
+				...message,
+				...(responseId ? { id: responseId } : {}),
+				ts: Date.now(),
 			}
-			if (reasoningData) {
-				extendedMessage.providerEncryptedContent = reasoningData
-			}
-			if (thoughtSignature) {
-				extendedMessage.providerThoughtSignature = thoughtSignature
-			}
-			if (reasoning) {
-				extendedMessage.reasoning = reasoning
-			}
-			if (reasoningSummary) {
-				extendedMessage.reasoningSummary = reasoningSummary
-			}
+
+			// Store reasoning_details array if present (for models like Gemini 3)
 			if (reasoningDetails) {
-				extendedMessage.reasoningDetails = reasoningDetails
+				messageWithTs.reasoning_details = reasoningDetails
 			}
 
-			this.ctx.apiConversationHistory.push(extendedMessage as ApiMessage)
+			// Store reasoning: Anthropic thinking (with signature), plain text (most providers), or encrypted (OpenAI Native)
+			// Skip if reasoning_details already contains the reasoning (to avoid duplication)
+			if (isAnthropicProtocol && reasoning && thoughtSignature && !reasoningDetails) {
+				// Anthropic provider with extended thinking: Store as proper `thinking` block
+				// This format passes through anthropic-filter.ts and is properly round-tripped
+				// for interleaved thinking with tool use (required by Anthropic API)
+				const thinkingBlock = {
+					type: "thinking",
+					thinking: reasoning,
+					signature: thoughtSignature,
+				}
+
+				if (typeof messageWithTs.content === "string") {
+					messageWithTs.content = [
+						thinkingBlock,
+						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+					]
+				} else if (Array.isArray(messageWithTs.content)) {
+					messageWithTs.content = [thinkingBlock, ...messageWithTs.content]
+				} else if (!messageWithTs.content) {
+					messageWithTs.content = [thinkingBlock]
+				}
+			} else if (reasoning && !reasoningDetails) {
+				// Other providers (non-Anthropic): Store as generic reasoning block
+				const reasoningBlock = {
+					type: "reasoning",
+					text: reasoning,
+					summary: reasoningSummary ?? ([] as any[]),
+				}
+
+				// Also store reasoning_content as a top-level field so that it
+				// survives content-array transformations (e.g., buildCleanConversationHistory
+				// converting the array to a string when the model doesn't set preserveReasoning).
+				// DeepSeek/Z.ai require this field to be passed back in thinking mode.
+				messageWithTs.reasoning_content = reasoning
+
+				if (typeof messageWithTs.content === "string") {
+					messageWithTs.content = [
+						reasoningBlock,
+						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+					]
+				} else if (Array.isArray(messageWithTs.content)) {
+					messageWithTs.content = [reasoningBlock, ...messageWithTs.content]
+				} else if (!messageWithTs.content) {
+					messageWithTs.content = [reasoningBlock]
+				}
+			} else if (reasoningData?.encrypted_content) {
+				// OpenAI Native encrypted reasoning
+				const reasoningBlock = {
+					type: "reasoning",
+					summary: [] as any[],
+					encrypted_content: reasoningData.encrypted_content,
+					...(reasoningData.id ? { id: reasoningData.id } : {}),
+				}
+
+				if (typeof messageWithTs.content === "string") {
+					messageWithTs.content = [
+						reasoningBlock,
+						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+					]
+				} else if (Array.isArray(messageWithTs.content)) {
+					messageWithTs.content = [reasoningBlock, ...messageWithTs.content]
+				} else if (!messageWithTs.content) {
+					messageWithTs.content = [reasoningBlock]
+				}
+			}
+
+			// For non-Anthropic providers (e.g., Gemini 3), persist the thought signature as its own
+			// content block so converters can attach it back to the correct provider-specific fields.
+			// Note: For Anthropic extended thinking, the signature is already included in the thinking block above.
+			if (thoughtSignature && !isAnthropicProtocol) {
+				const thoughtSignatureBlock = {
+					type: "thoughtSignature",
+					thoughtSignature,
+				}
+
+				if (typeof messageWithTs.content === "string") {
+					messageWithTs.content = [
+						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+						thoughtSignatureBlock,
+					]
+				} else if (Array.isArray(messageWithTs.content)) {
+					messageWithTs.content = [...messageWithTs.content, thoughtSignatureBlock]
+				} else if (!messageWithTs.content) {
+					messageWithTs.content = [thoughtSignatureBlock]
+				}
+			}
+
+			this.ctx.apiConversationHistory.push(messageWithTs)
 		} else {
-			this.ctx.apiConversationHistory.push({ ...message, ts: Date.now() } as ApiMessage)
+			// For user messages, validate tool_result IDs ONLY when the immediately previous *effective* message
+			// is an assistant message.
+			//
+			// If the previous effective message is also a user message (e.g., summary + a new user message),
+			// validating against any earlier assistant message can incorrectly inject placeholder tool_results.
+			const effectiveHistoryForValidation = getEffectiveApiHistory(this.ctx.apiConversationHistory)
+			const lastEffective = effectiveHistoryForValidation[effectiveHistoryForValidation.length - 1]
+			const historyForValidation = lastEffective?.role === "assistant" ? effectiveHistoryForValidation : []
+
+			// If the previous effective message is NOT an assistant, convert tool_result blocks to text blocks.
+			// This prevents orphaned tool_results from being filtered out by getEffectiveApiHistory.
+			// This can happen when condensing occurs after the assistant sends tool_uses but before
+			// the user responds - the tool_use blocks get condensed away, leaving orphaned tool_results.
+			let messageToAdd = message
+			if (lastEffective?.role !== "assistant" && Array.isArray(message.content)) {
+				messageToAdd = {
+					...message,
+					content: message.content.map((block) =>
+						block.type === "tool_result"
+							? {
+									type: "text" as const,
+									text: `Tool result:\n${typeof block.content === "string" ? block.content : JSON.stringify(block.content)}`,
+								}
+							: block,
+					),
+				}
+			}
+
+			const validatedMessage = validateAndFixToolResultIds(messageToAdd, historyForValidation)
+			const messageWithTs = { ...validatedMessage, ts: Date.now() }
+			this.ctx.apiConversationHistory.push(messageWithTs)
 		}
 
 		await this.saveApiConversationHistory()
@@ -267,6 +391,15 @@ export class TaskMessageManager {
 	findMessageByTimestamp(ts: number): ClineMessage | undefined {
 		for (let i = this.ctx.clineMessages.length - 1; i >= 0; i--) {
 			if (this.ctx.clineMessages[i].ts === ts) {
+				return this.ctx.clineMessages[i]
+			}
+		}
+		return undefined
+	}
+
+	findMessageById(id: string): ClineMessage | undefined {
+		for (let i = this.ctx.clineMessages.length - 1; i >= 0; i--) {
+			if (this.ctx.clineMessages[i].id === id) {
 				return this.ctx.clineMessages[i]
 			}
 		}

@@ -4,13 +4,11 @@ import crypto from "crypto"
 import { v7 as uuidv7 } from "uuid"
 import EventEmitter from "events"
 
-import { AskIgnoredError } from "./AskIgnoredError"
 import { startAllPrefetch } from "../prefetch"
 import { setLastGlobalApiRequestTime, getLastGlobalApiRequestTime as getGlobalApiTime } from "./globalApiTiming"
 
 import { Anthropic } from "@anthropic-ai/sdk"
 import debounce from "lodash.debounce"
-import pWaitFor from "p-wait-for"
 
 import {
 	type TaskLike,
@@ -36,9 +34,6 @@ import {
 	getApiProtocol,
 	getModelId,
 	isRetiredProvider,
-	isIdleAsk,
-	isInteractiveAsk,
-	isResumableAsk,
 	QueuedMessage,
 	DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
@@ -96,13 +91,7 @@ import type { ITaskUINotifier } from "./interfaces/ITaskUINotifier"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
 import {
 	type ApiMessage,
-	readApiMessages,
-	saveApiMessages,
-	readTaskMessages,
-	saveTaskMessages,
-	taskMetadata,
 } from "../task-persistence"
-import { getEnvironmentDetails } from "../environment/getEnvironmentDetails"
 import { ErrorRecoveryHandler } from "./ErrorRecoveryHandler"
 import { PersistentRetryManager } from "./PersistentRetry"
 import {
@@ -113,18 +102,18 @@ import {
 	checkpointRestore,
 	checkpointDiff,
 } from "../checkpoints"
-import { getEffectiveApiHistory } from "../condense"
 import { MessageQueueService } from "../message-queue/MessageQueueService"
 import { AutoApprovalHandler, checkAutoApproval } from "../auto-approval"
 import { MessageManager } from "../message-manager"
-import { validateAndFixToolResultIds } from "./validateToolResultIds"
 import { TaskStateMachine, TaskState } from "./TaskStateMachine"
 import { TaskRequestBuilder } from "./TaskRequestBuilder"
 import { TaskStreamProcessor } from "./TaskStreamProcessor"
-import { generateParentContextSummary } from "./SubTaskContextBuilder"
 import type { IsolationLevel, ForkedContextConfig, CacheSafeParams } from "./SubTaskOptions"
-import { DEFAULT_FORKED_CONTEXT_CONFIG } from "./SubTaskOptions"
 import { TaskMessageManager, type TaskMessageContext } from "./TaskMessageManager"
+import { TaskAskSayHandler } from "./TaskAskSayHandler"
+import { type TaskAskSayHost } from "./interfaces/TaskAskSayHost"
+import { TaskSubtaskHandler } from "./TaskSubtaskHandler"
+import { type TaskSubtaskHost } from "./interfaces/TaskSubtaskHost"
 import { TaskToolHandler } from "./TaskToolHandler"
 import { TaskExecutor, type TaskExecutorHost } from "./TaskExecutor"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
@@ -505,6 +494,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		return this._taskMessageManager
 	}
 
+	/** @internal Ask/say operations — delegates to TaskAskSayHandler. */
+	private get askSayHandler(): TaskAskSayHandler {
+		if (!this._askSayHandler) {
+			this._askSayHandler = new TaskAskSayHandler(this as unknown as TaskAskSayHost)
+		}
+		return this._askSayHandler
+	}
+	private _askSayHandler?: TaskAskSayHandler
+
 	/** @internal Tool result accumulation — delegates to TaskToolHandler. */
 	private get toolHandler(): TaskToolHandler {
 		if (!this._taskToolHandler) {
@@ -528,6 +526,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 		return this._lifecycleHandler
 	}
+
+	/** @internal Subtask operations — delegates to TaskSubtaskHandler. */
+	private get subtaskHandler(): TaskSubtaskHandler {
+		if (!this._subtaskHandler) {
+			this._subtaskHandler = new TaskSubtaskHandler(this as unknown as TaskSubtaskHost)
+		}
+		return this._subtaskHandler
+	}
+	private _subtaskHandler?: TaskSubtaskHandler
 
 	/** Accessor for the static lastGlobalApiRequestTime (used by TaskExecutor). */
 	public setLastGlobalApiRequestTime(time: number): void {
@@ -1004,174 +1011,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// API Messages
 
 	private async getSavedApiConversationHistory(): Promise<ApiMessage[]> {
-		return readApiMessages({ taskId: this.taskId, globalStoragePath: this.globalStoragePath })
+		return this.msgMgr.getSavedApiConversationHistory()
 	}
 
 	async addToApiConversationHistory(message: Anthropic.MessageParam, reasoning?: string) {
-		// Capture the encrypted_content / thought signatures from the provider (e.g., OpenAI Responses API, Google GenAI) if present.
-		// We only persist data reported by the current response body.
-		const handler = this.api as ApiHandler & {
-			getResponseId?: () => string | undefined
-			getEncryptedContent?: () => { encrypted_content: string; id?: string } | undefined
-			getThoughtSignature?: () => string | undefined
-			getSummary?: () => any[] | undefined
-			getReasoningDetails?: () => any[] | undefined
-		}
-
-		if (message.role === "assistant") {
-			const responseId = handler.getResponseId?.()
-			const reasoningData = handler.getEncryptedContent?.()
-			const thoughtSignature = handler.getThoughtSignature?.()
-			const reasoningSummary = handler.getSummary?.()
-			const reasoningDetails = handler.getReasoningDetails?.()
-
-			// Only Anthropic's API expects/validates the special `thinking` content block signature.
-			// Other providers (notably Gemini 3) use different signature semantics (e.g. `thoughtSignature`)
-			// and require round-tripping the signature in their own format.
-			const modelId = getModelId(this.apiConfiguration)
-			const apiProvider = this.apiConfiguration.apiProvider
-			const apiProtocol = getApiProtocol(
-				apiProvider && !isRetiredProvider(apiProvider) ? apiProvider : undefined,
-				modelId,
-			)
-			const isAnthropicProtocol = apiProtocol === "anthropic"
-
-			// Start from the original assistant message
-			const messageWithTs: any = {
-				...message,
-				...(responseId ? { id: responseId } : {}),
-				ts: Date.now(),
-			}
-
-			// Store reasoning_details array if present (for models like Gemini 3)
-			if (reasoningDetails) {
-				messageWithTs.reasoning_details = reasoningDetails
-			}
-
-			// Store reasoning: Anthropic thinking (with signature), plain text (most providers), or encrypted (OpenAI Native)
-			// Skip if reasoning_details already contains the reasoning (to avoid duplication)
-			if (isAnthropicProtocol && reasoning && thoughtSignature && !reasoningDetails) {
-				// Anthropic provider with extended thinking: Store as proper `thinking` block
-				// This format passes through anthropic-filter.ts and is properly round-tripped
-				// for interleaved thinking with tool use (required by Anthropic API)
-				const thinkingBlock = {
-					type: "thinking",
-					thinking: reasoning,
-					signature: thoughtSignature,
-				}
-
-				if (typeof messageWithTs.content === "string") {
-					messageWithTs.content = [
-						thinkingBlock,
-						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
-					]
-				} else if (Array.isArray(messageWithTs.content)) {
-					messageWithTs.content = [thinkingBlock, ...messageWithTs.content]
-				} else if (!messageWithTs.content) {
-					messageWithTs.content = [thinkingBlock]
-				}
-			} else if (reasoning && !reasoningDetails) {
-				// Other providers (non-Anthropic): Store as generic reasoning block
-				const reasoningBlock = {
-					type: "reasoning",
-					text: reasoning,
-					summary: reasoningSummary ?? ([] as any[]),
-				}
-
-				// Also store reasoning_content as a top-level field so that it
-				// survives content-array transformations (e.g., buildCleanConversationHistory
-				// converting the array to a string when the model doesn't set preserveReasoning).
-				// DeepSeek/Z.ai require this field to be passed back in thinking mode.
-				messageWithTs.reasoning_content = reasoning
-
-				if (typeof messageWithTs.content === "string") {
-					messageWithTs.content = [
-						reasoningBlock,
-						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
-					]
-				} else if (Array.isArray(messageWithTs.content)) {
-					messageWithTs.content = [reasoningBlock, ...messageWithTs.content]
-				} else if (!messageWithTs.content) {
-					messageWithTs.content = [reasoningBlock]
-				}
-			} else if (reasoningData?.encrypted_content) {
-				// OpenAI Native encrypted reasoning
-				const reasoningBlock = {
-					type: "reasoning",
-					summary: [] as any[],
-					encrypted_content: reasoningData.encrypted_content,
-					...(reasoningData.id ? { id: reasoningData.id } : {}),
-				}
-
-				if (typeof messageWithTs.content === "string") {
-					messageWithTs.content = [
-						reasoningBlock,
-						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
-					]
-				} else if (Array.isArray(messageWithTs.content)) {
-					messageWithTs.content = [reasoningBlock, ...messageWithTs.content]
-				} else if (!messageWithTs.content) {
-					messageWithTs.content = [reasoningBlock]
-				}
-			}
-
-			// For non-Anthropic providers (e.g., Gemini 3), persist the thought signature as its own
-			// content block so converters can attach it back to the correct provider-specific fields.
-			// Note: For Anthropic extended thinking, the signature is already included in the thinking block above.
-			if (thoughtSignature && !isAnthropicProtocol) {
-				const thoughtSignatureBlock = {
-					type: "thoughtSignature",
-					thoughtSignature,
-				}
-
-				if (typeof messageWithTs.content === "string") {
-					messageWithTs.content = [
-						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
-						thoughtSignatureBlock,
-					]
-				} else if (Array.isArray(messageWithTs.content)) {
-					messageWithTs.content = [...messageWithTs.content, thoughtSignatureBlock]
-				} else if (!messageWithTs.content) {
-					messageWithTs.content = [thoughtSignatureBlock]
-				}
-			}
-
-			this.apiConversationHistory.push(messageWithTs)
-		} else {
-			// For user messages, validate tool_result IDs ONLY when the immediately previous *effective* message
-			// is an assistant message.
-			//
-			// If the previous effective message is also a user message (e.g., summary + a new user message),
-			// validating against any earlier assistant message can incorrectly inject placeholder tool_results.
-			const effectiveHistoryForValidation = getEffectiveApiHistory(this.apiConversationHistory)
-			const lastEffective = effectiveHistoryForValidation[effectiveHistoryForValidation.length - 1]
-			const historyForValidation = lastEffective?.role === "assistant" ? effectiveHistoryForValidation : []
-
-			// If the previous effective message is NOT an assistant, convert tool_result blocks to text blocks.
-			// This prevents orphaned tool_results from being filtered out by getEffectiveApiHistory.
-			// This can happen when condensing occurs after the assistant sends tool_uses but before
-			// the user responds - the tool_use blocks get condensed away, leaving orphaned tool_results.
-			let messageToAdd = message
-			if (lastEffective?.role !== "assistant" && Array.isArray(message.content)) {
-				messageToAdd = {
-					...message,
-					content: message.content.map((block) =>
-						block.type === "tool_result"
-							? {
-									type: "text" as const,
-									text: `Tool result:\n${typeof block.content === "string" ? block.content : JSON.stringify(block.content)}`,
-								}
-							: block,
-					),
-				}
-			}
-
-			const validatedMessage = validateAndFixToolResultIds(messageToAdd, historyForValidation)
-			const messageWithTs = { ...validatedMessage, ts: Date.now() }
-			this.apiConversationHistory.push(messageWithTs)
-		}
-
-		await this.saveApiConversationHistory()
+		return this.msgMgr.addToApiConversationHistory(message, reasoning)
 	}
 
 	// NOTE: We intentionally do NOT mutate stored messages to merge consecutive user turns.
@@ -1179,8 +1023,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// so rewind/edit behavior can still reference original message boundaries.
 
 	async overwriteApiConversationHistory(newHistory: ApiMessage[]) {
-		this.apiConversationHistory = newHistory
-		await this.saveApiConversationHistory()
+		return this.msgMgr.overwriteApiConversationHistory(newHistory)
 	}
 
 	/**
@@ -1199,82 +1042,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * So we usually only need to flush the pending user message with tool_results.
 	 */
 	public async flushPendingToolResultsToHistory(): Promise<boolean> {
-		// Only flush if there's actually pending content to save
-		if (this.userMessageContent.length === 0) {
-			return true
-		}
-
-		// CRITICAL: Wait for the assistant message to be saved to API history first.
-		// Without this, tool_result blocks would appear BEFORE tool_use blocks in the
-		// conversation history, causing API errors like:
-		// "unexpected `tool_use_id` found in `tool_result` blocks"
-		//
-		// This can happen when parallel tools are called (e.g., update_todo_list + new_task).
-		// Tools execute during streaming via presentAssistantMessage, BEFORE the assistant
-		// message is saved. When new_task triggers delegation, it calls this method to
-		// flush pending results - but the assistant message hasn't been saved yet.
-		//
-		// The assistantMessageSavedToHistory flag is:
-		// - Reset to false at the start of each API request
-		// - Set to true after the assistant message is saved in recursivelyMakeClineRequests
-		if (!this.assistantMessageSavedToHistory) {
-			await pWaitFor(() => this.assistantMessageSavedToHistory || this.abort, {
-				interval: 50,
-				timeout: 30_000, // 30 second timeout as safety net
-			}).catch(() => {
-				// If timeout or abort, log and proceed anyway to avoid hanging
-				logger.warn("Task",
-					`flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved for task ${this.taskId}`,
-				)
-			})
-		}
-
-		// If task was aborted while waiting, don't flush
-		if (this.abort) {
-			return false
-		}
-
-		// Save the user message with tool_result blocks
-		const userMessage: Anthropic.MessageParam = {
-			role: "user",
-			content: this.userMessageContent,
-		}
-
-		// Validate and fix tool_result IDs when the previous *effective* message is an assistant message.
-		const effectiveHistoryForValidation = getEffectiveApiHistory(this.apiConversationHistory)
-		const lastEffective = effectiveHistoryForValidation[effectiveHistoryForValidation.length - 1]
-		const historyForValidation = lastEffective?.role === "assistant" ? effectiveHistoryForValidation : []
-		const validatedMessage = validateAndFixToolResultIds(userMessage, historyForValidation)
-		const userMessageWithTs = { ...validatedMessage, ts: Date.now() }
-		this.apiConversationHistory.push(userMessageWithTs as ApiMessage)
-
-		const saved = await this.saveApiConversationHistory()
-
-		if (saved) {
-			// Clear the pending content since it's now saved
-			this.userMessageContent = []
-		} else {
-			logger.warn("Task",
-				`flushPendingToolResultsToHistory: save failed for task ${this.taskId}, retaining pending tool results in memory`,
-			)
-		}
-
-		return saved
+		return this.msgMgr.flushPendingToolResultsToHistory()
 	}
 
 	private async saveApiConversationHistory(): Promise<boolean> {
-		try {
-			const cloned = structuredClone(this.apiConversationHistory)
-			await saveApiMessages({
-				messages: cloned,
-				taskId: this.taskId,
-				globalStoragePath: this.globalStoragePath,
-			})
-			return true
-		} catch (error) {
-			logger.error("Task", "Failed to save API conversation history:", error)
-			return false
-		}
+		return this.msgMgr.saveApiConversationHistory()
 	}
 
 	/**
@@ -1283,28 +1055,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * Used by delegation flow when flushPendingToolResultsToHistory reports failure.
 	 */
 	public async retrySaveApiConversationHistory(): Promise<boolean> {
-		const delays = [100, 500, 1500]
-
-		for (let attempt = 0; attempt < delays.length; attempt++) {
-			await new Promise<void>((resolve) => setTimeout(resolve, delays[attempt]))
-			logger.warn("Task",
-				`retrySaveApiConversationHistory: retry attempt ${attempt + 1}/${delays.length} for task ${this.taskId}`,
-			)
-
-			const success = await this.saveApiConversationHistory()
-
-			if (success) {
-				return true
-			}
-		}
-
-		return false
+		return this.msgMgr.retrySaveApiConversationHistory()
 	}
 
 	// Cline Messages
 
 	private async getSavedClineMessages(): Promise<ClineMessage[]> {
-		return readTaskMessages({ taskId: this.taskId, globalStoragePath: this.globalStoragePath })
+		return this.msgMgr.getSavedClineMessages()
 	}
 
 	private async addToClineMessages(message: Omit<ClineMessage, "id"> & { id?: string }) {
@@ -1312,92 +1069,29 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (!message.id) {
 			message.id = uuidv7()
 		}
-		this.clineMessages.push(message as ClineMessage)
-		const provider = this.hostRef.deref()
-		// Avoid resending large, mostly-static fields (notably taskHistory) on every chat message update.
-		// taskHistory is maintained in-memory in the webview and updated via taskHistoryItemUpdated.
-		await provider?.postStateToWebviewWithoutTaskHistory()
-		this.emit(NJUST_AI_CJEventName.Message, { action: "created", message: message as ClineMessage })
-		await this.saveClineMessages()
-
-		// Cloud service disabled - no message capture
+		const messageWithId = message as ClineMessage
+		return this.msgMgr.addToClineMessages(messageWithId)
 	}
 
 	public async overwriteClineMessages(newMessages: ClineMessage[]) {
-		for (const msg of newMessages) {
-			if (!msg.id) msg.id = uuidv7()
-		}
-		this.clineMessages = newMessages
-		restoreTodoListForTask(this)
-		await this.saveClineMessages()
+		return this.msgMgr.overwriteClineMessages(newMessages)
 	}
 
 	private async updateClineMessage(message: ClineMessage) {
-		const provider = this.hostRef.deref()
-		await provider?.postMessageToWebview({ type: "messageUpdated", clineMessage: message })
-		this.emit(NJUST_AI_CJEventName.Message, { action: "updated", message })
-		// Cloud service disabled - no message capture
+		return this.msgMgr.updateClineMessage(message)
 	}
 
 	private async saveClineMessages(): Promise<boolean> {
-		try {
-			await saveTaskMessages({
-				messages: structuredClone(this.clineMessages),
-				taskId: this.taskId,
-				globalStoragePath: this.globalStoragePath,
-			})
-
-			if (this._taskApiConfigName === undefined) {
-				await this.taskApiConfigReady
-			}
-
-			const { historyItem, tokenUsage } = await taskMetadata({
-				taskId: this.taskId,
-				rootTaskId: this.rootTaskId,
-				parentTaskId: this.parentTaskId,
-				taskNumber: this.taskNumber,
-				messages: this.clineMessages,
-				globalStoragePath: this.globalStoragePath,
-				workspace: this.cwd,
-				mode: this._taskMode || defaultModeSlug, // Use the task's own mode, not the current provider mode.
-				apiConfigName: this._taskApiConfigName, // Use the task's own provider profile, not the current provider profile.
-				initialStatus: this.initialStatus,
-			})
-
-			// Emit token/tool usage updates using debounced function
-			// The debounce with maxWait ensures:
-			// - Immediate first emit (leading: true)
-			// - At most one emit per interval during rapid updates (maxWait)
-			// - Final state is emitted when updates stop (trailing: true)
-			this.debouncedEmitTokenUsage(tokenUsage, this.toolUsage)
-
-			await this.notifier?.updateTaskHistory(historyItem)
-			return true
-		} catch (error) {
-			logger.error("Task", "Failed to save Roo messages:", error)
-			return false
-		}
+		return this.msgMgr.saveClineMessages()
 	}
 
 	/** @deprecated Prefer findMessageById for new code. */
 	private findMessageByTimestamp(ts: number): ClineMessage | undefined {
-		for (let i = this.clineMessages.length - 1; i >= 0; i--) {
-			if (this.clineMessages[i].ts === ts) {
-				return this.clineMessages[i]
-			}
-		}
-
-		return undefined
+		return this.msgMgr.findMessageByTimestamp(ts)
 	}
 
 	private findMessageById(id: string): ClineMessage | undefined {
-		for (let i = this.clineMessages.length - 1; i >= 0; i--) {
-			if (this.clineMessages[i].id === id) {
-				return this.clineMessages[i]
-			}
-		}
-
-		return undefined
+		return this.msgMgr.findMessageById(id)
 	}
 
 	// Note that `partial` has three valid states true (partial message),
@@ -1410,235 +1104,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		progressStatus?: ToolProgressStatus,
 		isProtected?: boolean,
 	): Promise<{ response: ClineAskResponse; text?: string; images?: string[] }> {
-		// If this Cline instance was aborted by the provider, then the only
-		// thing keeping us alive is a promise still running in the background,
-		// in which case we don't want to send its result to the webview as it
-		// is attached to a new instance of Cline now. So we can safely ignore
-		// the result of any active promises, and this class will be
-		// deallocated. (Although we set Cline = undefined in provider, that
-		// simply removes the reference to this instance, but the instance is
-		// still alive until this promise resolves or rejects.)
-		if (this.abort) {
-			throw new Error(`[NJUST_AI_CJ#ask] task ${this.taskId}.${this.instanceId} aborted`)
-		}
-
-		let askTs: number
-
-		if (partial !== undefined) {
-			const lastMessage = this.clineMessages.at(-1)
-
-			const isUpdatingPreviousPartial =
-				lastMessage && lastMessage.partial && lastMessage.type === "ask" && lastMessage.ask === type
-
-			if (partial) {
-				if (isUpdatingPreviousPartial) {
-					// Existing partial message, so update it.
-					lastMessage.text = text
-					lastMessage.partial = partial
-					lastMessage.progressStatus = progressStatus
-					lastMessage.isProtected = isProtected
-					// TODO: Be more efficient about saving and posting only new
-					// data or one whole message at a time so ignore partial for
-					// saves, and only post parts of partial message instead of
-					// whole array in new listener.
-					this.updateClineMessage(lastMessage)
-					throw new AskIgnoredError("updating existing partial")
-				} else {
-					// This is a new partial message, so add it with partial
-					// state.
-					askTs = Date.now()
-					this.lastMessageTs = askTs
-					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, partial, isProtected })
-					throw new AskIgnoredError("new partial")
-				}
-			} else {
-				if (isUpdatingPreviousPartial) {
-					// This is the complete version of a previously partial
-					// message, so replace the partial with the complete version.
-					this.askResponse = undefined
-					this.askResponseText = undefined
-					this.askResponseImages = undefined
-
-					// Bug for the history books:
-					// In the webview we use the ts as the chatrow key for the
-					// virtuoso list. Since we would update this ts right at the
-					// end of streaming, it would cause the view to flicker. The
-					// key prop has to be stable otherwise react has trouble
-					// reconciling items between renders, causing unmounting and
-					// remounting of components (flickering).
-					// The lesson here is if you see flickering when rendering
-					// lists, it's likely because the key prop is not stable.
-					// So in this case we must make sure that the message ts is
-					// never altered after first setting it.
-					askTs = lastMessage.ts
-					this.lastMessageTs = askTs
-					lastMessage.text = text
-					lastMessage.partial = false
-					lastMessage.progressStatus = progressStatus
-					lastMessage.isProtected = isProtected
-					await this.saveClineMessages()
-					this.updateClineMessage(lastMessage)
-				} else {
-					// This is a new and complete message, so add it like normal.
-					this.askResponse = undefined
-					this.askResponseText = undefined
-					this.askResponseImages = undefined
-					askTs = Date.now()
-					this.lastMessageTs = askTs
-					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, isProtected })
-				}
-			}
-		} else {
-			// This is a new non-partial message, so add it like normal.
-			this.askResponse = undefined
-			this.askResponseText = undefined
-			this.askResponseImages = undefined
-			askTs = Date.now()
-			this.lastMessageTs = askTs
-			await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, isProtected })
-		}
-
-		const timeouts: NodeJS.Timeout[] = []
-
-		// Automatically approve if the ask according to the user's settings.
-		const provider = this.hostRef.deref()
-		const state = provider ? await provider.getState() : undefined
-		const approval = await checkAutoApproval({ state: state as any, ask: type, text, isProtected })
-
-		if (approval.decision === "approve") {
-			this.approveAsk()
-		} else if (approval.decision === "deny") {
-			this.denyAsk()
-		} else if (approval.decision === "timeout") {
-			// Store the auto-approval timeout so it can be cancelled if user interacts
-			this.autoApprovalTimeoutRef = setTimeout(() => {
-				const { askResponse, text, images } = approval.fn()
-				this.handleWebviewAskResponse(askResponse, text, images)
-				this.autoApprovalTimeoutRef = undefined
-			}, approval.timeout)
-			timeouts.push(this.autoApprovalTimeoutRef)
-		}
-
-		// The state is mutable if the message is complete and the task will
-		// block (via the `pWaitFor`).
-		const isBlocking = !(this.askResponse !== undefined || this.lastMessageTs !== askTs)
-		const isMessageQueued = !this.messageQueueService.isEmpty()
-		// Keep queued user messages intact during command_output asks. Those asks
-		// are terminal flow-control, not conversational turns.
-		// Idle asks (completion_result, api_req_failed, etc.) must not
-		// auto-drain queued messages — doing so would auto-continue the
-		// task without explicit user action.
-		const shouldDrainQueuedMessageForAsk = type !== "command_output" && !isIdleAsk(type)
-		const isStatusMutable = !partial && isBlocking && !isMessageQueued && approval.decision === "ask"
-
-		if (isStatusMutable) {
-			const statusMutationTimeout = 2_000
-
-			if (isInteractiveAsk(type)) {
-				timeouts.push(
-					setTimeout(() => {
-						const message = this.findMessageByTimestamp(askTs)
-
-						if (message) {
-							this.interactiveAsk = message
-							this.emit(NJUST_AI_CJEventName.TaskInteractive, this.taskId)
-							provider?.postMessageToWebview({ type: "interactionRequired" })
-						}
-					}, statusMutationTimeout),
-				)
-			} else if (isResumableAsk(type)) {
-				timeouts.push(
-					setTimeout(() => {
-						const message = this.findMessageByTimestamp(askTs)
-
-						if (message) {
-							this.resumableAsk = message
-							this.emit(NJUST_AI_CJEventName.TaskResumable, this.taskId)
-						}
-					}, statusMutationTimeout),
-				)
-			} else if (isIdleAsk(type)) {
-				timeouts.push(
-					setTimeout(() => {
-						const message = this.findMessageByTimestamp(askTs)
-
-						if (message) {
-							this.idleAsk = message
-							this.emit(NJUST_AI_CJEventName.TaskIdle, this.taskId)
-						}
-					}, statusMutationTimeout),
-				)
-			}
-		} else if (isMessageQueued && shouldDrainQueuedMessageForAsk) {
-			const message = this.messageQueueService.dequeueMessage()
-
-			if (message) {
-				// Check if this is a tool approval ask that needs to be handled.
-				if (type === "tool" || type === "command" || type === "use_mcp_server") {
-					// For tool approvals, we need to approve first, then send
-					// the message if there's text/images.
-					this.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
-				} else {
-					// For other ask types (like followup or command_output), fulfill the ask
-					// directly.
-					this.handleWebviewAskResponse("messageResponse", message.text, message.images)
-				}
-			}
-		}
-
-		// Wait for askResponse to be set
-		await pWaitFor(
-			() => {
-				if (this.askResponse !== undefined || this.lastMessageTs !== askTs) {
-					return true
-				}
-
-				// If a queued message arrives while we're blocked on an ask (e.g. a follow-up
-				// suggestion click that was incorrectly queued due to UI state), consume it
-				// immediately so the task doesn't hang.
-				if (shouldDrainQueuedMessageForAsk && !this.messageQueueService.isEmpty()) {
-					const message = this.messageQueueService.dequeueMessage()
-					if (message) {
-						// If this is a tool approval ask, we need to approve first (yesButtonClicked)
-						// and include any queued text/images.
-						if (type === "tool" || type === "command" || type === "use_mcp_server") {
-							this.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
-						} else {
-							this.handleWebviewAskResponse("messageResponse", message.text, message.images)
-						}
-					}
-				}
-
-				return false
-			},
-			{ interval: 100 },
-		)
-
-		if (this.lastMessageTs !== askTs) {
-			// Could happen if we send multiple asks in a row i.e. with
-			// command_output. It's important that when we know an ask could
-			// fail, it is handled gracefully.
-			throw new AskIgnoredError("superseded")
-		}
-
-		const result = { response: this.askResponse!, text: this.askResponseText, images: this.askResponseImages }
-		this.askResponse = undefined
-		this.askResponseText = undefined
-		this.askResponseImages = undefined
-
-		// Cancel the timeouts if they are still running.
-		timeouts.forEach((timeout) => clearTimeout(timeout))
-
-		// Switch back to an active state.
-		if (this.idleAsk || this.resumableAsk || this.interactiveAsk) {
-			this.idleAsk = undefined
-			this.resumableAsk = undefined
-			this.interactiveAsk = undefined
-			this.emit(NJUST_AI_CJEventName.TaskActive, this.taskId)
-		}
-
-		this.emit(NJUST_AI_CJEventName.TaskAskResponded)
-		return result
+		return this.askSayHandler.ask(type, text, partial, progressStatus, isProtected)
 	}
 
 	handleWebviewAskResponse(askResponse: ClineAskResponse, text?: string, images?: string[]) {
@@ -1831,115 +1297,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		contextCondense?: ContextCondense,
 		contextTruncation?: ContextTruncation,
 	): Promise<undefined> {
-		if (this.abort) {
-			throw new Error(`[NJUST_AI_CJ#say] task ${this.taskId}.${this.instanceId} aborted`)
-		}
-
-		if (partial !== undefined) {
-			const lastMessage = this.clineMessages.at(-1)
-
-			const isUpdatingPreviousPartial =
-				lastMessage && lastMessage.partial && lastMessage.type === "say" && lastMessage.say === type
-
-			if (partial) {
-				if (isUpdatingPreviousPartial) {
-					// Existing partial message, so update it.
-					lastMessage.text = text
-					lastMessage.images = images
-					lastMessage.partial = partial
-					lastMessage.progressStatus = progressStatus
-					this.updateClineMessage(lastMessage)
-				} else {
-					// This is a new partial message, so add it with partial state.
-					const sayTs = Date.now()
-
-					if (!options.isNonInteractive) {
-						this.lastMessageTs = sayTs
-					}
-
-					await this.addToClineMessages({
-						ts: sayTs,
-						type: "say",
-						say: type,
-						text,
-						images,
-						partial,
-						contextCondense,
-						contextTruncation,
-					})
-				}
-			} else {
-				// New now have a complete version of a previously partial message.
-				// This is the complete version of a previously partial
-				// message, so replace the partial with the complete version.
-				if (isUpdatingPreviousPartial) {
-					if (!options.isNonInteractive) {
-						this.lastMessageTs = lastMessage.ts
-					}
-
-					lastMessage.text = text
-					lastMessage.images = images
-					lastMessage.partial = false
-					lastMessage.progressStatus = progressStatus
-
-					// Instead of streaming partialMessage events, we do a save
-					// and post like normal to persist to disk.
-					await this.saveClineMessages()
-
-					// More performant than an entire `postStateToWebview`.
-					this.updateClineMessage(lastMessage)
-				} else {
-					// This is a new and complete message, so add it like normal.
-					const sayTs = Date.now()
-
-					if (!options.isNonInteractive) {
-						this.lastMessageTs = sayTs
-					}
-
-					await this.addToClineMessages({
-						ts: sayTs,
-						type: "say",
-						say: type,
-						text,
-						images,
-						contextCondense,
-						contextTruncation,
-					})
-				}
-			}
-		} else {
-			// This is a new non-partial message, so add it like normal.
-			const sayTs = Date.now()
-
-			// A "non-interactive" message is a message is one that the user
-			// does not need to respond to. We don't want these message types
-			// to trigger an update to `lastMessageTs` since they can be created
-			// asynchronously and could interrupt a pending ask.
-			if (!options.isNonInteractive) {
-				this.lastMessageTs = sayTs
-			}
-
-			await this.addToClineMessages({
-				ts: sayTs,
-				type: "say",
-				say: type,
-				text,
-				images,
-				checkpoint,
-				contextCondense,
-				contextTruncation,
-			})
-		}
+		return this.askSayHandler.say(type, text, images, partial, checkpoint, progressStatus, options, contextCondense, contextTruncation)
 	}
 
 	async sayAndCreateMissingParamError(toolName: ToolName, paramName: string, relPath?: string) {
-		await this.say(
-			"error",
-			`Roo tried to use ${toolName}${
-				relPath ? ` for '${relPath.toPosix()}'` : ""
-			} without value for required parameter '${paramName}'. Retrying...`,
-		)
-		return formatResponse.toolError(formatResponse.missingToolParameterError(paramName))
+		return this.askSayHandler.sayAndCreateMissingParamError(toolName, paramName, relPath)
 	}
 
 	// Lifecycle
@@ -2086,41 +1448,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		forkedConfig?: ForkedContextConfig,
 		cacheSafeParams?: CacheSafeParams,
 	) {
-		const provider = this.hostRef.deref()
-
-		if (!provider) {
-			throw new Error("Provider not available")
-		}
-
-		let forkedContextSummary: string | undefined
-		let effectiveCacheSafeParams: CacheSafeParams | undefined
-
-		if (isolationLevel === "forked") {
-			if (cacheSafeParams) {
-				// Cache-aware: byte-identical prefix for prompt cache sharing
-				effectiveCacheSafeParams = cacheSafeParams
-				forkedContextSummary = message
-			} else {
-				// Traditional: text summary from parent context
-				const config = forkedConfig ?? DEFAULT_FORKED_CONTEXT_CONFIG
-				forkedContextSummary = generateParentContextSummary(
-					this.apiConversationHistory,
-					config.summaryMaxTokens,
-					config,
-				)
-			}
-		}
-
-		const child = await provider.delegateParentAndOpenChild({
-			parentTaskId: this.taskId,
-			message,
-			initialTodos,
-			mode,
-			isolationLevel,
-			forkedContextSummary,
-			cacheSafeParams: effectiveCacheSafeParams,
-		})
-		return child
+		return this.subtaskHandler.startSubtask(message, initialTodos, mode, isolationLevel, forkedConfig, cacheSafeParams)
 	}
 
 	/**
@@ -2134,67 +1462,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * - Immediately continues task loop without user interaction
 	 */
 	public async resumeAfterDelegation(): Promise<void> {
-		// Clear any ask states that might have been set during history load
-		this.idleAsk = undefined
-		this.resumableAsk = undefined
-		this.interactiveAsk = undefined
-
-		// Reset abort and streaming state to ensure clean continuation
-		this.abort = false
-		this.abandoned = false
-		this.abortReason = undefined
-		this.didFinishAbortingStream = false
-		this.isStreaming = false
-		this.isWaitingForFirstChunk = false
-
-		// Ensure next API call includes full context after delegation
-		this.skipPrevResponseIdOnce = true
-
-		// Mark as initialized and active
-		this.isInitialized = true
-		this.emit(NJUST_AI_CJEventName.TaskActive, this.taskId)
-
-		// Load conversation history if not already loaded
-		if (this.apiConversationHistory.length === 0) {
-			this.apiConversationHistory = await this.getSavedApiConversationHistory()
-		}
-
-		// Add environment details to the existing last user message (which contains the tool_result)
-		// This avoids creating a new user message which would cause consecutive user messages
-		const environmentDetails = await getEnvironmentDetails(this, true)
-		let lastUserMsgIndex = -1
-		for (let i = this.apiConversationHistory.length - 1; i >= 0; i--) {
-			if (this.apiConversationHistory[i].role === "user") {
-				lastUserMsgIndex = i
-				break
-			}
-		}
-		if (lastUserMsgIndex >= 0) {
-			const lastUserMsg = this.apiConversationHistory[lastUserMsgIndex]
-			if (Array.isArray(lastUserMsg.content)) {
-				// Remove any existing environment_details blocks before adding fresh ones
-				const contentWithoutEnvDetails = lastUserMsg.content.filter(
-					(block: Anthropic.Messages.ContentBlockParam) => {
-						if (block.type === "text" && typeof block.text === "string") {
-							const isEnvironmentDetailsBlock =
-								block.text.trim().startsWith("<environment_details>") &&
-								block.text.trim().endsWith("</environment_details>")
-							return !isEnvironmentDetailsBlock
-						}
-						return true
-					},
-				)
-				// Add fresh environment details
-				lastUserMsg.content = [...contentWithoutEnvDetails, { type: "text" as const, text: environmentDetails }]
-			}
-		}
-
-		// Save the updated history
-		await this.saveApiConversationHistory()
-
-		// Continue task loop - pass empty array to signal no new user content needed
-		// The initiateTaskLoop will handle this by skipping user message addition
-		await this.initiateTaskLoop([])
+		return this.subtaskHandler.resumeAfterDelegation()
 	}
 
 	// Cloud Agent orchestration delegated to CloudAgentOrchestrator
