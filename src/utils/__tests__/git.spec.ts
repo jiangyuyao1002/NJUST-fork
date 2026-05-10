@@ -26,9 +26,10 @@ type ExecFunction = (
 
 type PromisifiedExec = (command: string, options?: { cwd?: string }) => Promise<{ stdout: string; stderr: string }>
 
-// Mock child_process.exec
+// Mock child_process.exec and execFile
 vitest.mock("child_process", () => ({
 	exec: vitest.fn(),
+	execFile: vitest.fn(),
 }))
 
 // Mock fs.promises
@@ -76,7 +77,7 @@ vitest.mock("../../integrations/misc/extract-text", () => ({
 	truncateOutput: vitest.fn((text) => text),
 }))
 
-import { exec } from "child_process"
+import { exec, execFile } from "child_process"
 
 describe("git utils", () => {
 	const cwd = "/test/path"
@@ -169,6 +170,19 @@ describe("git utils", () => {
 				callback(new Error(`Unexpected command: ${command}`))
 			})
 
+
+			// execFile mock for searchCommits git log call (now uses execFileAsync)
+			vitest.mocked(execFile).mockImplementation((...args: any[]) => {
+				const callback = args[args.length - 1]
+				const cmd = args[0]
+				const cmdArgs = args[1] as string[]
+				if (cmd === "git" && cmdArgs[0] === "log") {
+					callback(null, { stdout: mockCommitData, stderr: "" })
+					return {} as any
+				}
+				callback(new Error("Unexpected execFile call"))
+				return {} as any
+			})
 			const result = await searchCommits("test", cwd)
 
 			// First verify the result is correct
@@ -184,12 +198,11 @@ describe("git utils", () => {
 			// Then verify all commands were called correctly
 			expect(vitest.mocked(exec)).toHaveBeenCalledWith("git --version", {}, expect.any(Function))
 			expect(vitest.mocked(exec)).toHaveBeenCalledWith("git rev-parse --git-dir", { cwd }, expect.any(Function))
-			expect(vitest.mocked(exec)).toHaveBeenCalledWith(
-				'git log -n 10 --format="%H%n%h%n%s%n%an%n%ad" --date=short --grep="test" --regexp-ignore-case',
-				{ cwd },
+			expect(vitest.mocked(execFile)).toHaveBeenCalledWith(
+				"git",
+				["log", "-n", "10", "--format=%H%n%h%n%s%n%an%n%ad", "--date=short", "--grep", "test", "--regexp-ignore-case"],
 				expect.any(Function),
-			)
-		})
+			)		})
 
 		it("should return empty array when git is not installed", async () => {
 			vitest.mocked(exec).mockImplementation((command: string, options: any, callback: any) => {
@@ -257,6 +270,22 @@ describe("git utils", () => {
 				return {} as any
 			})
 
+
+			// execFile mock for searchCommits git log calls (now uses execFileAsync)
+			let logCallIndex = 0
+			const logResponses = ["", mockCommitData]
+			vitest.mocked(execFile).mockImplementation((...args: any[]) => {
+				const callback = args[args.length - 1]
+				const cmd = args[0]
+				const cmdArgs = args[1] as string[]
+				if (cmd === "git" && cmdArgs[0] === "log") {
+					const response = logResponses[logCallIndex++] || ""
+					callback(null, { stdout: response, stderr: "" })
+					return {} as any
+				}
+				callback(new Error("Unexpected execFile call"))
+				return {} as any
+			})
 			const result = await searchCommits("abc123", cwd)
 			expect(result).toHaveLength(2)
 			expect(result[0]).toEqual({
