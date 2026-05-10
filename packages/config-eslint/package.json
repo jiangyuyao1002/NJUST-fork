@@ -6,6 +6,7 @@
 		"./base": "./base.js",
 		"./base-strict": "./base-strict.js",
 		"./react": "./react.js",
+		"./react-strict": "./react-strict.js",
 		"./next-js": "./next.js"
 	},
 	"devDependencies": {

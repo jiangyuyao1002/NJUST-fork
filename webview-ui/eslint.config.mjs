@@ -1,8 +1,8 @@
-import { reactConfig } from "@njust-ai-cj/config-eslint/react"
+import { reactStrictConfig } from "@njust-ai-cj/config-eslint/react-strict"
 
 /** @type {import("eslint").Linter.Config} */
 export default [
-	...reactConfig,
+	...reactStrictConfig,
 	{
 		rules: {
 			"@typescript-eslint/no-unused-vars": [
