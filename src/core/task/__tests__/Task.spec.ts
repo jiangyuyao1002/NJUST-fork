@@ -397,6 +397,34 @@ describe("Cline", () => {
 				new Task({ provider: mockProvider, apiConfiguration: mockApiConfig })
 			}).toThrow("Either historyItem or task/images must be provided")
 		})
+
+		it("logs startTask errors instead of unhandled rejection", async () => {
+			const { logger } = await import("../../../shared/logger")
+			const loggerSpy = vi.spyOn(logger, "error")
+
+			// Mock lifecycle handler to make startTask reject immediately
+			const { TaskLifecycleHandler } = await import("../TaskLifecycleHandler")
+			const startTaskSpy = vi.spyOn(TaskLifecycleHandler.prototype, "startTask").mockRejectedValue(
+				new Error("simulated startTask failure"),
+			)
+
+			new Task({
+				provider: mockProvider,
+				apiConfiguration: mockApiConfig,
+				task: "test task",
+				startTask: true,
+			})
+
+			await vi.waitFor(
+				() => {
+					expect(loggerSpy).toHaveBeenCalledWith("startTask failed", expect.any(Error))
+				},
+				{ timeout: 3000 },
+			)
+
+			startTaskSpy.mockRestore()
+			loggerSpy.mockRestore()
+		})
 	})
 
 	describe("getEnvironmentDetails", () => {

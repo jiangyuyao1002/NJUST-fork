@@ -133,6 +133,11 @@ async function handleOpenFile(context: MessageHandlerContext, message: WebviewMe
 	if (!path.isAbsolute(filePath)) {
 		filePath = path.join(context.getCurrentCwd(), filePath)
 	}
+	if (isPathOutsideWorkspace(filePath)) {
+		const errorMessage = `Access denied: Path is outside the workspace: ${filePath}`
+		vscode.window.showErrorMessage(errorMessage)
+		return
+	}
 	void openFile(filePath, message.values as { create?: boolean; content?: string; line?: number })
 }
 

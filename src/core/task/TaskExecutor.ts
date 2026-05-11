@@ -1119,7 +1119,7 @@ export class TaskExecutor {
 										// Add to content and present
 										t.assistantMessageContent.push(partialToolUse)
 										t.userMessageContentReady = false
-										void t.presentAssistantMessage()
+										void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 									} else if (event.type === "tool_call_delta") {
 										// Process chunk using streaming JSON parser
 										const partialToolUse = this.toolCallParser.processStreamingChunk(
@@ -1138,7 +1138,7 @@ export class TaskExecutor {
 												t.assistantMessageContent[toolUseIndex] = partialToolUse
 
 												// Present updated tool use
-												void t.presentAssistantMessage()
+												void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 											}
 										}
 									} else if (event.type === "tool_call_end") {
@@ -1171,14 +1171,14 @@ export class TaskExecutor {
 												if (enabled && (state?.autoApprovalEnabled ?? false)) {
 													const decision = t.toolExecution.streamingExecutor.shouldEagerExecute(t, latest)
 													if (decision === "eager") {
-														void t.presentAssistantMessage()
+														void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 														break
 													}
 												}
 											}
 
 											// Present the finalized tool call
-											void t.presentAssistantMessage()
+											void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 										} else if (toolUseIndex !== undefined) {
 											// finalizeStreamingToolCall returned null (malformed JSON or missing args)
 											// Mark the tool as non-partial so it's presented as complete, but execution
@@ -1197,7 +1197,7 @@ export class TaskExecutor {
 											t.userMessageContentReady = false
 
 											// Present the tool call - validation will handle missing params
-											void t.presentAssistantMessage()
+											void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 										}
 									}
 								}
@@ -1230,7 +1230,7 @@ export class TaskExecutor {
 
 								// Present the tool call to user - presentAssistantMessage will execute
 								// tools sequentially and accumulate all results in userMessageContent
-								void t.presentAssistantMessage()
+								void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 								break
 							}
 							case "text": {
@@ -1250,7 +1250,7 @@ export class TaskExecutor {
 									})
 									t.userMessageContentReady = false
 								}
-								void t.presentAssistantMessage()
+								void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 								break
 							}
 						}
@@ -1634,7 +1634,7 @@ export class TaskExecutor {
 							t.userMessageContentReady = false
 
 							// Present the finalized tool call
-							void t.presentAssistantMessage()
+							void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 						} else if (toolUseIndex !== undefined) {
 							// finalizeStreamingToolCall returned null (malformed JSON or missing args)
 							// We still need to mark the tool as non-partial so it gets executed
@@ -1653,7 +1653,7 @@ export class TaskExecutor {
 							t.userMessageContentReady = false
 
 							// Present the tool call - validation will handle missing params
-							void t.presentAssistantMessage()
+							void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 						}
 					}
 				}
@@ -1844,7 +1844,7 @@ export class TaskExecutor {
 					// If there is content to update then it will complete and
 					// update `t.userMessageContentReady` to true, which we
 					// `pWaitFor` before making the next request.
-					void t.presentAssistantMessage()
+					void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 				}
 
 				if (hasTextContent || hasToolUses) {

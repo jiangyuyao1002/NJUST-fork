@@ -675,4 +675,35 @@ Output only the summary of the conversation so far, without any additional comme
 			expect(customSupportPromptsUpdateCalls.length).toBe(0)
 		})
 	})
+
+		describe('setValues resilience', () => {
+			it('continues setting values when individual key fails', async () => {
+				const { logger } = await import('../../../utils/logging')
+				const loggerSpy = vi.spyOn(logger, 'error')
+
+				// Make update fail for 'listApiConfigMeta' but succeed for others
+				mockGlobalState.update.mockImplementation((key: string, _value: any) => {
+					if (key === 'listApiConfigMeta') {
+						return Promise.reject(new Error('storage write failed'))
+					}
+					return Promise.resolve()
+				})
+
+				// Call setValues with multiple keys
+				await proxy.setValues({
+					currentApiConfigName: 'test-config',
+					listApiConfigMeta: [{ name: 'test', apiProvider: 'anthropic' }],
+					allowedCommands: ['echo'],
+				} as any)
+
+				// The failing key should be logged but other keys should succeed
+				expect(loggerSpy).toHaveBeenCalledWith(
+					expect.stringContaining('listApiConfigMeta'),
+					expect.any(Error),
+				)
+				expect(mockGlobalState.update).toHaveBeenCalledWith('currentApiConfigName', 'test-config')
+				expect(mockGlobalState.update).toHaveBeenCalledWith('allowedCommands', ['echo'])
+			})
+		})
+
 })

@@ -553,7 +553,12 @@ export class ContextProxy {
 
 	public async setValues(values: NJUST_AI_CJSettings) {
 		const entries = Object.entries(values) as [NJUST_AI_CJSettingsKey, unknown][]
-		await Promise.all(entries.map(([key, value]) => this.setValue(key, value)))
+		const results = await Promise.allSettled(entries.map(([key, value]) => this.setValue(key, value)))
+		for (const [index, result] of results.entries()) {
+			if (result.status === "rejected") {
+				logger.error(`Failed to set value for key "${entries[index][0]}"`, result.reason)
+			}
+		}
 	}
 
 	/**
@@ -587,11 +592,17 @@ export class ContextProxy {
 		this.stateCache = {}
 		this.secretCache = {}
 
-		await Promise.all([
+		const operations = [
 			...GLOBAL_STATE_KEYS.map((key) => this.originalContext.globalState.update(key, undefined)),
 			...SECRET_STATE_KEYS.map((key) => this.originalContext.secrets.delete(key)),
 			...GLOBAL_SECRET_KEYS.map((key) => this.originalContext.secrets.delete(key)),
-		])
+		]
+		const results = await Promise.allSettled(operations)
+		for (const result of results) {
+			if (result.status === "rejected") {
+				logger.error("Failed to reset state", result.reason)
+			}
+		}
 
 		await this.initialize()
 	}

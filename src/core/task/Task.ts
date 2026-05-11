@@ -726,9 +726,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (startTask) {
 			this._started = true
 			if (task || images) {
-				void this.startTask(task, images)
+				void this.startTask(task, images).catch((error) => { logger.error("startTask failed", error) })
 			} else if (historyItem) {
-				void this.resumeTaskFromHistory()
+				void this.resumeTaskFromHistory().catch((error) => { logger.error("resumeTaskFromHistory failed", error) })
 			} else {
 				throw new Error("Either historyItem or task/images must be provided")
 			}
@@ -1364,7 +1364,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const { task, images } = this.metadata
 
 		if (task || images) {
-			void this.startTask(task ?? undefined, images ?? undefined)
+			void this.startTask(task ?? undefined, images ?? undefined).catch((error) => { logger.error("startTask failed", error) })
 		}
 	}
 
