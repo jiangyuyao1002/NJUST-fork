@@ -7,7 +7,7 @@ const TYPE_KINDS = new Set(["class", "struct", "interface", "enum", "extend", "t
 export class CangjieTypeHierarchyProvider implements vscode.TypeHierarchyProvider {
 	constructor(private readonly index: CangjieSymbolIndex) {}
 
-	async prepareTypeHierarchy(
+	prepareTypeHierarchy(
 		document: vscode.TextDocument,
 		position: vscode.Position,
 		_token: vscode.CancellationToken,

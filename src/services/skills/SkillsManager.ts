@@ -116,7 +116,7 @@ export class SkillsManager {
 			const fileContent = await fs.readFile(skillMdPath, "utf-8")
 
 			// Use gray-matter to parse frontmatter
-			const { data: frontmatter, content: body } = matter(fileContent)
+			const { data: frontmatter, content: _body } = matter(fileContent)
 
 			// Validate required fields (only name and description for now)
 			if (!frontmatter.name || typeof frontmatter.name !== "string") {
@@ -769,7 +769,7 @@ Add your skill instructions here.
 		this.disposables.push(watcher)
 	}
 
-	async dispose(): Promise<void> {
+	dispose(): Promise<void> {
 		this.isDisposed = true
 		this.disposables.forEach((d) => d.dispose())
 		this.disposables = []

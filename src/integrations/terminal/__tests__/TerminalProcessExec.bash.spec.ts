@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // npx vitest src/integrations/terminal/__tests__/TerminalProcessExec.bash.spec.ts
 
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest"

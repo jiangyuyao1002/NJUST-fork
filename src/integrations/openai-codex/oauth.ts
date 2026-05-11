@@ -2,19 +2,19 @@
 // This is a stub since we've removed the actual OAuth implementation
 
 export const openAiCodexOAuthManager = {
-	async getAccessToken(): Promise<string | null> {
+	getAccessToken(): string | null {
 		return null
 	},
 
-	async forceRefreshAccessToken(): Promise<string | null> {
+	forceRefreshAccessToken(): string | null {
 		return null
 	},
 
-	async getAccountId(): Promise<string | null> {
+	getAccountId(): string | null {
 		return null
 	},
 
-	async isAuthenticated(): Promise<boolean> {
+	isAuthenticated(): boolean {
 		return false
 	},
 
@@ -27,7 +27,7 @@ export const openAiCodexOAuthManager = {
 		return ""
 	},
 
-	async waitForCallback(): Promise<{ success: boolean; error?: string }> {
+	waitForCallback(): { success: boolean; error?: string } {
 		// Stub - return failure
 		return { success: false }
 	},

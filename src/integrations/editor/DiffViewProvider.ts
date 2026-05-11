@@ -58,7 +58,7 @@ export class DiffViewProvider {
 				(doc) => doc.uri.scheme === "file" && arePathsEqual(doc.uri.fsPath, absolutePath),
 			)
 
-			if (existingDocument && existingDocument.isDirty) {
+			if (existingDocument?.isDirty) {
 				await existingDocument.save()
 			}
 		}

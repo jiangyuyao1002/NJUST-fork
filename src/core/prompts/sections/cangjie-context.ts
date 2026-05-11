@@ -65,7 +65,8 @@ import {
 	extractTypeOutlineFromLines as _extractTypeOutlineFromLines,
 	formatSymbolEntries as _formatSymbolEntries,
 } from "./CangjieDependencyResolver"
-import {
+import { logger } from "../../../shared/logger"
+	import {
 	collectActiveCangjieEditorSnapshot as _collectActiveCangjieEditorSnapshot,
 	getActiveCangjieFileInfo as _getActiveCangjieFileInfo,
 	type StructuredEditingContextPreparse,
@@ -936,7 +937,7 @@ async function parseCjpmTomlContent(content: string, cwd: string): Promise<CjpmP
 		const fromSmol = await projectInfoFromParsedTomlRoot(root, cwd)
 		if (fromSmol) return fromSmol
 	} catch (e) {
-		console.warn("[cangjie-context] smol-toml parse failed, using regex fallback:", e)
+		logger.warn("CangjieContext", "[cangjie-context] smol-toml parse failed, using regex fallback:", e)
 	}
 	try {
 		const sections = splitTomlSections(content)

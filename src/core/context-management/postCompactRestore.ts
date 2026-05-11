@@ -159,7 +159,7 @@ export function postCompactRestore(messages: ApiMessage[], options?: RestoreOpti
 	}
 
 	// 3. Plan file restoration
-	if (options.planFile && options.planFile.content) {
+	if (options.planFile?.content) {
 		const truncated = truncateToTokenBudget(options.planFile.content, POST_COMPACT_MAX_TOKENS_PER_FILE)
 		restoredParts.push(`### Plan File: ${options.planFile.path}\n\`\`\`\n${truncated}\n\`\`\``)
 	}

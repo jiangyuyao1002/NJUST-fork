@@ -56,7 +56,7 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 			.getConfiguration(Package.name)
 			.get<boolean>("preventCompletionWithOpenTodos", false)
 
-		const hasIncompleteTodos = task.todoList && task.todoList.some((todo) => todo.status !== "completed")
+		const hasIncompleteTodos = task.todoList?.some((todo) => todo.status !== "completed")
 
 		if (preventCompletionWithOpenTodos && hasIncompleteTodos) {
 			task.consecutiveMistakeCount++

@@ -38,7 +38,7 @@ import { resolveParallelNativeToolCalls } from "../../shared/parallelToolCalls"
 import { type ApiStream, GroundingSource } from "../../api/transform/stream"
 import type { SystemPromptParts } from "../prompts/system"
 import { checkToolPromptConsistency } from "../prompts/toolPromptConsistency"
-import { type AssistantMessageContent, presentAssistantMessage, markUserContentReadyIfDrained, isAnyToolUse, isToolUseBlock, type TypedBlock } from "../assistant-message"
+import { type AssistantMessageContent, markUserContentReadyIfDrained, isAnyToolUse, isToolUseBlock, type TypedBlock } from "../assistant-message"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
 import type { ApiMessage } from "../task-persistence"
 import { getModelMaxOutputTokens } from "../../shared/api"
@@ -944,7 +944,7 @@ export class TaskExecutor {
 					// if last message is a partial we need to update and save it
 					const lastMessage = t.clineMessages.at(-1)
 
-					if (lastMessage && lastMessage.partial) {
+					if (lastMessage?.partial) {
 						// lastMessage.ts = Date.now() DO NOT update ts since it is used as a key for virtuoso list
 						lastMessage.partial = false
 						// instead of streaming partialMessage events, we do a save and post like normal to persist to disk

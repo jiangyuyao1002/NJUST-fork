@@ -9,6 +9,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { getErrorMessage } from "../../shared/error-utils"
+import { logger } from "../../shared/logger"
 
 export type ReadTaskMessagesOptions = {
 	taskId: string
@@ -27,14 +28,14 @@ export async function readTaskMessages({
 		try {
 			const parsedData = JSON.parse(await fs.readFile(filePath, "utf8"))
 			if (!Array.isArray(parsedData)) {
-				console.warn(
+				logger.warn("TaskMessages", 
 					`[readTaskMessages] Parsed data is not an array (got ${typeof parsedData}), returning empty. TaskId: ${taskId}, Path: ${filePath}`,
 				)
 				return []
 			}
 			return parsedData
 		} catch (error) {
-			console.warn(
+			logger.warn("TaskMessages", 
 				`[readTaskMessages] Failed to parse ${filePath} for task ${taskId}, returning empty: ${getErrorMessage(error)}`,
 			)
 			return []

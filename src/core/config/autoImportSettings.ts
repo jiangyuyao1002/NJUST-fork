@@ -8,6 +8,7 @@ import { t } from "../../i18n"
 
 import { importSettingsFromPath, ImportOptions } from "./importExport"
 import { getErrorMessage } from "../../shared/error-utils"
+import { logger } from "../../shared/logger"
 
 /**
  * Automatically imports NJUST_AI_CJ settings from a specified path if it exists.
@@ -62,7 +63,7 @@ export async function autoImportSettings(
 		outputChannel.appendLine(`[AutoImport] Unexpected error during auto-import: ${errorMessage}`)
 
 		// Log error but don't fail extension activation
-		console.warn("Auto-import settings error:", error)
+		logger.warn("AutoImportSettings", "Auto-import settings error:", error)
 	}
 }
 

@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import { parseCangjieDefinitions } from "../../services/tree-sitter/cangjieParser"
 
 export class CangjieInlayHintsProvider implements vscode.InlayHintsProvider {
-	async provideInlayHints(
+	provideInlayHints(
 		document: vscode.TextDocument,
 		_range: vscode.Range,
 		token: vscode.CancellationToken,

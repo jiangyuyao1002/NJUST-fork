@@ -19,7 +19,7 @@ export type InjectableConfigType =
  *
  * Does not mutate original object
  */
-export async function injectEnv<C extends InjectableConfigType>(config: C, notFoundValue: any = "") {
+export function injectEnv<C extends InjectableConfigType>(config: C, notFoundValue: any = "") {
 	return injectVariables(config, { env: process.env }, notFoundValue)
 }
 
@@ -34,7 +34,7 @@ export async function injectEnv<C extends InjectableConfigType>(config: C, notFo
  *
  * Matched keys that have `null` | `undefined` values are treated as not found.
  */
-export async function injectVariables<C extends InjectableConfigType>(
+export function injectVariables<C extends InjectableConfigType>(
 	config: C,
 	variables: Record<string, undefined | null | string | Record<string, undefined | null | string>>,
 	propNotFoundValue?: any,

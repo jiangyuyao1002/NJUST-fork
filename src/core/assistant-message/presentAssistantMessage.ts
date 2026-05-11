@@ -10,6 +10,7 @@ import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
 import type { ToolResponse, ToolUse, McpToolUse, PushToolResultOptions } from "../../shared/tools"
 import { getErrorMessage, wrapAsError } from "../../shared/error-utils"
 
+import { logger } from "../../shared/logger"
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import { Task } from "../task/Task"
 import { TaskState } from "../task/TaskStateMachine"
@@ -137,8 +138,8 @@ export async function presentAssistantMessage(cline: Task) {
 		// This provides 80-90% reduction in cloning overhead (5-100ms saved per block).
 		block = { ...cline.assistantMessageContent[cline.currentStreamingContentIndex] }
 	} catch (error) {
-		console.error(`ERROR cloning block:`, error)
-		console.error(
+		logger.error("PresentAssistantMessage", "ERROR cloning block:", error)
+		logger.error("PresentAssistantMessage", 
 			`Block content:`,
 			JSON.stringify(cline.assistantMessageContent[cline.currentStreamingContentIndex], null, 2),
 		)
@@ -180,7 +181,7 @@ export async function presentAssistantMessage(cline: Task) {
 
 			const pushToolResult = (content: ToolResponse, second?: string[] | PushToolResultOptions) => {
 				if (hasToolResult) {
-					console.warn(
+					logger.warn("PresentAssistantMessage", 
 						`[presentAssistantMessage] Skipping duplicate tool_result for mcp_tool_use: ${toolCallId}`,
 					)
 					return
@@ -514,7 +515,7 @@ export async function presentAssistantMessage(cline: Task) {
 					}
 				}
 			} catch (err) {
-				console.error(
+				logger.error("PresentAssistantMessage", 
 					"[presentAssistantMessage] Auto-approve eager batch path failed; falling back to serial execution:",
 					err,
 				)
@@ -690,7 +691,7 @@ export async function presentAssistantMessage(cline: Task) {
 			const pushToolResult = (content: ToolResponse) => {
 				// Native tool calling: only allow ONE tool_result per tool call
 				if (hasToolResult) {
-					console.warn(
+					logger.warn("PresentAssistantMessage", 
 						`[presentAssistantMessage] Skipping duplicate tool_result for tool_use_id: ${toolCallId}`,
 					)
 					return
@@ -957,7 +958,7 @@ export async function presentAssistantMessage(cline: Task) {
 						} catch (err) {
 							// Tool execution threw after exhausting retries. Push an error
 							// result so the API always gets a tool_result for every tool_use.
-							console.error(
+							logger.error("PresentAssistantMessage", 
 								`[presentAssistantMessage] Tool ${block.name} failed after retries:`,
 								getErrorMessage(err),
 							)
@@ -984,7 +985,7 @@ export async function presentAssistantMessage(cline: Task) {
 										customToolArgs = customTool.parameters.parse(block.nativeArgs || block.params || {})
 									} catch (parseParamsError: unknown) {
 										const message = `Custom tool "${block.name}" argument validation failed: ${getErrorMessage(parseParamsError)}`
-										console.error(message)
+										logger.error("PresentAssistantMessage", message)
 										cline.consecutiveMistakeCount++
 										await cline.say("error", message)
 										pushToolResult(formatResponse.toolError(message))
@@ -997,7 +998,7 @@ export async function presentAssistantMessage(cline: Task) {
 										task: cline,
 									})
 
-									console.log(
+									logger.info("PresentAssistantMessage", 
 										`${customTool.name}.execute(): ${JSON.stringify(customToolArgs)} -> ${JSON.stringify(result)}`,
 									)
 
@@ -1064,7 +1065,7 @@ export async function presentAssistantMessage(cline: Task) {
 	// ── Unlock ─────────────────────────────────────────────────────────────
 	const _lockHeldMs = performance.now() - _lockAcquiredAt
 	if (_lockHeldMs > 5_000) {
-		console.warn(
+		logger.warn("PresentAssistantMessage", 
 			`[presentAssistantMessage] Lock held for ${_lockHeldMs.toFixed(0)}ms ` +
 				`(task=${cline.taskId}, blockIndex=${cline.currentStreamingContentIndex})`,
 		)
@@ -1087,6 +1088,6 @@ async function checkpointSaveAndMark(task: Task) {
 		await task.checkpointSave(true)
 		task.currentStreamingDidCheckpoint = true
 	} catch (error) {
-		console.error(`[Task#presentAssistantMessage] Error saving checkpoint: ${error instanceof Error ? getErrorMessage(error) : String(error)}`, error)
+		logger.error("PresentAssistantMessage", `[Task#presentAssistantMessage] Error saving checkpoint: ${error instanceof Error ? getErrorMessage(error) : String(error)}`, error)
 	}
 }

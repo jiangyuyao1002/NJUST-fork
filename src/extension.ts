@@ -13,7 +13,7 @@ if (fs.existsSync(envPath)) {
 		dotenvx.config({ path: envPath })
 	} catch (e) {
 		// Best-effort only: never fail extension activation due to optional env loading.
-		console.warn("Failed to load environment variables:", e)
+		logger.warn("Extension", "Failed to load environment variables:", e)
 	}
 }
 

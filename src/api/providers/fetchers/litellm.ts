@@ -34,7 +34,7 @@ export async function getLiteLLMModels(apiKey: string, baseUrl: string): Promise
 		const models: ModelRecord = {}
 
 		// Process the model info from the response
-		if (response.data && response.data.data && Array.isArray(response.data.data)) {
+		if (response.data?.data && Array.isArray(response.data.data)) {
 			for (const model of response.data.data) {
 				const modelName = model.model_name
 				const modelInfo = model.model_info

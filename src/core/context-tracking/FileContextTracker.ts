@@ -8,6 +8,7 @@ import fs from "fs/promises"
 import { ContextProxy } from "../config/ContextProxy"
 import type { FileMetadataEntry, RecordSource, TaskMetadata } from "./FileContextTrackerTypes"
 import type { ITaskHost } from "../task/interfaces/ITaskHost"
+import { logger } from "../../shared/logger"
 
 // This class is responsible for tracking file operations that may result in stale context.
 // If a user modifies a file outside of Roo, the context may become stale and need to be updated.
@@ -40,13 +41,13 @@ export class FileContextTracker {
 	private getCwd(): string | undefined {
 		const cwd = vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath).at(0)
 		if (!cwd) {
-			console.info("No workspace folder available - cannot determine current working directory")
+			logger.info("FileContextTracker", "No workspace folder available - cannot determine current working directory")
 		}
 		return cwd
 	}
 
 	// File watchers are set up for each file that is tracked in the task metadata.
-	async setupFileWatcher(filePath: string) {
+	setupFileWatcher(filePath: string) {
 		// Only setup watcher if it doesn't already exist for this file
 		if (this.fileWatchers.has(filePath)) {
 			return
@@ -93,20 +94,20 @@ export class FileContextTracker {
 			// Set up file watcher for this file
 			await this.setupFileWatcher(filePath)
 		} catch (error) {
-			console.error("Failed to track file operation:", error)
+			logger.error("FileContextTracker", "Failed to track file operation:", error)
 		}
 	}
 
 	public getContextProxy(): ContextProxy | undefined {
 		const provider = this.providerRef.deref()
 		if (!provider) {
-			console.error("ClineProvider reference is no longer valid")
+			logger.error("FileContextTracker", "ClineProvider reference is no longer valid")
 			return undefined
 		}
 		const context = provider.contextProxy
 
 		if (!context) {
-			console.error("Context is not available")
+			logger.error("FileContextTracker", "Context is not available")
 			return undefined
 		}
 
@@ -123,7 +124,7 @@ export class FileContextTracker {
 				return JSON.parse(await fs.readFile(filePath, "utf8"))
 			}
 		} catch (error) {
-			console.error("Failed to read task metadata:", error)
+			logger.error("FileContextTracker", "Failed to read task metadata:", error)
 		}
 		return { files_in_context: [] }
 	}
@@ -136,7 +137,7 @@ export class FileContextTracker {
 			const filePath = path.join(taskDir, GlobalFileNames.taskMetadata)
 			await safeWriteJson(filePath, metadata)
 		} catch (error) {
-			console.error("Failed to save task metadata:", error)
+			logger.error("FileContextTracker", "Failed to save task metadata:", error)
 		}
 	}
 
@@ -198,7 +199,7 @@ export class FileContextTracker {
 			metadata.files_in_context.push(newEntry)
 			await this.saveTaskMetadata(taskId, metadata)
 		} catch (error) {
-			console.error("Failed to add file to metadata:", error)
+			logger.error("FileContextTracker", "Failed to add file to metadata:", error)
 		}
 	}
 
@@ -257,7 +258,7 @@ export class FileContextTracker {
 
 			return uniquePaths
 		} catch (error) {
-			console.error("Failed to get files read by Roo:", error)
+			logger.error("FileContextTracker", "Failed to get files read by Roo:", error)
 			return []
 		}
 	}

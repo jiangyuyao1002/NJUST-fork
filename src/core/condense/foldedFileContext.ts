@@ -1,6 +1,7 @@
 import * as path from "path"
 import { parseSourceCodeDefinitionsForFile } from "../../services/tree-sitter"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
+import { logger } from "../../shared/logger"
 
 /**
  * Checks if a definitions string is actually an error message from tree-sitter
@@ -155,7 +156,7 @@ ${truncatedDefinitions}
 
 	// Log failed files as a single batch summary instead of per-file errors
 	if (failedFiles.length > 0) {
-		console.warn(
+		logger.warn("FoldedFileContext", 
 			`Folded context generation: skipped ${failedFiles.length} file(s) due to errors: ${failedFiles.slice(0, 5).join(", ")}${failedFiles.length > 5 ? ` and ${failedFiles.length - 5} more` : ""}`,
 		)
 	}

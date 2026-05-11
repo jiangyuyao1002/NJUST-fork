@@ -338,7 +338,7 @@ describe("AwsBedrockHandler Error Handling", () => {
 
 			// Should have yielded error chunks before throwing for non-throttling errors
 			expect(
-				chunks.some((chunk) => chunk.type === "text" && chunk.text && chunk.text.includes("Some other error")),
+				chunks.some((chunk) => chunk.type === "text" && chunk.text?.includes("Some other error")),
 			).toBe(true)
 			expect(thrownError).toBeDefined()
 			expect(thrownError?.message).toContain("Some other error")

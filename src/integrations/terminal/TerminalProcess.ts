@@ -43,7 +43,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 
 		const terminal = this.terminal.terminal
 
-		const isShellIntegrationAvailable = terminal.shellIntegration && terminal.shellIntegration.executeCommand
+		const isShellIntegrationAvailable = terminal.shellIntegration?.executeCommand
 
 		if (!isShellIntegrationAvailable) {
 			terminal.sendText(command, true)

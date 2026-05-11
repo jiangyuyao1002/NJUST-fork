@@ -180,7 +180,7 @@ function createLMTool(
 			}
 		},
 
-		async prepareInvocation(
+		prepareInvocation(
 			_options: vscode.LanguageModelToolInvocationPrepareOptions<Record<string, unknown>>,
 			_token: vscode.CancellationToken,
 		): Promise<vscode.PreparedToolInvocation> {

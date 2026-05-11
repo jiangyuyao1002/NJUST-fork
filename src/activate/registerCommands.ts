@@ -167,7 +167,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 		void visibleProvider.postMessageToWebview({ type: "acceptInput" })
 	},
-	toggleAutoApprove: async () => {
+	toggleAutoApprove: () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
 
 		if (!visibleProvider) {

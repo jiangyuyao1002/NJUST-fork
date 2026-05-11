@@ -136,6 +136,7 @@ describe("taskEventBus (global singleton)", () => {
 })
 
 vi.mock("../../../utils/debugLog", () => ({
+	// eslint-disable-next-line no-console
 	debugLog: (...args: unknown[]) => console.debug(...args),
 }))
 

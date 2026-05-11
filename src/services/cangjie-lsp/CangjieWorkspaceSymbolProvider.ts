@@ -25,7 +25,7 @@ const KIND_TO_ICON: Record<string, vscode.SymbolKind> = {
 export class CangjieWorkspaceSymbolProvider implements vscode.WorkspaceSymbolProvider {
 	constructor(private readonly index: CangjieSymbolIndex) {}
 
-	async provideWorkspaceSymbols(
+	provideWorkspaceSymbols(
 		query: string,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.SymbolInformation[]> {

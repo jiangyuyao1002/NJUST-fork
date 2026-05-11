@@ -58,7 +58,7 @@ function escapeXml(value: string): string {
  * @param skillsManager - The SkillsManager instance
  * @param currentMode - The current mode slug (e.g., 'code', 'architect')
  */
-export async function getSkillsSection(
+export function getSkillsSection(
 	skillsManager: SkillsManagerLike | undefined,
 	currentMode: string | undefined,
 	triggerText?: string,

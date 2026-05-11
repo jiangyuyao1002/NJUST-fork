@@ -4,7 +4,6 @@ import * as fs from "fs"
 import type { CangjieSymbolIndex } from "./CangjieSymbolIndex"
 import {
 	parseCangjieDefinitions,
-	computeCangjieSignature,
 	type CangjieDef,
 } from "../tree-sitter/cangjieParser"
 

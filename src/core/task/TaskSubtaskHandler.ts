@@ -6,7 +6,7 @@
  *
  * Phase 1: Extract subtask logic from Task.ts
  */
-import type { ApiMessage } from "../task-persistence"
+
 import type { Anthropic } from "@anthropic-ai/sdk"
 import type { TaskSubtaskHost } from "./interfaces/TaskSubtaskHost"
 import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"

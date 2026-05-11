@@ -350,7 +350,7 @@ export class StaticPatternClassifier implements ClassifierStrategy {
 		}
 	}
 
-	async classify(
+	classify(
 		toolName: string,
 		input: Record<string, unknown>,
 		context: ClassifierContext,

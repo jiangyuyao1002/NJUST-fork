@@ -171,7 +171,7 @@ export async function searchWorkspaceFiles(
 
 		// Verify types of the shortest results
 		const verifiedResults = await Promise.all(
-			fzfResults.map(async (result) => {
+			fzfResults.map((result) => {
 				const fullPath = path.join(workspacePath, result.path)
 				// Verify if the path exists and is actually a directory
 				if (fs.existsSync(fullPath)) {

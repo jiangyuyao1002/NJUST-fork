@@ -720,7 +720,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 							}
 
 							// Check if this is a complete response (non-streaming format)
-							if (parsed.response && parsed.response.output && Array.isArray(parsed.response.output)) {
+							if (parsed.response?.output && Array.isArray(parsed.response.output)) {
 								// Handle complete response in the initial event
 								for (const outputItem of parsed.response.output) {
 									if (outputItem.type === "text" && outputItem.content) {
@@ -1018,8 +1018,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 								// Check if the done event contains the complete output (as a fallback)
 								if (
 									!hasContent &&
-									parsed.response &&
-									parsed.response.output &&
+									parsed.response?.output &&
 									Array.isArray(parsed.response.output)
 								) {
 									for (const outputItem of parsed.response.output) {
@@ -1153,7 +1152,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 	/**
 	 * Shared processor for Responses API events.
 	 */
-	private async *processEvent(event: any, model: OpenAiNativeModel): ApiStream {
+	private *processEvent(event: any, model: OpenAiNativeModel): ApiStream {
 		// Capture resolved service tier when available
 		if (event?.response?.service_tier) {
 			this.lastServiceTier = event.response.service_tier as ServiceTier

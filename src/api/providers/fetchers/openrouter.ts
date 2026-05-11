@@ -185,7 +185,7 @@ export const parseOpenRouterModel = ({
 	id,
 	model,
 	inputModality,
-	outputModality,
+	outputModality: _outputModality,
 	maxTokens,
 	supportedParameters,
 }: {

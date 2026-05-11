@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { MockedFunction } from "vitest"
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime"
 

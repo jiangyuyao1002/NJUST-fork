@@ -104,7 +104,7 @@ export class FileWatcher implements IFileWatcher {
 	/**
 	 * Initializes the file watcher
 	 */
-	async initialize(): Promise<void> {
+	initialize(): void {
 		// Create file watcher
 		const filePattern = new vscode.RelativePattern(
 			this.workspacePath,
@@ -136,7 +136,7 @@ export class FileWatcher implements IFileWatcher {
 	 * Handles file creation events
 	 * @param uri URI of the created file
 	 */
-	private async handleFileCreated(uri: vscode.Uri): Promise<void> {
+	private handleFileCreated(uri: vscode.Uri): void {
 		this.accumulatedEvents.set(uri.fsPath, { uri, type: "create" })
 		this.scheduleBatchProcessing()
 	}
@@ -145,7 +145,7 @@ export class FileWatcher implements IFileWatcher {
 	 * Handles file change events
 	 * @param uri URI of the changed file
 	 */
-	private async handleFileChanged(uri: vscode.Uri): Promise<void> {
+	private handleFileChanged(uri: vscode.Uri): void {
 		this.accumulatedEvents.set(uri.fsPath, { uri, type: "change" })
 		this.scheduleBatchProcessing()
 	}
@@ -154,7 +154,7 @@ export class FileWatcher implements IFileWatcher {
 	 * Handles file deletion events
 	 * @param uri URI of the deleted file
 	 */
-	private async handleFileDeleted(uri: vscode.Uri): Promise<void> {
+	private handleFileDeleted(uri: vscode.Uri): void {
 		this.accumulatedEvents.set(uri.fsPath, { uri, type: "delete" })
 		this.scheduleBatchProcessing()
 	}
@@ -503,7 +503,7 @@ export class FileWatcher implements IFileWatcher {
 			// Check if file should be ignored
 			if (
 				!this.ignoreController.validateAccess(filePath) ||
-				(this.ignoreInstance && this.ignoreInstance.ignores(relativeFilePath))
+				(this.ignoreInstance?.ignores(relativeFilePath))
 			) {
 				return {
 					path: filePath,

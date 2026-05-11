@@ -454,7 +454,7 @@ export async function executeCommandInTerminal(
 	}
 
 	if (terminalProvider === "vscode") {
-		callbacks.onNoShellIntegration = async (error: string) => {
+		callbacks.onNoShellIntegration = (error: string) => {
 			TelemetryService.instance.captureShellIntegrationError(task.taskId)
 			shellIntegrationError = error
 		}

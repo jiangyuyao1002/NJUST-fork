@@ -274,7 +274,7 @@ export class CodeIndexManager {
 	 * - Service instances will be recreated on next initialize() call
 	 * - Prevents race conditions from multiple concurrent recovery attempts
 	 */
-	public async recoverFromError(): Promise<void> {
+	public recoverFromError(): Promise<void> {
 		// Prevent race conditions from multiple rapid recovery attempts
 		if (this._isRecoveringFromError) {
 			return

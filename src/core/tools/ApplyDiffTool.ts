@@ -202,7 +202,7 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 
 				let toolProgressStatus
 
-				if (task.diffStrategy && task.diffStrategy.getProgressStatus) {
+				if (task.diffStrategy?.getProgressStatus) {
 					const block: ToolUse<"apply_diff"> = {
 						type: "tool_use",
 						name: "apply_diff",
@@ -248,7 +248,7 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 
 				let toolProgressStatus
 
-				if (task.diffStrategy && task.diffStrategy.getProgressStatus) {
+				if (task.diffStrategy?.getProgressStatus) {
 					const block: ToolUse<"apply_diff"> = {
 						type: "tool_use",
 						name: "apply_diff",
@@ -332,7 +332,7 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 
 		let toolProgressStatus
 
-		if (task.diffStrategy && task.diffStrategy.getProgressStatus) {
+		if (task.diffStrategy?.getProgressStatus) {
 			toolProgressStatus = task.diffStrategy.getProgressStatus(block)
 		}
 

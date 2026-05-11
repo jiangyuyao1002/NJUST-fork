@@ -255,24 +255,24 @@ async function handleCancelTask(context: MessageHandlerContext, _message: Webvie
 	await context.provider.cancelTask()
 }
 
-async function handleCancelAutoApproval(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+function handleCancelAutoApproval(context: MessageHandlerContext, _message: WebviewMessage): void {
 	context.provider.getCurrentTask()?.cancelAutoApprovalTimeout()
 }
 
-async function handleExportCurrentTask(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+function handleExportCurrentTask(context: MessageHandlerContext, _message: WebviewMessage): void {
 	const id = context.provider.getCurrentTask()?.taskId
 	if (id) void context.provider.exportTaskWithId(id)
 }
 
-async function handleShowTaskWithId(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleShowTaskWithId(context: MessageHandlerContext, message: WebviewMessage): void {
 	void context.provider.showTaskWithId(message.text!)
 }
 
-async function handleCondenseTaskContextRequest(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleCondenseTaskContextRequest(context: MessageHandlerContext, message: WebviewMessage): void {
 	void context.provider.condenseTaskContext(message.text!)
 }
 
-async function handleDeleteTaskWithId(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleDeleteTaskWithId(context: MessageHandlerContext, message: WebviewMessage): void {
 	void context.provider.deleteTaskWithId(message.text!)
 }
 
@@ -296,7 +296,7 @@ async function handleDeleteMultipleTasksWithIds(context: MessageHandlerContext, 
 	logger.info("TaskMessageHandler", `Batch deletion completed: ${ok}/${ids.length} tasks successful, ${ids.length - ok} tasks failed`)
 }
 
-async function handleExportTaskWithId(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleExportTaskWithId(context: MessageHandlerContext, message: WebviewMessage): void {
 	void context.provider.exportTaskWithId(message.text!)
 }
 
@@ -366,11 +366,11 @@ async function handleQueueMessage(context: MessageHandlerContext, message: Webvi
 	context.provider.getCurrentTask()?.messageQueueService.addMessage(resolved.text, resolved.images)
 }
 
-async function handleRemoveQueuedMessage(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleRemoveQueuedMessage(context: MessageHandlerContext, message: WebviewMessage): void {
 	context.provider.getCurrentTask()?.messageQueueService.removeMessage(message.text ?? "")
 }
 
-async function handleEditQueuedMessage(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleEditQueuedMessage(context: MessageHandlerContext, message: WebviewMessage): void {
 	if (message.payload) {
 		const { id, text, images } = message.payload as EditQueuedMessagePayload
 		context.provider.getCurrentTask()?.messageQueueService.updateMessage(id, text, images)

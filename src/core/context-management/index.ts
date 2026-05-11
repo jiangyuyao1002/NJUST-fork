@@ -562,7 +562,7 @@ export async function manageContext({
 			effectiveThreshold = profileThreshold
 		} else {
 			// Invalid threshold value, fall back to global setting
-			console.warn(
+			logger.warn("ContextManagement", 
 				`Invalid profile threshold ${profileThreshold} for profile "${currentProfileId}". Using global default of ${autoCondenseContextPercent}%`,
 			)
 			effectiveThreshold = autoCondenseContextPercent
@@ -651,7 +651,7 @@ export async function manageContext({
 					tokenCount: prevContextTokens,
 				})
 				if (preHookResult.abort) {
-					console.warn(
+					logger.warn("ContextManagement", 
 						"[Context Management] Pre-compact hook aborted compaction: " +
 						(preHookResult.message || "unknown reason"),
 					)
@@ -682,7 +682,7 @@ export async function manageContext({
 			// Circuit breaker: if condensation has failed too many times consecutively,
 			// skip it and fall through to truncation to avoid wasting API calls
 			else if (compactFailures >= MAX_CONSECUTIVE_COMPACT_FAILURES) {
-				console.warn(
+				logger.warn("ContextManagement", 
 					`[Context Management] Circuit breaker triggered: ` +
 					`${compactFailures} consecutive condensation failures. ` +
 					`Falling back to forced truncation.`,
@@ -796,7 +796,7 @@ export async function manageContext({
 				if (result.error) {
 					// Condensation failed - increment circuit breaker counter
 					compactFailures++
-					console.warn(
+					logger.warn("ContextManagement", 
 						`[Context Management] Condensation failed (attempt ${compactFailures}/${MAX_CONSECUTIVE_COMPACT_FAILURES}): ${result.error}`,
 					)
 					error = result.error

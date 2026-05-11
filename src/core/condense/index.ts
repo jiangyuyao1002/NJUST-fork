@@ -319,7 +319,7 @@ async function compactWithPTLRetry(
 				retryMessages = retryMessages.slice(
 					-Math.max(2, retryMessages.length - dropCount),
 				)
-				console.warn(
+				logger.warn("Condense", 
 					`[summarizeConversation] PTL retry ${retry + 1}/${maxRetries}: ` +
 						`dropping oldest messages, ${retryMessages.length} remaining`,
 				)
@@ -387,7 +387,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 
 	// Validate that the API handler supports message creation
 	if (!apiHandler || typeof apiHandler.createMessage !== "function") {
-		console.error("API handler is invalid for condensing. Cannot proceed.")
+		logger.error("Condense", "API handler is invalid for condensing. Cannot proceed.")
 		const error = t("common:errors.condense_handler_invalid")
 		return { ...response, error }
 	}
@@ -427,7 +427,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 				)
 			}
 		} catch (err) {
-			console.warn(
+			logger.warn("Condense", 
 				"[summarizeConversation] Cache-sharing path failed, falling back to simplified path:",
 				getErrorMessage(err),
 			)
@@ -461,7 +461,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 			outputTokens = fallbackResult.outputTokens
 		} catch (error) {
 			// Non-PTL error or exhausted retries — fail
-			console.error("Error during condensing API call:", error)
+			logger.error("Condense", "Error during condensing API call:", error)
 			const errorMessage = getErrorMessage(error)
 
 			let errorDetails = ""
@@ -550,7 +550,7 @@ ${commandBlocks}
 				}
 			}
 		} catch (error) {
-			console.error("[summarizeConversation] Failed to generate folded file context:", error)
+			logger.error("Condense", "[summarizeConversation] Failed to generate folded file context:", error)
 			// Continue without folded context - non-critical failure
 		}
 	}

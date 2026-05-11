@@ -30,7 +30,7 @@ export class CangjieSemanticTokensProvider implements vscode.DocumentSemanticTok
 		["declaration", "readonly"],
 	)
 	static get legend(): vscode.SemanticTokensLegend { return CangjieSemanticTokensProvider._legend }
-	async provideDocumentSemanticTokens(
+	provideDocumentSemanticTokens(
 		document: vscode.TextDocument,
 	): Promise<vscode.SemanticTokens> {
 		const builder = new vscode.SemanticTokensBuilder(CangjieSemanticTokensProvider._legend)

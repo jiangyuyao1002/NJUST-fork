@@ -14,7 +14,7 @@ describe("C Source Code Definition Tests", () => {
 			queryString: cQuery,
 			extKey: "c",
 		})
-		if (!result || !result.match(/\d+--\d+ \|/)) {
+		if (!result?.match(/\d+--\d+ \|/)) {
 			throw new Error("Failed to parse C tree structure")
 		}
 		parseResult = result

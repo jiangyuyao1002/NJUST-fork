@@ -199,7 +199,7 @@ export class ClineProvider
 		// The globalState write-through is debounced separately (not on every mutation)
 		// since per-task files are authoritative and globalState is only for downgrade compat.
 		this.taskHistoryStore = new TaskHistoryStore(this.contextProxy.globalStorageUri.fsPath, {
-			onWrite: async () => {
+			onWrite: () => {
 				this.taskHistory.scheduleGlobalStateWriteThrough()
 			},
 		})
@@ -747,7 +747,7 @@ export class ClineProvider
 	}
 
 
-	private async applyPendingEditIfPresent(task: Task): Promise<void> {
+	private applyPendingEditIfPresent(task: Task): Promise<void> {
 		const operationId = `task-${task.taskId}`
 		const pendingEdit = this.pendingEditManager.get(operationId)
 		if (!pendingEdit) {
@@ -1131,7 +1131,7 @@ export class ClineProvider
 			const baseUrlDomain = baseUrl.match(/^(https?:\/\/[^\/]+)/)?.[1] || "https://openrouter.ai"
 			const response = await axios.post(`${baseUrlDomain}/api/v1/auth/keys`, { code })
 
-			if (response.data && response.data.key) {
+			if (response.data?.key) {
 				apiKey = response.data.key
 			} else {
 				throw new Error("Invalid response from OpenRouter API")

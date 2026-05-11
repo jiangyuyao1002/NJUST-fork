@@ -621,7 +621,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 							}
 
 							// Handle complete response
-							if (parsed.response && parsed.response.output && Array.isArray(parsed.response.output)) {
+							if (parsed.response?.output && Array.isArray(parsed.response.output)) {
 								for (const outputItem of parsed.response.output) {
 									if (outputItem.type === "text" && outputItem.content) {
 										for (const content of outputItem.content) {
@@ -740,8 +740,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 
 								if (
 									!hasContent &&
-									parsed.response &&
-									parsed.response.output &&
+									parsed.response?.output &&
 									Array.isArray(parsed.response.output)
 								) {
 									for (const outputItem of parsed.response.output) {
@@ -814,7 +813,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		}
 	}
 
-	private async *processEvent(event: any, model: OpenAiCodexModel): ApiStream {
+	private *processEvent(event: any, model: OpenAiCodexModel): ApiStream {
 		if (event?.response?.output && Array.isArray(event.response.output)) {
 			this.lastResponseOutput = event.response.output
 		}

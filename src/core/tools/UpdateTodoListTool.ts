@@ -146,7 +146,7 @@ export function getTodoListForTask(cline: Task): TodoItem[] | undefined {
 	return cline.todoList?.slice()
 }
 
-export async function setTodoListForTask(cline?: Task, todos?: TodoItem[]) {
+export function setTodoListForTask(cline?: Task, todos?: TodoItem[]) {
 	if (cline === undefined) return
 	cline.todoList = Array.isArray(todos) ? todos : []
 }

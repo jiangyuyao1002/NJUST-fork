@@ -242,7 +242,7 @@ export class MultiSearchReplaceDiffStrategy implements DiffStrategy {
 				}
 	}
 
-	async applyDiff(
+	applyDiff(
 		originalContent: string,
 		diffContent: string,
 		_paramStartLine?: number,

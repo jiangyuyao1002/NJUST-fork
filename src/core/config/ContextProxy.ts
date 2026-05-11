@@ -129,7 +129,7 @@ export class ContextProxy {
 	 */
 	private static readonly MIGRATION_VERSION_KEY = "__migration_version__"
 
-	private async getMigrationVersion(): Promise<number> {
+	private getMigrationVersion(): Promise<number> {
 		return this.originalContext.globalState.get<number>(
 			ContextProxy.MIGRATION_VERSION_KEY,
 		) ?? 0
@@ -566,7 +566,7 @@ export class ContextProxy {
 	 * Import / Export
 	 */
 
-	public async export(): Promise<GlobalSettings | undefined> {
+	public export(): Promise<GlobalSettings | undefined> {
 		try {
 			const globalSettings = globalSettingsExportSchema.parse(this.getValues())
 

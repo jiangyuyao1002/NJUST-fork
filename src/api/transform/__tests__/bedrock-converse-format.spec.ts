@@ -51,7 +51,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -61,7 +61,7 @@ describe("convertToBedrockConverseMessages", () => {
 		expect(result[0].content[0]).toEqual({ text: "Look at this image:" })
 
 		const imageBlock = result[0].content[1] as ContentBlock
-		if ("image" in imageBlock && imageBlock.image && imageBlock.image.source) {
+		if ("image" in imageBlock && imageBlock.image?.source) {
 			expect(imageBlock.image.format).toBe("jpeg")
 			expect(imageBlock.image.source).toBeDefined()
 			expect(imageBlock.image.source.bytes).toBeDefined()
@@ -89,7 +89,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -126,7 +126,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -160,7 +160,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -195,7 +195,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -230,7 +230,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -264,7 +264,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -334,7 +334,7 @@ describe("convertToBedrockConverseMessages", () => {
 
 		const result = convertToBedrockConverseMessages(messages)
 
-		if (!result[0] || !result[0].content) {
+		if (!result[0]?.content) {
 			expect.fail("Expected result to have content")
 			return
 		}
@@ -365,7 +365,7 @@ describe("convertToBedrockConverseMessages", () => {
 			const result = convertToBedrockConverseMessages(messages)
 			const toolBlock = result[0]?.content?.[0] as ContentBlock
 
-			if ("toolUse" in toolBlock && toolBlock.toolUse && toolBlock.toolUse.toolUseId) {
+			if ("toolUse" in toolBlock && toolBlock.toolUse?.toolUseId) {
 				expect(toolBlock.toolUse.toolUseId.length).toBeLessThanOrEqual(OPENAI_CALL_ID_MAX_LENGTH)
 				expect(toolBlock.toolUse.toolUseId.length).toBe(OPENAI_CALL_ID_MAX_LENGTH)
 				expect(toolBlock.toolUse.toolUseId).toContain("_")
@@ -392,7 +392,7 @@ describe("convertToBedrockConverseMessages", () => {
 			const result = convertToBedrockConverseMessages(messages)
 			const resultBlock = result[0]?.content?.[0] as ContentBlock
 
-			if ("toolResult" in resultBlock && resultBlock.toolResult && resultBlock.toolResult.toolUseId) {
+			if ("toolResult" in resultBlock && resultBlock.toolResult?.toolUseId) {
 				expect(resultBlock.toolResult.toolUseId.length).toBeLessThanOrEqual(OPENAI_CALL_ID_MAX_LENGTH)
 				expect(resultBlock.toolResult.toolUseId.length).toBe(OPENAI_CALL_ID_MAX_LENGTH)
 				expect(resultBlock.toolResult.toolUseId).toContain("_")
@@ -419,7 +419,7 @@ describe("convertToBedrockConverseMessages", () => {
 			const result = convertToBedrockConverseMessages(messages)
 			const resultBlock = result[0]?.content?.[0] as ContentBlock
 
-			if ("toolResult" in resultBlock && resultBlock.toolResult && resultBlock.toolResult.toolUseId) {
+			if ("toolResult" in resultBlock && resultBlock.toolResult?.toolUseId) {
 				expect(resultBlock.toolResult.toolUseId.length).toBeLessThanOrEqual(OPENAI_CALL_ID_MAX_LENGTH)
 				expect(resultBlock.toolResult.toolUseId.length).toBe(OPENAI_CALL_ID_MAX_LENGTH)
 			} else {
@@ -545,11 +545,9 @@ describe("convertToBedrockConverseMessages", () => {
 
 			if (
 				"toolUse" in toolUseBlock &&
-				toolUseBlock.toolUse &&
-				toolUseBlock.toolUse.toolUseId &&
+				toolUseBlock.toolUse?.toolUseId &&
 				"toolResult" in toolResultBlock &&
-				toolResultBlock.toolResult &&
-				toolResultBlock.toolResult.toolUseId
+				toolResultBlock.toolResult?.toolUseId
 			) {
 				expect(toolUseBlock.toolUse.toolUseId).toBe(toolResultBlock.toolResult.toolUseId)
 				expect(toolUseBlock.toolUse.toolUseId.length).toBeLessThanOrEqual(OPENAI_CALL_ID_MAX_LENGTH)

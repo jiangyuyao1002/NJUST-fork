@@ -222,7 +222,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 
 			for await (const chunk of result) {
 				// Track the final structured response (per SDK pattern: candidate.finishReason)
-				if (chunk.candidates && chunk.candidates[0]?.finishReason) {
+				if (chunk.candidates?.[0]?.finishReason) {
 					finalResponse = chunk as { responseId?: string }
 				}
 				// Process candidates and their parts to separate thoughts from content
@@ -233,7 +233,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 						pendingGroundingMetadata = candidate.groundingMetadata
 					}
 
-					if (candidate.content && candidate.content.parts) {
+					if (candidate.content?.parts) {
 						for (const part of candidate.content.parts as Array<{
 							thought?: boolean
 							text?: string

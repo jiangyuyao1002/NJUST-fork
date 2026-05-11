@@ -8,7 +8,7 @@
  * Phase 1: Extract ask/say logic from Task.ts
  * Phase 2 (future): Move webview response handling here once host surface is reduced
  */
-import type { ClineAsk, ClineAskResponse, ClineMessage, ClineSay, ToolProgressStatus, ContextCondense, ContextTruncation, ToolName } from "@njust-ai-cj/types"
+import type { ClineAsk, ClineAskResponse, ClineSay, ToolProgressStatus, ContextCondense, ContextTruncation, ToolName } from "@njust-ai-cj/types"
 import {
 	isInteractiveAsk,
 	isIdleAsk,
@@ -17,7 +17,7 @@ import {
 import { findLastIndex } from "../../shared/array"
 import { formatResponse } from "../../core/prompts/responses"
 import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
-import type { TaskAskSayHost, QueuedMessage } from "./interfaces/TaskAskSayHost"
+import type { TaskAskSayHost } from "./interfaces/TaskAskSayHost"
 import { logger } from "../../shared/logger"
 import pWaitFor from "p-wait-for"
 
@@ -28,11 +28,11 @@ class AskIgnoredError extends Error {
 	}
 }
 
-async function checkAutoApproval({
-	state,
-	ask,
-	text,
-	isProtected,
+function checkAutoApproval({
+	state: _state,
+	ask: _ask,
+	text: _text,
+	isProtected: _isProtected,
 }: {
 	state: any
 	ask: ClineAsk

@@ -197,7 +197,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 		// Continue with the rest of the abort logic
 		if (this.pid) {
 			// Also check for any child processes
-			psTree(this.pid, async (err, children) => {
+			psTree(this.pid, (err, children) => {
 				if (!err) {
 					const pids = children.map((p) => parseInt(p.PID))
 

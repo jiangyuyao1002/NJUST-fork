@@ -19,6 +19,7 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { Mode, modes } from "../../shared/modes"
 import { getErrorMessage } from "../../shared/error-utils"
 import { buildApiHandler } from "../../api"
+import { logger } from "../../shared/logger"
 
 // Type-safe model migrations mapping
 type ModelMigrations = {
@@ -193,7 +194,7 @@ export class ProviderSettingsManager {
 	private _lock = Promise.resolve()
 	private lock<T>(cb: () => Promise<T>) {
 		const next = this._lock.then(cb).catch((error) => {
-			console.error("[ProviderSettingsManager] Lock operation failed:", error)
+			logger.error("ProviderSettingsManager", "[ProviderSettingsManager] Lock operation failed:", error)
 			throw error
 		})
 		// Suppress rejection — lock chain errors are logged above, and we only
@@ -213,7 +214,7 @@ export class ProviderSettingsManager {
 			try {
 				rateLimitSeconds = await this.context.globalState.get<number>("rateLimitSeconds")
 			} catch (error) {
-				console.error("[MigrateRateLimitSeconds] Error getting global rate limit:", error)
+				logger.error("ProviderSettingsManager", "[MigrateRateLimitSeconds] Error getting global rate limit:", error)
 			}
 
 			if (rateLimitSeconds === undefined) {
@@ -227,11 +228,11 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateRateLimitSeconds] Failed to migrate rate limit settings:`, error)
+			logger.error("ProviderSettingsManager", `[MigrateRateLimitSeconds] Failed to migrate rate limit settings:`, error)
 		}
 	}
 
-	private async migrateOpenAiHeaders(providerProfiles: ProviderProfiles) {
+	private migrateOpenAiHeaders(providerProfiles: ProviderProfiles) {
 		try {
 			for (const [_name, apiConfig] of Object.entries(providerProfiles.apiConfigs)) {
 				// Use type assertion to access the deprecated property safely
@@ -251,11 +252,11 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateOpenAiHeaders] Failed to migrate OpenAI headers:`, error)
+			logger.error("ProviderSettingsManager", `[MigrateOpenAiHeaders] Failed to migrate OpenAI headers:`, error)
 		}
 	}
 
-	private async migrateConsecutiveMistakeLimit(providerProfiles: ProviderProfiles) {
+	private migrateConsecutiveMistakeLimit(providerProfiles: ProviderProfiles) {
 		try {
 			for (const [_name, apiConfig] of Object.entries(providerProfiles.apiConfigs)) {
 				if (apiConfig.consecutiveMistakeLimit == null) {
@@ -263,11 +264,11 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateConsecutiveMistakeLimit] Failed to migrate consecutive mistake limit:`, error)
+			logger.error("ProviderSettingsManager", `[MigrateConsecutiveMistakeLimit] Failed to migrate consecutive mistake limit:`, error)
 		}
 	}
 
-	private async migrateTodoListEnabled(providerProfiles: ProviderProfiles) {
+	private migrateTodoListEnabled(providerProfiles: ProviderProfiles) {
 		try {
 			for (const [_name, apiConfig] of Object.entries(providerProfiles.apiConfigs)) {
 				if (apiConfig.todoListEnabled === undefined) {
@@ -275,7 +276,7 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateTodoListEnabled] Failed to migrate todo list enabled setting:`, error)
+			logger.error("ProviderSettingsManager", `[MigrateTodoListEnabled] Failed to migrate todo list enabled setting:`, error)
 		}
 	}
 
@@ -303,7 +304,7 @@ export class ProviderSettingsManager {
 				// Check if the current model ID needs migration
 				const newModelId = providerMigrations[apiConfig.apiModelId]
 				if (newModelId && newModelId !== apiConfig.apiModelId) {
-					console.log(
+					logger.info("ProviderSettingsManager", 
 						`[ModelMigration] Migrating ${apiConfig.apiProvider} model from ${apiConfig.apiModelId} to ${newModelId}`,
 					)
 					apiConfig.apiModelId = newModelId
@@ -311,7 +312,7 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[ModelMigration] Failed to apply model migrations:`, error)
+			logger.error("ProviderSettingsManager", `[ModelMigration] Failed to apply model migrations:`, error)
 		}
 
 		return migrated
@@ -550,7 +551,7 @@ export class ProviderSettingsManager {
 					} catch (error) {
 						// If we can't build the API handler or get model info, skip filtering
 						// to avoid accidental data loss from incomplete configurations
-						console.warn(`Skipping token field filtering for config '${name}': ${getErrorMessage(error)}`)
+						logger.warn("ProviderSettingsManager", `Skipping token field filtering for config '${name}': ${getErrorMessage(error)}`)
 					}
 				}
 				return profiles
@@ -658,7 +659,7 @@ export class ProviderSettingsManager {
 			apiProvider !== undefined &&
 			(typeof apiProvider !== "string" || (!isProviderName(apiProvider) && !isRetiredProvider(apiProvider)))
 		) {
-			console.log(
+			logger.info("ProviderSettingsManager", 
 				`[ProviderSettingsManager] Sanitizing unknown provider "${config.apiProvider}" - resetting to undefined`,
 			)
 			// Return a new config object without the invalid apiProvider

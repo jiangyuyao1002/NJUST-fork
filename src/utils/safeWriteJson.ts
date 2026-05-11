@@ -5,7 +5,6 @@ import * as lockfile from "proper-lockfile"
 import { JsonStreamStringify } from "json-stream-stringify"
 
 import { logger } from "../shared/logger"
-import { getErrorMessage } from "../shared/error-utils"
 
 /**
  * Options for safeWriteJson function

@@ -12,6 +12,7 @@
 
 import type OpenAI from "openai"
 import { TOOL_ALIASES } from "../../shared/tools"
+import { logger } from "../../shared/logger"
 
 export interface ConsistencyCheckResult {
 	ok: boolean
@@ -84,13 +85,13 @@ export function checkToolPromptConsistency(
 
 	if (!ok) {
 		if (mentionedButUnavailable.length > 0) {
-			console.warn(
+			logger.warn("ToolPromptConsistency", 
 				`[ToolPromptConsistency] Tools mentioned in system prompt but NOT in tool list: ${mentionedButUnavailable.join(", ")}. ` +
 				`The model may attempt to call these and fail.`,
 			)
 		}
 		if (availableButUnmentioned.length > 0) {
-			console.warn(
+			logger.warn("ToolPromptConsistency", 
 				`[ToolPromptConsistency] Tools in tool list but NOT mentioned in system prompt: ${availableButUnmentioned.join(", ")}. ` +
 				`The model may not know to use these.`,
 			)

@@ -427,7 +427,7 @@ export function registerCangjieCommands(
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieCleanGeneratedTests", async () => {
+		vscode.commands.registerCommand("njust-ai-cj.cangjieCleanGeneratedTests", () => {
 			const { filesRemoved, taskEntriesRemoved } = purgeAllTrackedCangjieTestFiles()
 			if (taskEntriesRemoved > 0) {
 				void vscode.window.showInformationMessage(

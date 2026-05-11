@@ -132,7 +132,7 @@ export abstract class BaseProvider implements ApiHandler {
 	/**
 	 * Override when {@link hasNativeTokenCounting} is true; return undefined to fall back to tiktoken.
 	 */
-	protected async countTokensNative(
+	protected countTokensNative(
 		_content: Anthropic.Messages.ContentBlockParam[],
 	): Promise<number | TokenCountResult | undefined> {
 		return undefined

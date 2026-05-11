@@ -362,7 +362,7 @@ export class McpHub implements IMcpHubService {
 		}
 	}
 
-	private async watchProjectMcpFile(): Promise<void> {
+	private watchProjectMcpFile(): Promise<void> {
 		// Skip if test environment is detected or VSCode APIs are not available
 		if (process.env.NODE_ENV === "test" || !vscode.workspace.createFileSystemWatcher) {
 			return

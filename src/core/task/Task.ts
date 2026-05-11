@@ -31,9 +31,6 @@ import {
 	NJUST_AI_CJEventName,
 	TaskStatus,
 	TodoItem,
-	getApiProtocol,
-	getModelId,
-	isRetiredProvider,
 	QueuedMessage,
 	DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
@@ -77,7 +74,7 @@ import {
 
 // core modules
 import { ToolRepetitionDetector } from "../tools/ToolRepetitionDetector"
-import { restoreTodoListForTask } from "../tools/UpdateTodoListTool"
+
 import { FileContextTracker } from "../context-tracking/FileContextTracker"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { RooProtectedController } from "../protect/RooProtectedController"
@@ -103,7 +100,7 @@ import {
 	checkpointDiff,
 } from "../checkpoints"
 import { MessageQueueService } from "../message-queue/MessageQueueService"
-import { AutoApprovalHandler, checkAutoApproval } from "../auto-approval"
+import { AutoApprovalHandler } from "../auto-approval"
 import { MessageManager } from "../message-manager"
 import { TaskStateMachine, TaskState } from "./TaskStateMachine"
 import { TaskRequestBuilder } from "./TaskRequestBuilder"
@@ -1274,7 +1271,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 	}
 
-	async handleTerminalOperation(terminalOperation: "continue" | "abort") {
+	handleTerminalOperation(terminalOperation: "continue" | "abort") {
 		if (terminalOperation === "continue") {
 			this.terminalProcess?.continue()
 		} else if (terminalOperation === "abort") {
@@ -1502,7 +1499,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Start skill/memory prefetch in parallel (non-blocking)
 		const provider = this.hostRef.deref()
 		startAllPrefetch({
-			skillFetchFn: async () => {
+			skillFetchFn: () => {
 				const skillsManager = provider?.getSkillsManager()
 				const skills = skillsManager?.getAllSkills() ?? []
 				return skills.map((s) => s.name)

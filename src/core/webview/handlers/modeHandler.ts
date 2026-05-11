@@ -241,7 +241,7 @@ async function handleImportMode(context: MessageHandlerContext, message: Webview
 			title: "Select mode export file to import",
 		})
 
-		if (fileUri && fileUri[0]) {
+		if (fileUri?.[0]) {
 			await updateGlobalState("lastModeImportPath", fileUri[0].fsPath)
 			const yamlContent = await fs.readFile(fileUri[0].fsPath, "utf-8")
 			const result = await provider.customModesManager.importModeWithRules(yamlContent, message.source || "project")
@@ -358,7 +358,7 @@ async function handleOpenCommandFile(context: MessageHandlerContext, message: We
 		if (message.text) {
 			const { getCommand } = await import("../../../services/command/commands")
 			const command = await getCommand(getCurrentCwd(), message.text)
-			if (command && command.filePath) {
+			if (command?.filePath) {
 				void openFile(command.filePath)
 			} else {
 				vscode.window.showErrorMessage(t("common:errors.command_not_found", { name: message.text }))
@@ -376,7 +376,7 @@ async function handleDeleteCommand(context: MessageHandlerContext, message: Webv
 		if (message.text && message.values?.source) {
 			const { getCommand } = await import("../../../services/command/commands")
 			const command = await getCommand(getCurrentCwd(), message.text)
-			if (command && command.filePath) {
+			if (command?.filePath) {
 				await fs.unlink(command.filePath)
 				provider.log(`Deleted command file: ${command.filePath}`)
 			} else {
@@ -420,7 +420,7 @@ async function handleCreateCommand(context: MessageHandlerContext, message: Webv
 		await fs.mkdir(commandsDir, { recursive: true })
 
 		let commandName: string
-		if (fileName && fileName.trim()) {
+		if (fileName?.trim()) {
 			let cleanFileName = fileName.trim()
 			if (cleanFileName.startsWith("/")) {
 				cleanFileName = cleanFileName.substring(1)

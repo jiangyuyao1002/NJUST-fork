@@ -46,7 +46,7 @@ export class CjpmTaskProvider implements vscode.TaskProvider, vscode.Disposable 
 		})
 	}
 
-	async provideTasks(): Promise<vscode.Task[]> {
+	provideTasks(): Promise<vscode.Task[]> {
 		const workspaceFolders = vscode.workspace.workspaceFolders
 		if (!workspaceFolders) return []
 

@@ -219,7 +219,7 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
 			}),
 		})
 
-		if (!response || !response.ok) {
+		if (!response?.ok) {
 			const status = response?.status || 0
 			let errorText = "No response"
 			try {

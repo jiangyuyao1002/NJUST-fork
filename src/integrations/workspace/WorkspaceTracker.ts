@@ -91,11 +91,11 @@ class WorkspaceTracker {
 		)
 	}
 
-	private async workspaceDidReset() {
+	private workspaceDidReset() {
 		if (this.resetTimer) {
 			clearTimeout(this.resetTimer)
 		}
-		this.resetTimer = setTimeout(async () => {
+		this.resetTimer = setTimeout(() => {
 			if (this.prevWorkSpacePath !== this.cwd) {
 				void this.providerRef.deref()?.postMessageToWebview({
 					type: "workspaceUpdated",
@@ -153,7 +153,7 @@ class WorkspaceTracker {
 		}
 	}
 
-	private async removeFilePath(filePath: string): Promise<boolean> {
+	private removeFilePath(filePath: string): Promise<boolean> {
 		const normalizedPath = this.normalizeFilePath(filePath)
 		return this.filePaths.delete(normalizedPath) || this.filePaths.delete(normalizedPath + "/")
 	}

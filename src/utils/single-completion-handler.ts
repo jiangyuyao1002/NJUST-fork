@@ -10,7 +10,7 @@ export async function singleCompletionHandler(apiConfiguration: ProviderSettings
 	if (!promptText) {
 		throw new Error("No prompt text provided")
 	}
-	if (!apiConfiguration || !apiConfiguration.apiProvider) {
+	if (!apiConfiguration?.apiProvider) {
 		throw new Error("No valid API configuration provided")
 	}
 

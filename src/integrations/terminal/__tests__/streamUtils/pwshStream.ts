@@ -27,6 +27,7 @@ export function createPowerShellStream(command: string): CommandStream {
 			shellCommand = `pwsh -NoProfile -NonInteractive -Command "${escapedCommand}"`
 		}
 
+		// eslint-disable-next-line no-console
 		console.log(`Executing PowerShell command on ${process.platform}: ${shellCommand}`)
 
 		realOutput = execSync(shellCommand, {

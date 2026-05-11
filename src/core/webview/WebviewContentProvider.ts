@@ -125,7 +125,7 @@ export class WebviewContentProvider {
 	/**
 	 * Generates HTML content for production build.
 	 */
-	async getHtmlContent(webview: vscode.Webview): Promise<string> {
+	getHtmlContent(webview: vscode.Webview): Promise<string> {
 		const stylesUri = getUri(webview, this.host.extensionUri, [
 			"webview-ui",
 			"build",

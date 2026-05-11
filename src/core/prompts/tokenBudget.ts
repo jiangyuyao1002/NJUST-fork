@@ -1,3 +1,5 @@
+import { logger } from "../../shared/logger"
+
 export type PromptTokenBudget = {
 	systemPromptMaxTokens: number
 	toolDefinitionMaxTokens: number
@@ -95,7 +97,7 @@ export function trimSectionsByBudget(sections: SectionBudget[], maxTokens: numbe
 		if (currentTokens <= maxTokens) break
 		retained.delete(section.name)
 		currentTokens -= section.estimatedTokens
-		console.warn(`[tokenBudget] Trimmed section "${section.name}" (${section.estimatedTokens} tokens) to fit budget`)
+		logger.warn("TokenBudget", `[tokenBudget] Trimmed section "${section.name}" (${section.estimatedTokens} tokens) to fit budget`)
 	}
 
 	return retained

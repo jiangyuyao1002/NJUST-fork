@@ -86,7 +86,7 @@ export class CloudAgentClient {
 		}
 		const body = JSON.stringify({
 			session_id: sessionId,
-			...(runId && runId.trim() ? { run_id: runId.trim() } : {}),
+			...(runId?.trim() ? { run_id: runId.trim() } : {}),
 		})
 		try {
 			let resp: Response
@@ -445,7 +445,7 @@ export class CloudAgentClient {
 	}
 
 	async disconnect(sessionId?: string, runId?: string): Promise<void> {
-		if (sessionId && sessionId.trim()) {
+		if (sessionId?.trim()) {
 			await CloudAgentClient.sendDeferredAbort(
 				this.serverUrl,
 				this.deviceToken,

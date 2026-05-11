@@ -69,7 +69,7 @@ async function handleAskResponse(context: MessageHandlerContext, message: Webvie
 		?.handleWebviewAskResponse(message.askResponse!, resolved.text, resolved.images)
 }
 
-async function handleTerminalOperation(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleTerminalOperation(context: MessageHandlerContext, message: WebviewMessage): void {
 	if (message.terminalOperation) {
 		void context.provider.getCurrentTask()?.handleTerminalOperation(message.terminalOperation)
 	}
@@ -96,7 +96,7 @@ async function handleSelectContextFiles(context: MessageHandlerContext, message:
 	})
 }
 
-async function handleOpenImage(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleOpenImage(context: MessageHandlerContext, message: WebviewMessage): void {
 	void openImage(message.text!, { values: message.values })
 }
 
@@ -128,7 +128,7 @@ async function handleSaveImage(context: MessageHandlerContext, message: WebviewM
 	}
 }
 
-async function handleOpenFile(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleOpenFile(context: MessageHandlerContext, message: WebviewMessage): void {
 	if (!message.text) return
 	let filePath: string = message.text
 	if (!path.isAbsolute(filePath)) {
@@ -180,11 +180,11 @@ async function handleReadFileContent(context: MessageHandlerContext, message: We
 	}
 }
 
-async function handleOpenMention(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleOpenMention(context: MessageHandlerContext, message: WebviewMessage): void {
 	void openMention(context.getCurrentCwd(), message.text)
 }
 
-async function handleOpenExternal(_context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handleOpenExternal(_context: MessageHandlerContext, message: WebviewMessage): void {
 	if (message.url) {
 		const parsed = vscode.Uri.parse(message.url)
 		if (parsed.scheme !== "http" && parsed.scheme !== "https") {
@@ -211,7 +211,7 @@ async function handleTtsSpeed(context: MessageHandlerContext, message: WebviewMe
 	await provider.postStateToWebview()
 }
 
-async function handlePlayTts(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+function handlePlayTts(context: MessageHandlerContext, message: WebviewMessage): void {
 	if (message.text) {
 		void playTts(message.text, {
 			onStart: () => context.provider.postMessageToWebview({ type: "ttsStart", text: message.text }),
@@ -220,7 +220,7 @@ async function handlePlayTts(context: MessageHandlerContext, message: WebviewMes
 	}
 }
 
-async function handleStopTts(_context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+function handleStopTts(_context: MessageHandlerContext, _message: WebviewMessage): void {
 	stopTts()
 }
 
@@ -458,7 +458,7 @@ async function handleInsertTextIntoTextarea(context: MessageHandlerContext, mess
 	}
 }
 
-async function handleShowMdmAuthRequiredNotification(_context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+function handleShowMdmAuthRequiredNotification(_context: MessageHandlerContext, _message: WebviewMessage): void {
 	vscode.window.showWarningMessage(t("common:mdm.info.organization_requires_auth"))
 }
 

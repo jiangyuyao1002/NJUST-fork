@@ -49,7 +49,7 @@ export class TerminalRegistry {
 
 		try {
 			const startDisposable = vscode.window.onDidStartTerminalShellExecution?.(
-				async (e: vscode.TerminalShellExecutionStartEvent) => {
+				(e: vscode.TerminalShellExecutionStartEvent) => {
 					// Get a handle to the stream as early as possible:
 					const stream = e.execution.read()
 					const terminal = this.getTerminalByVSCETerminal(e.terminal)
@@ -73,7 +73,7 @@ export class TerminalRegistry {
 			}
 
 			const endDisposable = vscode.window.onDidEndTerminalShellExecution?.(
-				async (e: vscode.TerminalShellExecutionEndEvent) => {
+				(e: vscode.TerminalShellExecutionEndEvent) => {
 					const terminal = this.getTerminalByVSCETerminal(e.terminal)
 					const process = terminal?.process
 					const exitDetails = TerminalProcess.interpretExitCode(e.exitCode)
@@ -146,7 +146,7 @@ export class TerminalRegistry {
 	 * @param taskId Optional task ID to associate with the terminal
 	 * @returns A Terminal instance
 	 */
-	public static async getOrCreateTerminal(
+	public static getOrCreateTerminal(
 		cwd: string,
 		taskId?: string,
 		provider: RooTerminalProvider = "vscode",

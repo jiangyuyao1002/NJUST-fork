@@ -1026,7 +1026,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 			// The bedrockModels array is a constant and updating the model ID from the returned invokedModelID value
 			// in a prompt router response isn't possible on the constant.
 			model = { id: baseModelId, info: JSON.parse(JSON.stringify(bedrockModels[baseModelId])) }
-		} else if (modelType && modelType.includes("router")) {
+		} else if (modelType?.includes("router")) {
 			model = {
 				id: bedrockDefaultPromptRouterModelId,
 				info: JSON.parse(JSON.stringify(bedrockModels[bedrockDefaultPromptRouterModelId])),
