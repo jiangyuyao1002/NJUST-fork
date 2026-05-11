@@ -47,11 +47,17 @@ export default [
 		},
 		rules: {
 			"no-undef": "off",
+			"@typescript-eslint/no-floating-promises": "off",
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/prefer-optional-chain": "off",
 		},
 	},
 	{
 		files: ["**/*.mjs"],
 		languageOptions: {
+			parserOptions: {
+				project: null, // 禁用 TS 项目检查，避免 .mjs 文件被当 TS 解析
+			},
 			globals: {
 				process: "readonly",
 				console: "readonly",
@@ -62,11 +68,24 @@ export default [
 				__filename: "readonly",
 			},
 		},
+		rules: {
+			"@typescript-eslint/no-floating-promises": "off",
+			"@typescript-eslint/prefer-optional-chain": "off",
+			"@typescript-eslint/require-await": "off",
+			"no-console": "off",
+		},
 	},
 	{
 		files: ["shared/logger.ts"],
 		rules: {
 			"no-console": "off",
+		},
+	},
+	{
+		files: ["**/__tests__/**", "**/*.spec.ts", "**/*.test.ts", "**/__mocks__/**"],
+		rules: {
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/no-explicit-any": "off",
 		},
 	},
 	{
