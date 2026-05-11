@@ -330,7 +330,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * @internal
 	 */
 	static resetGlobalApiRequestTime(): void {
-		setLastGlobalApiRequestTime(undefined as any)
+		setLastGlobalApiRequestTime(undefined)
 	}
 
 	/**
@@ -1155,7 +1155,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			)
 			if (lastToolAskIndex !== -1) {
 				this.clineMessages[lastToolAskIndex].isAnswered = true
-				void this.updateClineMessage(this.clineMessages[lastToolAskIndex])
+				void this.updateClineMessage(this.clineMessages[lastToolAskIndex]).catch((error) => { logger.warn("Task", "updateClineMessage failed", error) })
 				this.saveClineMessages().catch((error) => {
 					logger.error("Task", "Failed to save answered tool-ask state:", error)
 				})
@@ -1497,7 +1497,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	private async initiateTaskLoop(userContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {
 		// Kicks off the checkpoints initialization process in the background.
-		void getCheckpointService(this)
+		void getCheckpointService(this).catch((error) => { logger.warn("Task", "getCheckpointService failed", error) })
 
 		// Start skill/memory prefetch in parallel (non-blocking)
 		const provider = this.hostRef.deref()

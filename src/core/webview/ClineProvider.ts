@@ -784,8 +784,8 @@ export class ClineProvider
 
 		try {
 			await this.view?.webview.postMessage(message)
-		} catch {
-			// View disposed, drop message silently
+		} catch (error) {
+			logger.debug("ClineProvider", `postMessageToWebview: view disposed (message type: ${(message as any).type})`, error)
 		}
 	}
 
@@ -1395,8 +1395,9 @@ export class ClineProvider
 				try {
 					const { openAiCodexOAuthManager } = await import("../../integrations/openai-codex/oauth")
 					return await openAiCodexOAuthManager.isAuthenticated()
-				} catch {
-					return false
+			} catch (error) {
+				logger.debug("ClineProvider", "OpenAI Codex OAuth authentication check failed", error)
+				return false
 				}
 			})(),
 			cloudAgentServerUrl,
@@ -1804,7 +1805,8 @@ export class ClineProvider
 		if (!parentTask) {
 			try {
 				await this.stack.pop()
-			} catch {
+			} catch (error) {
+			logger.warn("ClineProvider", "Stack pop failed", error)
 				// Non-fatal
 			}
 		}
@@ -2238,8 +2240,9 @@ export class ClineProvider
 		// 7) Emit TaskDelegated (provider-level)
 		try {
 			this.emit(NJUST_AI_CJEventName.TaskDelegated, parentTaskId, child.taskId)
-		} catch {
+		} catch (error) {
 			// non-fatal
+			logger.warn("ClineProvider", "TaskDelegated event emission failed", error)
 		}
 
 		return child
@@ -2265,7 +2268,8 @@ export class ClineProvider
 				taskId: parentTaskId,
 				globalStoragePath,
 			})
-		} catch {
+		} catch (error) {
+			logger.debug("ClineProvider", "Failed to read parent cline messages", error)
 			parentClineMessages = []
 		}
 
@@ -2275,7 +2279,8 @@ export class ClineProvider
 				taskId: parentTaskId,
 				globalStoragePath,
 			})) as any[]
-		} catch {
+		} catch (error) {
+			logger.debug("ClineProvider", "Failed to read parent api messages", error)
 			parentApiMessages = []
 		}
 
@@ -2412,8 +2417,9 @@ export class ClineProvider
 		// 6) Emit TaskDelegationCompleted (provider-level)
 		try {
 			this.emit(NJUST_AI_CJEventName.TaskDelegationCompleted, parentTaskId, childTaskId, completionResultSummary)
-		} catch {
+		} catch (error) {
 			// non-fatal
+			logger.warn("ClineProvider", "TaskDelegationCompleted event emission failed", error)
 		}
 
 		// 7) Reopen the parent from history as the sole active task (restores saved mode)
@@ -2424,13 +2430,15 @@ export class ClineProvider
 		if (parentInstance) {
 			try {
 				await parentInstance.overwriteClineMessages(parentClineMessages)
-			} catch {
+			} catch (error) {
 				// non-fatal
+				logger.warn("ClineProvider", "overwriteClineMessages failed", error)
 			}
 			try {
 				await parentInstance.overwriteApiConversationHistory(parentApiMessages as any)
-			} catch {
+			} catch (error) {
 				// non-fatal
+				logger.warn("ClineProvider", "overwriteApiConversationHistory failed", error)
 			}
 
 			// Auto-resume parent without ask("resume_task")
@@ -2440,8 +2448,9 @@ export class ClineProvider
 		// 9) Emit TaskDelegationResumed (provider-level)
 		try {
 			this.emit(NJUST_AI_CJEventName.TaskDelegationResumed, parentTaskId, childTaskId)
-		} catch {
+		} catch (error) {
 			// non-fatal
+			logger.warn("ClineProvider", "TaskDelegationResumed event emission failed", error)
 		}
 	}
 

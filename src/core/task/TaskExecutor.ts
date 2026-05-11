@@ -2080,32 +2080,33 @@ export class TaskExecutor {
 
 				// If we reach here without continuing, return false (will always be false for now)
 				return false
-			} catch (error) {
-				// A tool execution or presentAssistantMessage threw an unhandled
-					const h = this.host
-				// exception. Log it, notify the user, and end the task gracefully.
-				const errMsg = getErrorMessage(error)
-				logger.error("TaskExecutor",
-					`Unhandled error in request loop for task ${h.taskId}:`,
-					errMsg,
-					error instanceof Error ? error.stack : "",
+		} catch (error) {
+			// A tool execution or presentAssistantMessage threw an unhandled
+			const h = this.host
+			// exception. Log it, notify the user, and end the task gracefully.
+			const errMsg = getErrorMessage(error)
+			logger.error("TaskExecutor",
+				`Unhandled error in request loop for task ${h.taskId}:`,
+				errMsg,
+				error instanceof Error ? error.stack : "",
+			)
+			// Release the presentAssistantMessage lock if it was held.
+			// presentAssistantMessageLocked may be stuck true if the exception
+			// escaped the while loop without reaching the finally block.
+			if (h.presentAssistantMessageLocked) {
+				logger.warn("TaskExecutor",
+					`Force-releasing stuck presentAssistantMessageLocked for task ${h.taskId}`,
 				)
-				// Release the presentAssistantMessage lock if it was held.
-				// presentAssistantMessageLocked may be stuck true if the exception
-				// escaped the while loop without reaching the finally block.
-				if (h.presentAssistantMessageLocked) {
-					logger.warn("TaskExecutor",
-						`Force-releasing stuck presentAssistantMessageLocked for task ${h.taskId}`,
-					)
-					h.presentAssistantMessageLocked = false
-				}
-				// Notify the user through the UI
-				try {
-					await h.say("error", `Task ended unexpectedly: ${errMsg}`)
-				} catch {
-					// Best-effort notification
-				}
-				return true // End the task loop
+				h.presentAssistantMessageLocked = false
+			}
+			// Notify the user through the UI
+			try {
+				await h.say("error", `Task ended unexpectedly: ${errMsg}`)
+			} catch (sayError) {
+				// Best-effort notification
+				logger.warn("TaskExecutor", "Failed to notify user about task error", sayError)
+			}
+			return true // End the task loop
 			}
 		}
 

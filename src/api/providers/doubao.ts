@@ -87,8 +87,8 @@ export class DoubaoHandler extends OpenAiHandler {
 		const modelId = this.options.openAiModelId ?? this.options.apiModelId ?? doubaoDefaultModelId
 		const { info: modelInfo } = this.getModel()
 
-		const isThinkingModel =
-			modelId.includes("thinking") || modelId.includes("seed-1.6") || modelId.includes("seed-2.0")
+		const THINKING_MODEL_PATTERNS = [/doubao-(?!.*non-).*-thinking/, /seed-1.6/, /seed-2.0/]
+		const isThinkingModel = THINKING_MODEL_PATTERNS.some((p) => p.test(modelId))
 
 		const convertedMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages], {
 			mergeToolResultText: isThinkingModel,

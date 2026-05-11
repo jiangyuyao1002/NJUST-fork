@@ -21,6 +21,6 @@ export function getLastGlobalApiRequestTime(): number | undefined {
 /**
  * Set the last global API request timestamp.
  */
-export function setLastGlobalApiRequestTime(time: number): void {
+export function setLastGlobalApiRequestTime(time: number | undefined): void {
 	lastGlobalApiRequestTime = time
 }

@@ -1,4 +1,5 @@
 import * as os from "os"
+import { ensureAllRequired, ensureAdditionalPropertiesFalse } from "./schema-utils"
 import { v7 as uuidv7 } from "uuid"
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
@@ -255,91 +256,6 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): any {
 		// Ensure all properties are in the required array for OpenAI's strict mode.
-		// Properties that were optional in Roo's schema are made nullable so the model can
-		// explicitly pass null instead of fabricating placeholder values.
-		const ensureAllRequired = (schema: any): any => {
-			const getPrimaryType = (value: any): string | undefined =>
-				Array.isArray(value?.type) ? value.type.find((t: string) => t !== "null") : value?.type
-
-			if (!schema || typeof schema !== "object" || getPrimaryType(schema) !== "object") {
-				return schema
-			}
-
-			const result = { ...schema }
-			const originallyRequired = new Set(Array.isArray(schema.required) ? schema.required : [])
-
-			// OpenAI Responses API requires additionalProperties: false on all object schemas
-			// Only add if not already set to false (to avoid unnecessary mutations)
-			if (result.additionalProperties !== false) {
-				result.additionalProperties = false
-			}
-
-			if (result.properties) {
-				const allKeys = Object.keys(result.properties)
-				result.required = allKeys
-
-				// Recursively process nested objects
-				const newProps = { ...result.properties }
-				for (const key of allKeys) {
-					const prop = newProps[key]
-					if (prop && !originallyRequired.has(key)) {
-						const types = Array.isArray(prop.type) ? prop.type : prop.type ? [prop.type] : []
-						if (types.length > 0 && !types.includes("null")) {
-							newProps[key] = { ...prop, type: [...types, "null"] }
-						}
-					}
-					const normalizedProp = newProps[key]
-					const primaryType = getPrimaryType(normalizedProp)
-					if (primaryType === "object") {
-						newProps[key] = ensureAllRequired(normalizedProp)
-					} else if (primaryType === "array" && getPrimaryType(normalizedProp.items) === "object") {
-						newProps[key] = {
-							...normalizedProp,
-							items: ensureAllRequired(normalizedProp.items),
-						}
-					}
-				}
-				result.properties = newProps
-			}
-
-			return result
-		}
-
-		// Adds additionalProperties: false to all object schemas recursively
-		// without modifying required array. Used for MCP tools with strict: false
-		// to comply with OpenAI Responses API requirements.
-		const ensureAdditionalPropertiesFalse = (schema: any): any => {
-			if (!schema || typeof schema !== "object" || schema.type !== "object") {
-				return schema
-			}
-
-			const result = { ...schema }
-
-			// OpenAI Responses API requires additionalProperties: false on all object schemas
-			// Only add if not already set to false (to avoid unnecessary mutations)
-			if (result.additionalProperties !== false) {
-				result.additionalProperties = false
-			}
-
-			if (result.properties) {
-				// Recursively process nested objects
-				const newProps = { ...result.properties }
-				for (const key of Object.keys(result.properties)) {
-					const prop = newProps[key]
-					if (prop && prop.type === "object") {
-						newProps[key] = ensureAdditionalPropertiesFalse(prop)
-					} else if (prop && prop.type === "array" && prop.items?.type === "object") {
-						newProps[key] = {
-							...prop,
-							items: ensureAdditionalPropertiesFalse(prop.items),
-						}
-					}
-				}
-				result.properties = newProps
-			}
-
-			return result
-		}
 
 		// Build a request body for the OpenAI Responses API.
 		// Ensure we explicitly pass max_output_tokens based on Roo's reserved model response calculation

@@ -66,6 +66,7 @@ function convertToVsCodeLmTools(tools: OpenAI.Chat.ChatCompletionTool[]): vscode
 export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
 	private client: vscode.LanguageModelChat | null
+private initPromise: Promise<void> | null = null
 	private disposable: vscode.Disposable | null
 	private currentRequestCancellation: vscode.CancellationTokenSource | null
 
@@ -88,7 +89,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 					}
 				}
 			})
-			void this.initializeClient()
+			this.initPromise = this.initializeClient()
 		} catch (error) {
 			// Ensure cleanup if constructor fails
 			this.dispose()
@@ -319,6 +320,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 	}
 
 	private async getClient(): Promise<vscode.LanguageModelChat> {
+		if (this.initPromise) { await this.initPromise }
 		if (!this.client) {
 			debugLog("NJUST_AI_CJ <Language Model API>: Getting client with options:", {
 				vsCodeLmModelSelector: this.options.vsCodeLmModelSelector,

@@ -18,17 +18,16 @@ const LSP_SERVER_NAME = "Cangjie Language Server"
 // Middleware helpers: debounce high-frequency LSP requests
 // ---------------------------------------------------------------------------
 
-function debounceMiddleware<T>(delayMs: number): (
+export function debounceMiddleware<T>(delayMs: number): (
 	next: () => vscode.ProviderResult<T>,
 ) => Thenable<T> {
 	let timer: ReturnType<typeof setTimeout> | undefined
 	let pending: { resolve: (v: T) => void; reject: (e: unknown) => void } | undefined
-	let lastResult: T | undefined
 
 	return (next) => {
 		if (timer) {
 			clearTimeout(timer)
-			pending?.resolve(lastResult as T)
+			pending?.reject(new vscode.CancellationError())
 		}
 		return new Promise<T>((resolve, reject) => {
 			pending = { resolve, reject }
@@ -36,7 +35,6 @@ function debounceMiddleware<T>(delayMs: number): (
 				timer = undefined
 				pending = undefined
 				Promise.resolve(next()).then((result) => {
-					lastResult = result as T
 					resolve(result as T)
 				}, reject)
 			}, delayMs)
