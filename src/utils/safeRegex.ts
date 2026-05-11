@@ -1,3 +1,4 @@
+import { getErrorMessage } from "../shared/error-utils"
 /**
  * Safe regex construction with ReDoS protection.
  *
@@ -54,7 +55,7 @@ export function validateRegexPattern(pattern: string): { valid: true } | { valid
 	} catch (e) {
 		return {
 			valid: false,
-			reason: `Invalid regex syntax: ${e instanceof Error ? e.message : String(e)}`,
+			reason: `Invalid regex syntax: ${getErrorMessage(e)}`,
 		}
 	}
 

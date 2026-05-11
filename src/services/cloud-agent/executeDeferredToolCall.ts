@@ -7,6 +7,7 @@ import {
 	execApplyDiff,
 } from "../mcp-server/tool-executors"
 import type { DeferredToolCall, DeferredToolResult } from "./types"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Execute a single deferred tool call locally and return an MCP-shaped result.
@@ -88,7 +89,7 @@ export async function executeDeferredToolCall(
 
 		return { call_id: call.call_id, content, is_error: false }
 	} catch (error) {
-		const msg = error instanceof Error ? error.message : String(error)
+		const msg = getErrorMessage(error)
 		return { call_id: call.call_id, content: msg, is_error: true }
 	}
 }

@@ -5,6 +5,7 @@ import { MAX_ITEM_TOKENS } from "../constants"
 import { t } from "../../../i18n"
 import { withValidationErrorHandling } from "../shared/validation-helpers"
 import { logger } from "../../../shared/logger"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 // Timeout constants for Ollama API requests
 const OLLAMA_EMBEDDING_TIMEOUT_MS = 60000 // 60 seconds for embedding requests
@@ -127,7 +128,7 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 			}
 
 			// Re-throw a more specific error for the caller
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			throw new Error(t("embeddings:ollama.embeddingFailed", { message }))
 		}
 	}

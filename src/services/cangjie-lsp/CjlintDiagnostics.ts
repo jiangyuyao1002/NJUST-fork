@@ -6,6 +6,7 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
 import type { CangjieLintConfig } from "./CangjieLintConfig"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -126,7 +127,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 				`[Perf] cjlint single-file scan completed in ${Date.now() - t0}ms (${path.basename(filePath)})`,
 			)
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjLint] Error (single file): ${message}`)
 		} finally {
 			this.running = false
@@ -201,7 +202,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 				`[Perf] cjlint workspace scan completed in ${Date.now() - t0}ms (${allDiagnostics.size} files)`,
 			)
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjLint] Error: ${message}`)
 		} finally {
 			this.running = false
@@ -278,7 +279,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 				allDiagnostics.get(absolutePath)!.push(diagnostic)
 			}
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjLint] Failed to parse report ${reportPath}: ${message}`)
 		}
 	}

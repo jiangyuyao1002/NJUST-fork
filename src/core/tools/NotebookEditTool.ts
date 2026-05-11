@@ -2,6 +2,7 @@ import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { getErrorMessage } from "../../shared/error-utils"
 
 interface NotebookEditParams {
 	path: string
@@ -103,7 +104,7 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 			} catch (err) {
 				pushToolResult(
 					formatResponse.toolError(
-						`Failed to open notebook at '${path}': ${err instanceof Error ? err.message : String(err)}`,
+						`Failed to open notebook at '${path}': ${getErrorMessage(err)}`,
 					),
 				)
 				return

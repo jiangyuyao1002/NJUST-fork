@@ -1,9 +1,9 @@
+import { getErrorMessage } from "../../shared/error-utils"
 import { v7 as uuidv7 } from "uuid"
 import * as vscode from "vscode"
 
 import type { ClineProvider } from "../webview/ClineProvider"
-import type {
-	Plan,
+import type {	Plan,
 	PlanStep,
 	PlanStepResult,
 	PlanStepStatus,
@@ -97,7 +97,7 @@ export class PlanEngine {
 				plan.status = "failed"
 			}
 			this.outputChannel.appendLine(
-				`[PlanEngine] Plan execution stopped: ${error instanceof Error ? error.message : String(error)}`,
+				`[PlanEngine] Plan execution stopped: ${getErrorMessage(error)}`,
 			)
 		} finally {
 			plan.updatedAt = Date.now()
@@ -184,7 +184,7 @@ export class PlanEngine {
 			return stepResult
 		} catch (error) {
 			step.status = "failed"
-			step.error = error instanceof Error ? error.message : String(error)
+			step.error = getErrorMessage(error)
 			step.completedAt = Date.now()
 
 			const stepResult: PlanStepResult = {

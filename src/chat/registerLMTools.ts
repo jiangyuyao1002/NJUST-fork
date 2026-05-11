@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 
 import type { ClineProvider } from "../core/webview/ClineProvider"
+import { getErrorMessage } from "../shared/error-utils"
 
 interface ToolDefinition {
 	name: string
@@ -148,7 +149,7 @@ export function registerLMTools(
 			outputChannel.appendLine(`[LMTools] Registered tool: ${def.name}`)
 		} catch (error) {
 			outputChannel.appendLine(
-				`[LMTools] Failed to register tool ${def.name}: ${error instanceof Error ? error.message : String(error)}`,
+				`[LMTools] Failed to register tool ${def.name}: ${getErrorMessage(error)}`,
 			)
 		}
 	}
@@ -171,7 +172,7 @@ function createLMTool(
 				const result = await executeTool(def.name, input, provider, token)
 				return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(result)])
 			} catch (error) {
-				const message = error instanceof Error ? error.message : String(error)
+				const message = getErrorMessage(error)
 				outputChannel.appendLine(`[LMTools] Error in ${def.name}: ${message}`)
 				return new vscode.LanguageModelToolResult([
 					new vscode.LanguageModelTextPart(`Error: ${message}`),

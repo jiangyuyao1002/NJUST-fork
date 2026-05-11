@@ -19,6 +19,7 @@ import { RooHandler } from "../../api/providers/roo"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
 import { t } from "../../i18n"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export class GenerateImageTool extends BaseTool<"generate_image"> {
 	readonly name = "generate_image" as const
@@ -112,12 +113,12 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 			} catch (error) {
 				await task.say(
 					"error",
-					`Failed to read input image: ${error instanceof Error ? error.message : "Unknown error"}`,
+					`Failed to read input image: ${getErrorMessage(error)}`,
 				)
 				task.didToolFailInCurrentTurn = true
 				pushToolResult(
 					formatResponse.toolError(
-						`Failed to read input image: ${error instanceof Error ? error.message : "Unknown error"}`,
+						`Failed to read input image: ${getErrorMessage(error)}`,
 					),
 				)
 				return

@@ -5,6 +5,7 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { Package } from "../../shared/package"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -274,7 +275,7 @@ export async function probeCangjieToolchain(): Promise<CangjieToolProbeResult[]>
 				versionLine: versionLine || "(no output)",
 			})
 		} catch (e) {
-			const msg = e instanceof Error ? e.message : String(e)
+			const msg = getErrorMessage(e)
 			out.push({
 				id,
 				label: id,

@@ -19,6 +19,7 @@ import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { getCommand, type Command } from "../../services/command/commands"
 import { buildSkillResult, resolveSkillContentForMode, type SkillLookup } from "../../services/skills/skillInvocation"
 import type { SkillContent } from "../../shared/skills"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export async function openMention(cwd: string, mention?: string): Promise<void> {
 	if (!mention) {
@@ -193,7 +194,7 @@ export async function parseMentions(
 				)
 				contentBlocks.push(fileResult)
 			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error)
+				const errorMsg = getErrorMessage(error)
 				contentBlocks.push({
 					type: mention.endsWith("/") ? "folder" : "file",
 					path: mentionPath,
@@ -205,28 +206,28 @@ export async function parseMentions(
 				const problems = await getWorkspaceProblems(cwd, includeDiagnosticMessages, maxDiagnosticMessages)
 				parsedText += `\n\n<workspace_diagnostics>\n${problems}\n</workspace_diagnostics>`
 			} catch (error) {
-				parsedText += `\n\n<workspace_diagnostics>\nError fetching diagnostics: ${error instanceof Error ? error.message : String(error)}\n</workspace_diagnostics>`
+				parsedText += `\n\n<workspace_diagnostics>\nError fetching diagnostics: ${getErrorMessage(error)}\n</workspace_diagnostics>`
 			}
 		} else if (mention === "git-changes") {
 			try {
 				const workingState = await getWorkingState(cwd)
 				parsedText += `\n\n<git_working_state>\n${workingState}\n</git_working_state>`
 			} catch (error) {
-				parsedText += `\n\n<git_working_state>\nError fetching working state: ${error instanceof Error ? error.message : String(error)}\n</git_working_state>`
+				parsedText += `\n\n<git_working_state>\nError fetching working state: ${getErrorMessage(error)}\n</git_working_state>`
 			}
 		} else if (/^[a-f0-9]{7,40}$/.test(mention)) {
 			try {
 				const commitInfo = await getCommitInfo(mention, cwd)
 				parsedText += `\n\n<git_commit hash="${mention}">\n${commitInfo}\n</git_commit>`
 			} catch (error) {
-				parsedText += `\n\n<git_commit hash="${mention}">\nError fetching commit info: ${error instanceof Error ? error.message : String(error)}\n</git_commit>`
+				parsedText += `\n\n<git_commit hash="${mention}">\nError fetching commit info: ${getErrorMessage(error)}\n</git_commit>`
 			}
 		} else if (mention === "terminal") {
 			try {
 				const terminalOutput = await getLatestTerminalOutput()
 				parsedText += `\n\n<terminal_output>\n${terminalOutput}\n</terminal_output>`
 			} catch (error) {
-				parsedText += `\n\n<terminal_output>\nError fetching terminal output: ${error instanceof Error ? error.message : String(error)}\n</terminal_output>`
+				parsedText += `\n\n<terminal_output>\nError fetching terminal output: ${getErrorMessage(error)}\n</terminal_output>`
 			}
 		}
 	}
@@ -242,7 +243,7 @@ export async function parseMentions(
 			commandOutput += command.content
 			slashCommandHelp += `\n\n<command name="${commandName}">\n${commandOutput}\n</command>`
 		} catch (error) {
-			slashCommandHelp += `\n\n<command name="${commandName}">\nError loading command '${commandName}': ${error instanceof Error ? error.message : String(error)}\n</command>`
+			slashCommandHelp += `\n\n<command name="${commandName}">\nError loading command '${commandName}': ${getErrorMessage(error)}\n</command>`
 		}
 	}
 
@@ -314,7 +315,7 @@ async function getFileOrFolderContentWithMetadata(
 					},
 				}
 			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error)
+				const errorMsg = getErrorMessage(error)
 				return {
 					type: "file",
 					path: mentionPath,
@@ -395,7 +396,7 @@ async function getFileOrFolderContentWithMetadata(
 			}
 		}
 	} catch (error) {
-		const errorMsg = error instanceof Error ? error.message : String(error)
+		const errorMsg = getErrorMessage(error)
 		throw new Error(`Failed to access path "${mentionPath}": ${errorMsg}`)
 	}
 }

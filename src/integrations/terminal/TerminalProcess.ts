@@ -6,6 +6,7 @@ import { logger } from "../../shared/logger"
 import type { ExitCodeDetails } from "./types"
 import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { Terminal } from "./Terminal"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export class TerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<Terminal>
@@ -132,7 +133,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 			stream = await streamAvailable
 		} catch (error) {
 			// Stream timeout or other error occurred
-			logger.error("TerminalProcess", "Stream error:", error instanceof Error ? error.message : String(error))
+			logger.error("TerminalProcess", "Stream error:", getErrorMessage(error))
 
 			// Emit completed event with error message
 			this.emit(

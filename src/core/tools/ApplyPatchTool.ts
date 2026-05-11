@@ -24,6 +24,7 @@ import {
 	resolveRootPackageName,
 } from "./cangjiePreflightCheck"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 interface ApplyPatchParams {
 	patch: string
@@ -106,7 +107,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				const errorMessage =
 					error instanceof ParseError
 						? `Invalid patch format: ${error.message}${formatHint}`
-						: `Failed to parse patch: ${error instanceof Error ? error.message : String(error)}${formatHint}`
+						: `Failed to parse patch: ${getErrorMessage(error)}${formatHint}`
 				pushToolResult(formatResponse.toolError(errorMessage))
 				return
 			}
@@ -132,7 +133,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 					task.consecutiveMistakeCount >= 2
 						? "\n\n正确格式示例：\n*** Begin Patch\n*** Update File: path/to/file.cj\n@@ -line,count +line,count @@\n old line\n+new line\n*** End Patch"
 						: ""
-				const errorMessage = `Failed to process patch: ${error instanceof Error ? error.message : String(error)}${formatHint}`
+				const errorMessage = `Failed to process patch: ${getErrorMessage(error)}${formatHint}`
 				pushToolResult(formatResponse.toolError(errorMessage))
 				return
 			}
@@ -386,7 +387,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 		try {
 			await fs.unlink(absolutePath)
 		} catch (error) {
-			const errorMessage = `Failed to delete file '${relPath}': ${error instanceof Error ? error.message : String(error)}`
+			const errorMessage = `Failed to delete file '${relPath}': ${getErrorMessage(error)}`
 			await task.say("error", errorMessage)
 			pushToolResult(formatResponse.toolError(errorMessage))
 			return

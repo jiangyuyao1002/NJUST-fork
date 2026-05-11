@@ -7,6 +7,7 @@ import { CangjieCompletionEngine } from "./CangjieCompletionEngine"
 import { CompletionCache } from "./CompletionCache"
 import { GenericCompletionEngine } from "./GenericCompletionEngine"
 import { resolveInlineCompletionApiHandler } from "./inlineCompletionApi"
+import { getErrorMessage } from "../../shared/error-utils"
 
 function delayWithCancellation(ms: number, token: vscode.CancellationToken): Promise<void> {
 	return new Promise((resolve, reject) => {
@@ -138,7 +139,7 @@ export class InlineCompletionProvider implements vscode.InlineCompletionItemProv
 			}
 		} catch (error) {
 			this.outputChannel?.appendLine(
-				`[InlineCompletion] Request failed: ${error instanceof Error ? error.message : String(error)}`,
+				`[InlineCompletion] Request failed: ${getErrorMessage(error)}`,
 			)
 			return null
 		}

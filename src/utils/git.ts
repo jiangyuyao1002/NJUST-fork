@@ -9,6 +9,7 @@ import { logger } from "../shared/logger"
 import type { GitRepositoryInfo, GitCommit } from "@njust-ai-cj/types"
 
 import { truncateOutput } from "../integrations/misc/extract-text"
+import { getErrorMessage } from "../shared/error-utils"
 
 const execAsync = promisify(exec)
 const execFileAsync = promisify(execFileCb)
@@ -318,7 +319,7 @@ export async function getCommitInfo(hash: string, cwd: string): Promise<string> 
 		return truncateOutput(output, GIT_OUTPUT_LINE_LIMIT)
 	} catch (error) {
 		logger.error("Git", "Error getting commit info:", error)
-		return `Failed to get commit info: ${error instanceof Error ? error.message : String(error)}`
+		return `Failed to get commit info: ${getErrorMessage(error)}`
 	}
 }
 
@@ -347,7 +348,7 @@ export async function getWorkingState(cwd: string): Promise<string> {
 		return truncateOutput(output, lineLimit)
 	} catch (error) {
 		logger.error("Git", "Error getting working state:", error)
-		return `Failed to get working state: ${error instanceof Error ? error.message : String(error)}`
+		return `Failed to get working state: ${getErrorMessage(error)}`
 	}
 }
 

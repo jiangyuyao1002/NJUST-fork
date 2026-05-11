@@ -4,6 +4,7 @@ import * as fs from "fs"
 import { execFile } from "child_process"
 import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -68,7 +69,7 @@ export class CangjieProfiler implements vscode.Disposable {
 			this.outputChannel.appendLine(`[Profiler] Profile completed: ${hotPaths.length} hot paths found`)
 			return { success: true, output, hotPaths }
 		} catch (error: unknown) {
-			const msg = error instanceof Error ? error.message : String(error)
+			const msg = getErrorMessage(error)
 			this.outputChannel.appendLine(`[Profiler] Profile failed: ${msg}`)
 			return { success: false, output: msg, hotPaths: [] }
 		}

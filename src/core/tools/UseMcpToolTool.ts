@@ -9,6 +9,7 @@ import { toolNamesMatch } from "../../utils/mcp-name"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 interface UseMcpToolParams {
 	server_name: string
@@ -247,7 +248,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			return { isValid: true, availableTools: server.tools.map((t) => t.name), resolvedToolName: tool.name }
 		} catch (error) {
 			logger.error("UseMcpToolTool", "Error validating MCP tool existence:", error)
-			return { isValid: false, error: `Validation failed: ${error instanceof Error ? error.message : String(error)}` }
+			return { isValid: false, error: `Validation failed: ${getErrorMessage(error)}` }
 		}
 	}
 

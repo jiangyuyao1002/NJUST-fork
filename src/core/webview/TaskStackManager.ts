@@ -10,6 +10,7 @@ import type * as vscode from "vscode"
 import { NJUST_AI_CJEventName, type HistoryItem, type TokenUsage, type ToolUsage } from "@njust-ai-cj/types"
 
 import type { Task } from "../task/Task"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export interface TaskStackHost {
 	readonly outputChannel: vscode.OutputChannel
@@ -93,7 +94,7 @@ export class TaskStackManager {
 			} catch (error) {
 				this.log(
 					`[onTaskAborted] Failed to rehydrate after streaming failure: ${
-						error instanceof Error ? error.message : String(error)
+						getErrorMessage(error)
 					}`,
 				)
 			}
@@ -184,7 +185,7 @@ export class TaskStackManager {
 			try {
 				await task.abortTask(true)
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : String(e)
+				const msg = getErrorMessage(e)
 				this.log(`[TaskStackManager#pop] abortTask() failed ${task.taskId}.${task.instanceId}: ${msg}`)
 			}
 
@@ -213,7 +214,7 @@ export class TaskStackManager {
 				} catch (err) {
 					this.log(
 						`[TaskStackManager#pop] Failed to repair parent metadata for ${parentTaskId} (non-fatal): ${
-							err instanceof Error ? err.message : String(err)
+							getErrorMessage(err)
 						}`,
 					)
 				}
@@ -231,7 +232,7 @@ export class TaskStackManager {
 		try {
 			await oldTask.abortTask(true)
 		} catch (e) {
-			const msg = e instanceof Error ? e.message : String(e)
+			const msg = getErrorMessage(e)
 			this.log(
 				`[rehydrate] abortTask() failed for old task ${oldTask.taskId}.${oldTask.instanceId}: ${msg}`,
 			)

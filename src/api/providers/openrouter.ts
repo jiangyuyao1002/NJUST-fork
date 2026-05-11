@@ -38,6 +38,7 @@ import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { globalCostTracker } from "../../utils/costTracker"
 import { logger } from "../../shared/logger"
 import { requireApiKey } from "../interfaces/api-key-validator"
+import { getErrorMessage } from "../../shared/error-utils"
 
 // Add custom interface for OpenRouter params.
 type OpenRouterChatCompletionParams = OpenAI.Chat.ChatCompletionCreateParams & {
@@ -179,7 +180,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 			this.endpoints = endpoints
 		} catch (error) {
 			logger.error("OpenRouter", "Error loading dynamic models:", {
-				error: error instanceof Error ? error.message : String(error),
+				error: getErrorMessage(error),
 				stack: error instanceof Error ? error.stack : undefined,
 			})
 		}

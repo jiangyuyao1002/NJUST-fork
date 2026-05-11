@@ -5,6 +5,7 @@ import type { SkillMetadata, WebviewMessage } from "@njust-ai-cj/types"
 import type { ClineProvider } from "./ClineProvider"
 import { openFile } from "../../integrations/misc/open-file"
 import { t } from "../../i18n"
+import { getErrorMessage } from "../../shared/error-utils"
 
 type SkillSource = SkillMetadata["source"]
 
@@ -62,7 +63,7 @@ export async function handleCreateSkill(
 		await provider.postMessageToWebview({ type: "skills", skills })
 		return skills
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Error creating skill: ${errorMessage}`)
 		vscode.window.showErrorMessage(`Failed to create skill: ${errorMessage}`)
 		return undefined
@@ -98,7 +99,7 @@ export async function handleDeleteSkill(
 		await provider.postMessageToWebview({ type: "skills", skills })
 		return skills
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Error deleting skill: ${errorMessage}`)
 		vscode.window.showErrorMessage(`Failed to delete skill: ${errorMessage}`)
 		return undefined
@@ -134,7 +135,7 @@ export async function handleMoveSkill(
 		await provider.postMessageToWebview({ type: "skills", skills })
 		return skills
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Error moving skill: ${errorMessage}`)
 		vscode.window.showErrorMessage(`Failed to move skill: ${errorMessage}`)
 		return undefined
@@ -169,7 +170,7 @@ export async function handleUpdateSkillModes(
 		await provider.postMessageToWebview({ type: "skills", skills })
 		return skills
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Error updating skill modes: ${errorMessage}`)
 		vscode.window.showErrorMessage(`Failed to update skill modes: ${errorMessage}`)
 		return undefined
@@ -201,7 +202,7 @@ export async function handleOpenSkillFile(provider: ClineProvider, message: Webv
 
 		void openFile(skill.path)
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Error opening skill file: ${errorMessage}`)
 		vscode.window.showErrorMessage(`Failed to open skill file: ${errorMessage}`)
 	}

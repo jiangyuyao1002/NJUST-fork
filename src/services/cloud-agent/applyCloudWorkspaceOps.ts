@@ -1,6 +1,7 @@
 import { execApplyDiff, execWriteFile } from "../mcp-server/tool-executors"
 
 import type { WorkspaceOp } from "./types"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export interface CloudWorkspaceOpResult {
 	path: string
@@ -27,7 +28,7 @@ export async function applySingleCloudWorkspaceOp(cwd: string, op: WorkspaceOp):
 		const message = await execApplyDiff(cwd, { path: op.path, diff: op.diff })
 		return { path: op.path, ok: true, message }
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : String(e)
+		const msg = getErrorMessage(e)
 		return { path: op.path, ok: false, message: msg }
 	}
 }

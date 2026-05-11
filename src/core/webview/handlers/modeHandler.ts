@@ -22,6 +22,7 @@ import {
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../../utils/export"
 
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 export function registerModeHandlers(router: MessageRouter): void {
 	router.register("mode", handleMode)
@@ -98,7 +99,7 @@ async function handleRefreshCustomTools(context: MessageHandlerContext, _message
 		await provider.postMessageToWebview({
 			type: "customToolsResult",
 			tools: [],
-			error: error instanceof Error ? error.message : String(error),
+			error: getErrorMessage(error),
 		})
 	}
 }
@@ -162,7 +163,7 @@ async function handleDeleteCustomMode(context: MessageHandlerContext, message: W
 				vscode.window.showErrorMessage(
 					t("common:errors.delete_rules_folder_failed", {
 						rulesFolderPath,
-						error: error instanceof Error ? error.message : String(error),
+						error: getErrorMessage(error),
 					}),
 				)
 			}
@@ -210,7 +211,7 @@ async function handleExportMode(context: MessageHandlerContext, message: Webview
 				void provider.postMessageToWebview({ type: "exportModeResult", success: false, error: result.error, slug: message.slug })
 			}
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			provider.log(`Failed to export mode ${message.slug}: ${errorMessage}`)
 			void provider.postMessageToWebview({ type: "exportModeResult", success: false, error: errorMessage, slug: message.slug })
 		}
@@ -259,7 +260,7 @@ async function handleImportMode(context: MessageHandlerContext, message: Webview
 			void provider.postMessageToWebview({ type: "importModeResult", success: false, error: "cancelled" })
 		}
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Failed to import mode: ${errorMessage}`)
 		void provider.postMessageToWebview({ type: "importModeResult", success: false, error: errorMessage })
 		vscode.window.showErrorMessage(t("common:errors.mode_import_failed", { error: errorMessage }))
@@ -519,7 +520,7 @@ async function handleOpenDebugHistory(context: MessageHandlerContext, message: W
 		const doc = await vscode.workspace.openTextDocument(tempFilePath)
 		await vscode.window.showTextDocument(doc, { preview: true })
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Error opening debug history: ${errorMessage}`)
 		vscode.window.showErrorMessage(`Failed to open debug history: ${errorMessage}`)
 	}

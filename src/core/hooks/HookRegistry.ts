@@ -16,6 +16,7 @@
  */
 
 import { HookType, AnyHookContext, HookHandler, RegisteredHook, HookResult } from "./types"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export class HookRegistry {
 	private hooks: Map<HookType, RegisteredHook[]> = new Map()
@@ -92,7 +93,7 @@ export class HookRegistry {
 				if (context.hookType.startsWith("pre")) {
 					return {
 						abort: true,
-						message: `Aborted: hook "${hook.name}" threw an error: ${error instanceof Error ? error.message : String(error)}`,
+						message: `Aborted: hook "${hook.name}" threw an error: ${getErrorMessage(error)}`,
 					}
 				}
 			}

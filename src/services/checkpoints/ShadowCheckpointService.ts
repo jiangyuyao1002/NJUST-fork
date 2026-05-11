@@ -15,6 +15,7 @@ import { t } from "../../i18n"
 
 import { CheckpointDiff, CheckpointResult, CheckpointEventMap } from "./types"
 import { getExcludePatterns } from "./excludes"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Creates a SimpleGit instance with sanitized environment variables to prevent
@@ -223,7 +224,7 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 			await git.raw(["add", ".", "--ignore-errors"])
 		} catch (error) {
 			this.log(
-				`[${this.constructor.name}#stageAll] failed to add files to git: ${error instanceof Error ? error.message : String(error)}`,
+				`[${this.constructor.name}#stageAll] failed to add files to git: ${getErrorMessage(error)}`,
 			)
 		}
 	}
@@ -277,7 +278,7 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 			return null
 		} catch (error) {
 			this.log(
-				`[${this.constructor.name}#getNestedGitRepository] failed to check for nested git repos: ${error instanceof Error ? error.message : String(error)}`,
+				`[${this.constructor.name}#getNestedGitRepository] failed to check for nested git repos: ${getErrorMessage(error)}`,
 			)
 
 			// If we can't check, assume there are no nested repos to avoid blocking the feature.
@@ -291,7 +292,7 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 				this.shadowGitConfigWorktree = (await git.getConfig("core.worktree")).value || undefined
 			} catch (error) {
 				this.log(
-					`[${this.constructor.name}#getShadowGitConfigWorktree] failed to get core.worktree: ${error instanceof Error ? error.message : String(error)}`,
+					`[${this.constructor.name}#getShadowGitConfigWorktree] failed to get core.worktree: ${getErrorMessage(error)}`,
 				)
 			}
 		}
@@ -510,7 +511,7 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 				return true
 			} catch (error) {
 				console.error(
-					`[${this.constructor.name}#deleteBranch] failed to delete branch ${branchName}: ${error instanceof Error ? error.message : String(error)}`,
+					`[${this.constructor.name}#deleteBranch] failed to delete branch ${branchName}: ${getErrorMessage(error)}`,
 				)
 
 				return false

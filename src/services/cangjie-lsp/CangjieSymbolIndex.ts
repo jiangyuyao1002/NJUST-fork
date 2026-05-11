@@ -13,6 +13,7 @@ import {
 } from "../tree-sitter/cangjieParser"
 import { Package } from "../../shared/package"
 import { extractCangjieImportPackagePrefixes, posixPathMatchesImportPackage } from "./cangjieImportPaths"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const INDEX_DIR = ".cangjie-index"
 const INDEX_FILE = "symbols.json"
@@ -641,7 +642,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			if (!this._loggedIndexErrors.has(filePath)) {
 				this._loggedIndexErrors.add(filePath)
 				this.outputChannel.appendLine(
-					`[SymbolIndex] Failed to reindex ${filePath}: ${err instanceof Error ? err.message : String(err)}`,
+					`[SymbolIndex] Failed to reindex ${filePath}: ${getErrorMessage(err)}`,
 				)
 			}
 		}

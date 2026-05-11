@@ -16,6 +16,7 @@ import { getApiMetrics } from "../../shared/getApiMetrics"
 import { DIFF_VIEW_URI_SCHEME } from "../../integrations/editor/DiffViewProvider"
 
 import { CheckpointServiceOptions, RepoPerTaskCheckpointService } from "../../services/checkpoints"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const WARNING_THRESHOLD_MS = 5000
 
@@ -123,7 +124,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 		if ((err as any).name === "TimeoutError" && task.enableCheckpoints) {
 			sendCheckpointInitWarn(task, "INIT_TIMEOUT", task.checkpointTimeout)
 		}
-		log(`[Task#getCheckpointService] ${err instanceof Error ? err.message : String(err)}`)
+		log(`[Task#getCheckpointService] ${getErrorMessage(err)}`)
 		task.enableCheckpoints = false
 		task.checkpointServiceInitializing = false
 		return undefined
@@ -199,12 +200,12 @@ async function checkGitInstallation(
 		try {
 			await service.initShadowGit()
 		} catch (err) {
-			log(`[Task#getCheckpointService] initShadowGit -> ${err instanceof Error ? err.message : String(err)}`)
+			log(`[Task#getCheckpointService] initShadowGit -> ${getErrorMessage(err)}`)
 			task.enableCheckpoints = false
 		}
 			task.checkpointServiceInitializing = false
 	} catch (err) {
-		log(`[Task#getCheckpointService] Unexpected error during Git check: ${err instanceof Error ? err.message : String(err)}`)
+		log(`[Task#getCheckpointService] Unexpected error during Git check: ${getErrorMessage(err)}`)
 		console.error("Git check error:", err)
 		task.enableCheckpoints = false
 		task.checkpointServiceInitializing = false

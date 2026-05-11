@@ -175,7 +175,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 
 				this.client = new Ollama(clientOptions)
 			} catch (error: unknown) {
-				const message = error instanceof Error ? error.message : String(error)
+				const message = getErrorMessage(error)
 				throw new Error(`Error creating Ollama client: ${redactApiSecrets(message)}`)
 			}
 		}
@@ -321,7 +321,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 				}
 			}
 		} catch (error: unknown) {
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			const err = error as Record<string, unknown>
 			const statusCode = err.status || err.statusCode
 

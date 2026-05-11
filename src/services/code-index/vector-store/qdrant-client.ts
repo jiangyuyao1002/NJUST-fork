@@ -195,7 +195,7 @@ export class QdrantVectorStore implements IVectorStore {
 			await this._createPayloadIndexes()
 			return created
 		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			logger.error("QdrantVectorStore", `Failed to initialize Qdrant collection "${this.collectionName}":`, errorMessage)
 
 			// If this is already a vector dimension mismatch error (identified by cause), re-throw it as-is
@@ -255,7 +255,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			logger.info("QdrantVectorStore", `Successfully created new collection ${this.collectionName}`)
 			return true
 		} catch (recreationError) {
-			const errorMessage = recreationError instanceof Error ? recreationError.message : String(recreationError)
+			const errorMessage = getErrorMessage(recreationError)
 
 			// Provide detailed error context based on what stage failed
 			let contextualErrorMessage: string
@@ -507,7 +507,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			})
 		} catch (error: unknown) {
 			// Extract more detailed error information
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			const err = error as Record<string, unknown>
 			const response = err.response as Record<string, unknown> | undefined
 			const errorStatus = err.status || response?.status || err.statusCode

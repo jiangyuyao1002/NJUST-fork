@@ -4,6 +4,7 @@ import { singleCompletionHandler } from "../../utils/single-completion-handler"
 import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export interface MessageEnhancerOptions {
 	text: string
@@ -86,7 +87,7 @@ export class MessageEnhancer {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : String(error),
+				error: getErrorMessage(error),
 			}
 		}
 	}

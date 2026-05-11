@@ -43,6 +43,7 @@ import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { logger } from "../../shared/logger"
 import { TIMING } from "../../shared/constants"
+import { getErrorMessage } from "../../shared/error-utils"
 
 // Discriminated union for connection states
 export type ConnectedMcpConnection = {
@@ -2029,7 +2030,7 @@ export class McpHub implements IMcpHubService {
 				try {
 					await this.deleteConnection(conn.server.name, conn.server.source)
 				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : String(error)
+					const errorMessage = getErrorMessage(error)
 					disconnectionErrors.push({
 						serverName: conn.server.name,
 						error: errorMessage,

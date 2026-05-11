@@ -23,6 +23,7 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../utils/logging"
 import { supportPrompt } from "../../shared/support-prompt"
 import { TIMING } from "../../shared/constants"
+import { getErrorMessage } from "../../shared/error-utils"
 
 type GlobalStateKey = keyof GlobalState
 type SecretStateKey = keyof SecretState
@@ -62,7 +63,7 @@ export class ContextProxy {
 				// Revert to original assignment
 				this.stateCache[key] = this.originalContext.globalState.get(key)
 			} catch (error) {
-				logger.error(`Error loading global ${key}: ${error instanceof Error ? error.message : String(error)}`)
+				logger.error(`Error loading global ${key}: ${getErrorMessage(error)}`)
 			}
 		}
 
@@ -72,7 +73,7 @@ export class ContextProxy {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
 					logger.error(
-						`Error loading secret ${key}: ${error instanceof Error ? error.message : String(error)}`,
+						`Error loading secret ${key}: ${getErrorMessage(error)}`,
 					)
 				}
 			}),
@@ -81,7 +82,7 @@ export class ContextProxy {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
 					logger.error(
-						`Error loading global secret ${key}: ${error instanceof Error ? error.message : String(error)}`,
+						`Error loading global secret ${key}: ${getErrorMessage(error)}`,
 					)
 				}
 			}),
@@ -168,7 +169,7 @@ export class ContextProxy {
 			}
 		} catch (error) {
 			logger.error(
-				`Error during customCondensingPrompt migration: ${error instanceof Error ? error.message : String(error)}`,
+				`Error during customCondensingPrompt migration: ${getErrorMessage(error)}`,
 			)
 		}
 	}
@@ -206,7 +207,7 @@ export class ContextProxy {
 			}
 		} catch (error) {
 			logger.error(
-				`Error during old default condensing prompt migration: ${error instanceof Error ? error.message : String(error)}`,
+				`Error during old default condensing prompt migration: ${getErrorMessage(error)}`,
 			)
 		}
 	}
@@ -272,7 +273,7 @@ export class ContextProxy {
 			}
 		} catch (error) {
 			logger.error(
-				`Error during invalid API provider migration: ${error instanceof Error ? error.message : String(error)}`,
+				`Error during invalid API provider migration: ${getErrorMessage(error)}`,
 			)
 		}
 	}
@@ -314,7 +315,7 @@ export class ContextProxy {
 			}
 		} catch (error) {
 			logger.error(
-				`Error during image generation settings migration: ${error instanceof Error ? error.message : String(error)}`,
+				`Error during image generation settings migration: ${getErrorMessage(error)}`,
 			)
 		}
 	}
@@ -403,7 +404,7 @@ export class ContextProxy {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
 					logger.error(
-						`Error refreshing secret ${key}: ${error instanceof Error ? error.message : String(error)}`,
+						`Error refreshing secret ${key}: ${getErrorMessage(error)}`,
 					)
 				}
 			}),
@@ -412,7 +413,7 @@ export class ContextProxy {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
 					logger.error(
-						`Error refreshing global secret ${key}: ${error instanceof Error ? error.message : String(error)}`,
+						`Error refreshing global secret ${key}: ${getErrorMessage(error)}`,
 					)
 				}
 			}),

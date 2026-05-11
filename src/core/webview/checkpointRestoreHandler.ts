@@ -5,6 +5,7 @@ import * as vscode from "vscode"
 import pWaitFor from "p-wait-for"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export interface CheckpointRestoreConfig {
 	provider: ClineProvider
@@ -82,7 +83,7 @@ export async function handleCheckpointRestoreOperation(config: CheckpointRestore
 	} catch (error) {
 		logger.error("CheckpointRestore", `Error in checkpoint restore (${operation}):`, error)
 		vscode.window.showErrorMessage(
-			`Error during checkpoint restore: ${error instanceof Error ? error.message : String(error)}`,
+			`Error during checkpoint restore: ${getErrorMessage(error)}`,
 		)
 		throw error
 	}

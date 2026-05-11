@@ -7,6 +7,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { t } from "../../i18n"
 
 import { importSettingsFromPath, ImportOptions } from "./importExport"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Automatically imports NJUST_AI_CJ settings from a specified path if it exists.
@@ -57,7 +58,7 @@ export async function autoImportSettings(
 			vscode.window.showWarningMessage(t("common:warnings.auto_import_failed", { error: result.error }))
 		}
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		outputChannel.appendLine(`[AutoImport] Unexpected error during auto-import: ${errorMessage}`)
 
 		// Log error but don't fail extension activation

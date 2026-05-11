@@ -16,6 +16,7 @@ import { recordSecurityMetric, startTraceSpan } from "../security/metrics"
 import { RetryableError } from "./errors"
 import { DualSchemaAdapter, type JSONSchema } from "./DualSchemaAdapter"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 // ── Progress data types (Task 4.1) ───────────────────────────────────
 /**
@@ -417,7 +418,7 @@ export abstract class BaseTool<TName extends ToolName> {
 					`handling partial ${this.name}`,
 					error instanceof Error ? error : new Error(String(error)),
 				)
-				toolSpan.end("error", { stage: "partial", error: error instanceof Error ? error.message : String(error) })
+				toolSpan.end("error", { stage: "partial", error: getErrorMessage(error) })
 			}
 			return
 		}
@@ -446,7 +447,7 @@ export abstract class BaseTool<TName extends ToolName> {
 			}
 		} catch (error) {
 			logger.error("BaseTool", "Error parsing parameters:", error)
-			const errorMessage = `Failed to parse ${this.name} parameters: ${error instanceof Error ? error.message : String(error)}`
+			const errorMessage = `Failed to parse ${this.name} parameters: ${getErrorMessage(error)}`
 			await callbacks.handleError(`parsing ${this.name} args`, new Error(errorMessage))
 			toolSpan.end("error", { stage: "parse", error: errorMessage })
 			// Note: handleError already emits a tool_result via formatResponse.toolError in the caller.
@@ -715,7 +716,7 @@ export abstract class BaseTool<TName extends ToolName> {
 		toolSpan.end("error", {
 			stage: "execute",
 			attempts: attempt,
-			error: lastError instanceof Error ? lastError.message : String(lastError),
+			error: getErrorMessage(lastError),
 		})
 		throw lastError instanceof Error ? lastError : new Error(String(lastError))
 		} finally {

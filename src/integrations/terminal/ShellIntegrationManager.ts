@@ -3,6 +3,7 @@ import * as path from "path"
 import * as vscode from "vscode"
 
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export class ShellIntegrationManager {
 	public static terminalTmpDirs: Map<number, string> = new Map()
@@ -102,7 +103,7 @@ export class ShellIntegrationManager {
 
 			return true
 		} catch (error: unknown) {
-			logger.error("ShellIntegrationManager", `Error cleaning up temporary directory ${tmpDir}: ${error instanceof Error ? error.message : String(error)}`)
+			logger.error("ShellIntegrationManager", `Error cleaning up temporary directory ${tmpDir}: ${getErrorMessage(error)}`)
 
 			return false
 		}

@@ -1,3 +1,4 @@
+import { getErrorMessage } from "../../shared/error-utils"
 import fs from "fs/promises"
 import path from "path"
 
@@ -22,8 +23,7 @@ import {
 	CRITICAL_SIGNATURE_MODULES,
 	resolveRootPackageName,
 } from "./cangjiePreflightCheck"
-import {
-	countOccurrences,
+import {	countOccurrences,
 	safeLiteralReplace,
 	detectLineEnding,
 	normalizeToLF,
@@ -257,7 +257,7 @@ export class EditTool extends BaseTool<"edit"> {
 			} catch (error) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("edit")
-				const errorDetails = error instanceof Error ? error.message : String(error)
+				const errorDetails = getErrorMessage(error)
 				const formattedError = `Failed to read file: ${absolutePath}\n\n<error_details>\nRead error: ${errorDetails}\n\nRecovery suggestions:\n1. Verify the file exists and is readable\n2. Check file permissions\n3. If the file may have changed, use read_file to confirm its current contents\n</error_details>`
 				pushToolResult(formattedError)
 				return

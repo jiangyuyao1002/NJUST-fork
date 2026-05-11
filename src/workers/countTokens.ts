@@ -5,6 +5,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { tiktoken } from "../utils/tiktoken"
 
 import { type CountTokensResult } from "./types"
+import { getErrorMessage } from "../shared/error-utils"
 
 async function countTokens(content: Anthropic.Messages.ContentBlockParam[]): Promise<CountTokensResult> {
 	try {
@@ -13,7 +14,7 @@ async function countTokens(content: Anthropic.Messages.ContentBlockParam[]): Pro
 	} catch (error) {
 		return {
 			success: false,
-			error: error instanceof Error ? error.message : "Unknown error",
+			error: getErrorMessage(error),
 		}
 	}
 }

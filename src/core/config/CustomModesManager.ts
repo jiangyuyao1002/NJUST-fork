@@ -21,6 +21,7 @@ import { logger } from "../../utils/logging"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { ensureSettingsDirectoryExists } from "../../utils/globalContext"
 import { t } from "../../i18n"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const ROOMODES_FILENAME = ".roomodes"
 
@@ -178,7 +179,7 @@ export class CustomModesManager {
 					return JSON.parse(content)
 				} catch {
 					// JSON also failed, show the original YAML error
-					const errorMsg = yamlError instanceof Error ? yamlError.message : String(yamlError)
+					const errorMsg = getErrorMessage(yamlError)
 					console.error(`[CustomModesManager] Failed to parse YAML from ${filePath}:`, errorMsg)
 
 					const lineMatch = errorMsg.match(/at line (\d+)/)
@@ -191,7 +192,7 @@ export class CustomModesManager {
 			}
 
 			// For non-.roomodes files, just log and return empty object
-			const errorMsg = yamlError instanceof Error ? yamlError.message : String(yamlError)
+			const errorMsg = getErrorMessage(yamlError)
 			console.error(`[CustomModesManager] Failed to parse YAML from ${filePath}:`, errorMsg)
 			return {}
 		}
@@ -238,7 +239,7 @@ export class CustomModesManager {
 		} catch (error) {
 			// Only log if the error wasn't already handled in parseYamlSafely
 			if (!(error as any).alreadyHandled) {
-				const errorMsg = `Failed to load modes from ${filePath}: ${error instanceof Error ? error.message : String(error)}`
+				const errorMsg = `Failed to load modes from ${filePath}: ${getErrorMessage(error)}`
 				console.error(`[CustomModesManager] ${errorMsg}`)
 			}
 			return []
@@ -477,7 +478,7 @@ export class CustomModesManager {
 				await this.refreshMergedState()
 			})
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			logger.error("Failed to update custom mode", { slug, error: errorMessage })
 			vscode.window.showErrorMessage(t("common:customModes.errors.updateFailed", { error: errorMessage }))
 			throw error
@@ -570,7 +571,7 @@ export class CustomModesManager {
 				await this.refreshMergedState()
 			})
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			vscode.window.showErrorMessage(t("common:customModes.errors.deleteFailed", { error: errorMessage }))
 		}
 	}
@@ -617,7 +618,7 @@ export class CustomModesManager {
 			}
 		} catch (error) {
 			logger.error(`Error deleting rules folder for mode ${slug}`, {
-				error: error instanceof Error ? error.message : String(error),
+				error: getErrorMessage(error),
 			})
 		}
 	}
@@ -630,7 +631,7 @@ export class CustomModesManager {
 			this.clearCache()
 			await this.onUpdate()
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			vscode.window.showErrorMessage(t("common:customModes.errors.resetFailed", { error: errorMessage }))
 		}
 	}
@@ -722,7 +723,7 @@ export class CustomModesManager {
 		} catch (error) {
 			logger.error("Failed to check rules directory for mode", {
 				slug,
-				error: error instanceof Error ? error.message : String(error),
+				error: getErrorMessage(error),
 			})
 			return false
 		}
@@ -852,7 +853,7 @@ export class CustomModesManager {
 
 			return { success: true, yaml: yamlContent }
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			logger.error("Failed to export mode with rules", { slug, error: errorMessage })
 			return { success: false, error: errorMessage }
 		}
@@ -964,7 +965,7 @@ export class CustomModesManager {
 			} catch (parseError) {
 				return {
 					success: false,
-					error: `Invalid YAML format: ${parseError instanceof Error ? parseError.message : "Failed to parse YAML"}`,
+					error: `Invalid YAML format: ${getErrorMessage(parseError)}`,
 				}
 			}
 
@@ -1015,7 +1016,7 @@ export class CustomModesManager {
 			// Return the imported mode's slug so the UI can activate it
 			return { success: true, slug: importData.customModes[0]?.slug }
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			logger.error("Failed to import mode with rules", { error: errorMessage })
 			return { success: false, error: errorMessage }
 		}

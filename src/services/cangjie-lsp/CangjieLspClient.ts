@@ -9,6 +9,7 @@ import {
 	TransportKind,
 } from "vscode-languageclient/node"
 import { Package } from "../../shared/package"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const CANGJIE_LANGUAGE_ID = "cangjie"
 const LSP_SERVER_NAME = "Cangjie Language Server"
@@ -390,7 +391,7 @@ export class CangjieLspClient {
 					await this.start()
 				})
 				.catch((err) => {
-					const msg = err instanceof Error ? err.message : String(err)
+					const msg = getErrorMessage(err)
 					this.extensionOutputChannel.appendLine(`[CangjieLSP] Config restart failed: ${msg}`)
 				})
 		})
@@ -580,7 +581,7 @@ export class CangjieLspClient {
 			this.autoRestartCount = 0
 			this.fireOnCangjieActivatedOnce()
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			this.extensionOutputChannel.appendLine(`[CangjieLSP] Failed to start server: ${message}`)
 			this.setState("error", message)
 			if (message.includes("initialize fail") || message.includes("system api")) {
@@ -650,7 +651,7 @@ export class CangjieLspClient {
 					await this.client.stop()
 				}
 			} catch (error) {
-				const message = error instanceof Error ? error.message : String(error)
+				const message = getErrorMessage(error)
 				this.extensionOutputChannel.appendLine(`[CangjieLSP] Error stopping server: ${message}`)
 			}
 			this.client = undefined

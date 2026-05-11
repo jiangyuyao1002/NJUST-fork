@@ -67,6 +67,7 @@ import { debugLog } from "../../utils/debugLog"
 import { TokenBucketRateLimiter } from "../../services/rate-limiter/TokenBucketRateLimiter"
 import { BackpressureController } from "../stream/BackpressureController"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000
 
@@ -635,7 +636,7 @@ export class TaskExecutor {
 						} catch (persistentErr) {
 							const stats = persistentRetryHandler.getStats()
 							throw new Error(
-								`[Task#${h.taskId}] Persistent retry ended after ${stats.totalRetries} attempts: ${persistentErr instanceof Error ? persistentErr.message : String(persistentErr)}`,
+								`[Task#${h.taskId}] Persistent retry ended after ${stats.totalRetries} attempts: ${getErrorMessage(persistentErr)}`,
 							)
 						}
 
@@ -668,7 +669,7 @@ export class TaskExecutor {
 				h.stateMachine.force(TaskState.ERROR)
 				const { response } = await h.ask(
 					"api_req_failed",
-					error instanceof Error ? error.message : String(error),
+					getErrorMessage(error),
 				)
 
 				if (response !== "yesButtonClicked") {
@@ -1527,7 +1528,7 @@ export class TaskExecutor {
 						// Determine cancellation reason
 						const cancelReason: ClineApiReqCancelReason = t.abort ? "user_cancelled" : "streaming_failed"
 
-						const rawErrorMessage = error instanceof Error ? error.message : String(error)
+						const rawErrorMessage = getErrorMessage(error)
 						const streamingFailedMessage = t.abort
 							? undefined
 							: `${i18nT("common:interruption.streamTerminatedByProvider")}: ${rawErrorMessage}`
@@ -2083,7 +2084,7 @@ export class TaskExecutor {
 				// A tool execution or presentAssistantMessage threw an unhandled
 					const h = this.host
 				// exception. Log it, notify the user, and end the task gracefully.
-				const errMsg = error instanceof Error ? error.message : String(error)
+				const errMsg = getErrorMessage(error)
 				logger.error("TaskExecutor",
 					`Unhandled error in request loop for task ${h.taskId}:`,
 					errMsg,

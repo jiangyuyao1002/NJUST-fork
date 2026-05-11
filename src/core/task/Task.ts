@@ -119,6 +119,7 @@ import { TaskExecutor, type TaskExecutorHost } from "./TaskExecutor"
 import { presentAssistantMessage } from "../assistant-message"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
 import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export interface TaskOptions extends CreateTaskOptions {
 	host?: ITaskHost
@@ -764,7 +765,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// If there's an error getting state, use the default mode
 			this._taskMode = defaultModeSlug
 			// Use the provider's log method for better error visibility
-			const errorMessage = `Failed to initialize task mode: ${error instanceof Error ? error.message : String(error)}`
+			const errorMessage = `Failed to initialize task mode: ${getErrorMessage(error)}`
 			host.log(errorMessage)
 		}
 	}
@@ -805,7 +806,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this._taskApiConfigName = "default"
 			}
 			// Use the provider's log method for better error visibility
-			const errorMessage = `Failed to initialize task API config name: ${error instanceof Error ? error.message : String(error)}`
+			const errorMessage = `Failed to initialize task API config name: ${getErrorMessage(error)}`
 			host.log(errorMessage)
 		}
 	}

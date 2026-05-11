@@ -7,6 +7,7 @@ import { getTaskDirectoryPath } from "../../utils/storage"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { toolResultCache } from "./helpers/ToolResultCache"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /** Default byte limit for read operations (40KB) */
 const DEFAULT_LIMIT = 40 * 1024 // 40KB default limit
@@ -212,7 +213,7 @@ export class ReadCommandOutputTool extends BaseTool<"read_command_output"> {
 			toolResultCache.set(cacheKey, result)
 			pushToolResult(result)
 		} catch (error) {
-			const errorMsg = error instanceof Error ? error.message : String(error)
+			const errorMsg = getErrorMessage(error)
 			await task.say("error", `Error reading command output: ${errorMsg}`)
 			task.didToolFailInCurrentTurn = true
 			pushToolResult(`Error reading command output: ${errorMsg}`)

@@ -6,6 +6,7 @@ import { constants as fsConstants } from "fs"
 import { logger } from "../shared/logger"
 import { Package } from "../shared/package"
 import { t } from "../i18n"
+import { getErrorMessage } from "../shared/error-utils"
 
 /**
  * Gets the base storage path for conversations
@@ -40,7 +41,7 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 		return customStoragePath
 	} catch (error) {
 		// If path is unusable, report error and fall back to default path
-		logger.error("StorageProvider", `Custom storage path is unusable: ${error instanceof Error ? error.message : String(error)}`)
+		logger.error("StorageProvider", `Custom storage path is unusable: ${getErrorMessage(error)}`)
 		if (vscode.window) {
 			vscode.window.showErrorMessage(t("common:errors.custom_storage_path_unusable", { path: customStoragePath }))
 		}
@@ -138,7 +139,7 @@ export async function promptForCustomStoragePath(): Promise<void> {
 					vscode.window.showErrorMessage(
 						t("common:errors.cannot_access_path", {
 							path: result,
-							error: error instanceof Error ? error.message : String(error),
+							error: getErrorMessage(error),
 						}),
 					)
 				}

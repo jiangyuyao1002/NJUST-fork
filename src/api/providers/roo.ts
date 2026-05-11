@@ -19,6 +19,7 @@ import { getModels, getModelsFromCache } from "../providers/fetchers/modelCache"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { generateImageWithProvider, generateImageWithImagesApi, ImageGenerationResult } from "./utils/image-generation"
 import { t } from "../../i18n"
+import { getErrorMessage } from "../../shared/error-utils"
 
 // Extend OpenAI's CompletionUsage to include Roo specific fields
 interface RooUsage extends OpenAI.CompletionUsage {
@@ -319,7 +320,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 			}
 		} catch (error) {
 			const errorContext = {
-				error: error instanceof Error ? error.message : String(error),
+				error: getErrorMessage(error),
 				stack: error instanceof Error ? error.stack : undefined,
 				modelId: this.options.apiModelId,
 				hasTaskId: Boolean(metadata?.taskId),
@@ -347,7 +348,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 		} catch (error) {
 			// Enhanced error logging with more context
 			logger.error("RooHandler", "Error loading dynamic models:", {
-				error: error instanceof Error ? error.message : String(error),
+				error: getErrorMessage(error),
 				stack: error instanceof Error ? error.stack : undefined,
 				baseURL,
 				hasApiKey: Boolean(apiKey),

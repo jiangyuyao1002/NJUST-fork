@@ -20,6 +20,7 @@ import { handleCheckpointRestoreOperation } from "../checkpointRestoreHandler"
 import { resolveIncomingImages } from "./shared-utils"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { logger } from "../../../shared/logger"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 export function registerTaskHandlers(router: MessageRouter): void {
 	router.register("webviewDidLaunch", handleWebviewDidLaunch)
@@ -124,7 +125,7 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 		}
 	} catch (e) {
 		logger.error("TaskMessageHandler", "Error in delete message:", e)
-		vscode.window.showErrorMessage(t("common:errors.message.error_deleting_message", { error: e instanceof Error ? e.message : String(e) }))
+		vscode.window.showErrorMessage(t("common:errors.message.error_deleting_message", { error: getErrorMessage(e) }))
 	}
 }
 
@@ -197,7 +198,7 @@ async function doEditConfirm(context: MessageHandlerContext, messageTs: number, 
 		await currentCline.submitUserMessage(editedContent, images)
 	} catch (e) {
 		logger.error("TaskMessageHandler", "Error in edit message:", e)
-		vscode.window.showErrorMessage(t("common:errors.message.error_editing_message", { error: e instanceof Error ? e.message : String(e) }))
+		vscode.window.showErrorMessage(t("common:errors.message.error_editing_message", { error: getErrorMessage(e) }))
 	}
 }
 
@@ -241,7 +242,7 @@ async function handleNewTask(context: MessageHandlerContext, message: WebviewMes
 		await context.provider.postMessageToWebview({ type: "invoke", invoke: "newChat" })
 	} catch (error) {
 		await context.provider.postMessageToWebview({ type: "invoke", invoke: "newChat" })
-		vscode.window.showErrorMessage(`Failed to create task: ${error instanceof Error ? error.message : String(error)}`)
+		vscode.window.showErrorMessage(`Failed to create task: ${getErrorMessage(error)}`)
 	}
 }
 
@@ -286,7 +287,7 @@ async function handleDeleteMultipleTasksWithIds(context: MessageHandlerContext, 
 		const batch = ids.slice(i, i + BATCH)
 		const r = await Promise.all(batch.map(async (id: string) => {
 			try { await provider.deleteTaskWithId(id); return { id, success: true } }
-			catch (e) { logger.info("TaskMessageHandler", `Failed to delete task ${id}: ${e instanceof Error ? e.message : String(e)}`); return { id, success: false } }
+			catch (e) { logger.info("TaskMessageHandler", `Failed to delete task ${id}: ${getErrorMessage(e)}`); return { id, success: false } }
 		}))
 		results.push(...r)
 		await provider.postStateToWebview()
@@ -308,7 +309,7 @@ async function handleGetTaskWithAggregatedCosts(context: MessageHandlerContext, 
 		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: taskId, historyItem: result.historyItem, aggregatedCosts: result.aggregatedCosts })
 	} catch (error) {
 		logger.error("TaskMessageHandler", "Error getting task with aggregated costs:", error)
-		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: message.text, error: error instanceof Error ? error.message : String(error) })
+		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: message.text, error: getErrorMessage(error) })
 	}
 }
 

@@ -22,6 +22,7 @@ import { ShadowCheckpointService } from "../../services/checkpoints/ShadowCheckp
 import { pruneStaleRegistrations, NO_TASK_KEY } from "../../services/cangjie-lsp/cangjieGeneratedTestCleanup"
 import { aggregateTaskCostsRecursive, type AggregatedCosts } from "./aggregateTaskCosts"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export interface TaskHistoryHost {
 	readonly context: vscode.ExtensionContext
@@ -87,13 +88,13 @@ export class TaskHistoryService {
 					)
 				}
 			} catch (e) {
-				this.log(`[CangjieTestCleanup] prune failed: ${e instanceof Error ? e.message : String(e)}`)
+				this.log(`[CangjieTestCleanup] prune failed: ${getErrorMessage(e)}`)
 			}
 
 			const items = this.host.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task)
 			void this.host.postMessageToWebview({ type: "taskHistoryUpdated", taskHistory: items })
 		} catch (error) {
-			this.log(`[TaskHistoryService] Init error: ${error instanceof Error ? error.message : String(error)}`)
+			this.log(`[TaskHistoryService] Init error: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -128,7 +129,7 @@ export class TaskHistoryService {
 			} catch (error) {
 				logger.warn(
 					"TaskHistoryService",
-					`getTaskWithId: api_conversation_history.json corrupted for task ${id}, returning empty history: ${error instanceof Error ? error.message : String(error)}`,
+					`getTaskWithId: api_conversation_history.json corrupted for task ${id}, returning empty history: ${getErrorMessage(error)}`,
 				)
 			}
 		} else {
@@ -249,7 +250,7 @@ export class TaskHistoryService {
 				} catch (error) {
 					logger.error(
 						"TaskHistoryService",
-						`deleteTaskWithId: failed to delete associated shadow repository or branch: ${error instanceof Error ? error.message : String(error)}`,
+						`deleteTaskWithId: failed to delete associated shadow repository or branch: ${getErrorMessage(error)}`,
 					)
 				}
 
@@ -260,7 +261,7 @@ export class TaskHistoryService {
 				} catch (error) {
 					logger.error(
 						"TaskHistoryService",
-						`deleteTaskWithId: failed to remove task directory: ${error instanceof Error ? error.message : String(error)}`,
+						`deleteTaskWithId: failed to remove task directory: ${getErrorMessage(error)}`,
 					)
 				}
 			}
@@ -369,7 +370,7 @@ export class TaskHistoryService {
 				await this.host.contextProxy.setValue("taskHistory", items)
 			} catch (err) {
 				this.log(
-					`[scheduleGlobalStateWriteThrough] Failed: ${err instanceof Error ? err.message : String(err)}`,
+					`[scheduleGlobalStateWriteThrough] Failed: ${getErrorMessage(err)}`,
 				)
 			}
 		}, TaskHistoryService.GLOBAL_STATE_WRITE_THROUGH_DEBOUNCE_MS)
@@ -383,7 +384,7 @@ export class TaskHistoryService {
 
 		const items = this.host.taskHistoryStore.getAll()
 		this.host.contextProxy.setValue("taskHistory", items).catch((err: unknown) => {
-			this.log(`[flushGlobalStateWriteThrough] Failed: ${err instanceof Error ? err.message : String(err)}`)
+			this.log(`[flushGlobalStateWriteThrough] Failed: ${getErrorMessage(err)}`)
 		})
 	}
 

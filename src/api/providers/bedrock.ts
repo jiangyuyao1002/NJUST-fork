@@ -46,6 +46,7 @@ import { shouldUseReasoningBudget } from "../../shared/api"
 import { normalizeToolSchema } from "../../utils/json-schema"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 import { getApiRequestTimeout } from "./utils/timeout-config"
+import { getErrorMessage } from "../../shared/error-utils"
 
 interface BedrockError extends Error {
 	status?: number
@@ -807,7 +808,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 	): ApiProviderError {
 		const modelId = this.getModel().id
 		if (TelemetryService.hasInstance()) {
-			const origMsg = error instanceof Error ? error.message : String(error)
+			const origMsg = getErrorMessage(error)
 			const forTelemetry = new ApiProviderError(origMsg)
 			;forTelemetry.provider = this.providerName
 			;forTelemetry.modelId = modelId
@@ -1555,7 +1556,7 @@ Please check:
 			ctx: "bedrock",
 			customArn: this.options.awsCustomArn,
 			errorType,
-			errorMessage: error instanceof Error ? error.message : String(error),
+			errorMessage: getErrorMessage(error),
 			...(error instanceof Error && error.stack ? { errorStack: error.stack } : {}),
 			...(this.client?.config?.region ? { clientRegion: this.client.config.region } : {}),
 		})

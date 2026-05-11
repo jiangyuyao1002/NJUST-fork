@@ -285,7 +285,7 @@ export async function presentAssistantMessage(cline: Task) {
 				const errorString = `Error ${action}: ${JSON.stringify(serializeError(error))}`
 				await cline.say(
 					"error",
-					`Error ${action}:\n${error instanceof Error ? error.message : String(error)}`,
+					`Error ${action}:\n${getErrorMessage(error)}`,
 				)
 				pushToolResult(formatResponse.toolError(errorString))
 			}
@@ -442,7 +442,7 @@ export async function presentAssistantMessage(cline: Task) {
 								const errorString = `Error ${action}: ${JSON.stringify(serializeError(err))}`
 								await cline.say(
 									"error",
-									`Error ${action}:\n${err instanceof Error ? err.message : String(err)}`,
+									`Error ${action}:\n${getErrorMessage(err)}`,
 								)
 								pushToolResult(formatResponse.toolError(errorString), { isError: true })
 								if (toolBlock.name === "execute_command") {
@@ -791,7 +791,7 @@ export async function presentAssistantMessage(cline: Task) {
 
 				await cline.say(
 					"error",
-					`Error ${action}:\n${error instanceof Error ? error.message : String(error)}`,
+					`Error ${action}:\n${getErrorMessage(error)}`,
 				)
 
 				pushToolResult(formatResponse.toolError(errorString))
@@ -867,7 +867,7 @@ export async function presentAssistantMessage(cline: Task) {
 					// 2. NOT set didAlreadyUseTool = true (the tool was never executed, just failed validation)
 					// This prevents the stream from being interrupted with "Response interrupted by tool use result"
 					// which would cause the extension to appear to hang
-					const errorContent = formatResponse.toolError(error instanceof Error ? error.message : String(error))
+					const errorContent = formatResponse.toolError(getErrorMessage(error))
 					// Push tool_result directly without setting didAlreadyUseTool
 					cline.pushToolResultToUserContent({
 						type: "tool_result",
@@ -959,11 +959,11 @@ export async function presentAssistantMessage(cline: Task) {
 							// result so the API always gets a tool_result for every tool_use.
 							console.error(
 								`[presentAssistantMessage] Tool ${block.name} failed after retries:`,
-								err instanceof Error ? err.message : String(err),
+								getErrorMessage(err),
 							)
 							pushToolResult(
 								formatResponse.toolError(
-									`Tool ${block.name} failed: ${err instanceof Error ? err.message : String(err)}`,
+									`Tool ${block.name} failed: ${getErrorMessage(err)}`,
 								)
 							)
 						}
@@ -1087,6 +1087,6 @@ async function checkpointSaveAndMark(task: Task) {
 		await task.checkpointSave(true)
 		task.currentStreamingDidCheckpoint = true
 	} catch (error) {
-		console.error(`[Task#presentAssistantMessage] Error saving checkpoint: ${error instanceof Error ? error instanceof Error ? error.message : String(error) : String(error)}`, error)
+		console.error(`[Task#presentAssistantMessage] Error saving checkpoint: ${error instanceof Error ? getErrorMessage(error) : String(error)}`, error)
 	}
 }

@@ -15,6 +15,7 @@ import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 import { calculateApiCostAnthropic } from "../../shared/cost"
 import { convertOpenAIToolsToAnthropic } from "../../core/prompts/tools/native-tools/converters"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Converts OpenAI tool_choice to Anthropic ToolChoice format
@@ -117,7 +118,7 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 			stream = await this.client.messages.create(requestParams)
 		} catch (error) {
 			const status = (error as any)?.status
-			const msg = error instanceof Error ? error.message : String(error)
+			const msg = getErrorMessage(error)
 			throw Object.assign(new Error(`MiniMax API error (HTTP ${status || "?"}): ${msg}`), { status })
 		}
 

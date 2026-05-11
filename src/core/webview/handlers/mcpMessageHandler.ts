@@ -10,6 +10,7 @@ import { t } from "../../../i18n"
 import { safeWriteJson } from "../../../utils/safeWriteJson"
 
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 export function registerMcpHandlers(router: MessageRouter): void {
 	router.register("allowedCommands", handleAllowedCommands)
@@ -79,7 +80,7 @@ async function handleDeleteMcpServer(context: MessageHandlerContext, message: We
 		provider.log(`Successfully deleted MCP server: ${message.serverName}`)
 		await provider.postStateToWebview()
 	} catch (error) {
-		provider.log(`Failed to delete MCP server: ${error instanceof Error ? error.message : String(error)}`)
+		provider.log(`Failed to delete MCP server: ${getErrorMessage(error)}`)
 	}
 }
 
@@ -148,6 +149,6 @@ async function handleTestWebSearch(context: MessageHandlerContext, _message: Web
 		await searchProvider.search("test", 1)
 		await provider.postMessageToWebview({ type: "webSearchStatus", text: JSON.stringify({ status: "ok", provider: providerName }) })
 	} catch (error) {
-		await provider.postMessageToWebview({ type: "webSearchStatus", text: JSON.stringify({ status: "error", message: error instanceof Error ? error.message : String(error) }) })
+		await provider.postMessageToWebview({ type: "webSearchStatus", text: JSON.stringify({ status: "error", message: getErrorMessage(error) }) })
 	}
 }

@@ -25,6 +25,7 @@ import { generateNormalizedAbsolutePath, generateRelativeFilePath } from "../sha
 import { isPathInIgnoredDirectory } from "../../glob/ignore-utils"
 import { Package } from "../../../shared/package"
 import { logger } from "../../../shared/logger"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 /**
  * Implementation of the file watcher interface
@@ -220,7 +221,7 @@ export class FileWatcher implements IFileWatcher {
 					})
 				}
 			} catch (error: unknown) {
-				const _errorMessage = error instanceof Error ? error.message : String(error)
+				const _errorMessage = getErrorMessage(error)
 				const err = error as Record<string, unknown>
 				const response = err.response as Record<string, unknown> | undefined
 				const _errorStatus = err.status || response?.status || err.statusCode

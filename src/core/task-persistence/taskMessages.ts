@@ -8,6 +8,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getTaskDirectoryPath } from "../../utils/storage"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export type ReadTaskMessagesOptions = {
 	taskId: string
@@ -34,7 +35,7 @@ export async function readTaskMessages({
 			return parsedData
 		} catch (error) {
 			console.warn(
-				`[readTaskMessages] Failed to parse ${filePath} for task ${taskId}, returning empty: ${error instanceof Error ? error.message : String(error)}`,
+				`[readTaskMessages] Failed to parse ${filePath} for task ${taskId}, returning empty: ${getErrorMessage(error)}`,
 			)
 			return []
 		}

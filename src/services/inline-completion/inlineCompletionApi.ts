@@ -1,5 +1,6 @@
 import { buildApiHandler, type ApiHandler } from "../../api"
 import type { ClineProvider } from "../../core/webview/ClineProvider"
+import { getErrorMessage } from "../../shared/error-utils"
 
 let loggedMissingApiProfile = false
 
@@ -29,7 +30,7 @@ export async function resolveInlineCompletionApiHandler(
 		return buildApiHandler(apiConfiguration)
 	} catch (error) {
 		log?.(
-			`[InlineCompletion] Could not build API handler: ${error instanceof Error ? error.message : String(error)}`,
+			`[InlineCompletion] Could not build API handler: ${getErrorMessage(error)}`,
 		)
 		return undefined
 	}

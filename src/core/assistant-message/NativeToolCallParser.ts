@@ -17,6 +17,7 @@ import type {
 	ApiStreamToolCallEndChunk,
 } from "../../api/transform/stream"
 import { MCP_TOOL_PREFIX, MCP_TOOL_SEPARATOR, parseMcpToolName, normalizeMcpToolName } from "../../utils/mcp-name"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Helper type to extract properly typed native arguments for a given tool.
@@ -1182,7 +1183,7 @@ export class NativeToolCallParser {
 			return result
 		} catch (error) {
 			console.error(
-				`Failed to parse tool call arguments: ${error instanceof Error ? error.message : String(error)}`,
+				`Failed to parse tool call arguments: ${getErrorMessage(error)}`,
 			)
 
 			console.error(`Tool call: ${JSON.stringify(toolCall, null, 2)}`)

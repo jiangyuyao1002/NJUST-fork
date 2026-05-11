@@ -24,6 +24,7 @@ import { ICodeParser, IEmbedder, IFileWatcher, IVectorStore } from "./interfaces
 import { CodeIndexConfigManager } from "./config-manager"
 import { CacheManager } from "./cache-manager"
 import { BATCH_SEGMENT_THRESHOLD } from "./constants"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Factory class responsible for creating and configuring code indexing service dependencies.
@@ -120,7 +121,7 @@ export class CodeIndexServiceFactory {
 			// If validation throws an exception, preserve the original error message
 			return {
 				valid: false,
-				error: error instanceof Error ? error.message : "embeddings:validation.configurationError",
+				error: getErrorMessage(error),
 			}
 		}
 	}

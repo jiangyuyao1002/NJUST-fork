@@ -28,6 +28,7 @@ import {
 import { isPathInIgnoredDirectory } from "../../glob/ignore-utils"
 import { Package } from "../../../shared/package"
 import { logger } from "../../../shared/logger"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 export class DirectoryScanner implements IDirectoryScanner {
 	private readonly batchSegmentThreshold: number
@@ -394,7 +395,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 						const errorObj = deleteError as Record<string, unknown>
 						const _errorStatus =
 							errorObj?.status || (errorObj?.response as Record<string, unknown>)?.status || errorObj?.statusCode
-						const errorMessage = deleteError instanceof Error ? deleteError.message : String(deleteError)
+						const errorMessage = getErrorMessage(deleteError)
 
 						logger.error("DirectoryScanner", `Failed to delete points for ${uniqueFilePaths.length} files before upsert in workspace ${scanWorkspace}:`, deleteError)
 

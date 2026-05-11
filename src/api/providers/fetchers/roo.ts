@@ -5,6 +5,7 @@ import { parseApiPrice } from "../../../shared/cost"
 import { logger } from "../../../shared/logger"
 import { DEFAULT_HEADERS } from "../constants"
 import { resolveVersionedSettings, type VersionedSettings } from "./versionedSettings"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 /**
  * Fetches available models from the NJUST_AI_CJ Cloud provider
@@ -162,7 +163,7 @@ export async function getRooModels(baseUrl: string, apiKey?: string): Promise<Mo
 			clearTimeout(timeoutId)
 		}
 	} catch (error: unknown) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		const errorName = error instanceof Error ? error.name : undefined
 		// Enhanced error logging
 		logger.error("RooModels", "Error fetching NJUST_AI_CJ Cloud models:", {

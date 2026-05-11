@@ -1,6 +1,8 @@
 {
+	"extends": "../packages/config-typescript/base.json",
 	"compilerOptions": {
-		"esModuleInterop": true,
+		"declaration": false,
+		"declarationMap": false,
 		"experimentalDecorators": true,
 		"forceConsistentCasingInFileNames": true,
 		"isolatedModules": true,
@@ -10,14 +12,12 @@
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
+		"noUncheckedIndexedAccess": false,
 		"noUnusedLocals": false,
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
 		"sourceMap": true,
-		"strict": true,
-		"target": "ES2022",
 		"useDefineForClassFields": true,
-		"useUnknownInCatchVariables": true
+		"useUnknownInCatchVariables": true,
+		"types": []
 	},
 	"include": ["."],
 	"exclude": ["node_modules", "**/__tests__", "**/__mocks__", "**/*.spec.ts", "**/*.test.ts"],

@@ -9,6 +9,7 @@ import { generateParentContextSummary } from "../task/SubTaskContextBuilder"
 import { DEFAULT_FORKED_CONTEXT_CONFIG } from "../task/SubTaskOptions"
 import type { ForkedContextConfig } from "../task/SubTaskOptions"
 import { TIMING } from "../../shared/constants"
+import { getErrorMessage } from "../../shared/error-utils"
 
 type ApiMessage = { role: string; content: any; ts?: number }
 
@@ -273,7 +274,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 			}
 			return taskResult
 		} catch (error) {
-			const errorMsg = error instanceof Error ? error.message : String(error)
+			const errorMsg = getErrorMessage(error)
 			agent.status = "failed"
 			agent.completedAt = Date.now()
 

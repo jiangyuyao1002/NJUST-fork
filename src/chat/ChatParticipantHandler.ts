@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import type { ClineMessage } from "@njust-ai-cj/types"
+import { getErrorMessage } from "../shared/error-utils"
 
 const PARTICIPANT_ID = "njust-ai-cj.agent"
 
@@ -86,7 +87,7 @@ export class ChatParticipantHandler {
 				},
 			}
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			stream.markdown(`**Error:** ${message}`)
 			this.outputChannel.appendLine(`[ChatParticipant] Error: ${message}`)
 			return { metadata: { command } }

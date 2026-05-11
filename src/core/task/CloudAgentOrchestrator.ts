@@ -23,6 +23,7 @@ import { allowRooIgnorePathAccess, type RooIgnoreController } from "../ignore/Ro
 import type { RooProtectedController } from "../protect/RooProtectedController"
 import { AskIgnoredError } from "./AskIgnoredError"
 import { NJUST_AI_CJEventName, type ClineSay, type ClineAsk } from "@njust-ai-cj/types"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Thin abstraction over the Task methods that CloudAgentOrchestrator needs,
@@ -155,7 +156,7 @@ export class CloudAgentOrchestrator {
 				await client.connect()
 			} catch (error) {
 				if (this.host.abort) return
-				const msg = error instanceof Error ? error.message : String(error)
+				const msg = getErrorMessage(error)
 				await this.host.say("error", `Cloud Agent connect error: ${msg}`)
 				await this.host.ask("api_req_failed", msg)
 				return
@@ -198,12 +199,12 @@ export class CloudAgentOrchestrator {
 				error instanceof Error &&
 				(error.name === "AbortError" || /aborted|timeout/i.test(error.message))
 			if (isAbort) {
-				const errorMsg = error instanceof Error ? error.message : String(error)
+				const errorMsg = getErrorMessage(error)
 				await this.host.say("error", `Cloud Agent request was cancelled or timed out: ${errorMsg}`)
 				await this.host.ask("api_req_failed", errorMsg)
 				return
 			}
-			const errorMsg = error instanceof Error ? error.message : String(error)
+			const errorMsg = getErrorMessage(error)
 			await this.host.say("error", `Cloud Agent error: ${errorMsg}`)
 			await this.host.ask("api_req_failed", errorMsg)
 		} finally {
@@ -270,7 +271,7 @@ export class CloudAgentOrchestrator {
 			)
 		} catch (error) {
 			if (this.host.abort) return
-			const msg = error instanceof Error ? error.message : String(error)
+			const msg = getErrorMessage(error)
 			await this.host.say("error", `Cloud Agent deferred/start error: ${msg}`)
 			await this.host.ask("api_req_failed", msg)
 			return
@@ -393,7 +394,7 @@ export class CloudAgentOrchestrator {
 				)
 			} catch (error) {
 				if (this.host.abort) break
-				const msg = error instanceof Error ? error.message : String(error)
+				const msg = getErrorMessage(error)
 				await this.host.say("error", `Cloud Agent deferred/resume error: ${msg}`)
 				await this.host.ask("api_req_failed", msg)
 				await CloudAgentClient.sendDeferredAbort(
@@ -478,7 +479,7 @@ export class CloudAgentOrchestrator {
 				compileResult = await compileClient.compile(this.host.taskId, this.host.cwd)
 			} catch (error) {
 				if (this.host.abort) break
-				const msg = error instanceof Error ? error.message : String(error)
+				const msg = getErrorMessage(error)
 				await this.host.say("error", `[Compile] 编译请求失败: ${msg}`)
 				break
 			} finally {
@@ -527,7 +528,7 @@ export class CloudAgentOrchestrator {
 				)
 			} catch (error) {
 				if (this.host.abort) break
-				const msg = error instanceof Error ? error.message : String(error)
+				const msg = getErrorMessage(error)
 				await this.host.say("error", `[Compile] 修正请求失败: ${msg}`)
 				break
 			} finally {

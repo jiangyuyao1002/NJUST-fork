@@ -1,10 +1,10 @@
+import { getErrorMessage } from "../../shared/error-utils"
 import { normalizeDeferredResponse } from "./normalizeDeferredResponse"
 import { parseWorkspaceOps } from "./parseWorkspaceOps"
 import { logger } from "../../shared/logger"
 import { ApiRetryExecutor, type ApiRetryOptions } from "../../api/retry/ApiRetryStrategy"
 import { analyzeErrorForRetry } from "../../api/retry/ApiErrorClassifier"
-import type {
-	CloudAgentCallbacks,
+import type {	CloudAgentCallbacks,
 	CloudAgentClientOptions,
 	CloudCompileResponse,
 	CloudCompileResult,
@@ -112,7 +112,7 @@ export class CloudAgentClient {
 				logger.warn("CloudAgentClient", `deferred/abort HTTP ${resp.status}: ${t.slice(0, 300)}`)
 			}
 		} catch (e) {
-			const msg = e instanceof Error ? e.message : String(e)
+			const msg = getErrorMessage(e)
 			logger.warn("CloudAgentClient", `deferred/abort failed: ${msg}`)
 		} finally {
 			if (timer) clearTimeout(timer)
@@ -406,7 +406,7 @@ export class CloudAgentClient {
 				try {
 					return normalizeDeferredResponse(parsed)
 				} catch (e) {
-					const hint = e instanceof Error ? e.message : String(e)
+					const hint = getErrorMessage(e)
 					throw new Error(`Cloud Agent: invalid deferred response payload (HTTP ${resp.status}): ${hint}`)
 				}
 			},

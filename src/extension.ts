@@ -84,6 +84,7 @@ import { initializeI18n } from "./i18n"
 import { ChatParticipantHandler, registerLMTools, ChatStateSync } from "./chat"
 import { InlineCompletionProvider } from "./services/inline-completion/InlineCompletionProvider"
 import { resolveInlineCompletionApiHandler } from "./services/inline-completion/inlineCompletionApi"
+import { getErrorMessage } from "./shared/error-utils"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -128,7 +129,7 @@ function scheduleCangjieToolchainGapCheck(): void {
 			})
 	})().catch((err) => {
 		outputChannel?.appendLine(
-			`[CangjieToolchain] Gap check failed: ${err instanceof Error ? err.message : String(err)}`,
+			`[CangjieToolchain] Gap check failed: ${getErrorMessage(err)}`,
 		)
 	})
 }
@@ -192,7 +193,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		.catch((e) => {
 			outputChannel.appendLine(
-				`[CangjieTestCleanup] 启动孤儿清理失败：${e instanceof Error ? e.message : String(e)}`,
+				`[CangjieTestCleanup] 启动孤儿清理失败：${getErrorMessage(e)}`,
 			)
 		})
 
@@ -211,12 +212,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	await Promise.allSettled([
 		initializeNetworkProxy(context, outputChannel).catch((err) =>
 			outputChannel.appendLine(
-				`[Startup] Network proxy init failed: ${err instanceof Error ? err.message : String(err)}`,
+				`[Startup] Network proxy init failed: ${getErrorMessage(err)}`,
 			),
 		),
 		migrateSettings(context, outputChannel).catch((err) =>
 			outputChannel.appendLine(
-				`[Startup] Settings migration failed: ${err instanceof Error ? err.message : String(err)}`,
+				`[Startup] Settings migration failed: ${getErrorMessage(err)}`,
 			),
 		),
 	])
@@ -268,7 +269,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 				// Initialize in background; do not block extension activation
 				void manager.initialize(contextProxy).catch((error) => {
-					const message = error instanceof Error ? error.message : String(error)
+					const message = getErrorMessage(error)
 					outputChannel.appendLine(
 						`[CodeIndexManager] Error during background CodeIndexManager configuration/indexing for ${folder.uri.fsPath}: ${message}`,
 					)
@@ -283,7 +284,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(cangjieLintConfig)
 	void cangjieLintConfig.initialize().catch((err) => {
 		outputChannel.appendLine(
-			`[CangjieLintConfig] Initialize failed: ${err instanceof Error ? err.message : String(err)}`,
+			`[CangjieLintConfig] Initialize failed: ${getErrorMessage(err)}`,
 		)
 	})
 
@@ -359,7 +360,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	void scheduleCangjieToolchainGapCheck()
 
 	void cangjieLspClient.start().catch((error) => {
-		const message = error instanceof Error ? error.message : String(error)
+		const message = getErrorMessage(error)
 		outputChannel.appendLine(`[CangjieLSP] Error during startup: ${message}`)
 	})
 
@@ -385,7 +386,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	} catch (error) {
 		outputChannel.appendLine(
-			`[AutoImport] Error during auto-import: ${error instanceof Error ? error.message : String(error)}`,
+			`[AutoImport] Error during auto-import: ${getErrorMessage(error)}`,
 		)
 	}
 
@@ -554,7 +555,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		setTimeout(() => {
 			void cangjieSymbolIndex?.initialize().catch((err) => {
 				outputChannel.appendLine(
-					`[SymbolIndex] Background initialization error: ${err instanceof Error ? err.message : String(err)}`,
+					`[SymbolIndex] Background initialization error: ${getErrorMessage(err)}`,
 				)
 			})
 		}, 1000)
@@ -643,7 +644,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					() => {},
 					(err: unknown) => {
 						outputChannel.appendLine(
-							`[McpToolsServer] Failed to persist auth token to secret storage: ${err instanceof Error ? err.message : String(err)}. ` +
+							`[McpToolsServer] Failed to persist auth token to secret storage: ${getErrorMessage(err)}. ` +
 							`MCP server authentication will not survive VS Code restart until this is resolved.`,
 						)
 					},
@@ -673,7 +674,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				})
 				.catch((error) => {
 					outputChannel.appendLine(
-						`[McpToolsServer] Failed to start: ${error instanceof Error ? error.message : String(error)}`,
+						`[McpToolsServer] Failed to start: ${getErrorMessage(error)}`,
 					)
 				})
 

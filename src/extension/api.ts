@@ -28,6 +28,7 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 import { openClineInNewTab } from "../activate/registerCommands"
 import { getCommands } from "../services/command/commands"
 import { getModels } from "../api/providers/fetchers/modelCache"
+import { getErrorMessage } from "../shared/error-utils"
 
 export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJAPI {
 	private readonly outputChannel: vscode.OutputChannel
@@ -98,7 +99,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 						try {
 							await this.resumeTask(command.data)
 						} catch (error) {
-							const errorMessage = error instanceof Error ? error.message : String(error)
+							const errorMessage = getErrorMessage(error)
 							this.log(`[API] ResumeTask failed for taskId ${command.data}: ${errorMessage}`)
 							// Don't rethrow - we want to prevent IPC server crashes.
 							// The error is logged for debugging purposes.
@@ -154,7 +155,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 						try {
 							this.deleteQueuedMessage(command.data)
 						} catch (error) {
-							const errorMessage = error instanceof Error ? error.message : String(error)
+							const errorMessage = getErrorMessage(error)
 							this.log(`[API] DeleteQueuedMessage failed for messageId ${command.data}: ${errorMessage}`)
 						}
 						break

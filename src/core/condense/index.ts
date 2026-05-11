@@ -14,6 +14,7 @@ import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { generateFoldedFileContext } from "./foldedFileContext"
 import { getCompactPrompt, getPartialCompactPrompt, formatCompactSummary } from "./prompt"
 import type { PartialCompactDirection } from "./prompt"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export type { FoldedFileContextResult, FoldedFileContextOptions } from "./foldedFileContext"
 
@@ -304,7 +305,7 @@ async function compactWithPTLRetry(
 			}
 			return { summary: "", cost: c, outputTokens: t }
 		} catch (err) {
-			const errMsg = err instanceof Error ? err.message : String(err)
+			const errMsg = getErrorMessage(err)
 			const errStatus = (err as any)?.status ?? 0
 			const isPTL =
 				errStatus === 413 ||
@@ -428,7 +429,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 		} catch (err) {
 			console.warn(
 				"[summarizeConversation] Cache-sharing path failed, falling back to simplified path:",
-				err instanceof Error ? err.message : String(err),
+				getErrorMessage(err),
 			)
 		}
 	}
@@ -461,7 +462,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 		} catch (error) {
 			// Non-PTL error or exhausted retries — fail
 			console.error("Error during condensing API call:", error)
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 
 			let errorDetails = ""
 			if (error instanceof Error) {
@@ -956,7 +957,7 @@ export async function summarizePartialConversation(
 			}
 		}
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		return {
 			...response,
 			cost,

@@ -12,6 +12,7 @@ import { getCjpmTreeSummaryForPrompt } from "./cjpmTreeForPrompt"
 import { recordCompileHistoryEvent } from "./cangjieCompileHistory"
 import { analyzeCompileOutput, formatAnalysisSummary, getFixDirectiveForLearning, normalizeErrorPattern } from "./CangjieErrorAnalyzer"
 import type { CangjieMetricsCollector } from "./CangjieMetricsCollector"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -137,7 +138,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 				this.runDebouncedPostSavePipeline(cwd).catch((err) => {
 				this.outputChannel.appendLine(
 					`[CompileGuard] Unhandled error in post-save pipeline: ` +
-					`${err instanceof Error ? err.message : String(err)}`,
+					`${getErrorMessage(err)}`,
 				)
 			})
 			}, this.COMPILE_DEBOUNCE_MS)
@@ -533,7 +534,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 
 			return { formatted: false, output: "Already formatted" }
 		} catch (error: unknown) {
-			const msg = error instanceof Error ? error.message : String(error)
+			const msg = getErrorMessage(error)
 			return { formatted: false, output: msg }
 		} finally {
 			try { fs.unlinkSync(tmpOutput) } catch {}

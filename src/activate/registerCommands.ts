@@ -13,6 +13,7 @@ import { CodeIndexManager } from "../services/code-index/manager"
 import { importSettingsWithFeedback } from "../core/config/importExport"
 import { runActiveEditorCode } from "../services/run-code/runCode"
 import { t } from "../i18n"
+import { getErrorMessage } from "../shared/error-utils"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -188,7 +189,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			await vscode.commands.executeCommand("markdown.showPreviewToSide", ed.document.uri)
 		} catch (e) {
 			outputChannel.appendLine(
-				`[openMarkdownPreview] Built-in Markdown preview failed: ${e instanceof Error ? e.message : String(e)}`,
+				`[openMarkdownPreview] Built-in Markdown preview failed: ${getErrorMessage(e)}`,
 			)
 			void vscode.window.showWarningMessage(t("common:markdown_preview.builtin_unavailable"))
 		}

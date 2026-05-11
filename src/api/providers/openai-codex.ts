@@ -23,6 +23,7 @@ import { isMcpTool } from "../../utils/mcp-name"
 import { sanitizeOpenAiCallId } from "../../utils/tool-id"
 import { openAiCodexOAuthManager } from "../../integrations/openai-codex/oauth"
 import { t } from "../../i18n"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export type OpenAiCodexModel = ReturnType<OpenAiCodexHandler["getModel"]>
 
@@ -201,7 +202,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 				yield* this.executeRequest(requestBody, model, accessToken, metadata?.taskId)
 				return
 			} catch (error) {
-				const message = error instanceof Error ? error.message : String(error)
+				const message = getErrorMessage(error)
 				const isAuthFailure = /unauthorized|invalid token|not authenticated|authentication|401/i.test(message)
 
 				if (attempt === 0 && isAuthFailure) {

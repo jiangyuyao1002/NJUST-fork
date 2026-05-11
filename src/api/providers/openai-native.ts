@@ -707,7 +707,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			yield* this.handleStreamResponse(response.body, model)
 		} catch (error) {
 			const model = this.getModel()
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 
 			if (TelemetryService.hasInstance()) {
 				const forTelemetry =
@@ -1218,7 +1218,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			// This can happen in certain edge cases and shouldn't break the flow
 		} catch (error) {
 			if (TelemetryService.hasInstance()) {
-				const msg = error instanceof Error ? error.message : String(error)
+				const msg = getErrorMessage(error)
 				const forTelemetry = new ApiProviderError(msg)
 				;forTelemetry.provider = this.providerName
 				;forTelemetry.modelId = model.id
@@ -1666,7 +1666,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			return ""
 		} catch (error) {
 			if (TelemetryService.hasInstance()) {
-				const msg = error instanceof Error ? error.message : String(error)
+				const msg = getErrorMessage(error)
 				const forTelemetry = new ApiProviderError(msg)
 				;forTelemetry.provider = this.providerName
 				;forTelemetry.modelId = this.getModel().id

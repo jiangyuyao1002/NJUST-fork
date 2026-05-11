@@ -16,6 +16,7 @@ import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 
 import { debugLog } from "../../utils/debugLog"
+import { getErrorMessage } from "../../shared/error-utils"
 /**
  * Converts OpenAI-format tools to VSCode Language Model tools.
  * Normalizes the JSON Schema to draft 2020-12 compliant format required by
@@ -93,7 +94,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			this.dispose()
 
 			throw new Error(
-				`NJUST_AI_CJ <Language Model API>: Failed to initialize handler: ${error instanceof Error ? error.message : "Unknown error"}`,
+				`NJUST_AI_CJ <Language Model API>: Failed to initialize handler: ${getErrorMessage(error)}`,
 			)
 		}
 	}
@@ -116,7 +117,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			debugLog("NJUST_AI_CJ <Language Model API>: Client initialized successfully")
 		} catch (error) {
 			// Handle errors during client initialization
-			const errorMessage = error instanceof Error ? error.message : "Unknown error"
+			const errorMessage = getErrorMessage(error)
 			logger.error("VsCodeLm", "Client initialization failed:", errorMessage)
 			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to initialize client: ${errorMessage}`)
 		}
@@ -165,7 +166,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				countTokens: async () => 0,
 			}
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error"
+			const errorMessage = getErrorMessage(error)
 			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to select model: ${errorMessage}`)
 		}
 	}
@@ -286,7 +287,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				return 0
 			}
 
-			const errorMessage = error instanceof Error ? error.message : "Unknown error"
+			const errorMessage = getErrorMessage(error)
 			logger.warn("VsCodeLm", "Token counting failed:", errorMessage)
 
 			// Log additional error details if available
@@ -331,7 +332,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				debugLog("NJUST_AI_CJ <Language Model API>: Creating client with selector:", selector)
 				this.client = await this.createClient(selector)
 			} catch (error) {
-				const message = error instanceof Error ? error.message : "Unknown error"
+				const message = getErrorMessage(error)
 				logger.error("VsCodeLm", "Client creation failed:", message)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to create client: ${message}`)
 			}

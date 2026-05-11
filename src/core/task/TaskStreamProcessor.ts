@@ -21,6 +21,7 @@ import { getLastGlobalApiRequestTime } from "./globalApiTiming"
 import { PersistentRetryManager } from "./PersistentRetry"
 import { logger } from "../../shared/logger"
 import { TIMING, LIMITS } from "../../shared/constants"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = TIMING.MAX_EXPONENTIAL_BACKOFF_MS / 1000
 const FORCED_CONTEXT_REDUCTION_PERCENT = LIMITS.FORCED_CONTEXT_REDUCTION_PERCENT
@@ -219,7 +220,7 @@ export class TaskStreamProcessor {
 			)
 			}
 		} catch (err) {
-			const message = err instanceof Error ? err.message : String(err)
+			const message = getErrorMessage(err)
 
 			if (this.task.abort && message.includes("Aborted during retry countdown")) {
 				return

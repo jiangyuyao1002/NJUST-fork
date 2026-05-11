@@ -9,6 +9,7 @@ import { BaseTerminal } from "./BaseTerminal"
 import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { normalizeDotSlashCommandForWindowsShell } from "../../utils/hostShellCommand"
 import { filterSensitiveEnv } from "../../utils/env"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export class ExecaTerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<RooTerminal>
@@ -127,7 +128,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				try {
 					await Promise.race([this.subprocess, kill])
 				} catch (error) {
-					logger.info("ExecaTerminalProcess", `[ExecaTerminalProcess#run] subprocess termination error: ${error instanceof Error ? error.message : String(error)}`)
+					logger.info("ExecaTerminalProcess", `[ExecaTerminalProcess#run] subprocess termination error: ${getErrorMessage(error)}`)
 				}
 
 				if (timeoutId) {
@@ -141,7 +142,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#run] shell execution error: ${error.message}`)
 				this.emit("shell_execution_complete", { exitCode: error.exitCode ?? 0, signalName: error.signal })
 			} else {
-				logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#run] shell execution error: ${error instanceof Error ? error.message : String(error)}`)
+				logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#run] shell execution error: ${getErrorMessage(error)}`)
 
 				this.emit("shell_execution_complete", { exitCode: 1 })
 			}
@@ -172,7 +173,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				try {
 					this.subprocess.kill("SIGTERM"); setTimeout(() => { try { this.subprocess?.kill("SIGKILL") } catch {} }, 5_000); this.subprocess.kill("SIGKILL")
 				} catch (e) {
-					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill subprocess: ${e instanceof Error ? e.message : String(e)}`)
+					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill subprocess: ${getErrorMessage(e)}`)
 				}
 			}
 
@@ -181,7 +182,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				try {
 					process.kill(this.pid, "SIGKILL")
 				} catch (e) {
-					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill process ${this.pid}: ${e instanceof Error ? e.message : String(e)}`)
+					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill process ${this.pid}: ${getErrorMessage(e)}`)
 				}
 			}
 		}
@@ -204,7 +205,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 						try {
 							process.kill(pid, "SIGKILL")
 						} catch (e) {
-							logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to send SIGKILL to child PID ${pid}: ${e instanceof Error ? e.message : String(e)}`)
+							logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to send SIGKILL to child PID ${pid}: ${getErrorMessage(e)}`)
 						}
 					}
 				} else {

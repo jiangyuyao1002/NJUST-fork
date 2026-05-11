@@ -4,6 +4,7 @@ import type { ModelRecord } from "@njust-ai-cj/types"
 
 import { logger } from "../../../shared/logger"
 import { DEFAULT_HEADERS } from "../constants"
+import { getErrorMessage } from "../../../shared/error-utils"
 /**
  * Fetches available models from a LiteLLM server
  *
@@ -67,7 +68,7 @@ export async function getLiteLLMModels(apiKey: string, baseUrl: string): Promise
 
 		return models
 	} catch (error: unknown) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		logger.error("LiteLLM", "Error fetching LiteLLM models:", errorMessage)
 		if (axios.isAxiosError(error) && error.response) {
 			throw new Error(

@@ -2,6 +2,7 @@ import type { WebviewMessage } from "@njust-ai-cj/types"
 import { CodeIndexManager } from "../../../services/code-index/manager"
 import { t } from "../../../i18n"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 export function registerIndexingHandlers(router: MessageRouter): void {
 	router.register("saveCodeIndexSettingsAtomic", handleSaveCodeIndexSettingsAtomic)
@@ -54,19 +55,19 @@ async function handleSaveCodeIndexSettingsAtomic(context: MessageHandlerContext,
 				try {
 					await mgr.handleSettingsChange()
 				} catch (error) {
-					provider.log(`Embedder validation failed after provider change: ${error instanceof Error ? error.message : String(error)}`)
+					provider.log(`Embedder validation failed after provider change: ${getErrorMessage(error)}`)
 					await provider.postMessageToWebview({ type: "indexingStatusUpdate", values: mgr.getCurrentStatus() })
 					return
 				}
 			} else {
 				try { await mgr.handleSettingsChange() } catch (error) {
-					provider.log(`Settings change handling error: ${error instanceof Error ? error.message : String(error)}`)
+					provider.log(`Settings change handling error: ${getErrorMessage(error)}`)
 				}
 			}
 			await new Promise((r) => setTimeout(r, 200))
 			if (mgr.isFeatureEnabled && mgr.isFeatureConfigured && !mgr.isInitialized) {
 				try { await mgr.initialize(provider.contextProxy) } catch (error) {
-					provider.log(`Code index initialization failed: ${error instanceof Error ? error.message : String(error)}`)
+					provider.log(`Code index initialization failed: ${getErrorMessage(error)}`)
 					await provider.postMessageToWebview({ type: "indexingStatusUpdate", values: mgr.getCurrentStatus() })
 				}
 			}
@@ -75,8 +76,8 @@ async function handleSaveCodeIndexSettingsAtomic(context: MessageHandlerContext,
 			await provider.postMessageToWebview({ type: "indexingStatusUpdate", values: { systemStatus: "Error", message: t("embeddings:orchestrator.indexingRequiresWorkspace"), processedItems: 0, totalItems: 0, currentItemUnit: "items" } })
 		}
 	} catch (error) {
-		provider.log(`Error saving code index settings: ${error instanceof Error ? error.message : String(error)}`)
-		await provider.postMessageToWebview({ type: "codeIndexSettingsSaved", success: false, error: error instanceof Error ? error.message : "Failed to save settings" })
+		provider.log(`Error saving code index settings: ${getErrorMessage(error)}`)
+		await provider.postMessageToWebview({ type: "codeIndexSettingsSaved", success: false, error: getErrorMessage(error) })
 	}
 }
 
@@ -117,7 +118,7 @@ async function handleStartIndexing(context: MessageHandlerContext, _message: Web
 				if (!mgr.isInitialized) { await mgr.initialize(provider.contextProxy); if (mgr.state === "Standby" || mgr.state === "Error") void mgr.startIndexing() }
 			}
 		}
-	} catch (error) { provider.log(`Error starting indexing: ${error instanceof Error ? error.message : String(error)}`) }
+	} catch (error) { provider.log(`Error starting indexing: ${getErrorMessage(error)}`) }
 }
 
 async function handleStopIndexing(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
@@ -127,7 +128,7 @@ async function handleStopIndexing(context: MessageHandlerContext, _message: Webv
 		if (!mgr) { provider.log("Cannot stop indexing: No workspace folder open"); return }
 		mgr.stopIndexing()
 		void provider.postMessageToWebview({ type: "indexingStatusUpdate", values: mgr.getCurrentStatus() })
-	} catch (error) { provider.log(`Error stopping indexing: ${error instanceof Error ? error.message : String(error)}`) }
+	} catch (error) { provider.log(`Error stopping indexing: ${getErrorMessage(error)}`) }
 }
 
 async function handleToggleWorkspaceIndexing(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -140,7 +141,7 @@ async function handleToggleWorkspaceIndexing(context: MessageHandlerContext, mes
 		if (enabled && mgr.isFeatureEnabled && mgr.isFeatureConfigured) { await mgr.initialize(provider.contextProxy); void mgr.startIndexing() }
 		else if (!enabled) mgr.stopIndexing()
 		void provider.postMessageToWebview({ type: "indexingStatusUpdate", values: mgr.getCurrentStatus() })
-	} catch (error) { provider.log(`Error toggling workspace indexing: ${error instanceof Error ? error.message : String(error)}`) }
+	} catch (error) { provider.log(`Error toggling workspace indexing: ${getErrorMessage(error)}`) }
 }
 
 async function handleSetAutoEnableDefault(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -158,7 +159,7 @@ async function handleSetAutoEnableDefault(context: MessageHandlerContext, messag
 			else if (!was && now && m.isFeatureEnabled && m.isFeatureConfigured) { await m.initialize(provider.contextProxy); void m.startIndexing() }
 		}
 		void provider.postMessageToWebview({ type: "indexingStatusUpdate", values: mgr.getCurrentStatus() })
-	} catch (error) { provider.log(`Error setting auto-enable default: ${error instanceof Error ? error.message : String(error)}`) }
+	} catch (error) { provider.log(`Error setting auto-enable default: ${getErrorMessage(error)}`) }
 }
 
 async function handleClearIndexData(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
@@ -168,5 +169,5 @@ async function handleClearIndexData(context: MessageHandlerContext, _message: We
 		if (!mgr) { void provider.postMessageToWebview({ type: "indexCleared", values: { success: false, error: t("embeddings:orchestrator.indexingRequiresWorkspace") } }); return }
 		await mgr.clearIndexData()
 		void provider.postMessageToWebview({ type: "indexCleared", values: { success: true } })
-	} catch (error) { void provider.postMessageToWebview({ type: "indexCleared", values: { success: false, error: error instanceof Error ? error.message : String(error) } }) }
+	} catch (error) { void provider.postMessageToWebview({ type: "indexCleared", values: { success: false, error: getErrorMessage(error) } }) }
 }

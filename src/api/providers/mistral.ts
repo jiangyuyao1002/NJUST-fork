@@ -17,6 +17,7 @@ import { ApiStream } from "../transform/stream"
 
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import { getErrorMessage } from "../../shared/error-utils"
 
 // Type helper to handle thinking chunks from Mistral API
 // The SDK includes ThinkChunk but TypeScript has trouble with the discriminated union
@@ -102,7 +103,7 @@ export class MistralHandler extends BaseProvider implements SingleCompletionHand
 		try {
 			response = await this.client.chat.stream(requestOptions)
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			throw new Error(redactApiSecrets(`Mistral completion error: ${errorMessage}`))
 		}
 
@@ -210,7 +211,7 @@ export class MistralHandler extends BaseProvider implements SingleCompletionHand
 
 			return content || ""
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			throw new Error(`Mistral completion error: ${errorMessage}`)
 		}
 	}

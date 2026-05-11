@@ -26,6 +26,7 @@ import { t } from "../../../i18n"
 
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { resolveIncomingImages } from "./shared-utils"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 export function registerChatHandlers(router: MessageRouter): void {
 	router.register("customInstructions", handleCustomInstructions)
@@ -171,7 +172,7 @@ async function handleReadFileContent(context: MessageHandlerContext, message: We
 		const content = await fs.readFile(absPath, "utf-8")
 		void provider.postMessageToWebview({ type: "fileContent", fileContent: { path: relPath, content } })
 	} catch (err) {
-		const errorMsg = err instanceof Error ? err.message : String(err)
+		const errorMsg = getErrorMessage(err)
 		void provider.postMessageToWebview({
 			type: "fileContent",
 			fileContent: { path: relPath, content: null, error: errorMsg },
@@ -313,7 +314,7 @@ async function handleTranscribeAudio(context: MessageHandlerContext, message: We
 				})
 				creds = getWhisperCredentialsFromProviderSettings(profile as ProviderSettings)
 			} catch (e) {
-				provider.log(`transcribeAudio enhancement profile: ${e instanceof Error ? e.message : String(e)}`)
+				provider.log(`transcribeAudio enhancement profile: ${getErrorMessage(e)}`)
 			}
 		}
 
@@ -345,7 +346,7 @@ async function handleTranscribeAudio(context: MessageHandlerContext, message: We
 		provider.log(`transcribeAudio: ${error instanceof Error ? error.message : JSON.stringify(error)}`)
 		await postError({
 			errorI18nKey: "chat:voiceInput.errorTranscriptionFailed",
-			detail: error instanceof Error ? error.message : String(error),
+			detail: getErrorMessage(error),
 		})
 	}
 }
@@ -438,7 +439,7 @@ async function handleSearchFiles(context: MessageHandlerContext, message: Webvie
 			tempController?.dispose()
 		}
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		await provider.postMessageToWebview({
 			type: "fileSearchResults",
 			results: [],
@@ -473,7 +474,7 @@ async function handleDismissUpsell(context: MessageHandlerContext, message: Webv
 			}
 			await provider.postMessageToWebview({ type: "dismissedUpsells", list: updatedList })
 		} catch (error) {
-			provider.log(`Failed to dismiss upsell: ${error instanceof Error ? error.message : String(error)}`)
+			provider.log(`Failed to dismiss upsell: ${getErrorMessage(error)}`)
 		}
 	}
 }
@@ -498,7 +499,7 @@ async function handleOpenMarkdownPreview(context: MessageHandlerContext, message
 			const doc = await vscode.workspace.openTextDocument(tempFilePath)
 			await vscode.commands.executeCommand("markdown.showPreview", doc.uri)
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			provider.log(`Error opening markdown preview: ${errorMessage}`)
 			vscode.window.showErrorMessage(`Failed to open markdown preview: ${errorMessage}`)
 		}

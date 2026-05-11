@@ -40,6 +40,7 @@ import { fileReadCache } from "./helpers/FileReadCache"
 import { toolResultCache } from "./helpers/ToolResultCache"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -298,7 +299,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 						nativeContent: `File: ${relPath}\n${result}`,
 					})
 				} catch (error) {
-					const errorMsg = error instanceof Error ? error.message : String(error)
+					const errorMsg = getErrorMessage(error)
 					updateFileResult(relPath, {
 						status: "error",
 						error: `Error reading file: ${errorMsg}`,
@@ -317,7 +318,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 			this.buildAndPushResult(task, fileResults, pushToolResult, resultCacheKey)
 		} catch (error) {
 			const relPath = filePath || "unknown"
-			const errorMsg = error instanceof Error ? error.message : String(error)
+			const errorMsg = getErrorMessage(error)
 
 			updateFileResult(relPath, {
 				status: "error",
@@ -464,7 +465,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 				})
 				return
 			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error)
+				const errorMsg = getErrorMessage(error)
 				updateFileResult(relPath, {
 					status: "error",
 					error: `Error reading image file: ${errorMsg}`,
@@ -492,7 +493,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 				})
 				return
 			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error)
+				const errorMsg = getErrorMessage(error)
 				updateFileResult(relPath, {
 					status: "error",
 					error: `Error extracting text: ${errorMsg}`,
@@ -917,7 +918,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 				// Track file in context
 				await task.fileContextTracker.trackFileContext(relPath, "read_tool")
 			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error)
+				const errorMsg = getErrorMessage(error)
 				results.push(`File: ${relPath}\nError: ${errorMsg}`)
 				await task.say("error", `Error reading file ${relPath}: ${errorMsg}`)
 			}

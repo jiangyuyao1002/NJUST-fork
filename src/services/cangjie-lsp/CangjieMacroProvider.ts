@@ -7,6 +7,7 @@ import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv, CJC_CONFIG_KEY } from "./cangjieToolUtils"
 import type { CangjieSymbolIndex } from "./CangjieSymbolIndex"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -27,7 +28,7 @@ async function formatExpandedCangjieWithCjfmt(expanded: string, outputChannel: v
 			return fs.readFileSync(tmpOut, "utf-8")
 		}
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : String(e)
+		const msg = getErrorMessage(e)
 		outputChannel.appendLine(`[MacroExpand] cjfmt skipped: ${msg}`)
 	} finally {
 		try {
@@ -193,7 +194,7 @@ export function registerMacroCommands(context: vscode.ExtensionContext, outputCh
 					})
 					await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside })
 				} catch (err) {
-					const msg = err instanceof Error ? err.message : String(err)
+					const msg = getErrorMessage(err)
 					outputChannel.appendLine(`[MacroExpand] Error: ${msg}`)
 
 					if (msg.includes("--expand-macros")) {

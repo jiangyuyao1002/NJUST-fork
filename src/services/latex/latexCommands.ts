@@ -5,6 +5,7 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { Package } from "../../shared/package"
 import { resolveLatexmkExecutable, resolvePdflatexExecutable } from "./latexResolve"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -106,7 +107,7 @@ export function registerLatexCommands(context: vscode.ExtensionContext, _outputC
 				void vscode.window.showWarningMessage("编译已结束但未找到生成的 PDF，请查看输出面板中的日志。")
 			}
 		} catch (e) {
-			const msg = e instanceof Error ? e.message : String(e)
+			const msg = getErrorMessage(e)
 			latexChannel.appendLine(`\n[LaTeX] 错误: ${msg}`)
 			void vscode.window.showErrorMessage(
 				`LaTeX 编译失败。请安装 MiKTeX 或 TeX Live，或将 MiKTeX 的 bin 加入系统 PATH；也可在设置中填写 njust-ai-cj.latex.latexmkPath（latexmk.exe 完整路径）。详情见输出「${LATEX_OUTPUT_CHANNEL}」。`,

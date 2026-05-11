@@ -3,6 +3,7 @@ import * as os from "os"
 import * as vscode from "vscode"
 import { getWorkspacePath } from "../../utils/path"
 import { t } from "../../i18n"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export async function openImage(dataUriOrPath: string, options?: { values?: { action?: string } }) {
 	// Check if it's a file path (absolute or relative)
@@ -72,7 +73,7 @@ export async function openImage(dataUriOrPath: string, options?: { values?: { ac
 
 				vscode.window.showInformationMessage(t("common:info.image_copied_to_clipboard"))
 			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : String(error)
+				const errorMessage = getErrorMessage(error)
 				vscode.window.showErrorMessage(t("common:errors.error_copying_image", { errorMessage }))
 			} finally {
 				// Clean up temp file
@@ -119,7 +120,7 @@ export async function saveImage(dataUri: string, defaultUri: vscode.Uri): Promis
 		vscode.window.showInformationMessage(t("common:info.image_saved", { path: saveUri.fsPath }))
 		return saveUri
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		vscode.window.showErrorMessage(t("common:errors.error_saving_image", { errorMessage }))
 		return undefined
 	}

@@ -19,6 +19,7 @@ import { ContextProxy } from "./ContextProxy"
 import { CustomModesManager } from "./CustomModesManager"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
 import { t } from "../../i18n"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export type ImportOptions = {
 	providerSettingsManager: ProviderSettingsManager
@@ -309,7 +310,7 @@ export const importSettingsWithFeedback = async (
 		} catch (error) {
 			result = {
 				success: false,
-				error: `Cannot access file at path "${filePath}": ${error instanceof Error ? error.message : "Unknown error"}`,
+				error: `Cannot access file at path "${filePath}": ${getErrorMessage(error)}`,
 			}
 		}
 	} else {

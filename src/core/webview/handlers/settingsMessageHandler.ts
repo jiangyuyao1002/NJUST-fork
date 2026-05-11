@@ -21,6 +21,7 @@ import { debugLog } from "../../../utils/debugLog"
 
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { logger } from "../../../shared/logger"
+import { getErrorMessage } from "../../../shared/error-utils"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -190,7 +191,7 @@ async function handleGetVSCodeSetting(context: MessageHandlerContext, message: W
 			await provider.postMessageToWebview({
 				type: "vsCodeSetting",
 				setting,
-				error: `Failed to get setting: ${error instanceof Error ? error.message : String(error)}`,
+				error: `Failed to get setting: ${getErrorMessage(error)}`,
 				value: undefined,
 			})
 		}
@@ -404,7 +405,7 @@ async function handleRequestRooModels(context: MessageHandlerContext, _message: 
 		const rooModels = await getModels(rooOptions)
 		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: true, values: { provider: "roo", models: rooModels } })
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: false, error: errorMessage, values: { provider: "roo" } })
 	}
 }
@@ -549,7 +550,7 @@ async function handleRequestOpenAiCodexRateLimits(context: MessageHandlerContext
 		const rateLimits = await fetchOpenAiCodexRateLimitInfo(accessToken, { accountId })
 		void provider.postMessageToWebview({ type: "openAiCodexRateLimits", values: rateLimits })
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
+		const errorMessage = getErrorMessage(error)
 		provider.log(`Error fetching OpenAI Codex rate limits: ${errorMessage}`)
 		void provider.postMessageToWebview({ type: "openAiCodexRateLimits", error: errorMessage })
 	}

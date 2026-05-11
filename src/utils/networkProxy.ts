@@ -14,6 +14,7 @@ import * as vscode from "vscode"
 import { Package } from "../shared/package"
 
 import { logger } from "../shared/logger"
+import { getErrorMessage } from "../shared/error-utils"
 
 /**
  * Proxy configuration state
@@ -242,7 +243,7 @@ async function configureGlobalProxy(config: ProxyConfig): Promise<void> {
 		bootstrap = mod.bootstrap
 	} catch (error) {
 		log(
-			`Failed to load global-agent (proxy support is only available in debug/dev builds): ${error instanceof Error ? error.message : String(error)}`,
+			`Failed to load global-agent (proxy support is only available in debug/dev builds): ${getErrorMessage(error)}`,
 		)
 		return
 	}
@@ -254,7 +255,7 @@ async function configureGlobalProxy(config: ProxyConfig): Promise<void> {
 		proxyInitialized = true
 		log(`global-agent bootstrap() completed successfully`)
 	} catch (error) {
-		log(`global-agent bootstrap() FAILED: ${error instanceof Error ? error.message : String(error)}`)
+		log(`global-agent bootstrap() FAILED: ${getErrorMessage(error)}`)
 		return
 	}
 
@@ -317,7 +318,7 @@ async function configureUndiciProxy(config: ProxyConfig): Promise<void> {
 			}
 		}
 	} catch (error) {
-		log(`Failed to configure undici proxy dispatcher: ${error instanceof Error ? error.message : String(error)}`)
+		log(`Failed to configure undici proxy dispatcher: ${getErrorMessage(error)}`)
 	}
 }
 /**

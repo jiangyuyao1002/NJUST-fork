@@ -106,6 +106,7 @@ import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
 import { logger } from "../../shared/logger"
 import { TIMING, LIMITS } from "../../shared/constants"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -299,7 +300,7 @@ export class ClineProvider
 					)
 				}
 			} catch (error) {
-				const msg = error instanceof Error ? error.message : String(error)
+				const msg = getErrorMessage(error)
 				this.log(`Failed to load full model details for LM Studio: ${msg}`)
 				vscode.window.showErrorMessage(msg)
 			}
@@ -697,7 +698,7 @@ export class ClineProvider
 		} catch (error) {
 			this.log(
 				`Failed to restore API configuration for mode '${mode}': ${
-					error instanceof Error ? error.message : String(error)
+					getErrorMessage(error)
 				}. Continuing with default configuration.`,
 			)
 		}
@@ -716,7 +717,7 @@ export class ClineProvider
 		} catch (error) {
 			this.log(
 				`Failed to restore API configuration '${apiConfigName}' for task: ${
-					error instanceof Error ? error.message : String(error)
+					getErrorMessage(error)
 				}. Continuing with current configuration.`,
 			)
 		}
@@ -837,7 +838,7 @@ export class ClineProvider
 			;(task as any)._taskMode = newMode
 		} catch (error) {
 			this.log(
-				`Failed to persist mode switch for task ${task.taskId}: ${error instanceof Error ? error.message : String(error)}`,
+				`Failed to persist mode switch for task ${task.taskId}: ${getErrorMessage(error)}`,
 			)
 			throw error
 		}
@@ -1026,7 +1027,7 @@ export class ClineProvider
 			// If persistence fails, log the error but don't fail the profile switch.
 			this.log(
 				`Failed to persist provider profile switch for task ${task.taskId}: ${
-					error instanceof Error ? error.message : String(error)
+					getErrorMessage(error)
 				}`,
 			)
 		}
@@ -2129,7 +2130,7 @@ export class ClineProvider
 		} catch (error) {
 			this.log(
 				`[delegateParentAndOpenChild] Error flushing pending tool results (non-fatal): ${
-					error instanceof Error ? error.message : String(error)
+					getErrorMessage(error)
 				}`,
 			)
 		}
@@ -2142,7 +2143,7 @@ export class ClineProvider
 		} catch (error) {
 			this.log(
 				`[delegateParentAndOpenChild] Error during parent disposal (non-fatal): ${
-					error instanceof Error ? error.message : String(error)
+					getErrorMessage(error)
 				}`,
 			)
 			// Non-fatal: proceed with child creation even if parent cleanup had issues

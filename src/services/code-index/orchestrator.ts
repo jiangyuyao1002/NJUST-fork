@@ -7,6 +7,7 @@ import { DirectoryScanner } from "./processors"
 import { CacheManager } from "./cache-manager"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Manages the code indexing workflow, coordinating between different services and managers.
@@ -285,7 +286,7 @@ export class CodeIndexOrchestrator {
 				this.stateManager.setSystemState("Indexed", t("embeddings:orchestrator.fileWatcherStarted"))
 			}
 		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : String(error)
+			const errorMessage = getErrorMessage(error)
 			// Handle abort gracefully — not an error, just a user-initiated stop
 			if (indexingStarted) {
 				try {
@@ -362,7 +363,7 @@ export class CodeIndexOrchestrator {
 					logger.warn("CodeIndexOrchestrator", "Service not configured, skipping vector collection clear.")
 				}
 			} catch (error: unknown) {
-				const message = error instanceof Error ? error.message : String(error)
+				const message = getErrorMessage(error)
 				logger.error("CodeIndexOrchestrator", "Failed to clear vector collection:", error)
 				this.stateManager.setSystemState("Error", `Failed to clear vector collection: ${message}`)
 			}

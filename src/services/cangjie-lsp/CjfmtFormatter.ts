@@ -6,6 +6,7 @@ import * as crypto from "crypto"
 import { execFile } from "child_process"
 import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
+import { getErrorMessage } from "../../shared/error-utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -126,7 +127,7 @@ export class CjfmtFormatter implements vscode.DocumentFormattingEditProvider, vs
 
 			return [vscode.TextEdit.replace(fullRange, formattedContent)]
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error)
+			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjFmt] Error: ${message}`)
 			vscode.window.showErrorMessage(`Cangjie format failed: ${message}`)
 			return []

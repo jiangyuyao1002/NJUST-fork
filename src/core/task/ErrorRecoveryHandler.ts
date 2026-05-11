@@ -7,6 +7,7 @@ import { logger } from "../../shared/logger"
 import type { TypedBlock } from "../assistant-message/types"
 
 import type { Task } from "./Task"
+import { getErrorMessage } from "../../shared/error-utils"
 
 /**
  * Structured result from error recovery handling.
@@ -56,7 +57,7 @@ export class ErrorRecoveryHandler {
 			taskId: this.task.taskId,
 			retryAttempt,
 			errorKind: classified,
-			errorMessage: error instanceof Error ? error.message : String(error),
+			errorMessage: getErrorMessage(error),
 			timestamp: Date.now(),
 		})
 	
@@ -168,7 +169,7 @@ export class ErrorRecoveryHandler {
 			case "server_error_backoff": {
 				// server_error (500): exponential backoff with diagnostics logging.
 				const backoffMs = Math.min(2000 * Math.pow(2, retryAttempt), 60_000)
-				const errorMsg = error instanceof Error ? error.message : String(error)
+				const errorMsg = getErrorMessage(error)
 				logger.error("ErrorRecoveryHandler",
 					`Server error 500 for task ${this.task.taskId} (attempt ${retryAttempt + 1}/5). ` +
 						`Diagnostics: ${errorMsg}. ` +
