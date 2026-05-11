@@ -1,4 +1,5 @@
 import {  guardedFetch } from "../../core/security/networkGuard"
+import { getErrorMessage } from "../../shared/error-utils"
 
 export type WebSearchProviderName =
 	| "tavily"
@@ -410,7 +411,7 @@ export class BaiduFreeSearchProvider implements WebSearchProvider {
 				throw new Error(`Baidu returned ${response.status}`)
 			}
 
-			const html = await response.text()
+			const html = (await response.text()).slice(0, 500_000)
 			return this.parseBaiduResults(html, count)
 		} finally {
 			clear()
@@ -508,7 +509,7 @@ export class SogouFreeSearchProvider implements WebSearchProvider {
 				throw new Error(`Sogou returned ${response.status}`)
 			}
 
-			const html = await response.text()
+			const html = (await response.text()).slice(0, 500_000)
 			const results = this.parseSogouResults(html, count)
 			if (results.length > 0) {
 				return results
@@ -525,7 +526,7 @@ export class SogouFreeSearchProvider implements WebSearchProvider {
 			if (error instanceof Error && error.name === "AbortError") {
 				throw new Error("Sogou search timed out.")
 			}
-			throw new Error(`Sogou search failed: ${error instanceof Error ? error.message : String(error)}`)
+			throw new Error(`Sogou search failed: ${getErrorMessage(error)}`)
 		} finally {
 			clear()
 		}
@@ -583,7 +584,7 @@ export class DuckDuckGoSearchProvider implements WebSearchProvider {
 				throw new Error(`DuckDuckGo returned ${response.status}`)
 			}
 
-			const html = await response.text()
+			const html = (await response.text()).slice(0, 500_000)
 			const results: WebSearchResult[] = []
 			const linkRegex = /<a[^>]+rel="nofollow"[^>]+href="([^"]+)"[^>]*class="result-link"[^>]*>([\s\S]*?)<\/a>/gi
 			const snippetRegex = /<td[^>]*class="result-snippet"[^>]*>([\s\S]*?)<\/td>/gi
@@ -591,10 +592,10 @@ export class DuckDuckGoSearchProvider implements WebSearchProvider {
 			const snippets: string[] = []
 
 			let m: RegExpExecArray | null
-			while ((m = linkRegex.exec(html)) !== null) {
+			while ((m = linkRegex.exec(html)) !== null && links.length < 100) {
 				links.push({ url: m[1], title: m[2].replace(/<[^>]*>/g, "").trim() })
 			}
-			while ((m = snippetRegex.exec(html)) !== null) {
+			while ((m = snippetRegex.exec(html)) !== null && snippets.length < 100) {
 				snippets.push(m[1].replace(/<[^>]*>/g, "").trim())
 			}
 
@@ -608,7 +609,7 @@ export class DuckDuckGoSearchProvider implements WebSearchProvider {
 			if (error instanceof Error && error.name === "AbortError") {
 				throw new Error("DuckDuckGo search timed out.")
 			}
-			throw new Error(`DuckDuckGo search failed: ${error instanceof Error ? error.message : String(error)}`)
+			throw new Error(`DuckDuckGo search failed: ${getErrorMessage(error)}`)
 		} finally {
 			clear()
 		}
