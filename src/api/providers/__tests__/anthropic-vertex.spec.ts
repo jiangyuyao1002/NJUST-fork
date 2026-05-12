@@ -621,7 +621,7 @@ describe("VertexHandler", () => {
 				vertexRegion: "us-central1",
 			})
 
-			const mockCreate = vitest.fn().mockImplementation(async (_options) => {
+			const mockCreate = vitest.fn().mockImplementation(async (options) => {
 				return {
 					async *[Symbol.asyncIterator]() {
 						yield {
@@ -703,7 +703,7 @@ describe("VertexHandler", () => {
 				vertexRegion: "us-central1",
 			})
 
-			const mockCreate = vitest.fn().mockImplementation(async (_options) => {
+			const mockCreate = vitest.fn().mockImplementation(async (options) => {
 				return {
 					async *[Symbol.asyncIterator]() {
 						yield {
@@ -1106,7 +1106,7 @@ describe("VertexHandler", () => {
 				modelMaxThinkingTokens: 4096,
 			})
 
-			const mockCreate = vitest.fn().mockImplementation(async (_options) => {
+			const mockCreate = vitest.fn().mockImplementation(async (options) => {
 				if (!options.stream) {
 					return {
 						id: "test-completion",

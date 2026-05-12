@@ -153,7 +153,7 @@ async function testCmdCommand(
 		const eventHandlers = (vscode as any).__eventHandlers
 
 		// Execute the command first to set up the process
-		await terminalProcess.run(command)
+		const runPromise = terminalProcess.run(command)
 
 		// Trigger the start terminal shell execution event through VSCode mock
 		if (eventHandlers.startTerminalShellExecution) {
@@ -191,6 +191,9 @@ async function testCmdCommand(
 				exitCode: exitCode,
 			})
 		}
+
+		// Now await runPromise - both streamAvailable and shellExecutionComplete are resolved
+		await runPromise
 
 		// Store exit details for return
 		const exitDetails = TerminalProcess.interpretExitCode(exitCode)

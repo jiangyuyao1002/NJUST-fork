@@ -47,7 +47,7 @@ export type CheckAutoApprovalResult =
 			fn: () => { askResponse: ClineAskResponse; text?: string; images?: string[] }
 	  }
 
-export function checkAutoApproval({
+export async function checkAutoApproval({
 	state,
 	ask,
 	text,

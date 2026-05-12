@@ -330,7 +330,7 @@ describe("AwsBedrockHandler Error Handling", () => {
 			let thrownError: Error | undefined
 			try {
 				for await (const _chunk of generator) {
-					chunks.push(chunk)
+					chunks.push(_chunk)
 				}
 			} catch (error) {
 				thrownError = error as Error

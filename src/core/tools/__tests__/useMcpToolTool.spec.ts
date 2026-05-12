@@ -79,7 +79,7 @@ describe("useMcpToolTool", () => {
 		mockAskApproval = vi.fn().mockResolvedValue(true)
 		mockHandleError = vi.fn()
 		mockPushToolResult = vi.fn()
-		mockRemoveClosingTag = vi.fn((tag: string, value?: string) => value || "")
+		_mockRemoveClosingTag = vi.fn((tag: string, value?: string) => value || "")
 
 		mockProviderRef = {
 			deref: vi.fn().mockReturnValue({

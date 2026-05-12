@@ -19,7 +19,7 @@ describe("processUserContentMentions", () => {
 		vi.clearAllMocks()
 
 		mockFileContextTracker = {} as FileContextTracker
-		mockRooIgnoreController = {}
+		_mockRooIgnoreController = {}
 
 		// Default mock implementation - returns ParseMentionsResult object
 		vi.mocked(parseMentions).mockImplementation(async (text) => ({

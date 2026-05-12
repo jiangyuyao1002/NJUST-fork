@@ -18,7 +18,7 @@ vitest.mock("openai", () => {
 		default: mockConstructor.mockImplementation(() => ({
 			chat: {
 				completions: {
-					create: mockCreate.mockImplementation(async (_options) => {
+					create: mockCreate.mockImplementation(async (options) => {
 						if (!options.stream) {
 							return {
 								id: "test-completion",
@@ -221,7 +221,7 @@ describe("OpenAiHandler", () => {
 		})
 
 		it("should handle tool calls in streaming responses", async () => {
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async (options) => {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {
@@ -303,7 +303,7 @@ describe("OpenAiHandler", () => {
 		})
 
 		it("should yield tool calls even when finish_reason is not set (fallback behavior)", async () => {
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async (options) => {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {
@@ -521,7 +521,7 @@ describe("OpenAiHandler", () => {
 		]
 
 		it("should handle API errors", async () => {
-			mockCreate.mockRejectedValueOnce(new Error("API Error"))
+			mockCreate.mockRejectedValue(new Error("API Error"))
 
 			const stream = handler.createMessage("system prompt", testMessages)
 
@@ -536,7 +536,7 @@ describe("OpenAiHandler", () => {
 			const rateLimitError = new Error("Rate limit exceeded")
 			rateLimitError.name = "Error"
 			;(rateLimitError as any).status = 429
-			mockCreate.mockRejectedValueOnce(rateLimitError)
+			mockCreate.mockRejectedValue(rateLimitError)
 
 			const stream = handler.createMessage("system prompt", testMessages)
 
@@ -826,7 +826,7 @@ describe("OpenAiHandler", () => {
 		it("should handle tool calls with O3 model in streaming mode", async () => {
 			const o3Handler = new OpenAiHandler(o3Options)
 
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async (options) => {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {
@@ -891,7 +891,7 @@ describe("OpenAiHandler", () => {
 		it("should yield tool calls for O3 model even when finish_reason is not set (fallback behavior)", async () => {
 			const o3Handler = new OpenAiHandler(o3Options)
 
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async (options) => {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {

@@ -85,7 +85,7 @@ export async function testParseSourceCodeDefinitions(
 	const parser = new Parser()
 
 	// Load language and configure parser
-	const wasmPath = path.join(process.cwd(), `dist/${wasmFile}`)
+	const wasmPath = path.join(process.cwd(), `src/node_modules/tree-sitter-wasms/out/${wasmFile}`)
 	const lang = await Language.load(wasmPath)
 	parser.setLanguage(lang)
 
@@ -114,7 +114,7 @@ export async function testParseSourceCodeDefinitions(
 export async function inspectTreeStructure(content: string, language: string = "typescript"): Promise<string> {
 	const { Parser, Language } = await initializeTreeSitter()
 	const parser = new Parser()
-	const wasmPath = path.join(process.cwd(), `dist/tree-sitter-${language}.wasm`)
+	const wasmPath = path.join(process.cwd(), `src/node_modules/tree-sitter-wasms/out/tree-sitter-${language}.wasm`)
 	const lang = await Language.load(wasmPath)
 	parser.setLanguage(lang)
 

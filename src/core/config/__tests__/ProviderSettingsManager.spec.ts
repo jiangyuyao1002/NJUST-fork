@@ -342,7 +342,7 @@ describe("ProviderSettingsManager", () => {
 			mockSecrets.get.mockRejectedValue(new Error("Storage failed"))
 
 			await expect(providerSettingsManager.initialize()).rejects.toThrow(
-				"Failed to initialize config: Error: Failed to read provider profiles from secrets: Error: Storage failed",
+				"Failed to read provider profiles from secrets: Storage failed",
 			)
 		})
 	})
@@ -403,7 +403,7 @@ describe("ProviderSettingsManager", () => {
 			mockSecrets.get.mockRejectedValue(new Error("Read failed"))
 
 			await expect(providerSettingsManager.listConfig()).rejects.toThrow(
-				"Failed to list configs: Error: Failed to read provider profiles from secrets: Error: Read failed",
+				"Failed to list configs: Failed to read provider profiles from secrets: Read failed",
 			)
 		})
 	})
@@ -565,7 +565,7 @@ describe("ProviderSettingsManager", () => {
 			mockSecrets.store.mockRejectedValue(new Error("Storage failed"))
 
 			await expect(providerSettingsManager.saveConfig("test", {})).rejects.toThrow(
-				"Failed to save config: Error: Failed to write provider profiles to secrets: Error: Storage failed",
+				"Failed to save config: Failed to write provider profiles to secrets: Storage failed",
 			)
 		})
 
@@ -666,7 +666,7 @@ describe("ProviderSettingsManager", () => {
 			)
 
 			await expect(providerSettingsManager.deleteConfig("default")).rejects.toThrow(
-				"Failed to delete config: Error: Cannot delete the last remaining configuration",
+				"Failed to delete config: Cannot delete the last remaining configuration",
 			)
 		})
 	})
@@ -734,7 +734,7 @@ describe("ProviderSettingsManager", () => {
 			mockSecrets.store.mockRejectedValue(new Error("Storage failed"))
 
 			await expect(providerSettingsManager.activateProfile({ name: "test" })).rejects.toThrow(
-				"Failed to activate profile: Failed to write provider profiles to secrets: Error: Storage failed",
+				"Failed to activate profile: Failed to write provider profiles to secrets: Storage failed",
 			)
 		})
 
@@ -952,7 +952,7 @@ describe("ProviderSettingsManager", () => {
 			mockSecrets.get.mockRejectedValue(new Error("Storage failed"))
 
 			await expect(providerSettingsManager.hasConfig("test")).rejects.toThrow(
-				"Failed to check config existence: Error: Failed to read provider profiles from secrets: Error: Storage failed",
+				"Failed to check config existence: Failed to read provider profiles from secrets: Storage failed",
 			)
 		})
 	})
@@ -1293,7 +1293,7 @@ describe("ProviderSettingsManager", () => {
 			mockSecrets.store.mockRejectedValue(new Error("Storage failed"))
 
 			await expect(providerSettingsManager.syncCloudProfiles({})).rejects.toThrow(
-				"Failed to sync cloud profiles: Error: Failed to write provider profiles to secrets: Error: Storage failed",
+				"Failed to sync cloud profiles: Failed to write provider profiles to secrets: Storage failed",
 			)
 		})
 

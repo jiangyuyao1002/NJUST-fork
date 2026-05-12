@@ -248,7 +248,7 @@ describe("AnthropicHandler", () => {
 		})
 
 		it("should handle API errors", async () => {
-			mockCreate.mockRejectedValueOnce(new Error("Anthropic completion error: API Error"))
+			mockCreate.mockRejectedValue(new Error("Anthropic completion error: API Error"))
 			await expect(handler.completePrompt("Test prompt")).rejects.toThrow("Anthropic completion error: API Error")
 		})
 

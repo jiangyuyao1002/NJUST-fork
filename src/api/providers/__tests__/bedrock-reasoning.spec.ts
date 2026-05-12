@@ -86,7 +86,7 @@ describe("AwsBedrockHandler - Extended Thinking", () => {
 			const stream = handler.createMessage("System prompt", messages)
 
 			const chunks = []
-			for await (const _chunk of stream) {
+			for await (const chunk of stream) {
 				chunks.push(chunk)
 			}
 
@@ -135,7 +135,7 @@ describe("AwsBedrockHandler - Extended Thinking", () => {
 
 			const stream = handler.createMessage("System prompt", messages, metadata)
 			const chunks = []
-			for await (const _chunk of stream) {
+			for await (const chunk of stream) {
 				chunks.push(chunk)
 			}
 
@@ -170,7 +170,7 @@ describe("AwsBedrockHandler - Extended Thinking", () => {
 			const messages = [{ role: "user" as const, content: "Test" }]
 			const stream = handler.createMessage("System prompt", messages)
 
-			for await (const _chunk of stream) {
+			for await (const chunk of stream) {
 				// consume stream
 			}
 
@@ -214,7 +214,7 @@ describe("AwsBedrockHandler - Extended Thinking", () => {
 			const stream = handler.createMessage("System prompt", messages)
 
 			const chunks = []
-			for await (const _chunk of stream) {
+			for await (const chunk of stream) {
 				chunks.push(chunk)
 			}
 
@@ -261,7 +261,7 @@ describe("AwsBedrockHandler - Extended Thinking", () => {
 			const stream = handler.createMessage("System prompt", messages)
 
 			const chunks = []
-			for await (const _chunk of stream) {
+			for await (const chunk of stream) {
 				chunks.push(chunk)
 			}
 
@@ -310,7 +310,7 @@ describe("AwsBedrockHandler - Extended Thinking", () => {
 			const stream = handler.createMessage("System prompt", messages)
 
 			const chunks = []
-			for await (const _chunk of stream) {
+			for await (const chunk of stream) {
 				chunks.push(chunk)
 			}
 

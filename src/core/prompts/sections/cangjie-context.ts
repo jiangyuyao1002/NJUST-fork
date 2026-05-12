@@ -3252,6 +3252,7 @@ export function buildCompileErrorCorpusSearch(
 // Re-export for testing and backward compatibility
 export {
 	_extractImports,
+	_extractImports as extractImports,
 	_mapImportsToDocPaths,
 	CJC_ERROR_PATTERNS,
 	STDLIB_DOC_MAP,

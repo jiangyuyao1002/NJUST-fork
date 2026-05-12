@@ -118,7 +118,7 @@ describe("autoImportSettings", () => {
 		}
 
 		// mockProvider must be initialized AFTER its dependencies
-		mockProvider = {
+		_mockProvider = {
 			providerSettingsManager: mockProviderSettingsManager,
 			contextProxy: mockContextProxy,
 			upsertProviderProfile: vi.fn().mockResolvedValue({ success: true }),

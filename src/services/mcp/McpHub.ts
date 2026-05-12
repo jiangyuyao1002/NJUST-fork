@@ -362,10 +362,10 @@ export class McpHub implements IMcpHubService {
 		}
 	}
 
-	private watchProjectMcpFile(): Promise<void> {
+	private async watchProjectMcpFile(): Promise<void> {
 		// Skip if test environment is detected or VSCode APIs are not available
 		if (process.env.NODE_ENV === "test" || !vscode.workspace.createFileSystemWatcher) {
-			return
+			return Promise.resolve()
 		}
 
 		// Clean up existing project MCP watcher if it exists
@@ -375,7 +375,7 @@ export class McpHub implements IMcpHubService {
 		}
 
 		if (!vscode.workspace.workspaceFolders?.length) {
-			return
+			return Promise.resolve()
 		}
 
 		const workspaceFolder = this.providerRef.deref()?.cwd ?? getWorkspacePath()

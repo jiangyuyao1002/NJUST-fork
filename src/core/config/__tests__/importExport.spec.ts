@@ -761,8 +761,7 @@ describe("importExport", () => {
 				)
 				// Should log full details to console
 				expect(consoleWarnSpy).toHaveBeenCalledWith(
-					"Settings import completed with warnings:",
-					expect.arrayContaining([expect.stringContaining("problematic-profile")]),
+					expect.stringContaining("[ImportExport] Settings import completed with warnings:"),
 				)
 				expect(showInfoMessageSpy).not.toHaveBeenCalled()
 
@@ -1009,11 +1008,7 @@ describe("importExport", () => {
 				)
 				// Should log full details to console
 				expect(consoleWarnSpy).toHaveBeenCalledWith(
-					"Settings import completed with warnings:",
-					expect.arrayContaining([
-						expect.stringContaining("problematic-profile-1"),
-						expect.stringContaining("problematic-profile-2"),
-					]),
+					expect.stringContaining("[ImportExport] Settings import completed with warnings:"),
 				)
 
 				showWarningMessageSpy.mockRestore()

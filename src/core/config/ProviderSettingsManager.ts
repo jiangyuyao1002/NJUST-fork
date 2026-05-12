@@ -664,7 +664,7 @@ export class ProviderSettingsManager {
 			)
 			// Return a new config object without the invalid apiProvider
 			// This effectively resets the profile so the user can select a valid provider
-			const { _apiProvider, ...restConfig } = config
+			const { apiProvider: _, ...restConfig } = config
 			return restConfig
 		}
 

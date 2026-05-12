@@ -52,7 +52,16 @@ vi.mock("../../../services/mcp/McpServerManager", () => ({
 	},
 }))
 vi.mock("../../../integrations/workspace/WorkspaceTracker")
-vi.mock("../../config/ProviderSettingsManager")
+vi.mock("../../config/ProviderSettingsManager", () => ({
+	ProviderSettingsManager: vi.fn().mockImplementation(() => ({
+		initialize: vi.fn().mockResolvedValue(undefined),
+		listConfig: vi.fn().mockResolvedValue([]),
+		getProfile: vi.fn().mockResolvedValue(undefined),
+		setModeConfig: vi.fn().mockResolvedValue(undefined),
+		getModeConfigId: vi.fn().mockReturnValue(undefined),
+	})),
+	ProviderProfiles: {},
+}))
 vi.mock("../../config/CustomModesManager")
 vi.mock("../../../utils/path", () => ({
 	getWorkspacePath: vi.fn().mockReturnValue("/test/workspace"),
