@@ -74,6 +74,7 @@ log.txt
 
 # Temp lint output
 temp-lint-*.txt
+eslint-report*.json
 
 # Devflow planning and specs
 devflow/
