@@ -81,7 +81,7 @@ async function handleSaveCodeIndexSettingsAtomic(context: MessageHandlerContext,
 	}
 }
 
-function handleRequestIndexingStatus(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+async function handleRequestIndexingStatus(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	const mgr = provider.getCurrentWorkspaceCodeIndexManager()
 	if (!mgr) {
@@ -121,7 +121,7 @@ async function handleStartIndexing(context: MessageHandlerContext, _message: Web
 	} catch (error) { provider.log(`Error starting indexing: ${getErrorMessage(error)}`) }
 }
 
-function handleStopIndexing(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+async function handleStopIndexing(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	try {
 		const mgr = provider.getCurrentWorkspaceCodeIndexManager()

@@ -151,20 +151,20 @@ private initPromise: Promise<void> | null = null
 				family: "lm",
 				version: "1.0",
 				maxInputTokens: 8192,
-				sendRequest: (_messages, _options, _token) => {
+				sendRequest: async (_messages, _options, _token) => {
 					// Provide a minimal implementation
 					return {
-						stream: (function* () {
+						stream: (async function* () {
 							yield new vscode.LanguageModelTextPart(
 								"Language model functionality is limited. Please check VS Code configuration.",
 							)
 						})(),
-						text: (function* () {
+						text: (async function* () {
 							yield "Language model functionality is limited. Please check VS Code configuration."
 						})(),
 					}
 				},
-				countTokens: () => 0,
+				countTokens: async () => 0,
 			}
 		} catch (error) {
 			const errorMessage = getErrorMessage(error)

@@ -146,7 +146,7 @@ export class TerminalRegistry {
 	 * @param taskId Optional task ID to associate with the terminal
 	 * @returns A Terminal instance
 	 */
-	public static getOrCreateTerminal(
+	public static async getOrCreateTerminal(
 		cwd: string,
 		taskId?: string,
 		provider: RooTerminalProvider = "vscode",

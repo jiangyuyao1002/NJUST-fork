@@ -1499,7 +1499,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Start skill/memory prefetch in parallel (non-blocking)
 		const provider = this.hostRef.deref()
 		startAllPrefetch({
-			skillFetchFn: () => {
+			skillFetchFn: async () => {
 				const skillsManager = provider?.getSkillsManager()
 				const skills = skillsManager?.getAllSkills() ?? []
 				return skills.map((s) => s.name)

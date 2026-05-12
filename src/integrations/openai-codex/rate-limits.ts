@@ -12,7 +12,7 @@ export interface RateLimitInfo {
 	fetchedAt?: number
 }
 
-export function fetchOpenAiCodexRateLimitInfo(
+export async function fetchOpenAiCodexRateLimitInfo(
 	_accessToken: string,
 	_options?: { accountId?: string | null },
 ): Promise<RateLimitInfo | undefined> {

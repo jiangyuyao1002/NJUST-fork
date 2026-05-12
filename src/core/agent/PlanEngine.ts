@@ -384,7 +384,7 @@ export class PlanEngine {
 		this.abortController?.abort()
 	}
 
-	approvePlan(planId: string): Promise<void> {
+	async approvePlan(planId: string): Promise<void> {
 		const plan = this.plans.get(planId)
 		if (!plan) throw new Error(`Plan not found: ${planId}`)
 		if (plan.status !== "draft") throw new Error(`Plan is not in draft status`)

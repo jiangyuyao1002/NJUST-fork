@@ -27,7 +27,7 @@ export const openAiCodexOAuthManager = {
 		return ""
 	},
 
-	waitForCallback(): { success: boolean; error?: string } {
+	async waitForCallback(): Promise<{ success: boolean; error?: string }> {
 		// Stub - return failure
 		return { success: false }
 	},

@@ -57,7 +57,7 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 
 	// ── Execution ───────────────────────────────────────────────────────
 
-	override execute(
+	override async execute(
 		params: { query: string },
 		_task: Task,
 		{ pushToolResult }: ToolCallbacks,

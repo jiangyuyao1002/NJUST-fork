@@ -769,7 +769,7 @@ Add your skill instructions here.
 		this.disposables.push(watcher)
 	}
 
-	dispose(): Promise<void> {
+	async dispose(): Promise<void> {
 		this.isDisposed = true
 		this.disposables.forEach((d) => d.dispose())
 		this.disposables = []

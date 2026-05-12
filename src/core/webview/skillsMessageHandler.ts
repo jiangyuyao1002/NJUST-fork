@@ -180,7 +180,7 @@ export async function handleUpdateSkillModes(
 /**
  * Handles the openSkillFile message - opens a skill file in the editor
  */
-export function handleOpenSkillFile(provider: ClineProvider, message: WebviewMessage): Promise<void> {
+export async function handleOpenSkillFile(provider: ClineProvider, message: WebviewMessage): Promise<void> {
 	try {
 		const skillName = message.skillName
 		const source = message.source as SkillSource

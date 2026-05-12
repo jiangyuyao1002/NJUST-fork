@@ -246,7 +246,7 @@ export class CustomModesManager {
 		}
 	}
 
-	private mergeCustomModes(projectModes: ModeConfig[], globalModes: ModeConfig[]): Promise<ModeConfig[]> {
+	private async mergeCustomModes(projectModes: ModeConfig[], globalModes: ModeConfig[]): Promise<ModeConfig[]> {
 		const slugs = new Set<string>()
 		const merged: ModeConfig[] = []
 

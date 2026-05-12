@@ -496,7 +496,7 @@ state so that context is preserved even after compression.
 /**
  * Get all built-in commands as Command objects
  */
-export function getBuiltInCommands(): Promise<Command[]> {
+export async function getBuiltInCommands(): Promise<Command[]> {
 	return Object.values(BUILT_IN_COMMANDS).map((cmd) => ({
 		name: cmd.name,
 		content: cmd.content,
@@ -510,7 +510,7 @@ export function getBuiltInCommands(): Promise<Command[]> {
 /**
  * Get a specific built-in command by name
  */
-export function getBuiltInCommand(name: string): Promise<Command | undefined> {
+export async function getBuiltInCommand(name: string): Promise<Command | undefined> {
 	const cmd = BUILT_IN_COMMANDS[name]
 	if (!cmd) return undefined
 
@@ -527,6 +527,6 @@ export function getBuiltInCommand(name: string): Promise<Command | undefined> {
 /**
  * Get names of all built-in commands
  */
-export function getBuiltInCommandNames(): Promise<string[]> {
+export async function getBuiltInCommandNames(): Promise<string[]> {
 	return Object.keys(BUILT_IN_COMMANDS)
 }

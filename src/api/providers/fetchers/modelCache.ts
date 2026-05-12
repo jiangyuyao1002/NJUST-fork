@@ -218,7 +218,7 @@ export const refreshModels = async (options: GetModelsOptions): Promise<ModelRec
  * Refreshes public provider caches without blocking or requiring auth.
  * Should be called once during extension activation.
  */
-export function initializeModelCacheRefresh(): Promise<void> {
+export async function initializeModelCacheRefresh(): Promise<void> {
 	// Wait for extension to fully activate before refreshing
 	setTimeout(async () => {
 		// Providers that work without API keys

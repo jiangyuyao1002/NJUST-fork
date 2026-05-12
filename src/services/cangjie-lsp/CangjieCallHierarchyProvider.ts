@@ -7,7 +7,7 @@ const CALLABLE_KINDS: Set<CangjieDefKind> = new Set(["func", "main", "init", "ma
 export class CangjieCallHierarchyProvider implements vscode.CallHierarchyProvider {
 	constructor(private readonly index: CangjieSymbolIndex) {}
 
-	prepareCallHierarchy(
+	async prepareCallHierarchy(
 		document: vscode.TextDocument,
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
@@ -27,7 +27,7 @@ export class CangjieCallHierarchyProvider implements vscode.CallHierarchyProvide
 		}]
 	}
 
-	provideCallHierarchyIncomingCalls(
+	async provideCallHierarchyIncomingCalls(
 		item: vscode.CallHierarchyItem,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.CallHierarchyIncomingCall[]> {

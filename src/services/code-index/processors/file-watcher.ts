@@ -104,7 +104,7 @@ export class FileWatcher implements IFileWatcher {
 	/**
 	 * Initializes the file watcher
 	 */
-	initialize(): void {
+	async initialize(): Promise<void> {
 		// Create file watcher
 		const filePattern = new vscode.RelativePattern(
 			this.workspacePath,

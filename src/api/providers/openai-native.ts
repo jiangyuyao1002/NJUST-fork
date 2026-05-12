@@ -1152,7 +1152,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 	/**
 	 * Shared processor for Responses API events.
 	 */
-	private *processEvent(event: any, model: OpenAiNativeModel): ApiStream {
+	private async *processEvent(event: any, model: OpenAiNativeModel): ApiStream {
 		// Capture resolved service tier when available
 		if (event?.response?.service_tier) {
 			this.lastServiceTier = event.response.service_tier as ServiceTier

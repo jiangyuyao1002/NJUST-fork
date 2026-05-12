@@ -28,7 +28,7 @@ class AskIgnoredError extends Error {
 	}
 }
 
-function checkAutoApproval({
+async function checkAutoApproval({
 	state: _state,
 	ask: _ask,
 	text: _text,

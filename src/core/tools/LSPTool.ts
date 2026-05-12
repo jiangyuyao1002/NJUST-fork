@@ -31,7 +31,7 @@ const ACTION_COMMAND_MAP: Record<LSPAction, string> = {
  * Dynamically load the vscode module. Returns undefined when not running
  * inside a VS Code extension host (e.g. unit-test / CLI environment).
  */
-function getVscodeModule(): Promise<typeof import("vscode") | undefined> {
+async function getVscodeModule(): Promise<typeof import("vscode") | undefined> {
 	try {
 		 
 		return require("vscode")

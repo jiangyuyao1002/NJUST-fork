@@ -21,7 +21,7 @@ import { buildSkillResult, resolveSkillContentForMode, type SkillLookup } from "
 import type { SkillContent } from "../../shared/skills"
 import { getErrorMessage } from "../../shared/error-utils"
 
-export function openMention(cwd: string, mention?: string): Promise<void> {
+export async function openMention(cwd: string, mention?: string): Promise<void> {
 	if (!mention) {
 		return
 	}

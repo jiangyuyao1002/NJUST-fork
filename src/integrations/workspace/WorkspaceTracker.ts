@@ -153,7 +153,7 @@ class WorkspaceTracker {
 		}
 	}
 
-	private removeFilePath(filePath: string): Promise<boolean> {
+	private async removeFilePath(filePath: string): Promise<boolean> {
 		const normalizedPath = this.normalizeFilePath(filePath)
 		return this.filePaths.delete(normalizedPath) || this.filePaths.delete(normalizedPath + "/")
 	}

@@ -813,7 +813,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		}
 	}
 
-	private *processEvent(event: any, model: OpenAiCodexModel): ApiStream {
+	private async *processEvent(event: any, model: OpenAiCodexModel): ApiStream {
 		if (event?.response?.output && Array.isArray(event.response.output)) {
 			this.lastResponseOutput = event.response.output
 		}

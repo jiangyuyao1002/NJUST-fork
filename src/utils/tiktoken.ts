@@ -52,7 +52,7 @@ function serializeToolResult(block: Anthropic.Messages.ToolResultBlockParam): st
 	return parts.join("\n")
 }
 
-export function tiktoken(content: Anthropic.Messages.ContentBlockParam[]): Promise<number> {
+export async function tiktoken(content: Anthropic.Messages.ContentBlockParam[]): Promise<number> {
 	if (content.length === 0) {
 		return 0
 	}

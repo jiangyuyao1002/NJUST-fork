@@ -55,7 +55,7 @@ export class CangjieLintConfig implements vscode.Disposable {
 	/**
 	 * Initialize: find and load .cjlintrc, set up file watcher.
 	 */
-	initialize(): Promise<void> {
+	async initialize(): Promise<void> {
 		const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
 		if (!workspaceFolder) return
 

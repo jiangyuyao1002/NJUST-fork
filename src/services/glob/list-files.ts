@@ -161,7 +161,7 @@ function ensureFirstLevelDirectoriesIncluded(
 /**
  * Handle special directories (root, home) that should not be fully listed
  */
-function handleSpecialDirectories(dirPath: string): Promise<[string[], boolean] | null> {
+async function handleSpecialDirectories(dirPath: string): Promise<[string[], boolean] | null> {
 	const absolutePath = path.resolve(dirPath)
 
 	// Do not allow listing files in root directory

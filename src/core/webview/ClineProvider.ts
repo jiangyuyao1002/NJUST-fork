@@ -199,7 +199,7 @@ export class ClineProvider
 		// The globalState write-through is debounced separately (not on every mutation)
 		// since per-task files are authoritative and globalState is only for downgrade compat.
 		this.taskHistoryStore = new TaskHistoryStore(this.contextProxy.globalStorageUri.fsPath, {
-			onWrite: () => {
+			onWrite: async () => {
 				this.taskHistory.scheduleGlobalStateWriteThrough()
 			},
 		})
@@ -747,7 +747,7 @@ export class ClineProvider
 	}
 
 
-	private applyPendingEditIfPresent(task: Task): Promise<void> {
+	private async applyPendingEditIfPresent(task: Task): Promise<void> {
 		const operationId = `task-${task.taskId}`
 		const pendingEdit = this.pendingEditManager.get(operationId)
 		if (!pendingEdit) {
