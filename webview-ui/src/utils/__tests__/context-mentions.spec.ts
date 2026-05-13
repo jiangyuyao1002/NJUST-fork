@@ -260,20 +260,20 @@ describe("getContextMenuOptions", () => {
 
 	it("should match git commands", () => {
 		const result = getContextMenuOptions("git", null, mockQueryItems)
-		expect(result[0].type).toBe(ContextMenuOptionType.Git)
-		expect(result[0].label).toBe("Git Commits")
+		expect(result[0]!.type).toBe(ContextMenuOptionType.Git)
+		expect(result[0]!.label).toBe("Git Commits")
 	})
 
 	it("should match git commit hashes", () => {
 		const result = getContextMenuOptions("abc1234", null, mockQueryItems)
-		expect(result[0].type).toBe(ContextMenuOptionType.Git)
-		expect(result[0].value).toBe("abc1234")
+		expect(result[0]!.type).toBe(ContextMenuOptionType.Git)
+		expect(result[0]!.value).toBe("abc1234")
 	})
 
 	it("should return NoResults when no matches found", () => {
 		const result = getContextMenuOptions("nonexistent", null, mockQueryItems)
 		expect(result).toHaveLength(1)
-		expect(result[0].type).toBe(ContextMenuOptionType.NoResults)
+		expect(result[0]!.type).toBe(ContextMenuOptionType.NoResults)
 	})
 
 	/**
@@ -387,7 +387,7 @@ describe("getContextMenuOptions", () => {
 		)
 
 		expect(result).toHaveLength(1)
-		expect(result[0].type).toBe(ContextMenuOptionType.NoResults)
+		expect(result[0]!.type).toBe(ContextMenuOptionType.NoResults)
 	})
 
 	/**
@@ -434,7 +434,7 @@ describe("getContextMenuOptions", () => {
 		expect(result.length).toBeGreaterThan(0)
 
 		// Verify the first item is an opened file type
-		expect(result[0].type).toBe(ContextMenuOptionType.OpenedFile)
+		expect(result[0]!.type).toBe(ContextMenuOptionType.OpenedFile)
 
 		// Verify the remaining items are in the correct order:
 		// suggestions -> openedFiles -> searchResults -> gitResults
@@ -477,9 +477,9 @@ describe("getContextMenuOptions", () => {
 		const result = getContextMenuOptions("/co", null, [], [], mockModes)
 
 		// Should have section header first, then mode results
-		expect(result[0].type).toBe(ContextMenuOptionType.SectionHeader)
-		expect(result[1].type).toBe(ContextMenuOptionType.Mode)
-		expect(result[1].value).toBe("code")
+		expect(result[0]!.type).toBe(ContextMenuOptionType.SectionHeader)
+		expect(result[1]!.type).toBe(ContextMenuOptionType.Mode)
+		expect(result[1]!.value).toBe("code")
 	})
 
 	it("should not process slash commands when query starts with slash but inputValue doesn't", () => {
@@ -488,9 +488,9 @@ describe("getContextMenuOptions", () => {
 		const result = getContextMenuOptions("/nonexistentquery", null, [], [])
 
 		// Should not process as a mode command
-		expect(result[0].type).not.toBe(ContextMenuOptionType.Mode)
+		expect(result[0]!.type).not.toBe(ContextMenuOptionType.Mode)
 		// Should return NoResults since it won't match anything
-		expect(result[0].type).toBe(ContextMenuOptionType.NoResults)
+		expect(result[0]!.type).toBe(ContextMenuOptionType.NoResults)
 	})
 
 	// --- Tests for Escaped Spaces (Focus on how paths are presented) ---
@@ -529,7 +529,7 @@ describe("getContextMenuOptions", () => {
 
 		// Verify we get some results back that aren't "No Results"
 		expect(formattedItems.length).toBeGreaterThan(0)
-		expect(formattedItems[0].type !== ContextMenuOptionType.NoResults).toBeTruthy()
+		expect(formattedItems[0]!.type !== ContextMenuOptionType.NoResults).toBeTruthy()
 
 		// The main thing we want to verify is that no backslashes show up in any display fields
 		// This is the core UI behavior we want to test - spaces should not be escaped in display text

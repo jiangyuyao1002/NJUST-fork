@@ -1265,12 +1265,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 			let firstTool
 			try {
-				firstTool = JSON.parse(batch[0].text || "{}")
+				firstTool = JSON.parse(batch[0]!.text || "{}")
 			} catch {
-				return batch[0]
+				return batch[0]!
 			}
 			return {
-				...batch[0],
+				...batch[0]!,
 				text: JSON.stringify({ ...firstTool, batchFiles }),
 			}
 		}
@@ -1293,12 +1293,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 			let firstTool
 			try {
-				firstTool = JSON.parse(batch[0].text || "{}")
+				firstTool = JSON.parse(batch[0]!.text || "{}")
 			} catch {
-				return batch[0]
+				return batch[0]!
 			}
 			return {
-				...batch[0],
+				...batch[0]!,
 				text: JSON.stringify({ ...firstTool, batchDirs }),
 			}
 		}
@@ -1322,12 +1322,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 			let firstTool
 			try {
-				firstTool = JSON.parse(batch[0].text || "{}")
+				firstTool = JSON.parse(batch[0]!.text || "{}")
 			} catch {
-				return batch[0]
+				return batch[0]!
 			}
 			return {
-				...batch[0],
+				...batch[0]!,
 				text: JSON.stringify({ ...firstTool, batchDiffs }),
 			}
 		}
@@ -1543,7 +1543,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const nextModeIndex = (currentModeIndex + 1) % allModes.length
 		// Update local state and notify extension to sync mode change
-		switchToMode(allModes[nextModeIndex].slug)
+		switchToMode(allModes[nextModeIndex]!.slug)
 	}, [mode, customModes, switchToMode])
 
 	// Function to handle switching to previous mode
@@ -1552,7 +1552,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const previousModeIndex = (currentModeIndex - 1 + allModes.length) % allModes.length
 		// Update local state and notify extension to sync mode change
-		switchToMode(allModes[previousModeIndex].slug)
+		switchToMode(allModes[previousModeIndex]!.slug)
 	}, [mode, customModes, switchToMode])
 
 	// Mode switching keyboard handler. Scroll-intent keyboard detection

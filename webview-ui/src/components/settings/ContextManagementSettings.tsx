@@ -542,7 +542,7 @@ export const ContextManagementSettings = ({
 									max={100}
 									step={1}
 									value={[getCurrentThresholdValue()]}
-									onValueChange={([value]) => handleThresholdChange(value)}
+									onValueChange={([value]: [number]) => handleThresholdChange(value)}
 									data-testid="condense-threshold-slider"
 								/>
 								<span className="w-20">{getCurrentThresholdValue()}%</span>

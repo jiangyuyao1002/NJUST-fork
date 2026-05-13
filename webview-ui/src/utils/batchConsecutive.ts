@@ -11,25 +11,25 @@ export function batchConsecutive<T>(items: T[], predicate: (item: T) => boolean,
 	let i = 0
 
 	while (i < items.length) {
-		if (predicate(items[i])) {
+		if (predicate(items[i]!)) {
 			// Collect consecutive matches into a batch
-			const batch: T[] = [items[i]]
+			const batch: T[] = [items[i]!]
 			let j = i + 1
 
-			while (j < items.length && predicate(items[j])) {
-				batch.push(items[j])
+			while (j < items.length && predicate(items[j]!)) {
+				batch.push(items[j]!)
 				j++
 			}
 
 			if (batch.length > 1) {
 				result.push(synthesize(batch))
 			} else {
-				result.push(batch[0])
+				result.push(batch[0]!)
 			}
 
 			i = j
 		} else {
-			result.push(items[i])
+			result.push(items[i]!)
 			i++
 		}
 	}

@@ -48,7 +48,7 @@ export function highlightFzfMatch(
 
 		// Add highlighted character
 		parts.push({
-			text: text[pos],
+			text: text[pos]!,
 			highlight: true,
 		})
 

@@ -278,7 +278,7 @@ const MarkdownBlock = memo(({ markdown }: MarkdownBlockProps) => {
 
 				// Extract language from className
 				const match = /language-(\w+)/.exec(className)
-				const language = match ? match[1] : "text"
+				const language = match ? match[1]! : "text"
 
 				// Wrap CodeBlock in a div to ensure proper separation
 				return (

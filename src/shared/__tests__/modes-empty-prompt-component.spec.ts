@@ -93,7 +93,7 @@ describe("getModeSelection with empty promptComponent", () => {
 		const result = getModeSelection("non-existent-mode", partialPromptComponent, [])
 
 		// Should merge with default mode
-		expect(result.roleDefinition).toBe(defaultMode.roleDefinition) // Falls back to default mode
+		expect(result.roleDefinition).toBe(defaultMode!.roleDefinition) // Falls back to default mode
 		expect(result.baseInstructions).toBe("Custom instructions for unknown mode") // Uses promptComponent
 	})
 })

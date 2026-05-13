@@ -359,8 +359,8 @@ const CodeBlock = memo(
 					wrapperHeight = copyRect.height
 				} else if (copyWrapper.children.length > 0) {
 					// Try to get height from the button inside
-					const buttonRect = copyWrapper.children[0].getBoundingClientRect()
-					const buttonStyle = window.getComputedStyle(copyWrapper.children[0] as Element)
+					const buttonRect = copyWrapper.children[0]!.getBoundingClientRect()
+					const buttonStyle = window.getComputedStyle(copyWrapper.children[0]! as Element)
 					const buttonPadding =
 						parseInt(buttonStyle.getPropertyValue("padding-top") || "0", 10) +
 						parseInt(buttonStyle.getPropertyValue("padding-bottom") || "0", 10)

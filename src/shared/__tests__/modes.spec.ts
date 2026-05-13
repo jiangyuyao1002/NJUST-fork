@@ -798,8 +798,8 @@ describe("getModeSelection", () => {
 	test("should fall back to default mode if slug does not exist in custom, prompt, or built-in modes", () => {
 		const selection = getModeSelection("non-existent-mode", undefined, customModesList)
 		const defaultMode = modes[0] // First mode is the default
-		expect(selection.roleDefinition).toBe(defaultMode.roleDefinition)
-		expect(selection.baseInstructions).toBe(defaultMode.customInstructions || "")
+		expect(selection.roleDefinition).toBe(defaultMode!.roleDefinition)
+		expect(selection.baseInstructions).toBe(defaultMode!.customInstructions || "")
 	})
 
 	test("customMode's properties are used if customMode exists, ignoring promptComponent's properties", () => {

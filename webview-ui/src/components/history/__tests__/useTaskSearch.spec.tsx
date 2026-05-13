@@ -64,8 +64,8 @@ describe("useTaskSearch", () => {
 		const { result } = renderHook(() => useTaskSearch())
 
 		expect(result.current.tasks).toHaveLength(2) // Only tasks from current workspace
-		expect(result.current.tasks[0].id).toBe("task-2") // Newest first
-		expect(result.current.tasks[1].id).toBe("task-1")
+		expect(result.current.tasks[0]!.id).toBe("task-2") // Newest first
+		expect(result.current.tasks[1]!.id).toBe("task-1")
 	})
 
 	it("filters tasks by current workspace by default", () => {
@@ -94,9 +94,9 @@ describe("useTaskSearch", () => {
 		})
 
 		expect(result.current.sortOption).toBe("newest")
-		expect(result.current.tasks[0].id).toBe("task-2") // Feb 17
-		expect(result.current.tasks[1].id).toBe("task-1") // Feb 16
-		expect(result.current.tasks[2].id).toBe("task-3") // Feb 15
+		expect(result.current.tasks[0]!.id).toBe("task-2") // Feb 17
+		expect(result.current.tasks[1]!.id).toBe("task-1") // Feb 16
+		expect(result.current.tasks[2]!.id).toBe("task-3") // Feb 15
 	})
 
 	it("sorts by oldest", () => {
@@ -107,9 +107,9 @@ describe("useTaskSearch", () => {
 			result.current.setSortOption("oldest")
 		})
 
-		expect(result.current.tasks[0].id).toBe("task-3") // Feb 15
-		expect(result.current.tasks[1].id).toBe("task-1") // Feb 16
-		expect(result.current.tasks[2].id).toBe("task-2") // Feb 17
+		expect(result.current.tasks[0]!.id).toBe("task-3") // Feb 15
+		expect(result.current.tasks[1]!.id).toBe("task-1") // Feb 16
+		expect(result.current.tasks[2]!.id).toBe("task-2") // Feb 17
 	})
 
 	it("sorts by most expensive", () => {
@@ -120,9 +120,9 @@ describe("useTaskSearch", () => {
 			result.current.setSortOption("mostExpensive")
 		})
 
-		expect(result.current.tasks[0].id).toBe("task-3") // $0.05
-		expect(result.current.tasks[1].id).toBe("task-2") // $0.02
-		expect(result.current.tasks[2].id).toBe("task-1") // $0.01
+		expect(result.current.tasks[0]!.id).toBe("task-3") // $0.05
+		expect(result.current.tasks[1]!.id).toBe("task-2") // $0.02
+		expect(result.current.tasks[2]!.id).toBe("task-1") // $0.01
 	})
 
 	it("sorts by most tokens", () => {
@@ -136,9 +136,9 @@ describe("useTaskSearch", () => {
 		// task-2: 200 + 100 + 25 + 10 = 335 tokens
 		// task-3: 150 + 75 = 225 tokens
 		// task-1: 100 + 50 = 150 tokens
-		expect(result.current.tasks[0].id).toBe("task-2")
-		expect(result.current.tasks[1].id).toBe("task-3")
-		expect(result.current.tasks[2].id).toBe("task-1")
+		expect(result.current.tasks[0]!.id).toBe("task-2")
+		expect(result.current.tasks[1]!.id).toBe("task-3")
+		expect(result.current.tasks[2]!.id).toBe("task-1")
 	})
 
 	it("filters tasks by search query", () => {
@@ -150,7 +150,7 @@ describe("useTaskSearch", () => {
 		})
 
 		expect(result.current.tasks).toHaveLength(1)
-		expect(result.current.tasks[0].id).toBe("task-1")
+		expect(result.current.tasks[0]!.id).toBe("task-1")
 		expect((result.current.tasks[0] as any).highlight).toBe("<mark>Create a React component</mark>")
 	})
 

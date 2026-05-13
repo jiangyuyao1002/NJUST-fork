@@ -50,7 +50,7 @@ export const ImageGenerationSettings = ({
 			}
 		}
 		// Otherwise use first available model for current provider
-		return availableModels[0]?.value || IMAGE_GENERATION_MODELS[0].value
+		return availableModels[0]?.value || IMAGE_GENERATION_MODELS[0]!.value
 	}, [openRouterImageGenerationSelectedModel, availableModels, currentProvider])
 
 	// Handle provider changes
@@ -72,7 +72,7 @@ export const ImageGenerationSettings = ({
 				// No need to call setImageGenerationSelectedModel since the value doesn't change
 			} else {
 				// Current model doesn't exist for new provider, switch to first available
-				setImageGenerationSelectedModel(providerModels[0].value)
+				setImageGenerationSelectedModel(providerModels[0]!.value)
 			}
 		}
 	}

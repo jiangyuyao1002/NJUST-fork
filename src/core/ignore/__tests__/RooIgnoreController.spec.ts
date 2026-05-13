@@ -153,7 +153,7 @@ describe("RooIgnoreController", () => {
 			await controller.initialize()
 
 			// Verify error was logged
-			expect(consoleSpy).toHaveBeenCalledWith("Unexpected error loading .rooignore:", expect.any(Error))
+			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Unexpected error loading .rooignore:"))
 
 			// Cleanup
 			consoleSpy.mockRestore()
@@ -365,7 +365,7 @@ describe("RooIgnoreController", () => {
 			expect(result).toEqual([])
 
 			// Verify error was logged
-			expect(consoleSpy).toHaveBeenCalledWith("Error filtering paths:", expect.any(Error))
+			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Error filtering paths:"))
 
 			// Cleanup
 			consoleSpy.mockRestore()

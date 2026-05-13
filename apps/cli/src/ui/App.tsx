@@ -40,8 +40,6 @@ import {
 	type AutocompleteInputHandle,
 	type AutocompleteTrigger,
 	type AutocompleteItem,
-	type FileResult,
-	type SlashCommandResult,
 	AutocompleteInput,
 	PickerSelect,
 	createFileTrigger,

@@ -106,7 +106,7 @@ function getPreviousTodos(messages: ClineMessage[], currentMessageTs: number): a
 		})
 
 	if (previousUpdateIndex !== -1) {
-		const previousMessage = messages.slice().reverse()[previousUpdateIndex]
+		const previousMessage = messages.slice().reverse()[previousUpdateIndex]!
 		try {
 			const tool = JSON.parse(previousMessage.text || "{}")
 			return tool.todos || []

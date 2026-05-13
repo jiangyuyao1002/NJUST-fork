@@ -104,7 +104,7 @@ export function normalizeLanguage(language: string | undefined): ExtendedLanguag
 
 	// Check if it's an alias
 	if (normalizedInput in languageAliases) {
-		return languageAliases[normalizedInput]
+		return languageAliases[normalizedInput]!
 	}
 
 	// Warn about unrecognized language and default to txt (only once per language)

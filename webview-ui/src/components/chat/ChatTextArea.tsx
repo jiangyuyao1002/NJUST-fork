@@ -737,7 +737,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				const acceptedTypes = ["png", "jpeg", "webp"]
 
 				const imageItems = Array.from(items).filter((item) => {
-					const [type, subtype] = item.type.split("/")
+					const [type, subtype] = item.type.split("/") as [string, string]
 					return type === "image" && acceptedTypes.includes(subtype)
 				})
 
@@ -861,7 +861,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				let totalLength = 0
 
 				for (let i = 0; i < trimmed.length; i++) {
-					const mentionText = convertToMentionPath(trimmed[i], cwd)
+					const mentionText = convertToMentionPath(trimmed[i]!, cwd)
 					newValue += mentionText
 					totalLength += mentionText.length
 					if (i < trimmed.length - 1) {
@@ -914,7 +914,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 					for (const file of files) {
 						const diskPath = (file as File & { path?: string }).path
-						const [type, subtype] = file.type.split("/")
+						const [type, subtype] = file.type.split("/") as [string, string]
 						const isImage = type === "image" && acceptedTypes.includes(subtype)
 						if (isImage && !shouldDisableImages) {
 							imageFilesToEmbed.push(file)

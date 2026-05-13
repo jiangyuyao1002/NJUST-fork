@@ -101,8 +101,8 @@ describe("mentionRegex and mentionRegexGlobal", () => {
 		const matches = Array.from(input.matchAll(mentionRegexGlobal))
 
 		expect(matches.length).toBe(2)
-		expect(matches[0][1]).toBe("/path/to/escaped\\ file.txt") // Group 1 should not include '@'
-		expect(matches[1][1]).toBe("problems")
+		expect(matches[0]![1]).toBe("/path/to/escaped\\ file.txt") // Group 1 should not include '@'
+		expect(matches[1]![1]).toBe("problems")
 	})
 
 	// NEW: Additional tests for the boundary restriction
@@ -138,8 +138,8 @@ After space @/should/match.txt`
 
 			const matches = Array.from(input.matchAll(mentionRegexGlobal))
 			expect(matches.length).toBe(2)
-			expect(matches[0][0]).toBe("@/path/on/newline.txt")
-			expect(matches[1][0]).toBe("@/should/match.txt")
+			expect(matches[0]![0]).toBe("@/path/on/newline.txt")
+			expect(matches[1]![0]).toBe("@/should/match.txt")
 		})
 
 		it("should not match mentions in pasted log entries", () => {

@@ -192,7 +192,7 @@ export const TerminalSettings = ({
 											max={60000}
 											step={1000}
 											value={[terminalShellIntegrationTimeout ?? 5000]}
-											onValueChange={([value]) =>
+											onValueChange={([value]: [number]) =>
 												setCachedStateField(
 													"terminalShellIntegrationTimeout",
 													Math.min(60000, Math.max(1000, value)),
@@ -221,7 +221,7 @@ export const TerminalSettings = ({
 											max={1000}
 											step={10}
 											value={[terminalCommandDelay ?? 0]}
-											onValueChange={([value]) =>
+											onValueChange={([value]: [number]) =>
 												setCachedStateField(
 													"terminalCommandDelay",
 													Math.min(1000, Math.max(0, value)),

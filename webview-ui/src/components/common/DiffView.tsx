@@ -113,7 +113,7 @@ const DiffView = memo(({ source, filePath }: DiffViewProps) => {
 			const processed: Hunk[] = []
 
 			for (let i = 0; i < hunks.length; i++) {
-				const hunk = hunks[i]
+				const hunk = hunks[i]!
 				try {
 					const highlighted = await highlightHunks(
 						hunk.oldText,

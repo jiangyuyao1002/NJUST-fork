@@ -62,7 +62,7 @@ describe("Command Autocomplete", () => {
 
 			// Should return NoResults when no commands match
 			expect(options).toHaveLength(1)
-			expect(options[0].type).toBe(ContextMenuOptionType.NoResults)
+			expect(options[0]!.type).toBe(ContextMenuOptionType.NoResults)
 		})
 
 		it("should handle no matching commands", () => {
@@ -70,7 +70,7 @@ describe("Command Autocomplete", () => {
 
 			// Should return NoResults when no commands match
 			expect(options).toHaveLength(1)
-			expect(options[0].type).toBe(ContextMenuOptionType.NoResults)
+			expect(options[0]!.type).toBe(ContextMenuOptionType.NoResults)
 		})
 
 		it("should not return command suggestions for non-slash queries", () => {
@@ -113,7 +113,7 @@ describe("Command Autocomplete", () => {
 
 			// Filter out section headers and check the first command
 			const commandOptions = options.filter((option) => option.type === ContextMenuOptionType.Command)
-			expect(commandOptions[0].value).toBe("test")
+			expect(commandOptions[0]!.value).toBe("test")
 		})
 
 		it("should handle partial matches correctly", () => {
@@ -161,7 +161,7 @@ describe("Command Autocomplete", () => {
 			const commandOptions = options.filter((option) => option.type === ContextMenuOptionType.Command)
 
 			expect(modeOptions.length).toBe(1)
-			expect(modeOptions[0].value).toBe("code")
+			expect(modeOptions[0]!.value).toBe("code")
 			// Fuzzy search might match some commands, so we just check it's a reasonable number
 			expect(commandOptions.length).toBeGreaterThanOrEqual(0)
 		})
@@ -224,7 +224,7 @@ describe("Command Autocomplete", () => {
 			const options = getContextMenuOptions("/setup", null, mockQueryItems, [], [], undefined)
 
 			expect(options).toHaveLength(1)
-			expect(options[0].type).toBe(ContextMenuOptionType.NoResults)
+			expect(options[0]!.type).toBe(ContextMenuOptionType.NoResults)
 		})
 
 		it("should handle empty query with commands", () => {
@@ -245,7 +245,7 @@ describe("Command Autocomplete", () => {
 			// Should have 2 items: 1 section header + 1 command
 			expect(options.length).toBe(2)
 			const commandOptions = options.filter((option) => option.type === ContextMenuOptionType.Command)
-			expect(commandOptions[0].value).toBe("very-long-command-name-that-exceeds-normal-length")
+			expect(commandOptions[0]!.value).toBe("very-long-command-name-that-exceeds-normal-length")
 		})
 
 		it("should handle commands with numeric names", () => {

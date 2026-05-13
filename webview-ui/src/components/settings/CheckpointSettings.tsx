@@ -62,7 +62,7 @@ export const CheckpointSettings = ({
 								max={MAX_CHECKPOINT_TIMEOUT_SECONDS}
 								step={1}
 								defaultValue={[checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS]}
-								onValueChange={([value]) => {
+								onValueChange={([value]: [number]) => {
 									setCachedStateField("checkpointTimeout", value)
 								}}
 								className="flex-1"

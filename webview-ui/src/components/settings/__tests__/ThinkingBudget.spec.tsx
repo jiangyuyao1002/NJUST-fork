@@ -129,7 +129,7 @@ describe("ThinkingBudget", () => {
 		)
 
 		const sliders = screen.getAllByTestId("slider")
-		fireEvent.change(sliders[1], { target: { value: "5000" } })
+		fireEvent.change(sliders[1]!, { target: { value: "5000" } })
 
 		expect(setApiConfigurationField).toHaveBeenCalledWith("modelMaxThinkingTokens", 5000)
 	})
@@ -161,7 +161,7 @@ describe("ThinkingBudget", () => {
 		render(<ThinkingBudget {...defaultProps} apiConfiguration={{ modelMaxTokens: 1000 }} />)
 
 		const sliders = screen.getAllByTestId("slider")
-		expect(sliders[1].getAttribute("min")).toBe("1024")
+		expect(sliders[1]!.getAttribute("min")).toBe("1024")
 	})
 
 	it("should use min thinking tokens of 128 for Gemini 2.5 Pro models", () => {
@@ -177,7 +177,7 @@ describe("ThinkingBudget", () => {
 		)
 
 		const sliders = screen.getAllByTestId("slider")
-		expect(sliders[1].getAttribute("min")).toBe("128")
+		expect(sliders[1]!.getAttribute("min")).toBe("128")
 	})
 
 	it("should use step of 128 for Gemini 2.5 Pro models", () => {
@@ -193,7 +193,7 @@ describe("ThinkingBudget", () => {
 		)
 
 		const sliders = screen.getAllByTestId("slider")
-		expect(sliders[1].getAttribute("step")).toBe("128")
+		expect(sliders[1]!.getAttribute("step")).toBe("128")
 	})
 
 	it("should use step of 1024 for non-Gemini models", () => {
@@ -209,7 +209,7 @@ describe("ThinkingBudget", () => {
 		)
 
 		const sliders = screen.getAllByTestId("slider")
-		expect(sliders[1].getAttribute("step")).toBe("1024")
+		expect(sliders[1]!.getAttribute("step")).toBe("1024")
 	})
 
 	it("should update max tokens when slider changes", () => {
@@ -224,7 +224,7 @@ describe("ThinkingBudget", () => {
 		)
 
 		const sliders = screen.getAllByTestId("slider")
-		fireEvent.change(sliders[0], { target: { value: "12000" } })
+		fireEvent.change(sliders[0]!, { target: { value: "12000" } })
 
 		expect(setApiConfigurationField).toHaveBeenCalledWith("modelMaxTokens", 12000)
 	})

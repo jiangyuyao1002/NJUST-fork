@@ -15,7 +15,7 @@ export function parseDeferredExecutingTool(text: string | undefined): { tool: st
 	if (!text?.trim()) return null
 	const m = text.trim().match(/^\[Deferred\] executing tool:\s+(\S+)\s+\(([^)]+)\)\s*$/)
 	if (!m) return null
-	return { tool: m[1], callId: m[2] }
+	return { tool: m[1]!, callId: m[2]! }
 }
 
 /** Matches deferred tool error lines from `Task.ts`. */
@@ -23,7 +23,7 @@ export function parseDeferredToolError(text: string | undefined): { tool: string
 	if (!text?.trim()) return null
 	const m = text.trim().match(/^\[Deferred\] tool (\S+) error:\s*([\s\S]*)$/)
 	if (!m) return null
-	return { tool: m[1], message: m[2].trim() }
+	return { tool: m[1]!, message: m[2]!.trim() }
 }
 
 export function isCloudAgentAssistantTextMessage(m: ClineMessage | undefined): boolean {

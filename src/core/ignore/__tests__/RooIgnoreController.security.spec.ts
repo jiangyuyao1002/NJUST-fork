@@ -315,7 +315,7 @@ build/
 			expect(filtered).toEqual([])
 
 			// Should log error
-			expect(consoleSpy).toHaveBeenCalledWith("Error filtering paths:", expect.any(Error))
+			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Error filtering paths:"))
 
 			// Clean up
 			consoleSpy.mockRestore()

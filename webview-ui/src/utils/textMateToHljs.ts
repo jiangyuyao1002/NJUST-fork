@@ -50,7 +50,7 @@ function constructTheme(tmTheme: FullColorTheme): Record<string, string> {
 
 	const theme: Record<string, string> = {}
 	Object.keys(hljsToTextMate).forEach((className) => {
-		const tokens = hljsToTextMate[className]
+		const tokens = hljsToTextMate[className]!
 		for (const scope of tokens) {
 			if (tokenToForeground[scope]) {
 				theme[className] = tokenToForeground[scope]

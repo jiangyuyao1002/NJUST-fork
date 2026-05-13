@@ -42,7 +42,7 @@ function HighlightMatch({ text, positions }: HighlightMatchProps) {
 			if (currentSegment) {
 				segments.push({ text: currentSegment, highlighted: currentHighlighted })
 			}
-			currentSegment = text[i]
+			currentSegment = text[i]!
 			currentHighlighted = isHighlighted
 		}
 	}

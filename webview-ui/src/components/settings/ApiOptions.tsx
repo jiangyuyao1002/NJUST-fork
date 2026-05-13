@@ -467,7 +467,7 @@ const ApiOptions = ({
 		if (fromWelcomeView) {
 			const openRouterIndex = options.findIndex((opt) => opt.value === "openrouter")
 			if (openRouterIndex > 0) {
-				const [openRouterOption] = options.splice(openRouterIndex, 1)
+				const [openRouterOption] = options.splice(openRouterIndex, 1) as [typeof options[0]]
 				options.unshift(openRouterOption)
 			}
 		}

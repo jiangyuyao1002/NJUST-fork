@@ -12,7 +12,7 @@ describe("embeddingModels", () => {
 			const geminiProfiles = EMBEDDING_MODEL_PROFILES.gemini
 			expect(geminiProfiles).toBeDefined()
 			expect(geminiProfiles!["gemini-embedding-001"]).toBeDefined()
-			expect(geminiProfiles!["gemini-embedding-001"].dimension).toBe(3072)
+			expect(geminiProfiles!["gemini-embedding-001"]!.dimension).toBe(3072)
 		})
 
 		it("should have deprecated text-embedding-004 in gemini profiles for backward compatibility", () => {
@@ -22,7 +22,7 @@ describe("embeddingModels", () => {
 			const geminiProfiles = EMBEDDING_MODEL_PROFILES.gemini
 			expect(geminiProfiles).toBeDefined()
 			expect(geminiProfiles!["text-embedding-004"]).toBeDefined()
-			expect(geminiProfiles!["text-embedding-004"].dimension).toBe(3072)
+			expect(geminiProfiles!["text-embedding-004"]!.dimension).toBe(3072)
 		})
 	})
 

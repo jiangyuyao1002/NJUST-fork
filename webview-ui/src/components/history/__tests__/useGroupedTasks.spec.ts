@@ -41,10 +41,10 @@ describe("useGroupedTasks", () => {
 			const { result } = renderHook(() => useGroupedTasks([parentTask, childTask1, childTask2], ""))
 
 			expect(result.current.groups).toHaveLength(1)
-			expect(result.current.groups[0].parent.id).toBe("parent-1")
-			expect(result.current.groups[0].subtasks).toHaveLength(2)
-			expect(result.current.groups[0].subtasks[0].item.id).toBe("child-2") // Newest first
-			expect(result.current.groups[0].subtasks[1].item.id).toBe("child-1")
+			expect(result.current.groups[0]!.parent.id).toBe("parent-1")
+			expect(result.current.groups[0]!.subtasks).toHaveLength(2)
+			expect(result.current.groups[0]!.subtasks[0]!.item.id).toBe("child-2") // Newest first
+			expect(result.current.groups[0]!.subtasks[1]!.item.id).toBe("child-1")
 		})
 
 		it("handles tasks with no children", () => {
@@ -62,10 +62,10 @@ describe("useGroupedTasks", () => {
 			const { result } = renderHook(() => useGroupedTasks([task1, task2], ""))
 
 			expect(result.current.groups).toHaveLength(2)
-			expect(result.current.groups[0].parent.id).toBe("task-2") // Newest first
-			expect(result.current.groups[0].subtasks).toHaveLength(0)
-			expect(result.current.groups[1].parent.id).toBe("task-1")
-			expect(result.current.groups[1].subtasks).toHaveLength(0)
+			expect(result.current.groups[0]!.parent.id).toBe("task-2") // Newest first
+			expect(result.current.groups[0]!.subtasks).toHaveLength(0)
+			expect(result.current.groups[1]!.parent.id).toBe("task-1")
+			expect(result.current.groups[1]!.subtasks).toHaveLength(0)
 		})
 
 		it("handles orphaned subtasks (parent not in list)", () => {
@@ -109,9 +109,9 @@ describe("useGroupedTasks", () => {
 			const { result } = renderHook(() => useGroupedTasks([oldTask, newTask, middleTask], ""))
 
 			expect(result.current.groups).toHaveLength(3)
-			expect(result.current.groups[0].parent.id).toBe("new-1")
-			expect(result.current.groups[1].parent.id).toBe("middle-1")
-			expect(result.current.groups[2].parent.id).toBe("old-1")
+			expect(result.current.groups[0]!.parent.id).toBe("new-1")
+			expect(result.current.groups[1]!.parent.id).toBe("middle-1")
+			expect(result.current.groups[2]!.parent.id).toBe("old-1")
 		})
 
 		it("sorts groups by parent timestamp when sort is oldest", () => {
@@ -134,9 +134,9 @@ describe("useGroupedTasks", () => {
 			const { result } = renderHook(() => useGroupedTasks([oldTask, newTask, middleTask], "", "oldest"))
 
 			expect(result.current.groups).toHaveLength(3)
-			expect(result.current.groups[0].parent.id).toBe("old-1")
-			expect(result.current.groups[1].parent.id).toBe("middle-1")
-			expect(result.current.groups[2].parent.id).toBe("new-1")
+			expect(result.current.groups[0]!.parent.id).toBe("old-1")
+			expect(result.current.groups[1]!.parent.id).toBe("middle-1")
+			expect(result.current.groups[2]!.parent.id).toBe("new-1")
 		})
 
 		it("handles empty task list", () => {
@@ -170,14 +170,14 @@ describe("useGroupedTasks", () => {
 
 			// Root task is the only group at top level
 			expect(result.current.groups).toHaveLength(1)
-			expect(result.current.groups[0].parent.id).toBe("root-1")
-			expect(result.current.groups[0].subtasks).toHaveLength(1)
-			expect(result.current.groups[0].subtasks[0].item.id).toBe("child-1")
+			expect(result.current.groups[0]!.parent.id).toBe("root-1")
+			expect(result.current.groups[0]!.subtasks).toHaveLength(1)
+			expect(result.current.groups[0]!.subtasks[0]!.item.id).toBe("child-1")
 
 			// Grandchild is nested inside child's children
-			expect(result.current.groups[0].subtasks[0].children).toHaveLength(1)
-			expect(result.current.groups[0].subtasks[0].children[0].item.id).toBe("grandchild-1")
-			expect(result.current.groups[0].subtasks[0].children[0].children).toHaveLength(0)
+			expect(result.current.groups[0]!.subtasks[0]!.children).toHaveLength(1)
+			expect(result.current.groups[0]!.subtasks[0]!.children[0]!.item.id).toBe("grandchild-1")
+			expect(result.current.groups[0]!.subtasks[0]!.children[0]!.children).toHaveLength(0)
 		})
 	})
 
@@ -195,7 +195,7 @@ describe("useGroupedTasks", () => {
 
 			const { result } = renderHook(() => useGroupedTasks([parentTask, childTask], ""))
 
-			expect(result.current.groups[0].isExpanded).toBe(false)
+			expect(result.current.groups[0]!.isExpanded).toBe(false)
 		})
 
 		it("expands groups correctly", () => {
@@ -211,13 +211,13 @@ describe("useGroupedTasks", () => {
 
 			const { result } = renderHook(() => useGroupedTasks([parentTask, childTask], ""))
 
-			expect(result.current.groups[0].isExpanded).toBe(false)
+			expect(result.current.groups[0]!.isExpanded).toBe(false)
 
 			act(() => {
 				result.current.toggleExpand("parent-1")
 			})
 
-			expect(result.current.groups[0].isExpanded).toBe(true)
+			expect(result.current.groups[0]!.isExpanded).toBe(true)
 		})
 
 		it("collapses expanded groups", () => {
@@ -237,13 +237,13 @@ describe("useGroupedTasks", () => {
 			act(() => {
 				result.current.toggleExpand("parent-1")
 			})
-			expect(result.current.groups[0].isExpanded).toBe(true)
+			expect(result.current.groups[0]!.isExpanded).toBe(true)
 
 			// Collapse
 			act(() => {
 				result.current.toggleExpand("parent-1")
 			})
-			expect(result.current.groups[0].isExpanded).toBe(false)
+			expect(result.current.groups[0]!.isExpanded).toBe(false)
 		})
 
 		it("expands/collapses multiple groups independently", () => {
@@ -341,7 +341,7 @@ describe("useGroupedTasks", () => {
 
 			const { result } = renderHook(() => useGroupedTasks([orphanedTask], "search"))
 
-			expect(result.current.flatTasks?.[0].isSubtask).toBe(false)
+			expect(result.current.flatTasks?.[0]!.isSubtask).toBe(false)
 		})
 
 		it("handles whitespace-only search query as non-search mode", () => {
@@ -407,7 +407,7 @@ describe("useGroupedTasks", () => {
 			act(() => {
 				result.current.toggleExpand("parent-1")
 			})
-			expect(result.current.groups[0].isExpanded).toBe(true)
+			expect(result.current.groups[0]!.isExpanded).toBe(true)
 
 			// Add a new child task
 			const newChildTask = createMockTask({
@@ -419,7 +419,7 @@ describe("useGroupedTasks", () => {
 			rerender({ tasks: [parentTask, childTask, newChildTask], query: "" })
 
 			// Expand state should be preserved
-			expect(result.current.groups[0].isExpanded).toBe(true)
+			expect(result.current.groups[0]!.isExpanded).toBe(true)
 		})
 	})
 })
@@ -458,11 +458,11 @@ describe("buildSubtree", () => {
 
 		expect(node.item.id).toBe("parent-1")
 		expect(node.children).toHaveLength(2)
-		expect(node.children[0].item.id).toBe("child-2") // Newest first
-		expect(node.children[1].item.id).toBe("child-1")
+		expect(node.children[0]!.item.id).toBe("child-2") // Newest first
+		expect(node.children[1]!.item.id).toBe("child-1")
 		expect(node.isExpanded).toBe(false)
-		expect(node.children[0].isExpanded).toBe(false)
-		expect(node.children[1].isExpanded).toBe(false)
+		expect(node.children[0]!.isExpanded).toBe(false)
+		expect(node.children[1]!.isExpanded).toBe(false)
 	})
 
 	it("builds a deeply nested tree recursively", () => {
@@ -495,12 +495,12 @@ describe("buildSubtree", () => {
 
 		expect(node.item.id).toBe("root")
 		expect(node.children).toHaveLength(1)
-		expect(node.children[0].item.id).toBe("child")
-		expect(node.children[0].children).toHaveLength(1)
-		expect(node.children[0].children[0].item.id).toBe("grandchild")
-		expect(node.children[0].children[0].children).toHaveLength(1)
-		expect(node.children[0].children[0].children[0].item.id).toBe("great-grandchild")
-		expect(node.children[0].children[0].children[0].children).toHaveLength(0)
+		expect(node.children[0]!.item.id).toBe("child")
+		expect(node.children[0]!.children).toHaveLength(1)
+		expect(node.children[0]!.children[0]!.item.id).toBe("grandchild")
+		expect(node.children[0]!.children[0]!.children).toHaveLength(1)
+		expect(node.children[0]!.children[0]!.children[0]!.item.id).toBe("great-grandchild")
+		expect(node.children[0]!.children[0]!.children[0]!.children).toHaveLength(0)
 	})
 
 	it("does not mutate the original childrenMap arrays", () => {
@@ -525,8 +525,8 @@ describe("buildSubtree", () => {
 		buildSubtree(parent, childrenMap, new Set<string>())
 
 		// Original array should not be mutated (sort is on a slice)
-		expect(originalChildren[0].id).toBe("child-1")
-		expect(originalChildren[1].id).toBe("child-2")
+		expect(originalChildren[0]!.id).toBe("child-1")
+		expect(originalChildren[1]!.id).toBe("child-2")
 	})
 
 	it("sets isExpanded: true when task ID is in expandedIds", () => {
@@ -545,7 +545,7 @@ describe("buildSubtree", () => {
 		const node = buildSubtree(parent, childrenMap, expandedIds)
 
 		expect(node.isExpanded).toBe(true)
-		expect(node.children[0].isExpanded).toBe(false)
+		expect(node.children[0]!.isExpanded).toBe(false)
 	})
 
 	it("propagates isExpanded correctly through deeply nested tree", () => {
@@ -579,9 +579,9 @@ describe("buildSubtree", () => {
 		const node = buildSubtree(root, childrenMap, expandedIds)
 
 		expect(node.isExpanded).toBe(true)
-		expect(node.children[0].isExpanded).toBe(false) // child not expanded
-		expect(node.children[0].children[0].isExpanded).toBe(true) // grandchild expanded
-		expect(node.children[0].children[0].children[0].isExpanded).toBe(false) // great-grandchild not expanded
+		expect(node.children[0]!.isExpanded).toBe(false) // child not expanded
+		expect(node.children[0]!.children[0]!.isExpanded).toBe(true) // grandchild expanded
+		expect(node.children[0]!.children[0]!.children[0]!.isExpanded).toBe(false) // great-grandchild not expanded
 	})
 })
 

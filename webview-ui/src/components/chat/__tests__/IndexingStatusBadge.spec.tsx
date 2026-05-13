@@ -89,7 +89,7 @@ vi.mock("@/i18n/TranslationContext", () => ({
 				"indexingStatus.tooltip.indexed": "Codebase has been successfully indexed",
 				"indexingStatus.tooltip.clickToSettings": "Click to open indexing settings",
 			}
-			return translations[cleanKey] || cleanKey
+			return translations[cleanKey!]! || cleanKey
 		},
 	}),
 }))

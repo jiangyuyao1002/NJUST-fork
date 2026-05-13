@@ -57,7 +57,7 @@ export function initializeSourceMaps(): void {
 	try {
 		const scripts = document.getElementsByTagName("script")
 		for (let i = 0; i < scripts.length; i++) {
-			const script = scripts[i]
+			const script = scripts[i]!
 			if (script.src) {
 				// Try multiple source map locations
 				const possibleMapUrls = [

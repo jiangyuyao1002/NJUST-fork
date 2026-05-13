@@ -89,10 +89,10 @@ export async function applySourceMapsToComponentStack(componentStack: string): P
 					const stackFrames = await StackTrace.fromError(syntheticError)
 
 					if (stackFrames.length > 0) {
-						const frame = stackFrames[0]
+						const frame = stackFrames[0]!
 						const mappedFileName = frame.fileName || fileName
-						const mappedLineNumber = frame.lineNumber || parseInt(lineNumber, 10)
-						const mappedColumnNumber = frame.columnNumber || parseInt(columnNumber, 10)
+						const mappedLineNumber = frame.lineNumber || parseInt(lineNumber!, 10)
+						const mappedColumnNumber = frame.columnNumber || parseInt(columnNumber!, 10)
 
 						return `at ${componentName} (${mappedFileName}:${mappedLineNumber}:${mappedColumnNumber})`
 					}

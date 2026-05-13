@@ -130,7 +130,7 @@ describe("CodeActionProvider", () => {
 			const actions = provider.provideCodeActions(mockDocument, mockRange, mockContext)
 
 			expect(actions).toEqual([])
-			expect(consoleErrorSpy).toHaveBeenCalledWith("Error providing code actions:", expect.any(Error))
+			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Error providing code actions:"))
 
 			consoleErrorSpy.mockRestore()
 		})

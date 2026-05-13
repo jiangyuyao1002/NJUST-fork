@@ -164,8 +164,8 @@ export function useVoiceInput(
 		rec.onresult = (event: SpeechRecognitionEvent) => {
 			let interim = ""
 			for (let i = event.resultIndex; i < event.results.length; i++) {
-				const result = event.results[i]
-				const piece = result[0]?.transcript ?? ""
+				const result = event.results[i]!
+				const piece = result[0]!.transcript ?? ""
 				if (result.isFinal) {
 					speechFinalsRef.current += piece
 				} else {

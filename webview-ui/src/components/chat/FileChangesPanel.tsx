@@ -70,7 +70,7 @@ const FileChangesPanel = memo(({ clineMessages, className }: FileChangesPanelPro
 		for (const path of expandedPaths) {
 			const entries = byPath.get(path)
 			if (!entries?.length) continue
-			const originalContent = entries[0].originalContent
+			const originalContent = entries[0]!.originalContent
 			const lookupPath = path.startsWith("./") ? path.slice(2) : path
 			if (
 				originalContent !== undefined &&
@@ -133,7 +133,7 @@ const FileChangesPanel = memo(({ clineMessages, className }: FileChangesPanelPro
 			<CollapsibleContent>
 				<div className="flex flex-col gap-1 pb-2 pl-6">
 					{Array.from(byPath.entries()).map(([path, entries]) => {
-						const originalContent = entries[0].originalContent
+						const originalContent = entries[0]!.originalContent
 						const lookupPath = path.startsWith("./") ? path.slice(2) : path
 						const finalContent = finalContentByPath[lookupPath]
 						const hasMergedDiff =

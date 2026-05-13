@@ -86,7 +86,7 @@ describe("fileChangesFromMessages", () => {
 		]
 		const result = fileChangesFromMessages(messages)
 		expect(result).toHaveLength(1)
-		expect(result[0].path).toBe("src/foo.ts")
+		expect(result[0]!.path).toBe("src/foo.ts")
 	})
 
 	it("extracts single-file edit from ask tool message", () => {
@@ -128,8 +128,8 @@ describe("fileChangesFromMessages", () => {
 		]
 		const result = fileChangesFromMessages(messages)
 		expect(result).toHaveLength(1)
-		expect(result[0].path).toBe("lib/bar.ts")
-		expect(result[0].diff).toBe("-old\n+new")
+		expect(result[0]!.path).toBe("lib/bar.ts")
+		expect(result[0]!.diff).toBe("-old\n+new")
 	})
 
 	it("uses content when diff is missing for single-file", () => {
@@ -148,7 +148,7 @@ describe("fileChangesFromMessages", () => {
 		]
 		const result = fileChangesFromMessages(messages)
 		expect(result).toHaveLength(1)
-		expect(result[0].diff).toBe("full file content")
+		expect(result[0]!.diff).toBe("full file content")
 	})
 
 	it("ignores single-file tool when path is missing", () => {
@@ -201,8 +201,8 @@ describe("fileChangesFromMessages", () => {
 		const result = fileChangesFromMessages(messages)
 		expect(result).toHaveLength(2)
 		expect(result[0]).toEqual({ path: "a.ts", diff: "content a" })
-		expect(result[1].path).toBe("b.ts")
-		expect(result[1].diff).toBe("content b")
+		expect(result[1]!.path).toBe("b.ts")
+		expect(result[1]!.diff).toBe("content b")
 	})
 
 	it("includes diffStats from batchDiffs when present", () => {
@@ -225,7 +225,7 @@ describe("fileChangesFromMessages", () => {
 			}),
 		]
 		const result = fileChangesFromMessages(messages)
-		expect(result[0].diffStats).toEqual({ added: 2, removed: 1 })
+		expect(result[0]!.diffStats).toEqual({ added: 2, removed: 1 })
 	})
 
 	it("recognizes all ClineSayTool file-edit tool names (editedExistingFile, appliedDiff, newFileCreated)", () => {
@@ -246,7 +246,7 @@ describe("fileChangesFromMessages", () => {
 			]
 			const result = fileChangesFromMessages(messages)
 			expect(result).toHaveLength(1)
-			expect(result[0].path).toBe("f.ts")
+			expect(result[0]!.path).toBe("f.ts")
 		}
 	})
 
@@ -277,8 +277,8 @@ describe("fileChangesFromMessages", () => {
 		]
 		const result = fileChangesFromMessages(messages)
 		expect(result).toHaveLength(2)
-		expect(result[0].path).toBe("first.ts")
-		expect(result[1].path).toBe("second.ts")
+		expect(result[0]!.path).toBe("first.ts")
+		expect(result[1]!.path).toBe("second.ts")
 	})
 
 	it("skips invalid JSON in message text", () => {

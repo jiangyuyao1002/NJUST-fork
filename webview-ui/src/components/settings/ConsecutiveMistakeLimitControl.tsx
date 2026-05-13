@@ -21,7 +21,7 @@ export const ConsecutiveMistakeLimitControl = ({ value, onChange }: ConsecutiveM
 					min={0}
 					max={10}
 					step={1}
-					onValueChange={(newValue) => onChange(Math.max(0, newValue[0]))}
+					onValueChange={(newValue) => onChange(Math.max(0, newValue[0]!))}
 				/>
 				<span className="w-10">{Math.max(0, value ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT)}</span>
 			</div>

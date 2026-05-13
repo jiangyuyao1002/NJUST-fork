@@ -278,7 +278,7 @@ describe("SkillsSettings", () => {
 		// Find the first delete button (for project-skill)
 		const deleteButtons = buttons.filter((btn) => btn.querySelector('[class*="text-destructive"]'))
 		expect(deleteButtons.length).toBeGreaterThan(0)
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		expect(screen.getByTestId("alert-dialog")).toHaveAttribute("data-open", "true")
 		expect(screen.getByText("settings:skills.deleteDialog.title")).toBeInTheDocument()
@@ -290,7 +290,7 @@ describe("SkillsSettings", () => {
 		// Find and click delete button
 		const buttons = screen.getAllByTestId("button")
 		const deleteButtons = buttons.filter((btn) => btn.querySelector('[class*="text-destructive"]'))
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		const confirmButton = screen.getByTestId("alert-dialog-action")
 		fireEvent.click(confirmButton)
@@ -311,7 +311,7 @@ describe("SkillsSettings", () => {
 		// Find and click delete button
 		const buttons = screen.getAllByTestId("button")
 		const deleteButtons = buttons.filter((btn) => btn.querySelector('[class*="text-destructive"]'))
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		const cancelButton = screen.getByTestId("alert-dialog-cancel")
 		fireEvent.click(cancelButton)
@@ -334,7 +334,7 @@ describe("SkillsSettings", () => {
 				btn.querySelector('[class*="lucide-square-pen"]'),
 		)
 		// Click the first edit button (for project-skill)
-		fireEvent.click(editButtons[0])
+		fireEvent.click(editButtons[0]!)
 
 		expect(vscode.postMessage).toHaveBeenCalledWith({
 			type: "openSkillFile",
@@ -353,7 +353,7 @@ describe("SkillsSettings", () => {
 		// Find and click delete button
 		const buttons = screen.getAllByTestId("button")
 		const deleteButtons = buttons.filter((btn) => btn.querySelector('[class*="text-destructive"]'))
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		const confirmButton = screen.getByTestId("alert-dialog-action")
 		fireEvent.click(confirmButton)

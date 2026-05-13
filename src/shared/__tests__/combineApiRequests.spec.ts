@@ -42,12 +42,12 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The combined message should have the properties of the start message
-			expect(result[0].type).toBe("say")
-			expect(result[0].say).toBe("api_req_started")
-			expect(result[0].ts).toBe(1000)
+			expect(result[0]!.type).toBe("say")
+			expect(result[0]!.say).toBe("api_req_started")
+			expect(result[0]!.ts).toBe(1000)
 
 			// The text should be a JSON string with combined properties
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 				cost: 0.005,
@@ -68,14 +68,14 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(2)
 
 			// Check first combined message
-			const parsedText1 = JSON.parse(result[0].text || "{}")
+			const parsedText1 = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText1).toEqual({
 				request: "GET /api/data1",
 				cost: 0.005,
 			})
 
 			// Check second combined message
-			const parsedText2 = JSON.parse(result[1].text || "{}")
+			const parsedText2 = JSON.parse(result[1]!.text || "{}")
 			expect(parsedText2).toEqual({
 				request: "GET /api/data2",
 				cost: 0.007,
@@ -116,7 +116,7 @@ describe("combineApiRequests", () => {
 			// Check the order and content of messages
 			expect(result[0]).toEqual(otherMessage1)
 
-			const parsedText1 = JSON.parse(result[1].text || "{}")
+			const parsedText1 = JSON.parse(result[1]!.text || "{}")
 			expect(parsedText1).toEqual({
 				request: "GET /api/data1",
 				cost: 0.005,
@@ -124,7 +124,7 @@ describe("combineApiRequests", () => {
 
 			expect(result[2]).toEqual(otherMessage2)
 
-			const parsedText2 = JSON.parse(result[3].text || "{}")
+			const parsedText2 = JSON.parse(result[3]!.text || "{}")
 			expect(parsedText2).toEqual({
 				request: "GET /api/data2",
 				cost: 0.007,
@@ -182,7 +182,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The text should be a JSON string with only the finish message properties
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				cost: 0.005,
 			})
@@ -206,7 +206,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The text should be a JSON string with only the start message properties
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 			})
@@ -225,7 +225,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The text should be a JSON string with combined properties from the first finish message
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 				cost: 0.005, // Should use the first finish message's cost
@@ -246,15 +246,15 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(2)
 
 			// Check first combined message
-			const parsedText1 = JSON.parse(result[0].text || "{}")
+			const parsedText1 = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText1).toEqual({
 				request: "GET /api/data1",
 				cost: 0.005,
 			})
 
 			// Check second message (should be the original start message)
-			expect(result[1].say).toBe("api_req_started")
-			const parsedText2 = JSON.parse(result[1].text || "{}")
+			expect(result[1]!.say).toBe("api_req_started")
+			const parsedText2 = JSON.parse(result[1]!.text || "{}")
 			expect(parsedText2).toEqual({
 				request: "GET /api/data2",
 			})
@@ -287,8 +287,8 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The combined message should preserve additional properties from the start message
-			expect(result[0].reasoning).toBe("This is a test")
-			expect(result[0].partial).toBe(false)
+			expect(result[0]!.reasoning).toBe("This is a test")
+			expect(result[0]!.partial).toBe(false)
 		})
 
 		it("should handle invalid JSON in api_req_started message", () => {
@@ -309,7 +309,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The text should be a JSON string with only the finish message properties
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				cost: 0.005,
 			})
@@ -333,7 +333,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The text should be a JSON string with only the start message properties
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 			})
@@ -351,7 +351,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The implementation uses finishData when startData is not a valid object
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			// Check that the cost property exists (from finish message)
 			expect(parsedText.cost).toBe(0.005)
 		})
@@ -374,7 +374,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The implementation uses startData when finishData is not a valid object
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			// Check that request property exists (from start message)
 			expect(parsedText.request).toBe("GET /api/data")
 		})
@@ -397,7 +397,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// Using shallow merge, nested objects are completely replaced rather than merged
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 				cost: 0.005,
@@ -427,7 +427,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// All properties should be properly merged
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 				user: "john",
@@ -459,8 +459,8 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The start message should remain unchanged since the finish message appears before it
-			expect(result[0].say).toBe("api_req_started")
-			const parsedText = JSON.parse(result[0].text || "{}")
+			expect(result[0]!.say).toBe("api_req_started")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 			})
@@ -478,7 +478,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The combined text should be an empty object
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({})
 		})
 
@@ -500,7 +500,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The text should be a JSON string with only the start message properties
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 			})
@@ -527,9 +527,9 @@ describe("combineApiRequests", () => {
 			expect(result[0]).toEqual(otherMessage)
 
 			// Second message should be a combined message with the same ts as startMessage1
-			expect(result[1].ts).toBe(startMessage1.ts)
-			expect(result[1].say).toBe("api_req_started")
-			const parsedText1 = JSON.parse(result[1].text || "{}")
+			expect(result[1]!.ts).toBe(startMessage1.ts)
+			expect(result[1]!.say).toBe("api_req_started")
+			const parsedText1 = JSON.parse(result[1]!.text || "{}")
 			expect(parsedText1).toEqual({
 				request: "GET /api/data1",
 				cost: 0.005,
@@ -572,14 +572,14 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(2)
 
 			// Check first combined message
-			const parsedText1 = JSON.parse(result[0].text || "{}")
+			const parsedText1 = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText1).toEqual({
 				request: "GET /api/data1",
 				cost: 0.005,
 			})
 
 			// Check second combined message
-			const parsedText2 = JSON.parse(result[1].text || "{}")
+			const parsedText2 = JSON.parse(result[1]!.text || "{}")
 			expect(parsedText2).toEqual({
 				request: "GET /api/data2",
 				cost: 0.007,
@@ -601,7 +601,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// The finish message properties should overwrite start message properties with the same name
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "OVERWRITTEN", // This was in both messages, finish value wins
 				cost: 0.005, // This was in both messages, finish value wins
@@ -620,7 +620,7 @@ describe("combineApiRequests", () => {
 			expect(result).toHaveLength(1)
 
 			// Array values should be preserved
-			const parsedText = JSON.parse(result[0].text || "{}")
+			const parsedText = JSON.parse(result[0]!.text || "{}")
 			expect(parsedText).toEqual({
 				request: "GET /api/data",
 				tags: ["api", "get"],

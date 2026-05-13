@@ -156,7 +156,7 @@ export const SelectDropdown = React.memo(
 				})
 
 				// Remove trailing separator if present
-				if (result.length > 0 && result[result.length - 1].type === DropdownOptionType.SEPARATOR) {
+				if (result.length > 0 && result[result.length - 1]!.type === DropdownOptionType.SEPARATOR) {
 					result.pop()
 				}
 

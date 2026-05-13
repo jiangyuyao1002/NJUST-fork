@@ -14,7 +14,7 @@ Object.entries(localeFiles).forEach(([path, module]) => {
 	const match = path.match(/\.\/locales\/([^/]+)\/([^/]+)\.json/)
 
 	if (match) {
-		const [, language, namespace] = match
+		const [, language, namespace] = match as [string, string, string]
 
 		// Initialize language object if it doesn't exist
 		if (!translations[language]) {

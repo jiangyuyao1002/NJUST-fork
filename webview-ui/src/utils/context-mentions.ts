@@ -11,7 +11,7 @@ import { escapeSpaces } from "./path-mentions"
  * and taking only the first line
  */
 function getModeDescription(mode: ModeConfig): string {
-	return (mode.description || mode.whenToUse || mode.roleDefinition).split("\n")[0]
+	return (mode.description || mode.whenToUse || mode.roleDefinition).split("\n")[0]!
 }
 
 export interface SearchResult {

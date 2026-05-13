@@ -258,7 +258,7 @@ describe("SlashCommandsSettings", () => {
 
 		// Find the delete button for the global command (using the button with Trash2 icon)
 		const deleteButtons = screen.getAllByTestId("button").filter((btn) => btn.querySelector(".text-destructive"))
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		// Alert dialog should be open with delete confirmation
 		expect(screen.getByTestId("alert-dialog")).toHaveAttribute("data-open", "true")
@@ -270,7 +270,7 @@ describe("SlashCommandsSettings", () => {
 
 		// Click delete button for global command
 		const deleteButtons = screen.getAllByTestId("button").filter((btn) => btn.querySelector(".text-destructive"))
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		// Click confirm delete
 		const confirmButton = screen.getByTestId("alert-dialog-action")
@@ -290,7 +290,7 @@ describe("SlashCommandsSettings", () => {
 
 		// Click delete button
 		const deleteButtons = screen.getAllByTestId("button").filter((btn) => btn.querySelector(".text-destructive"))
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		// Click cancel
 		const cancelButton = screen.getByTestId("alert-dialog-cancel")
@@ -320,7 +320,7 @@ describe("SlashCommandsSettings", () => {
 		)
 
 		// Click the first edit button
-		fireEvent.click(editButtons[0])
+		fireEvent.click(editButtons[0]!)
 
 		expect(vscode.postMessage).toHaveBeenCalledWith({
 			type: "openFile",
@@ -333,7 +333,7 @@ describe("SlashCommandsSettings", () => {
 
 		// Click delete button
 		const deleteButtons = screen.getAllByTestId("button").filter((btn) => btn.querySelector(".text-destructive"))
-		fireEvent.click(deleteButtons[0])
+		fireEvent.click(deleteButtons[0]!)
 
 		// Click confirm delete
 		const confirmButton = screen.getByTestId("alert-dialog-action")

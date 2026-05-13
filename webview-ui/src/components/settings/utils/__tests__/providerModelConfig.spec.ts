@@ -138,7 +138,7 @@ describe("providerModelConfig", () => {
 		it("adds custom-arn option for bedrock provider", () => {
 			const models = getStaticModelsForProvider("bedrock", "Use Custom ARN")
 			expect(models["custom-arn"]).toBeDefined()
-			expect(models["custom-arn"].description).toBe("Use Custom ARN")
+			expect(models["custom-arn"]!.description).toBe("Use Custom ARN")
 		})
 
 		it("returns empty object for providers without static models", () => {
