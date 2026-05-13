@@ -232,7 +232,7 @@ export class MessageManager {
 
 			// Cleanup artifacts asynchronously (fire-and-forget with error handling)
 			this.cleanupOrphanedArtifacts(validIds).catch((error) => {
-				console.error("[MessageManager] Error cleaning up orphaned command output artifacts:", error)
+				logger.error("MessageManager", "Error cleaning up orphaned command output artifacts:", error)
 			})
 		}
 

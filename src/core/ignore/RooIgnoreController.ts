@@ -4,6 +4,7 @@ import fs from "fs/promises"
 import fsSync from "fs"
 import ignore, { Ignore } from "ignore"
 import * as vscode from "vscode"
+import { logger } from "../../shared/logger"
 
 export const LOCK_TEXT_SYMBOL = "\u{1F512}"
 
@@ -76,7 +77,7 @@ export class RooIgnoreController {
 			}
 		} catch (error) {
 			// Should never happen: reading file failed even though it exists
-			console.error("Unexpected error loading .rooignore:", error)
+			logger.error("RooIgnoreController", "Unexpected error loading .rooignore:", error)
 		}
 	}
 
@@ -183,7 +184,7 @@ export class RooIgnoreController {
 				.filter((x) => x.allowed)
 				.map((x) => x.path)
 		} catch (error) {
-			console.error("Error filtering paths:", error)
+			logger.error("RooIgnoreController", "Error filtering paths:", error)
 			return [] // Fail closed for security
 		}
 	}

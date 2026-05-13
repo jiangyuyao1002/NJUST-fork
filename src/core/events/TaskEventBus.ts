@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 
 import { debugLog } from "../../utils/debugLog"
+import { logger } from "../../shared/logger"
 /** Task-scoped domain events (B.1). */
 export type TaskEventName =
 	| "task:started"
@@ -63,7 +64,7 @@ export class TaskEventBus {
 				try {
 					listener(event, payload)
 				} catch (e) {
-					console.error(`[TaskEventBus] listener error for ${event}:`, e)
+					logger.error("TaskEventBus", `listener error for ${event}:`, e)
 				}
 			}
 		}

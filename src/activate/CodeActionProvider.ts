@@ -6,6 +6,7 @@ import { Package } from "../shared/package"
 import { getCodeActionCommand } from "../utils/commands"
 import { EditorUtils } from "../integrations/editor/EditorUtils"
 import { matchCjcErrorPattern } from "../core/prompts/sections/cangjie-context"
+import { logger } from "../shared/logger"
 
 export const TITLES: Record<CodeActionName, string> = {
 	EXPLAIN: "Explain with NJUST_AI_CJ",
@@ -121,7 +122,7 @@ export class CodeActionProvider implements vscode.CodeActionProvider {
 
 			return actions
 		} catch (error) {
-			console.error("Error providing code actions:", error)
+			logger.error("CodeActionProvider", "Error providing code actions:", error)
 			return []
 		}
 	}

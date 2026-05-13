@@ -17,6 +17,7 @@
 
 import { HookType, AnyHookContext, HookHandler, RegisteredHook, HookResult } from "./types"
 import { getErrorMessage } from "../../shared/error-utils"
+import { logger } from "../../shared/logger"
 
 export class HookRegistry {
 	private hooks: Map<HookType, RegisteredHook[]> = new Map()
@@ -88,7 +89,7 @@ export class HookRegistry {
 					}
 				}
 			} catch (error) {
-				console.error(`[HookRegistry] Hook "${hook.name}" (${hook.hookType}) threw:`, error)
+				logger.error("HookRegistry", `Hook "${hook.name}" (${hook.hookType}) threw:`, error)
 				// For pre-hooks, treat exceptions as abort to prevent security bypass.
 				if (context.hookType.startsWith("pre")) {
 					return {

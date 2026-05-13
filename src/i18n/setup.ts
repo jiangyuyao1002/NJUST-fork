@@ -54,7 +54,7 @@ if (!isTestEnv) {
 						const content = fs.readFileSync(filePath, "utf8")
 						translations[language]![namespace] = JSON.parse(content)
 					} catch (error) {
-						console.error(`Error loading translation file ${filePath}:`, error)
+						logger.error("i18n", `Error loading translation file ${filePath}:`, error)
 				// Notify user that translations may be incomplete
 				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 				if (typeof vscode !== "undefined" && vscode.window) {
@@ -68,10 +68,10 @@ if (!isTestEnv) {
 
 			logger.info("i18n", `Loaded translations for languages: ${Object.keys(translations).join(", ")}`)
 		} catch (dirError) {
-			console.error(`Error processing directory ${localesDir}:`, dirError)
+			logger.error("i18n", `Error processing directory ${localesDir}:`, dirError)
 		}
 	} catch (error) {
-		console.error("Error loading translations:", error)
+		logger.error("i18n", "Error loading translations:", error)
 	}
 }
 

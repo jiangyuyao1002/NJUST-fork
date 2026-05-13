@@ -8,6 +8,7 @@ import {
 } from "@njust-ai-cj/types"
 
 import { ClineAskResponse } from "../../shared/WebviewMessage"
+import { logger } from "../../shared/logger"
 
 import { isWriteToolAction, isReadOnlyToolAction } from "./tools"
 import { isMcpToolAlwaysAllowed } from "./mcp"
@@ -150,7 +151,7 @@ export async function checkAutoApproval({
 		try {
 			tool = JSON.parse(text || "{}")
 		} catch (error) {
-			console.error("Failed to parse tool:", error)
+			logger.error("AutoApproval", "Failed to parse tool:", error)
 		}
 
 		if (!tool) {

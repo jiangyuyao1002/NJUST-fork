@@ -186,11 +186,11 @@ async function checkGitInstallation(
 					{ isNonInteractive: true },
 				).catch((err) => {
 					log("[Task#getCheckpointService] caught unexpected error in say('checkpoint_saved')")
-					console.error(err)
+					logger.error("Checkpoints", "say('checkpoint_saved') error:", err)
 				})
 			} catch (err) {
 				log("[Task#getCheckpointService] caught unexpected error in on('checkpoint'), disabling checkpoints")
-				console.error(err)
+				logger.error("Checkpoints", "on('checkpoint') error:", err)
 				task.enableCheckpoints = false
 			}
 		})
@@ -206,7 +206,7 @@ async function checkGitInstallation(
 			task.checkpointServiceInitializing = false
 	} catch (err) {
 		log(`[Task#getCheckpointService] Unexpected error during Git check: ${getErrorMessage(err)}`)
-		console.error("Git check error:", err)
+		logger.error("Checkpoints", "Git check error:", err)
 		task.enableCheckpoints = false
 		task.checkpointServiceInitializing = false
 	}
@@ -225,7 +225,7 @@ export async function checkpointSave(task: Task, force = false, suppressMessage 
 	return service
 		.saveCheckpoint(`Task: ${task.taskId}, Time: ${Date.now()}`, { allowEmpty: force, suppressMessage })
 		.catch((err) => {
-			console.error("[Task#checkpointSave] caught unexpected error, disabling checkpoints", err)
+			logger.error("Checkpoints", "checkpointSave caught unexpected error, disabling checkpoints:", err)
 			task.enableCheckpoints = false
 		})
 }

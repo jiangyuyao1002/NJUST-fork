@@ -26,7 +26,7 @@ export default [
 			"@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: true }],
 			"@typescript-eslint/no-require-imports": "warn",
 			"@typescript-eslint/ban-ts-comment": ["warn", { "ts-expect-error": false, "ts-ignore": true, "ts-nocheck": true }],
-			"no-console": ["error", { allow: ["error"] }],
+			"no-console": "error",
 			"@typescript-eslint/no-floating-promises": "error",
 			"@typescript-eslint/require-await": "warn",
 			"@typescript-eslint/prefer-optional-chain": "warn",
@@ -86,6 +86,7 @@ export default [
 		rules: {
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/no-explicit-any": "off",
+			"no-console": "off",
 		},
 	},
 	{

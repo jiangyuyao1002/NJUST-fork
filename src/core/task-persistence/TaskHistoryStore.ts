@@ -134,7 +134,7 @@ export class TaskHistoryStore {
 
 		// Synchronously flush the index (best-effort)
 		this.flushIndex().catch((err) => {
-			console.error("[TaskHistoryStore] Error flushing index on dispose:", err)
+			logger.error("TaskHistoryStore", "Error flushing index on dispose:", err)
 		})
 	}
 
@@ -440,7 +440,7 @@ export class TaskHistoryStore {
 
 		// Write WAL marker immediately to survive crashes during the debounce window
 		this.writeWalMarker().catch((err) => {
-			console.error("[TaskHistoryStore] Failed to write WAL marker:", err)
+			logger.error("TaskHistoryStore", "Failed to write WAL marker:", err)
 		})
 
 		if (this.indexWriteTimer) {
@@ -454,7 +454,7 @@ export class TaskHistoryStore {
 				// Index persisted successfully — clear the WAL marker
 				await this.clearWalMarker()
 			} catch (err) {
-				console.error("[TaskHistoryStore] Failed to write index:", err)
+				logger.error("TaskHistoryStore", "Failed to write index:", err)
 			}
 		}, TaskHistoryStore.INDEX_WRITE_DEBOUNCE_MS)
 	}
@@ -528,22 +528,22 @@ export class TaskHistoryStore {
 						}
 						watchDebounce = setTimeout(() => {
 							this.reconcile().catch((err) => {
-								console.error("[TaskHistoryStore] Reconciliation after fs.watch failed:", err)
+								logger.error("TaskHistoryStore", "Reconciliation after fs.watch failed:", err)
 							})
 						}, 500)
 					})
 
 					this.fsWatcher.on("error", (err) => {
-						console.error("[TaskHistoryStore] fs.watch error:", err)
+						logger.error("TaskHistoryStore", "fs.watch error:", err)
 						// fs.watch is unreliable on some platforms; periodic reconciliation
 						// serves as the fallback.
 					})
 				} catch (err) {
-					console.error("[TaskHistoryStore] Failed to start fs.watch:", err)
+					logger.error("TaskHistoryStore", "Failed to start fs.watch:", err)
 				}
 			})
 			.catch((err) => {
-				console.error("[TaskHistoryStore] Failed to get tasks dir for watcher:", err)
+				logger.error("TaskHistoryStore", "Failed to get tasks dir for watcher:", err)
 			})
 	}
 
@@ -563,7 +563,7 @@ export class TaskHistoryStore {
 			try {
 				await this.reconcile()
 			} catch (err) {
-				console.error("[TaskHistoryStore] Periodic reconciliation failed:", err)
+				logger.error("TaskHistoryStore", "Periodic reconciliation failed:", err)
 			}
 			this.startPeriodicReconciliation()
 		}, TaskHistoryStore.RECONCILE_INTERVAL_MS)
