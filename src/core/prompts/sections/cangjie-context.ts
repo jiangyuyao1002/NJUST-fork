@@ -144,12 +144,12 @@ const MAX_WORKSPACE_MEMBERS = 20
 const CONTEXT_FILE_LRU_MAX = 64
 const contextFileLru = new Map<string, { mtime: number; text: string }>()
 
-function readFileUtf8Lru(fp: string): string | null {
+async function readFileUtf8Lru(fp: string): Promise<string | null> {
 	try {
-		const st = fs.statSync(fp)
+		const st = await fs.promises.stat(fp)
 		const hit = contextFileLru.get(fp)
 		if (hit && hit.mtime === st.mtimeMs) return hit.text
-		const text = fs.readFileSync(fp, "utf-8")
+		const text = await fs.promises.readFile(fp, "utf-8")
 		if (contextFileLru.size >= CONTEXT_FILE_LRU_MAX) {
 			const first = contextFileLru.keys().next().value as string | undefined
 			if (first !== undefined) contextFileLru.delete(first)
@@ -161,11 +161,11 @@ function readFileUtf8Lru(fp: string): string | null {
 	}
 }
 
-function editorDocumentCacheKey(uri: vscode.Uri): string {
+async function editorDocumentCacheKey(uri: vscode.Uri): Promise<string> {
 	const fp = uri.fsPath
 	if (uri.scheme !== "file") return fp
 	try {
-		return `${fp}:${fs.statSync(fp).mtimeMs}`
+		return `${fp}:${(await fs.promises.stat(fp)).mtimeMs}`
 	} catch {
 		return fp
 	}
@@ -184,17 +184,17 @@ function editorDocumentCacheKey(uri: vscode.Uri): string {
  * with directory-inferred package names. Report mismatches so the AI
  * can generate correct package declarations.
  */
-function verifyPackageDeclarations(
+async function verifyPackageDeclarations(
 	root: PackageNode,
 	cwd: string,
 	srcDir: string,
-): string | null {
+): Promise<string | null> {
 	const mismatches: string[] = []
 	const MAX_CHECKS = 50
 	let checked = 0
 	const symbolIndex = CangjieSymbolIndex.getInstance()
 
-	function walk(node: PackageNode): void {
+	async function walk(node: PackageNode): Promise<void> {
 		if (checked >= MAX_CHECKS) return
 
 		for (const fileName of node.sourceFiles) {
@@ -215,7 +215,7 @@ function verifyPackageDeclarations(
 			// Fallback: read from disk (SymbolIndex may not include package entries)
 			if (declaredPkg === null) {
 				try {
-					const content = fs.readFileSync(filePath, "utf-8")
+					const content = await fs.promises.readFile(filePath, "utf-8")
 					const match = content.match(PACKAGE_DECL_REGEX)
 					declaredPkg = match ? (match[1] ?? null) : null
 				} catch {
@@ -237,11 +237,11 @@ function verifyPackageDeclarations(
 		}
 
 		for (const child of node.children) {
-			walk(child)
+			await walk(child)
 		}
 	}
 
-	walk(root)
+	await walk(root)
 
 	if (mismatches.length === 0) return null
 
@@ -261,10 +261,10 @@ function verifyPackageDeclarations(
  * For workspace projects, generate a summary of public symbols in each
  * member module so the AI knows what's available across modules.
  */
-function buildWorkspaceSymbolSummary(
+async function buildWorkspaceSymbolSummary(
 	info: CjpmProjectInfo,
 	cwd: string,
-): string | null {
+): Promise<string | null> {
 	if (!info.isWorkspace || !info.members || info.members.length === 0) return null
 
 	const symbolIndex = CangjieSymbolIndex.getInstance()
@@ -275,7 +275,11 @@ function buildWorkspaceSymbolSummary(
 
 	for (const member of info.members) {
 		const memberSrcDir = path.join(cwd, member.path, "src")
-		if (!fs.existsSync(memberSrcDir)) continue
+		try {
+			await fs.promises.access(memberSrcDir)
+		} catch {
+			continue
+		}
 
 		const symbols = symbolIndex.getSymbolsByDirectory(memberSrcDir)
 		if (symbols.length === 0) continue
@@ -574,12 +578,12 @@ function topLevelModuleFromRel(rel: string): string {
 	return segs[0]!
 }
 
-function buildCangjieStyleFewShotSection(
+async function buildCangjieStyleFewShotSection(
 	cwd: string,
 	imports: string[],
 	diagnostics: vscode.Diagnostic[],
 	cjpmRawHash: string,
-): string | null {
+): Promise<string | null> {
 	const idx = CangjieSymbolIndex.getInstance()
 	if (!idx || idx.symbolCount === 0) return null
 	const learnedData = loadLearnedFixes(cwd)
@@ -640,7 +644,7 @@ function buildCangjieStyleFewShotSection(
 		try {
 			let lines = fileCache.get(sym.filePath)
 			if (!lines) {
-				const raw = readFileUtf8Lru(sym.filePath)
+				const raw = await readFileUtf8Lru(sym.filePath)
 				if (!raw) continue
 				lines = raw.split("\n")
 				fileCache.set(sym.filePath, lines)
@@ -992,12 +996,12 @@ function getPackageTreeCacheKey(cwd: string, srcDir: string, rootPackageName?: s
 	return `${cwd}|${srcDir}|${rootPackageName ?? "default"}`
 }
 
-function getCachedPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): PackageNode | null {
+async function getCachedPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): Promise<PackageNode | null> {
 	const key = getPackageTreeCacheKey(cwd, srcDir, rootPackageName)
 	const now = Date.now()
 	const hit = packageTreeCache.get(key)
 	if (hit && now - hit.time < PACKAGE_TREE_CACHE_TTL_MS) return hit.value
-	const value = scanPackageHierarchy(cwd, srcDir, rootPackageName)
+	const value = await scanPackageHierarchy(cwd, srcDir, rootPackageName)
 	packageTreeCache.set(key, { value, time: now })
 	if (packageTreeCache.size > 128) {
 		const first = packageTreeCache.keys().next().value as string | undefined
@@ -1006,19 +1010,23 @@ function getCachedPackageHierarchy(cwd: string, srcDir: string, rootPackageName?
 	return value
 }
 
-function scanPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): PackageNode | null {
+async function scanPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): Promise<PackageNode | null> {
 	const srcPath = path.join(cwd, srcDir)
-	if (!fs.existsSync(srcPath)) return null
+	try {
+		await fs.promises.access(srcPath)
+	} catch {
+		return null
+	}
 
 	let fileCount = 0
 	const rootPkg = rootPackageName || "default"
 
-	function scan(dir: string, depth: number, pkgName: string): PackageNode | null {
+	async function scan(dir: string, depth: number, pkgName: string): Promise<PackageNode | null> {
 		if (depth > MAX_SCAN_DEPTH || fileCount > MAX_SCAN_FILES) return null
 
 		let entries: fs.Dirent[]
 		try {
-			entries = fs.readdirSync(dir, { withFileTypes: true })
+			entries = await fs.promises.readdir(dir, { withFileTypes: true })
 		} catch {
 			return null
 		}
@@ -1044,7 +1052,7 @@ function scanPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: str
 
 		const children: PackageNode[] = []
 		for (const cd of childDirs) {
-			const childNode = scan(path.join(dir, cd.name), depth + 1, `${pkgName}.${cd.name}`)
+			const childNode = await scan(path.join(dir, cd.name), depth + 1, `${pkgName}.${cd.name}`)
 			if (childNode) children.push(childNode)
 		}
 
@@ -1072,10 +1080,10 @@ function countTreeFiles(node: PackageNode, testOnly: boolean): number {
 // System prompt section formatters
 // ---------------------------------------------------------------------------
 
-function readWorkspaceMemberDependencies(
+async function readWorkspaceMemberDependencies(
 	cwd: string,
 	member: WorkspaceMember,
-): string[] {
+): Promise<string[]> {
 	if (member.dependencyDisplay && member.dependencyDisplay.length > 0) {
 		return member.dependencyDisplay.slice(0, 5)
 	}
@@ -1087,9 +1095,13 @@ function readWorkspaceMemberDependencies(
 		}
 	} else {
 		const memberToml = path.join(cwd, member.path, "cjpm.toml")
-		if (!fs.existsSync(memberToml)) return []
 		try {
-			const content = fs.readFileSync(memberToml, "utf-8")
+			await fs.promises.access(memberToml)
+		} catch {
+			return []
+		}
+		try {
+			const content = await fs.promises.readFile(memberToml, "utf-8")
 			const memberSections = splitTomlSections(content)
 			const deps = memberSections.get("dependencies")
 			if (!deps) return []
@@ -1111,17 +1123,17 @@ function readWorkspaceMemberDependencies(
 		.slice(0, 5)
 }
 
-function buildCompactProjectOverviewSection(
+async function buildCompactProjectOverviewSection(
 	cwd: string,
 	info: CjpmProjectInfo,
 	activePkg: string | null,
 	activeFilePath: string | null,
-): string {
+): Promise<string> {
 	const lines: string[] = ["## 当前项目概览（紧凑）\n"]
 
 	if (!info.isWorkspace) {
 		const rootPkgName = info.name || undefined
-		const pkgTree = getCachedPackageHierarchy(cwd, info.srcDir, rootPkgName)
+		const pkgTree = await getCachedPackageHierarchy(cwd, info.srcDir, rootPkgName)
 		const srcCount = pkgTree ? countTreeFiles(pkgTree, false) : 0
 		const testCount = pkgTree ? countTreeFiles(pkgTree, true) : 0
 		lines.push(`项目: ${info.name} (${info.outputType}) v${info.version}`)
@@ -1153,10 +1165,10 @@ function buildCompactProjectOverviewSection(
 
 	for (const member of resolvedMembers) {
 		const memberCwd = path.join(cwd, member.path)
-		const pkgTree = getCachedPackageHierarchy(memberCwd, "src", member.name)
+		const pkgTree = await getCachedPackageHierarchy(memberCwd, "src", member.name)
 		const srcCount = pkgTree ? countTreeFiles(pkgTree, false) : 0
 		const testCount = pkgTree ? countTreeFiles(pkgTree, true) : 0
-		const deps = readWorkspaceMemberDependencies(cwd, member)
+		const deps = await readWorkspaceMemberDependencies(cwd, member)
 		const activeTag = member.name === activeMemberName ? " ← 当前编辑模块" : ""
 		const depSuffix = deps.length > 0 ? `, 依赖: ${deps.join(", ")}` : ""
 		lines.push(`- ${member.name} (${member.outputType}): ${srcCount} 源/${testCount} 测${activeTag}${depSuffix}`)
@@ -1562,10 +1574,20 @@ let cachedCjpmTree: {
 async function getCjpmTreeSection(cwd: string): Promise<string | null> {
 	try {
 		const tomlPath = path.join(cwd, "cjpm.toml")
-		if (!fs.existsSync(tomlPath)) return null
-		const tomlMtime = fs.statSync(tomlPath).mtimeMs
+		try {
+			await fs.promises.access(tomlPath)
+		} catch {
+			return null
+		}
+		const tomlMtime = (await fs.promises.stat(tomlPath)).mtimeMs
 		const lockPath = path.join(cwd, "cjpm.lock")
-		const lockMtime = fs.existsSync(lockPath) ? fs.statSync(lockPath).mtimeMs : 0
+		let lockMtime = 0
+		try {
+			await fs.promises.access(lockPath)
+			lockMtime = (await fs.promises.stat(lockPath)).mtimeMs
+		} catch {
+			/* lock file doesn't exist */
+		}
 		const now = Date.now()
 		if (
 			cachedCjpmTree &&
@@ -1807,14 +1829,19 @@ export const STDLIB_CRITICAL_SIGNATURES: Record<string, string> = {
 	].join("\n"),
 }
 
-function buildStdlibSignatureHintsSection(
+async function buildStdlibSignatureHintsSection(
 	imports: string[],
 	docsBase: string | null | undefined,
 	globalStoragePath?: string,
-): string | null {
+): Promise<string | null> {
 	let hints: Record<string, string> = STDLIB_API_SIGNATURE_HINTS
-	if (docsBase && fs.existsSync(docsBase) && globalStoragePath) {
-		hints = mergeStdlibConstraintHintsFromCorpus({ ...STDLIB_API_SIGNATURE_HINTS }, docsBase, globalStoragePath)
+	if (docsBase && globalStoragePath) {
+		try {
+			await fs.promises.access(docsBase)
+			hints = mergeStdlibConstraintHintsFromCorpus({ ...STDLIB_API_SIGNATURE_HINTS }, docsBase, globalStoragePath)
+		} catch {
+			/* docsBase doesn't exist, use default hints */
+		}
 	}
 	const keys = Object.keys(hints).sort((a, b) => b.length - a.length)
 	const lines: string[] = []
@@ -1897,12 +1924,16 @@ function corpusExtraHaystackMatchesKey(hay: string, key: string, latinMap: Map<s
 	return re ? re.test(hay) : hay.includes(k)
 }
 
-function buildCorpusExtraFewShotSection(
+async function buildCorpusExtraFewShotSection(
 	corpusRoot: string,
 	imports: string[],
 	diagnostics: vscode.Diagnostic[],
-): string | null {
-	if (!fs.existsSync(corpusRoot)) return null
+): Promise<string | null> {
+	try {
+		await fs.promises.access(corpusRoot)
+	} catch {
+		return null
+	}
 
 	const textChunks: string[] = []
 	for (const ed of vscode.window.visibleTextEditors) {
@@ -1926,9 +1957,13 @@ function buildCorpusExtraFewShotSection(
 		if (usedRel.has(rel)) continue
 		if (!keys.some((k) => corpusExtraHaystackMatchesKey(hay, k, latinMap))) continue
 		const fp = path.join(corpusRoot, rel)
-		if (!fs.existsSync(fp)) continue
 		try {
-			const raw = readFileUtf8Lru(fp)
+			await fs.promises.access(fp)
+		} catch {
+			continue
+		}
+		try {
+			const raw = await readFileUtf8Lru(fp)
 			if (!raw) continue
 			let body = raw.trim().replace(/\r\n/g, "\n")
 			if (body.length > CORPUS_EXTRA_MAX_CHARS_PER_FILE) {
@@ -2418,10 +2453,11 @@ function simpleHash(str: string): number {
 	return h >>> 0
 }
 
-function computeContextCacheKey(cwd: string, diagSummaryHash: number): string {
-	const openFiles = vscode.window.visibleTextEditors
+async function computeContextCacheKey(cwd: string, diagSummaryHash: number): Promise<string> {
+	const openFilesPromises = vscode.window.visibleTextEditors
 		.filter((e) => e.document.languageId === "cangjie" || e.document.fileName.endsWith(".cj"))
 		.map((e) => editorDocumentCacheKey(e.document.uri))
+	const openFiles = (await Promise.all(openFilesPromises))
 		.sort()
 		.join("|")
 	return `${cwd}|${openFiles}|${diagSummaryHash}|ch:${getCompileHistoryRevision(cwd)}`
@@ -2450,15 +2486,16 @@ function workspaceHasOpenCangjieFile(): boolean {
 	return false
 }
 
-function openCangjieDocumentsSignature(): string {
+async function openCangjieDocumentsSignature(): Promise<string> {
 	const docs = vscode.workspace.textDocuments ?? []
-	const keys: string[] = []
+	const keysPromises: Promise<string>[] = []
 	for (const doc of docs) {
 		if (doc.uri.scheme !== "file") continue
 		if (doc.languageId === "cangjie" || doc.fileName.endsWith(".cj")) {
-			keys.push(editorDocumentCacheKey(doc.uri))
+			keysPromises.push(editorDocumentCacheKey(doc.uri))
 		}
 	}
+	const keys = await Promise.all(keysPromises)
 	return keys.sort().join("|")
 }
 
@@ -2518,7 +2555,7 @@ export async function getCangjieContextSection(
 	if (!runCangjieContext) return ""
 
 	const diagSnapshot = collectDiagnosticSnapshot()
-	const contextSectionKey = `${computeContextCacheKey(cwd, diagSnapshot.diagSummaryHash)}|tb:${tokenBudget}|m:${mode}|intensity:${contextIntensity}|rc:${simpleHash(recentBuildRootCauses.join("|"))}|rd:${simpleHash(repairDirective ?? "")}`
+	const contextSectionKey = `${await computeContextCacheKey(cwd, diagSnapshot.diagSummaryHash)}|tb:${tokenBudget}|m:${mode}|intensity:${contextIntensity}|rc:${simpleHash(recentBuildRootCauses.join("|"))}|rd:${simpleHash(repairDirective ?? "")}`
 	const now = Date.now()
 	const contextSectionTtl = getContextSectionCacheTtlMs()
 	if (contextSectionCache && contextSectionCache.key === contextSectionKey && now - contextSectionCache.time < contextSectionTtl) {
@@ -2530,7 +2567,10 @@ export async function getCangjieContextSection(
 
 	const p = (async (): Promise<string> => {
 	const docsBase = resolveCangjieDocsBasePath(extensionPath)
-	const docsExist = docsBase != null && fs.existsSync(docsBase)
+	let docsExist = false
+	if (docsBase != null) {
+		try { await fs.promises.access(docsBase); docsExist = true } catch { docsExist = false }
+	}
 	const includeHeavyContext = contextIntensity === "full"
 
 	const prioritized: PrioritizedCangjieSection[] = []
@@ -2546,7 +2586,7 @@ export async function getCangjieContextSection(
 			? projectOverviewCache.value
 			: null
 		if (overview === null) {
-			overview = buildCompactProjectOverviewSection(
+			overview = await buildCompactProjectOverviewSection(
 				cwd,
 				projectInfo,
 				activeFileInfo?.packageName ?? null,
@@ -2561,17 +2601,17 @@ export async function getCangjieContextSection(
 	if (projectInfo && includeHeavyContext) {
 		if (!projectInfo.isWorkspace) {
 			const rootPkgName = projectInfo.name || undefined
-			const pkgTree = getCachedPackageHierarchy(cwd, projectInfo.srcDir, rootPkgName)
+			const pkgTree = await getCachedPackageHierarchy(cwd, projectInfo.srcDir, rootPkgName)
 			if (pkgTree) {
-				const pkgMismatches = verifyPackageDeclarations(pkgTree, cwd, projectInfo.srcDir)
+				const pkgMismatches = await verifyPackageDeclarations(pkgTree, cwd, projectInfo.srcDir)
 				addPrioritized(prioritized, 515, pkgMismatches || undefined)
 			}
 		} else {
 			for (const member of projectInfo.members || []) {
 				const memberCwd = path.join(cwd, member.path)
-				const memberTree = getCachedPackageHierarchy(memberCwd, "src", member.name)
+				const memberTree = await getCachedPackageHierarchy(memberCwd, "src", member.name)
 				if (memberTree) {
-					const pkgMismatches = verifyPackageDeclarations(memberTree, memberCwd, "src")
+					const pkgMismatches = await verifyPackageDeclarations(memberTree, memberCwd, "src")
 					addPrioritized(prioritized, 515, pkgMismatches || undefined)
 				}
 			}
@@ -2606,9 +2646,9 @@ export async function getCangjieContextSection(
 			heavyBundle = {
 				symbols: editorSymbolsSnapshot,
 				importedSymbols: _resolveImportedSymbols(imports, cwd, projectInfo),
-				stdlibHints: buildStdlibSignatureHintsSection(imports, docsBase, globalStoragePath),
-				workspaceSummary: projectInfo.isWorkspace ? buildWorkspaceSymbolSummary(projectInfo, cwd) : null,
-				fewShot: buildCangjieStyleFewShotSection(cwd, imports, rawDiagnostics, cjpmRawHash),
+				stdlibHints: await buildStdlibSignatureHintsSection(imports, docsBase, globalStoragePath),
+				workspaceSummary: projectInfo.isWorkspace ? await buildWorkspaceSymbolSummary(projectInfo, cwd) : null,
+				fewShot: await buildCangjieStyleFewShotSection(cwd, imports, rawDiagnostics, cjpmRawHash),
 			}
 			heavyContextCache = { key: heavyContextKey, value: heavyBundle, time: now }
 		}
@@ -2694,7 +2734,7 @@ export async function getCangjieContextSection(
 		addPrioritized(
 			prioritized,
 			750,
-			buildCorpusExtraFewShotSection(docsBase, imports, rawDiagnostics) || undefined,
+			await buildCorpusExtraFewShotSection(docsBase, imports, rawDiagnostics) || undefined,
 		)
 	}
 
@@ -2810,7 +2850,8 @@ ${packed.join("\n\n")}
 const ERROR_CONTEXT_RADIUS = 15
 const ERROR_CONTEXT_MAX_LOCATIONS = 8
 
-function formatSingleErrorLocationBlock(cwd: string, filePart: string, lineStr: string): string | null {
+// Sync version for use in sync callers (enhanceCjcErrorOutput, etc.)
+function formatSingleErrorLocationBlockSync(cwd: string, filePart: string, lineStr: string): string | null {
 	const lineNum = parseInt(lineStr, 10) - 1
 	if (Number.isNaN(lineNum) || lineNum < 0) return null
 	const filePath = path.isAbsolute(filePart) ? filePart : path.resolve(cwd, filePart)
@@ -2869,7 +2910,8 @@ function extractErrorSourceContext(errorOutput: string, cwd: string): string[] {
 		if (seen.has(key)) continue
 		seen.add(key)
 
-		const block = formatSingleErrorLocationBlock(cwd, filePart!, lineStr!)
+		// Use sync version for compatibility with sync callers
+		const block = formatSingleErrorLocationBlockSync(cwd, filePart!, lineStr!)
 		if (block) contextLines.push(block)
 
 		if (contextLines.length >= ERROR_CONTEXT_MAX_LOCATIONS) break
@@ -2961,7 +3003,7 @@ export function buildCangjieExecuteCommandErrorAppendix(
 			: "[输出片段]"
 
 		const snippet =
-			locMatch != null ? formatSingleErrorLocationBlock(cwd, locMatch[1]!, locMatch[2]!) : null
+			locMatch != null ? formatSingleErrorLocationBlockSync(cwd, locMatch[1]!, locMatch[2]!) : null
 
 		const patterns = getMatchingCjcPatternsByCategory(text)
 		let patternBlock: string
