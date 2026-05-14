@@ -81,3 +81,6 @@ eslint-report*.json
 
 # Devflow planning and specs
 devflow/
+
+# Local agent workspace artifacts
+.agents/
