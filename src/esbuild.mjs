@@ -54,6 +54,7 @@ async function main() {
 						["../LICENSE", "LICENSE"],
 						["node_modules/vscode-material-icons/generated", "assets/vscode-material-icons"],
 						["../webview-ui/audio", "webview-ui/audio"],
+						["../webview-ui/build", "webview-ui/build"],
 						],
 						srcDir,
 						buildDir,
