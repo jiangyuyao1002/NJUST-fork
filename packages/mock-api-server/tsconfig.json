@@ -1,0 +1,9 @@
+{
+	"extends": "@njust-ai-cj/config-typescript/base.json",
+	"compilerOptions": {
+		"types": ["node", "vitest/globals"],
+		"outDir": "dist"
+	},
+	"include": ["src", "__tests__"],
+	"exclude": ["node_modules"]
+}

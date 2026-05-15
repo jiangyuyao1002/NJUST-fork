@@ -1,0 +1,21 @@
+{
+	"name": "@njust-ai-cj/mock-api-server",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"test": "vitest run",
+		"check-types": "tsc --noEmit",
+		"start": "tsx src/index.ts"
+	},
+	"devDependencies": {
+		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@types/node": "20.x",
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.3",
+		"vitest": "^3.2.3"
+	}
+}

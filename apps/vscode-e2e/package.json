@@ -12,6 +12,7 @@
 	"devDependencies": {
 		"@njust-ai-cj/config-eslint": "workspace:^",
 		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai-cj/mock-api-server": "workspace:^",
 		"@njust-ai-cj/types": "workspace:^",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "20.x",
