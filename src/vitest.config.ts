@@ -17,14 +17,17 @@ export default defineConfig({
 		onConsoleLog,
 		coverage: {
 			provider: "v8",
+			reporter: ["json", "html", "text-summary"],
 			reportsDirectory: "../coverage/src",
 			include: [
-				"core/context-management/**",
-				"core/condense/**",
-				"core/tools/**",
-				"core/task/CloudAgentOrchestrator.ts",
-				"api/retry/**",
-				"services/cloud-agent/**",
+				"core/**",
+				"api/**",
+				"services/**",
+			],
+			exclude: [
+				"**/__tests__/**",
+				"**/__mocks__/**",
+				"**/cangjie-context.ts",
 			],
 			thresholds: {
 				lines: 60,

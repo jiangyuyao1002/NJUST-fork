@@ -74,10 +74,30 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+              with:
+                fetch-depth: 0 # 获取完整历史用于 PR 比较
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
-            - name: Run tests with coverage thresholds
+            - name: Run src tests with coverage
               run: pnpm test:coverage
+            - name: Run webview-ui tests with coverage
+              run: pnpm --filter webview-ui test:coverage
+            - name: Upload src coverage to Codecov
+              uses: codecov/codecov-action@v4
+              with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+                files: ./coverage/src/coverage-final.json
+                flags: src
+                fail_ci_if_error: false
+                verbose: true
+            - name: Upload webview-ui coverage to Codecov
+              uses: codecov/codecov-action@v4
+              with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+                files: ./coverage/webview-ui/coverage-final.json
+                flags: webview-ui
+                fail_ci_if_error: false
+                verbose: true
 
     check-secrets:
         runs-on: ubuntu-latest

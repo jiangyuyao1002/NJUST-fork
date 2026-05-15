@@ -14,6 +14,24 @@ export default defineConfig({
 		environment: "jsdom",
 		include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
 		onConsoleLog,
+		coverage: {
+			provider: "v8",
+			reporter: ["json", "html", "text-summary"],
+			reportsDirectory: "../coverage/webview-ui",
+			include: ["src/**"],
+			exclude: [
+				"src/**/*.spec.ts",
+				"src/**/*.spec.tsx",
+				"src/__mocks__/**",
+				"src/i18n/__mocks__/**",
+				"src/utils/test-utils.tsx",
+			],
+			thresholds: {
+				lines: 50,
+				functions: 40,
+				branches: 30,
+			},
+		},
 	},
 	resolve: {
 		alias: {
