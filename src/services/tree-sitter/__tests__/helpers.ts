@@ -1,5 +1,6 @@
 import { parseSourceCodeDefinitionsForFile, setMinComponentLines } from ".."
 import * as fs from "fs/promises"
+import { existsSync } from "fs"
 import * as path from "path"
 import tsxQuery from "../queries/tsx"
 import { Parser, Language } from "web-tree-sitter"
@@ -42,7 +43,7 @@ export async function initializeTreeSitter() {
 			const filename = path.basename(wasmPath)
 			const correctPath = path.join(process.cwd(), "dist", filename)
 			// console.log(`Redirecting WASM load from ${wasmPath} to ${correctPath}`)
-			return originalLoad(correctPath)
+			return originalLoad(existsSync(correctPath) ? correctPath : wasmPath)
 		}
 
 		initializedTreeSitter = { Parser, Language }

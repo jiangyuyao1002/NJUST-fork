@@ -11,6 +11,8 @@ import { TerminalProcess } from "../TerminalProcess"
 import { Terminal } from "../Terminal"
 import { TerminalRegistry } from "../TerminalRegistry"
 
+const runTerminalStressTests = process.env.RUN_TERMINAL_STRESS_TESTS === "1"
+
 // Mock the vscode module
 vi.mock("vscode", () => {
 	// Store event handlers so we can trigger them in tests
@@ -434,8 +436,10 @@ describe("TerminalProcess with Bash Command Output", () => {
 		}
 	})
 
-	// We can skip this very large test for normal development
-	it.skip(`should execute 'yes AAA... | head -n ${1_000_000}' and verify lines of 'A's`, async () => {
+	// This very large test is opt-in for stress/nightly runs.
+	it.skipIf(!runTerminalStressTests)(
+		`should execute 'yes AAA... | head -n ${1_000_000}' and verify lines of 'A's`,
+		async () => {
 		const TEST_LINES = 1_000_000
 		const expectedOutput = Array(TEST_LINES).fill("A".repeat(76)).join("\n") + "\n"
 
@@ -475,5 +479,6 @@ describe("TerminalProcess with Bash Command Output", () => {
 		for (const index of sampleIndices) {
 			expect(lines[index]).toBe("A".repeat(76))
 		}
-	})
+		},
+	)
 })

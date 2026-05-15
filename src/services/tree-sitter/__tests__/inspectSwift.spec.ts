@@ -4,10 +4,18 @@ import { it, expect } from "vitest"
 
 import { inspectTreeStructure, testParseSourceCodeDefinitions, debugLog } from "./helpers"
 import { swiftQuery } from "../queries"
-import sampleSwiftContent from "./fixtures/sample-swift"
 
-// This is insanely slow for some reason.
-describe.skip("inspectSwift", () => {
+const runSwiftTreeSitterTests = process.env.RUN_SWIFT_TREE_SITTER_TESTS === "1"
+
+const sampleSwiftContent = String.raw`
+class SampleSwiftClass {
+    func sampleMethod() -> String {
+        return "swift"
+    }
+}
+`
+
+describe.skipIf(!runSwiftTreeSitterTests)("inspectSwift", () => {
 	const testOptions = {
 		language: "swift",
 		wasmFile: "tree-sitter-swift.wasm",

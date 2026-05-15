@@ -4,7 +4,125 @@ import { it, expect, vi, beforeEach, beforeAll } from "vitest"
 
 import { swiftQuery } from "../queries"
 import { initializeTreeSitter, testParseSourceCodeDefinitions } from "./helpers"
-import sampleSwiftContent from "./fixtures/sample-swift"
+
+const runSwiftTreeSitterTests = process.env.RUN_SWIFT_TREE_SITTER_TESTS === "1"
+
+const sampleSwiftContent = String.raw`
+class StandardClassDefinition {
+    private var standardProperty: String
+    func standardMethod() -> String {
+        return standardProperty
+    }
+}
+
+final class FinalClassDefinition {
+    func finalClassMethod() -> Int {
+        return 1
+    }
+}
+
+open class OpenClassDefinition {
+    open func openOverridableMethod() -> Double {
+        return 1.0
+    }
+}
+
+protocol ProtocolDefinition {
+    var protocolRequiredProperty: String { get set }
+    func protocolRequiredMethod(with parameter: String) -> Bool
+}
+
+class InheritingClassDefinition: StandardClassDefinition, ProtocolDefinition {
+    var protocolRequiredProperty: String = "Required property"
+    func protocolRequiredMethod(with parameter: String) -> Bool {
+        return !parameter.isEmpty
+    }
+}
+
+struct StandardStructDefinition {
+    var standardStructProperty: String
+}
+
+struct GenericStructDefinition<T: Comparable, U> {
+    var items: [T]
+    var mappings: [T: U]
+}
+
+protocol AssociatedTypeProtocolDefinition {
+    associatedtype AssociatedItem
+    var items: [AssociatedItem] { get set }
+}
+
+extension StandardClassDefinition {
+    func classExtensionMethod() -> String {
+        return "class"
+    }
+}
+
+extension StandardStructDefinition {
+    func structExtensionMethod() -> String {
+        return "struct"
+    }
+}
+
+extension ProtocolDefinition {
+    func protocolExtensionMethod() -> String {
+        return "protocol"
+    }
+}
+
+class MethodContainer {
+    func instanceMethodDefinition(parameter1: String) -> String {
+        return parameter1
+    }
+}
+
+struct TypeMethodContainer {
+    static func typeMethodDefinition(parameter1: String) -> String {
+        return parameter1
+    }
+}
+
+class StoredPropertyContainer {
+    var storedPropertyWithObserver: Int = 0 {
+        willSet { }
+        didSet { }
+    }
+}
+
+class ComputedPropertyContainer {
+    var computedProperty: String {
+        get { return "" }
+        set { }
+    }
+}
+
+class DesignatedInitializerContainer {
+    init(property1: String) { }
+}
+
+class ConvenienceInitializerContainer {
+    init(property1: String, property2: Int) { }
+    convenience init(defaultsWithOverride: String = "Default") {
+        self.init(property1: defaultsWithOverride, property2: 42)
+    }
+}
+
+class DeinitializerDefinition {
+    deinit { }
+}
+
+class SubscriptDefinition {
+    subscript(index: Int) -> String {
+        get { return "" }
+        set { }
+    }
+}
+
+class TypeAliasContainer {
+    typealias DictionaryOfArrays<Key: Hashable, Value: Equatable> = [Key: [Value]]
+}
+`
 
 // Swift test options
 const testOptions = {
@@ -27,8 +145,7 @@ vi.mock("../../../utils/fs", () => ({
 	fileExistsAtPath: vi.fn().mockImplementation(() => Promise.resolve(true)),
 }))
 
-// This is insanely slow for some reason.
-describe.skip("parseSourceCodeDefinitionsForFile with Swift", () => {
+describe.skipIf(!runSwiftTreeSitterTests)("parseSourceCodeDefinitionsForFile with Swift", () => {
 	// Cache the result to avoid repeated slow parsing
 	let parsedResult: string | undefined
 
