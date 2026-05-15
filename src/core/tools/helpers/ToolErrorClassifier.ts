@@ -65,7 +65,8 @@ export function classifyToolError(error: unknown): ToolErrorClassification {
 			code: "ENOENT",
 		}
 	}
-	if (code === "EACCES" || code === "EPERM" || /permission denied|access denied|eacces|eperm/i.test(msg)) {
+	const isToolPermission = /permission denied for tool|blocked by hook|permission.*deny/i.test(msg)
+	if (!isToolPermission && (code === "EACCES" || code === "EPERM" || /permission denied|access denied|eacces|eperm/i.test(msg))) {
 		return {
 			category: "filesystem",
 			retryable: false,
