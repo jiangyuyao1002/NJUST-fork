@@ -2,13 +2,14 @@ import * as assert from "assert"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as vscode from "vscode"
+import { execFileSync } from "child_process"
 
 import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
 
 import { waitFor, sleep, waitUntilCompleted } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite.skip("NJUST_AI_CJ execute_command Tool", function () {
+suite("NJUST_AI_CJ execute_command Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -37,8 +38,17 @@ suite.skip("NJUST_AI_CJ execute_command Tool", function () {
 		},
 	}
 
-	// Create test files before all tests
-	suiteSetup(async () => {
+	// Skip on Windows when wmic.exe is missing — the extension's TerminalProcess
+	// relies on wmic for process-tree management on Windows.
+	suiteSetup(async function () {
+		if (process.platform === "win32") {
+			try {
+				execFileSync("where", ["wmic.exe"], { stdio: "ignore" })
+			} catch {
+				this.skip()
+			}
+		}
+
 		// Get workspace directory
 		const workspaceFolders = vscode.workspace.workspaceFolders
 		if (!workspaceFolders || workspaceFolders.length === 0) {

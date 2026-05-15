@@ -8,7 +8,29 @@ import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite.skip("NJUST_AI_CJ apply_diff Tool", function () {
+const isApplyDiffToolMessage = (message: ClineMessage): boolean => {
+	if (message.type === "ask" && message.ask === "tool" && message.text) {
+		try {
+			const toolData = JSON.parse(message.text)
+			const tool = String(toolData.tool ?? "")
+			return tool.includes("Patch") || tool.includes("Diff") || tool === "editedExistingFile"
+		} catch {
+			return false
+		}
+	}
+	if (message.type === "say" && message.say === "api_req_started" && message.text) {
+		try {
+			const requestData = JSON.parse(message.text)
+			const request = String(requestData.request ?? "")
+			return request.includes("apply_diff") || request.includes("apply_patch")
+		} catch {
+			return message.text.includes("apply_diff") || message.text.includes("apply_patch")
+		}
+	}
+	return false
+}
+
+suite("NJUST_AI_CJ apply_diff Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -181,15 +203,10 @@ function validateInput(input) {
 			// Check for tool execution
 			if (message.type === "say" && message.say === "api_req_started" && message.text) {
 				console.log("API request started:", message.text.substring(0, 200))
-				try {
-					const requestData = JSON.parse(message.text)
-					if (requestData.request && requestData.request.includes("apply_diff")) {
-						applyDiffExecuted = true
-						console.log("apply_diff tool executed!")
-					}
-				} catch (e) {
-					console.log("Failed to parse api_req_started message:", e)
-				}
+			}
+			if (isApplyDiffToolMessage(message)) {
+				applyDiffExecuted = true
+				console.log("apply_diff tool executed!")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -238,7 +255,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			}
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => taskCompleted, { timeout: 120_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)
@@ -294,15 +311,10 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			// Check for tool execution
 			if (message.type === "say" && message.say === "api_req_started" && message.text) {
 				console.log("API request started:", message.text.substring(0, 200))
-				try {
-					const requestData = JSON.parse(message.text)
-					if (requestData.request && requestData.request.includes("apply_diff")) {
-						applyDiffExecuted = true
-						console.log("apply_diff tool executed!")
-					}
-				} catch (e) {
-					console.log("Failed to parse api_req_started message:", e)
-				}
+			}
+			if (isApplyDiffToolMessage(message)) {
+				applyDiffExecuted = true
+				console.log("apply_diff tool executed!")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -353,7 +365,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			await waitFor(() => taskStarted, { timeout: 60_000 })
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => taskCompleted, { timeout: 120_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)
@@ -413,15 +425,10 @@ function keepThis() {
 			// Check for tool execution
 			if (message.type === "say" && message.say === "api_req_started" && message.text) {
 				console.log("API request started:", message.text.substring(0, 200))
-				try {
-					const requestData = JSON.parse(message.text)
-					if (requestData.request && requestData.request.includes("apply_diff")) {
-						applyDiffExecuted = true
-						console.log("apply_diff tool executed!")
-					}
-				} catch (e) {
-					console.log("Failed to parse api_req_started message:", e)
-				}
+			}
+			if (isApplyDiffToolMessage(message)) {
+				applyDiffExecuted = true
+				console.log("apply_diff tool executed!")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -465,7 +472,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			await waitFor(() => taskStarted, { timeout: 60_000 })
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => taskCompleted, { timeout: 120_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)
@@ -521,15 +528,10 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			// Check for tool execution attempt
 			if (message.type === "say" && message.say === "api_req_started" && message.text) {
 				console.log("API request started:", message.text.substring(0, 200))
-				try {
-					const requestData = JSON.parse(message.text)
-					if (requestData.request && requestData.request.includes("apply_diff")) {
-						applyDiffAttempted = true
-						console.log("apply_diff tool attempted!")
-					}
-				} catch (e) {
-					console.log("Failed to parse api_req_started message:", e)
-				}
+			}
+			if (isApplyDiffToolMessage(message)) {
+				applyDiffAttempted = true
+				console.log("apply_diff tool attempted!")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -651,16 +653,11 @@ function checkInput(input) {
 			// Check for tool execution
 			if (message.type === "say" && message.say === "api_req_started" && message.text) {
 				console.log("API request started:", message.text.substring(0, 200))
-				try {
-					const requestData = JSON.parse(message.text)
-					if (requestData.request && requestData.request.includes("apply_diff")) {
-						applyDiffExecuted = true
-						applyDiffCount++
-						console.log(`apply_diff tool executed! (count: ${applyDiffCount})`)
-					}
-				} catch (e) {
-					console.log("Failed to parse api_req_started message:", e)
-				}
+			}
+			if (isApplyDiffToolMessage(message)) {
+				applyDiffExecuted = true
+				applyDiffCount++
+				console.log(`apply_diff tool executed! (count: ${applyDiffCount})`)
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)

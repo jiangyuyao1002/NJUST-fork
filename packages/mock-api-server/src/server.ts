@@ -6,7 +6,7 @@ import { openAISSE } from "./responses/openai.js"
 import { openAIChatCompletionsPath } from "./routes/chat.js"
 import { healthPath } from "./routes/health.js"
 import { anthropicMessagesPath } from "./routes/messages.js"
-import { resolveScenario, type MockProvider, type MockScenarioResponse } from "./scenarios/index.js"
+import { autoResolveScenario, resolveScenario, type MockProvider, type MockScenarioResponse } from "./scenarios/index.js"
 
 export type MockServerConfig = {
 	host?: string
@@ -46,15 +46,14 @@ const writeJson = (response: ServerResponse, statusCode: number, body: Record<st
 	response.end(JSON.stringify(body))
 }
 
-const selectScenario = (
+const selectScenarioName = (
 	request: IncomingMessage,
 	body: Record<string, unknown>,
-	defaultScenario: string,
-): string => {
+): string | undefined => {
 	const headerValue = request.headers["x-mock-scenario"]
 	if (typeof headerValue === "string" && headerValue.length > 0) return headerValue
 	if (typeof body.mock_scenario === "string" && body.mock_scenario.length > 0) return body.mock_scenario
-	return defaultScenario
+	return undefined
 }
 
 const writeSSE = async (response: ServerResponse, chunks: string[], delayMs: number) => {
@@ -79,7 +78,8 @@ const handleCompletion = async (
 	config: Required<Pick<MockServerConfig, "defaultScenario" | "responseDelayMs" | "maxBodyBytes">>,
 ) => {
 	const body = await readJsonBody(request, config.maxBodyBytes)
-	const scenario = resolveScenario(selectScenario(request, body, config.defaultScenario))
+	const scenarioName = selectScenarioName(request, body)
+	const scenario = scenarioName ? resolveScenario(scenarioName) : autoResolveScenario(body) ?? resolveScenario(config.defaultScenario)
 	const result: MockScenarioResponse = scenario.resolve({ provider, body })
 	if (result.type === "error") {
 		writeJson(response, result.status, {

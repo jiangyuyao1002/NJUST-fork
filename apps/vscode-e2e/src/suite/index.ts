@@ -3,12 +3,36 @@ import Mocha from "mocha"
 import { glob } from "glob"
 import * as vscode from "vscode"
 
-import type { NJUST_AI_CJAPI } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, type NJUST_AI_CJAPI } from "@njust-ai-cj/types"
 
 import { waitFor } from "./utils"
 
+type TestApiWithCurrentTask = NJUST_AI_CJAPI & {
+	sidebarProvider?: {
+		getCurrentTask?: () => { approveAsk?: () => void } | undefined
+	}
+}
+
+const approveMockCompletion = async (api: NJUST_AI_CJAPI) => {
+	const currentTask = (api as TestApiWithCurrentTask).sidebarProvider?.getCurrentTask?.()
+
+	if (currentTask?.approveAsk) {
+		currentTask.approveAsk()
+		return
+	}
+
+	await api.pressPrimaryButton()
+}
+
+const approveMockAskWithRetry = async (api: NJUST_AI_CJAPI) => {
+	for (let attempt = 0; attempt < 10; attempt++) {
+		await approveMockCompletion(api)
+		await new Promise((resolve) => setTimeout(resolve, 200))
+	}
+}
+
 export async function run() {
-	const extension = vscode.extensions.getExtension<NJUST_AI_CJAPI>("RooVeterinaryInc.njust-ai-cj")
+	const extension = vscode.extensions.getExtension<NJUST_AI_CJAPI>("JunjieChen-YuyaoJiang.njust-ai-cj")
 
 	if (!extension) {
 		throw new Error("Extension not found")
@@ -16,16 +40,55 @@ export async function run() {
 
 	const api = extension.isActive ? extension.exports : await extension.activate()
 
-	await api.setConfiguration({
-		apiProvider: "openrouter" as const,
-		openRouterApiKey: process.env.OPENROUTER_API_KEY!,
-		openRouterModelId: "openai/gpt-4.1",
-	})
+	if (process.env.MOCK_API_URL) {
+		await api.setConfiguration({
+			apiProvider: "openai" as const,
+			openAiBaseUrl: `${process.env.MOCK_API_URL}/v1`,
+			openAiApiKey: "mock-key",
+			openAiModelId: "mock-model",
+			openAiStreamingEnabled: true,
+			autoApprovalEnabled: true,
+			alwaysAllowSubtasks: true,
+		})
+	} else {
+		await api.setConfiguration({
+			apiProvider: "openrouter" as const,
+			openRouterApiKey: process.env.OPENROUTER_API_KEY!,
+			openRouterModelId: "openai/gpt-4.1",
+		})
+	}
 
 	await vscode.commands.executeCommand("njust-ai-cj.SidebarProvider.focus")
 	await waitFor(() => api.isReady())
 
 	globalThis.api = api
+
+	if (process.env.MOCK_API_URL) {
+		api.on(NJUST_AI_CJEventName.Message, ({ message }) => {
+			const shouldApproveNewTask =
+				message.type === "ask" &&
+				message.ask === "tool" &&
+				typeof message.text === "string" &&
+				(() => {
+					try {
+						return JSON.parse(message.text).tool === "newTask"
+					} catch {
+						return false
+					}
+				})()
+
+			if (message.type === "ask" && message.ask === "completion_result") {
+				void approveMockCompletion(api).catch((error) => {
+					console.error("Failed to auto-approve mock completion:", error)
+				})
+			}
+			if (shouldApproveNewTask) {
+				void approveMockAskWithRetry(api).catch((error) => {
+					console.error("Failed to auto-approve mock new_task:", error)
+				})
+			}
+		})
+	}
 
 	const mochaOptions: Mocha.MochaOptions = {
 		ui: "tdd",
@@ -51,6 +114,26 @@ export async function run() {
 		console.log(`Running specific test file: ${specificFile}`)
 	} else {
 		testFiles = await glob("**/**.test.js", { cwd })
+	}
+
+	// Only tests listed below are compatible with the mock API server.
+	// Excluded tests:
+	//   - task, modes, markdown-lists: assert real LLM output quality, not tool invocation
+	//   - use-mcp-tool: requires a live MCP server alongside the mock LLM
+	if (process.env.MOCK_API_URL && !process.env.TEST_FILE) {
+		const mockSupportedTests = new Set([
+			"extension.test.js",
+			"subtasks.test.js",
+			"tools/apply-diff.test.js",
+			"tools/execute-command.test.js",
+			"tools/list-files.test.js",
+			"tools/read-file.test.js",
+			"tools/search-files.test.js",
+			"tools/write-to-file.test.js",
+		])
+		testFiles = testFiles.filter((testFile) =>
+			mockSupportedTests.has(testFile.replace(/\\/g, "/").replace(/^suite\//, "")),
+		)
 	}
 
 	if (testFiles.length === 0) {

@@ -8,7 +8,42 @@ import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite.skip("NJUST_AI_CJ list_files Tool", function () {
+const getListFilesResult = (message: ClineMessage): string | null => {
+	const text = message.text || ""
+
+	if (message.type === "ask" && message.ask === "tool") {
+		try {
+			const toolData = JSON.parse(text)
+			if (
+				typeof toolData.tool === "string" &&
+				toolData.tool.startsWith("listFiles") &&
+				typeof toolData.content === "string"
+			) {
+				return toolData.content
+			}
+		} catch {
+			return null
+		}
+	}
+
+	if (message.type === "say" && message.say === "api_req_started" && text.includes("list_files")) {
+		try {
+			const jsonMatch = text.match(/\{"request":".*?"\}/)
+			if (jsonMatch) {
+				const requestData = JSON.parse(jsonMatch[0])
+				if (requestData.request && requestData.request.includes("Result:")) {
+					return requestData.request
+				}
+			}
+		} catch {
+			return null
+		}
+	}
+
+	return null
+}
+
+suite("NJUST_AI_CJ list_files Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -184,27 +219,11 @@ This directory contains various files and subdirectories for testing the list_fi
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and capture results
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("list_files")) {
-					toolExecuted = true
-					console.log("list_files tool executed:", text.substring(0, 200))
-
-					// Extract list results from the tool execution
-					try {
-						const jsonMatch = text.match(/\{"request":".*?"\}/)
-						if (jsonMatch) {
-							const requestData = JSON.parse(jsonMatch[0])
-							if (requestData.request && requestData.request.includes("Result:")) {
-								listResults = requestData.request
-								console.log("Captured list results:", listResults?.substring(0, 300))
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse list results:", e)
-					}
-				}
+			const result = getListFilesResult(message)
+			if (result) {
+				toolExecuted = true
+				listResults = result
+				console.log("Captured list results:", listResults.substring(0, 300))
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -287,27 +306,11 @@ This directory contains various files and subdirectories for testing the list_fi
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and capture results
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("list_files")) {
-					toolExecuted = true
-					console.log("list_files tool executed (recursive):", text.substring(0, 200))
-
-					// Extract list results from the tool execution
-					try {
-						const jsonMatch = text.match(/\{"request":".*?"\}/)
-						if (jsonMatch) {
-							const requestData = JSON.parse(jsonMatch[0])
-							if (requestData.request && requestData.request.includes("Result:")) {
-								listResults = requestData.request
-								console.log("Captured recursive list results:", listResults?.substring(0, 300))
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse recursive list results:", e)
-					}
-				}
+			const result = getListFilesResult(message)
+			if (result) {
+				toolExecuted = true
+				listResults = result
+				console.log("Captured recursive list results:", listResults.substring(0, 300))
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -397,27 +400,11 @@ This directory contains various files and subdirectories for testing the list_fi
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and capture results
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("list_files")) {
-					toolExecuted = true
-					console.log("list_files tool executed (symlinks):", text.substring(0, 200))
-
-					// Extract list results from the tool execution
-					try {
-						const jsonMatch = text.match(/\{"request":".*?"\}/)
-						if (jsonMatch) {
-							const requestData = JSON.parse(jsonMatch[0])
-							if (requestData.request && requestData.request.includes("Result:")) {
-								listResults = requestData.request
-								console.log("Captured symlink test results:", listResults?.substring(0, 300))
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse symlink test results:", e)
-					}
-				}
+			const result = getListFilesResult(message)
+			if (result) {
+				toolExecuted = true
+				listResults = result
+				console.log("Captured symlink test results:", listResults.substring(0, 300))
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -514,13 +501,10 @@ This directory contains various files and subdirectories for testing the list_fi
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("list_files")) {
-					toolExecuted = true
-					console.log("list_files tool executed (workspace root):", text.substring(0, 200))
-				}
+			const result = getListFilesResult(message)
+			if (result) {
+				toolExecuted = true
+				console.log("list_files tool executed (workspace root):", result.substring(0, 200))
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)

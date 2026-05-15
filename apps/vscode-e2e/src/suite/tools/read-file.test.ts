@@ -9,7 +9,58 @@ import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite.skip("NJUST_AI_CJ read_file Tool", function () {
+const extractReadFileResult = (message: ClineMessage): string | null => {
+	const text = message.text || ""
+
+	if (message.type === "ask" && message.ask === "tool") {
+		try {
+			const toolData = JSON.parse(text)
+			if (
+				toolData.tool === "readFile" &&
+				typeof toolData.content === "string" &&
+				(/(^|\n)\s*\d+\s*\|/.test(toolData.content) ||
+					toolData.content.includes("\n") ||
+					/^File:/i.test(toolData.content) ||
+					/error|not found/i.test(toolData.content))
+			) {
+				return toolData.content
+			}
+		} catch {
+			return null
+		}
+	}
+
+	if (message.type === "say" && message.say === "completion_result" && /^File:/i.test(text)) {
+		return text
+	}
+
+	if (message.type === "say" && message.say === "api_req_started" && text.includes("read_file")) {
+		try {
+			const requestData = JSON.parse(text)
+			if (requestData.request && requestData.request.includes("[read_file")) {
+				const resultMatch =
+					requestData.request.match(/```[^`]*\n([\s\S]*?)\n```/) ??
+					requestData.request.match(/Result:[\s\S]*?\n((?:\d+\s*\|[^\n]*\n?)+)/) ??
+					requestData.request.match(/Result:\s*\n([\s\S]+?)(?:\n\n|$)/)
+				return resultMatch?.[1] ?? requestData.request
+			}
+		} catch {
+			return null
+		}
+	}
+
+	return null
+}
+
+const stripReadFilePresentation = (content: string): string =>
+	content
+		.split("\n")
+		.filter((line) => !line.startsWith("File:"))
+		.map((line) => line.replace(/^\s*\d+\s*\|\s*/, ""))
+		.join("\n")
+		.trim()
+
+suite("NJUST_AI_CJ read_file Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let tempDir: string
@@ -133,40 +184,11 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and extract result
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("read_file")) {
-					toolExecuted = true
-					console.log("Tool executed:", text.substring(0, 200))
-
-					// Parse the tool result from the api_req_started message
-					try {
-						const requestData = JSON.parse(text)
-						if (requestData.request && requestData.request.includes("[read_file")) {
-							console.log("Full request for debugging:", requestData.request)
-							// Try multiple patterns to extract the content
-							// Pattern 1: Content between triple backticks
-							let resultMatch = requestData.request.match(/```[^`]*\n([\s\S]*?)\n```/)
-							if (!resultMatch) {
-								// Pattern 2: Content after "Result:" with line numbers
-								resultMatch = requestData.request.match(/Result:[\s\S]*?\n((?:\d+\s*\|[^\n]*\n?)+)/)
-							}
-							if (!resultMatch) {
-								// Pattern 3: Simple content after Result:
-								resultMatch = requestData.request.match(/Result:\s*\n([\s\S]+?)(?:\n\n|$)/)
-							}
-							if (resultMatch) {
-								toolResult = resultMatch[1]
-								console.log("Extracted tool result:", toolResult)
-							} else {
-								console.log("Could not extract tool result from request")
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse tool result:", e)
-					}
-				}
+			const result = extractReadFileResult(message)
+			if (result) {
+				toolExecuted = true
+				toolResult = result
+				console.log("Extracted tool result:", toolResult.substring(0, 200))
 			}
 
 			// Log important messages for debugging
@@ -239,7 +261,7 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 			assert.ok(toolResult !== null, "Tool should have returned a result")
 			// The tool returns content with line numbers, so we need to extract just the content
 			// For single line, the format is "1 | Hello, World!"
-			const actualContent = (toolResult as string).replace(/^\d+\s*\|\s*/, "")
+			const actualContent = stripReadFilePresentation(toolResult as string)
 			assert.strictEqual(
 				actualContent.trim(),
 				"Hello, World!",
@@ -276,37 +298,11 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and extract result
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("read_file")) {
-					toolExecuted = true
-					console.log("Tool executed for multiline file")
-
-					// Parse the tool result
-					try {
-						const requestData = JSON.parse(text)
-						if (requestData.request && requestData.request.includes("[read_file")) {
-							console.log("Full request for debugging:", requestData.request)
-							// Try multiple patterns to extract the content
-							let resultMatch = requestData.request.match(/```[^`]*\n([\s\S]*?)\n```/)
-							if (!resultMatch) {
-								resultMatch = requestData.request.match(/Result:[\s\S]*?\n((?:\d+\s*\|[^\n]*\n?)+)/)
-							}
-							if (!resultMatch) {
-								resultMatch = requestData.request.match(/Result:\s*\n([\s\S]+?)(?:\n\n|$)/)
-							}
-							if (resultMatch) {
-								toolResult = resultMatch[1]
-								console.log("Extracted multiline tool result")
-							} else {
-								console.log("Could not extract tool result from request")
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse tool result:", e)
-					}
-				}
+			const result = extractReadFileResult(message)
+			if (result) {
+				toolExecuted = true
+				toolResult = result
+				console.log("Extracted multiline tool result")
 			}
 
 			// Log AI responses
@@ -347,11 +343,7 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 			// Verify the tool returned the correct multiline content
 			assert.ok(toolResult !== null, "Tool should have returned a result")
 			// The tool returns content with line numbers, so we need to extract just the content
-			const lines = (toolResult as string).split("\n").map((line) => {
-				const match = line.match(/^\d+\s*\|\s*(.*)$/)
-				return match ? match[1] : line
-			})
-			const actualContent = lines.join("\n")
+			const actualContent = stripReadFilePresentation(toolResult as string)
 			const expectedContent = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5"
 			assert.strictEqual(
 				actualContent.trim(),
@@ -387,37 +379,11 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and extract result
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("read_file")) {
-					toolExecuted = true
-					console.log("Tool executed:", text.substring(0, 300))
-
-					// Parse the tool result
-					try {
-						const requestData = JSON.parse(text)
-						if (requestData.request && requestData.request.includes("[read_file")) {
-							console.log("Full request for debugging:", requestData.request)
-							// Try multiple patterns to extract the content
-							let resultMatch = requestData.request.match(/```[^`]*\n([\s\S]*?)\n```/)
-							if (!resultMatch) {
-								resultMatch = requestData.request.match(/Result:[\s\S]*?\n((?:\d+\s*\|[^\n]*\n?)+)/)
-							}
-							if (!resultMatch) {
-								resultMatch = requestData.request.match(/Result:\s*\n([\s\S]+?)(?:\n\n|$)/)
-							}
-							if (resultMatch) {
-								toolResult = resultMatch[1]
-								console.log("Extracted line range tool result")
-							} else {
-								console.log("Could not extract tool result from request")
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse tool result:", e)
-					}
-				}
+			const result = extractReadFileResult(message)
+			if (result) {
+				toolExecuted = true
+				toolResult = result
+				console.log("Extracted line range tool result")
 			}
 
 			// Log AI responses
@@ -499,15 +465,11 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("read_file")) {
-					toolExecuted = true
-					// Check if error was returned
-					if (text.includes("error") || text.includes("not found")) {
-						_errorHandled = true
-					}
+			const result = extractReadFileResult(message)
+			if (result) {
+				toolExecuted = true
+				if (/error|not found/i.test(result)) {
+					_errorHandled = true
 				}
 			}
 		}
@@ -570,13 +532,10 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("read_file")) {
-					toolExecuted = true
-					console.log("Tool executed for XML file")
-				}
+			const result = extractReadFileResult(message)
+			if (result) {
+				toolExecuted = true
+				console.log("Tool executed for XML file")
 			}
 
 			// Log AI responses
@@ -641,13 +600,9 @@ suite.skip("NJUST_AI_CJ read_file Tool", function () {
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Count read_file executions
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("read_file")) {
-					readFileCount++
-					console.log(`Read file execution #${readFileCount}`)
-				}
+			if (extractReadFileResult(message)) {
+				readFileCount++
+				console.log(`Read file execution #${readFileCount}`)
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -714,13 +669,10 @@ Assume both files exist and you can read them directly. Read each file and tell 
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("read_file")) {
-					toolExecuted = true
-					console.log("Reading large file...")
-				}
+			const result = extractReadFileResult(message)
+			if (result) {
+				toolExecuted = true
+				console.log("Reading large file...")
 			}
 
 			// Log AI responses

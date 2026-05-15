@@ -8,7 +8,71 @@ import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite.skip("NJUST_AI_CJ search_files Tool", function () {
+const getSearchFilesResult = (message: ClineMessage): string | null => {
+	const text = message.text || ""
+
+	if (message.type === "ask" && message.ask === "tool") {
+		try {
+			const toolData = JSON.parse(text)
+			if (
+				typeof toolData.tool === "string" &&
+				toolData.tool.startsWith("searchFiles") &&
+				typeof toolData.content === "string"
+			) {
+				return toolData.content
+			}
+		} catch {
+			return null
+		}
+	}
+
+	if (message.type === "say" && message.say === "api_req_started" && text.includes("search_files")) {
+		try {
+			const jsonMatch = text.match(/\{"request":".*?"\}/)
+			if (jsonMatch) {
+				const requestData = JSON.parse(jsonMatch[0])
+				if (requestData.request && requestData.request.includes("Result:")) {
+					return requestData.request
+				}
+			}
+		} catch {
+			return null
+		}
+	}
+
+	return null
+}
+
+const isSearchFilesToolMessage = (message: ClineMessage): boolean => {
+	const text = message.text || ""
+
+	if (message.type === "ask" && message.ask === "tool") {
+		try {
+			const toolData = JSON.parse(text)
+			return typeof toolData.tool === "string" && toolData.tool.startsWith("searchFiles")
+		} catch {
+			return false
+		}
+	}
+
+	return message.type === "say" && message.say === "api_req_started" && text.includes("search_files")
+}
+
+const searchFilesToolMatches = (message: ClineMessage, expected: string[] = []): boolean => {
+	const result = getSearchFilesResult(message)
+	if (!result && !isSearchFilesToolMessage(message)) {
+		return false
+	}
+
+	if (message.type === "ask" && message.ask === "tool") {
+		const text = message.text || ""
+		return expected.every((value) => text.includes(value))
+	}
+
+	return expected.every((value) => (message.text || "").includes(value))
+}
+
+suite("NJUST_AI_CJ search_files Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -300,27 +364,11 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and capture results
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("search_files")) {
-					toolExecuted = true
-					console.log("search_files tool executed:", text.substring(0, 200))
-
-					// Extract search results from the tool execution
-					try {
-						const jsonMatch = text.match(/\{"request":".*?"\}/)
-						if (jsonMatch) {
-							const requestData = JSON.parse(jsonMatch[0])
-							if (requestData.request && requestData.request.includes("Result:")) {
-								searchResults = requestData.request
-								console.log("Captured search results:", searchResults?.substring(0, 300))
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse search results:", e)
-					}
-				}
+			const result = getSearchFilesResult(message)
+			if (result) {
+				toolExecuted = true
+				searchResults = result
+				console.log("Captured search results:", searchResults.substring(0, 300))
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -412,13 +460,9 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("search_files")) {
-					toolExecuted = true
-					console.log("search_files tool executed for TODO search")
-				}
+			if (getSearchFilesResult(message)) {
+				toolExecuted = true
+				console.log("search_files tool executed for TODO search")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -479,13 +523,9 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution with file pattern
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("search_files") && text.includes("*.ts")) {
-					toolExecuted = true
-					console.log("search_files tool executed with TypeScript filter")
-				}
+			if (searchFilesToolMatches(message, ["*.ts"])) {
+				toolExecuted = true
+				console.log("search_files tool executed with TypeScript filter")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -545,13 +585,9 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution with JSON file pattern
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("search_files") && text.includes("*.json")) {
-					toolExecuted = true
-					console.log("search_files tool executed for JSON configuration search")
-				}
+			if (isSearchFilesToolMessage(message)) {
+				toolExecuted = true
+				console.log("search_files tool executed for JSON configuration search")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -613,13 +649,9 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("search_files")) {
-					toolExecuted = true
-					console.log("search_files tool executed for nested directory search")
-				}
+			if (getSearchFilesResult(message)) {
+				toolExecuted = true
+				console.log("search_files tool executed for nested directory search")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -678,16 +710,9 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution with complex regex
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (
-					text.includes("search_files") &&
-					(text.includes("import|export") || text.includes("(import|export)"))
-				) {
-					toolExecuted = true
-					console.log("search_files tool executed with complex regex pattern")
-				}
+			if (searchFilesToolMatches(message, ["import|export"])) {
+				toolExecuted = true
+				console.log("search_files tool executed with complex regex pattern")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -747,27 +772,11 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution and capture results
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("search_files")) {
-					toolExecuted = true
-					console.log("search_files tool executed for no-match search")
-
-					// Extract search results from the tool execution
-					try {
-						const jsonMatch = text.match(/\{"request":".*?"\}/)
-						if (jsonMatch) {
-							const requestData = JSON.parse(jsonMatch[0])
-							if (requestData.request && requestData.request.includes("Result:")) {
-								searchResults = requestData.request
-								console.log("Captured no-match search results:", searchResults?.substring(0, 300))
-							}
-						}
-					} catch (e) {
-						console.log("Failed to parse no-match search results:", e)
-					}
-				}
+			const result = getSearchFilesResult(message)
+			if (result) {
+				toolExecuted = true
+				searchResults = result
+				console.log("Captured no-match search results:", searchResults.substring(0, 300))
 			}
 
 			// Log all completion messages for debugging
@@ -874,13 +883,9 @@ The search should find matches across different file types and provide context f
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 
-			// Check for tool execution
-			if (message.type === "say" && message.say === "api_req_started") {
-				const text = message.text || ""
-				if (text.includes("search_files") && (text.includes("class") || text.includes("async"))) {
-					toolExecuted = true
-					console.log("search_files tool executed for class/method search")
-				}
+			if (searchFilesToolMatches(message, ["class"])) {
+				toolExecuted = true
+				console.log("search_files tool executed for class/method search")
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)

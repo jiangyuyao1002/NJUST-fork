@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { startMockServer, type MockServerHandle } from "../src/index.js"
+import { startMockServer, type MockServerHandle } from "../src/runtime.js"
 
 describe("MockAPIServer", () => {
 	let handle: MockServerHandle | undefined
@@ -84,7 +84,7 @@ describe("MockAPIServer", () => {
 		expect(body).toContain('"id":"call_search_files"')
 	})
 
-	it("returns final text after tool results are present", async () => {
+	it("returns attempt_completion after tool results are present", async () => {
 		const server = await start()
 
 		const response = await fetch(`${server.url}/v1/chat/completions`, {
@@ -103,8 +103,10 @@ describe("MockAPIServer", () => {
 		const body = await readStream(response)
 
 		expect(response.status).toBe(200)
-		expect(body).toContain("Mock read_file result processed.")
-		expect(body).not.toContain('"tool_calls"')
+		expect(body).toContain('"tool_calls"')
+		expect(body).toContain('"name":"attempt_completion"')
+		expect(body).toContain('\\"result\\":\\"The requested file was read successfully.\\"')
+		expect(body).toContain('"finish_reason":"tool_calls"')
 	})
 
 	it("POST /v1/messages returns an Anthropic SSE stream", async () => {
@@ -175,6 +177,52 @@ describe("MockAPIServer", () => {
 
 		expect(response.status).toBe(200)
 		expect(body).toContain('"name":"execute_command"')
+	})
+
+	it.each([
+		["Use the list_files tool to list the contents of \"demo\" recursively.", '"name":"list_files"', '\\"recursive\\":true'],
+		["Use the list_files tool to list the contents of \"demo\" (non-recursive).", '"name":"list_files"', '\\"recursive\\":false'],
+		["Please use the read_file tool to read the file named \"simple.txt\".", '"name":"read_file"', '\\"path\\":\\"simple.txt\\"'],
+		["Create a file named \"created.txt\" with the following content:\nHello", '"name":"write_to_file"', '\\"content\\":\\"Hello\\"'],
+		["Use the search_files tool with the regex pattern \"TODO.*\".", '"name":"search_files"', '\\"regex\\":\\"TODO.*\\"'],
+		[
+			`Use the search_files tool with the regex pattern '"\\\\w+":\\\\s*' and file pattern "*.json".`,
+			'"name":"search_files"',
+			'\\"file_pattern\\":\\"*.json\\"',
+		],
+		["Use the execute_command tool to run this command: echo hi", '"name":"execute_command"', '\\"command\\":\\"echo hi\\"'],
+		["Use apply_diff on the file demo.txt to change \"Hello World\" to \"Hello Universe\".", '"name":"apply_patch"', '\\"patch\\":\\"*** Begin Patch'],
+		["Create a subtask by using the new_task tool with the message 'child prompt'.", '"name":"new_task"', '\\"message\\":\\"child prompt\\"'],
+	])("auto-routes prompt %s", async (prompt, toolName, expectedArgs) => {
+		const server = await start()
+
+		const response = await fetch(`${server.url}/v1/chat/completions`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
+		})
+		const body = await readStream(response)
+
+		expect(response.status).toBe(200)
+		expect(body).toContain(toolName)
+		expect(body).toContain(expectedArgs)
+	})
+
+	it("auto-routes the square-root child prompt to attempt_completion", async () => {
+		const server = await start()
+
+		const response = await fetch(`${server.url}/v1/chat/completions`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				messages: [{ role: "user", content: "You are a calculator. What is the square root of 9?" }],
+			}),
+		})
+		const body = await readStream(response)
+
+		expect(response.status).toBe(200)
+		expect(body).toContain('"name":"attempt_completion"')
+		expect(body).toContain('\\"result\\":\\"3\\"')
 	})
 
 	it("returns HTTP 500 for the error scenario", async () => {

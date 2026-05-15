@@ -3,19 +3,25 @@ import * as os from "os"
 import * as fs from "fs/promises"
 
 import { runTests } from "@vscode/test-electron"
+import { startMockServer } from "../../../packages/mock-api-server/src/runtime.js"
 
 async function main() {
+	let testWorkspace: string | undefined
+	let exitCode = 0
+	const mockHandle = await startMockServer({ port: 0 })
+	console.info(`Mock API server started at ${mockHandle.url}`)
+
 	try {
 		// The folder containing the Extension Manifest package.json
 		// Passed to `--extensionDevelopmentPath`
-		const extensionDevelopmentPath = path.resolve(__dirname, "../../../src")
+		const extensionDevelopmentPath = path.resolve(process.cwd(), "../../src")
 
 		// The path to the extension test script
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, "./suite/index")
 
 		// Create a temporary workspace folder for tests
-		const testWorkspace = await fs.mkdtemp(path.join(os.tmpdir(), "roo-test-workspace-"))
+		testWorkspace = await fs.mkdtemp(path.join(os.tmpdir(), "roo-test-workspace-"))
 
 		// Get test filter from command line arguments or environment variable
 		// Usage examples:
@@ -28,6 +34,7 @@ async function main() {
 		// Pass test filters as environment variables to the test runner
 		const extensionTestsEnv = {
 			...process.env,
+			MOCK_API_URL: mockHandle.url,
 			...(testGrep && { TEST_GREP: testGrep }),
 			...(testFile && { TEST_FILE: testFile }),
 		}
@@ -41,11 +48,17 @@ async function main() {
 			version: process.env.VSCODE_VERSION || "1.101.2",
 		})
 
-		// Clean up the temporary workspace
-		await fs.rm(testWorkspace, { recursive: true, force: true })
 	} catch (error) {
 		console.error("Failed to run tests", error)
-		process.exit(1)
+		exitCode = 1
+	} finally {
+		await mockHandle.close()
+		if (testWorkspace) {
+			await fs.rm(testWorkspace, { recursive: true, force: true })
+		}
+		if (exitCode !== 0) {
+			process.exit(exitCode)
+		}
 	}
 }
 

@@ -2,21 +2,24 @@ import * as assert from "assert"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as os from "os"
+import * as vscode from "vscode"
 
 import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
 
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
+suite("NJUST_AI_CJ write_to_file Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let tempDir: string
+	let workspaceDir: string
 	let testFilePath: string
 
 	// Create a temporary directory for test files
 	suiteSetup(async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "roo-test-"))
+		workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || tempDir
 	})
 
 	// Clean up temporary directory after tests
@@ -40,7 +43,7 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 		}
 
 		// Generate unique file name for each test to avoid conflicts
-		testFilePath = path.join(tempDir, `test-file-${Date.now()}.txt`)
+		testFilePath = path.join(workspaceDir, `test-file-${Date.now()}.txt`)
 
 		// Small delay to ensure clean state
 		await sleep(100)
@@ -105,6 +108,17 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 			}
 			if (message.type === "ask" && message.ask === "tool") {
 				console.log("Tool request:", message.text?.substring(0, 200))
+				if (message.text) {
+					try {
+						const parsed = JSON.parse(message.text)
+						if (parsed.tool === "newFileCreated" || parsed.tool === "editedExistingFile") {
+							writeToFileToolExecuted = true
+							toolExecutionDetails = message.text
+						}
+					} catch {
+						// Ignore non-JSON tool messages
+					}
+				}
 			}
 			if (message.type === "say" && (message.say === "completion_result" || message.say === "text")) {
 				console.log("AI response:", message.text?.substring(0, 200))
@@ -162,51 +176,27 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 			// Give extra time for file system operations
 			await sleep(2000)
 
-			// The file might be created in different locations, let's check them all
+			// The file should be created in the active VS Code workspace.
 			const possibleLocations = [
 				testFilePath, // Expected location
-				path.join(tempDir, baseFileName), // In temp directory
+				path.join(workspaceDir, baseFileName), // In workspace directory
 				path.join(process.cwd(), baseFileName), // In current working directory
-				path.join("/tmp/roo-test-workspace-" + "*", baseFileName), // In workspace created by runTest.ts
 			]
 
 			let fileFound = false
 			let actualFilePath = ""
 			let actualContent = ""
 
-			// First check the workspace directory that was created
-			const workspaceDirs = await fs
-				.readdir("/tmp")
-				.then((files) => files.filter((f) => f.startsWith("roo-test-workspace-")))
-				.catch(() => [])
-
-			for (const wsDir of workspaceDirs) {
-				const wsFilePath = path.join("/tmp", wsDir, baseFileName)
+			for (const location of possibleLocations) {
 				try {
-					await fs.access(wsFilePath)
+					await fs.access(location)
 					fileFound = true
-					actualFilePath = wsFilePath
-					actualContent = await fs.readFile(wsFilePath, "utf-8")
-					console.log("File found in workspace directory:", wsFilePath)
+					actualFilePath = location
+					actualContent = await fs.readFile(location, "utf-8")
+					console.log("File found at:", location)
 					break
 				} catch {
 					// Continue checking
-				}
-			}
-
-			// If not found in workspace, check other locations
-			if (!fileFound) {
-				for (const location of possibleLocations) {
-					try {
-						await fs.access(location)
-						fileFound = true
-						actualFilePath = location
-						actualContent = await fs.readFile(location, "utf-8")
-						console.log("File found at:", location)
-						break
-					} catch {
-						// Continue checking
-					}
 				}
 			}
 
@@ -233,15 +223,15 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 					console.log("Could not list CWD:", e)
 				}
 
-				// List /tmp for test files
+				// List temp root for test files
 				try {
-					const tmpFiles = await fs.readdir("/tmp")
+					const tmpFiles = await fs.readdir(os.tmpdir())
 					console.log(
-						"Test files in /tmp:",
+						"Test files in temp root:",
 						tmpFiles.filter((f) => f.includes("test-file") || f.includes("roo-test")),
 					)
 				} catch (e) {
-					console.log("Could not list /tmp:", e)
+					console.log("Could not list temp root:", e)
 				}
 			}
 
@@ -272,7 +262,7 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 		const messages: ClineMessage[] = []
 		const content = "File in nested directory"
 		const fileName = `file-${Date.now()}.txt`
-		const nestedPath = path.join(tempDir, "nested", "deep", "directory", fileName)
+		const nestedPath = path.join(workspaceDir, "nested", "deep", "directory", fileName)
 		let taskStarted = false
 		let taskCompleted = false
 		let writeToFileToolExecuted = false
@@ -300,6 +290,17 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 
 			if (message.type === "ask" && message.ask === "tool") {
 				console.log("Tool request:", message.text?.substring(0, 200))
+				if (message.text) {
+					try {
+						const parsed = JSON.parse(message.text)
+						if (parsed.tool === "newFileCreated" || parsed.tool === "editedExistingFile") {
+							writeToFileToolExecuted = true
+							toolExecutionDetails = message.text
+						}
+					} catch {
+						// Ignore non-JSON tool messages
+					}
+				}
 			}
 		}
 		api.on(NJUST_AI_CJEventName.Message, messageHandler)
@@ -347,53 +348,21 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 			// Give extra time for file system operations
 			await sleep(2000)
 
-			// Check various possible locations
+			// Check workspace locations
 			let fileFound = false
 			let actualFilePath = ""
 			let actualContent = ""
 
-			// Check workspace directories
-			const workspaceDirs = await fs
-				.readdir("/tmp")
-				.then((files) => files.filter((f) => f.startsWith("roo-test-workspace-")))
-				.catch(() => [])
-
-			for (const wsDir of workspaceDirs) {
-				// Check in nested structure within workspace
-				const wsNestedPath = path.join("/tmp", wsDir, "nested", "deep", "directory", fileName)
+			for (const location of [nestedPath, path.join(workspaceDir, fileName)]) {
 				try {
-					await fs.access(wsNestedPath)
+					await fs.access(location)
 					fileFound = true
-					actualFilePath = wsNestedPath
-					actualContent = await fs.readFile(wsNestedPath, "utf-8")
-					console.log("File found in workspace nested directory:", wsNestedPath)
+					actualFilePath = location
+					actualContent = await fs.readFile(location, "utf-8")
+					console.log("File found at:", location)
 					break
 				} catch {
-					// Also check if file was created directly in workspace root
-					const wsFilePath = path.join("/tmp", wsDir, fileName)
-					try {
-						await fs.access(wsFilePath)
-						fileFound = true
-						actualFilePath = wsFilePath
-						actualContent = await fs.readFile(wsFilePath, "utf-8")
-						console.log("File found in workspace root (nested dirs not created):", wsFilePath)
-						break
-					} catch {
-						// Continue checking
-					}
-				}
-			}
-
-			// If not found in workspace, check the expected location
-			if (!fileFound) {
-				try {
-					await fs.access(nestedPath)
-					fileFound = true
-					actualFilePath = nestedPath
-					actualContent = await fs.readFile(nestedPath, "utf-8")
-					console.log("File found at expected nested path:", nestedPath)
-				} catch {
-					// File not found
+					// Continue checking
 				}
 			}
 
@@ -401,24 +370,11 @@ suite.skip("NJUST_AI_CJ write_to_file Tool", function () {
 			if (!fileFound) {
 				console.log("File not found. Debugging info:")
 
-				// List workspace directories and their contents
-				for (const wsDir of workspaceDirs) {
-					const wsPath = path.join("/tmp", wsDir)
-					try {
-						const files = await fs.readdir(wsPath)
-						console.log(`Files in workspace ${wsDir}:`, files)
-
-						// Check if nested directory was created
-						const nestedDir = path.join(wsPath, "nested")
-						try {
-							await fs.access(nestedDir)
-							console.log("Nested directory exists in workspace")
-						} catch {
-							console.log("Nested directory NOT created in workspace")
-						}
-					} catch (e) {
-						console.log(`Could not list workspace ${wsDir}:`, e)
-					}
+				try {
+					const files = await fs.readdir(workspaceDir)
+					console.log(`Files in workspace ${workspaceDir}:`, files)
+				} catch (e) {
+					console.log(`Could not list workspace ${workspaceDir}:`, e)
 				}
 			}
 
