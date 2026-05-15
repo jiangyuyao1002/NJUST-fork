@@ -835,6 +835,281 @@ describe("Context Management", () => {
 			// Clean up
 			summarizeSpy.mockRestore()
 		})
+
+		describe("compactFailures circuit breaker", () => {
+			it("falls back to truncation when compactFailures reaches the limit", async () => {
+				vi.clearAllMocks()
+				const summarizeSpy = vi.spyOn(condenseModule, "summarizeConversation")
+				const modelInfo = createModelInfo(100000, 30000)
+				const messagesWithSmallContent = messages.map((m) =>
+					m.role === "user" ? { ...m, content: "" } : m,
+				)
+
+				const result = await manageContext({
+					messages: messagesWithSmallContent,
+					totalTokens: 70001,
+					contextWindow: modelInfo.contextWindow,
+					maxTokens: modelInfo.maxTokens,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					compactFailures: 3,
+				})
+
+				expect(summarizeSpy).not.toHaveBeenCalled()
+				expect(result.truncationId).toBeDefined()
+				expect(result.messagesRemoved).toBe(2)
+				expect(result.error).toContain("Circuit breaker")
+				expect(result.compactFailures).toBe(3)
+
+				summarizeSpy.mockRestore()
+			})
+
+			it("uses condensation and resets compactFailures after a successful retry", async () => {
+				const mockSummarizeResponse: condenseModule.SummarizeResponse = {
+					messages: [
+						{ role: "user", content: "First message" },
+						{ role: "user", content: "Recovered summary", isSummary: true },
+						{ role: "assistant", content: "Last message" },
+					],
+					summary: "Recovered summary",
+					cost: 0.02,
+					newContextTokens: 100,
+				}
+				const summarizeSpy = vi
+					.spyOn(condenseModule, "summarizeConversation")
+					.mockResolvedValue(mockSummarizeResponse)
+				const modelInfo = createModelInfo(100000, 30000)
+				const messagesWithSmallContent = messages.map((m) =>
+					m.role === "user" ? { ...m, content: "" } : m,
+				)
+
+				const result = await manageContext({
+					messages: messagesWithSmallContent,
+					totalTokens: 70001,
+					contextWindow: modelInfo.contextWindow,
+					maxTokens: modelInfo.maxTokens,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					compactFailures: 2,
+				})
+
+				expect(summarizeSpy).toHaveBeenCalled()
+				expect(result.summary).toBe("Recovered summary")
+				expect(result.compactFailures).toBe(0)
+
+				summarizeSpy.mockRestore()
+			})
+
+			it("increments compactFailures when condensation fails", async () => {
+				const summarizeSpy = vi
+					.spyOn(condenseModule, "summarizeConversation")
+					.mockResolvedValue({
+						messages,
+						summary: "",
+						cost: 0.01,
+						error: "Summarization failed",
+					})
+				const modelInfo = createModelInfo(100000, 30000)
+				const messagesWithSmallContent = messages.map((m) =>
+					m.role === "user" ? { ...m, content: "" } : m,
+				)
+
+				const result = await manageContext({
+					messages: messagesWithSmallContent,
+					totalTokens: 70001,
+					contextWindow: modelInfo.contextWindow,
+					maxTokens: modelInfo.maxTokens,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					compactFailures: 2,
+				})
+
+				expect(summarizeSpy).toHaveBeenCalled()
+				expect(result.truncationId).toBeDefined()
+				expect(result.compactFailures).toBe(3)
+
+				summarizeSpy.mockRestore()
+			})
+		})
+
+		describe("isSubAgent path", () => {
+			it("skips condensation and returns original messages when under the limit", async () => {
+				vi.clearAllMocks()
+				const summarizeSpy = vi.spyOn(condenseModule, "summarizeConversation")
+				const modelInfo = createModelInfo(100000, 30000)
+				const messagesWithSmallContent = [
+					...messages.slice(0, -1),
+					{ ...messages[messages.length - 1], content: "" },
+				]
+
+				const result = await manageContext({
+					messages: messagesWithSmallContent,
+					totalTokens: 1000,
+					contextWindow: modelInfo.contextWindow,
+					maxTokens: modelInfo.maxTokens,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 1,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					isSubAgent: true,
+				})
+
+				expect(summarizeSpy).not.toHaveBeenCalled()
+				expect(result.messages).toEqual(messagesWithSmallContent)
+				expect(result.summary).toBe("")
+				expect(result.cost).toBe(0)
+				expect(result.truncationId).toBeUndefined()
+
+				summarizeSpy.mockRestore()
+			})
+
+			it("falls back to truncation when a sub-agent is over the limit", async () => {
+				vi.clearAllMocks()
+				const summarizeSpy = vi.spyOn(condenseModule, "summarizeConversation")
+				const modelInfo = createModelInfo(100000, 30000)
+				const messagesWithSmallContent = [
+					...messages.slice(0, -1),
+					{ ...messages[messages.length - 1], content: "" },
+				]
+
+				const result = await manageContext({
+					messages: messagesWithSmallContent,
+					totalTokens: 70001,
+					contextWindow: modelInfo.contextWindow,
+					maxTokens: modelInfo.maxTokens,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					isSubAgent: true,
+				})
+
+				expect(summarizeSpy).not.toHaveBeenCalled()
+				expect(result.truncationId).toBeDefined()
+				expect(result.messagesRemoved).toBe(2)
+				expect(result.summary).toBe("")
+				expect(result.cost).toBe(0)
+
+				summarizeSpy.mockRestore()
+			})
+		})
+
+		describe("lightweight summary path", () => {
+			it("falls through to LLM condensation when lightweight summary has no source material", async () => {
+				const summarizeSpy = vi
+					.spyOn(condenseModule, "summarizeConversation")
+					.mockResolvedValue({
+						messages: [{ role: "user", content: "LLM summary", isSummary: true }],
+						summary: "LLM summary",
+						cost: 0.03,
+					})
+				const modelInfo = createModelInfo(100000, 30000)
+				const emptySourceMessages = messages.map((m) =>
+					m.role === "user" ? { ...m, content: "" } : m,
+				)
+
+				const result = await manageContext({
+					messages: emptySourceMessages,
+					totalTokens: 70001,
+					contextWindow: modelInfo.contextWindow,
+					maxTokens: modelInfo.maxTokens,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+				})
+
+				expect(summarizeSpy).toHaveBeenCalled()
+				expect(result.summary).toBe("LLM summary")
+
+				summarizeSpy.mockRestore()
+			})
+
+			it("generates a zero-cost summary from recent user context and file operations", async () => {
+				vi.clearAllMocks()
+				const summarizeSpy = vi.spyOn(condenseModule, "summarizeConversation")
+				const modelInfo = createModelInfo(100000, 30000)
+				const lightweightMessages: ApiMessage[] = [
+					{ role: "user", content: "Please update the dashboard filters." },
+					{
+						role: "assistant",
+						content: [
+							{
+								type: "tool_use",
+								id: "tool-1",
+								name: "write_to_file",
+								input: { path: "src/dashboard.ts" },
+							},
+							{ type: "text", text: "Need to finish the TODO around saved filters." },
+						],
+					},
+					{ role: "user", content: "Also keep the pending TODO visible." },
+					{
+						role: "assistant",
+						content: [
+							{
+								type: "tool_use",
+								id: "tool-2",
+								name: "apply_diff",
+								input: { filePath: "src/filterStore.ts" },
+							},
+							{ type: "text", text: "Pending TODO: add regression coverage." },
+						],
+					},
+					{ role: "user", content: "" },
+				]
+
+				const result = await manageContext({
+					messages: lightweightMessages,
+					totalTokens: 70001,
+					contextWindow: modelInfo.contextWindow,
+					maxTokens: modelInfo.maxTokens,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+				})
+
+				expect(summarizeSpy).not.toHaveBeenCalled()
+				expect(result.cost).toBe(0)
+				expect(result.summary).toContain("## Conversation Summary (auto-extracted)")
+				expect(result.summary).toContain("Please update the dashboard filters.")
+				expect(result.summary).toContain("src/dashboard.ts")
+				expect(result.summary).toContain("src/filterStore.ts")
+				expect(result.summary).toContain("write_to_file")
+				expect(result.summary).toContain("Pending TODO: add regression coverage.")
+				expect(result.messages.some((msg) => msg.isSummary)).toBe(true)
+
+				summarizeSpy.mockRestore()
+			})
+		})
 	})
 
 	/**

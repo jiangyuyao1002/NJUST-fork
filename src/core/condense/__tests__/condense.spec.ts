@@ -13,6 +13,12 @@ import {
 	getMessagesSinceLastSummary,
 	getEffectiveApiHistory,
 	extractCommandBlocks,
+	toolUseToText,
+	toolResultToText,
+	convertToolBlocksToText,
+	transformMessagesForCondensing,
+	injectSyntheticToolResults,
+	cleanupAfterTruncation,
 } from "../index"
 
 // Create a mock ApiHandler for testing
@@ -63,6 +69,142 @@ describe("Condense", () => {
 		if (!TelemetryService.hasInstance()) {
 			TelemetryService.createInstance([])
 		}
+	})
+
+	describe("tool block text conversion", () => {
+		it("formats tool_use input objects as readable key value text", () => {
+			const result = toolUseToText({
+				type: "tool_use",
+				id: "tool-1",
+				name: "read_file",
+				input: { path: "src/app.ts", options: { encoding: "utf8" } },
+			})
+
+			expect(result).toContain("[Tool Use: read_file]")
+			expect(result).toContain("path: src/app.ts")
+			expect(result).toContain('"encoding": "utf8"')
+		})
+
+		it("formats string and empty tool_result content", () => {
+			expect(
+				toolResultToText({
+					type: "tool_result",
+					tool_use_id: "tool-1",
+					content: "done",
+					is_error: true,
+				}),
+			).toBe("[Tool Result (Error)]\ndone")
+
+			expect(
+				toolResultToText({
+					type: "tool_result",
+					tool_use_id: "tool-2",
+				} as Anthropic.Messages.ToolResultBlockParam),
+			).toBe("[Tool Result]")
+		})
+
+		it("converts only tool blocks inside array content", () => {
+			const converted = convertToolBlocksToText([
+				{ type: "text", text: "before" },
+				{ type: "tool_use", id: "tool-1", name: "read_file", input: { path: "a.ts" } },
+				{ type: "tool_result", tool_use_id: "tool-1", content: [{ type: "text", text: "file" }] },
+			])
+
+			expect(converted).toEqual([
+				{ type: "text", text: "before" },
+				{ type: "text", text: "[Tool Use: read_file]\npath: a.ts" },
+				{ type: "text", text: "[Tool Result]\nfile" },
+			])
+			expect(convertToolBlocksToText("plain text")).toBe("plain text")
+		})
+
+		it("transforms each message without mutating non-tool content", () => {
+			const messages = [
+				{ role: "user", content: "plain" },
+				{
+					role: "assistant",
+					content: [{ type: "tool_use" as const, id: "tool-1", name: "list_files", input: "" }],
+				},
+			]
+
+			const transformed = transformMessagesForCondensing(messages)
+
+			expect(transformed[0]).toEqual(messages[0])
+			expect(transformed[1]?.content).toEqual([{ type: "text", text: "[Tool Use: list_files]\n" }])
+			expect(transformed[1]).not.toBe(messages[1])
+		})
+	})
+
+	describe("injectSyntheticToolResults", () => {
+		it("appends one synthetic user message for orphan assistant tool_use blocks", () => {
+			const messages: ApiMessage[] = [
+				{
+					role: "assistant",
+					ts: 10,
+					content: [
+						{ type: "tool_use", id: "tool-1", name: "read_file", input: { path: "a.ts" } },
+						{ type: "tool_use", id: "tool-2", name: "list_files", input: {} },
+					],
+				},
+			]
+
+			const result = injectSyntheticToolResults(messages)
+
+			expect(result).toHaveLength(2)
+			expect(result[1]).toMatchObject({ role: "user", ts: 11 })
+			expect(result[1]?.content).toEqual([
+				{
+					type: "tool_result",
+					tool_use_id: "tool-1",
+					content: "Context condensation triggered. Tool execution deferred.",
+				},
+				{
+					type: "tool_result",
+					tool_use_id: "tool-2",
+					content: "Context condensation triggered. Tool execution deferred.",
+				},
+			])
+		})
+
+		it("returns the original array when every tool_use has a result", () => {
+			const messages: ApiMessage[] = [
+				{
+					role: "assistant",
+					content: [{ type: "tool_use", id: "tool-1", name: "read_file", input: { path: "a.ts" } }],
+				},
+				{
+					role: "user",
+					content: [{ type: "tool_result", tool_use_id: "tool-1", content: "ok" }],
+				},
+			]
+
+			expect(injectSyntheticToolResults(messages)).toBe(messages)
+		})
+	})
+
+	describe("cleanupAfterTruncation", () => {
+		it("clears parent references whose summary or truncation marker no longer exists", () => {
+			const messages: ApiMessage[] = [
+				{ role: "user", content: "kept summary", isSummary: true, condenseId: "summary-1" },
+				{
+					role: "assistant",
+					content: "still condensed",
+					condenseParent: "summary-1",
+					truncationParent: "missing-truncation",
+				},
+				{ role: "user", content: "restored", condenseParent: "missing-summary" },
+			]
+
+			const result = cleanupAfterTruncation(messages)
+
+			expect(result[1]?.condenseParent).toBe("summary-1")
+			expect(result[1]?.truncationParent).toBeUndefined()
+			expect(result[2]?.condenseParent).toBeUndefined()
+		})
+
+		it("returns an empty array for empty history", () => {
+			expect(cleanupAfterTruncation([])).toEqual([])
+		})
 	})
 
 	describe("extractCommandBlocks", () => {

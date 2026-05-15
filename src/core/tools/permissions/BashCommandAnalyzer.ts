@@ -276,6 +276,11 @@ export function analyzeBashCommand(command: string): BashAnalysisResult {
 		return { riskLevel: "safe", reasons: ["Empty command"] }
 	}
 
+	const fullCommandResult = analyzeSegment(command)
+	if (fullCommandResult.riskLevel === "forbidden") {
+		return fullCommandResult
+	}
+
 	const segments = splitCommandSegments(command)
 	const segmentResults = segments.map((segment) => ({
 		segment,

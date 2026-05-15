@@ -199,4 +199,21 @@ describe("truncateConversation", () => {
 		expect(result.messages[0].content).toBe("start")
 		expect(result.messages[0].truncationParent).toBeUndefined()
 	})
+
+	it("reports messagesRemoved as the actual number of tagged messages", () => {
+		const messages: ApiMessage[] = [
+			makeMsg("user", "start", 0),
+			makeMsg("assistant", "mid1", 1),
+			makeMsg("user", "mid2", 2),
+			makeMsg("assistant", "mid3", 3),
+			makeMsg("user", "mid4", 4),
+			makeMsg("assistant", "mid5", 5),
+			makeMsg("user", "end", 6),
+		]
+
+		const result = truncateConversation(messages, 1, "task-1")
+		const taggedMessages = result.messages.filter((msg) => msg.truncationParent === result.truncationId)
+
+		expect(result.messagesRemoved).toBe(taggedMessages.length)
+	})
 })
