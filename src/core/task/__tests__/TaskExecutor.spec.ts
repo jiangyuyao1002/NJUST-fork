@@ -82,4 +82,25 @@ describe("TaskExecutor", () => {
 
 		expect(logger.warn).not.toHaveBeenCalled()
 	})
+
+	it("appends finalized streaming tool calls when tracking index is missing", () => {
+		const executor = new TaskExecutor(host({ parentTask: undefined }))
+		const taskHost = {
+			assistantMessageContent: [],
+			streamingToolCallIndices: new Map(),
+			userMessageContentReady: true,
+		}
+		const finalToolUse = {
+			type: "tool_use",
+			name: "read_file",
+			params: { path: "simple.txt" },
+			partial: false,
+		}
+
+		const placed = (executor as any).placeFinalizedStreamingToolUse(taskHost, "call_missing", finalToolUse)
+
+		expect(placed).toBe(finalToolUse)
+		expect(taskHost.assistantMessageContent).toEqual([{ ...finalToolUse, id: "call_missing" }])
+		expect(taskHost.userMessageContentReady).toBe(false)
+	})
 })

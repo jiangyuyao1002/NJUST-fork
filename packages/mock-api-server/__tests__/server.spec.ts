@@ -63,6 +63,7 @@ describe("MockAPIServer", () => {
 		expect(response.status).toBe(200)
 		expect(body).toContain('"tool_calls"')
 		expect(body).toContain('"name":"read_file"')
+		expect(body).toContain('\\"path\\":\\"src/app.ts\\"')
 		expect(body).toContain('"finish_reason":"tool_calls"')
 	})
 
@@ -193,6 +194,11 @@ describe("MockAPIServer", () => {
 		["Use the execute_command tool to run this command: echo hi", '"name":"execute_command"', '\\"command\\":\\"echo hi\\"'],
 		["Use apply_diff on the file demo.txt to change \"Hello World\" to \"Hello Universe\".", '"name":"apply_patch"', '\\"patch\\":\\"*** Begin Patch'],
 		["Create a subtask by using the new_task tool with the message 'child prompt'.", '"name":"new_task"', '\\"message\\":\\"child prompt\\"'],
+		[
+			`Use the MCP filesystem server's read_file tool to read the file "simple.txt".`,
+			'"name":"use_mcp_tool"',
+			'\\"server_name\\":\\"filesystem\\"',
+		],
 	])("auto-routes prompt %s", async (prompt, toolName, expectedArgs) => {
 		const server = await start()
 

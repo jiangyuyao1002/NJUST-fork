@@ -9,7 +9,7 @@ import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
+suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let tempDir: string
@@ -40,13 +40,23 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 		// Create .njust_ai directory and MCP configuration file
 		const rooDir = path.join(workspaceDir, ".njust_ai")
 		await fs.mkdir(rooDir, { recursive: true })
+		const e2eRoot = process.env.E2E_PACKAGE_ROOT ?? path.resolve(__dirname, "..", "..", "..")
+		const mockMcpServerPath = path.resolve(e2eRoot, "src", "suite", "fixtures", "mock-mcp-server.cjs")
+		const alwaysAllow = [
+			"read_file",
+			"write_file",
+			"list_directory",
+			"directory_tree",
+			"get_file_info",
+			"fail_tool",
+		]
 
 		const mcpConfig = {
 			mcpServers: {
-				time: {
-					command: "uvx",
-					args: ["mcp-server-time"],
-					alwaysAllow: ["get_current_time", "convert_time"],
+				filesystem: {
+					command: process.env.NODE_EXEC_PATH ?? "node",
+					args: [mockMcpServerPath, workspaceDir],
+					alwaysAllow,
 				},
 			},
 		}
@@ -136,7 +146,9 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				if (message.text) {
 					try {
 						const mcpRequest = JSON.parse(message.text)
-						mcpToolName = mcpRequest.toolName
+						if (mcpRequest.toolName) {
+							mcpToolName = mcpRequest.toolName
+						}
 						console.log("MCP request parsed:", {
 							type: mcpRequest.type,
 							serverName: mcpRequest.serverName,
@@ -245,7 +257,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			// Verify the MCP tool was requested
 			assert.ok(mcpToolRequested, "The use_mcp_tool should have been requested")
 
-			// Verify the correct tool was used
+			assert.ok(mcpToolName, "Should have captured the read_file MCP tool name")
 			assert.strictEqual(mcpToolName, "read_file", "Should have used the read_file tool")
 
 			// Verify we got a response from the MCP server
@@ -313,7 +325,9 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				if (message.text) {
 					try {
 						const mcpRequest = JSON.parse(message.text)
-						mcpToolName = mcpRequest.toolName
+						if (mcpRequest.toolName) {
+							mcpToolName = mcpRequest.toolName
+						}
 						console.log("MCP request parsed:", {
 							type: mcpRequest.type,
 							serverName: mcpRequest.serverName,
@@ -374,7 +388,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			// Verify the MCP tool was requested
 			assert.ok(mcpToolRequested, "The use_mcp_tool should have been requested for writing")
 
-			// Verify the correct tool was used
+			assert.ok(mcpToolName, "Should have captured the write_file MCP tool name")
 			assert.strictEqual(mcpToolName, "write_file", "Should have used the write_file tool")
 
 			// Verify we got a response from the MCP server
@@ -441,7 +455,9 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				if (message.text) {
 					try {
 						const mcpRequest = JSON.parse(message.text)
-						mcpToolName = mcpRequest.toolName
+						if (mcpRequest.toolName) {
+							mcpToolName = mcpRequest.toolName
+						}
 						console.log("MCP request parsed:", {
 							type: mcpRequest.type,
 							serverName: mcpRequest.serverName,
@@ -501,7 +517,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			// Verify the MCP tool was requested
 			assert.ok(mcpToolRequested, "The use_mcp_tool should have been requested")
 
-			// Verify the correct tool was used
+			assert.ok(mcpToolName, "Should have captured the list_directory MCP tool name")
 			assert.strictEqual(mcpToolName, "list_directory", "Should have used the list_directory tool")
 
 			// Verify we got a response from the MCP server
@@ -557,7 +573,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 		}
 	})
 
-	test.skip("Should request MCP filesystem directory_tree tool and complete successfully", async function () {
+	test("Should request MCP filesystem directory_tree tool and complete successfully", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
 		let _taskCompleted = false
@@ -580,7 +596,9 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				if (message.text) {
 					try {
 						const mcpRequest = JSON.parse(message.text)
-						mcpToolName = mcpRequest.toolName
+						if (mcpRequest.toolName) {
+							mcpToolName = mcpRequest.toolName
+						}
 						console.log("MCP request parsed:", {
 							type: mcpRequest.type,
 							serverName: mcpRequest.serverName,
@@ -640,7 +658,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			// Verify the MCP tool was requested
 			assert.ok(mcpToolRequested, "The use_mcp_tool should have been requested")
 
-			// Verify the correct tool was used
+			assert.ok(mcpToolName, "Should have captured the directory_tree MCP tool name")
 			assert.strictEqual(mcpToolName, "directory_tree", "Should have used the directory_tree tool")
 
 			// Verify we got a response from the MCP server
@@ -696,9 +714,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 		}
 	})
 
-	test.skip("Should handle MCP server error gracefully and complete task", async function () {
-		// Skipped: This test requires interactive approval for non-whitelisted MCP servers
-		// which cannot be automated in the test environment
+	test("Should handle MCP server error gracefully and complete task", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
 		let _taskCompleted = false
@@ -742,7 +758,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 
 		let taskId: string
 		try {
-			// Start task requesting non-existent MCP server
+			// Start task requesting a mock MCP tool that returns a controlled error
 			taskId = await api.startNewTask({
 				configuration: {
 					mode: "code",
@@ -750,7 +766,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 					alwaysAllowMcp: true,
 					mcpEnabled: true,
 				},
-				text: `Use the MCP server "nonexistent-server" to perform some operation. This should trigger an error but the task should still complete gracefully.`,
+				text: `Use the MCP filesystem server's fail_tool to trigger an error. This should trigger an error but the task should still complete gracefully.`,
 			})
 
 			// Wait for attempt_completion to be called (indicating task finished)
@@ -767,7 +783,69 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 		}
 	})
 
-	test.skip("Should validate MCP request message format and complete successfully", async function () {
+	test("Should handle missing MCP server gracefully and complete task", async function () {
+		const api = globalThis.api
+		const messages: ClineMessage[] = []
+		let _taskCompleted = false
+		let mcpToolRequested = false
+		let unknownServerError: string | null = null
+		let attemptCompletionCalled = false
+
+		const messageHandler = ({ message }: { message: ClineMessage }) => {
+			messages.push(message)
+
+			if (message.type === "ask" && message.ask === "use_mcp_server") {
+				mcpToolRequested = true
+				console.log("MCP tool request:", message.text?.substring(0, 200))
+			}
+
+			if (message.type === "say" && message.say === "error" && message.text) {
+				if (message.text.includes("nonexistent-server") || message.text.toLowerCase().includes("not found")) {
+					unknownServerError = message.text
+					console.log("Missing MCP server handled:", message.text.substring(0, 150))
+				}
+			}
+
+			if (message.type === "say" && message.say === "completion_result") {
+				attemptCompletionCalled = true
+				console.log("Attempt completion called:", message.text?.substring(0, 200))
+			}
+		}
+		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+
+		const taskCompletedHandler = (id: string) => {
+			if (id === taskId) {
+				_taskCompleted = true
+			}
+		}
+		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+
+		let taskId: string
+		try {
+			taskId = await api.startNewTask({
+				configuration: {
+					mode: "code",
+					autoApprovalEnabled: true,
+					alwaysAllowMcp: true,
+					mcpEnabled: true,
+				},
+				text: `Use the MCP server "nonexistent-server" to perform some operation. This should trigger an error but the task should still complete gracefully.`,
+			})
+
+			await waitFor(() => attemptCompletionCalled, { timeout: 45_000 })
+
+			assert.ok(mcpToolRequested, "The missing server use_mcp_tool request should have been shown")
+			assert.ok(unknownServerError, "Should have reported the missing MCP server")
+			assert.ok(attemptCompletionCalled, "Task should have completed with attempt_completion after missing server error")
+
+			console.log("Test passed! Missing MCP server handling verified and task completed")
+		} finally {
+			api.off(NJUST_AI_CJEventName.Message, messageHandler)
+			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		}
+	})
+
+	test("Should validate MCP request message format and complete successfully", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
 		let _taskCompleted = false
@@ -791,7 +869,9 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				if (message.text) {
 					try {
 						const mcpRequest = JSON.parse(message.text)
-						mcpToolName = mcpRequest.toolName
+						if (mcpRequest.toolName) {
+							mcpToolName = mcpRequest.toolName
+						}
 
 						// Check required fields
 						const hasType = typeof mcpRequest.type === "string"
@@ -863,7 +943,7 @@ suite.skip("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			assert.ok(mcpToolRequested, "The use_mcp_tool should have been requested")
 			assert.ok(validMessageFormat, "The MCP request should have valid message format")
 
-			// Verify the correct tool was used
+			assert.ok(mcpToolName, "Should have captured the get_file_info MCP tool name")
 			assert.strictEqual(mcpToolName, "get_file_info", "Should have used the get_file_info tool")
 
 			// Verify we got a response from the MCP server

@@ -93,6 +93,22 @@ export class TaskExecutor {
 	private readonly toolCallParser = new NativeToolCallParser()
 	constructor(private host: TaskExecutorHost) {}
 
+	private placeFinalizedStreamingToolUse(t: TaskExecutorHost, id: string, finalToolUse: ToolUse): ToolUse {
+		;finalToolUse.id = id
+
+		const toolUseIndex = t.streamingToolCallIndices.get(id)
+		if (toolUseIndex !== undefined) {
+			t.assistantMessageContent[toolUseIndex] = finalToolUse
+		} else {
+			t.assistantMessageContent.push(finalToolUse)
+		}
+
+		t.streamingToolCallIndices.delete(id)
+		t.userMessageContentReady = false
+
+		return finalToolUse
+	}
+
 	/**
 	 * Attempt a single API request with error handling, retry, and context management.
 	 * Migrated from Task.ts — the original method body is preserved verbatim.
@@ -996,22 +1012,9 @@ export class TaskExecutor {
 										const toolUseIndex = t.streamingToolCallIndices.get(event.id)
 
 										if (finalToolUse) {
-											// Store the tool call ID
-											;finalToolUse.id = event.id
-
-											// Get the index and replace partial with final
-											if (toolUseIndex !== undefined) {
-												t.assistantMessageContent[toolUseIndex] = finalToolUse
-											}
-
-											// Clean up tracking
-											t.streamingToolCallIndices.delete(event.id)
-
-											// Mark that we have new content to process
-											t.userMessageContentReady = false
+											const latest = this.placeFinalizedStreamingToolUse(t, event.id, finalToolUse)
 
 											// Try eager execution for safe auto-approve tools; fallback to regular path.
-											const latest = t.assistantMessageContent[toolUseIndex ?? -1] as any
 											if (latest?.type === "tool_use") {
 												const state = await t.hostRef.deref()?.getState()
 												const enabled = state?.enableStreamingToolExecution !== false
@@ -1047,6 +1050,39 @@ export class TaskExecutor {
 											void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 										}
 									}
+								}
+								break
+							}
+
+							case "tool_call_end": {
+								const finalToolUse = this.toolCallParser.finalizeStreamingToolCall(chunk.id)
+								const toolUseIndex = t.streamingToolCallIndices.get(chunk.id)
+
+								if (finalToolUse) {
+									const latest = this.placeFinalizedStreamingToolUse(t, chunk.id, finalToolUse)
+									if (latest?.type === "tool_use") {
+										const state = await t.hostRef.deref()?.getState()
+										const enabled = state?.enableStreamingToolExecution !== false
+										if (enabled && (state?.autoApprovalEnabled ?? false)) {
+											const decision = t.toolExecution.streamingExecutor.shouldEagerExecute(t, latest)
+											if (decision === "eager") {
+												void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
+												break
+											}
+										}
+									}
+
+									void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
+								} else if (toolUseIndex !== undefined) {
+									const existingToolUse = t.assistantMessageContent[toolUseIndex]
+									if (existingToolUse && existingToolUse.type === "tool_use") {
+										existingToolUse.partial = false
+										;existingToolUse.id = chunk.id
+									}
+
+									t.streamingToolCallIndices.delete(chunk.id)
+									t.userMessageContentReady = false
+									void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
 								}
 								break
 							}
@@ -1466,19 +1502,7 @@ export class TaskExecutor {
 						const toolUseIndex = t.streamingToolCallIndices.get(event.id)
 
 						if (finalToolUse) {
-							// Store the tool call ID
-							;finalToolUse.id = event.id
-
-							// Get the index and replace partial with final
-							if (toolUseIndex !== undefined) {
-								t.assistantMessageContent[toolUseIndex] = finalToolUse
-							}
-
-							// Clean up tracking
-							t.streamingToolCallIndices.delete(event.id)
-
-							// Mark that we have new content to process
-							t.userMessageContentReady = false
+							this.placeFinalizedStreamingToolUse(t, event.id, finalToolUse)
 
 							// Present the finalized tool call
 							void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })

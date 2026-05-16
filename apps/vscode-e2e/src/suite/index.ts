@@ -87,6 +87,11 @@ export async function run() {
 					console.error("Failed to auto-approve mock new_task:", error)
 				})
 			}
+			if (message.type === "ask" && message.ask === "use_mcp_server") {
+				void approveMockAskWithRetry(api).catch((error) => {
+					console.error("Failed to auto-approve mock use_mcp_server:", error)
+				})
+			}
 		})
 	}
 
@@ -119,7 +124,6 @@ export async function run() {
 	// Only tests listed below are compatible with the mock API server.
 	// Excluded tests:
 	//   - task, modes, markdown-lists: assert real LLM output quality, not tool invocation
-	//   - use-mcp-tool: requires a live MCP server alongside the mock LLM
 	if (process.env.MOCK_API_URL && !process.env.TEST_FILE) {
 		const mockSupportedTests = new Set([
 			"extension.test.js",
@@ -129,6 +133,7 @@ export async function run() {
 			"tools/list-files.test.js",
 			"tools/read-file.test.js",
 			"tools/search-files.test.js",
+			"tools/use-mcp-tool.test.js",
 			"tools/write-to-file.test.js",
 		])
 		testFiles = testFiles.filter((testFile) =>

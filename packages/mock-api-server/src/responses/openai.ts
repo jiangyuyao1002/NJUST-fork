@@ -30,20 +30,34 @@ const chunk = (delta: Record<string, unknown>, finishReason: string | null = nul
 export function openAISSE(response: StreamableScenarioResponse): string[] {
 	const chunks: OpenAIChunk[] = [chunk({ role: "assistant", content: "" })]
 	if (response.type === "tool_calls") {
-		chunks.push(
-			chunk({
-				tool_calls: response.toolCalls.map((toolCall, index) => ({
-					index,
-					id: toolCall.id,
-					type: "function",
-					function: {
-						name: toolCall.name,
-						arguments: JSON.stringify(toolCall.arguments),
-					},
-				})),
-			}),
-			chunk({}, "tool_calls"),
-		)
+		for (const [index, toolCall] of response.toolCalls.entries()) {
+			chunks.push(
+				chunk({
+					tool_calls: [
+						{
+							index,
+							id: toolCall.id,
+							type: "function",
+							function: {
+								name: toolCall.name,
+								arguments: "",
+							},
+						},
+					],
+				}),
+				chunk({
+					tool_calls: [
+						{
+							index,
+							function: {
+								arguments: JSON.stringify(toolCall.arguments),
+							},
+						},
+					],
+				}),
+			)
+		}
+		chunks.push(chunk({}, "tool_calls"))
 	} else {
 		chunks.push(chunk({ content: response.text }), chunk({}, "stop"))
 	}

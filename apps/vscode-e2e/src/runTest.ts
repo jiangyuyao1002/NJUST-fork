@@ -35,6 +35,8 @@ async function main() {
 		const extensionTestsEnv = {
 			...process.env,
 			MOCK_API_URL: mockHandle.url,
+			NODE_EXEC_PATH: process.execPath,
+			E2E_PACKAGE_ROOT: process.cwd(),
 			...(testGrep && { TEST_GREP: testGrep }),
 			...(testFile && { TEST_FILE: testFile }),
 		}

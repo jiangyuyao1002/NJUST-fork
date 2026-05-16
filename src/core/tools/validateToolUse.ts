@@ -38,7 +38,13 @@ export function mergeToolParamsForValidation(block: {
 	const na = block.nativeArgs
 	if (na && typeof na === "object" && !Array.isArray(na)) {
 		for (const [key, value] of Object.entries(na as Record<string, unknown>)) {
-			if (merged[key] !== undefined && merged[key] !== "") {
+			const currentValue = merged[key]
+			const shouldUseNativeStructuredValue =
+				typeof currentValue === "string" &&
+				value !== null &&
+				typeof value === "object" &&
+				!Array.isArray(value)
+			if (currentValue !== undefined && currentValue !== "" && !shouldUseNativeStructuredValue) {
 				continue
 			}
 			if (value === undefined || value === null) {

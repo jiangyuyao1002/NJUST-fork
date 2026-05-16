@@ -176,7 +176,22 @@ vi.mock("../TodoListSettingsControl", () => ({
 
 // Mock ThinkingBudget component
 vi.mock("../ThinkingBudget", () => ({
-	ThinkingBudget: ({ modelInfo }: any) => {
+	ThinkingBudget: ({ apiConfiguration, setApiConfigurationField, modelInfo }: any) => {
+		if (modelInfo?.supportsReasoningEffort) {
+			return (
+				<div data-testid="reasoning-effort">
+					<select
+						value={apiConfiguration?.reasoningEffort ?? "low"}
+						onChange={(e) => setApiConfigurationField("reasoningEffort", e.target.value)}>
+						<option value="low">Low</option>
+						<option value="medium">Medium</option>
+						<option value="high">High</option>
+						<option value="xhigh">XHigh</option>
+					</select>
+				</div>
+			)
+		}
+
 		// Only render if model supports reasoning budget (thinking models)
 		if (modelInfo?.supportsReasoningBudget || modelInfo?.requiredReasoningBudget) {
 			return (
@@ -470,7 +485,7 @@ describe("ApiOptions", () => {
 			// However, we've tested the state update call.
 		})
 
-		it.skip("updates reasoningEffort in openAiCustomModelInfo when select value changes", () => {
+		it("updates reasoningEffort in openAiCustomModelInfo when select value changes", () => {
 			const mockSetApiConfigurationField = vi.fn()
 			const initialConfig = {
 				apiProvider: "openai" as const,
@@ -494,8 +509,6 @@ describe("ApiOptions", () => {
 			// expect(reasoningSelect).toBeDefined()
 			const selectContainer = screen.getByTestId("reasoning-effort")
 			expect(selectContainer).toBeInTheDocument()
-
-			console.log(selectContainer.querySelector("select")?.value)
 
 			// Simulate changing the reasoning effort to 'high'
 			fireEvent.change(selectContainer.querySelector("select")!, { target: { value: "high" } })

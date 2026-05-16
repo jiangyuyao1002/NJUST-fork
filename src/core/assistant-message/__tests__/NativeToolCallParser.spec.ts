@@ -518,5 +518,56 @@ describe("NativeToolCallParser", () => {
 				}
 			})
 		})
+
+		describe("use_mcp_tool", () => {
+			it("should finalize streamed wrapper args with nested MCP arguments", () => {
+				const parser = new NativeToolCallParser()
+				const id = "call_use_mcp_tool"
+
+				let events = parser.processRawChunk({
+					index: 0,
+					id,
+					name: "use_mcp_tool",
+					arguments: "",
+				})
+				expect(events).toEqual([{ type: "tool_call_start", id, name: "use_mcp_tool" }])
+				parser.startStreamingToolCall(id, "use_mcp_tool")
+
+				events = parser.processRawChunk({
+					index: 0,
+					arguments: JSON.stringify({
+						server_name: "filesystem",
+						tool_name: "read_file",
+						arguments: { path: "simple.txt" },
+					}),
+				})
+				expect(events).toHaveLength(1)
+				expect(events[0]).toEqual({
+					type: "tool_call_delta",
+					id,
+					delta: JSON.stringify({
+						server_name: "filesystem",
+						tool_name: "read_file",
+						arguments: { path: "simple.txt" },
+					}),
+				})
+				parser.processStreamingChunk(id, events[0]!.delta)
+
+				const endEvents = parser.finalizeRawChunks()
+				expect(endEvents).toEqual([{ type: "tool_call_end", id }])
+
+				const result = parser.finalizeStreamingToolCall(id)
+				expect(result).not.toBeNull()
+				expect(result?.type).toBe("tool_use")
+				if (result?.type === "tool_use") {
+					expect(result.name).toBe("use_mcp_tool")
+					expect(result.nativeArgs).toEqual({
+						server_name: "filesystem",
+						tool_name: "read_file",
+						arguments: { path: "simple.txt" },
+					})
+				}
+			})
+		})
 	})
 })

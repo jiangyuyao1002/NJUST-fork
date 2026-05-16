@@ -260,6 +260,36 @@ const extractNewTaskArgs = (text: string): Record<string, unknown> => ({
 		"You are a calculator. Respond only with numbers. What is the square root of 9?",
 })
 
+const extractUseMcpToolArgs = (text: string): Record<string, unknown> => {
+	const lower = text.toLowerCase()
+	const serverName = lower.includes("nonexistent-server") ? "nonexistent-server" : "filesystem"
+	let toolName = "read_file"
+	if (lower.includes("write_file")) toolName = "write_file"
+	else if (lower.includes("list_directory")) toolName = "list_directory"
+	else if (lower.includes("directory_tree")) toolName = "directory_tree"
+	else if (lower.includes("get_file_info")) toolName = "get_file_info"
+	else if (lower.includes("fail_tool") || lower.includes("trigger an error")) toolName = "fail_tool"
+
+	const args: Record<string, unknown> = {}
+	const quoted = firstQuoted(text)
+	if (toolName === "read_file" || toolName === "get_file_info") {
+		args.path = quoted ?? "mcp-test.txt"
+	}
+	if (toolName === "write_file") {
+		args.path = quoted ?? "mcp-write-test.txt"
+		args.content = text.match(/content\s+"([^"]+)"/i)?.[1] ?? "Hello from MCP!"
+	}
+	if (toolName === "list_directory" || toolName === "directory_tree") {
+		args.path = "."
+	}
+
+	return {
+		server_name: serverName,
+		tool_name: toolName,
+		arguments: args,
+	}
+}
+
 const textOnlyResult = (text: string): string => {
 	if (/square root of 9/i.test(text)) return "3"
 	if (/what is your name/i.test(text)) return "My name is Roo"
@@ -311,6 +341,7 @@ const scenarioList: MockScenario[] = [
 	toolScenario("apply-diff", "apply_patch", extractApplyPatchArgs),
 	toolScenario("switch-mode", "switch_mode", { mode_slug: "ask", reason: "Requested by E2E test." }),
 	toolScenario("new-task", "new_task", extractNewTaskArgs),
+	toolScenario("use-mcp-tool", "use_mcp_tool", extractUseMcpToolArgs),
 	{
 		name: "multi-tool",
 		resolve: ({ body }) =>
@@ -380,6 +411,9 @@ export function autoResolveScenario(body: Record<string, unknown>): MockScenario
 	}
 	if (bodyText.includes("use the `switch_mode` tool") || bodyText.includes("switch to ask mode")) {
 		return resolveScenario("switch-mode")
+	}
+	if (lower.includes("mcp") && (lower.includes("server") || lower.includes("use_mcp_tool"))) {
+		return resolveScenario("use-mcp-tool")
 	}
 	if (lower.includes("new_task") || lower.includes("create a subtask")) return resolveScenario("new-task")
 	if (/square root of 9/i.test(text)) return resolveScenario("complete-square-root")

@@ -310,6 +310,28 @@ describe("mergeToolParamsForValidation + validateToolParams", () => {
 		expect(validateToolParams("execute_command", cmdMerged).valid).toBe(true)
 	})
 
+	it("uses structured native object values over stringified params for zod", () => {
+		const merged = mergeToolParamsForValidation({
+			params: {
+				server_name: "filesystem",
+				tool_name: "read_file",
+				arguments: "{\"path\":\"simple.txt\"}",
+			},
+			nativeArgs: {
+				server_name: "filesystem",
+				tool_name: "read_file",
+				arguments: { path: "simple.txt" },
+			},
+		})
+
+		expect(merged).toEqual({
+			server_name: "filesystem",
+			tool_name: "read_file",
+			arguments: { path: "simple.txt" },
+		})
+		expect(validateToolParams("use_mcp_tool", merged).valid).toBe(true)
+	})
+
 	it("resolves safe aliases and validates search_replace with its own schema", () => {
 		expect(
 			validateToolParams("write_file", { path: "a.cj", content: "x" }).valid,
