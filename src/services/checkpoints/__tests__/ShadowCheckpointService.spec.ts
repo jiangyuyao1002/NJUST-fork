@@ -16,6 +16,37 @@ import { RepoPerTaskCheckpointService } from "../RepoPerTaskCheckpointService"
 
 const tmpDir = path.join(os.tmpdir(), "CheckpointService")
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const removeTempDir = async (dir: string) => {
+	for (let attempt = 0; attempt < 5; attempt++) {
+		try {
+			await fs.rm(dir, { recursive: true, force: true })
+			return
+		} catch (error) {
+			const code = (error as NodeJS.ErrnoException).code
+			if (process.platform !== "win32" || !["EBUSY", "ENOTEMPTY", "EPERM"].includes(code ?? "")) {
+				throw error
+			}
+			await sleep(100 * (attempt + 1))
+		}
+	}
+
+	await fs.rm(dir, { recursive: true, force: true })
+}
+
+const withoutGitEnv = () => {
+	const env: Record<string, string> = {}
+
+	for (const [key, value] of Object.entries(process.env)) {
+		if (value !== undefined && !key.startsWith("GIT_")) {
+			env[key] = value
+		}
+	}
+
+	return env
+}
+
 const initWorkspaceRepo = async ({
 	workspaceDir,
 	userName = "NJUST_AI_CJ",
@@ -75,7 +106,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 		})
 
 		afterAll(async () => {
-			await fs.rm(tmpDir, { recursive: true, force: true })
+			await removeTempDir(tmpDir)
 		}, 60_000) // 60 second timeout for Windows cleanup
 
 		describe(`${klass.name}#getDiff`, () => {
@@ -932,7 +963,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 					// Verify the checkpoint was saved in the shadow repo, not the external repo
 					// Temporarily clear GIT_DIR to check the external repo
 					delete process.env.GIT_DIR
-					const externalGitCheck = simpleGit(externalGitDir)
+					const externalGitCheck = simpleGit({ baseDir: externalGitDir }).env(withoutGitEnv())
 					const externalLogAfter = await externalGitCheck.log()
 					const externalCommitCountAfter = externalLogAfter.total
 					// Restore GIT_DIR
@@ -960,7 +991,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 					}
 
 					// Clean up external git directory
-					await fs.rm(externalGitDir, { recursive: true, force: true })
+					await removeTempDir(externalGitDir)
 				}
 			})
 		})

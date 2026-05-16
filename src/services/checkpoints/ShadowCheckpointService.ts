@@ -78,6 +78,11 @@ function createSanitizedGit(baseDir: string): SimpleGit {
 	return git
 }
 
+function isNoChangesCommitError(error: Error): boolean {
+	const message = error.message.toLowerCase()
+	return message.includes("nothing to commit") || message.includes("no changes added to commit")
+}
+
 export abstract class ShadowCheckpointService extends EventEmitter {
 	public readonly taskId: string
 	public readonly checkpointsDir: string
@@ -344,6 +349,12 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 			}
 		} catch (e) {
 			const error = e instanceof Error ? e : new Error(String(e))
+
+			if (!options?.allowEmpty && isNoChangesCommitError(error)) {
+				this.log(`[${this.constructor.name}#saveCheckpoint] found no changes to commit`)
+				return undefined
+			}
+
 			this.log(`[${this.constructor.name}#saveCheckpoint] failed to create checkpoint: ${error.message}`)
 			this.emit("error", { type: "error", error })
 			throw error
