@@ -8,7 +8,7 @@ export default defineConfig({
 	test: {
 		globals: true,
 		setupFiles: [path.resolve(__dirname, "./vitest.setup.ts")],
-		exclude: [...defaultExclude, "webview-ui/**"],
+		exclude: [...defaultExclude, "webview-ui/**", "apps/**", "packages/**", "**/out/**"],
 		watch: false,
 		reporters,
 		silent,
@@ -20,9 +20,9 @@ export default defineConfig({
 			reporter: ["json", "html", "text-summary"],
 			reportsDirectory: "../coverage/src",
 			include: [
-				"core/**",
-				"api/**",
-				"services/**",
+				"src/core/**",
+				"src/api/**",
+				"src/services/**",
 			],
 			exclude: [
 				"**/__tests__/**",

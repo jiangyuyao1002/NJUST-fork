@@ -25,9 +25,37 @@ describe("dedupeReadonlyToolCalls", () => {
 		expect(r.uniqueCalls.map((x) => x.id)).toEqual(["1", "3", "4"])
 		expect(r.duplicateToOriginal.get("2")).toBe("1")
 	})
+
+	it("falls back to params when nativeArgs are absent", () => {
+		const a = { ...mk("read_file", "1"), nativeArgs: undefined, params: { path: "a.ts" } }
+		const b = { ...mk("read_file", "2"), nativeArgs: undefined, params: { path: "a.ts" } }
+
+		const r = dedupeReadonlyToolCalls([a, b] as ToolUse[])
+
+		expect(r.uniqueCalls.map((x) => x.id)).toEqual(["1"])
+		expect(r.duplicateToOriginal.get("2")).toBe("1")
+	})
+
+	it("keeps readonly calls separate when semantic fields differ", () => {
+		const calls = [
+			{ ...mk("read_file", "1"), nativeArgs: { path: "a.ts", offset: 1 } },
+			{ ...mk("read_file", "2"), nativeArgs: { path: "a.ts", offset: 2 } },
+			{ ...mk("list_files", "3"), nativeArgs: { path: ".", recursive: true } },
+			{ ...mk("list_files", "4"), nativeArgs: { path: ".", recursive: false } },
+		]
+
+		const r = dedupeReadonlyToolCalls(calls as ToolUse[])
+
+		expect(r.uniqueCalls.map((x) => x.id)).toEqual(["1", "2", "3", "4"])
+		expect(r.duplicateToOriginal.size).toBe(0)
+	})
 })
 
 describe("partitionToolCalls", () => {
+	it("returns no batches for empty input", () => {
+		expect(partitionToolCalls([], () => true)).toEqual([])
+	})
+
 	it("groups consecutive safe calls into parallel batch", () => {
 		const calls = [mk("read_file", "1"), mk("list_files", "2"), mk("write_to_file", "3")]
 		const safe = (c: ToolUse) => c.name === "read_file" || c.name === "list_files"
@@ -66,6 +94,12 @@ describe("partitionToolCalls", () => {
 			{ mode: "parallel", ids: ["4", "5"] },
 			{ mode: "serial", ids: ["6"] },
 		])
+	})
+
+	it("uses serial mode for a single concurrency-safe call", () => {
+		const batches = partitionToolCalls([mk("read_file", "1")], () => true)
+
+		expect(batches).toEqual([{ mode: "serial", calls: [expect.objectContaining({ id: "1" })] }])
 	})
 })
 

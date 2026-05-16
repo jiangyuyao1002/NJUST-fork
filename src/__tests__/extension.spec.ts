@@ -38,7 +38,7 @@ vi.mock("vscode", () => {
 			onDidChangeConfiguration: vi.fn(),
 			onDidSaveTextDocument: vi.fn(),
 			getWorkspaceFolder: vi.fn().mockReturnValue(mockFolder),
-			workspaceFolders: [mockFolder],
+			workspaceFolders: [],
 		},
 		languages: {
 			registerCodeActionsProvider: vi.fn(),

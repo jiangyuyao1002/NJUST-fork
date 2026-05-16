@@ -51,13 +51,13 @@ vi.mock("vscode", () => ({
 }))
 
 // Mock other dependencies
-vi.mock("../../services/mcp/McpServerManager", () => ({
+vi.mock("../../../services/mcp/McpServerManager", () => ({
 	McpServerManager: {
 		getInstance: vi.fn().mockResolvedValue(null),
 	},
 }))
 
-vi.mock("../../integrations/terminal/TerminalRegistry", () => ({
+vi.mock("../../../integrations/terminal/TerminalRegistry", () => ({
 	TerminalRegistry: {
 		releaseTerminalsForTask: vi.fn(),
 	},
