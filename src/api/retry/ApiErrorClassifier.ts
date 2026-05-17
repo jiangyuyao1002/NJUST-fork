@@ -1,4 +1,5 @@
 import { redactApiSecrets } from "../../utils/redactApiSecrets"
+import { classifyApiError, type ApiErrorKind } from "../../core/errors/apiErrorClassifier"
 
 /**
  * Retry / error taxonomy for API calls (report D.2).
@@ -31,9 +32,7 @@ export function classifyHttpStatus(status: number | undefined): ApiErrorCategory
  * Best-effort Retry-After (seconds) from OpenAI-style errors or Response headers.
  */
 export function getRetryAfterSecondsFromError(error: unknown): number | undefined {
-	const e = error as { headers?: { get?: (n: string) => string | null }; response?: { headers?: Headers } } & {
-		retryAfter?: number
-	}
+	const e = asRetryErrorLike(error)
 	if (typeof e?.retryAfter === "number" && Number.isFinite(e.retryAfter)) {
 		return e.retryAfter
 	}
@@ -57,6 +56,58 @@ export function getRetryAfterSecondsFromError(error: unknown): number | undefine
 	return undefined
 }
 
+type RetryErrorLike = {
+	status?: unknown
+	response?: { status?: unknown; headers?: Headers }
+	headers?: { get?: (name: string) => string | null }
+	retryAfter?: unknown
+}
+
+function asRetryErrorLike(error: unknown): RetryErrorLike {
+	return error !== null && typeof error === "object" ? (error as RetryErrorLike) : {}
+}
+
+function getStatusFromError(error: unknown): number | undefined {
+	const e = asRetryErrorLike(error)
+	const status = typeof e.status === "number" ? e.status : e.response?.status
+	return typeof status === "number" && Number.isFinite(status) ? status : undefined
+}
+
+function categoryForApiErrorKind(kind: ApiErrorKind): ApiErrorCategory {
+	switch (kind) {
+		case "rate_limit":
+			return ApiErrorCategory.RateLimited
+		case "server_error":
+		case "capacity":
+		case "model_overloaded":
+		case "model_unavailable":
+			return ApiErrorCategory.ServerError
+		case "network_error":
+		case "stale_connection":
+		case "timeout":
+			return ApiErrorCategory.RetryableNetwork
+		case "prompt_too_long":
+		case "max_output_tokens":
+		case "context_window_exceeded":
+		case "auth_error":
+		case "media_too_large":
+		case "invalid_tool_use":
+		case "content_policy":
+		case "partial_response":
+			return ApiErrorCategory.ClientError
+		case "unknown":
+			return ApiErrorCategory.Unknown
+	}
+}
+
+function shouldRetryCategory(category: ApiErrorCategory): boolean {
+	return (
+		category === ApiErrorCategory.RetryableNetwork ||
+		category === ApiErrorCategory.RateLimited ||
+		category === ApiErrorCategory.ServerError
+	)
+}
+
 export type ApiRetryDecision = {
 	/** Whether a safe automatic retry may be attempted for this failure */
 	shouldRetry: boolean
@@ -70,30 +121,31 @@ export type ApiRetryDecision = {
  * retry rate limits (honour Retry-After), 5xx, and unknown/network faults.
  */
 export function analyzeErrorForRetry(error: unknown): ApiRetryDecision {
-	const status =
-		(error as { status?: number })?.status ??
-		(error as { response?: { status?: number } })?.response?.status
+	const status = getStatusFromError(error)
 
-	if (status === 401 || status === 403) {
-		return { shouldRetry: false, category: ApiErrorCategory.ClientError }
-	}
-	if (status === 429) {
+	const statusCategory = classifyHttpStatus(status)
+	if (statusCategory === ApiErrorCategory.RateLimited) {
 		return {
 			shouldRetry: true,
 			category: ApiErrorCategory.RateLimited,
 			retryAfterSeconds: getRetryAfterSecondsFromError(error),
 		}
 	}
-	if (status !== undefined && status >= 500) {
-		return { shouldRetry: true, category: ApiErrorCategory.ServerError }
+	if (statusCategory !== ApiErrorCategory.Unknown) {
+		return {
+			shouldRetry: shouldRetryCategory(statusCategory),
+			category: statusCategory,
+		}
 	}
-	if (status !== undefined && status >= 400) {
-		return { shouldRetry: false, category: ApiErrorCategory.ClientError }
-	}
+
+	const category = categoryForApiErrorKind(classifyApiError(error))
 	if (status === undefined) {
-		return { shouldRetry: true, category: ApiErrorCategory.RetryableNetwork }
+		if (category === ApiErrorCategory.Unknown) {
+			return { shouldRetry: true, category: ApiErrorCategory.RetryableNetwork }
+		}
+		return { shouldRetry: shouldRetryCategory(category), category }
 	}
-	return { shouldRetry: false, category: ApiErrorCategory.Unknown }
+	return { shouldRetry: shouldRetryCategory(category), category }
 }
 
 /** Safe one-line representation of an error for logs/metrics (strips bearer / sk- style secrets). */

@@ -104,6 +104,30 @@ describe("analyzeErrorForRetry", () => {
 		expect(result.shouldRetry).toBe(false)
 		expect(result.category).toBe(ApiErrorCategory.ClientError)
 	})
+
+	it("core classifier stale connection kind maps to retryable network", () => {
+		const result = analyzeErrorForRetry({ message: "socket hang up" })
+		expect(result.shouldRetry).toBe(true)
+		expect(result.category).toBe(ApiErrorCategory.RetryableNetwork)
+	})
+
+	it("core classifier timeout kind maps to retryable network", () => {
+		const result = analyzeErrorForRetry({ code: "ETIMEDOUT", message: "request timeout" })
+		expect(result.shouldRetry).toBe(true)
+		expect(result.category).toBe(ApiErrorCategory.RetryableNetwork)
+	})
+
+	it("core classifier auth kind maps to non-retryable client error", () => {
+		const result = analyzeErrorForRetry({ message: "invalid api key" })
+		expect(result.shouldRetry).toBe(false)
+		expect(result.category).toBe(ApiErrorCategory.ClientError)
+	})
+
+	it("core classifier content policy kind maps to non-retryable client error", () => {
+		const result = analyzeErrorForRetry({ message: "blocked by content policy" })
+		expect(result.shouldRetry).toBe(false)
+		expect(result.category).toBe(ApiErrorCategory.ClientError)
+	})
 })
 
 describe("getRetryAfterSecondsFromError", () => {

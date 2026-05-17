@@ -2,7 +2,6 @@ import { isRetiredProvider, type ProviderSettings } from "@njust-ai-cj/types"
 
 import type { ApiHandler } from "../index"
 import type { ApiHandlerOptions } from "../../shared/api"
-import { AnthropicHandler } from "../providers/anthropic"
 import { defaultToolCallParser } from "../../core/assistant-message/ToolCallParserImpl"
 
 export type ProviderId = NonNullable<ProviderSettings["apiProvider"]>
@@ -16,13 +15,17 @@ export interface ProviderRegistration {
 	tokenCountingStrategy: TokenCountingStrategy
 }
 
+export type ProviderRegistrationOptions = {
+	tokenCountingStrategy?: TokenCountingStrategy
+	override?: boolean
+}
+
 /**
  * Central registry for API handler construction (report D.1).
  *
  * Supports self-registration: individual provider modules can call
- * `providerRegistry.register(id, factory)` at import time instead of
- * adding entries to registerDefaults(). The built-in defaults remain
- * as a fallback for providers that haven't migrated yet.
+ * `providerRegistry.register(id, factory)` at import time. Unknown providers
+ * fail fast instead of bypassing the registry with a hidden fallback.
  */
 export class ProviderRegistry {
 	private readonly factories = new Map<ProviderId, ProviderFactory>()
@@ -37,14 +40,42 @@ export class ProviderRegistry {
 	 * Register (or override) a handler factory for a provider ID.
 	 * Providers can call this at module load time for self-registration.
 	 */
-	register(id: ProviderId, factory: ProviderFactory, strategy?: TokenCountingStrategy): void {
+	register(id: ProviderId, factory: ProviderFactory, strategyOrOptions?: TokenCountingStrategy | ProviderRegistrationOptions): void {
+		const options =
+			typeof strategyOrOptions === "string"
+				? { tokenCountingStrategy: strategyOrOptions }
+				: (strategyOrOptions ?? {})
+
+		if (this.factories.has(id) && !options.override) {
+			throw new Error(`Provider "${id}" is already registered`)
+		}
+
 		this.factories.set(id, factory)
-		this.strategies.set(id, strategy ?? "tiktoken")
+		this.strategies.set(id, options.tokenCountingStrategy ?? "tiktoken")
 	}
 
 	/** List all currently registered provider IDs. */
 	getRegisteredIds(): ProviderId[] {
 		return [...this.factories.keys()]
+	}
+
+	has(id: ProviderId): boolean {
+		return this.factories.has(id)
+	}
+
+	get(id: ProviderId): ProviderRegistration | undefined {
+		const factory = this.factories.get(id)
+		if (!factory) {
+			return undefined
+		}
+		return {
+			factory,
+			tokenCountingStrategy: this.getTokenCountingStrategy(id),
+		}
+	}
+
+	size(): number {
+		return this.factories.size
 	}
 
 	getTokenCountingStrategy(id: ProviderId): TokenCountingStrategy {
@@ -66,10 +97,10 @@ export class ProviderRegistry {
 
 		const id = apiProvider ?? "anthropic"
 		const factory = this.factories.get(id as ProviderId)
-		if (factory) {
-			return factory(options)
+		if (!factory) {
+			throw new Error(`API provider "${id}" is not registered`)
 		}
-		return new AnthropicHandler(options)
+		return factory(options)
 	}
 }
 

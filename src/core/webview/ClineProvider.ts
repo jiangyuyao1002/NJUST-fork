@@ -96,6 +96,9 @@ import { AgentOrchestrator } from "../agent/AgentOrchestrator"
 import { WebviewMessageRouter } from "./WebviewMessageRouter"
 import { PendingEditManager } from "./PendingEditManager"
 import { WebviewContentProvider } from "./WebviewContentProvider"
+import { SettingsManager } from "./SettingsManager"
+import { TaskCoordinator } from "./TaskCoordinator"
+import { WebviewRouter } from "./WebviewRouter"
 import { mergeAllowedCommands, mergeDeniedCommands } from "./commandListUtils"
 import { TaskStackManager } from "./TaskStackManager"
 import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
@@ -135,6 +138,9 @@ export class ClineProvider
 	private disposables: vscode.Disposable[] = []
 	private webviewDisposables: vscode.Disposable[] = []
 	private readonly messageRouter: WebviewMessageRouter
+	public readonly settingsManager: SettingsManager
+	public readonly taskCoordinator: TaskCoordinator
+	public readonly webviewRouter: WebviewRouter
 	private view?: vscode.WebviewView | vscode.WebviewPanel
 	public readonly stack: TaskStackManager
 	private codeIndexStatusSubscription?: vscode.Disposable
@@ -179,6 +185,12 @@ export class ClineProvider
 			extensionUri: this.contextProxy.extensionUri,
 			getValues: () => this.contextProxy.getValues(),
 		})
+		this.settingsManager = new SettingsManager(this.contextProxy)
+		this.webviewRouter = new WebviewRouter({
+			isDisposed: () => this._disposed,
+			getWebview: () => this.view?.webview,
+			buildState: () => this.getStateToPostToWebview(),
+		})
 
 		this.stack = new TaskStackManager({
 			outputChannel: this.outputChannel,
@@ -221,6 +233,18 @@ export class ClineProvider
 		)
 		this.taskHistory.initialize().catch((error) => {
 			this.log(`Failed to initialize TaskHistoryStore: ${error}`)
+		})
+		this.taskCoordinator = new TaskCoordinator({
+			getCurrentTask: () => this.stack.current,
+			getTaskStackSize: () => this.stack.size,
+			getCurrentTaskStack: () => this.stack.taskIds,
+			getRecentTasks: () => this.taskHistory.getRecentTasks(),
+			createTask: (text, images, parentTask, options, configuration) =>
+				this.createTaskInternal(text, images, parentTask, options, configuration),
+			cancelTask: () => this.cancelTaskInternal(),
+			clearTask: () => this.clearTaskInternal(),
+			resumeTask: (taskId) => this.resumeTaskInternal(taskId),
+			createTaskWithHistoryItem: (historyItem, options) => this.createTaskWithHistoryItem(historyItem, options),
 		})
 
 		// Start configuration loading (which might trigger indexing) in the background.
@@ -782,15 +806,7 @@ export class ClineProvider
 
 
 	public async postMessageToWebview(message: ExtensionMessage) {
-		if (this._disposed) {
-			return
-		}
-
-		try {
-			await this.view?.webview.postMessage(message)
-		} catch (error) {
-			logger.debug("ClineProvider", `postMessageToWebview: view disposed (message type: ${message.type})`, error)
-		}
+		await this.webviewRouter.postMessage(message)
 	}
 
 	/**
@@ -1222,26 +1238,21 @@ export class ClineProvider
 	}
 
 	async postStateToWebview() {
-		const state = await this.getStateToPostToWebview()
-		void this.postMessageToWebview({ type: "state", state })
+		await this.webviewRouter.postState()
 	}
 
 	/**
 	 * Like postStateToWebview but intentionally omits taskHistory.
 	 */
 	async postStateToWebviewWithoutTaskHistory(): Promise<void> {
-		const state = await this.getStateToPostToWebview()
-		const { taskHistory: _omit, ...rest } = state
-		void this.postMessageToWebview({ type: "state", state: rest })
+		await this.webviewRouter.postStateWithoutTaskHistory()
 	}
 
 	/**
 	 * Like postStateToWebview but intentionally omits both clineMessages and taskHistory.
 	 */
 	async postStateToWebviewWithoutClineMessages(): Promise<void> {
-		const state = await this.getStateToPostToWebview()
-		const { clineMessages: _omitMessages, taskHistory: _omitHistory, ...rest } = state
-		void this.postMessageToWebview({ type: "state", state: rest })
+		await this.webviewRouter.postStateWithoutClineMessages()
 	}
 
 	private getMergedCommandLists(allowedCommands?: string[], deniedCommands?: string[]): { allowedCommands: string[]; deniedCommands: string[] } {
@@ -1591,28 +1602,28 @@ export class ClineProvider
 
 	// @deprecated - Use `ContextProxy#setValue` instead.
 	private async updateGlobalState<K extends keyof GlobalState>(key: K, value: GlobalState[K]) {
-		await this.contextProxy.setValue(key, value)
+		await this.settingsManager.setGlobalValue(key, value)
 	}
 
 	// @deprecated - Use `ContextProxy#getValue` instead.
 	private getGlobalState<K extends keyof GlobalState>(key: K) {
-		return this.contextProxy.getValue(key)
+		return this.settingsManager.getGlobalValue(key)
 	}
 
 	public async setValue<K extends keyof NJUST_AI_CJSettings>(key: K, value: NJUST_AI_CJSettings[K]) {
-		await this.contextProxy.setValue(key, value)
+		await this.settingsManager.setValue(key, value)
 	}
 
 	public getValue<K extends keyof NJUST_AI_CJSettings>(key: K) {
-		return this.contextProxy.getValue(key)
+		return this.settingsManager.getValue(key)
 	}
 
 	public getValues() {
-		return this.contextProxy.getValues()
+		return this.settingsManager.getValues()
 	}
 
 	public async setValues(values: NJUST_AI_CJSettings) {
-		await this.contextProxy.setValues(values)
+		await this.settingsManager.setValues(values)
 	}
 
 	// dev
@@ -1734,19 +1745,19 @@ export class ClineProvider
 	 */
 
 	public getCurrentTask(): Task | undefined {
-		return this.stack.current
+		return this.taskCoordinator.getCurrentTask()
 	}
 
 	getTaskStackSize(): number {
-		return this.stack.size
+		return this.taskCoordinator.getTaskStackSize()
 	}
 
 	public getCurrentTaskStack(): string[] {
-		return this.stack.taskIds
+		return this.taskCoordinator.getCurrentTaskStack()
 	}
 
 	public getRecentTasks(): string[] {
-		return this.taskHistory.getRecentTasks()
+		return this.taskCoordinator.getRecentTasks()
 	}
 
 	// When initializing a new task, (not from history but from a tool command
@@ -1756,6 +1767,16 @@ export class ClineProvider
 	// of tasks, each one being a sub task of the previous one until the main
 	// task is finished.
 	public async createTask(
+		text?: string,
+		images?: string[],
+		parentTask?: Task,
+		options: CreateTaskOptions = {},
+		configuration: NJUST_AI_CJSettings = {},
+	): Promise<Task> {
+		return this.taskCoordinator.createTask(text, images, parentTask, options, configuration)
+	}
+
+	private async createTaskInternal(
 		text?: string,
 		images?: string[],
 		parentTask?: Task,
@@ -1850,6 +1871,10 @@ export class ClineProvider
 	}
 
 	public async cancelTask(): Promise<void> {
+		await this.taskCoordinator.cancelTask()
+	}
+
+	private async cancelTaskInternal(): Promise<void> {
 		const task = this.getCurrentTask()
 
 		if (!task) {
@@ -1940,6 +1965,10 @@ export class ClineProvider
 	// Clear the current task without treating it as a subtask.
 	// This is used when the user cancels a task that is not a subtask.
 	public async clearTask(): Promise<void> {
+		await this.taskCoordinator.clearTask()
+	}
+
+	private async clearTaskInternal(): Promise<void> {
 		if (this.stack.size > 0) {
 			const task = this.stack.current
 			logger.info("ClineProvider", `clearTask: clearing task ${task?.taskId}.${task?.instanceId}`)
@@ -1948,6 +1977,10 @@ export class ClineProvider
 	}
 
 	public resumeTask(taskId: string): void {
+		this.taskCoordinator.resumeTask(taskId)
+	}
+
+	private resumeTaskInternal(taskId: string): void {
 		// Use the existing showTaskWithId method which handles both current and
 		// historical tasks.
 		this.showTaskWithId(taskId).catch((error) => {

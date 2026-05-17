@@ -93,6 +93,8 @@ export interface BaseAgentDefinition {
 	disallowedTools?: string[]
 	/** Permission handling mode */
 	permissionMode?: AgentPermissionMode
+	/** User-visible warning when an agent bypasses normal permission checks. */
+	permissionWarning?: string
 	/** Model to use. "inherit" means use parent's model. */
 	model?: string
 	/** Maximum number of agentic turns before auto-completion */

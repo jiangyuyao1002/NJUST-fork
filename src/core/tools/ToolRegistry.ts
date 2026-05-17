@@ -4,12 +4,14 @@ import type { ToolRegistry as IToolRegistry } from "./ToolSearchTool"
 import { TOOL_ALIASES } from "../../shared/tools"
 import { ToolDependencyGraph } from "./ToolDependencyGraph"
 
+type RegisteredTool = BaseTool<ToolName>
+
 /**
  * Entry for a conditionally registered tool.
  * The tool is only available when its condition returns true.
  */
 interface ConditionalToolEntry {
-	tool: BaseTool<any>
+	tool: RegisteredTool
 	condition: () => boolean
 }
 
@@ -25,7 +27,7 @@ interface ConditionalToolEntry {
  * Inspired by Claude Code's findToolByName() dynamic lookup pattern.
  */
 export class ToolRegistryImpl implements IToolRegistry {
-	private readonly tools = new Map<string, BaseTool<any>>()
+	private readonly tools = new Map<string, RegisteredTool>()
 	private readonly aliasMap = new Map<string, string>() // alias -> canonical name
 	private readonly conditionalTools: ConditionalToolEntry[] = []
 
@@ -45,7 +47,7 @@ export class ToolRegistryImpl implements IToolRegistry {
 	 * Register a tool instance. Automatically indexes the tool's aliases.
 	 * Throws if the canonical name is already registered.
 	 */
-	register(tool: BaseTool<any>): void {
+	register(tool: RegisteredTool): void {
 		const name = tool.name
 		if (this.tools.has(name)) {
 			throw new Error(`ToolRegistry: tool '${name}' is already registered`)
@@ -68,7 +70,7 @@ export class ToolRegistryImpl implements IToolRegistry {
 	/**
 	 * Look up a tool by name, resolving aliases to canonical names.
 	 */
-	get(name: string): BaseTool<any> | undefined {
+	get(name: string): RegisteredTool | undefined {
 		const tool = this.tools.get(name)
 		if (tool) return tool
 
@@ -92,7 +94,7 @@ export class ToolRegistryImpl implements IToolRegistry {
 	 * Return all registered tool instances (no duplicates from aliases).
 	 * Implements the ToolSearchTool's ToolRegistry interface.
 	 */
-	getAllTools(): BaseTool<any>[] {
+	getAllTools(): RegisteredTool[] {
 		return Array.from(this.tools.values())
 	}
 
@@ -135,14 +137,14 @@ export class ToolRegistryImpl implements IToolRegistry {
 	/**
 	 * Return all tools that are not deferred (included in initial prompt).
 	 */
-	getNonDeferredTools(): BaseTool<any>[] {
+	getNonDeferredTools(): RegisteredTool[] {
 		return this.getAllTools().filter((t) => !t.shouldDefer)
 	}
 
 	/**
 	 * Return all tools that are deferred (only discovered via ToolSearchTool).
 	 */
-	getDeferredTools(): BaseTool<any>[] {
+	getDeferredTools(): RegisteredTool[] {
 		return this.getAllTools().filter((t) => t.shouldDefer)
 	}
 
@@ -162,7 +164,7 @@ export class ToolRegistryImpl implements IToolRegistry {
 	 * Use for tools that depend on environment variables, feature flags,
 	 * or platform checks (e.g., PowerShellTool on Windows only).
 	 */
-	registerConditional(tool: BaseTool<any>, condition: () => boolean): void {
+	registerConditional(tool: RegisteredTool, condition: () => boolean): void {
 		this.conditionalTools.push({ tool, condition })
 		// Index aliases for conditional tools too
 		for (const alias of tool.aliases) {
@@ -176,7 +178,7 @@ export class ToolRegistryImpl implements IToolRegistry {
 	 * Return all currently available tools: always-registered + conditional tools
 	 * whose conditions are satisfied.
 	 */
-	getAvailableTools(): BaseTool<any>[] {
+	getAvailableTools(): RegisteredTool[] {
 		const conditional = this.conditionalTools
 			.filter(({ condition }) => {
 				try {

@@ -24,6 +24,9 @@ const CUSTOM_DESCRIPTION =
 	"Inherits the parent task's full tool set. " +
 	"Used when the user wants to delegate without restricting capabilities."
 
+const READ_ONLY_BYPASS_WARNING =
+	"This agent uses bypassPermissions only for read-only tools. It must not modify files or run write operations."
+
 export const BUILT_IN_AGENTS: BuiltInAgentDefinition[] = [
 	{
 		agentType: "Explore",
@@ -31,6 +34,7 @@ export const BUILT_IN_AGENTS: BuiltInAgentDefinition[] = [
 		source: "built-in",
 		tools: ["read_file", "search_files", "list_files", "list_code_definition_names", "codebase_search"],
 		permissionMode: "bypassPermissions",
+		permissionWarning: READ_ONLY_BYPASS_WARNING,
 		model: "inherit",
 		isolation: "forked",
 		cacheAwareFork: true,
@@ -70,6 +74,7 @@ When given a task:
 		source: "built-in",
 		tools: ["read_file", "execute_command", "search_files", "list_files"],
 		permissionMode: "bypassPermissions",
+		permissionWarning: READ_ONLY_BYPASS_WARNING,
 		model: "inherit",
 		isolation: "forked",
 		cacheAwareFork: true,

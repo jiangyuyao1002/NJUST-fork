@@ -1,5 +1,6 @@
 import { BaseTool, type ToolCallbacks } from "./BaseTool"
 import type { Task } from "../task/Task"
+import type { ToolName } from "@njust-ai-cj/types"
 
 /**
  * Registry of tool instances that ToolSearchTool can search through.
@@ -7,7 +8,7 @@ import type { Task } from "../task/Task"
  */
 export interface ToolRegistry {
 	/** Return all registered BaseTool instances */
-	getAllTools(): BaseTool<any>[]
+	getAllTools(): BaseTool<ToolName>[]
 }
 
 /**

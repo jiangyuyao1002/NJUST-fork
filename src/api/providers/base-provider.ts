@@ -11,6 +11,30 @@ import { computeBackoffMs, delayMs, DEFAULT_API_RETRY_OPTIONS, type ApiRetryOpti
 import { analyzeErrorForRetry } from "../retry/ApiErrorClassifier"
 import { taskEventBus } from "../../core/events/TaskEventBus"
 
+type JsonSchemaObject = {
+	type?: string | string[]
+	properties?: Record<string, JsonSchemaObject>
+	items?: JsonSchemaObject
+	required?: string[]
+	additionalProperties?: boolean | JsonSchemaObject
+	[key: string]: unknown
+}
+
+type OpenAIToolFunction = {
+	name: string
+	strict?: boolean | null
+	parameters?: unknown
+}
+
+type OpenAITool = {
+	type: string
+	function?: OpenAIToolFunction | null
+}
+
+function isJsonSchemaObject(value: unknown): value is JsonSchemaObject {
+	return value !== null && typeof value === "object" && !Array.isArray(value)
+}
+
 /**
  * Base class for API providers that implements common functionality.
  */
@@ -36,7 +60,7 @@ export abstract class BaseProvider implements ApiHandler {
 	 * Filters for function tools, applies schema conversion to their parameters,
 	 * and ensures all tools have consistent strict values.
 	 */
-	protected convertToolsForOpenAI(tools: any[] | undefined): any[] | undefined {
+	protected convertToolsForOpenAI<TTool extends OpenAITool>(tools: TTool[] | undefined): TTool[] | undefined {
 		if (!tools) {
 			return undefined
 		}
@@ -44,7 +68,7 @@ export abstract class BaseProvider implements ApiHandler {
 		const useStrict = this.shouldUseStrictMode()
 
 		return tools.map((tool) => {
-			if (tool.type !== "function") {
+			if (tool.type !== "function" || !tool.function) {
 				return tool
 			}
 
@@ -61,7 +85,7 @@ export abstract class BaseProvider implements ApiHandler {
 						? this.convertToolSchemaForOpenAI(tool.function.parameters)
 						: tool.function.parameters,
 				},
-			}
+			} as TTool
 		})
 	}
 
@@ -73,11 +97,11 @@ export abstract class BaseProvider implements ApiHandler {
 	 * - Adding additionalProperties: false to all object schemas (required by OpenAI Responses API)
 	 * - Recursively processing nested objects and arrays
 	 */
-	protected convertToolSchemaForOpenAI(schema: any): any {
-		const getPrimaryType = (value: any): string | undefined =>
+	protected convertToolSchemaForOpenAI<T>(schema: T): T {
+		const getPrimaryType = (value: JsonSchemaObject | null | undefined): string | undefined =>
 			Array.isArray(value?.type) ? value.type.find((t: string) => t !== "null") : value?.type
 
-		if (!schema || typeof schema !== "object" || getPrimaryType(schema) !== "object") {
+		if (!isJsonSchemaObject(schema) || getPrimaryType(schema) !== "object") {
 			return schema
 		}
 
@@ -110,9 +134,13 @@ export abstract class BaseProvider implements ApiHandler {
 				const normalizedProp = newProps[key]
 				const primaryType = getPrimaryType(normalizedProp)
 				// Recursively process nested objects
-				if (normalizedProp && primaryType === "object") {
+				if (isJsonSchemaObject(normalizedProp) && primaryType === "object") {
 					newProps[key] = this.convertToolSchemaForOpenAI(normalizedProp)
-				} else if (normalizedProp && primaryType === "array" && getPrimaryType(normalizedProp.items) === "object") {
+				} else if (
+					isJsonSchemaObject(normalizedProp) &&
+					primaryType === "array" &&
+					getPrimaryType(normalizedProp.items) === "object"
+				) {
 					newProps[key] = {
 						...normalizedProp,
 						items: this.convertToolSchemaForOpenAI(normalizedProp.items),
@@ -122,7 +150,7 @@ export abstract class BaseProvider implements ApiHandler {
 			result.properties = newProps
 		}
 
-		return result
+		return result as T
 	}
 
 	protected hasNativeTokenCounting(): boolean {

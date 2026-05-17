@@ -3,12 +3,12 @@ import * as path from "path"
 import * as vscode from "vscode"
 import matter from "gray-matter"
 
-import type { ClineProvider } from "../../core/webview/ClineProvider"
 import { getGlobalRooDirectory, getGlobalAgentsDirectory, getProjectAgentsDirectoryForCwd } from "../roo-config"
 import { directoryExists, fileExists } from "../roo-config"
 import { SkillMetadata, SkillContent } from "../../shared/skills"
 import { modes, getAllModes } from "../../shared/modes"
 import {
+	type ModeConfig,
 	validateSkillName as validateSkillNameShared,
 	SkillNameValidationError,
 	SKILL_NAME_MAX_LENGTH,
@@ -20,13 +20,21 @@ import { logger } from "../../shared/logger"
 // Re-export for convenience
 export type { SkillMetadata, SkillContent }
 
+export interface SkillsManagerHost {
+	readonly cwd?: string
+	readonly context?: vscode.ExtensionContext
+	readonly customModesManager?: {
+		getCustomModes(): Promise<ModeConfig[]>
+	}
+}
+
 export class SkillsManager {
 	private skills: Map<string, SkillMetadata> = new Map()
-	private providerRef: WeakRef<ClineProvider>
+	private providerRef: WeakRef<SkillsManagerHost>
 	private disposables: vscode.Disposable[] = []
 	private isDisposed = false
 
-	constructor(provider: ClineProvider) {
+	constructor(provider: SkillsManagerHost) {
 		this.providerRef = new WeakRef(provider)
 	}
 
@@ -687,7 +695,7 @@ Add your skill instructions here.
 		const provider = this.providerRef.deref()
 		const builtInModeSlugs = modes.map((m) => m.slug)
 
-		if (!provider) {
+		if (!provider?.customModesManager) {
 			return builtInModeSlugs
 		}
 

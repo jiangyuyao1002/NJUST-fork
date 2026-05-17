@@ -7,6 +7,7 @@ describe("CloudAgentClient", () => {
 
 	afterEach(() => {
 		globalThis.fetch = originalFetch
+		vi.useRealTimers()
 		vi.restoreAllMocks()
 	})
 
@@ -166,6 +167,35 @@ describe("CloudAgentClient", () => {
 		await client.connect()
 		await expect(client.submitTask("s", "m")).rejects.toThrow("Cloud Agent error (HTTP 502)")
 	}, 15_000)
+
+	it("retries submitTask after a transient 5xx response", async () => {
+		vi.useFakeTimers()
+		vi.spyOn(Math, "random").mockReturnValue(0.5)
+
+		const fetchMock = vi.fn()
+		globalThis.fetch = fetchMock as unknown as typeof fetch
+		fetchMock.mockResolvedValueOnce(new Response("", { status: 502 }))
+		fetchMock.mockResolvedValueOnce(
+			new Response(JSON.stringify({ ok: true, logs: [], memory_summary: "" }), { status: 200 }),
+		)
+
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const resultPromise = client.submitTask("s", "m")
+
+		await vi.advanceTimersByTimeAsync(2_000)
+		await expect(resultPromise).resolves.toMatchObject({ memorySummary: "" })
+		expect(fetchMock).toHaveBeenCalledTimes(2)
+	}, 10_000)
+
+	it("does not retry submitTask on auth failures", async () => {
+		const fetchMock = vi.fn().mockResolvedValue(new Response("bad key", { status: 401 }))
+		globalThis.fetch = fetchMock as unknown as typeof fetch
+
+		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+
+		await expect(client.submitTask("s", "m")).rejects.toThrow("HTTP 401")
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+	})
 
 	it("throws when response body is not JSON", async () => {
 		const fetchMock = vi.fn()

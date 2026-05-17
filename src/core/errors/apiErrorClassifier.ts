@@ -18,6 +18,18 @@ export type ApiErrorKind =
 	| "partial_response"  // Incomplete response (stop_reason=max_tokens)
 	| "unknown"
 
+type ApiErrorLike = {
+	message?: unknown
+	status?: unknown
+	code?: unknown
+	stop_reason?: unknown
+	stopReason?: unknown
+}
+
+function asApiErrorLike(error: unknown): ApiErrorLike {
+	return error !== null && typeof error === "object" ? (error as ApiErrorLike) : {}
+}
+
 /**
  * Classifies an API error into a specific error kind for recovery routing.
  *
@@ -32,7 +44,7 @@ export type ApiErrorKind =
  * 8. Fallback (unknown)
  */
 export function classifyApiError(error: unknown): ApiErrorKind {
-	const e = error as any
+	const e = asApiErrorLike(error)
 	const msg = String(e?.message ?? "").toLowerCase()
 	const status = Number(e?.status ?? 0)
 	const code = String(e?.code ?? "").toLowerCase()
