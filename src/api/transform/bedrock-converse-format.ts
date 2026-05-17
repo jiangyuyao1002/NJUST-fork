@@ -19,8 +19,8 @@ interface BedrockMessageContent {
 	// Tool use and result fields
 	toolUseId?: string
 	name?: string
-	input?: any
-	output?: any // Used for tool_result type
+	input?: UnsafeAny
+	output?: UnsafeAny // Used for tool_result type
 }
 
 /**
@@ -195,7 +195,7 @@ export function convertToBedrockConverseMessages(anthropicMessages: Anthropic.Me
 				} as ContentBlock
 			}
 
-			// Default case for unknown block types
+			// Default case for UnsafeAny block types
 			return {
 				text: "[Unknown Block Type]",
 			} as ContentBlock

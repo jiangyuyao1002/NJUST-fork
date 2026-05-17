@@ -162,7 +162,7 @@ export class CustomModesManager {
 	/**
 	 * Parse YAML content with enhanced error handling and preprocessing
 	 */
-	private parseYamlSafely(content: string, filePath: string): any {
+	private parseYamlSafely(content: string, filePath: string): UnsafeAny {
 		// Clean the content
 		let cleanedContent = stripBom(content)
 		cleanedContent = this.cleanInvisibleCharacters(cleanedContent)
@@ -183,7 +183,7 @@ export class CustomModesManager {
 					logger.error("CustomModesManager", `Failed to parse YAML from ${filePath}:`, errorMsg)
 
 					const lineMatch = errorMsg.match(/at line (\d+)/)
-					const line = lineMatch ? lineMatch[1] : "unknown"
+					const line = lineMatch ? lineMatch[1] : "UnsafeAny"
 					vscode.window.showErrorMessage(t("common:customModes.errors.yamlParseError", { line }))
 
 					// Return empty object to prevent duplicate error handling
@@ -235,10 +235,10 @@ export class CustomModesManager {
 			source,
 			roleDefinition: mode.roleDefinition ? sanitizeModeContent(mode.roleDefinition) : undefined,
 			customInstructions: mode.customInstructions ? sanitizeModeContent(mode.customInstructions) : undefined,
-		})) as any
+		})) as UnsafeAny
 		} catch (error) {
 			// Only log if the error wasn't already handled in parseYamlSafely
-			if (!(error as any).alreadyHandled) {
+			if (!(error as Record<string, UnsafeAny>).alreadyHandled) {
 				const errorMsg = `Failed to load modes from ${filePath}: ${getErrorMessage(error)}`
 				logger.error("CustomModesManager", errorMsg)
 			}
@@ -301,7 +301,7 @@ export class CustomModesManager {
 
 				const errorMessage = t("common:customModes.errors.invalidFormat")
 
-				let config: any
+				let config: UnsafeAny
 
 				try {
 					config = this.parseYamlSafely(content, settingsPath)
@@ -662,7 +662,7 @@ export class CustomModesManager {
 						const roomodesModes = roomodesData?.customModes || []
 
 						// Check if this specific mode exists in .roomodes
-						const modeInRoomodes = roomodesModes.find((m: any) => m.slug === slug)
+						const modeInRoomodes = roomodesModes.find((m: UnsafeAny) => m.slug === slug)
 						if (!modeInRoomodes) {
 							return false // Mode not found anywhere
 						}
@@ -754,7 +754,7 @@ export class CustomModesManager {
 							const roomodesModes = roomodesData?.customModes || []
 
 							// Find the mode in .roomodes
-							mode = roomodesModes.find((m: any) => m.slug === slug)
+							mode = roomodesModes.find((m: UnsafeAny) => m.slug === slug)
 						}
 					} catch {
 						// Continue to check built-in modes

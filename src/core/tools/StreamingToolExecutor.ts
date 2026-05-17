@@ -71,7 +71,7 @@ export class StreamingToolExecutor {
 		if (!tool) {
 			return false
 		}
-		return tool.isPartialArgsStable((toolUse.nativeArgs ?? {}) as Record<string, unknown>)
+		return tool.isPartialArgsStable((toolUse.nativeArgs ?? {}) as Record<string, UnsafeAny>)
 	}
 
 	/**
@@ -129,10 +129,10 @@ export class StreamingToolExecutor {
 	/**
 	 * Detect if an error represents a max_output_tokens interruption.
 	 */
-	static isMaxOutputTokensError(error: unknown): boolean {
+	static isMaxOutputTokensError(error: UnsafeAny): boolean {
 		if (!error) return false
-		const msg = String((error as any)?.message ?? "").toLowerCase()
-		const stopReason = String((error as any)?.stop_reason ?? (error as any)?.stopReason ?? "").toLowerCase()
+		const msg = String((error as Record<string, UnsafeAny>)?.message ?? "").toLowerCase()
+		const stopReason = String((error as Record<string, UnsafeAny>)?.stop_reason ?? (error as Record<string, UnsafeAny>)?.stopReason ?? "").toLowerCase()
 
 		return (
 			/max[_\s-]?output[_\s-]?tokens/.test(msg) ||

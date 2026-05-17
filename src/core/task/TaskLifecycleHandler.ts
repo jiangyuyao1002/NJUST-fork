@@ -74,13 +74,13 @@ export interface TaskLifecycleHost {
 	apiConversationHistory: ApiMessage[]
 
 	refreshWebviewState(): Promise<void>
-	say(type: any, text?: string, images?: string[], partial?: boolean, checkpoint?: any, progressStatus?: any, options?: any): Promise<undefined>
-	ask(type: any, text?: string, partial?: boolean): Promise<{ response: string; text?: string; images?: string[] }>
+	say(type: UnsafeAny, text?: string, images?: string[], partial?: boolean, checkpoint?: UnsafeAny, progressStatus?: UnsafeAny, options?: UnsafeAny): Promise<undefined>
+	ask(type: UnsafeAny, text?: string, partial?: boolean): Promise<{ response: string; text?: string; images?: string[] }>
 	emit(event: string, ...args: any[]): boolean
 	getEnabledMcpToolsCount(): Promise<{ enabledToolCount: number; enabledServerCount: number }>
 	getTaskMode(): Promise<string>
 	initiateCloudAgentLoop(message: string, images?: string[]): Promise<void>
-	initiateTaskLoop(userContent: any[]): Promise<void>
+	initiateTaskLoop(userContent: UnsafeAny[]): Promise<void>
 	getSavedClineMessages(): Promise<ClineMessage[]>
 	getSavedApiConversationHistory(): Promise<ApiMessage[]>
 	overwriteClineMessages(messages: ClineMessage[]): Promise<void>
@@ -130,7 +130,7 @@ export class TaskLifecycleHandler {
 			const mode = await t.getTaskMode()
 
 			if (mode === DEFAULT_MODE_SLUG) {
-				await t.initiateCloudAgentLoop(task ?? "", images).catch((error: any) => {
+				await t.initiateCloudAgentLoop(task ?? "", images).catch((error: UnsafeAny) => {
 					if (t.abandoned === true || t.abortReason === "user_cancelled") {
 						return
 					}
@@ -145,7 +145,7 @@ export class TaskLifecycleHandler {
 						text: `<user_message>\n${task}\n</user_message>`,
 					},
 					...imageBlocks,
-				]).catch((error: any) => {
+				]).catch((error: UnsafeAny) => {
 					if (t.abandoned === true || t.abortReason === "user_cancelled") {
 						return
 					}
@@ -169,7 +169,7 @@ export class TaskLifecycleHandler {
 
 			const lastRelevantMessageIndex = findLastIndex(
 				modifiedClineMessages,
-				(m: any) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"),
+				(m: UnsafeAny) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"),
 			)
 
 			if (lastRelevantMessageIndex !== -1) {
@@ -187,7 +187,7 @@ export class TaskLifecycleHandler {
 
 			const lastApiReqStartedIndex = findLastIndex(
 				modifiedClineMessages,
-				(m: any) => m.type === "say" && m.say === "api_req_started",
+				(m: UnsafeAny) => m.type === "say" && m.say === "api_req_started",
 			)
 
 			if (lastApiReqStartedIndex !== -1) {
@@ -209,7 +209,7 @@ export class TaskLifecycleHandler {
 			const lastClineMessage = t.clineMessages
 				.slice()
 				.reverse()
-				.find((m: any) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"))
+				.find((m: UnsafeAny) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"))
 
 			let askType: ClineAsk
 			if (lastClineMessage?.ask === "completion_result") {
@@ -387,7 +387,7 @@ export class TaskLifecycleHandler {
 				const metricsPath = path.join(taskDir, "task-metrics.jsonl")
 				await fs.appendFile(metricsPath, `${JSON.stringify(payload)}\n`, "utf8")
 			})
-			.catch((error: any) => {
+			.catch((error: UnsafeAny) => {
 				logger.error("TaskLifecycleHandler", `Failed to persist metrics for task ${t.taskId}:`, error)
 			})
 	}
@@ -486,7 +486,7 @@ export class TaskLifecycleHandler {
 
 		void getTaskDirectoryPath(t.globalStoragePath, t.taskId)
 			.then((taskDir: string) => OutputInterceptor.cleanup(path.join(taskDir, "command-output")))
-			.catch((error: any) => {
+			.catch((error: UnsafeAny) => {
 				logger.error("TaskLifecycleHandler", "Error cleaning up command output artifacts:", error)
 			})
 
@@ -502,7 +502,7 @@ export class TaskLifecycleHandler {
 
 		safeDispose("DiffViewProvider", () => {
 			if (t.isStreaming && t.diffViewProvider.isEditing) {
-				t.diffViewProvider.revertChanges().catch((error: any) => logger.error("TaskLifecycleHandler", "DiffViewProvider revertChanges failed:", error))
+				t.diffViewProvider.revertChanges().catch((error: UnsafeAny) => logger.error("TaskLifecycleHandler", "DiffViewProvider revertChanges failed:", error))
 			}
 		})
 	}

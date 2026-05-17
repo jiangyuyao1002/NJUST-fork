@@ -197,11 +197,11 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 			let result
 			if (modelProvider === "roo") {
 				// Use NJUST_AI_CJ Cloud provider (supports both chat completions and images API)
-				const rooHandler = new RooHandler({} as any)
+				const rooHandler = new RooHandler({} as UnsafeAny)
 				result = await rooHandler.generateImage(prompt, selectedModel!, inputImageData, apiMethod)
 			} else {
 				// Use OpenRouter provider (only supports chat completions API)
-				const openRouterHandler = new OpenRouterHandler({} as any)
+				const openRouterHandler = new OpenRouterHandler({} as UnsafeAny)
 				result = await openRouterHandler.generateImage(prompt, selectedModel!, openRouterApiKey!, inputImageData)
 			}
 

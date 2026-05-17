@@ -35,7 +35,7 @@ async function checkAutoApproval({
 	text: _text,
 	isProtected: _isProtected,
 }: {
-	state: any
+	state: UnsafeAny
 	ask: ClineAsk
 	text?: string
 	isProtected?: boolean
@@ -275,7 +275,7 @@ export class TaskAskSayHandler {
 		text?: string,
 		images?: string[],
 		partial?: boolean,
-		checkpoint?: Record<string, unknown>,
+		checkpoint?: Record<string, UnsafeAny>,
 		progressStatus?: ToolProgressStatus,
 		options: {
 			isNonInteractive?: boolean

@@ -88,7 +88,7 @@ function getOrCreateRenamedTool(
 /**
  * Resolves a tool name to its canonical name.
  * If the tool name is an alias, returns the canonical tool name.
- * If it's already a canonical name or unknown, returns as-is.
+ * If it's already a canonical name or UnsafeAny, returns as-is.
  *
  * @param toolName - The tool name to resolve (may be an alias)
  * @returns The canonical tool name
@@ -228,7 +228,7 @@ export function filterNativeToolsForMode(
 	customModes: ModeConfig[] | undefined,
 	experiments: Record<string, boolean> | undefined,
 	codeIndexManager?: CodeIndexManager,
-	settings?: Record<string, any>,
+	settings?: Record<string, UnsafeAny>,
 	mcpHub?: IMcpHubService,
 ): OpenAI.Chat.ChatCompletionTool[] {
 	// Get mode configuration and all tools for this mode
@@ -355,7 +355,7 @@ export function isToolAllowedInMode(
 	customModes: ModeConfig[] | undefined,
 	experiments: Record<string, boolean> | undefined,
 	codeIndexManager?: CodeIndexManager,
-	settings?: Record<string, any>,
+	settings?: Record<string, UnsafeAny>,
 ): boolean {
 	const modeSlug = mode ?? defaultModeSlug
 
@@ -413,7 +413,7 @@ export function getAvailableToolsInGroup(
 	customModes: ModeConfig[] | undefined,
 	experiments: Record<string, boolean> | undefined,
 	codeIndexManager?: CodeIndexManager,
-	settings?: Record<string, any>,
+	settings?: Record<string, UnsafeAny>,
 ): ToolName[] {
 	const toolGroup = TOOL_GROUPS[groupName]
 	if (!toolGroup) {

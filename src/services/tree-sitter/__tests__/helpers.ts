@@ -21,9 +21,7 @@ export const DEBUG = process.env.DEBUG ? parseInt(process.env.DEBUG, 10) : 0
 
 // Debug function to conditionally log messages
 export const debugLog = (message: string, ...args: any[]) => {
-	if (DEBUG) {
-		// eslint-disable-next-line no-console
-		console.debug(message, ...args)
+	if (DEBUG) {		console.debug(message, ...args)
 	}
 }
 

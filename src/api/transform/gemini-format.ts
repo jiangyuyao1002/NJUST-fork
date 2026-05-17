@@ -80,7 +80,7 @@ export function convertAnthropicContentToGemini(
 				return {
 					functionCall: {
 						name: block.name,
-						args: block.input as Record<string, unknown>,
+						args: block.input as Record<string, UnsafeAny>,
 					},
 					// Inject the thoughtSignature into the functionCall part if required.
 					// This is necessary for Gemini 3+ thinking models to validate the tool call.
@@ -166,7 +166,7 @@ export function convertAnthropicContentToGemini(
 	if (includeThoughtSignatures) {
 		let seenFirstFunctionCall = false
 		for (const part of parts) {
-			if (part && typeof part === "object" && "functionCall" in part && (part as any).functionCall) {
+			if (part && typeof part === "object" && "functionCall" in part && (part as Record<string, UnsafeAny>).functionCall) {
 				const partWithSig = part as PartWithThoughtSignature
 				if (!seenFirstFunctionCall) {
 					seenFirstFunctionCall = true

@@ -1,9 +1,9 @@
 import { logger } from "./logger"
 
 // Support prompts
-type PromptParams = Record<string, string | any[]>
+type PromptParams = Record<string, string | UnsafeAny[]>
 
-const generateDiagnosticText = (diagnostics?: any[]) => {
+const generateDiagnosticText = (diagnostics?: UnsafeAny[]) => {
 	if (!diagnostics?.length) return ""
 	return `\nCurrent problems detected:\n${diagnostics
 		.map((d) => `- [${d.source || "Error"}] ${d.message}${d.code ? ` (${d.code})` : ""}`)
@@ -13,7 +13,7 @@ const generateDiagnosticText = (diagnostics?: any[]) => {
 export const createPrompt = (template: string, params: PromptParams): string => {
 	return template.replace(/\$\{(\w+)\}/g, (match, key) => {
 		if (key === "diagnosticText") {
-			return generateDiagnosticText(params["diagnostics"] as any[])
+			return generateDiagnosticText(params["diagnostics"] as UnsafeAny[])
 		} else if (key in params) {
 			const value = params[key]
 			if (typeof value === "string") {
@@ -242,10 +242,10 @@ Please provide:
 
 export const supportPrompt = {
 	default: Object.fromEntries(Object.entries(supportPromptConfigs).map(([key, config]) => [key, config.template])),
-	get: (customSupportPrompts: Record<string, any> | undefined, type: SupportPromptType): string => {
+	get: (customSupportPrompts: Record<string, UnsafeAny> | undefined, type: SupportPromptType): string => {
 		return customSupportPrompts?.[type] ?? supportPromptConfigs[type].template
 	},
-	create: (type: SupportPromptType, params: PromptParams, customSupportPrompts?: Record<string, any>): string => {
+	create: (type: SupportPromptType, params: PromptParams, customSupportPrompts?: Record<string, UnsafeAny>): string => {
 		const template = supportPrompt.get(customSupportPrompts, type)
 		return createPrompt(template, params)
 	},

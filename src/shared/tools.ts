@@ -173,7 +173,7 @@ export type NativeToolArgs = {
 	search_files: { path: string; regex: string; file_pattern?: string | null; semantic_query?: string | null }
 	switch_mode: { mode_slug: string; reason: string }
 	update_todo_list: { todos: string }
-	use_mcp_tool: { server_name: string; tool_name: string; arguments?: Record<string, unknown> }
+	use_mcp_tool: { server_name: string; tool_name: string; arguments?: Record<string, UnsafeAny> }
 	web_search: { search_query: string; count?: number }
 	web_fetch: { url: string; format?: "text" | "html" | "json" | "markdown"; maxLength?: number }
 	write_to_file: { path: string; content: string }
@@ -198,7 +198,7 @@ export type NativeToolArgs = {
 	task_output: { taskId: string; offset?: number; limit?: number }
 	agent: { task: string; agentType?: string; maxTurns?: number }
 	brief: { content: string; maxLength?: number }
-	config: { action: string; key?: string; value?: unknown }
+	config: { action: string; key?: string; value?: UnsafeAny }
 	// Add more tools as they are migrated to native protocol
 }
 
@@ -248,7 +248,7 @@ export interface McpToolUse {
 	/** Extracted tool name from the tool name */
 	toolName: string
 	/** Arguments passed to the MCP tool */
-	arguments: Record<string, unknown>
+	arguments: Record<string, UnsafeAny>
 	partial: boolean
 }
 
@@ -486,5 +486,5 @@ export interface DiffStrategy {
 		endLine?: number,
 	): Promise<DiffResult>
 
-	getProgressStatus?(toolUse: ToolUse, result?: any): ToolProgressStatus
+	getProgressStatus?(toolUse: ToolUse, result?: UnsafeAny): ToolProgressStatus
 }

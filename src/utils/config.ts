@@ -19,7 +19,7 @@ export type InjectableConfigType =
  *
  * Does not mutate original object
  */
-export function injectEnv<C extends InjectableConfigType>(config: C, notFoundValue: any = "") {
+export function injectEnv<C extends InjectableConfigType>(config: C, notFoundValue: UnsafeAny = "") {
 	return injectVariables(config, { env: process.env }, notFoundValue)
 }
 
@@ -37,7 +37,7 @@ export function injectEnv<C extends InjectableConfigType>(config: C, notFoundVal
 export function injectVariables<C extends InjectableConfigType>(
 	config: C,
 	variables: Record<string, undefined | null | string | Record<string, undefined | null | string>>,
-	propNotFoundValue?: any,
+	propNotFoundValue?: UnsafeAny,
 ) {
 	const isObject = typeof config === "object"
 	let configString: string = isObject ? JSON.stringify(config) : config

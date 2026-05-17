@@ -117,7 +117,7 @@ export interface TaskForkContext {
  * - Key context limited to summaryMaxTokens (approx chars * 0.25)
  */
 export function generateParentContextSummary(
-	parentMessages: Array<{ role: string; content: any }>,
+	parentMessages: Array<{ role: string; content: UnsafeAny }>,
 	summaryMaxTokens: number = 10_000,
 	config: ForkedContextConfig = DEFAULT_FORKED_CONTEXT_CONFIG,
 ): string {
@@ -125,7 +125,7 @@ export function generateParentContextSummary(
 	const parts: string[] = []
 
 	// Extract text content from message content (handles both string and array formats)
-	const getTextContent = (content: any): string => {
+	const getTextContent = (content: UnsafeAny): string => {
 		if (typeof content === "string") return content
 		if (Array.isArray(content)) {
 			return content
@@ -207,7 +207,7 @@ export function generateParentContextSummary(
  */
 export interface CacheAwareForkContext {
 	/** Messages to use as the fork's initial conversation */
-	messages: Array<{ role: string; content: any }>
+	messages: Array<{ role: string; content: UnsafeAny }>
 	/** Cache-safe params for the forked agent to reuse */
 	cacheSafeParams: CacheSafeParams
 }
@@ -232,7 +232,7 @@ export function buildCacheAwareForkContext(
 	// Build the fork's initial message array:
 	// 1. Parent's full conversation prefix (byte-identical for cache hit)
 	// 2. Single user message with the task description (only new content)
-	const messages: Array<{ role: string; content: any }> = []
+	const messages: Array<{ role: string; content: UnsafeAny }> = []
 
 	if (forkContextMessages && forkContextMessages.length > 0) {
 		messages.push(...forkContextMessages)
@@ -253,7 +253,7 @@ export function buildCacheAwareForkContext(
 export function buildForkPlaceholderResult(
 	toolUseId: string,
 	message: string = "Fork started -- processing in background",
-): { role: string; content: any } {
+): { role: string; content: UnsafeAny } {
 	return {
 		role: "user",
 		content: [
@@ -273,13 +273,13 @@ export function buildForkPlaceholderResult(
  */
 export function generateTaskResultSummary(
 	taskId: string,
-	messages: Array<{ role: string; content: any }>,
+	messages: Array<{ role: string; content: UnsafeAny }>,
 	maxResultChars: number = 2000,
 ): string {
 	const parts: string[] = [`[Subtask ${taskId} completed]`]
 
 	// Extract text content helper
-	const getTextContent = (content: any): string => {
+	const getTextContent = (content: UnsafeAny): string => {
 		if (typeof content === "string") return content
 		if (Array.isArray(content)) {
 			return content

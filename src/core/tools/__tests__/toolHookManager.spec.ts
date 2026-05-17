@@ -46,4 +46,44 @@ describe("ToolHookManager", () => {
 		expect(postSpy).toHaveBeenCalledTimes(1)
 		expect(failureSpy).toHaveBeenCalledTimes(1)
 	})
+
+	it("short-circuits pre-compact hooks when a hook denies compaction", async () => {
+		const mgr = new ToolHookManager()
+		const after = vi.fn(async () => ({ allow: true }))
+
+		mgr.registerPreCompactHook(async () => ({ allow: false, reason: "cache hot" }))
+		mgr.registerPreCompactHook(after)
+
+		const result = await mgr.runPreCompactHooks({
+			taskId: "task-1",
+			messageCount: 10,
+			tokenCount: 2000,
+		})
+
+		expect(result.allow).toBe(false)
+		expect(result.reason).toBe("cache hot")
+		expect(after).not.toHaveBeenCalled()
+	})
+
+	it("runs post-compact hooks even when one hook throws", async () => {
+		const mgr = new ToolHookManager()
+		const after = vi.fn(async () => undefined)
+
+		mgr.registerPostCompactHook(async () => {
+			throw new Error("post compact failed")
+		})
+		mgr.registerPostCompactHook(after)
+
+		await expect(
+			mgr.runPostCompactHooks({
+				taskId: "task-1",
+				messageCountBefore: 10,
+				messageCountAfter: 4,
+				tokenCountBefore: 2000,
+				tokenCountAfter: 900,
+			}),
+		).resolves.toBeUndefined()
+
+		expect(after).toHaveBeenCalledOnce()
+	})
 })

@@ -112,11 +112,11 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 			return {
 				embeddings: embeddings,
 			}
-		} catch (error: unknown) {
+		} catch (error: UnsafeAny) {
 			// Log the original error for debugging purposes
 			logger.error("OllamaEmbedder", "Ollama embedding failed:", error)
 
-			const err = error as Record<string, unknown>
+			const err = error as Record<string, UnsafeAny>
 
 			// Handle specific error types with better messages
 			if (err.name === "AbortError") {
@@ -177,7 +177,7 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 				const models = modelsData.models || []
 
 				// Check both with and without :latest suffix
-				const modelExists = models.some((m: any) => {
+				const modelExists = models.some((m: UnsafeAny) => {
 					const modelName = m.name || ""
 					return (
 						modelName === this.defaultModelId ||
@@ -187,7 +187,7 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 				})
 
 				if (!modelExists) {
-					const availableModels = models.map((m: any) => m.name).join(", ")
+					const availableModels = models.map((m: UnsafeAny) => m.name).join(", ")
 					return {
 						valid: false,
 						error: t("embeddings:ollama.modelNotFound", {
@@ -228,7 +228,7 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 			},
 			"ollama",
 			{
-				beforeStandardHandling: (error: any) => {
+				beforeStandardHandling: (error: UnsafeAny) => {
 					// Handle Ollama-specific connection errors
 					// Check for fetch failed errors which indicate Ollama is not running
 					if (

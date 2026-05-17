@@ -117,7 +117,7 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 		try {
 			stream = await this.client.messages.create(requestParams)
 		} catch (error) {
-			const status = (error as any)?.status
+			const status = (error as Record<string, UnsafeAny>)?.status
 			const msg = getErrorMessage(error)
 			throw Object.assign(new Error(`MiniMax API error (HTTP ${status || "?"}): ${msg}`), { status })
 		}

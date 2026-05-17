@@ -18,7 +18,7 @@ export const OPENROUTER_DEFAULT_PROVIDER_NAME = "[default]"
 
 interface EmbeddingItem {
 	embedding: string | number[]
-	[key: string]: any
+	[key: string]: UnsafeAny
 }
 
 interface OpenRouterEmbeddingResponse {
@@ -188,7 +188,7 @@ export class OpenRouterEmbedder implements IEmbedder {
 
 			try {
 				// Build the request parameters
-				const requestParams: any = {
+				const requestParams: UnsafeAny = {
 					input: batchTexts,
 					model: model,
 					// OpenAI package (as of v4.78.1) has a parsing issue that truncates embedding dimensions to 256
@@ -287,7 +287,7 @@ export class OpenRouterEmbedder implements IEmbedder {
 			const modelToUse = this.defaultModelId
 
 			// Build the request parameters
-			const requestParams: any = {
+			const requestParams: UnsafeAny = {
 				input: testTexts,
 				model: modelToUse,
 				encoding_format: "base64",

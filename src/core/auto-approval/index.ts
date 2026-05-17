@@ -55,7 +55,7 @@ export async function checkAutoApproval({
 	text,
 	isProtected,
 }: {
-	state?: Partial<ExtensionState> & Record<string, any>
+	state?: Partial<ExtensionState> & Record<string, UnsafeAny>
 	ask: ClineAsk
 	text?: string
 	isProtected?: boolean
@@ -125,7 +125,7 @@ export async function checkAutoApproval({
 		const risk = classifyBashCommand(text)
 		if (risk === "dangerous") return { decision: "deny" }
 
-		const patternRules = ((state as any)?.commandPatternRules ?? []) as PatternRule[]
+		const patternRules = ((state as Record<string, UnsafeAny>)?.commandPatternRules ?? []) as PatternRule[]
 		const patternDecision = matchPatternRules(text, patternRules)
 		if (patternDecision === "allow") return { decision: "approve" }
 		if (patternDecision === "deny") return { decision: "deny" }

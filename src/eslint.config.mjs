@@ -23,7 +23,7 @@ export default [
 					caughtErrorsIgnorePattern: "^_",
 				},
 			],
-			"@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: true }],
+			"@typescript-eslint/no-explicit-any": ["error", { ignoreRestArgs: true }],
 			"@typescript-eslint/no-require-imports": "warn",
 			"@typescript-eslint/ban-ts-comment": ["warn", { "ts-expect-error": false, "ts-ignore": true, "ts-nocheck": true }],
 			"no-console": "error",

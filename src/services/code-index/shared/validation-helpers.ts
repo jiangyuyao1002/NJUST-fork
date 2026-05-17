@@ -88,7 +88,7 @@ export function getErrorMessageForStatus(status: number | undefined, embedderTyp
 /**
  * Extracts status code from various error formats
  */
-export function extractStatusCode(error: any): number | undefined {
+export function extractStatusCode(error: UnsafeAny): number | undefined {
 	// Direct status property
 	if (error?.status) return error.status
 
@@ -114,7 +114,7 @@ export function extractStatusCode(error: any): number | undefined {
 /**
  * Extracts error message from various error formats
  */
-export function extractErrorMessage(error: any): string {
+export function extractErrorMessage(error: UnsafeAny): string {
 	if (error?.message) {
 		return error.message
 	}
@@ -145,10 +145,10 @@ export function extractErrorMessage(error: any): string {
  * Returns a consistent error response based on the error type
  */
 export function handleValidationError(
-	error: any,
+	error: UnsafeAny,
 	embedderType: string,
 	customHandlers?: {
-		beforeStandardHandling?: (error: any) => { valid: boolean; error: string } | undefined
+		beforeStandardHandling?: (error: UnsafeAny) => { valid: boolean; error: string } | undefined
 	},
 ): { valid: boolean; error: string } {
 	// Serialize the error to ensure we have access to all properties
@@ -215,7 +215,7 @@ export async function withValidationErrorHandling<T extends { valid: boolean; er
 /**
  * Formats an embedding error message based on the error type and context
  */
-export function formatEmbeddingError(error: any, maxRetries: number): Error {
+export function formatEmbeddingError(error: UnsafeAny, maxRetries: number): Error {
 	const errorMessage = extractErrorMessage(error)
 	const statusCode = extractStatusCode(error)
 

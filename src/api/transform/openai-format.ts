@@ -18,7 +18,7 @@ export type ReasoningDetail = {
 	id?: string | null // Unique identifier for the reasoning detail
 	/**
 	 * Format of the reasoning detail:
-	 * - "unknown" - Format is not specified
+	 * - "UnsafeAny" - Format is not specified
 	 * - "openai-responses-v1" - OpenAI responses format version 1
 	 * - "anthropic-claude-v1" - Anthropic Claude format version 1 (default)
 	 * - "google-gemini-v1" - Google Gemini format version 1
@@ -26,6 +26,17 @@ export type ReasoningDetail = {
 	 */
 	format?: string
 	index?: number // Sequential index of the reasoning detail
+}
+
+type OpenAIMessageWithReasoning = OpenAI.Chat.ChatCompletionMessageParam & {
+	tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[]
+	tool_call_id?: string
+	reasoning_details?: ReasoningDetail[]
+	content?: string | OpenAI.Chat.ChatCompletionContentPart[] | null
+}
+
+type AnthropicMessageWithReasoning = Anthropic.Messages.MessageParam & {
+	reasoning_details?: UnsafeAny[]
 }
 
 /**
@@ -70,7 +81,7 @@ export function consolidateReasoningDetails(reasoningDetails: ReasoningDetail[])
 		let concatenatedSummary = ""
 		let signature: string | undefined
 		let id: string | undefined
-		let format = "unknown"
+		let format = "UnsafeAny"
 		let type = "reasoning.text"
 
 		for (const detail of details) {
@@ -175,9 +186,9 @@ export function sanitizeGeminiMessages(
 
 	for (const msg of messages) {
 		if (msg.role === "assistant") {
-			const anyMsg = msg as any
-			const toolCalls = anyMsg.tool_calls as OpenAI.Chat.ChatCompletionMessageToolCall[] | undefined
-			const reasoningDetails = anyMsg.reasoning_details as ReasoningDetail[] | undefined
+			const anyMsg = msg as OpenAIMessageWithReasoning
+			const toolCalls = anyMsg.tool_calls
+			const reasoningDetails = anyMsg.reasoning_details
 
 			if (Array.isArray(toolCalls) && toolCalls.length > 0) {
 				const hasReasoningDetails = Array.isArray(reasoningDetails) && reasoningDetails.length > 0
@@ -191,7 +202,7 @@ export function sanitizeGeminiMessages(
 					}
 					// Keep any textual content, but drop the tool_calls themselves
 					if (anyMsg.content) {
-						sanitized.push({ role: "assistant", content: anyMsg.content } as any)
+						sanitized.push({ role: "assistant", content: anyMsg.content } as OpenAI.Chat.ChatCompletionAssistantMessageParam)
 					}
 					continue
 				}
@@ -221,9 +232,11 @@ export function sanitizeGeminiMessages(
 				validReasoningDetails.push(...detailsWithoutId)
 
 				// Build the sanitized message
-				const sanitizedMsg: any = {
+				const sanitizedMsg: OpenAI.Chat.ChatCompletionAssistantMessageParam & {
+					reasoning_details?: ReasoningDetail[]
+				} = {
 					role: "assistant",
-					content: anyMsg.content ?? "",
+					content: (anyMsg.content ?? "") as UnsafeAny,
 				}
 
 				if (validReasoningDetails.length > 0) {
@@ -240,7 +253,7 @@ export function sanitizeGeminiMessages(
 		}
 
 		if (msg.role === "tool") {
-			const anyMsg = msg as any
+			const anyMsg = msg as OpenAIMessageWithReasoning
 			if (anyMsg.tool_call_id && droppedToolCallIds.has(anyMsg.tool_call_id)) {
 				// Skip tool result for dropped tool call
 				continue
@@ -279,12 +292,12 @@ export function convertToOpenAiMessages(
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
 	const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
-	const mapReasoningDetails = (details: unknown): any[] | undefined => {
+	const mapReasoningDetails = (details: UnsafeAny): UnsafeAny[] | undefined => {
 		if (!Array.isArray(details)) {
 			return undefined
 		}
 
-		return details.map((detail: any) => {
+		return details.map((detail: UnsafeAny) => {
 			// Strip `id` from openai-responses-v1 blocks because OpenAI's Responses API
 			// requires `store: true` to persist reasoning blocks. Since we manage
 			// conversation state client-side, we don't use `store: true`, and sending
@@ -306,8 +319,8 @@ export function convertToOpenAiMessages(
 			// will convert a single text block into a string for compactness.
 			// If a message also contains reasoning_details (Gemini 3 / xAI / o-series, etc.),
 			// we must preserve it here as well.
-			const messageWithDetails = anthropicMessage as any
-			const baseMessage: OpenAI.Chat.ChatCompletionMessageParam & { reasoning_details?: any[] } = {
+			const messageWithDetails = anthropicMessage as AnthropicMessageWithReasoning
+			const baseMessage: OpenAI.Chat.ChatCompletionMessageParam & { reasoning_details?: UnsafeAny[] } = {
 				role: anthropicMessage.role,
 				content: anthropicMessage.content,
 			}
@@ -315,7 +328,7 @@ export function convertToOpenAiMessages(
 			if (anthropicMessage.role === "assistant") {
 				const mapped = mapReasoningDetails(messageWithDetails.reasoning_details)
 				if (mapped) {
-					;(baseMessage as any).reasoning_details = mapped
+				;(baseMessage as OpenAI.Chat.ChatCompletionMessageParam & { reasoning_details?: UnsafeAny[] }).reasoning_details = mapped
 				}
 			}
 
@@ -473,13 +486,13 @@ export function convertToOpenAiMessages(
 				}))
 
 				// Check if the message has reasoning_details (used by Gemini 3, xAI, etc.)
-				const messageWithDetails = anthropicMessage as any
+				const messageWithDetails = anthropicMessage as AnthropicMessageWithReasoning
 
 				// Build message with reasoning_details BEFORE tool_calls to preserve
 				// the order expected by providers like Roo. Property order matters
 				// when sending messages back to some APIs.
 				const baseMessage: OpenAI.Chat.ChatCompletionAssistantMessageParam & {
-					reasoning_details?: any[]
+					reasoning_details?: UnsafeAny[]
 				} = {
 					role: "assistant",
 					// Use empty string instead of undefined for providers like Gemini (via OpenRouter)

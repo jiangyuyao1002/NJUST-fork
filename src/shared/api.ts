@@ -62,7 +62,7 @@ export const shouldUseReasoningEffort = ({
 	if (settings?.enableReasoningEffort === false) return false
 
 	// Selected effort from settings or model default
-	const selectedEffort = (settings?.reasoningEffort ?? (model as any).reasoningEffort) as
+	const selectedEffort = (settings?.reasoningEffort ?? (model as Record<string, UnsafeAny>).reasoningEffort) as
 		| "disable"
 		| "none"
 		| "minimal"
@@ -74,7 +74,7 @@ export const shouldUseReasoningEffort = ({
 	// "disable" explicitly omits reasoning
 	if (selectedEffort === "disable") return false
 
-	const cap = model.supportsReasoningEffort as unknown
+	const cap = model.supportsReasoningEffort as UnsafeAny
 
 	// Capability array: use only if selected is included (treat "none"/"minimal" as valid)
 	if (Array.isArray(cap)) {
@@ -88,7 +88,7 @@ export const shouldUseReasoningEffort = ({
 
 	// Not explicitly supported: only allow when the model itself defines a default effort
 	// Ignore settings-only selections when capability is absent/false
-	const modelDefaultEffort = (model as any).reasoningEffort as
+	const modelDefaultEffort = (model as Record<string, UnsafeAny>).reasoningEffort as
 		| "none"
 		| "minimal"
 		| "low"

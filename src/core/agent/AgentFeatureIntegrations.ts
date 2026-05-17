@@ -11,7 +11,7 @@
 
 import type { AgentDefinition } from "./types"
 import { ToolHookManager } from "../tools/ToolHookManager"
-import type { HookContext } from "../hooks/types"
+import type { LifecycleHookContext } from "../tools/toolHooks"
 
 // ── MCP Integration ──
 
@@ -125,21 +125,16 @@ export function activateAgentFeatures(
 
 	// Fire SubagentStartHook if any hooks are configured
 	if (hookNames.length > 0 && params.parentTaskId) {
-		const hookContext: HookContext = {
-			hookType: "preToolUse" as any, // use generic context
+		const hookContext: LifecycleHookContext = {
 			taskId: params.taskId,
-			timestamp: Date.now(),
 		}
 		// Notify via ToolHookManager that a subagent started
 		try {
-			const manager = ToolHookManager.instance
-			if (typeof (manager as any).runSubagentStartHooks === "function") {
-				;(manager as any).runSubagentStartHooks(
-					params.parentTaskId,
-					agentDef.agentType,
-					hookContext,
-				)
-			}
+			void ToolHookManager.instance.runSubagentStartHooks(
+				params.parentTaskId,
+				agentDef.agentType,
+				hookContext,
+			)
 		} catch {
 			// Hooks are fire-and-forget
 		}
@@ -165,15 +160,12 @@ export function deactivateAgentFeatures(
 ): void {
 	if (state.hooks.length > 0 && params.parentTaskId) {
 		try {
-			const manager = ToolHookManager.instance
-			if (typeof (manager as any).runSubagentStopHooks === "function") {
-				;(manager as any).runSubagentStopHooks(
-					params.parentTaskId,
-					"agent",
-					params.success,
-					{ hookType: "postToolUse" as any, taskId: params.taskId, timestamp: Date.now() },
-				)
-			}
+			void ToolHookManager.instance.runSubagentStopHooks(
+				params.parentTaskId,
+				"agent",
+				params.success,
+				{ taskId: params.taskId },
+			)
 		} catch {
 			// Hooks are fire-and-forget
 		}

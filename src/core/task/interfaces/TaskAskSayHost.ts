@@ -53,8 +53,8 @@ export interface TaskAskSayHost {
 	// Notifier
 	notifier?: {
 		postStateToWebviewWithoutTaskHistory(): Promise<void>
-		postMessageToWebview(message: any): Promise<void>
-		updateTaskHistory(item: any): Promise<void>
+		postMessageToWebview(message: UnsafeAny): Promise<void>
+		updateTaskHistory(item: UnsafeAny): Promise<void>
 	}
 
 	// Message persistence (via msgMgr)
@@ -70,7 +70,7 @@ export interface TaskAskSayHost {
 	checkpointSave(allowEmpty?: boolean, suppressChatRow?: boolean): Promise<void>
 
 	// Provider reference (for state access)
-	hostRef: { deref(): any }
+	hostRef: { deref(): UnsafeAny }
 
 	// Helper methods needed by handler
 	cancelAutoApprovalTimeout(): void

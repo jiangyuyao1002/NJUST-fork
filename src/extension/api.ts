@@ -35,7 +35,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 	private readonly sidebarProvider: ClineProvider
 	private readonly context: vscode.ExtensionContext
 	private readonly ipc?: IpcServer
-	private readonly log: (...args: unknown[]) => void
+	private readonly log: (...args: UnsafeAny[]) => void
 	private logfile?: string
 
 	constructor(
@@ -51,7 +51,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 		this.context = provider.context
 
 		if (enableLogging) {
-			this.log = (...args: unknown[]) => {
+			this.log = (...args: UnsafeAny[]) => {
 				this.outputChannelLog(...args)
 				logger.info("API", args.map(String).join(" "))
 			}
@@ -70,7 +70,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 			this.log(`[API] ipc server started: socketPath=${socketPath}, pid=${process.pid}, ppid=${process.ppid}`)
 
 			ipc.on(IpcMessageType.TaskCommand, async (clientId, command) => {
-				const sendResponse = (eventName: NJUST_AI_CJEventName, payload: unknown[]) => {
+				const sendResponse = (eventName: NJUST_AI_CJEventName, payload: UnsafeAny[]) => {
 					ipc.send(clientId, {
 						type: IpcMessageType.TaskEvent,
 						origin: IpcOrigin.Server,
@@ -372,16 +372,16 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				this.emit(NJUST_AI_CJEventName.TaskSpawned, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegated as any, (childTaskId: string) => {
-				;(this.emit as any)(NJUST_AI_CJEventName.TaskDelegated, task.taskId, childTaskId)
+			task.on(NJUST_AI_CJEventName.TaskDelegated as UnsafeAny, (childTaskId: string) => {
+				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegated, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegationCompleted as any, (childTaskId: string, summary: string) => {
-				;(this.emit as any)(NJUST_AI_CJEventName.TaskDelegationCompleted, task.taskId, childTaskId, summary)
+			task.on(NJUST_AI_CJEventName.TaskDelegationCompleted as UnsafeAny, (childTaskId: string, summary: string) => {
+				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegationCompleted, task.taskId, childTaskId, summary)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegationResumed as any, (childTaskId: string) => {
-				;(this.emit as any)(NJUST_AI_CJEventName.TaskDelegationResumed, task.taskId, childTaskId)
+			task.on(NJUST_AI_CJEventName.TaskDelegationResumed as UnsafeAny, (childTaskId: string) => {
+				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegationResumed, task.taskId, childTaskId)
 			})
 
 			// Task Execution
@@ -424,7 +424,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 
 	// Logging
 
-	private outputChannelLog(...args: unknown[]) {
+	private outputChannelLog(...args: UnsafeAny[]) {
 		for (const arg of args) {
 			if (arg === null) {
 				this.outputChannel.appendLine("null")

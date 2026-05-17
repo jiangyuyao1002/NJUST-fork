@@ -107,6 +107,24 @@ export type SubagentStopHook = (
 	context: LifecycleHookContext,
 ) => Promise<void>
 
+export interface PreCompactHookContext extends LifecycleHookContext {
+	messageCount: number
+	tokenCount: number
+}
+
+export interface PostCompactHookContext extends LifecycleHookContext {
+	messageCountBefore: number
+	messageCountAfter: number
+	tokenCountBefore: number
+	tokenCountAfter: number
+}
+
+export type PreCompactHook = (
+	context: PreCompactHookContext,
+) => Promise<{ allow: boolean; reason?: string }>
+
+export type PostCompactHook = (context: PostCompactHookContext) => Promise<void>
+
 /**
  * All supported hook event types.
  */
@@ -121,6 +139,8 @@ export type HookEventType =
 	| "Stop"
 	| "SubagentStart"
 	| "SubagentStop"
+	| "PreCompact"
+	| "PostCompact"
 
 /**
  * Configuration for hook execution ordering.

@@ -15,18 +15,12 @@ import pWaitFor from "p-wait-for"
 import type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 export type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 
-import type { ITaskHost } from "./interfaces/ITaskHost"
 import type {
 	ClineMessage,
-	ClineSay,
-	ClineAsk,
 	ClineApiReqInfo,
 	ClineApiReqCancelReason,
 	ContextCondense,
 	ContextTruncation,
-	ProviderSettings,
-	ToolProgressStatus,
-	TokenUsage,
 	ToolName,
 } from "@njust-ai-cj/types"
 import {
@@ -36,12 +30,11 @@ import {
 	isRetiredProvider,
 } from "@njust-ai-cj/types"
 
-import type { ApiHandler, ApiHandlerCreateMessageMetadata } from "../../api"
+import type { ApiHandlerCreateMessageMetadata } from "../../api"
 import { resolveParallelNativeToolCalls } from "../../shared/parallelToolCalls"
 import { type ApiStream, GroundingSource } from "../../api/transform/stream"
-import type { SystemPromptParts } from "../prompts/system"
 import { checkToolPromptConsistency } from "../prompts/toolPromptConsistency"
-import { type AssistantMessageContent, markUserContentReadyIfDrained, isAnyToolUse, isToolUseBlock, type TypedBlock } from "../assistant-message"
+import { markUserContentReadyIfDrained, isAnyToolUse, isToolUseBlock, type TypedBlock } from "../assistant-message"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
 import type { ApiMessage } from "../task-persistence"
 import { getModelMaxOutputTokens } from "../../shared/api"
@@ -268,7 +261,7 @@ export class TaskExecutor {
 
 			const [contextMgmtEnvironmentDetails, contextMgmtFilesReadByRoo] = contextManagementWillRun
 				? await Promise.all([
-						getEnvironmentDetails(h as any, true),
+						getEnvironmentDetails(h as UnsafeAny, true),
 						autoCondenseContext
 							? h.streamProcessor.getFilesReadByRooSafely("attemptApiRequest")
 							: Promise.resolve(undefined),
@@ -294,7 +287,7 @@ export class TaskExecutor {
 					environmentDetails: contextMgmtEnvironmentDetails,
 					filesReadByRoo: contextMgmtFilesReadByRoo,
 					cwd: h.cwd,
-					rooIgnoreController: h.rooIgnoreController as any,
+					rooIgnoreController: h.rooIgnoreController as UnsafeAny,
 					enableMicroCompact: true,
 					cacheReadTokens,
 					cacheAwareTotalTokens,
@@ -365,7 +358,7 @@ export class TaskExecutor {
 		const approvalResult = await h.autoApprovalHandler.checkAutoApprovalLimits(
 			state,
 			h.combineMessages(h.clineMessages.slice(1)),
-			async (type: any, data: any) => h.ask(type, data),
+			async (type: UnsafeAny, data: UnsafeAny) => h.ask(type, data),
 		)
 
 		if (!approvalResult.shouldProceed) {
@@ -434,13 +427,13 @@ export class TaskExecutor {
 
 		const stream = h.api.createMessage(
 			systemPrompt,
-			cleanConversationHistory as unknown as Anthropic.Messages.MessageParam[],
+			cleanConversationHistory as UnsafeAny as Anthropic.Messages.MessageParam[],
 			metadata,
 		)
 		h.stateMachine.force(TaskState.STREAMING)
 
 		// Wrap with backpressure controller to prevent unbounded buffering
-		const controlledStream = new BackpressureController(stream as unknown as AsyncGenerator<any>, 1000, 250)
+		const controlledStream = new BackpressureController(stream as UnsafeAny as AsyncGenerator<UnsafeAny>, 1000, 250)
 		const iterator = controlledStream[Symbol.asyncIterator]()
 
 		abortSignal.addEventListener("abort", () => {
@@ -465,13 +458,13 @@ export class TaskExecutor {
 			const firstChunk = await Promise.race([firstChunkPromise, abortPromise])
 			await clearRetryEvents(h.globalStoragePath, h.taskId)
 			const firstValue = firstChunk.value
-			if ((firstValue as any)?.type === "error") {
-				const errMsg = (firstValue as any)?.message || (firstValue as any)?.error || "API stream error"
+			if ((firstValue as Record<string, UnsafeAny>)?.type === "error") {
+				const errMsg = (firstValue as Record<string, UnsafeAny>)?.message || (firstValue as Record<string, UnsafeAny>)?.error || "API stream error"
 				throw new Error(String(errMsg))
 			}
 			yield firstValue
 			h.isWaitingForFirstChunk = false
-		} catch (error: unknown) {
+		} catch (error: UnsafeAny) {
 			h.isWaitingForFirstChunk = false
 			h.currentRequestAbortController = undefined
 
@@ -637,7 +630,7 @@ export class TaskExecutor {
 			globalQueryProfiler.start({
 				requestId: requestProfileId,
 				taskId: t.taskId,
-				modelId: modelId ?? "unknown",
+				modelId: modelId ?? "UnsafeAny",
 				startedAt: requestStartedAt,
 			})
 
@@ -691,7 +684,7 @@ export class TaskExecutor {
 				}
 			}
 
-			const environmentDetails = await getEnvironmentDetails(t as any, currentIncludeFileDetails)
+			const environmentDetails = await getEnvironmentDetails(t as UnsafeAny, currentIncludeFileDetails)
 
 			// Remove any existing environment_details blocks before adding fresh ones.
 			// This prevents duplicate environment details when resuming tasks,
@@ -1754,11 +1747,11 @@ export class TaskExecutor {
 						// Timeout: inject error tool_results for any tool_use blocks
 						// that never received a result, then force-unblock.
 						const pendingToolBlocks = t.assistantMessageContent.filter(
-							(b: any) =>
+							(b: UnsafeAny) =>
 								(b.type === "tool_use" || b.type === "mcp_tool_use") &&
 								b.id &&
 								!t.userMessageContent.some(
-									(r: any) =>
+									(r: UnsafeAny) =>
 										r.type === "tool_result" && r.tool_use_id === sanitizeToolUseId(b.id),
 								),
 						)
@@ -1781,7 +1774,7 @@ export class TaskExecutor {
 							})
 						}
 
-						markUserContentReadyIfDrained(t as any)
+						markUserContentReadyIfDrained(t as UnsafeAny)
 						t.userMessageContentReady = true
 					}
 
@@ -1812,7 +1805,7 @@ export class TaskExecutor {
 
 							// Check if the previous tool result was an interruption
 							const lastUserMsg = t.apiConversationHistory
-								.filter((m: any) => m.role === "user")
+								.filter((m: UnsafeAny) => m.role === "user")
 								.pop()
 							const wasInterrupted =
 								lastUserMsg &&

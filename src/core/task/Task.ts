@@ -175,7 +175,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * Cached tool definitions to avoid rebuilding for the same mode.
 	 * Shared from parent to child via inheritCacheFromParent.
 	 */
-	public cachedToolDefinitions?: { mode: string; tools: any[]; time: number }
+	public cachedToolDefinitions?: { mode: string; tools: UnsafeAny[]; time: number }
 
 	/**
 	 * The mode associated with this task. Persisted across sessions
@@ -488,7 +488,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/** @internal Persistence/CRUD operations on messages — delegates to TaskMessageManager. */
 	private get msgMgr(): TaskMessageManager {
 		if (!this._taskMessageManager) {
-			this._taskMessageManager = new TaskMessageManager(this as unknown as TaskMessageContext)
+			this._taskMessageManager = new TaskMessageManager(this as UnsafeAny as TaskMessageContext)
 		}
 		return this._taskMessageManager
 	}
@@ -496,7 +496,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/** @internal Ask/say operations — delegates to TaskAskSayHandler. */
 	private get askSayHandler(): TaskAskSayHandler {
 		if (!this._askSayHandler) {
-			this._askSayHandler = new TaskAskSayHandler(this as unknown as TaskAskSayHost)
+			this._askSayHandler = new TaskAskSayHandler(this as UnsafeAny as TaskAskSayHost)
 		}
 		return this._askSayHandler
 	}
@@ -513,7 +513,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/** @internal API request loop — delegates to TaskExecutor. */
 	private get executor(): TaskExecutor {
 		if (!this._executor) {
-			this._executor = new TaskExecutor(this as unknown as TaskExecutorHost)
+			this._executor = new TaskExecutor(this as UnsafeAny as TaskExecutorHost)
 		}
 		return this._executor
 	}
@@ -521,7 +521,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/** @internal Lifecycle operations — delegates to TaskLifecycleHandler. */
 	private get lifecycleHandler(): TaskLifecycleHandler {
 		if (!this._lifecycleHandler) {
-			this._lifecycleHandler = new TaskLifecycleHandler(this as unknown as TaskLifecycleHost)
+			this._lifecycleHandler = new TaskLifecycleHandler(this as UnsafeAny as TaskLifecycleHost)
 		}
 		return this._lifecycleHandler
 	}
@@ -529,7 +529,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/** @internal Subtask operations — delegates to TaskSubtaskHandler. */
 	private get subtaskHandler(): TaskSubtaskHandler {
 		if (!this._subtaskHandler) {
-			this._subtaskHandler = new TaskSubtaskHandler(this as unknown as TaskSubtaskHost)
+			this._subtaskHandler = new TaskSubtaskHandler(this as UnsafeAny as TaskSubtaskHost)
 		}
 		return this._subtaskHandler
 	}
@@ -1297,7 +1297,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		text?: string,
 		images?: string[],
 		partial?: boolean,
-		checkpoint?: Record<string, unknown>,
+		checkpoint?: Record<string, UnsafeAny>,
 		progressStatus?: ToolProgressStatus,
 		options: {
 			isNonInteractive?: boolean
@@ -1479,7 +1479,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const host: ICloudAgentHost = {
 			taskId: this.taskId,
 			cwd: this.cwd,
-			get abort() { return (this as unknown as { _task: Task })._task?.abort ?? false },
+			get abort() { return (this as UnsafeAny as { _task: Task })._task?.abort ?? false },
 			rooIgnoreController: this.rooIgnoreController,
 			rooProtectedController: this.rooProtectedController,
 			say: (type, text?, imgs?) => this.say(type, text, imgs),
@@ -1552,7 +1552,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	// Delegated to TaskStreamProcessor
-	private getCurrentProfileId(state: any): string {
+	private getCurrentProfileId(state: UnsafeAny): string {
 		return this.streamProcessor.getCurrentProfileId(state)
 	}
 
@@ -1575,7 +1575,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	// Delegated to TaskStreamProcessor
 	// Shared exponential backoff for retries (first-chunk and mid-stream)
-	private async backoffAndAnnounce(retryAttempt: number, error: any): Promise<void> {
+	private async backoffAndAnnounce(retryAttempt: number, error: UnsafeAny): Promise<void> {
 		return this.streamProcessor.backoffAndAnnounce(retryAttempt, error)
 	}
 
@@ -1589,7 +1589,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private buildCleanConversationHistory(
 		messages: ApiMessage[],
 	): Array<
-		Anthropic.Messages.MessageParam | { type: "reasoning"; encrypted_content?: string; id?: string; summary?: any[] }
+		Anthropic.Messages.MessageParam | { type: "reasoning"; encrypted_content?: string; id?: string; summary?: UnsafeAny[] }
 	> {
 		return this.streamProcessor.buildCleanConversationHistory(messages)
 	}

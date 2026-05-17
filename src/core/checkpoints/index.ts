@@ -121,7 +121,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 		}
 		return service
 	} catch (err) {
-		if ((err as any).name === "TimeoutError" && task.enableCheckpoints) {
+		if ((err as Record<string, UnsafeAny>).name === "TimeoutError" && task.enableCheckpoints) {
 			sendCheckpointInitWarn(task, "INIT_TIMEOUT", task.checkpointTimeout)
 		}
 		log(`[Task#getCheckpointService] ${getErrorMessage(err)}`)
@@ -135,7 +135,7 @@ async function checkGitInstallation(
 	task: Task,
 	service: RepoPerTaskCheckpointService,
 	log: (message: string) => void,
-	provider: any,
+	provider: UnsafeAny,
 ) {
 	try {
 		const gitInstalled = await checkGitInstalled()

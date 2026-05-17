@@ -69,7 +69,7 @@ export class ChatParticipantHandler {
 				? `${previousMessages}\n\nUser: ${request.prompt}`
 				: request.prompt
 
-			await this.provider.handleModeSwitch(modeSlug as any)
+			await this.provider.handleModeSwitch(modeSlug as UnsafeAny)
 
 			const task = await this.provider.createTask(fullPrompt)
 			const taskId = task.taskId
@@ -95,7 +95,7 @@ export class ChatParticipantHandler {
 	}
 
 	private async streamTaskOutput(
-		task: any,
+		task: UnsafeAny,
 		stream: vscode.ChatResponseStream,
 		token: vscode.CancellationToken,
 	): Promise<void> {
@@ -179,7 +179,7 @@ export class ChatParticipantHandler {
 					if (msg.text) {
 						try {
 							const toolData = JSON.parse(msg.text)
-							stream.progress(`Using tool: ${toolData.tool || "unknown"}`)
+							stream.progress(`Using tool: ${toolData.tool || "UnsafeAny"}`)
 						} catch {
 							stream.progress("Executing tool...")
 						}
@@ -207,7 +207,7 @@ export class ChatParticipantHandler {
 						try {
 							const toolData = JSON.parse(msg.text)
 							stream.markdown(
-								`\n> **Tool approval needed:** ${toolData.tool || "unknown"}\n> Use the Roo sidebar to approve or reject.\n`,
+								`\n> **Tool approval needed:** ${toolData.tool || "UnsafeAny"}\n> Use the Roo sidebar to approve or reject.\n`,
 							)
 						} catch {
 							stream.markdown("\n> **Tool approval needed.** Use the Roo sidebar to approve or reject.\n")

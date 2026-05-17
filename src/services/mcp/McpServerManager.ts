@@ -66,7 +66,7 @@ export class McpServerManager {
 	/**
 	 * Notify all registered providers of server state changes.
 	 */
-	static notifyProviders(message: any): void {
+	static notifyProviders(message: UnsafeAny): void {
 		this.providers.forEach((provider) => {
 			provider.postMessageToWebview(message).catch((error) => {
 				logger.error("McpServerManager", "Failed to notify provider:", error)

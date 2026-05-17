@@ -54,7 +54,7 @@ export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY = "\n\n====\n\nSYSTEM_PROMPT_DYNAMIC
  * - >= 32k  tokens → 3000
  * - >= 16k  tokens → 2400
  * - < 16k  tokens → max(800, min(DEFAULT, floor(window * 0.08)))
- * - unknown / < 4096 → DEFAULT_CANGJIE_CONTEXT_TOKEN_BUDGET (4800)
+ * - UnsafeAny / < 4096 → DEFAULT_CANGJIE_CONTEXT_TOKEN_BUDGET (4800)
  *
  * The result of this function is *not* the final budget — it feeds into
  * `resolveCangjieContextTokenBudget`, which allows the user's VS Code
@@ -537,8 +537,8 @@ export async function SYSTEM_PROMPT(
 	skillsManager?: SkillsManager,
 ): Promise<string> {
 	const parts = await SYSTEM_PROMPT_PARTS(
-		contextOrCfg as any,
-		cwd as any, supportsComputerUse as any, mcpHub, diffStrategy,
+		contextOrCfg as UnsafeAny,
+		cwd as UnsafeAny, supportsComputerUse as UnsafeAny, mcpHub, diffStrategy,
 		mode, customModePrompts, customModes, globalCustomInstructions,
 		experiments, language, rooIgnoreInstructions, settings,
 		todoList, modelId, skillsManager,

@@ -141,9 +141,9 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 		const tools: GenerateContentConfig["tools"] = [
 			{
 				functionDeclarations: (metadata?.tools ?? []).map((tool) => ({
-					name: (tool as any).function.name,
-					description: (tool as any).function.description,
-					parametersJsonSchema: (tool as any).function.parameters,
+					name: (tool as Record<string, UnsafeAny>).function.name,
+					description: (tool as Record<string, UnsafeAny>).function.description,
+					parametersJsonSchema: (tool as Record<string, UnsafeAny>).function.parameters,
 				})),
 			},
 		]
@@ -195,7 +195,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 				mode = FunctionCallingConfigMode.ANY
 				allowedFunctionNames = [choice.function.name]
 			} else {
-				// Fall back to AUTO for unknown values to avoid unintentionally broadening tool access.
+				// Fall back to AUTO for UnsafeAny values to avoid unintentionally broadening tool access.
 				mode = FunctionCallingConfigMode.AUTO
 			}
 
@@ -238,7 +238,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 							thought?: boolean
 							text?: string
 							thoughtSignature?: string
-							functionCall?: { name: string; args: Record<string, unknown> }
+							functionCall?: { name: string; args: Record<string, UnsafeAny> }
 						}>) {
 							// Capture thought signatures so they can be persisted into API history.
 							const thoughtSignature = part.thoughtSignature

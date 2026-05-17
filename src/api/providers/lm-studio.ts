@@ -192,7 +192,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 	async completePrompt(prompt: string): Promise<string> {
 		try {
 			// Create params object with optional draft model
-			const params: any = {
+			const params: UnsafeAny = {
 				model: this.getModel().id,
 				messages: [{ role: "user", content: prompt }],
 				temperature: this.options.modelTemperature ?? LMSTUDIO_DEFAULT_TEMPERATURE,
@@ -226,7 +226,7 @@ export async function getLmStudioModels(baseUrl = "http://localhost:1234") {
 		}
 
 		const response = await axios.get(`${baseUrl}/v1/models`)
-		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
+		const modelsArray = response.data?.data?.map((model: UnsafeAny) => model.id) || []
 		return [...new Set<string>(modelsArray)]
 	} catch {
 		return []

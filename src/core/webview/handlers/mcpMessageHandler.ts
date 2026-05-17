@@ -31,7 +31,7 @@ async function handleAllowedCommands(context: MessageHandlerContext, message: We
 	const { updateGlobalState } = context
 	const commands = message.commands ?? []
 	const validCommands = Array.isArray(commands)
-		? commands.filter((cmd: unknown) => typeof cmd === "string" && (cmd as string).trim().length > 0)
+		? commands.filter((cmd: UnsafeAny) => typeof cmd === "string" && (cmd as string).trim().length > 0)
 		: []
 	await updateGlobalState("allowedCommands", validCommands)
 	await vscode.workspace.getConfiguration(Package.name).update("allowedCommands", validCommands, vscode.ConfigurationTarget.Global)
@@ -41,7 +41,7 @@ async function handleDeniedCommands(context: MessageHandlerContext, message: Web
 	const { updateGlobalState } = context
 	const commands = message.commands ?? []
 	const validCommands = Array.isArray(commands)
-		? commands.filter((cmd: unknown) => typeof cmd === "string" && (cmd as string).trim().length > 0)
+		? commands.filter((cmd: UnsafeAny) => typeof cmd === "string" && (cmd as string).trim().length > 0)
 		: []
 	await updateGlobalState("deniedCommands", validCommands)
 	await vscode.workspace.getConfiguration(Package.name).update("deniedCommands", validCommands, vscode.ConfigurationTarget.Global)
@@ -145,7 +145,7 @@ async function handleTestWebSearch(context: MessageHandlerContext, _message: Web
 		const apiKey = state?.webSearchApiKey ?? ""
 		const serpApiEngine = state?.serpApiEngine ?? "bing"
 		const { createSearchProvider } = await import("../../../services/web-search/WebSearchProvider")
-		const searchProvider = createSearchProvider(providerName as any, apiKey, serpApiEngine as any)
+		const searchProvider = createSearchProvider(providerName as UnsafeAny, apiKey, serpApiEngine as UnsafeAny)
 		await searchProvider.search("test", 1)
 		await provider.postMessageToWebview({ type: "webSearchStatus", text: JSON.stringify({ status: "ok", provider: providerName }) })
 	} catch (error) {

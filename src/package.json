@@ -3,7 +3,7 @@
 	"displayName": "NJUST_AI_CJ",
 	"description": "AI-powered coding assistant for NJUST",
 	"publisher": "JunjieChen-YuyaoJiang",
-	"version": "2026.5.15",
+	"version": "2026.5.17",
 	"icon": "assets/icons/icon.png",
 	"galleryBanner": {
 		"color": "#617A91",
@@ -1222,7 +1222,7 @@
 		}
 	},
 	"scripts": {
-		"lint": "eslint . --ext=ts --max-warnings=3000",
+		"lint": "eslint . --ext=ts --max-warnings=500",
 		"check-types": "tsc --noEmit",
 		"test": "vitest run",
 		"format": "prettier --write .",

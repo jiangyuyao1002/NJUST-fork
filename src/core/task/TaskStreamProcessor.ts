@@ -53,9 +53,9 @@ export class TaskStreamProcessor {
 	/**
 	 * Get the current profile ID from provider state.
 	 */
-	getCurrentProfileId(state: any): string {
+	getCurrentProfileId(state: UnsafeAny): string {
 		return (
-			state?.listApiConfigMeta?.find((profile: any) => profile.name === state?.currentApiConfigName)?.id ??
+			state?.listApiConfigMeta?.find((profile: UnsafeAny) => profile.name === state?.currentApiConfigName)?.id ??
 			"default"
 		)
 	}
@@ -70,13 +70,14 @@ export class TaskStreamProcessor {
 		const state = await this.task.providerRef.deref()?.getState()
 		const rateLimitSeconds =
 			state?.apiConfiguration?.rateLimitSeconds ?? this.task.apiConfiguration?.rateLimitSeconds ?? 0
+		const lastRequestTime = getLastGlobalApiRequestTime()
 
-		if (rateLimitSeconds <= 0 || !getLastGlobalApiRequestTime()) {
+		if (rateLimitSeconds <= 0 || lastRequestTime === undefined) {
 			return
 		}
 
 		const now = performance.now()
-		const timeSinceLastRequest = now - getLastGlobalApiRequestTime()!
+		const timeSinceLastRequest = now - lastRequestTime
 		const rateLimitDelay = Math.ceil(
 			Math.min(rateLimitSeconds, Math.max(0, rateLimitSeconds * 1000 - timeSinceLastRequest) / 1000),
 		)
@@ -118,7 +119,7 @@ export class TaskStreamProcessor {
 	 * Integrates with PersistentRetryManager for cross-request retry tracking
 	 * and timeout degradation.
 	 */
-	async backoffAndAnnounce(retryAttempt: number, error: any): Promise<void> {
+	async backoffAndAnnounce(retryAttempt: number, error: UnsafeAny): Promise<void> {
 		try {
 			// Determine error category for persistent retry tracking
 			const errorCategory = this.inferErrorCategory(error)
@@ -165,7 +166,7 @@ export class TaskStreamProcessor {
 			// Prefer RetryInfo on 429 if present
 			if (error?.status === 429) {
 				const retryInfo = error?.errorDetails?.find(
-					(d: any) => d["@type"] === "type.googleapis.com/google.rpc.RetryInfo",
+					(d: UnsafeAny) => d["@type"] === "type.googleapis.com/google.rpc.RetryInfo",
 				)
 				const match = retryInfo?.retryDelay?.match?.(/^(\d+)s$/)
 				if (match) {
@@ -234,9 +235,9 @@ export class TaskStreamProcessor {
 	 * Infer the error category from an error object for persistent retry tracking.
 	 * Uses status codes and error messages as heuristics.
 	 */
-	private inferErrorCategory(error: any): string {
+	private inferErrorCategory(error: UnsafeAny): string {
 		if (!error) {
-			return "unknown"
+			return "UnsafeAny"
 		}
 
 		const status = error.status ?? error.statusCode
@@ -284,7 +285,7 @@ export class TaskStreamProcessor {
 			return "media_too_large"
 		}
 
-		return "unknown"
+		return "UnsafeAny"
 	}
 
 	/**
@@ -432,7 +433,7 @@ export class TaskStreamProcessor {
 			type: "reasoning"
 			encrypted_content: string
 			id?: string
-			summary?: any[]
+			summary?: UnsafeAny[]
 		}
 
 		const cleanConversationHistory: (Anthropic.Messages.MessageParam | ReasoningItemForRequest)[] = []
@@ -484,19 +485,19 @@ export class TaskStreamProcessor {
 						role: "assistant",
 						content: assistantContent,
 						reasoning_details: msgWithDetails.reasoning_details,
-					} as any)
+					} as UnsafeAny)
 
 					continue
 				}
 
 				// Embedded reasoning: encrypted (send) or plain text (skip)
 				const hasEncryptedReasoning =
-					first && (first as unknown as ReasoningBlock).type === "reasoning" && typeof (first as unknown as ReasoningBlock).encrypted_content === "string"
+					first && (first as UnsafeAny as ReasoningBlock).type === "reasoning" && typeof (first as UnsafeAny as ReasoningBlock).encrypted_content === "string"
 				const hasPlainTextReasoning =
-					first && (first as unknown as ReasoningBlock).type === "reasoning" && typeof (first as unknown as ReasoningBlock).text === "string"
+					first && (first as UnsafeAny as ReasoningBlock).type === "reasoning" && typeof (first as UnsafeAny as ReasoningBlock).text === "string"
 
 				if (hasEncryptedReasoning) {
-					const reasoningBlock = first as unknown as ReasoningBlock
+					const reasoningBlock = first as UnsafeAny as ReasoningBlock
 
 					// Send as separate reasoning item (OpenAI Native)
 					cleanConversationHistory.push({
@@ -550,7 +551,7 @@ export class TaskStreamProcessor {
 					const msgWithReasoning = msg as ApiMessage & { reasoning_content?: string }
 					const topLevelReasoning = msgWithReasoning.reasoning_content
 					if (topLevelReasoning && typeof topLevelReasoning === "string" && topLevelReasoning.trim()) {
-						const msgObj: any = {
+						const msgObj: UnsafeAny = {
 							role: "assistant",
 							content: assistantContent,
 						}
@@ -577,7 +578,7 @@ export class TaskStreamProcessor {
 				const topLevelReasoning = msgWithReasoning.reasoning_content
 				if (topLevelReasoning && typeof topLevelReasoning === "string" && topLevelReasoning.trim()) {
 					const shouldPreserveForApi = this.task.api.getModel().info.preserveReasoning === true
-					const msgObj: any = {
+					const msgObj: UnsafeAny = {
 						role: msg.role,
 						content: msg.content as Anthropic.Messages.ContentBlockParam[] | string,
 					}

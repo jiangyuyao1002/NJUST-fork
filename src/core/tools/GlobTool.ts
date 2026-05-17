@@ -118,8 +118,8 @@ export class GlobTool extends BaseTool<"glob"> {
 	}
 
 	override async handlePartial(task: Task, block: ToolUse<"glob">): Promise<void> {
-		const _pattern: string | undefined = (block.nativeArgs as any)?.pattern ?? block.params.path
-		const relPath: string | undefined = (block.nativeArgs as any)?.path ?? block.params.path
+		const _pattern: string | undefined = (block.nativeArgs as Record<string, UnsafeAny>)?.pattern ?? block.params.path
+		const relPath: string | undefined = (block.nativeArgs as Record<string, UnsafeAny>)?.path ?? block.params.path
 
 		const absolutePath = relPath ? path.resolve(task.cwd, relPath) : task.cwd
 		const isOutsideWorkspace = isPathOutsideWorkspace(absolutePath)

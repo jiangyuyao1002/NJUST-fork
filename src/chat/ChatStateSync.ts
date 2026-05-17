@@ -90,7 +90,7 @@ export class ChatStateSync {
 			}
 
 			try {
-				const currentTask = (this.provider as any).getCurrentTask?.()
+				const currentTask = (this.provider as Record<string, UnsafeAny>).getCurrentTask?.()
 				if (!currentTask || currentTask.taskId !== taskId) return
 
 				const messages: ClineMessage[] = currentTask.clineMessages || []

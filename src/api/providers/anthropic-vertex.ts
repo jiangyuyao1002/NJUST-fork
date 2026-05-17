@@ -157,7 +157,7 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 								yield { type: "reasoning", text: "\n" }
 							}
 
-							yield { type: "reasoning", text: (contentBlock as any).thinking }
+							yield { type: "reasoning", text: (contentBlock as Record<string, UnsafeAny>).thinking }
 							break
 						}
 						case "tool_use": {
@@ -185,7 +185,7 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 							break
 						}
 						case "thinking_delta": {
-							yield { type: "reasoning", text: (delta as any).thinking }
+							yield { type: "reasoning", text: (delta as Record<string, UnsafeAny>).thinking }
 							break
 						}
 						case "input_json_delta": {
@@ -195,7 +195,7 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 								index: chunk.index,
 								id: undefined,
 								name: undefined,
-								arguments: (delta as any).partial_json,
+								arguments: (delta as Record<string, UnsafeAny>).partial_json,
 							}
 							break
 						}

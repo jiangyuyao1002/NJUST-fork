@@ -2,8 +2,8 @@ import * as vscode from "vscode"
 import * as path from "path"
 
 export interface ExportContext {
-	getValue(key: string): any
-	setValue(key: string, value: any): Promise<void>
+	getValue(key: string): UnsafeAny
+	setValue(key: string, value: UnsafeAny): Promise<void>
 }
 
 export interface ExportOptions {

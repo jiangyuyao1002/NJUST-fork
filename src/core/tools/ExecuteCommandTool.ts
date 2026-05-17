@@ -127,7 +127,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				})
 			}
 
-			await reportProgress?.({ icon: "terminal", text: "Waiting for command approval" } as any)
+			await reportProgress?.({ icon: "terminal", text: "Waiting for command approval" } as UnsafeAny)
 			const approvalMessage = safetyCheck.requiresConfirmation
 				? `[High risk] This command may destroy data. Confirm to run:\n${canonicalCommand}\n\nReasons: ${safetyCheck.reasons.join("; ")}`
 				: canonicalCommand
@@ -144,7 +144,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				await vscode.workspace.saveAll(false)
 			}
 
-			await reportProgress?.({ icon: "terminal", text: "Starting command execution" } as any)
+			await reportProgress?.({ icon: "terminal", text: "Starting command execution" } as UnsafeAny)
 			const executionId = task.lastMessageTs?.toString() ?? Date.now().toString()
 			const provider = await task.providerRef.deref()
 			const providerState = await provider?.getState()
@@ -197,7 +197,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				}
 
 				pushToolResult(result)
-			} catch (error: unknown) {
+			} catch (error: UnsafeAny) {
 				const status: CommandExecutionStatus = { executionId, status: "fallback" }
 				void provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
 				await task.say("shell_integration_warning")
@@ -476,7 +476,7 @@ export async function executeCommandInTerminal(
 
 	// Track command execution for persistent shell session metrics
 	if ("commandCount" in terminal) {
-		;(terminal as any).commandCount++
+		;(terminal as Record<string, UnsafeAny>).commandCount++
 	}
 
 	// Dual-timeout logic:
@@ -592,7 +592,7 @@ export async function executeCommandInTerminal(
 					exitStatus += " - core dump possible"
 				}
 			} else if (exitDetails.exitCode === undefined) {
-				result += "<VSCE exit code is undefined: terminal output and command execution status is unknown.>"
+				result += "<VSCE exit code is undefined: terminal output and command execution status is UnsafeAny.>"
 				exitStatus = `Exit code: <undefined, notify user>`
 			} else {
 				if (exitDetails.exitCode !== 0) {
@@ -602,7 +602,7 @@ export async function executeCommandInTerminal(
 				exitStatus += `Exit code: ${exitDetails.exitCode}`
 			}
 		} else {
-			result += "<VSCE exitDetails == undefined: terminal output and command execution status is unknown.>"
+			result += "<VSCE exitDetails == undefined: terminal output and command execution status is UnsafeAny.>"
 			exitStatus = `Exit code: <undefined, notify user>`
 		}
 

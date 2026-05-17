@@ -60,7 +60,7 @@ function findCangjieExecutableInTarget(workspaceRoot: string): string | undefine
 				} else if (e.name === "output" || !e.name.includes(".")) {
 					// Check executable permission on Unix to avoid returning data files.
 					try {
-						const s = fs.statSync(full, { throwIfNoEntry: true } as any)
+						const s = fs.statSync(full, { throwIfNoEntry: true } as UnsafeAny)
 						if ((s.mode & 0o111) === 0) continue
 					} catch { continue }
 					return full

@@ -59,12 +59,88 @@ interface OpenAiCodexUsageData {
 	output_tokens_details?: { reasoning_tokens?: number }
 }
 
+type CodexInputItem =
+	| { role: "user" | "assistant"; content: Record<string, UnsafeAny>[] }
+	| { type: string; content?: string; id?: string; encrypted_content?: string; [key: string]: UnsafeAny }
+	| Anthropic.Messages.MessageParam
+
+interface ResponsesOutputItem {
+	type?: string
+	text?: UnsafeAny
+	output_text?: string
+	delta?: string
+	content?: ResponsesOutputItem[]
+	call_id?: string
+	tool_call_id?: string
+	id?: string
+	name?: string
+	function_name?: string
+	function?: { name?: string; arguments?: UnsafeAny }
+	arguments?: UnsafeAny
+	input?: UnsafeAny
+	encrypted_content?: string
+	[key: string]: UnsafeAny
+}
+
+interface ResponsesStreamEvent {
+	type?: string
+	response?: {
+		output?: ResponsesOutputItem[]
+		id?: string
+		usage?: OpenAiCodexUsageData
+	}
+	delta?: string
+	text?: string
+	output_text?: string
+	part?: ResponsesOutputItem
+	item?: ResponsesOutputItem
+	call_id?: string
+	tool_call_id?: string
+	id?: string
+	name?: string
+	function_name?: string
+	arguments?: UnsafeAny
+	index?: number
+	choices?: Array<{ delta?: { content?: string } }>
+	usage?: OpenAiCodexUsageData
+	[key: string]: UnsafeAny
+}
+
+interface ResponsesRequestBody {
+	model: string
+	input: CodexInputItem[]
+	stream: boolean
+	reasoning?: { effort?: ReasoningEffortExtended; summary?: "auto" }
+	temperature?: number
+	store?: boolean
+	instructions?: string
+	include?: string[]
+	tools?: Array<{
+		type: "function"
+		name: string
+		description?: string
+		parameters?: Record<string, UnsafeAny>
+		strict?: boolean
+	}>
+	tool_choice?: UnsafeAny
+	parallel_tool_calls?: boolean
+}
+
+interface ResponsesClientLike {
+	responses: {
+		create(
+			body: ResponsesRequestBody,
+			options?: { signal?: AbortSignal; headers?: Record<string, string> },
+		): Promise<AsyncIterable<ResponsesStreamEvent>>
+	}
+}
+
 export class OpenAiCodexHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
 	private readonly providerName = "OpenAI Codex"
 	private client?: OpenAI
 	// Complete response output array
-	private lastResponseOutput: any[] | undefined
+	private lastResponseOutput: ResponsesOutputItem[] | undefined
 	// Last top-level response id
 	private lastResponseId: string | undefined
 	// Abort controller for cancelling ongoing requests
@@ -227,31 +303,11 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 
 	private buildRequestBody(
 		model: OpenAiCodexModel,
-		formattedInput: any,
+		formattedInput: CodexInputItem[],
 		systemPrompt: string,
 		reasoningEffort: ReasoningEffortExtended | undefined,
 		metadata?: ApiHandlerCreateMessageMetadata,
-	): any {
-
-		interface ResponsesRequestBody {
-			model: string
-			input: Array<{ role: "user" | "assistant"; content: any[] } | { type: string; content: string }>
-			stream: boolean
-			reasoning?: { effort?: ReasoningEffortExtended; summary?: "auto" }
-			temperature?: number
-			store?: boolean
-			instructions?: string
-			include?: string[]
-			tools?: Array<{
-				type: "function"
-				name: string
-				description?: string
-				parameters?: any
-				strict?: boolean
-			}>
-			tool_choice?: any
-			parallel_tool_calls?: boolean
-		}
+	): ResponsesRequestBody {
 
 		// Per the implementation guide: Codex backend may reject max_output_tokens
 		// and prompt_cache_retention, so we omit them
@@ -293,7 +349,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 	}
 
 	private async *executeRequest(
-		requestBody: any,
+		requestBody: ResponsesRequestBody,
 		model: OpenAiCodexModel,
 		accessToken: string,
 		taskId?: string,
@@ -325,13 +381,13 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 						defaultHeaders: codexHeaders,
 					})
 
-				const stream = (await (client as any).responses.create(requestBody, {
+				const stream = await (client as UnsafeAny as ResponsesClientLike).responses.create(requestBody, {
 					signal: this.abortController.signal,
 					// If the SDK supports per-request overrides, ensure headers are present.
 					headers: codexHeaders,
-				})) as AsyncIterable<any>
+				})
 
-				if (typeof (stream as any)?.[Symbol.asyncIterator] !== "function") {
+				if (typeof stream[Symbol.asyncIterator] !== "function") {
 					throw new Error(
 						"OpenAI SDK did not return an AsyncIterable for Responses API streaming. Falling back to SSE.",
 					)
@@ -358,19 +414,19 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		}
 	}
 
-	private formatFullConversation(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): any {
-		const formattedInput: any[] = []
+	private formatFullConversation(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): CodexInputItem[] {
+		const formattedInput: CodexInputItem[] = []
 
 		for (const message of messages) {
 			// Check if this is a reasoning item
-			if ((message as any).type === "reasoning") {
+			if ((message as Record<string, UnsafeAny>).type === "reasoning") {
 				formattedInput.push(message)
 				continue
 			}
 
 			if (message.role === "user") {
-				const content: any[] = []
-				const toolResults: any[] = []
+				const content: Record<string, UnsafeAny>[] = []
+				const toolResults: CodexInputItem[] = []
 
 				if (typeof message.content === "string") {
 					content.push({ type: "input_text", text: message.content })
@@ -405,8 +461,8 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 					formattedInput.push(...toolResults)
 				}
 			} else if (message.role === "assistant") {
-				const content: any[] = []
-				const toolCalls: any[] = []
+				const content: Record<string, UnsafeAny>[] = []
+				const toolCalls: CodexInputItem[] = []
 
 				if (typeof message.content === "string") {
 					content.push({ type: "output_text", text: message.content })
@@ -440,7 +496,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 	}
 
 	private async *makeCodexRequest(
-		requestBody: any,
+		requestBody: ResponsesRequestBody,
 		model: OpenAiCodexModel,
 		accessToken: string,
 		taskId?: string,
@@ -814,7 +870,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 	}
 
 	// eslint-disable-next-line @typescript-eslint/require-await
-	private async *processEvent(event: any, model: OpenAiCodexModel): ApiStream {
+	private async *processEvent(event: ResponsesStreamEvent, model: OpenAiCodexModel): ApiStream {
 		if (event?.response?.output && Array.isArray(event.response.output)) {
 			this.lastResponseOutput = event.response.output
 		}
@@ -1054,8 +1110,8 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 	}
 
 	private getReasoningEffort(model: OpenAiCodexModel): ReasoningEffortExtended | undefined {
-		const selected = (this.options.reasoningEffort as any) ?? (model.info.reasoningEffort as any)
-		return selected && selected !== "disable" && selected !== "none" ? (selected as any) : undefined
+		const selected = this.options.reasoningEffort ?? model.info.reasoningEffort
+		return selected && selected !== "disable" && selected !== "none" ? (selected as ReasoningEffortExtended) : undefined
 	}
 
 	override getModel() {
@@ -1114,7 +1170,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 
 			const reasoningEffort = this.getReasoningEffort(model)
 
-			const requestBody: any = {
+			const requestBody: UnsafeAny = {
 				model: model.id,
 				input: [
 					{

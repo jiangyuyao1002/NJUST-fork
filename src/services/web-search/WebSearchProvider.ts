@@ -601,7 +601,7 @@ export class DuckDuckGoSearchProvider implements WebSearchProvider {
 
 			for (let i = 0; i < Math.min(links.length, count); i++) {
 				const link = links[i]
-				if (link && link.url && link.title) {
+				if (link?.url && link.title) {
 					results.push({ title: link.title, url: link.url, snippet: snippets[i] ?? "" })
 				}
 			}

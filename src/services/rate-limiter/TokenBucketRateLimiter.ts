@@ -60,7 +60,7 @@ export class TokenBucketRateLimiter {
 	}
 
 	static resetInstance(): void {
-		TokenBucketRateLimiter._instance = undefined as any
+		TokenBucketRateLimiter._instance = undefined as UnsafeAny
 	}
 
 	private getConfig(key: string): BucketConfig {

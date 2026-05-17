@@ -30,12 +30,12 @@ export interface TaskSubtaskHost {
 	apiConversationHistory: ApiMessage[]
 
 	// Provider reference
-	hostRef: { deref(): any }
+	hostRef: { deref(): UnsafeAny }
 
 	// Task methods
 	getSavedApiConversationHistory(): Promise<ApiMessage[]>
 	saveApiConversationHistory(): Promise<boolean>
-	initiateTaskLoop(userMessage: any[]): Promise<void>
+	initiateTaskLoop(userMessage: UnsafeAny[]): Promise<void>
 
 	// Event emitter
 	emit(event: string, ...args: any[]): boolean

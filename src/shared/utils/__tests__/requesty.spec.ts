@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import { toRequestyServiceUrl } from "../requesty"

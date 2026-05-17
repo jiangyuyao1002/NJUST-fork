@@ -53,7 +53,7 @@ export function registerTaskHandlers(router: MessageRouter): void {
 
 // ── Shared helpers (message modification, task-internal) ──
 
-function findMessageIndices(messageTs: number, currentCline: any) {
+function findMessageIndices(messageTs: number, currentCline: UnsafeAny) {
 	const messageIndex = currentCline.clineMessages.findIndex((m: ClineMessage) => m.ts === messageTs)
 	const allApiMatches = currentCline.apiConversationHistory
 		.map((m: ApiMessage, idx: number) => ({ msg: m, idx }))
@@ -62,7 +62,7 @@ function findMessageIndices(messageTs: number, currentCline: any) {
 	return { messageIndex, apiConversationHistoryIndex: preferred?.idx ?? -1 }
 }
 
-function findFirstApiIndexAtOrAfter(ts: number, currentCline: any) {
+function findFirstApiIndexAtOrAfter(ts: number, currentCline: UnsafeAny) {
 	if (typeof ts !== "number") return -1
 	return currentCline.apiConversationHistory.findIndex((m: ApiMessage) => typeof m?.ts === "number" && m.ts >= ts)
 }
@@ -107,7 +107,7 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 				})
 			} else { vscode.window.showWarningMessage("No checkpoint found before this message") }
 		} else {
-			const saved = new Map<number, any>()
+			const saved = new Map<number, UnsafeAny>()
 			for (let i = 0; i < messageIndex; i++) {
 				const m = currentCline.clineMessages[i]
 				if (m?.checkpoint && m.ts) saved.set(m.ts, m.checkpoint)
@@ -179,7 +179,7 @@ async function doEditConfirm(context: MessageHandlerContext, messageTs: number, 
 		if (delApiIdx === -1 && typeof currentCline.clineMessages[delIdx]?.ts === "number") {
 			delApiIdx = findFirstApiIndexAtOrAfter(currentCline.clineMessages[delIdx]!.ts, currentCline)
 		}
-		const saved = new Map<number, any>()
+		const saved = new Map<number, UnsafeAny>()
 		for (let i = 0; i < delIdx; i++) {
 			const m = currentCline.clineMessages[i]
 			if (m?.checkpoint && m.ts) saved.set(m.ts, m.checkpoint)
@@ -349,7 +349,7 @@ async function handleEditMessageConfirmEntry(context: MessageHandlerContext, mes
 }
 
 async function handleUpdateTodoList(_context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
-	const todos = (message.payload as any)?.todos
+	const todos = (message.payload as Record<string, UnsafeAny>)?.todos
 	if (Array.isArray(todos)) await setPendingTodoList(todos)
 }
 
@@ -395,26 +395,26 @@ async function handleCheckpointRestore(context: MessageHandlerContext, message: 
 
 async function handlePlanAction(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	const { provider } = context
-	const m = message as any
+	const m = message as UnsafeAny
 	const engine = provider.planEngine
 	const pid = m.planId
 	switch (m.action) {
 		case "approve":
 			await engine.approvePlan(pid)
-			await provider.postMessageToWebview({ type: "planUpdate" as any, plan: engine.getPlan(pid) })
+			await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: engine.getPlan(pid) })
 			break
 		case "execute":
-			engine.executePlan(pid, { onPlanUpdate: async (p: any) => { await provider.postMessageToWebview({ type: "planUpdate" as any, plan: p }) } })
+			engine.executePlan(pid, { onPlanUpdate: async (p: UnsafeAny) => { await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: p }) } })
 				.catch((err: Error) => provider.log(`[PlanEngine] Execution error: ${err}`))
 			break
 		case "pause": engine.pausePlan(); break
 		case "cancel":
 			engine.deletePlan(pid)
-			await provider.postMessageToWebview({ type: "planUpdate" as any, plan: null })
+			await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: null })
 			break
 		case "updateStep":
 			engine.updateStep(pid, m.stepId, { description: m.description })
-			await provider.postMessageToWebview({ type: "planUpdate" as any, plan: engine.getPlan(pid) })
+			await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: engine.getPlan(pid) })
 			break
 	}
 }

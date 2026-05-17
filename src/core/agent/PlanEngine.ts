@@ -163,7 +163,7 @@ export class PlanEngine {
 			const dependencyContext = this.buildDependencyContext(plan, step)
 			const stepPrompt = this.buildStepPrompt(step, dependencyContext, plan)
 
-			await this.provider.handleModeSwitch(step.mode as any)
+			await this.provider.handleModeSwitch(step.mode as UnsafeAny)
 			const task = await this.provider.createTask(stepPrompt)
 			step.taskId = task.taskId
 
@@ -198,7 +198,7 @@ export class PlanEngine {
 		}
 	}
 
-	private waitForTaskCompletion(task: any): Promise<string> {
+	private waitForTaskCompletion(task: UnsafeAny): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error("Task execution timed out"))
@@ -220,7 +220,7 @@ export class PlanEngine {
 						clearTimeout(timeout)
 
 						const errorMsg = messages.find(
-							(m: any) => m.type === "say" && m.say === "error",
+							(m: UnsafeAny) => m.type === "say" && m.say === "error",
 						)
 						if (errorMsg) {
 							reject(new Error(errorMsg.text || "Task failed"))
@@ -267,9 +267,9 @@ export class PlanEngine {
 		return jsonMatch ? jsonMatch[0] : text
 	}
 
-	private buildPlanFromJson(json: any): Plan {
+	private buildPlanFromJson(json: UnsafeAny): Plan {
 		const planId = uuidv7()
-		const steps: PlanStep[] = (json.steps || []).map((s: any, index: number) => ({
+		const steps: PlanStep[] = (json.steps || []).map((s: UnsafeAny, index: number) => ({
 			id: `${planId}-step-${index}`,
 			index,
 			description: s.description || `Step ${index + 1}`,

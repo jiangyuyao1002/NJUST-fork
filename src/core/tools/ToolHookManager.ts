@@ -10,6 +10,10 @@ import type {
 	StopHook,
 	SubagentStartHook,
 	SubagentStopHook,
+	PreCompactHook,
+	PostCompactHook,
+	PreCompactHookContext,
+	PostCompactHookContext,
 	ToolHookContext,
 	LifecycleHookContext,
 	HookExecutionOrder,
@@ -42,6 +46,8 @@ export class ToolHookManager {
 	private stopHooks: StopHook[] = []
 	private subagentStartHooks: SubagentStartHook[] = []
 	private subagentStopHooks: SubagentStopHook[] = []
+	private preCompactHooks: PreCompactHook[] = []
+	private postCompactHooks: PostCompactHook[] = []
 
 	/**
 	 * Configurable pre-hook execution order.
@@ -92,6 +98,14 @@ export class ToolHookManager {
 
 	registerSubagentStopHook(hook: SubagentStopHook): void {
 		this.subagentStopHooks.push(hook)
+	}
+
+	registerPreCompactHook(hook: PreCompactHook): void {
+		this.preCompactHooks.push(hook)
+	}
+
+	registerPostCompactHook(hook: PostCompactHook): void {
+		this.postCompactHooks.push(hook)
 	}
 
 	// ── Unregistration ────────────────────────────────────────────────
@@ -297,6 +311,32 @@ export class ToolHookManager {
 	}
 
 	// ── Singleton ─────────────────────────────────────────────────────
+
+	async runPreCompactHooks(context: PreCompactHookContext): Promise<{ allow: boolean; reason?: string }> {
+		for (const hook of this.preCompactHooks) {
+			try {
+				const result = await hook(context)
+				if (!result.allow) {
+					return { allow: false, reason: result.reason }
+				}
+			} catch (err) {
+				logger.warn("ToolHookManager", "PreCompact hook error (blocking):", err)
+				return { allow: false, reason: err instanceof Error ? err.message : String(err) }
+			}
+		}
+
+		return { allow: true }
+	}
+
+	async runPostCompactHooks(context: PostCompactHookContext): Promise<void> {
+		for (const hook of this.postCompactHooks) {
+			try {
+				await hook(context)
+			} catch (err) {
+				logger.warn("ToolHookManager", "PostCompact hook error (ignored):", err)
+			}
+		}
+	}
 
 	static readonly instance = new ToolHookManager()
 }

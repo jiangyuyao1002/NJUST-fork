@@ -17,7 +17,7 @@ import { globalCacheMetrics } from "../../utils/cacheMetrics"
 import { expandTruncationToAtomicUnits, hasToolResults } from "./grouping"
 import { analyzeContextTokens } from "./contextAnalysis"
 import { generateSuggestions, formatSuggestions } from "./contextSuggestions"
-import { globalHookRegistry } from "../hooks"
+import { ToolHookManager } from "../tools/ToolHookManager"
 import {
 	ContextHierarchy,
 	buildContextHierarchy,
@@ -643,19 +643,17 @@ export async function manageContext({
 				})
 
 				// Execute pre-compact hooks (may abort via { abort: true })
-				const preHookResult = await globalHookRegistry.execute({
-					hookType: "preCompact",
-					timestamp: Date.now(),
+				const preHookResult = await ToolHookManager.instance.runPreCompactHooks({
 					taskId,
 					messageCount: preprocessedMessages.length,
 					tokenCount: prevContextTokens,
 				})
-				if (preHookResult.abort) {
+				if (!preHookResult.allow) {
 					logger.warn("ContextManagement", 
 						"[Context Management] Pre-compact hook aborted compaction: " +
-						(preHookResult.message || "unknown reason"),
+						(preHookResult.reason || "unknown reason"),
 					)
-					logCompactEvent("compact_aborted_hook", { reason: preHookResult.message })
+					logCompactEvent("compact_aborted_hook", { reason: preHookResult.reason })
 					// Return immediately — the hook explicitly opted out of compaction
 					// this turn. Skip truncation fallback as well.
 					return {
@@ -726,9 +724,7 @@ export async function manageContext({
 				if (smResult) {
 					logCompactEvent("compact_sm_success", { method: "lightweight_summary" })
 					// Post-compact hooks (fire-and-forget)
-					globalHookRegistry.execute({
-						hookType: "postCompact",
-						timestamp: Date.now(),
+					ToolHookManager.instance.runPostCompactHooks({
 						taskId,
 						messageCountBefore: preprocessedMessages.length,
 						messageCountAfter: smResult.messages.length,
@@ -757,9 +753,7 @@ export async function manageContext({
 				if (smMemoryResult) {
 					logCompactEvent("compact_sm_success", { method: "session_memory" })
 					// Post-compact hooks (fire-and-forget)
-					globalHookRegistry.execute({
-						hookType: "postCompact",
-						timestamp: Date.now(),
+					ToolHookManager.instance.runPostCompactHooks({
 						taskId,
 						messageCountBefore: preprocessedMessages.length,
 						messageCountAfter: smMemoryResult.messages.length,
@@ -806,9 +800,7 @@ export async function manageContext({
 					// Success - reset circuit breaker counter
 					logCompactEvent("compact_llm_success", { method: "llm_condensation" })
 					// Post-compact hooks (fire-and-forget)
-					globalHookRegistry.execute({
-						hookType: "postCompact",
-						timestamp: Date.now(),
+					ToolHookManager.instance.runPostCompactHooks({
 						taskId,
 						messageCountBefore: preprocessedMessages.length,
 						messageCountAfter: result.messages.length,

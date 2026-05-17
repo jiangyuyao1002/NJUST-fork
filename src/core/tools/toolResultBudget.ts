@@ -128,9 +128,9 @@ export function truncateToolResult(result: string, budgetTokens: number): string
 /**
  * Check if a content block contains image data (should not be truncated).
  */
-function isImageContent(content: unknown): boolean {
+function isImageContent(content: UnsafeAny): boolean {
 	if (Array.isArray(content)) {
-		return content.some((block) => (block as unknown as Record<string, unknown>).type === "image")
+		return content.some((block) => (block as UnsafeAny as Record<string, UnsafeAny>).type === "image")
 	}
 	return false
 }
@@ -145,12 +145,12 @@ function getToolResultText(block: Anthropic.Messages.ToolResultBlockParam): stri
 	}
 	if (Array.isArray(block.content)) {
 		// If it contains images, don't truncate
-		if (block.content.some((item: any) => item.type === "image")) {
+		if (block.content.some((item: UnsafeAny) => item.type === "image")) {
 			return null
 		}
 		const textParts = block.content
-			.filter((item: any) => item.type === "text")
-			.map((item: any) => item.text || "")
+			.filter((item: UnsafeAny) => item.type === "text")
+			.map((item: UnsafeAny) => item.text || "")
 		return textParts.join("\n")
 	}
 	return null
@@ -168,7 +168,7 @@ function setToolResultText(
 	}
 	if (Array.isArray(block.content)) {
 		// Replace text blocks, keep non-text blocks
-		const nonTextBlocks = block.content.filter((item: any) => item.type !== "text")
+		const nonTextBlocks = block.content.filter((item: UnsafeAny) => item.type !== "text")
 		return {
 			...block,
 			content: [{ type: "text" as const, text: newText }, ...nonTextBlocks],
@@ -216,7 +216,7 @@ export function applyToolResultBudget(
 
 			let modified = false
 			const newContent = message.content.map((block) => {
-				if ((block as unknown as Record<string, unknown>).type !== "tool_result") return block
+				if ((block as UnsafeAny as Record<string, UnsafeAny>).type !== "tool_result") return block
 
 				const toolResultBlock = block as Anthropic.Messages.ToolResultBlockParam
 

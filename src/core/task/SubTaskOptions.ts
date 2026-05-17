@@ -77,7 +77,7 @@ export interface CacheSafeParams {
 	/** Parent's tool definitions (exact same ToolUseBlock params) */
 	toolDefinitions?: string
 	/** Parent's conversation messages up to the fork point */
-	forkContextMessages?: Array<{ role: string; content: any }>
+	forkContextMessages?: Array<{ role: string; content: UnsafeAny }>
 }
 
 /** Configuration for forked context generation */

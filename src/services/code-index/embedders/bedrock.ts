@@ -140,9 +140,9 @@ export class BedrockEmbedder implements IEmbedder {
 						totalTokens,
 					},
 				}
-			} catch (error: unknown) {
+			} catch (error: UnsafeAny) {
 				const hasMoreAttempts = attempts < MAX_RETRIES - 1
-				const err = error as Record<string, unknown>
+				const err = error as Record<string, UnsafeAny>
 				const errorName = typeof err.name === "string" ? err.name : undefined
 
 				// Check if it's a rate limit error
@@ -180,7 +180,7 @@ export class BedrockEmbedder implements IEmbedder {
 		text: string,
 		model: string,
 	): Promise<{ embedding: number[]; inputTextTokenCount?: number }> {
-		let requestBody: any
+		let requestBody: UnsafeAny
 		const modelId = model
 
 		// Prepare the request body based on the model
@@ -287,8 +287,8 @@ export class BedrockEmbedder implements IEmbedder {
 				}
 
 				return { valid: true }
-			} catch (error: unknown) {
-				const err = error as Record<string, unknown>
+			} catch (error: UnsafeAny) {
+				const err = error as Record<string, UnsafeAny>
 				const errorName = typeof err.name === "string" ? err.name : undefined
 
 				// Check for specific AWS errors

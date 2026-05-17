@@ -6,6 +6,7 @@
  * Task.ts implements the combined `TaskExecutorHost` type.
  */
 import type { Anthropic } from "@anthropic-ai/sdk"
+import type OpenAI from "openai"
 import type {
 	ClineMessage,
 	ClineSay,
@@ -18,9 +19,11 @@ import type {
 } from "@njust-ai-cj/types"
 
 import type { ApiHandler } from "../../../api"
+import type { ApiStream } from "../../../api/transform/stream"
 import type { AssistantMessageContent } from "../../assistant-message"
 import type { ApiMessage } from "../../task-persistence"
 import type { SystemPromptParts } from "../../prompts/system"
+import type { FileContextTracker } from "../../context-tracking/FileContextTracker"
 import type { PersistentRetryManager } from "../PersistentRetry"
 import type { TaskState } from "../TaskStateMachine"
 import type { ITaskHost } from "./ITaskHost"
@@ -63,27 +66,27 @@ export interface TaskExecutorDelegatesHost {
 		getSystemPromptParts(): Promise<SystemPromptParts>
 		getSystemPrompt(): Promise<string>
 		condenseContext(): Promise<void>
-		inheritCacheFromParent(parent: any): void
+		inheritCacheFromParent(parent: UnsafeAny): void
 	}
 	streamProcessor: {
 		maybeWaitForProviderRateLimit(retryAttempt: number): Promise<void>
-		backoffAndAnnounce(retryAttempt: number, error: any): Promise<void>
-		buildCleanConversationHistory(messages: ApiMessage[]): any[]
-		getCurrentProfileId(state: any): string
+		backoffAndAnnounce(retryAttempt: number, error: UnsafeAny): Promise<void>
+		buildCleanConversationHistory(messages: ApiMessage[]): UnsafeAny[]
+		getCurrentProfileId(state: UnsafeAny): string
 		handleContextWindowExceededError(): Promise<void>
 		getFilesReadByRooSafely(context: string): Promise<string[] | undefined>
 	}
 	errorRecovery: {
-		handleApiError(error: any, retryAttempt: number): Promise<{ action: string; nextAttempt: number }>
+		handleApiError(error: UnsafeAny, retryAttempt: number): Promise<{ action: string; nextAttempt: number }>
 		shouldBypassCondense(): boolean
-		recordCompactFailure(error: any): Promise<void>
+		recordCompactFailure(error: UnsafeAny): Promise<void>
 		resetCompactFailure(): void
 	}
 	autoApprovalHandler: {
 		checkAutoApprovalLimits(
-			state: any,
-			messages: any,
-			askFn: (type: any, data: any) => Promise<any>,
+			state: UnsafeAny,
+			messages: ClineMessage[],
+			askFn: (type: ClineAsk, data?: string) => Promise<{ response: string; text?: string; images?: string[] }>,
 		): Promise<{ shouldProceed: boolean }>
 	}
 	tokenGrowthTracker: {
@@ -95,7 +98,7 @@ export interface TaskExecutorDelegatesHost {
 	rooIgnoreController: { dispose(): void } | undefined
 	toolExecution: {
 		dispose(): void
-		streamingExecutor: { shouldEagerExecute(task: unknown, block: unknown): string | null }
+		streamingExecutor: { shouldEagerExecute(task: UnsafeAny, block: UnsafeAny): string | null }
 	}
 	compactFailures: number
 }
@@ -104,7 +107,7 @@ export interface TaskExecutorDelegatesHost {
 export interface TaskExecutorTokenHost {
 	requestCacheReadWindow: number[]
 	requestInputTokensWindow: number[]
-	cachedToolDefinitions: { mode: string; tools: any[]; time: number } | undefined
+	cachedToolDefinitions: { mode: string; tools: OpenAI.Chat.ChatCompletionTool[]; time: number } | undefined
 }
 
 /** Request lifecycle control and mistake tracking. */
@@ -127,8 +130,8 @@ export interface TaskExecutorStreamHost {
 	consecutiveNoToolUseCount: number
 	consecutiveNoAssistantMessagesCount: number
 	streamingToolCallIndices: Map<string, number>
-	cachedStreamingModel?: any
-	notifier?: { postMessageToWebview(message: any): Promise<void> }
+	cachedStreamingModel?: ReturnType<ApiHandler["getModel"]>
+	notifier?: { postMessageToWebview(message: UnsafeAny): Promise<void> }
 	didFinishAbortingStream: boolean
 	currentStreamingDidCheckpoint: boolean
 }
@@ -140,7 +143,7 @@ export interface TaskExecutorServicesHost {
 		reset(): Promise<void>
 		revertChanges(): Promise<void>
 	}
-	fileContextTracker: any
+	fileContextTracker: FileContextTracker
 }
 
 /** Communication methods: say, ask, history management. */
@@ -150,7 +153,7 @@ export interface TaskExecutorMessagingHost {
 		text?: string,
 		images?: string[],
 		partial?: boolean,
-		checkpoint?: Record<string, unknown>,
+		checkpoint?: Record<string, UnsafeAny>,
 		progressStatus?: ToolProgressStatus,
 		options?: { isNonInteractive?: boolean },
 		contextCondense?: ContextCondense,
@@ -175,7 +178,7 @@ export interface TaskExecutorMessagingHost {
 export interface TaskExecutorControlHost {
 	getTokenUsage(): TokenUsage
 	combineMessages(messages: ClineMessage[]): ClineMessage[]
-	emit(event: string, ...args: any[]): boolean
+	emit(event: string, ...args: UnsafeAny[]): boolean
 
 	setLastGlobalApiRequestTime(time: number): void
 	getLastGlobalApiRequestTime(): number
@@ -185,9 +188,9 @@ export interface TaskExecutorControlHost {
 	updateClineMessage(message: ClineMessage): Promise<void>
 
 	abortTask(isAbandoned?: boolean): Promise<void>
-	backoffAndAnnounce(retryAttempt: number, error: any): Promise<void>
+	backoffAndAnnounce(retryAttempt: number, error: UnsafeAny): Promise<void>
 	maybeWaitForProviderRateLimit(retryAttempt: number): Promise<void>
-	attemptApiRequest(retryAttempt: number, options?: { skipProviderRateLimit?: boolean }): AsyncGenerator<any, void, unknown>
+	attemptApiRequest(retryAttempt: number, options?: { skipProviderRateLimit?: boolean }): ApiStream
 	presentAssistantMessage(): Promise<void>
 
 	getTaskMode(): string | undefined

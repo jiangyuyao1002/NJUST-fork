@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { describe, it, expect, beforeEach } from "vitest"
 
 import * as vscode from "vscode"

@@ -1,6 +1,6 @@
 import { APIError } from "openai"
 
-export function checkContextWindowExceededError(error: unknown): boolean {
+export function checkContextWindowExceededError(error: UnsafeAny): boolean {
 	return (
 		checkIsOpenAIContextWindowError(error) ||
 		checkIsOpenRouterContextWindowError(error) ||
@@ -8,14 +8,14 @@ export function checkContextWindowExceededError(error: unknown): boolean {
 	)
 }
 
-function checkIsOpenRouterContextWindowError(error: unknown): boolean {
+function checkIsOpenRouterContextWindowError(error: UnsafeAny): boolean {
 	try {
 		if (!error || typeof error !== "object") {
 			return false
 		}
 
 		// Use Record<string, any> for proper type narrowing
-		const err = error as Record<string, any>
+		const err = error as Record<string, UnsafeAny>
 		const status = err.status ?? err.code ?? err.error?.status ?? err.response?.status
 		const message: string = String(err.message || err.error?.message || "")
 
@@ -34,7 +34,7 @@ function checkIsOpenRouterContextWindowError(error: unknown): boolean {
 }
 
 // Docs: https://platform.openai.com/docs/guides/error-codes/api-errors
-function checkIsOpenAIContextWindowError(error: unknown): boolean {
+function checkIsOpenAIContextWindowError(error: UnsafeAny): boolean {
 	try {
 		// Check for LengthFinishReasonError
 		if (error && typeof error === "object" && "name" in error && error.name === "LengthFinishReasonError") {
@@ -54,7 +54,7 @@ function checkIsOpenAIContextWindowError(error: unknown): boolean {
 	}
 }
 
-function checkIsAnthropicContextWindowError(response: unknown): boolean {
+function checkIsAnthropicContextWindowError(response: UnsafeAny): boolean {
 	try {
 		// Type guard to safely access properties
 		if (!response || typeof response !== "object") {
@@ -62,7 +62,7 @@ function checkIsAnthropicContextWindowError(response: unknown): boolean {
 		}
 
 		// Use type assertions with proper checks
-		const res = response as Record<string, any>
+		const res = response as Record<string, UnsafeAny>
 
 		// Check for Anthropic-specific error structure with more specific validation
 		if (res.error?.error?.type === "invalid_request_error") {

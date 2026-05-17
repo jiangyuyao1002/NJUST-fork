@@ -56,7 +56,7 @@ function estimateTokens(text: string): number {
  * Extract text content from an ApiMessage content field.
  * Handles both plain string and Anthropic content-block array formats.
  */
-function getTextContent(content: any): string {
+function getTextContent(content: UnsafeAny): string {
 	if (typeof content === "string") return content
 	if (Array.isArray(content)) {
 		return (content as Array<{ type: string; text?: string }>)

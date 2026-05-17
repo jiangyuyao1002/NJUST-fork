@@ -86,7 +86,7 @@ export function collectReadToolFilePaths(preservedMessages: ApiMessage[]): Set<s
 	const paths = new Set<string>()
 	for (const msg of preservedMessages) {
 		if (msg.role !== "assistant" || !Array.isArray(msg.content)) continue
-		for (const block of msg.content as any[]) {
+		for (const block of msg.content as UnsafeAny[]) {
 			if (block.type !== "tool_use") continue
 			const name = block.name || ""
 			// Only consider read-like tools — writes are worth re-injecting

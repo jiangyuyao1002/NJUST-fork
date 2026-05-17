@@ -23,7 +23,7 @@ const defaultThemes: Record<string, string> = {
 	"Visual Studio Light": "light_vs",
 }
 
-function parseThemeString(themeString: string | undefined): any {
+function parseThemeString(themeString: string | undefined): UnsafeAny {
 	themeString = themeString
 		?.split("\n")
 		.filter((line) => {
@@ -86,7 +86,7 @@ export async function getTheme() {
 				: colorTheme.includes("Light")
 					? "vs"
 					: "vs-dark"
-		) as any
+		) as UnsafeAny
 
 		return converted
 	} catch {
@@ -95,13 +95,13 @@ export async function getTheme() {
 	return undefined
 }
 
-type JsonObject = { [key: string]: any }
+type JsonObject = { [key: string]: UnsafeAny }
 export function mergeJson(
 	first: JsonObject,
 	second: JsonObject,
 	mergeBehavior?: "merge" | "overwrite",
-	mergeKeys?: { [key: string]: (a: any, b: any) => boolean },
-): any {
+	mergeKeys?: { [key: string]: (a: UnsafeAny, b: UnsafeAny) => boolean },
+): UnsafeAny {
 	const copyOfFirst = JSON.parse(JSON.stringify(first))
 
 	try {
@@ -119,9 +119,9 @@ export function mergeJson(
 				// Array
 				if (mergeKeys?.[key]) {
 					// Merge keys are used to determine whether an item form the second object should override one from the first
-					const keptFromFirst: any[] = []
-					firstValue.forEach((item: any) => {
-						if (!secondValue.some((item2: any) => mergeKeys[key]!(item, item2))) {
+					const keptFromFirst: UnsafeAny[] = []
+					firstValue.forEach((item: UnsafeAny) => {
+						if (!secondValue.some((item2: UnsafeAny) => mergeKeys[key]!(item, item2))) {
 							keptFromFirst.push(item)
 						}
 					})

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { processCarriageReturns, applyRunLengthEncoding, truncateOutput } from "../../extract-text"
 
 /**

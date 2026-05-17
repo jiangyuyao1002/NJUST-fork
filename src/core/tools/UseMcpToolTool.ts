@@ -14,7 +14,7 @@ import { getErrorMessage } from "../../shared/error-utils"
 interface UseMcpToolParams {
 	server_name: string
 	tool_name: string
-	arguments?: Record<string, unknown>
+	arguments?: Record<string, UnsafeAny>
 }
 
 type ValidationResult =
@@ -23,7 +23,7 @@ type ValidationResult =
 			isValid: true
 			serverName: string
 			toolName: string
-			parsedArguments?: Record<string, unknown>
+			parsedArguments?: Record<string, UnsafeAny>
 	  }
 
 export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
@@ -119,7 +119,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 		}
 
 		// Native-only: arguments are already a structured object.
-		let parsedArguments: Record<string, unknown> | undefined
+		let parsedArguments: Record<string, UnsafeAny> | undefined
 		if (params.arguments !== undefined) {
 			if (typeof params.arguments !== "object" || params.arguments === null || Array.isArray(params.arguments)) {
 				task.consecutiveMistakeCount++
@@ -165,7 +165,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			const server = servers.find((s) => s.name === serverName)
 
 			if (!server) {
-				// Fail fast when server is unknown
+				// Fail fast when server is UnsafeAny
 				const availableServersArray = servers.map((s) => s.name)
 				const availableServers =
 					availableServersArray.length > 0 ? availableServersArray.join(", ") : "No servers available"
@@ -260,7 +260,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 		})
 	}
 
-	private processToolContent(toolResult: any): { text: string; images: string[] } {
+	private processToolContent(toolResult: UnsafeAny): { text: string; images: string[] } {
 		if (!toolResult?.content || toolResult.content.length === 0) {
 			return { text: "", images: [] }
 		}
@@ -268,7 +268,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 		const images: string[] = []
 
 		const textContent = toolResult.content
-			.map((item: any) => {
+			.map((item: UnsafeAny) => {
 				if (item.type === "text") {
 					return item.text
 				}
@@ -299,9 +299,9 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 		task: Task,
 		serverName: string,
 		toolName: string,
-		parsedArguments: Record<string, unknown> | undefined,
+		parsedArguments: Record<string, UnsafeAny> | undefined,
 		executionId: string,
-		pushToolResult: (content: string | Array<any>) => void,
+		pushToolResult: (content: string | Array<UnsafeAny>) => void,
 	): Promise<void> {
 		await task.say("mcp_server_request_started")
 

@@ -50,13 +50,13 @@ import { getErrorMessage } from "../../shared/error-utils"
 
 interface BedrockError extends Error {
 	status?: number
-	$metadata?: { httpStatusCode?: number; [key: string]: unknown }
+	$metadata?: { httpStatusCode?: number; [key: string]: UnsafeAny }
 	name: string
 	__type?: string
 	code?: string
 }
 
-function isBedrockError(error: unknown): error is BedrockError {
+function isBedrockError(error: UnsafeAny): error is BedrockError {
 	return error instanceof Error && ("status" in error || "$metadata" in error || "__type" in error)
 }
 
@@ -84,7 +84,7 @@ interface BedrockAdditionalModelFields {
 				type: "adaptive"
 		  }
 	anthropic_beta?: string[]
-	[key: string]: any // Add index signature to be compatible with DocumentType
+	[key: string]: UnsafeAny // Add index signature to be compatible with DocumentType
 }
 
 // Define interface for Bedrock payload
@@ -161,7 +161,7 @@ export interface StreamEvent {
 	}
 	messageStop?: {
 		stopReason?: "end_turn" | "tool_use" | "max_tokens" | "stop_sequence"
-		additionalModelResponseFields?: Record<string, unknown>
+		additionalModelResponseFields?: Record<string, UnsafeAny>
 	}
 	contentBlockStart?: ContentBlockStartEvent
 	contentBlockDelta?: ContentBlockDeltaEvent
@@ -532,7 +532,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 				// Parse the chunk as JSON if it's a string (for tests)
 				let streamEvent: StreamEvent
 				try {
-					streamEvent = typeof chunk === "string" ? JSON.parse(chunk) : (chunk as unknown as StreamEvent)
+					streamEvent = typeof chunk === "string" ? JSON.parse(chunk) : (chunk as UnsafeAny as StreamEvent)
 				} catch (e) {
 					logger.error("Failed to parse stream event", {
 						ctx: "bedrock",
@@ -711,7 +711,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 			}
 			// Clear timeout after stream completes
 			clearTimeout(timeoutId)
-		} catch (error: unknown) {
+		} catch (error: UnsafeAny) {
 			// Clear timeout on error
 			clearTimeout(timeoutId)
 
@@ -732,7 +732,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 			const errorChunks = this.handleBedrockError(error, true) // true for streaming context
 			// Yield each chunk individually to ensure type compatibility
 			for (const chunk of errorChunks) {
-				yield chunk as any // Cast to any to bypass type checking since we know the structure is correct
+				yield chunk as UnsafeAny // Cast to any to bypass type checking since we know the structure is correct
 			}
 
 			// Throw enhanced error so stream failures still trigger retry/backoff logic upstream.
@@ -802,7 +802,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 	}
 
 	private createEnhancedProviderError(
-		error: unknown,
+		error: UnsafeAny,
 		errorMessage: string,
 		operation: "createMessage" | "completePrompt",
 	): ApiProviderError {
@@ -836,7 +836,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 		anthropicMessages: Anthropic.Messages.MessageParam[] | { role: string; content: string }[],
 		systemMessage?: string,
 		usePromptCache: boolean = false,
-		modelInfo?: any,
+		modelInfo?: UnsafeAny,
 		conversationId?: string, // Optional conversation ID to track cache points across messages
 	): { system: SystemContentBlock[]; messages: Message[] } {
 		// First convert messages using shared converter for proper image handling
@@ -1059,7 +1059,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 		info: ModelInfo
 		maxTokens?: number
 		temperature?: number
-		reasoning?: any
+		reasoning?: UnsafeAny
 		reasoningBudget?: number
 	} {
 		if (this.costModelConfig?.id?.trim().length > 0) {
@@ -1160,7 +1160,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 			info: ModelInfo
 			maxTokens?: number
 			temperature?: number
-			reasoning?: any
+			reasoning?: UnsafeAny
 			reasoningBudget?: number
 		}
 	}
@@ -1172,7 +1172,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 	 *************************************************************************************/
 
 	// Store previous cache point placements for maintaining consistency across consecutive messages
-	private previousCachePointPlacements: { [conversationId: string]: any[] } = {}
+	private previousCachePointPlacements: { [conversationId: string]: UnsafeAny[] } = {}
 
 	private supportsAwsPromptCache(modelConfig: { id: BedrockModelId | string; info: ModelInfo }): boolean | undefined {
 		// Check if the model supports prompt cache
@@ -1210,7 +1210,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 							inputSchema: {
 								// Normalize schema to JSON Schema draft 2020-12 compliant format
 								// This converts type: ["T", "null"] to anyOf: [{type: "T"}, {type: "null"}]
-								json: normalizeToolSchema(tool.function.parameters as Record<string, unknown>),
+								json: normalizeToolSchema(tool.function.parameters as Record<string, UnsafeAny>),
 							},
 						},
 					}) as Tool,
@@ -1454,7 +1454,7 @@ Please check:
 	/**
 	 * Determines the error type based on the error message or name
 	 */
-	private getErrorType(error: unknown): string {
+	private getErrorType(error: UnsafeAny): string {
 		if (!(error instanceof Error)) {
 			return "GENERIC"
 		}
@@ -1501,7 +1501,7 @@ Please check:
 	/**
 	 * Formats an error message based on the error type and context
 	 */
-	private formatErrorMessage(error: unknown, errorType: string, _isStreamContext: boolean): string {
+	private formatErrorMessage(error: UnsafeAny, errorType: string, _isStreamContext: boolean): string {
 		const definition = AwsBedrockHandler.ERROR_TYPES[errorType] || AwsBedrockHandler.ERROR_TYPES.GENERIC
 		let template = definition!.messageTemplate
 
@@ -1514,7 +1514,7 @@ Please check:
 
 			const modelConfig = this.getModel()
 			templateVars.modelId = modelConfig.id
-			templateVars.contextWindow = String(modelConfig.info.contextWindow || "unknown")
+			templateVars.contextWindow = String(modelConfig.info.contextWindow || "UnsafeAny")
 		}
 
 		// Add context-specific template variables
@@ -1539,7 +1539,7 @@ Please check:
 	 * @returns Error message string for non-streaming context or array of stream chunks for streaming context
 	 */
 	private handleBedrockError(
-		error: unknown,
+		error: UnsafeAny,
 		isStreamContext: boolean,
 	): string | Array<{ type: string; text?: string; inputTokens?: number; outputTokens?: number }> {
 		// Determine error type

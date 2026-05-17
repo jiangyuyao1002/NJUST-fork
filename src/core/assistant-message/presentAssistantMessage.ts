@@ -29,6 +29,7 @@ import type { ToolCallbacks } from "../tools/BaseTool"
 import { formatResponse } from "../prompts/responses"
 import { sanitizeToolUseId } from "../../utils/tool-id"
 import { getToolResultBudget, truncateToolResult, estimateTokens } from "../tools/toolResultBudget"
+import type { AssistantMessageContent, TypedBlock } from "./types"
 
 // Tool registry is populated by the side-effect import of registerAllTools above.
 // CONCURRENCY_SAFE_TOOL_NAMES is now provided by toolRegistry.getConcurrencySafeNames()
@@ -63,7 +64,7 @@ async function handleConcurrencySafeToolUse(
 	const tool = toolRegistry.get(block.name)
 	if (tool && toolRegistry.getConcurrencySafeNames().has(block.name as ToolName)) {
 		const merged: ToolCallbacks = abortSignal ? { ...callbacks, abortSignal } : callbacks
-		await tool.handle(cline, block as ToolUse<any>, merged)
+		await tool.handle(cline, block as ToolUse, merged)
 		return true
 	}
 	return false
@@ -130,13 +131,13 @@ export async function presentAssistantMessage(cline: Task) {
 		break // exit loop → unlock below
 	}
 
-	let block: any
+	let block: AssistantMessageContent
 	try {
 		// Performance optimization: Use shallow copy instead of deep clone.
 		// The block is used read-only throughout this function - we never mutate its properties.
 		// We only need to protect against the reference changing during streaming, not nested mutations.
 		// This provides 80-90% reduction in cloning overhead (5-100ms saved per block).
-		block = { ...cline.assistantMessageContent[cline.currentStreamingContentIndex] }
+		block = { ...cline.assistantMessageContent[cline.currentStreamingContentIndex] } as AssistantMessageContent
 	} catch (error) {
 		logger.error("PresentAssistantMessage", "ERROR cloning block:", error)
 		logger.error("PresentAssistantMessage", 
@@ -362,10 +363,10 @@ export async function presentAssistantMessage(cline: Task) {
 					const start = cline.currentStreamingContentIndex
 					const run: ToolUse[] = []
 					for (let i = start; i < cline.assistantMessageContent.length; i++) {
-						const b = cline.assistantMessageContent[i] as any
+						const b = cline.assistantMessageContent[i] as UnsafeAny as TypedBlock
 						if (!b || b.type !== "tool_use") break
 						if (!b.id) break
-						const tb = b as ToolUse
+						const tb = b as UnsafeAny as ToolUse
 						if (!isConcurrencySafeToolUseBlock(tb)) break
 						if (streamingToolExecutor.shouldEagerExecute(cline, tb) !== "eager") break
 						run.push(tb)
@@ -383,7 +384,7 @@ export async function presentAssistantMessage(cline: Task) {
 						const runOne = async (toolBlock: ToolUse, batchSignal?: AbortSignal) => {
 							if (cline.abort || cline.didRejectTool || cascadeStop) return
 							if (batchSignal?.aborted) return
-							const toolCallId = (toolBlock as any).id as string
+							const toolCallId = (toolBlock as UnsafeAny as TypedBlock).id as string
 							if (allowedToolsSet && !allowedToolsSet.has(toolBlock.name)) {
 								cline.pushToolResultToUserContent({
 									type: "tool_result",
@@ -473,7 +474,7 @@ export async function presentAssistantMessage(cline: Task) {
 								for (const skipped of batch.calls) {
 									cline.pushToolResultToUserContent({
 										type: "tool_result",
-										tool_use_id: sanitizeToolUseId((skipped as any).id as string),
+										tool_use_id: sanitizeToolUseId((skipped as UnsafeAny as TypedBlock).id as string),
 										content: formatResponse.toolError(
 											"Skipped due to prior execute_command failure in this tool batch.",
 										),
@@ -522,17 +523,17 @@ export async function presentAssistantMessage(cline: Task) {
 			}
 			// Native tool calling is the only supported tool calling mechanism.
 			// A tool_use block without an id is invalid and cannot be executed.
-			const toolCallId = (block as any).id as string | undefined
+			const toolCallId = (block as UnsafeAny as TypedBlock).id as string | undefined
 			if (!toolCallId) {
 				const errorMessage =
 					"Invalid tool call: missing tool_use.id. XML tool calls are no longer supported. Remove any XML tool markup (e.g. <read_file>...</read_file>) and use native tool calling instead."
 				// Record a tool error for visibility/telemetry. Use the reported tool name if present.
 				try {
 					if (
-						typeof (cline as any).recordToolError === "function" &&
-						typeof (block as any).name === "string"
+						typeof (cline as Record<string, UnsafeAny>).recordToolError === "function" &&
+						typeof (block as Record<string, UnsafeAny>).name === "string"
 					) {
-						;(cline as any).recordToolError((block as any).name as ToolName, errorMessage)
+						;(cline as Record<string, UnsafeAny>).recordToolError((block as Record<string, UnsafeAny>).name as ToolName, errorMessage)
 					}
 				} catch {
 					// Best-effort only
@@ -566,7 +567,7 @@ export async function presentAssistantMessage(cline: Task) {
 						// Prefer native typed args when available; fall back to legacy params
 						// Check if nativeArgs exists (native protocol)
 						if (block.nativeArgs) {
-							return (toolRegistry.get("read_file") as ReadFileTool).getReadFileToolDescription(block.name, block.nativeArgs)
+							return (toolRegistry.get("read_file") as ReadFileTool).getReadFileToolDescription(block.name, block.nativeArgs as UnsafeAny)
 						}
 						return (toolRegistry.get("read_file") as ReadFileTool).getReadFileToolDescription(block.name, block.params)
 					case "write_to_file": {
@@ -863,7 +864,7 @@ export async function presentAssistantMessage(cline: Task) {
 					}
 				} catch (error) {
 					cline.consecutiveMistakeCount++
-					// For validation errors (unknown tool, tool not allowed for mode), we need to:
+					// For validation errors (UnsafeAny tool, tool not allowed for mode), we need to:
 					// 1. Send a tool_result with the error (required for native tool calling)
 					// 2. NOT set didAlreadyUseTool = true (the tool was never executed, just failed validation)
 					// This prevents the stream from being interrupted with "Response interrupted by tool use result"
@@ -954,7 +955,7 @@ export async function presentAssistantMessage(cline: Task) {
 					}
 
 					try {
-							await tool.handle(cline, block as ToolUse<any>, effectiveCallbacks)
+							await tool.handle(cline, block as ToolUse, effectiveCallbacks)
 						} catch (err) {
 							// Tool execution threw after exhausting retries. Push an error
 							// result so the API always gets a tool_result for every tool_use.
@@ -969,10 +970,10 @@ export async function presentAssistantMessage(cline: Task) {
 							)
 						}
 					} else {
-						// Handle unknown/invalid tool names OR custom tools
+						// Handle UnsafeAny/invalid tool names OR custom tools
 						// This is critical for native tool calling where every tool_use MUST have a tool_result
 
-					// CRITICAL: Don't process partial blocks for unknown tools - just let them stream in.
+					// CRITICAL: Don't process partial blocks for UnsafeAny tools - just let them stream in.
 					if (!block.partial) {
 						const customTool = stateExperiments?.customTools ? customToolRegistry.get(block.name) : undefined
 
@@ -983,7 +984,7 @@ export async function presentAssistantMessage(cline: Task) {
 								if (customTool.parameters) {
 									try {
 										customToolArgs = customTool.parameters.parse(block.nativeArgs || block.params || {})
-									} catch (parseParamsError: unknown) {
+									} catch (parseParamsError: UnsafeAny) {
 										const message = `Custom tool "${block.name}" argument validation failed: ${getErrorMessage(parseParamsError)}`
 										logger.error("PresentAssistantMessage", message)
 										cline.consecutiveMistakeCount++
@@ -1005,13 +1006,13 @@ export async function presentAssistantMessage(cline: Task) {
 									pushToolResult(result)
 									cline.consecutiveMistakeCount = 0
 								}
-							} catch (executionError: unknown) {
+							} catch (executionError: UnsafeAny) {
 								cline.consecutiveMistakeCount++
 								cline.recordToolError("custom_tool", getErrorMessage(executionError))
 								await handleError(`executing custom tool "${block.name}"`, wrapAsError(executionError))
 							}
 						} else {
-							// Not a custom tool - handle as unknown tool error
+							// Not a custom tool - handle as UnsafeAny tool error
 							const errorMessage = `Unknown tool "${block.name}". This tool does not exist. Please use one of the available tools.`
 							cline.consecutiveMistakeCount++
 							cline.recordToolError(block.name as ToolName, errorMessage)

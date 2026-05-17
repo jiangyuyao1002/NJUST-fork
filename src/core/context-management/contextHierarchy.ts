@@ -115,7 +115,7 @@ const FILE_PATH_FIELDS = [
 	"file_path", "target", "absolutePath", "output_file",
 ]
 
-function looksLikePath(s: unknown): s is string {
+function looksLikePath(s: UnsafeAny): s is string {
 	if (typeof s !== "string") return false
 	return s.includes("/") || s.includes("\\") || s.includes(".")
 }
@@ -126,8 +126,8 @@ function extractToolInfo(messages: ApiMessage[]): { names: Set<string>; count: n
 	for (const msg of messages) {
 		if (!Array.isArray(msg.content)) continue
 		for (const block of msg.content) {
-			if (block.type === "tool_use" && (block as any).name) {
-				names.add((block as any).name)
+			if (block.type === "tool_use" && (block as Record<string, UnsafeAny>).name) {
+				names.add((block as Record<string, UnsafeAny>).name)
 				count++
 			}
 		}
@@ -141,7 +141,7 @@ function extractFilePaths(messages: ApiMessage[]): Set<string> {
 		if (!Array.isArray(msg.content)) continue
 		for (const block of msg.content) {
 			if (block.type !== "tool_use") continue
-			const input = (block as any).input
+			const input = (block as Record<string, UnsafeAny>).input
 			if (!input || typeof input !== "object") continue
 			for (const field of FILE_PATH_FIELDS) {
 				if (looksLikePath(input[field])) {
@@ -161,8 +161,8 @@ function concatTextBlocks(messages: ApiMessage[], role: "user" | "assistant"): s
 			parts.push(msg.content)
 		} else if (Array.isArray(msg.content)) {
 			for (const block of msg.content) {
-				if (block.type === "text" && (block as any).text) {
-					parts.push((block as any).text)
+				if (block.type === "text" && (block as Record<string, UnsafeAny>).text) {
+					parts.push((block as Record<string, UnsafeAny>).text)
 				}
 			}
 		}
@@ -183,7 +183,7 @@ function hasWriteOperation(messages: ApiMessage[]): boolean {
 		if (!Array.isArray(msg.content)) continue
 		for (const block of msg.content) {
 			if (block.type === "tool_use") {
-				const name = ((block as any).name ?? "") as string
+				const name = ((block as Record<string, UnsafeAny>).name ?? "") as string
 				if (/write_to_file|apply_diff|insert_content|search_and_replace/.test(name)) return true
 			}
 		}

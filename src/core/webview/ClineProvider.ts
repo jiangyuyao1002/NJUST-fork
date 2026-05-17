@@ -13,7 +13,6 @@ import type { McpServer } from "@njust-ai-cj/types"
 import {
 	type TaskProviderLike,
 	type TaskProviderEvents,
-	type GlobalState,
 	type ProviderName,
 	type ProviderSettings,
 	type NJUST_AI_CJSettings,
@@ -32,6 +31,7 @@ import {
 	type CreateTaskOptions,
 	type ExtensionMessage,
 	type ExtensionState,
+	type GlobalState,
 	NJUST_AI_CJEventName,
 	requestyDefaultModelId,
 	openRouterDefaultModelId,
@@ -43,9 +43,7 @@ import {
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_MODES,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
-	getModelId,
 	isRetiredProvider,
-	DEFAULT_CLOUD_AGENT_URL,
 } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { Package } from "../../shared/package"
@@ -99,11 +97,12 @@ import { WebviewContentProvider } from "./WebviewContentProvider"
 import { SettingsManager } from "./SettingsManager"
 import { TaskCoordinator } from "./TaskCoordinator"
 import { WebviewRouter } from "./WebviewRouter"
-import { mergeAllowedCommands, mergeDeniedCommands } from "./commandListUtils"
+import { getMergedCommandLists, getWorkspaceWebviewConfig, isBypassWarningActive } from "./ClineProviderState"
+import { shouldRebuildTaskApiHandler } from "./ClineProviderProfiles"
 import { TaskStackManager } from "./TaskStackManager"
 import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
 import type { ClineMessage, TodoItem } from "@njust-ai-cj/types"
-import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore } from "../task-persistence"
+import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore, type ApiMessage } from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
@@ -194,7 +193,7 @@ export class ClineProvider
 
 		this.stack = new TaskStackManager({
 			outputChannel: this.outputChannel,
-			emit: (event, ...args) => this.emit(event as any, ...args) as boolean,
+			emit: (event, ...args) => EventEmitter.prototype.emit.call(this, event, ...args) as boolean,
 			getState: () => this.getState(),
 			getTaskWithId: (id) => this.getTaskWithId(id),
 			updateTaskHistory: (item, options) => this.updateTaskHistory(item, options),
@@ -205,7 +204,7 @@ export class ClineProvider
 
 		ClineProvider.activeInstances.add(this)
 
-		void this.updateGlobalState("codebaseIndexModels", EMBEDDING_MODEL_PROFILES)
+		void this.settingsManager.setGlobalValue("codebaseIndexModels", EMBEDDING_MODEL_PROFILES)
 
 		// Initialize the per-task file-based history store.
 		// The globalState write-through is debounced separately (not on every mutation)
@@ -710,7 +709,7 @@ export class ClineProvider
 			this.providerSettingsManager.getModeConfigId(mode),
 			this.providerSettingsManager.listConfig(),
 		])
-		await this.updateGlobalState("listApiConfigMeta", listApiConfig)
+		await this.settingsManager.setGlobalValue("listApiConfigMeta", listApiConfig)
 		if (!savedConfigId) {
 			return
 		}
@@ -734,7 +733,7 @@ export class ClineProvider
 
 	private async restoreTaskBoundProfile(apiConfigName: string): Promise<void> {
 		const listApiConfig = await this.providerSettingsManager.listConfig()
-		await this.updateGlobalState("listApiConfigMeta", listApiConfig)
+		await this.settingsManager.setGlobalValue("listApiConfigMeta", listApiConfig)
 		const profile = listApiConfig.find(({ name }) => name === apiConfigName)
 		if (!profile?.name) {
 			this.log(`Provider profile '${apiConfigName}' from history no longer exists. Using current configuration.`)
@@ -810,6 +809,14 @@ export class ClineProvider
 		await this.webviewRouter.postMessage(message)
 	}
 
+	public getGlobalState<K extends keyof GlobalState>(key: K): GlobalState[K] | undefined {
+		return this.contextProxy.getValue(key)
+	}
+
+	public updateGlobalState<K extends keyof GlobalState>(key: K, value: GlobalState[K]): Promise<void> {
+		return this.contextProxy.setValue(key, value)
+	}
+
 	/**
 	 * Handle switching to a new mode, including updating the associated API configuration
 	 * @param newMode The mode to switch to
@@ -817,7 +824,7 @@ export class ClineProvider
 	public async handleModeSwitch(newMode: Mode) {
 		await this.clearCangjieDiagnosticsIfNeeded(newMode)
 		await this.persistTaskModeSwitch(newMode)
-		await this.updateGlobalState("mode", newMode)
+		await this.settingsManager.setGlobalValue("mode", newMode)
 
 		this.emit(NJUST_AI_CJEventName.ModeChanged, newMode)
 
@@ -832,7 +839,7 @@ export class ClineProvider
 	}
 
 	private async clearCangjieDiagnosticsIfNeeded(newMode: Mode): Promise<void> {
-		const previousMode = (await this.getGlobalState("mode")) as Mode | undefined
+		const previousMode = (await this.settingsManager.getGlobalValue("mode")) as Mode | undefined
 		if (previousMode === "cangjie" && newMode !== "cangjie") {
 			cangjieDiagnosticModeSwitch.clearExtensionCangjieDiagnostics()
 		}
@@ -871,14 +878,14 @@ export class ClineProvider
 			this.providerSettingsManager.listConfig(),
 		])
 
-		await this.updateGlobalState("listApiConfigMeta", listApiConfig)
+		await this.settingsManager.setGlobalValue("listApiConfigMeta", listApiConfig)
 
 		if (savedConfigId) {
 			await this.activateModeSavedProfile(newMode, listApiConfig, savedConfigId)
 			return
 		}
 
-		const currentApiConfigNameAfter = this.getGlobalState("currentApiConfigName")
+		const currentApiConfigNameAfter = this.settingsManager.getGlobalValue("currentApiConfigName")
 		if (!currentApiConfigNameAfter) {
 			return
 		}
@@ -924,13 +931,7 @@ export class ClineProvider
 		const { forceRebuild = false } = options
 
 		// Determine if we need to rebuild using the previous configuration snapshot
-		const prevConfig = task.apiConfiguration
-		const prevProvider = prevConfig?.apiProvider
-		const prevModelId = prevConfig ? getModelId(prevConfig) : undefined
-		const newProvider = providerSettings.apiProvider
-		const newModelId = getModelId(providerSettings)
-
-		const needsRebuild = forceRebuild || prevProvider !== newProvider || prevModelId !== newModelId
+		const needsRebuild = shouldRebuildTaskApiHandler(task.apiConfiguration, providerSettings, forceRebuild)
 
 		if (needsRebuild) {
 			// Use updateApiConfiguration which handles both API handler rebuild and parser sync.
@@ -981,8 +982,8 @@ export class ClineProvider
 				// We should probably switch to that and verify that it works.
 				// I left the original implementation in just to be safe.
 				await Promise.all([
-					this.updateGlobalState("listApiConfigMeta", await this.providerSettingsManager.listConfig()),
-					this.updateGlobalState("currentApiConfigName", name),
+					this.settingsManager.setGlobalValue("listApiConfigMeta", await this.providerSettingsManager.listConfig()),
+					this.settingsManager.setGlobalValue("currentApiConfigName", name),
 					this.providerSettingsManager.setModeConfig(mode, id),
 					this.contextProxy.setProviderSettings(providerSettings),
 				])
@@ -994,7 +995,7 @@ export class ClineProvider
 				// Keep the current task's sticky provider profile in sync with the newly-activated profile.
 				await this.persistStickyProviderProfileToCurrentTask(name)
 			} else {
-				await this.updateGlobalState("listApiConfigMeta", await this.providerSettingsManager.listConfig())
+				await this.settingsManager.setGlobalValue("listApiConfigMeta", await this.providerSettingsManager.listConfig())
 			}
 
 			await this.postStateToWebview()
@@ -1055,7 +1056,8 @@ export class ClineProvider
 
 	private async persistCurrentTaskProfileName(taskId: string, apiConfigName: string): Promise<void> {
 		const taskHistoryItem =
-			this.taskHistoryStore.get(taskId) ?? (this.getGlobalState("taskHistory") ?? []).find((item) => item.id === taskId)
+			this.taskHistoryStore.get(taskId) ??
+			(this.getGlobalState("taskHistory") ?? []).find((item) => item.id === taskId)
 
 		if (taskHistoryItem) {
 			await this.updateTaskHistory({ ...taskHistoryItem, apiConfigName })
@@ -1103,7 +1105,7 @@ export class ClineProvider
 
 	async updateCustomInstructions(instructions?: string) {
 		// User may be clearing the field.
-		await this.updateGlobalState("customInstructions", instructions || undefined)
+		await this.settingsManager.setGlobalValue("customInstructions", instructions || undefined)
 		await this.postStateToWebview()
 	}
 
@@ -1255,17 +1257,9 @@ export class ClineProvider
 		await this.webviewRouter.postStateWithoutClineMessages()
 	}
 
-	private getMergedCommandLists(allowedCommands?: string[], deniedCommands?: string[]): { allowedCommands: string[]; deniedCommands: string[] } {
-		const workspaceConfig = vscode.workspace.getConfiguration(Package.name)
-		return {
-			allowedCommands: mergeAllowedCommands(allowedCommands, workspaceConfig.get<string[]>("allowedCommands") || []),
-			deniedCommands: mergeDeniedCommands(deniedCommands, workspaceConfig.get<string[]>("deniedCommands") || []),
-		}
-	}
-
 	async getStateToPostToWebview(): Promise<ExtensionState> {
 		const state = await this.getState()
-		const commandLists = this.getMergedCommandLists(state.allowedCommands, state.deniedCommands)
+		const commandLists = getMergedCommandLists(state.allowedCommands, state.deniedCommands)
 		return await this.buildWebviewState(state, commandLists)
 	}
 
@@ -1274,10 +1268,8 @@ export class ClineProvider
 		commandLists: { allowedCommands: string[]; deniedCommands: string[] },
 	): Promise<ExtensionState> {
 		const { allowedCommands, deniedCommands } = commandLists
-		const cloudOrganizations: any[] = []
-		const workspaceConfig = vscode.workspace.getConfiguration(Package.name)
-		const cloudAgentServerUrl = workspaceConfig.get<string>("cloudAgent.serverUrl", DEFAULT_CLOUD_AGENT_URL) ?? DEFAULT_CLOUD_AGENT_URL
-		const debug = workspaceConfig.get<boolean>("debug", false)
+		const cloudOrganizations: ExtensionState["cloudOrganizations"] = []
+		const workspaceWebviewConfig = getWorkspaceWebviewConfig()
 		const currentTask = this.getCurrentTask()
 
 		return {
@@ -1294,17 +1286,10 @@ export class ClineProvider
 			alwaysAllowModeSwitch: state.alwaysAllowModeSwitch ?? false,
 			alwaysAllowSubtasks: state.alwaysAllowSubtasks ?? false,
 			allowedMaxRequests: state.allowedMaxRequests,
-			bypassWarningActive: (state.autoApprovalEnabled ?? false) &&
-				(state.alwaysAllowExecute ?? false) &&
-				(state.alwaysAllowWrite ?? false) &&
-				(state.alwaysAllowWriteOutsideWorkspace ?? false) &&
-				(state.alwaysAllowWriteProtected ?? false) &&
-				(state.alwaysAllowReadOnly ?? false) &&
-				(state.alwaysAllowReadOnlyOutsideWorkspace ?? false) &&
-				(state.alwaysAllowMcp ?? false) &&
-				(state.alwaysAllowModeSwitch ?? false) &&
-				(state.alwaysAllowSubtasks ?? false) &&
-				!((this.getGlobalState("bypassWarningDismissedAt") ?? 0) || false),
+			bypassWarningActive: isBypassWarningActive(
+				state,
+				this.settingsManager.getGlobalValue("bypassWarningDismissedAt"),
+			),
 			allowedMaxCost: state.allowedMaxCost,
 			autoCondenseContext: state.autoCondenseContext ?? true,
 			autoCondenseContextPercent: state.autoCondenseContextPercent ?? DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
@@ -1392,7 +1377,7 @@ export class ClineProvider
 				codebaseIndexOpenRouterSpecificProvider: state.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
 			},
 			profileThresholds: state.profileThresholds ?? {},
-			hasOpenedModeSelector: this.getGlobalState("hasOpenedModeSelector") ?? false,
+			hasOpenedModeSelector: this.settingsManager.getGlobalValue("hasOpenedModeSelector") ?? false,
 			lockApiConfigAcrossModes: state.lockApiConfigAcrossModes ?? false,
 			alwaysAllowFollowupQuestions: state.alwaysAllowFollowupQuestions ?? false,
 			followupAutoApproveTimeoutMs: state.followupAutoApproveTimeoutMs ?? TIMING.FOLLOWUP_AUTO_APPROVE_TIMEOUT_MS,
@@ -1415,17 +1400,7 @@ export class ClineProvider
 				return false
 				}
 			})(),
-			cloudAgentServerUrl,
-			debug,
-			saveAllBeforeExecuteCommand: workspaceConfig.get<boolean>("saveAllBeforeExecuteCommand", true),
-			inlineCompletionEnabled: workspaceConfig.get<boolean>("inlineCompletion.enabled", true),
-			inlineCompletionTriggerDelayMs: workspaceConfig.get<number>("inlineCompletion.triggerDelayMs", 300),
-			inlineCompletionMaxLines: workspaceConfig.get<number>("inlineCompletion.maxLines", 10),
-			inlineCompletionEnableCangjieEnhanced: workspaceConfig.get<boolean>(
-				"inlineCompletion.enableCangjieEnhanced",
-				true,
-			),
-			inlineCompletionTriggerCommand: workspaceConfig.get<string>("inlineCompletion.triggerCommand", "alt+\\"),
+			...workspaceWebviewConfig,
 		}
 	}
 
@@ -1596,18 +1571,6 @@ export class ClineProvider
 
 	public async broadcastTaskHistoryUpdate(history?: HistoryItem[]): Promise<void> {
 		return this.taskHistory.broadcastTaskHistoryUpdate(history)
-	}
-
-	// ContextProxy
-
-	// @deprecated - Use `ContextProxy#setValue` instead.
-	private async updateGlobalState<K extends keyof GlobalState>(key: K, value: GlobalState[K]) {
-		await this.settingsManager.setGlobalValue(key, value)
-	}
-
-	// @deprecated - Use `ContextProxy#getValue` instead.
-	private getGlobalState<K extends keyof GlobalState>(key: K) {
-		return this.settingsManager.getGlobalValue(key)
 	}
 
 	public async setValue<K extends keyof NJUST_AI_CJSettings>(key: K, value: NJUST_AI_CJSettings[K]) {
@@ -2197,7 +2160,7 @@ export class ClineProvider
 		//    The mode switch must happen before createTask() because the Task constructor
 		//    initializes its mode from provider.getState() during initializeTaskMode().
 		try {
-			await this.handleModeSwitch(mode as any)
+			await this.handleModeSwitch(mode as Mode)
 		} catch (e) {
 			this.log(
 				`[delegateParentAndOpenChild] handleModeSwitch failed for mode '${mode}': ${
@@ -2217,7 +2180,7 @@ export class ClineProvider
 		// Without this, the child's fire-and-forget startTask() races with step 5,
 		// and the last writer to globalState overwrites the other's changes—
 		// causing the parent's delegation fields to be lost.
-		const child = await this.createTask(message, undefined, parent as any, {
+		const child = await this.createTask(message, undefined, parent, {
 			initialTodos,
 			initialStatus: "active",
 			startTask: false,
@@ -2314,12 +2277,12 @@ export class ClineProvider
 			parentClineMessages = []
 		}
 
-		let parentApiMessages: any[] = []
+		let parentApiMessages: ApiMessage[] = []
 		try {
 			parentApiMessages = (await readApiMessages({
 				taskId: parentTaskId,
 				globalStoragePath,
-			})) as any[]
+			}))
 		} catch (error) {
 			logger.debug("ClineProvider", "Failed to read parent api messages", error)
 			parentApiMessages = []
@@ -2346,6 +2309,7 @@ export class ClineProvider
 		let toolUseId: string | undefined
 		for (let i = parentApiMessages.length - 1; i >= 0; i--) {
 			const msg = parentApiMessages[i]
+			if (!msg) continue
 			if (msg.role === "assistant" && Array.isArray(msg.content)) {
 				for (const block of msg.content) {
 					if (block.type === "tool_use" && block.name === "new_task") {
@@ -2414,7 +2378,7 @@ export class ClineProvider
 			})
 		}
 
-		await saveApiMessages({ messages: parentApiMessages as any, taskId: parentTaskId, globalStoragePath })
+		await saveApiMessages({ messages: parentApiMessages, taskId: parentTaskId, globalStoragePath })
 
 		// 3) Close child instance if still open (single-open-task invariant).
 		//    This MUST happen BEFORE updating the child's status to "completed" because
@@ -2476,7 +2440,7 @@ export class ClineProvider
 				logger.warn("ClineProvider", "overwriteClineMessages failed", error)
 			}
 			try {
-				await parentInstance.overwriteApiConversationHistory(parentApiMessages as any)
+				await parentInstance.overwriteApiConversationHistory(parentApiMessages)
 			} catch (error) {
 				// non-fatal
 				logger.warn("ClineProvider", "overwriteApiConversationHistory failed", error)

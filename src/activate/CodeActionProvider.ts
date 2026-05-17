@@ -43,7 +43,7 @@ export class CodeActionProvider implements vscode.CodeActionProvider {
 		title: string,
 		kind: vscode.CodeActionKind,
 		command: CodeActionId,
-		args: any[],
+		args: UnsafeAny[],
 	): vscode.CodeAction {
 		const action = new vscode.CodeAction(title, kind)
 		action.command = { command: getCodeActionCommand(command), title, arguments: args }

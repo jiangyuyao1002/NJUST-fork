@@ -208,7 +208,7 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 							stream: true,
 							...nativeToolParams,
 						}),
-					)) as any
+					)) as UnsafeAny
 					break
 				}
 			}

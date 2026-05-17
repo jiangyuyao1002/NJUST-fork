@@ -23,7 +23,7 @@ const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActio
 			let selectedText: string
 			let startLine: number | undefined
 			let endLine: number | undefined
-			let diagnostics: any[] | undefined
+			let diagnostics: UnsafeAny[] | undefined
 
 			if (args.length > 1) {
 				// Called from code action.

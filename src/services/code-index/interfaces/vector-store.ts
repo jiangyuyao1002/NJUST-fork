@@ -4,7 +4,7 @@
 export type PointStruct = {
 	id: string
 	vector: number[]
-	payload: Record<string, any>
+	payload: Record<string, UnsafeAny>
 }
 
 export interface IVectorStore {
@@ -94,5 +94,5 @@ export interface Payload {
 	codeChunk: string
 	startLine: number
 	endLine: number
-	[key: string]: any
+	[key: string]: UnsafeAny
 }

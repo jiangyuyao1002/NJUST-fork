@@ -42,7 +42,7 @@ async function getVscodeModule(): Promise<typeof import("vscode") | undefined> {
 /**
  * Format a vscode.Location (or LocationLink) array into readable text.
  */
-function formatLocations(locations: any[], cwd: string): string {
+function formatLocations(locations: UnsafeAny[], cwd: string): string {
 	if (!locations || locations.length === 0) {
 		return "No results found."
 	}
@@ -67,7 +67,7 @@ function formatLocations(locations: any[], cwd: string): string {
 /**
  * Format hover results into readable text.
  */
-function formatHoverResults(hovers: any[]): string {
+function formatHoverResults(hovers: UnsafeAny[]): string {
 	if (!hovers || hovers.length === 0) {
 		return "No hover information available."
 	}
@@ -90,7 +90,7 @@ function formatHoverResults(hovers: any[]): string {
 /**
  * Format workspace symbol results into readable text.
  */
-function formatSymbolResults(symbols: any[], cwd: string): string {
+function formatSymbolResults(symbols: UnsafeAny[], cwd: string): string {
 	if (!symbols || symbols.length === 0) {
 		return "No symbols found."
 	}
@@ -235,7 +235,7 @@ export class LSPTool extends BaseTool<"lsp"> {
 			if (action === "symbols") {
 				// Workspace symbol search doesn't need a document/position
 				const command = ACTION_COMMAND_MAP[action]
-				const results = await vscode.commands.executeCommand<any[]>(command, symbolName)
+				const results = await vscode.commands.executeCommand<UnsafeAny[]>(command, symbolName)
 				resultText = formatSymbolResults(results, task.cwd)
 				if (task.taskMode === "cangjie" && symbolName && resultText !== "No symbols found.") {
 					task.cangjieRuntimePolicy.noteLspEvidence("symbols", symbolName, resultText.slice(0, 1000))
@@ -248,7 +248,7 @@ export class LSPTool extends BaseTool<"lsp"> {
 				const position = new vscode.Position((line ?? 1) - 1, (character ?? 1) - 1)
 
 				const command = ACTION_COMMAND_MAP[action]
-				const results = await vscode.commands.executeCommand<any[]>(command, document.uri, position)
+				const results = await vscode.commands.executeCommand<UnsafeAny[]>(command, document.uri, position)
 
 				if (action === "hover") {
 					resultText = formatHoverResults(results)

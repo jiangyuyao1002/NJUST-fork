@@ -63,21 +63,21 @@ export class SendMessageTool extends BaseTool<"send_message"> {
 			}
 
 			// Find the target task in the provider's task stack
-			const targetTask = (provider as any).findTaskInStack(targetTaskId) as Task | undefined
+			const targetTask = (provider as Record<string, UnsafeAny>).findTaskInStack(targetTaskId) as Task | undefined
 
 			if (!targetTask) {
 				pushToolResult(
 					formatResponse.toolError(
 						`Target task "${targetTaskId}" not found in the active task stack. ` +
 							`The task may have already completed or does not exist. ` +
-							`Active tasks: ${(provider as any).getCurrentTaskStack().join(", ")}`,
+							`Active tasks: ${(provider as Record<string, UnsafeAny>).getCurrentTaskStack().join(", ")}`,
 					),
 				)
 				return
 			}
 
 			// Check if target task is aborted or abandoned
-			if (targetTask.abort || (targetTask as any).abandoned) {
+			if (targetTask.abort || (targetTask as Record<string, UnsafeAny>).abandoned) {
 				pushToolResult(
 					formatResponse.toolError(
 						`Target task "${targetTaskId}" has already been completed or aborted. Cannot send messages to it.`,

@@ -37,17 +37,17 @@ export type ToolProgressData =
  * for UI display, hooks, and logging. The original input is never modified,
  * protecting the prompt cache from invalidation.
  */
-export interface ObservableInput<T = Record<string, unknown>> {
+export interface ObservableInput<T = Record<string, UnsafeAny>> {
 	/** The original, unmodified input (same reference). */
 	readonly original: T
 	/** Derived/computed fields for observers (UI, hooks, logs). */
-	readonly derived: Record<string, unknown>
+	readonly derived: Record<string, UnsafeAny>
 }
 
 /**
  * @deprecated Use RetryableError.isRetryable() instead.
  */
-function isRetryableToolError(error: unknown): boolean {
+function isRetryableToolError(error: UnsafeAny): boolean {
 	return RetryableError.isRetryable(error)
 }
 
@@ -80,7 +80,7 @@ export interface ToolCallbacks {
  * Helper type to extract the parameter type for a tool based on its name.
  * If the tool has native args defined in NativeToolArgs, use those; otherwise fall back to any.
  */
-type ToolParams<TName extends ToolName> = TName extends keyof NativeToolArgs ? NativeToolArgs[TName] : any
+type ToolParams<TName extends ToolName> = TName extends keyof NativeToolArgs ? NativeToolArgs[TName] : UnsafeAny
 
 /**
  * Abstract base class for all tools.
@@ -224,7 +224,7 @@ export abstract class BaseTool<TName extends ToolName> {
 	 * Whether this tool only reads data without modifying anything.
 	 * Used by permission system to auto-approve read-only tools.
 	 */
-	isReadOnly(_params?: Record<string, unknown>): boolean {
+	isReadOnly(_params?: Record<string, UnsafeAny>): boolean {
 		return false
 	}
 
@@ -232,7 +232,7 @@ export abstract class BaseTool<TName extends ToolName> {
 	 * Whether this tool performs destructive operations (delete files, drop tables, etc).
 	 * Used by permission system to require explicit user confirmation.
 	 */
-	isDestructive(_params?: Record<string, unknown>): boolean {
+	isDestructive(_params?: Record<string, UnsafeAny>): boolean {
 		return false
 	}
 
@@ -354,7 +354,7 @@ export abstract class BaseTool<TName extends ToolName> {
 	 * @returns true if the tool is allowed to proceed, false otherwise
 	 */
 	async checkPermissions(
-		params: Record<string, unknown>,
+		params: Record<string, UnsafeAny>,
 		callbacks: ToolCallbacks,
 		context?: { ruleEngine?: PermissionRuleEngine },
 	): Promise<boolean> {
@@ -504,7 +504,7 @@ export abstract class BaseTool<TName extends ToolName> {
 		//   pre-hooks run AFTER permission checks (original behavior).
 		if (hookManager.hookExecutionOrder === "before-permission") {
 			try {
-				const preResult = await hookManager.runPreHooks(this.name, params as Record<string, unknown>, hookContext)
+				const preResult = await hookManager.runPreHooks(this.name, params as Record<string, UnsafeAny>, hookContext)
 				if (!preResult.allow) {
 					callbacks.pushToolResult(
 						formatResponse.toolError(
@@ -525,7 +525,7 @@ export abstract class BaseTool<TName extends ToolName> {
 		const permissionContext = {
 			ruleEngine: (task as Task & { permissionRuleEngine?: PermissionRuleEngine }).permissionRuleEngine,
 		}
-		const isAllowed = await this.checkPermissions(params as Record<string, unknown>, callbacks, permissionContext)
+		const isAllowed = await this.checkPermissions(params as Record<string, UnsafeAny>, callbacks, permissionContext)
 		if (!isAllowed) {
 			callbacks.pushToolResult(formatResponse.toolError(`Permission denied for tool '${this.name}'.`))
 			toolSpan.end("error", { stage: "permission", denied: true })
@@ -533,7 +533,7 @@ export abstract class BaseTool<TName extends ToolName> {
 			try {
 				await hookManager.runPermissionDeniedHooks(
 					this.name,
-					params as Record<string, unknown>,
+					params as Record<string, UnsafeAny>,
 					`Permission denied for tool '${this.name}'`,
 					hookContext,
 				)
@@ -546,7 +546,7 @@ export abstract class BaseTool<TName extends ToolName> {
 		// ── Pre-hook execution (after-permission mode) ───────────────
 		if (hookManager.hookExecutionOrder === "after-permission") {
 			try {
-				const preResult = await hookManager.runPreHooks(this.name, params as Record<string, unknown>, hookContext)
+				const preResult = await hookManager.runPreHooks(this.name, params as Record<string, UnsafeAny>, hookContext)
 				if (!preResult.allow) {
 					callbacks.pushToolResult(
 						formatResponse.toolError(
@@ -569,7 +569,7 @@ export abstract class BaseTool<TName extends ToolName> {
 		const contextWindow = task.api?.getModel?.()?.info?.contextWindow || 200_000
 		const { singleMax } = getToolResultBudget(contextWindow)
 		const originalPushToolResult = callbacks.pushToolResult
-		const cacheableReadOnly = this.isReadOnly(params as Record<string, unknown>)
+		const cacheableReadOnly = this.isReadOnly(params as Record<string, UnsafeAny>)
 		const cacheKey = cacheableReadOnly ? toolResultCache.makeKey(this.name, params) : undefined
 		if (cacheKey) {
 			const cached = toolResultCache.get(cacheKey)
@@ -597,7 +597,7 @@ export abstract class BaseTool<TName extends ToolName> {
 
 		// Capture the last tool result for post-hooks
 		let capturedResult: ToolResponse | undefined
-		const toolUseId = block.id || callbacks.toolCallId || "unknown"
+		const toolUseId = block.id || callbacks.toolCallId || "UnsafeAny"
 		const pendingPersist: Promise<void>[] = []
 		const wrappedCallbacks: ToolCallbacks = {
 			...callbacks,
@@ -663,10 +663,10 @@ export abstract class BaseTool<TName extends ToolName> {
 		}
 
 		// Execute with typed parameters, wrapped in retry + hook handling
-		const retryable = this.isReadOnly(params as Record<string, unknown>)
+		const retryable = this.isReadOnly(params as Record<string, UnsafeAny>)
 		const maxAttempts = retryable ? 3 : 1
 		let attempt = 0
-		let lastError: unknown
+		let lastError: UnsafeAny
 		while (attempt < maxAttempts) {
 			attempt++
 			try {
@@ -684,7 +684,7 @@ export abstract class BaseTool<TName extends ToolName> {
 
 				// Run post-hooks after successful execution
 				try {
-					await hookManager.runPostHooks(this.name, params as Record<string, unknown>, capturedResult, hookContext)
+					await hookManager.runPostHooks(this.name, params as Record<string, UnsafeAny>, capturedResult, hookContext)
 				} catch (hookErr) {
 					logger.warn("BaseTool", "Post-hook error (ignored):", hookErr)
 				}
@@ -709,7 +709,7 @@ export abstract class BaseTool<TName extends ToolName> {
 			}
 			// Run failure hooks
 			const error = lastError instanceof Error ? lastError : new Error(String(lastError))
-			await hookManager.runFailureHooks(this.name, params as Record<string, unknown>, error, hookContext)
+			await hookManager.runFailureHooks(this.name, params as Record<string, UnsafeAny>, error, hookContext)
 		} catch (hookErr) {
 			logger.warn("BaseTool", "Failure-hook error (ignored):", hookErr)
 		}

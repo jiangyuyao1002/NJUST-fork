@@ -5,7 +5,7 @@ import i18next from "i18next"
 import { logger } from "../shared/logger"
 
 // Build translations object
-const translations: Record<string, Record<string, any>> = {}
+const translations: Record<string, Record<string, UnsafeAny>> = {}
 
 // Determine if running in test environment
 const isTestEnv = process.env.NODE_ENV === "test"

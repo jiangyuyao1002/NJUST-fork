@@ -3,15 +3,29 @@
  * Used by openai-codex and openai-native to normalize JSON schemas.
  */
 
-export function ensureAllRequired(schema: any): any {
-	const getPrimaryType = (value: any): string | undefined =>
-		Array.isArray(value?.type) ? value.type.find((t: string) => t !== "null") : value?.type
+type JsonSchema = Record<string, UnsafeAny> & {
+	type?: string | string[]
+	required?: string[]
+	additionalProperties?: boolean
+	properties?: Record<string, JsonSchema>
+	items?: JsonSchema
+}
 
-	if (!schema || typeof schema !== "object" || getPrimaryType(schema) !== "object") {
+function isSchema(value: UnsafeAny): value is JsonSchema {
+	return typeof value === "object" && value !== null
+}
+
+export function ensureAllRequired(schema: UnsafeAny): UnsafeAny {
+	const getPrimaryType = (value: UnsafeAny): string | undefined =>
+		isSchema(value)
+			? Array.isArray(value.type) ? value.type.find((t) => t !== "null") : value.type
+			: undefined
+
+	if (!isSchema(schema) || getPrimaryType(schema) !== "object") {
 		return schema
 	}
 
-	const result = { ...schema }
+	const result: JsonSchema = { ...schema }
 	const originallyRequired = new Set(Array.isArray(schema.required) ? schema.required : [])
 	if (result.additionalProperties !== false) {
 		result.additionalProperties = false
@@ -21,7 +35,7 @@ export function ensureAllRequired(schema: any): any {
 		const allKeys = Object.keys(result.properties)
 		result.required = allKeys
 
-		const newProps = { ...result.properties }
+		const newProps: Record<string, JsonSchema> = { ...result.properties }
 		for (const key of allKeys) {
 			const prop = newProps[key]
 			if (prop && !originallyRequired.has(key)) {
@@ -31,6 +45,9 @@ export function ensureAllRequired(schema: any): any {
 				}
 			}
 			const normalizedProp = newProps[key]
+			if (!normalizedProp) {
+				continue
+			}
 			const primaryType = getPrimaryType(normalizedProp)
 			if (primaryType === "object") {
 				newProps[key] = ensureAllRequired(normalizedProp)
@@ -47,18 +64,18 @@ export function ensureAllRequired(schema: any): any {
 	return result
 }
 
-export function ensureAdditionalPropertiesFalse(schema: any): any {
-	if (!schema || typeof schema !== "object" || schema.type !== "object") {
+export function ensureAdditionalPropertiesFalse(schema: UnsafeAny): UnsafeAny {
+	if (!isSchema(schema) || schema.type !== "object") {
 		return schema
 	}
 
-	const result = { ...schema }
+	const result: JsonSchema = { ...schema }
 	if (result.additionalProperties !== false) {
 		result.additionalProperties = false
 	}
 
 	if (result.properties) {
-		const newProps = { ...result.properties }
+		const newProps: Record<string, JsonSchema> = { ...result.properties }
 		for (const key of Object.keys(result.properties)) {
 			const prop = newProps[key]
 			if (prop && prop.type === "object") {

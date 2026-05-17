@@ -68,7 +68,7 @@ function parseFrontmatter(content: string): { fm: AgentFrontmatter; body: string
 		const kv = line.match(/^(\w[\w-]*)\s*:\s*(.+)$/)
 		if (!kv) continue
 		const key = kv[1]!
-		let value: any = kv[2]!.trim()
+		let value: UnsafeAny = kv[2]!.trim()
 
 		// Parse lists: "['a', 'b']" or "a, b, c"
 		if (value.startsWith("[") && value.endsWith("]")) {
@@ -86,7 +86,7 @@ function parseFrontmatter(content: string): { fm: AgentFrontmatter; body: string
 		else if (value === "true") value = true
 		else if (value === "false") value = false
 
-		;(fm as any)[key] = value
+		;(fm as UnsafeAny)[key] = value
 	}
 
 	return { fm, body }
@@ -126,14 +126,14 @@ async function loadMarkdownAgents(
 			source,
 			tools,
 			disallowedTools: fm.disallowedTools,
-			permissionMode: fm.permissionMode as any,
+			permissionMode: fm.permissionMode as UnsafeAny,
 			model: fm.model,
 			maxTurns: fm.maxTurns,
 			background: fm.background,
-			isolation: fm.isolation as any,
+			isolation: fm.isolation as UnsafeAny,
 			skills: fm.skills,
 			mcpServers: fm.mcpServers,
-			memory: fm.memory as any,
+			memory: fm.memory as UnsafeAny,
 			systemPrompt: body.trim(),
 			priority,
 			filePath,

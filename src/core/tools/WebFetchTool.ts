@@ -106,7 +106,7 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 				maxBodyLength: MAX_BODY_BYTES,
 				// Validate each redirect target through the same SSRF guard as the initial URL
 				beforeRedirect: async (_options, responseHeaders) => {
-					const location = (responseHeaders as any)?.location
+					const location = (responseHeaders as Record<string, UnsafeAny>)?.location
 					if (location && typeof location === "string") {
 						await assertSafeOutboundUrl(location)
 					}

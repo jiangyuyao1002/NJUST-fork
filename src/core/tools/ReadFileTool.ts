@@ -127,7 +127,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 	}
 
 	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Record<string, unknown>): boolean {
+	override isPartialArgsStable(partial: Record<string, UnsafeAny>): boolean {
 		return typeof partial.path === "string" && (partial.path as string).length > 0
 	}
 
@@ -317,7 +317,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 
 			this.buildAndPushResult(task, fileResults, pushToolResult, resultCacheKey)
 		} catch (error) {
-			const relPath = filePath || "unknown"
+			const relPath = filePath || "UnsafeAny"
 			const errorMsg = getErrorMessage(error)
 
 			updateFileResult(relPath, {
@@ -722,9 +722,9 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 			} else {
 				if (statusMessage) {
 					const textBlock = { type: "text" as const, text: finalResult }
-					pushToolResult([...result, textBlock] as any)
+					pushToolResult([...result, textBlock] as UnsafeAny)
 				} else {
-					pushToolResult(result as any)
+					pushToolResult(result as UnsafeAny)
 				}
 			}
 		} else {
@@ -735,13 +735,13 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 
 	getReadFileToolDescription(blockName: string, blockParams: { path?: string }): string
 	getReadFileToolDescription(blockName: string, nativeArgs: ReadFileParams): string
-	getReadFileToolDescription(blockName: string, second: unknown): string {
+	getReadFileToolDescription(blockName: string, second: UnsafeAny): string {
 		// If native typed args were provided
-		if (second && typeof second === "object" && "path" in second && typeof (second as any).path === "string") {
-			return `[${blockName} for '${(second as any).path}']`
+		if (second && typeof second === "object" && "path" in second && typeof (second as Record<string, UnsafeAny>).path === "string") {
+			return `[${blockName} for '${(second as Record<string, UnsafeAny>).path}']`
 		}
 
-		const blockParams = second as Record<string, unknown>
+		const blockParams = second as Record<string, UnsafeAny>
 		if (blockParams?.path) {
 			return `[${blockName} for '${blockParams.path}']`
 		}

@@ -221,10 +221,10 @@ export class FileWatcher implements IFileWatcher {
 						currentFile: path,
 					})
 				}
-			} catch (error: unknown) {
+			} catch (error: UnsafeAny) {
 				const _errorMessage = getErrorMessage(error)
-				const err = error as Record<string, unknown>
-				const response = err.response as Record<string, unknown> | undefined
+				const err = error as Record<string, UnsafeAny>
+				const response = err.response as Record<string, UnsafeAny> | undefined
 				const _errorStatus = err.status || response?.status || err.statusCode
 
 				// Mark all paths as error
@@ -317,7 +317,7 @@ export class FileWatcher implements IFileWatcher {
 					}
 				} else {
 					const error = settledResult.reason as Error
-					const rejectedPath = (settledResult.reason as any)?.path || "unknown"
+					const rejectedPath = (settledResult.reason as Record<string, UnsafeAny>)?.path || "UnsafeAny"
 					logger.error("FileWatcher", "A file processing promise was rejected:", settledResult.reason)
 					batchResults.push({
 						path: rejectedPath,

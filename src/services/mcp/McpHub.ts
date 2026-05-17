@@ -215,7 +215,7 @@ export class McpHub implements IMcpHubService {
 	 * @returns The validated configuration
 	 * @throws Error if the configuration is invalid
 	 */
-	private validateServerConfig(config: any, serverName?: string): z.infer<typeof ServerConfigSchema> {
+	private validateServerConfig(config: UnsafeAny, serverName?: string): z.infer<typeof ServerConfigSchema> {
 		// Detect configuration issues before validation
 		const hasStdioFields = config.command !== undefined
 		const hasUrlFields = config.url !== undefined // Covers sse and streamable-http
@@ -280,7 +280,7 @@ export class McpHub implements IMcpHubService {
 	 * @param message The error message prefix
 	 * @param error The error object
 	 */
-	private showErrorMessage(message: string, error: unknown): void {
+	private showErrorMessage(message: string, error: UnsafeAny): void {
 		logger.error("McpHub", `${message}:`, error)
 	}
 
@@ -327,7 +327,7 @@ export class McpHub implements IMcpHubService {
 	private async handleConfigFileChange(filePath: string, source: "global" | "project"): Promise<void> {
 		try {
 			const content = await fs.readFile(filePath, "utf-8")
-			let config: any
+			let config: UnsafeAny
 
 			try {
 				config = JSON.parse(content)
@@ -413,7 +413,7 @@ export class McpHub implements IMcpHubService {
 			if (!projectMcpPath) return
 
 			const content = await fs.readFile(projectMcpPath, "utf-8")
-			let config: any
+			let config: UnsafeAny
 
 			try {
 				config = JSON.parse(content)
@@ -778,7 +778,7 @@ export class McpHub implements IMcpHubService {
 				// As a workaround, we start the transport ourselves, and then monkey-patch the start method to no-op so that .connect() doesn't try to start it again.
 				await transport.start()
 				// Prevent the child process from blocking VS Code exit.
-				const childProcess = (transport as any).process
+				const childProcess = (transport as Record<string, UnsafeAny>).process
 				if (childProcess && typeof childProcess.unref === "function") {
 					childProcess.unref()
 					childProcess.on("exit", (code: number | null, signal: string | null) => {
@@ -889,7 +889,7 @@ export class McpHub implements IMcpHubService {
 				}
 			} else {
 				// Should not happen if validateServerConfig is correct
-				throw new Error(`Unsupported MCP server type: ${(configInjected as any).type}`)
+				throw new Error(`Unsupported MCP server type: ${(configInjected as Record<string, UnsafeAny>).type}`)
 			}
 
 			// Only override transport.start for stdio transports that have already been started
@@ -1036,7 +1036,7 @@ export class McpHub implements IMcpHubService {
 
 			// Read from the appropriate config file based on the actual source
 			try {
-				let serverConfigData: Record<string, any> = {}
+				let serverConfigData: Record<string, UnsafeAny> = {}
 				if (actualSource === "project") {
 					// Get project MCP config path
 					const projectMcpPath = await this.getProjectMcpPath()
@@ -1222,7 +1222,7 @@ export class McpHub implements IMcpHubService {
 	}
 
 	async updateServerConnections(
-		newServers: Record<string, any>,
+		newServers: Record<string, UnsafeAny>,
 		source: "global" | "project" = "global",
 		manageConnectingState: boolean = true,
 	): Promise<void> {
@@ -1434,7 +1434,7 @@ export class McpHub implements IMcpHubService {
 
 		try {
 			const globalPath = await this.getMcpSettingsFilePath()
-			let _globalServers: Record<string, any> = {}
+			let _globalServers: Record<string, UnsafeAny> = {}
 			try {
 				const globalContent = await fs.readFile(globalPath, "utf-8")
 				const globalConfig = JSON.parse(globalContent)
@@ -1444,7 +1444,7 @@ export class McpHub implements IMcpHubService {
 			}
 
 			const projectPath = await this.getProjectMcpPath()
-			let _projectServers: Record<string, any> = {}
+			let _projectServers: Record<string, UnsafeAny> = {}
 			if (projectPath) {
 				try {
 					const projectContent = await fs.readFile(projectPath, "utf-8")
@@ -1650,7 +1650,7 @@ export class McpHub implements IMcpHubService {
 	 */
 	private async updateServerConfig(
 		serverName: string,
-		configUpdate: Record<string, any>,
+		configUpdate: Record<string, UnsafeAny>,
 		source: "global" | "project" = "global",
 	): Promise<void> {
 		// Determine which config file to update
@@ -1836,7 +1836,7 @@ export class McpHub implements IMcpHubService {
 	async callTool(
 		serverName: string,
 		toolName: string,
-		toolArguments?: Record<string, unknown>,
+		toolArguments?: Record<string, UnsafeAny>,
 		source?: "global" | "project",
 	): Promise<McpToolCallResponse> {
 		const connection = this.findConnection(serverName, source)
@@ -1862,7 +1862,7 @@ export class McpHub implements IMcpHubService {
 		// Validate arguments are JSON-serializable before passing to RPC layer.
 		// Circular references, Functions, Symbols, and BigInt values cause
 		// JSON.stringify to throw, which would crash the caller uncaught.
-		let safeArguments: Record<string, unknown> | undefined
+		let safeArguments: Record<string, UnsafeAny> | undefined
 		if (toolArguments !== undefined) {
 			try {
 				safeArguments = JSON.parse(JSON.stringify(toolArguments))

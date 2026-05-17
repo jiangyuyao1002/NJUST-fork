@@ -11,7 +11,7 @@ import type { ForkedContextConfig } from "../task/SubTaskOptions"
 import { TIMING } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
 
-type ApiMessage = { role: string; content: any; ts?: number }
+type ApiMessage = { role: string; content: UnsafeAny; ts?: number }
 
 interface SubtaskResult {
 	agentId: string
@@ -245,7 +245,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 				? `${contextPrefix}\n\nTask:\n${spec.message}`
 				: spec.message
 
-			await this.provider.handleModeSwitch(spec.mode as any)
+			await this.provider.handleModeSwitch(spec.mode as UnsafeAny)
 			const task = await this.provider.createTask(fullMessage)
 
 			agent.taskId = task.taskId
@@ -290,7 +290,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 		}
 	}
 
-	private waitForCompletion(task: any): Promise<string> {
+	private waitForCompletion(task: UnsafeAny): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error("Agent task timed out after 10 minutes"))
@@ -312,7 +312,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 						clearTimeout(timeout)
 
 						const errorMsg = messages.find(
-							(m: any) => m.type === "say" && m.say === "error",
+							(m: UnsafeAny) => m.type === "say" && m.say === "error",
 						)
 						if (errorMsg) {
 							reject(new Error(errorMsg.text || "Task failed"))
@@ -384,7 +384,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 	async cancelAgent(agentId: string): Promise<void> {
 		const task = this.activeTasks.get(agentId)
 		if (task) {
-			await (task as any).abortTask?.()
+			await (task as Record<string, UnsafeAny>).abortTask?.()
 			this.activeTasks.delete(agentId)
 		}
 

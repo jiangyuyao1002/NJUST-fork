@@ -14,6 +14,16 @@ import i18n from "../../../i18n/setup"
 import { logger } from "../../../shared/logger"
 import { redactApiSecrets } from "../../../utils/redactApiSecrets"
 
+type ProviderErrorLike = Error & {
+	error?: { metadata?: { raw?: UnsafeAny } }
+	status?: number
+	errorDetails?: UnsafeAny
+	code?: string
+	$metadata?: UnsafeAny
+	headers?: UnsafeAny
+	retryAfter?: number
+}
+
 /**
  * Handles API provider errors and transforms them into user-friendly messages
  * while preserving important metadata for retry logic and UI display.
@@ -38,7 +48,7 @@ import { redactApiSecrets } from "../../../utils/redactApiSecrets"
  * }
  */
 export function handleProviderError(
-	error: unknown,
+	error: UnsafeAny,
 	providerName: string,
 	options?: {
 		/** Custom message prefix (default: "completion") */
@@ -50,7 +60,7 @@ export function handleProviderError(
 	const messagePrefix = options?.messagePrefix || "completion"
 
 	if (error instanceof Error) {
-		const anyErr = error as any
+		const anyErr = error as ProviderErrorLike
 		const rawMsg = anyErr?.error?.metadata?.raw || error.message || ""
 		const msg = redactApiSecrets(String(rawMsg))
 
@@ -95,10 +105,10 @@ export function handleProviderError(
 		}
 		// Preserve headers / retryAfter so ApiRetryExecutor can honour Retry-After
 		if (anyErr.headers !== undefined) {
-			;(wrapped as any).headers = anyErr.headers
+			;(wrapped as ApiProviderError & { headers?: UnsafeAny }).headers = anyErr.headers
 		}
 		if (typeof anyErr.retryAfter === "number") {
-			;(wrapped as any).retryAfter = anyErr.retryAfter
+			;(wrapped as ApiProviderError & { retryAfter?: number }).retryAfter = anyErr.retryAfter
 		}
 
 		return wrapped
@@ -111,7 +121,7 @@ export function handleProviderError(
 	)
 
 	// Also try to preserve status for non-Error exceptions (e.g., plain objects with status)
-	const anyErr = error as any
+	const anyErr = error as { status?: UnsafeAny }
 	if (typeof anyErr?.status === "number") {
 		wrapped.status = anyErr.status
 	}
@@ -123,6 +133,6 @@ export function handleProviderError(
  * Specialized handler for OpenAI-compatible providers
  * Re-exports with OpenAI-specific defaults for backward compatibility
  */
-export function handleOpenAIError(error: unknown, providerName: string): ApiProviderError {
+export function handleOpenAIError(error: UnsafeAny, providerName: string): ApiProviderError {
 	return handleProviderError(error, providerName, { messagePrefix: "completion" })
 }

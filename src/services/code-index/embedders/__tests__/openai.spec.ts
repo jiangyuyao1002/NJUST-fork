@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import type { MockedClass, MockedFunction } from "vitest"
 import { OpenAI } from "openai"
 

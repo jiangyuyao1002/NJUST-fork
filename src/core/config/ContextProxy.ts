@@ -257,7 +257,7 @@ export class ContextProxy {
 	}
 
 	/**
-	 * Migrates unknown apiProvider values by clearing them from storage.
+	 * Migrates UnsafeAny apiProvider values by clearing them from storage.
 	 * Retired providers are preserved so users can keep historical configuration.
 	 */
 	private async migrateInvalidApiProvider() {
@@ -285,7 +285,7 @@ export class ContextProxy {
 	private async migrateImageGenerationSettings() {
 		try {
 			// Check if there's an old nested structure
-			const oldNestedSettings = this.originalContext.globalState.get<any>("openRouterImageGenerationSettings")
+			const oldNestedSettings = this.originalContext.globalState.get<UnsafeAny>("openRouterImageGenerationSettings")
 
 			if (oldNestedSettings && typeof oldNestedSettings === "object") {
 				logger.info("Migrating old nested image generation settings to flattened structure")
@@ -475,7 +475,7 @@ export class ContextProxy {
 	}
 
 	/**
-	 * Sanitizes provider values by resetting unknown apiProvider values.
+	 * Sanitizes provider values by resetting UnsafeAny apiProvider values.
 	 * Active and retired providers are preserved.
 	 */
 	private sanitizeProviderValues(values: NJUST_AI_CJSettings): NJUST_AI_CJSettings {
@@ -486,7 +486,7 @@ export class ContextProxy {
 		let sanitizedValues = values
 		for (const key of legacyKeys) {
 			if (key in sanitizedValues) {
-				const copy = { ...sanitizedValues } as Record<string, unknown>
+				const copy = { ...sanitizedValues } as Record<string, UnsafeAny>
 				delete copy[key as string]
 				sanitizedValues = copy as NJUST_AI_CJSettings
 			}
@@ -554,7 +554,7 @@ export class ContextProxy {
 	}
 
 	public async setValues(values: NJUST_AI_CJSettings) {
-		const entries = Object.entries(values) as [NJUST_AI_CJSettingsKey, unknown][]
+		const entries = Object.entries(values) as [NJUST_AI_CJSettingsKey, UnsafeAny][]
 		const results = await Promise.allSettled(entries.map(([key, value]) => this.setValue(key, value)))
 		for (const [index, result] of results.entries()) {
 			if (result.status === "rejected") {

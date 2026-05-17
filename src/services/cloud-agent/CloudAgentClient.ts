@@ -21,7 +21,7 @@ const CLOUD_AGENT_RETRY_OPTIONS: Partial<ApiRetryOptions> = {
 	jitterRatio: 0.15,
 }
 
-function shouldRetryCloudAgent(error: unknown, _attempt: number): { retry: boolean; retryAfterSeconds?: number } {
+function shouldRetryCloudAgent(error: UnsafeAny, _attempt: number): { retry: boolean; retryAfterSeconds?: number } {
 	if (error instanceof Error && (error.name === "AbortError" || /aborted/i.test(error.message))) {
 		return { retry: false }
 	}
@@ -30,16 +30,16 @@ function shouldRetryCloudAgent(error: unknown, _attempt: number): { retry: boole
 }
 
 /** Undici/Node often surfaces low-level failures as `fetch failed` with details on `error.cause`. */
-function enrichFetchError(error: unknown): Error {
+function enrichFetchError(error: UnsafeAny): Error {
 	if (!(error instanceof Error)) {
 		return new Error(String(error))
 	}
 	const parts: string[] = [error.message]
-	const c = (error as Error & { cause?: unknown }).cause
+	const c = (error as Error & { cause?: UnsafeAny }).cause
 	if (c instanceof Error && c.message && !error.message.includes(c.message)) {
 		parts.push(c.message)
 	} else if (typeof c === "object" && c !== null && "code" in c) {
-		const code = (c as { code?: unknown }).code
+		const code = (c as { code?: UnsafeAny }).code
 		if (code !== undefined) {
 			parts.push(String(code))
 		}
@@ -104,7 +104,7 @@ export class CloudAgentClient {
 				// Older servers — expected until upgraded.
 				// Still clean up local session state so counters / caches
 				// don't leak across connection attempts.
-				(this as any).localSessionCleanup?.()
+				(this as Record<string, UnsafeAny>).localSessionCleanup?.()
 				return
 			}
 			if (!resp.ok) {
@@ -237,7 +237,7 @@ export class CloudAgentClient {
 		workspacePath?: string,
 		images?: string[],
 	): Promise<CloudRunResult> {
-		const body: Record<string, unknown> = {
+		const body: Record<string, UnsafeAny> = {
 			goal: message,
 			session_id: sessionId,
 			workspace_path: workspacePath,
@@ -309,7 +309,7 @@ export class CloudAgentClient {
 	 * Returns structured compile output (success flag + stdout/stderr).
 	 */
 	async compile(sessionId: string, workspacePath?: string): Promise<CloudCompileResult> {
-		const body: Record<string, unknown> = { session_id: sessionId }
+		const body: Record<string, UnsafeAny> = { session_id: sessionId }
 		if (workspacePath) {
 			body.workspace_path = workspacePath
 		}
@@ -364,7 +364,7 @@ export class CloudAgentClient {
 	// Deferred execution protocol
 	// -------------------------------------------------------------------
 
-	private async fetchDeferred(endpoint: string, body: Record<string, unknown>): Promise<DeferredResponse> {
+	private async fetchDeferred(endpoint: string, body: Record<string, UnsafeAny>): Promise<DeferredResponse> {
 		return this.retryExecutor.execute(
 			async () => {
 				const { signal, cleanup } = this.mergeAbortAndTimeout()
@@ -395,7 +395,7 @@ export class CloudAgentClient {
 				}
 
 				const text = await resp.text()
-				let parsed: unknown
+				let parsed: UnsafeAny
 				try {
 					parsed = JSON.parse(text)
 				} catch {
@@ -421,7 +421,7 @@ export class CloudAgentClient {
 		workspacePath?: string,
 		images?: string[],
 	): Promise<DeferredResponse> {
-		const body: Record<string, unknown> = {
+		const body: Record<string, UnsafeAny> = {
 			goal: message,
 			session_id: sessionId,
 			workspace_path: workspacePath,

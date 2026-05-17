@@ -31,7 +31,7 @@ function convertToVsCodeLmTools(tools: OpenAI.Chat.ChatCompletionTool[]): vscode
 			name: tool.function.name,
 			description: tool.function.description || "",
 			inputSchema: tool.function.parameters
-				? normalizeToolSchema(tool.function.parameters as Record<string, unknown>)
+				? normalizeToolSchema(tool.function.parameters as Record<string, UnsafeAny>)
 				: undefined,
 		}))
 }
@@ -347,7 +347,7 @@ private initPromise: Promise<void> | null = null
 		return this.client
 	}
 
-	private cleanMessageContent(content: any): any {
+	private cleanMessageContent(content: UnsafeAny): UnsafeAny {
 		if (!content) {
 			return content
 		}
@@ -361,7 +361,7 @@ private initPromise: Promise<void> | null = null
 		}
 
 		if (typeof content === "object") {
-			const cleaned: any = {}
+			const cleaned: UnsafeAny = {}
 			for (const [key, value] of Object.entries(content)) {
 				cleaned[key] = this.cleanMessageContent(value)
 			}
@@ -484,7 +484,7 @@ private initPromise: Promise<void> | null = null
 				inputTokens: totalInputTokens,
 				outputTokens: totalOutputTokens,
 			}
-		} catch (error: unknown) {
+		} catch (error: UnsafeAny) {
 			this.ensureCleanState()
 
 			if (error instanceof vscode.CancellationError) {
@@ -506,7 +506,7 @@ private initPromise: Promise<void> | null = null
 				logger.error("VsCodeLm", "Stream error object:", errorDetails)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorDetails}`)
 			} else {
-				// Fallback for unknown error types
+				// Fallback for UnsafeAny error types
 				const errorMessage = String(error)
 				logger.error("VsCodeLm", "Unknown stream error:", errorMessage)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorMessage}`)

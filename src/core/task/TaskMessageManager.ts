@@ -55,15 +55,15 @@ export interface TaskMessageContext {
 	initialStatus?: "active" | "delegated" | "completed"
 
 	cwd: string
-	debouncedEmitTokenUsage: (tokenUsage: any, toolUsage: any) => void
-	toolUsage: any
+	debouncedEmitTokenUsage: (tokenUsage: UnsafeAny, toolUsage: UnsafeAny) => void
+	toolUsage: UnsafeAny
 
-	emit(event: string, ...args: any[]): boolean
+	emit(event: string, ...args: UnsafeAny[]): boolean
 
 	notifier?: {
 		postStateToWebviewWithoutTaskHistory(): Promise<void>
-		postMessageToWebview(message: any): Promise<void>
-		updateTaskHistory(item: any): Promise<void>
+		postMessageToWebview(message: UnsafeAny): Promise<void>
+		updateTaskHistory(item: UnsafeAny): Promise<void>
 	}
 }
 
@@ -84,8 +84,8 @@ export class TaskMessageManager {
 			getResponseId?: () => string | undefined
 			getEncryptedContent?: () => { encrypted_content: string; id?: string } | undefined
 			getThoughtSignature?: () => string | undefined
-			getSummary?: () => any[] | undefined
-			getReasoningDetails?: () => any[] | undefined
+			getSummary?: () => UnsafeAny[] | undefined
+			getReasoningDetails?: () => UnsafeAny[] | undefined
 		}
 
 		if (message.role === "assistant") {
@@ -107,7 +107,7 @@ export class TaskMessageManager {
 			const isAnthropicProtocol = apiProtocol === "anthropic"
 
 			// Start from the original assistant message
-			const messageWithTs: any = {
+			const messageWithTs: UnsafeAny = {
 				...message,
 				...(responseId ? { id: responseId } : {}),
 				ts: Date.now(),
@@ -145,7 +145,7 @@ export class TaskMessageManager {
 				const reasoningBlock = {
 					type: "reasoning",
 					text: reasoning,
-					summary: reasoningSummary ?? ([] as any[]),
+					summary: reasoningSummary ?? ([] as UnsafeAny[]),
 				}
 
 				// Also store reasoning_content as a top-level field so that it
@@ -168,7 +168,7 @@ export class TaskMessageManager {
 				// OpenAI Native encrypted reasoning
 				const reasoningBlock = {
 					type: "reasoning",
-					summary: [] as any[],
+					summary: [] as UnsafeAny[],
 					encrypted_content: reasoningData.encrypted_content,
 					...(reasoningData.id ? { id: reasoningData.id } : {}),
 				}
@@ -345,7 +345,7 @@ export class TaskMessageManager {
 
 	async overwriteClineMessages(newMessages: ClineMessage[]): Promise<void> {
 		this.ctx.clineMessages = newMessages
-		restoreTodoListForTask(this.ctx as any)
+		restoreTodoListForTask(this.ctx as UnsafeAny)
 		await this.saveClineMessages()
 	}
 

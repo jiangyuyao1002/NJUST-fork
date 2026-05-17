@@ -133,7 +133,7 @@ export class QdrantVectorStore implements IVectorStore {
 		try {
 			const collectionInfo = await this.client.getCollection(this.collectionName)
 			return collectionInfo
-		} catch (error: unknown) {
+		} catch (error: UnsafeAny) {
 			if (error instanceof Error) {
 				logger.warn("QdrantVectorStore", `Warning during getCollectionInfo for "${this.collectionName}". Collection may not exist or another error occurred:`, error.message)
 			}
@@ -180,7 +180,7 @@ export class QdrantVectorStore implements IVectorStore {
 				) {
 					existingVectorSize = vectorsConfig.size
 				} else {
-					existingVectorSize = 0 // Fallback for unknown configuration
+					existingVectorSize = 0 // Fallback for UnsafeAny configuration
 				}
 
 				if (existingVectorSize === this.vectorSize) {
@@ -194,7 +194,7 @@ export class QdrantVectorStore implements IVectorStore {
 			// Create payload indexes
 			await this._createPayloadIndexes()
 			return created
-		} catch (error: unknown) {
+		} catch (error: UnsafeAny) {
 			const errorMessage = getErrorMessage(error)
 			logger.error("QdrantVectorStore", `Failed to initialize Qdrant collection "${this.collectionName}":`, errorMessage)
 
@@ -292,7 +292,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 				field_name: "type",
 				field_schema: "keyword",
 			})
-		} catch (indexError: unknown) {
+		} catch (indexError: UnsafeAny) {
 			const errorMessage = getErrorMessage(indexError).toLowerCase()
 			if (!errorMessage.includes("already exists")) {
 				logger.warn("QdrantVectorStore", `Could not create payload index for type on ${this.collectionName}. Details:`, getErrorMessage(indexError))
@@ -306,7 +306,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 					field_name: `pathSegments.${i}`,
 					field_schema: "keyword",
 				})
-			} catch (indexError: unknown) {
+			} catch (indexError: UnsafeAny) {
 				const errorMessage = getErrorMessage(indexError).toLowerCase()
 				if (!errorMessage.includes("already exists")) {
 					logger.warn("QdrantVectorStore", `Could not create payload index for pathSegments.${i} on ${this.collectionName}. Details:`, getErrorMessage(indexError))
@@ -323,7 +323,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 		points: Array<{
 			id: string
 			vector: number[]
-			payload: Record<string, any>
+			payload: Record<string, UnsafeAny>
 		}>,
 	): Promise<void> {
 		try {
@@ -364,7 +364,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 	 * @param payload Payload to check
 	 * @returns Boolean indicating if the payload is valid
 	 */
-	private isPayloadValid(payload: Record<string, unknown> | null | undefined): payload is Payload {
+	private isPayloadValid(payload: Record<string, UnsafeAny> | null | undefined): payload is Payload {
 		if (!payload) {
 			return false
 		}
@@ -505,11 +505,11 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 				filter,
 				wait: true,
 			})
-		} catch (error: unknown) {
+		} catch (error: UnsafeAny) {
 			// Extract more detailed error information
 			const errorMessage = getErrorMessage(error)
-			const err = error as Record<string, unknown>
-			const response = err.response as Record<string, unknown> | undefined
+			const err = error as Record<string, UnsafeAny>
+			const response = err.response as Record<string, UnsafeAny> | undefined
 			const errorStatus = err.status || response?.status || err.statusCode
 			const errorDetails = response?.data || err.data || ""
 

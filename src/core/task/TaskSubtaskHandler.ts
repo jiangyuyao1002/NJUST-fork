@@ -83,7 +83,7 @@ export class TaskSubtaskHandler {
 			this.host.apiConversationHistory = await this.host.getSavedApiConversationHistory()
 		}
 
-		const environmentDetails = await getEnvironmentDetails(this.host as any, true)
+		const environmentDetails = await getEnvironmentDetails(this.host as UnsafeAny, true)
 		let lastUserMsgIndex = -1
 		for (let i = this.host.apiConversationHistory.length - 1; i >= 0; i--) {
 			const msg = this.host.apiConversationHistory[i]!

@@ -85,7 +85,7 @@ export class NativeToolCallParser {
 	private static tryRecoverMalformedArgs(
 		toolName: string,
 		rawArgs: string,
-	): Record<string, unknown> | null {
+	): Record<string, UnsafeAny> | null {
 		if (toolName === "update_todo_list") {
 			const todosMatch = rawArgs.match(/\{"todos"\s*:\s*/)
 			if (todosMatch) {
@@ -148,7 +148,7 @@ export class NativeToolCallParser {
 	/**
 	 * Remap parameter name aliases to canonical names for the given tool.
 	 */
-	private static remapParamAliases(toolName: string, args: Record<string, unknown>): void {
+	private static remapParamAliases(toolName: string, args: Record<string, UnsafeAny>): void {
 		const aliases = NativeToolCallParser.PARAM_ALIASES[toolName]
 		if (!aliases) return
 
@@ -163,7 +163,7 @@ export class NativeToolCallParser {
 	/**
 	 * Coerce string values to their expected types (numbers, booleans).
 	 */
-	private static coerceArgTypes(args: Record<string, unknown>): void {
+	private static coerceArgTypes(args: Record<string, UnsafeAny>): void {
 		const intKeys = ["offset", "limit", "timeout", "anchor_line", "max_levels",
 			"max_lines", "contextLines", "expected_replacements", "count"]
 		for (const key of intKeys) {
@@ -184,7 +184,7 @@ export class NativeToolCallParser {
 		}
 	}
 
-	private static coerceOptionalBoolean(value: unknown): boolean | undefined {
+	private static coerceOptionalBoolean(value: UnsafeAny): boolean | undefined {
 		if (typeof value === "boolean") {
 			return value
 		}
@@ -422,7 +422,7 @@ export class NativeToolCallParser {
 		return finalToolUse
 	}
 
-	private static coerceOptionalNumber(value: unknown): number | undefined {
+	private static coerceOptionalNumber(value: UnsafeAny): number | undefined {
 		if (typeof value === "number" && Number.isFinite(value)) {
 			return value
 		}
@@ -445,20 +445,20 @@ export class NativeToolCallParser {
 	 *
 	 * Returns: { path: string, lineRanges: [{ start: 1, end: 50 }] }
 	 */
-	private static convertFileEntries(files: unknown[]): FileEntry[] {
-		return files.map((file: unknown) => {
-			const f = file as Record<string, unknown>
+	private static convertFileEntries(files: UnsafeAny[]): FileEntry[] {
+		return files.map((file: UnsafeAny) => {
+			const f = file as Record<string, UnsafeAny>
 			const entry: FileEntry = { path: f.path as string }
 			if (f.line_ranges && Array.isArray(f.line_ranges)) {
-				entry.lineRanges = (f.line_ranges as unknown[])
-					.map((range: unknown) => {
+				entry.lineRanges = (f.line_ranges as UnsafeAny[])
+					.map((range: UnsafeAny) => {
 						// Handle tuple format: [start, end]
 						if (Array.isArray(range) && range.length >= 2) {
 							return { start: Number(range[0]), end: Number(range[1]) }
 						}
 						// Handle object format: { start: number, end: number }
 						if (typeof range === "object" && range !== null && "start" in range && "end" in range) {
-							const r = range as { start: unknown; end: unknown }
+							const r = range as { start: UnsafeAny; end: UnsafeAny }
 							return { start: Number(r.start), end: Number(r.end) }
 						}
 						// Handle legacy string format: "1-50"
@@ -484,7 +484,7 @@ export class NativeToolCallParser {
 	private static createPartialToolUse(
 		id: string,
 		name: ToolName,
-		partialArgs: Record<string, any>,
+		partialArgs: Record<string, UnsafeAny>,
 		partial: boolean,
 		originalName?: string,
 	): ToolUse | null {
@@ -500,7 +500,7 @@ export class NativeToolCallParser {
 		}
 
 		// Build partial nativeArgs based on what we have so far
-		let nativeArgs: any = undefined
+		let nativeArgs: UnsafeAny = undefined
 
 		// Track if legacy format was used (for telemetry)
 		let usedLegacyFormat = false
@@ -510,7 +510,7 @@ export class NativeToolCallParser {
 				// Check for legacy format first: { files: [...] }
 				// Handle both array and stringified array (some models double-stringify)
 				if (partialArgs.files !== undefined) {
-					let filesArray: unknown[] | null = null
+					let filesArray: UnsafeAny[] | null = null
 
 					if (Array.isArray(partialArgs.files)) {
 						filesArray = partialArgs.files
@@ -538,7 +538,7 @@ export class NativeToolCallParser {
 				if (!nativeArgs && partialArgs.path !== undefined) {
 					const indent =
 						partialArgs.indentation && typeof partialArgs.indentation === "object"
-							? (partialArgs.indentation as Record<string, unknown>)
+							? (partialArgs.indentation as Record<string, UnsafeAny>)
 							: undefined
 					nativeArgs = {
 						path: partialArgs.path,
@@ -823,7 +823,7 @@ export class NativeToolCallParser {
 
 		try {
 			// Parse the arguments JSON string, with recovery for malformed tool calls
-			let args: Record<string, unknown>
+			let args: Record<string, UnsafeAny>
 			try {
 				args = toolCall.arguments === "" ? {} : JSON.parse(toolCall.arguments)
 			} catch (parseError) {
@@ -871,7 +871,7 @@ export class NativeToolCallParser {
 					// Check for legacy format first: { files: [...] }
 					// Handle both array and stringified array (some models double-stringify)
 					if (args.files !== undefined) {
-						let filesArray: unknown[] | null = null
+						let filesArray: UnsafeAny[] | null = null
 
 						if (Array.isArray(args.files)) {
 							filesArray = args.files
@@ -899,7 +899,7 @@ export class NativeToolCallParser {
 					if (!nativeArgs && args.path !== undefined) {
 						const indent =
 							args.indentation && typeof args.indentation === "object"
-								? (args.indentation as Record<string, unknown>)
+								? (args.indentation as Record<string, UnsafeAny>)
 								: undefined
 						nativeArgs = {
 							path: args.path,

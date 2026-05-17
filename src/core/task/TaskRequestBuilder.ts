@@ -212,7 +212,7 @@ export class TaskRequestBuilder {
 					contextWindow: modelInfo?.contextWindow,
 					taskId: this.task.taskId,
 					turnIndex: Math.max(0, this.task.apiConversationHistory.length - 1),
-					enableTurnAwarePromptPruning: (state as any)?.enableTurnAwarePromptPruning ?? true,
+					enableTurnAwarePromptPruning: (state as Record<string, UnsafeAny>)?.enableTurnAwarePromptPruning ?? true,
 					lastUserMessageForCangjieHint: lastUserForCangjie,
 				},
 				undefined, // todoList

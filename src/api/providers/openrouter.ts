@@ -144,7 +144,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 	protected models: ModelRecord = {}
 	protected endpoints: ModelRecord = {}
 	private readonly providerName = "OpenRouter"
-	private currentReasoningDetails: any[] = []
+	private currentReasoningDetails: UnsafeAny[] = []
 
 	constructor(options: ApiHandlerOptions) {
 		super()
@@ -186,7 +186,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 		}
 	}
 
-	getReasoningDetails(): any[] | undefined {
+	getReasoningDetails(): UnsafeAny[] | undefined {
 		return this.currentReasoningDetails.length > 0 ? this.currentReasoningDetails : undefined
 	}
 
@@ -269,8 +269,8 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 			// Step 2: Inject fake reasoning.encrypted block for tool calls that survived sanitization
 			openAiMessages = openAiMessages.map((msg) => {
 				if (msg.role === "assistant") {
-					const toolCalls = (msg as any).tool_calls as any[] | undefined
-					const existingDetails = (msg as any).reasoning_details as any[] | undefined
+					const toolCalls = (msg as Record<string, UnsafeAny>).tool_calls as UnsafeAny[] | undefined
+					const existingDetails = (msg as Record<string, UnsafeAny>).reasoning_details as UnsafeAny[] | undefined
 
 					// Only inject if there are tool calls and no existing encrypted reasoning
 					if (toolCalls && toolCalls.length > 0) {

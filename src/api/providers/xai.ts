@@ -136,9 +136,9 @@ export class XAIHandler extends BaseProvider implements SingleCompletionHandler 
 				// Fall back to direct fields in usage (used in test mocks)
 				const readTokens =
 					cachedTokens ||
-					("cache_read_input_tokens" in chunk.usage ? (chunk.usage as any).cache_read_input_tokens : 0)
+					("cache_read_input_tokens" in chunk.usage ? (chunk.usage as Record<string, UnsafeAny>).cache_read_input_tokens : 0)
 				const writeTokens =
-					"cache_creation_input_tokens" in chunk.usage ? (chunk.usage as any).cache_creation_input_tokens : 0
+					"cache_creation_input_tokens" in chunk.usage ? (chunk.usage as Record<string, UnsafeAny>).cache_creation_input_tokens : 0
 
 				yield {
 					type: "usage",

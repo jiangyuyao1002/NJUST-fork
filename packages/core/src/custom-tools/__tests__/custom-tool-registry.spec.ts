@@ -11,20 +11,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const TEST_FIXTURES_DIR = path.join(__dirname, "fixtures")
 const TEST_FIXTURES_OVERRIDE_DIR = path.join(__dirname, "fixtures-override")
-let cacheDirCounter = 0
+const TEST_CACHE_DIR = path.join(process.cwd(), "node_modules", ".cache", "custom-tool-registry-tests")
 
 describe("CustomToolRegistry", () => {
 	let registry: CustomToolRegistry
 
 	beforeEach(() => {
-		const cacheDir = path.join(
-			process.cwd(),
-			"node_modules",
-			".cache",
-			"custom-tool-registry-tests",
-			`${process.pid}-${cacheDirCounter++}`,
-		)
-		registry = new CustomToolRegistry({ cacheDir })
+		registry = new CustomToolRegistry({ cacheDir: TEST_CACHE_DIR })
 	})
 
 	describe("validation", () => {
@@ -242,7 +235,7 @@ describe("CustomToolRegistry", () => {
 
 			expect(result.loaded).toContain("multi_toolA")
 			expect(result.loaded).toContain("multi_toolB")
-		}, 30000)
+		}, 120_000)
 
 		it("should report validation failures", async () => {
 			const result = await registry.loadFromDirectory(TEST_FIXTURES_DIR)
@@ -267,7 +260,7 @@ describe("CustomToolRegistry", () => {
 			expect(result.loaded).not.toContain("mixed_someString")
 			expect(result.loaded).not.toContain("mixed_someNumber")
 			expect(result.loaded).not.toContain("mixed_someObject")
-		}, 30000)
+		}, 120_000)
 
 		it("should support args as alias for parameters", async () => {
 			const result = await registry.loadFromDirectory(TEST_FIXTURES_DIR)

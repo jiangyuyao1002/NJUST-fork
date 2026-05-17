@@ -65,7 +65,7 @@ export class FlagStore {
 	}
 
 	getAllFlags(): Record<string, { enabled: boolean; defaultValue: boolean; rolloutPercent?: number }> {
-		const result: Record<string, any> = {}
+		const result: Record<string, UnsafeAny> = {}
 		for (const [name, def] of this.flags) {
 			result[name] = {
 				enabled: this.isEnabled(name),

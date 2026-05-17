@@ -16,7 +16,7 @@ import { logger } from "../../shared/logger"
  * Previously, non-string values were `JSON.stringify`d, which turned `false` into the string `"false"`
  * and `60` into `"60"`, breaking zod validation and tool execution.
  */
-function mergeNativeValueForValidation(value: unknown): unknown {
+function mergeNativeValueForValidation(value: UnsafeAny): UnsafeAny {
 	if (value === undefined || value === null) {
 		return value
 	}
@@ -31,13 +31,13 @@ function mergeNativeValueForValidation(value: unknown): unknown {
 }
 
 export function mergeToolParamsForValidation(block: {
-	params?: Record<string, unknown>
-	nativeArgs?: unknown
-}): Record<string, unknown> {
-	const merged: Record<string, unknown> = { ...(block.params ?? {}) }
+	params?: Record<string, UnsafeAny>
+	nativeArgs?: UnsafeAny
+}): Record<string, UnsafeAny> {
+	const merged: Record<string, UnsafeAny> = { ...(block.params ?? {}) }
 	const na = block.nativeArgs
 	if (na && typeof na === "object" && !Array.isArray(na)) {
-		for (const [key, value] of Object.entries(na as Record<string, unknown>)) {
+		for (const [key, value] of Object.entries(na as Record<string, UnsafeAny>)) {
 			const currentValue = merged[key]
 			const shouldUseNativeStructuredValue =
 				typeof currentValue === "string" &&
@@ -84,7 +84,7 @@ export function validateToolUse(
 	mode: Mode,
 	customModes?: ModeConfig[],
 	toolRequirements?: Record<string, boolean>,
-	toolParams?: Record<string, unknown>,
+	toolParams?: Record<string, UnsafeAny>,
 	experiments?: Record<string, boolean>,
 	includedTools?: string[],
 	allowedTools?: string[],
@@ -197,7 +197,7 @@ export function isToolAllowedForMode(
 	modeSlug: string,
 	customModes: ModeConfig[],
 	toolRequirements?: Record<string, boolean>,
-	toolParams?: Record<string, any>, // All tool parameters
+	toolParams?: Record<string, UnsafeAny>, // All tool parameters
 	experiments?: Record<string, boolean>,
 	includedTools?: string[], // Opt-in tools explicitly included (e.g., from modelInfo)
 ): boolean {
@@ -233,7 +233,7 @@ export function isToolAllowedForMode(
 	}
 
 	// Always allow these tools (unless explicitly disabled above)
-	if (ALWAYS_AVAILABLE_TOOLS.includes(tool as any)) {
+	if (ALWAYS_AVAILABLE_TOOLS.includes(tool as UnsafeAny)) {
 		return true
 	}
 

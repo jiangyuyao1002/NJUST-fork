@@ -86,7 +86,7 @@ export class LiteLLMHandler extends RouterProvider implements SingleCompletionHa
 
 		return openAiMessages.map((msg) => {
 			if (msg.role === "assistant") {
-				const toolCalls = (msg as any).tool_calls as any[] | undefined
+				const toolCalls = (msg as Record<string, UnsafeAny>).tool_calls as UnsafeAny[] | undefined
 
 				// Only process if there are tool calls
 				if (toolCalls && toolCalls.length > 0) {
@@ -134,7 +134,7 @@ export class LiteLLMHandler extends RouterProvider implements SingleCompletionHa
 						type: "text",
 						text: systemPrompt,
 						cache_control: { type: "ephemeral" },
-					} as any,
+					} as UnsafeAny,
 				],
 			}
 
@@ -158,7 +158,7 @@ export class LiteLLMHandler extends RouterProvider implements SingleCompletionHa
 									type: "text",
 									text: message.content,
 									cache_control: { type: "ephemeral" },
-								} as any,
+								} as UnsafeAny,
 							],
 						}
 					} else if (Array.isArray(message.content)) {
@@ -170,7 +170,7 @@ export class LiteLLMHandler extends RouterProvider implements SingleCompletionHa
 									? ({
 											...content,
 											cache_control: { type: "ephemeral" },
-										} as any)
+										} as UnsafeAny)
 									: content,
 							),
 						}
@@ -258,11 +258,11 @@ export class LiteLLMHandler extends RouterProvider implements SingleCompletionHa
 				// Extract cache-related information if available
 				// LiteLLM may use different field names for cache tokens
 				const cacheWriteTokens =
-					lastUsage.cache_creation_input_tokens || (lastUsage as any).prompt_cache_miss_tokens || 0
+					lastUsage.cache_creation_input_tokens || (lastUsage as Record<string, UnsafeAny>).prompt_cache_miss_tokens || 0
 				const cacheReadTokens =
 					lastUsage.prompt_tokens_details?.cached_tokens ||
-					(lastUsage as any).cache_read_input_tokens ||
-					(lastUsage as any).prompt_cache_hit_tokens ||
+					(lastUsage as Record<string, UnsafeAny>).cache_read_input_tokens ||
+					(lastUsage as Record<string, UnsafeAny>).prompt_cache_hit_tokens ||
 					0
 
 				const { totalCost } = calculateApiCostOpenAI(

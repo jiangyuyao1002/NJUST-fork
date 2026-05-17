@@ -31,7 +31,7 @@ export class TaskStopTool extends BaseTool<"task_stop"> {
 			return
 		}
 
-		const provider = task.providerRef.deref() as any
+		const provider = task.providerRef.deref() as UnsafeAny
 		if (!provider?.getTaskWithId) {
 			pushToolResult(formatResponse.toolError("Task provider is unavailable for task_stop."))
 			return

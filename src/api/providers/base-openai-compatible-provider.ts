@@ -53,7 +53,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 		messages: Anthropic.Messages.MessageParam[],
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): Promise<Awaited<ReturnType<BaseOpenAiCompatibleProvider<ModelName>["createStream"]>>> {
-		let lastError: unknown
+		let lastError: UnsafeAny
 		for (let attempt = 0; attempt < DEFAULT_API_RETRY_OPTIONS.maxAttempts; attempt++) {
 			try {
 				return await this.createStream(systemPrompt, messages, metadata)
@@ -142,7 +142,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 
 		// Add thinking parameter if reasoning is enabled and model supports it
 		if (this.options.enableReasoningEffort && info.supportsReasoningBinary) {
-			;(params as any).thinking = { type: "enabled" }
+			;(params as Record<string, UnsafeAny>).thinking = { type: "enabled" }
 		}
 
 		try {
@@ -173,7 +173,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 
 		for await (const chunk of stream) {
 			// Check for provider-specific error responses (e.g., MiniMax base_resp)
-			const chunkAny = chunk as any
+			const chunkAny = chunk as UnsafeAny
 			if (chunkAny.base_resp?.status_code && chunkAny.base_resp.status_code !== 0) {
 				throw new Error(
 					`${this.providerName} API Error (${chunkAny.base_resp.status_code}): ${chunkAny.base_resp.status_msg || "Unknown error"}`,
@@ -192,7 +192,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 			if (delta) {
 				for (const key of ["reasoning_content", "reasoning"] as const) {
 					if (key in delta) {
-						const reasoning_content = ((delta as any)[key] as string | undefined) || ""
+						const reasoning_content = ((delta as UnsafeAny)[key] as string | undefined) || ""
 						if (reasoning_content?.trim()) {
 							yield { type: "reasoning", text: reasoning_content }
 						}
@@ -288,14 +288,14 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 
 		// Add thinking parameter if reasoning is enabled and model supports it
 		if (this.options.enableReasoningEffort && modelInfo.supportsReasoningBinary) {
-			;(params as any).thinking = { type: "enabled" }
+			;(params as Record<string, UnsafeAny>).thinking = { type: "enabled" }
 		}
 
 		try {
 			const response = await this.client.chat.completions.create(params)
 
 			// Check for provider-specific error responses (e.g., MiniMax base_resp)
-			const responseAny = response as any
+			const responseAny = response as UnsafeAny
 			if (responseAny.base_resp?.status_code && responseAny.base_resp.status_code !== 0) {
 				throw new Error(
 					`${this.providerName} API Error (${responseAny.base_resp.status_code}): ${responseAny.base_resp.status_msg || "Unknown error"}`,

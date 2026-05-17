@@ -166,7 +166,7 @@ export function validateConversationHistory(messages: ApiMessage[]): {
 				// Check if it's a tool_result — those can follow user messages
 				const content = messages[i]!.content
 				if (Array.isArray(content)) {
-					const hasToolResult = content.some((b: any) => b.type === "tool_result")
+					const hasToolResult = content.some((b: UnsafeAny) => b.type === "tool_result")
 					if (!hasToolResult) {
 						errors.push(`Consecutive user messages at index ${i - 1} and ${i}`)
 					}
