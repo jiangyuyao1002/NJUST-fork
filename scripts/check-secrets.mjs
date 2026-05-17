@@ -11,6 +11,7 @@
  */
 
 import { readFileSync } from "fs"
+import { execSync } from "child_process"
 import { createInterface } from "readline"
 
 // Patterns that indicate potential secrets
@@ -35,14 +36,13 @@ const patterns = SECRET_PATTERNS
 
 async function main() {
 	const isAllFiles = process.argv.includes("--all-files")
+	const isStaged = process.argv.includes("--staged")
 	const files = []
 
 	if (isAllFiles) {
 		try {
-			const { execSync } = await import("child_process")
 			const output = execSync("git ls-files", { encoding: "utf-8", stdio: "pipe" })
-			files.push(...output.trim().split("
-").filter(Boolean))
+			files.push(...output.trim().split("\n").filter(Boolean))
 		} catch {
 			console.log("Not a git repo; scanning src/ directly.")
 			const { readdirSync, statSync } = await import("fs")
@@ -58,6 +58,15 @@ async function main() {
 			for (const d of ["src", "packages", "apps", "scripts"]) {
 				try { walk(d) } catch {}
 			}
+		}
+	} else if (isStaged) {
+		try {
+			const output = execSync("git diff --cached --name-only --diff-filter=ACMR", { encoding: "utf-8", stdio: "pipe" })
+			files.push(...output.trim().split("\n").filter(Boolean))
+		} catch {
+			console.log("Not a git repo; scanning all tracked files.")
+			const output = execSync("git ls-files", { encoding: "utf-8", stdio: "pipe" })
+			files.push(...output.trim().split("\n").filter(Boolean))
 		}
 	} else {
 		const stdin = createInterface({ input: process.stdin })
