@@ -29,14 +29,14 @@ jobs:
             - name: Run knip checks
               run: pnpm knip
 
-    syncpack:
+    repository-hygiene:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
-            - name: Syncpack CLI available (tighten with .syncpackrc when ready)
+            - name: Check repository hygiene and dependency policy seed
               run: pnpm syncpack:lint
 
     compile:

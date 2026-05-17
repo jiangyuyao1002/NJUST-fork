@@ -11,12 +11,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const TEST_FIXTURES_DIR = path.join(__dirname, "fixtures")
 const TEST_FIXTURES_OVERRIDE_DIR = path.join(__dirname, "fixtures-override")
+let cacheDirCounter = 0
 
 describe("CustomToolRegistry", () => {
 	let registry: CustomToolRegistry
 
 	beforeEach(() => {
-		registry = new CustomToolRegistry()
+		const cacheDir = path.join(
+			process.cwd(),
+			"node_modules",
+			".cache",
+			"custom-tool-registry-tests",
+			`${process.pid}-${cacheDirCounter++}`,
+		)
+		registry = new CustomToolRegistry({ cacheDir })
 	})
 
 	describe("validation", () => {

@@ -64,6 +64,9 @@ function createSanitizedGit(baseDir: string): SimpleGit {
 	const options: Partial<SimpleGitOptions> = {
 		baseDir,
 		config: [],
+		unsafe: {
+			allowUnsafeTemplateDir: true,
+		},
 	}
 
 	// Create git instance and set the sanitized environment

@@ -1,6 +1,5 @@
 import React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import { SEO } from "@/lib/seo"
 import { ogImageUrl } from "@/lib/og"
 import { CookieConsentWrapper } from "@/components/CookieConsentWrapper"
@@ -10,8 +9,6 @@ import { Providers } from "@/components/providers"
 import Shell from "./shell"
 
 import "./globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
 
 const OG_TITLE = "Meet NJUST_AI_CJ"
 const OG_DESCRIPTION = "Your AI Software Engineering Team in the IDE and the Cloud."
@@ -96,7 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
 				/>
 			</head>
-			<body className={inter.className}>
+			<body className="font-sans">
 				<div itemScope itemType="https://schema.org/WebSite">
 					<link itemProp="url" href={SEO.url} />
 					<meta itemProp="name" content={SEO.name} />

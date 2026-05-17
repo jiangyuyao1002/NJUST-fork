@@ -93,7 +93,11 @@ export class TaskExecutor {
 	private readonly toolCallParser = new NativeToolCallParser()
 	constructor(private host: TaskExecutorHost) {}
 
-	private placeFinalizedStreamingToolUse(t: TaskExecutorHost, id: string, finalToolUse: ToolUse): ToolUse {
+	private placeFinalizedStreamingToolUse(
+		t: TaskExecutorHost,
+		id: string,
+		finalToolUse: ToolUse | McpToolUse,
+	): ToolUse | McpToolUse {
 		;finalToolUse.id = id
 
 		const toolUseIndex = t.streamingToolCallIndices.get(id)

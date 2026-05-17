@@ -1,6 +1,10 @@
+const STATS_FETCH_TIMEOUT_MS = 3_000
+
 export async function getGitHubStars() {
 	try {
-		const res = await fetch("https://api.github.com/repos/NJUST-AI/NJUST_AI_CJ")
+		const res = await fetch("https://api.github.com/repos/NJUST-AI/NJUST_AI_CJ", {
+			signal: AbortSignal.timeout(STATS_FETCH_TIMEOUT_MS),
+		})
 		const data = await res.json()
 
 		if (typeof data.stargazers_count !== "number") {
@@ -16,28 +20,28 @@ export async function getGitHubStars() {
 }
 
 export async function getVSCodeReviews() {
-	const res = await fetch("https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Accept: "application/json;api-version=7.1-preview.1",
-		},
-		body: JSON.stringify({
-			filters: [
-				{
-					criteria: [
-						{
-							filterType: 7,
-							value: "RooVeterinaryInc.njust-ai-cj",
-						},
-					],
-				},
-			],
-			flags: 914,
-		}),
-	})
-
 	try {
+		const res = await fetch("https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Accept: "application/json;api-version=7.1-preview.1",
+			},
+			body: JSON.stringify({
+				filters: [
+					{
+						criteria: [
+							{
+								filterType: 7,
+								value: "RooVeterinaryInc.njust-ai-cj",
+							},
+						],
+					},
+				],
+				flags: 914,
+			}),
+			signal: AbortSignal.timeout(STATS_FETCH_TIMEOUT_MS),
+		})
 		const data = await res.json()
 		const reviews = data?.results?.[0]?.extensions?.[0]?.reviews
 
@@ -60,27 +64,28 @@ export async function getVSCodeReviews() {
 }
 
 export async function getVSCodeDownloads() {
-	const res = await fetch("https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Accept: "application/json;api-version=7.1-preview.1",
-		},
-		body: JSON.stringify({
-			filters: [
-				{
-					criteria: [
-						{
-							filterType: 7,
-							value: "RooVeterinaryInc.njust-ai-cj",
-						},
-					],
-				},
-			],
-			flags: 914,
-		}),
-	})
 	try {
+		const res = await fetch("https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Accept: "application/json;api-version=7.1-preview.1",
+			},
+			body: JSON.stringify({
+				filters: [
+					{
+						criteria: [
+							{
+								filterType: 7,
+								value: "RooVeterinaryInc.njust-ai-cj",
+							},
+						],
+					},
+				],
+				flags: 914,
+			}),
+			signal: AbortSignal.timeout(STATS_FETCH_TIMEOUT_MS),
+		})
 		const data = await res.json()
 		const statistics = data?.results?.[0]?.extensions?.[0]?.statistics
 
