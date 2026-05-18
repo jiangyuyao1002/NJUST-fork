@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { FlagStore } from "../FlagStore"
+import { FlagStore } from "../FlagStore.js"
 
 describe("FlagStore", () => {
 	const originalFlagImageGeneration = process.env.FLAG_IMAGE_GENERATION

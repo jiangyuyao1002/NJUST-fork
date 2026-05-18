@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import { containsDangerousSubstitution, getCommandDecision } from "../commands"
+import { containsDangerousSubstitution, getCommandDecision } from "../commands.js"
 
 describe("containsDangerousSubstitution", () => {
 	describe("zsh array assignments (should NOT be flagged)", () => {

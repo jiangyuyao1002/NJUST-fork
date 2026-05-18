@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { checkAutoApproval } from "../index"
-import { isReadOnlyToolAction } from "../tools"
+import { checkAutoApproval } from "../index.js"
+import { isReadOnlyToolAction } from "../tools.js"
 
 const baseState = (patch: Record<string, unknown> = {}) => ({
 	autoApprovalEnabled: true,

@@ -1,2 +1,1 @@
-export { FlagStore } from "./FlagStore.js"
-export type { FlagDefinition, FlagContext, FlagOverrides } from "./FlagStore.js"
+export * from "@njust-ai-cj/core/feature-flags"

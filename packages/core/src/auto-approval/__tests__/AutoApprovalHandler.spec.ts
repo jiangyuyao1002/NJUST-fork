@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import { GlobalState, ClineMessage } from "@njust-ai-cj/types"
 
-import { getApiMetrics } from "../../../shared/getApiMetrics"
-import { AutoApprovalHandler } from "../AutoApprovalHandler"
+import { getApiMetrics } from "../../shared/getApiMetrics.js"
+import { AutoApprovalHandler } from "../AutoApprovalHandler.js"
 
 describe("AutoApprovalHandler", () => {
 	let handler: AutoApprovalHandler
@@ -38,7 +38,7 @@ describe("AutoApprovalHandler", () => {
 			expect(result1.requiresApproval).toBe(false)
 
 			// Add a message to simulate first request completed
-			messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 1000 })
+			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 1000 })
 
 			// Second call should trigger request limit (1 message + current = 2 > 1)
 			mockAskForApproval.mockResolvedValue({ response: "yesButtonClicked" })
@@ -68,12 +68,12 @@ describe("AutoApprovalHandler", () => {
 			expect(state.requestCount).toBe(1)
 
 			// Add API request messages
-			messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 1000 })
+			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 1000 })
 			await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			state = handler.getApprovalState()
 			expect(state.requestCount).toBe(2) // 1 message + current request
 
-			messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 2000 })
+			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 2000 })
 			await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			state = handler.getApprovalState()
 			expect(state.requestCount).toBe(3) // 2 messages + current request
@@ -84,7 +84,7 @@ describe("AutoApprovalHandler", () => {
 
 			// Add 3 API request messages (to simulate 3 requests made)
 			for (let i = 0; i < 3; i++) {
-				messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 1000 + i })
+				messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 1000 + i })
 			}
 
 			// Next check should trigger approval (3 messages + current = 4 > 3)
@@ -104,7 +104,7 @@ describe("AutoApprovalHandler", () => {
 
 			// Add messages to exceed limit
 			for (let i = 0; i < 3; i++) {
-				messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 1000 + i })
+				messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 1000 + i })
 			}
 
 			// Next request should trigger approval and reset
@@ -112,7 +112,7 @@ describe("AutoApprovalHandler", () => {
 			await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 
 			// Add more messages after reset
-			messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 4000 })
+			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 4000 })
 
 			// Next check should only count messages after reset
 			const result = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
@@ -127,7 +127,7 @@ describe("AutoApprovalHandler", () => {
 
 			// Add messages to exceed limit
 			for (let i = 0; i < 3; i++) {
-				messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 1000 + i })
+				messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 1000 + i })
 			}
 
 			// Next request with rejection
@@ -146,8 +146,8 @@ describe("AutoApprovalHandler", () => {
 
 		it("should calculate cost from messages", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 2.0 }), ts: 1000 },
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 1.5 }), ts: 2000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 2.0 }), ts: 1000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 1.5 }), ts: 2000 },
 			]
 
 			const result = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
@@ -159,7 +159,7 @@ describe("AutoApprovalHandler", () => {
 
 		it("should ask for approval when cost limit is exceeded", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 5.5 }), ts: 1000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 5.5 }), ts: 1000 },
 			]
 
 			mockAskForApproval.mockResolvedValue({ response: "yesButtonClicked" })
@@ -177,7 +177,7 @@ describe("AutoApprovalHandler", () => {
 
 		it("should not trigger at exactly max cost (within epsilon)", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 5.0 }), ts: 1000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 5.0 }), ts: 1000 },
 			]
 			const result1 = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			expect(result1.requiresApproval).toBe(false)
@@ -185,7 +185,7 @@ describe("AutoApprovalHandler", () => {
 
 		it("should not trigger just below max + epsilon from floating noise", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 5.00009 }), ts: 1000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 5.00009 }), ts: 1000 },
 			]
 			const result2 = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			expect(result2.requiresApproval).toBe(false)
@@ -193,7 +193,7 @@ describe("AutoApprovalHandler", () => {
 
 		it("should trigger when cost exceeds max beyond epsilon", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 5.001 }), ts: 1000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 5.001 }), ts: 1000 },
 			]
 			mockAskForApproval.mockResolvedValue({ response: "yesButtonClicked" })
 			const result3 = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
@@ -202,8 +202,8 @@ describe("AutoApprovalHandler", () => {
 
 		it("should reset cost tracking on approval", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: '{"cost": 3.0}', ts: 1000 },
-				{ type: "say", say: "api_req_started", text: '{"cost": 3.0}', ts: 2000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 3.0}', ts: 1000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 3.0}', ts: 2000 },
 			]
 
 			mockAskForApproval.mockResolvedValue({ response: "yesButtonClicked" })
@@ -213,8 +213,8 @@ describe("AutoApprovalHandler", () => {
 			expect(result1.requiresApproval).toBe(true)
 
 			messages.push(
-				{ type: "say", say: "api_req_started", text: '{"cost": 2.0}', ts: 3000 },
-				{ type: "say", say: "api_req_started", text: '{"cost": 1.0}', ts: 4000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 2.0}', ts: 3000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 1.0}', ts: 4000 },
 			)
 
 			const result2 = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
@@ -229,7 +229,7 @@ describe("AutoApprovalHandler", () => {
 
 		it("should track multiple cost resets correctly", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: '{"cost": 6.0}', ts: 1000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 6.0}', ts: 1000 },
 			]
 
 			mockAskForApproval.mockResolvedValue({ response: "yesButtonClicked" })
@@ -237,13 +237,13 @@ describe("AutoApprovalHandler", () => {
 			await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 
 			messages.push(
-				{ type: "say", say: "api_req_started", text: '{"cost": 3.0}', ts: 2000 },
-				{ type: "say", say: "api_req_started", text: '{"cost": 3.0}', ts: 3000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 3.0}', ts: 2000 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 3.0}', ts: 3000 },
 			)
 
 			await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 
-			messages.push({ type: "say", say: "api_req_started", text: '{"cost": 2.0}', ts: 4000 })
+			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: '{"cost": 2.0}', ts: 4000 })
 
 			const result = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 
@@ -268,13 +268,13 @@ describe("AutoApprovalHandler", () => {
 			expect(result.shouldProceed).toBe(true)
 			expect(result.requiresApproval).toBe(false)
 
-			messages.push({ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 1.0 }), ts: 1000 })
+			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 1.0 }), ts: 1000 })
 			// Second: 1 + 1 = 2 <= 2
 			result = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			expect(result.shouldProceed).toBe(true)
 			expect(result.requiresApproval).toBe(false)
 
-			messages.push({ type: "say", say: "api_req_started", text: "{}", ts: 2000 })
+			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: "{}", ts: 2000 })
 			// Third: 2 + 1 = 3 > 2 → request limit
 			result = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 
@@ -293,9 +293,9 @@ describe("AutoApprovalHandler", () => {
 			mockState.allowedMaxRequests = 5
 			mockState.allowedMaxCost = 10.0
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 2.0 }), ts: 1 },
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 1.0 }), ts: 2 },
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 2.0 }), ts: 3 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 2.0 }), ts: 1 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 1.0 }), ts: 2 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 2.0 }), ts: 3 },
 			]
 
 			await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
@@ -322,7 +322,7 @@ describe("AutoApprovalHandler", () => {
 		it("does not re-scan the full message array when length is unchanged", async () => {
 			mockState.allowedMaxCost = 100
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", text: JSON.stringify({ cost: 0.1 }), ts: 1 },
+				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 0.1 }), ts: 1 },
 			]
 			const spy = vi.spyOn(Array.prototype, "forEach" as any)
 

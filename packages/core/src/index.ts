@@ -1,5 +1,13 @@
 export * from "./custom-tools/index.js"
 export * from "./debug-log/index.js"
 export * from "./errors/index.js"
+export * from "./feature-flags/index.js"
+export * from "./message-queue/index.js"
 export * from "./message-utils/index.js"
+export * from "./prefetch/index.js"
+export * from "./security/index.js"
+export * from "./stream/index.js"
 export * from "./task-history/index.js"
+
+export * as AutoApproval from "./auto-approval/index.js"
+export * as Shared from "./shared/index.js"

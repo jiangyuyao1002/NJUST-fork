@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { matchPatternRules } from "../patternRules"
+import { matchPatternRules } from "../patternRules.js"
 
 describe("patternRules", () => {
 	it("matches prefix rules", () => {

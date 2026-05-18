@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { assessCommandRisk } from "../commandRisk"
+import { assessCommandRisk } from "../commandRisk.js"
 
 describe("assessCommandRisk", () => {
 	it("returns high risk for empty command", () => {

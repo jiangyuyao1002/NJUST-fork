@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { classifyBashCommand } from "../bashClassifier"
+import { classifyBashCommand } from "../bashClassifier.js"
 
 describe("classifyBashCommand", () => {
 	it("marks safe commands", () => {

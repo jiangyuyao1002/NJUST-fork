@@ -5,9 +5,16 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
-		"./cli": "./src/cli.ts",
 		"./browser": "./src/browser.ts",
-		"./providers": "./src/providers/index.ts"
+		"./cli": "./src/cli.ts",
+		"./providers": "./src/providers/index.ts",
+		"./shared": "./src/shared/index.ts",
+		"./auto-approval": "./src/auto-approval/index.ts",
+		"./security": "./src/security/index.ts",
+		"./feature-flags": "./src/feature-flags/index.ts",
+		"./stream": "./src/stream/index.ts",
+		"./prefetch": "./src/prefetch/index.ts",
+		"./message-queue": "./src/message-queue/index.ts"
 	},
 	"scripts": {
 		"lint": "eslint src --ext=ts --max-warnings=0",
@@ -16,17 +23,23 @@
 		"clean": "rimraf .turbo"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "^0.52.0",
+		"@njust-ai-cj/telemetry": "workspace:^",
 		"@njust-ai-cj/types": "workspace:^",
 		"esbuild": "^0.25.0",
 		"execa": "^9.5.2",
 		"ignore": "^7.0.3",
 		"openai": "^5.12.2",
+		"shell-quote": "^1.8.2",
+		"uuid": "^11.1.0",
 		"zod": "3.25.76"
 	},
 	"devDependencies": {
 		"@njust-ai-cj/config-eslint": "workspace:^",
 		"@njust-ai-cj/config-typescript": "workspace:^",
 		"@types/node": "20.x",
+		"@types/shell-quote": "^1.7.5",
+		"@types/uuid": "^10.0.0",
 		"vitest": "^3.2.3"
 	}
 }

@@ -1,6 +1,6 @@
 import { GlobalState, ClineMessage, ClineAsk } from "@njust-ai-cj/types"
 
-import { ClineAskResponse } from "../../shared/WebviewMessage"
+import { ClineAskResponse } from "../shared/WebviewMessage.js"
 
 export interface AutoApprovalResult {
 	shouldProceed: boolean
