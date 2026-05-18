@@ -1,4 +1,22 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
+
+vi.mock("vscode", () => ({
+	workspace: {
+		workspaceFolders: [],
+		getConfiguration: vi.fn().mockReturnValue({
+			get: vi.fn(),
+		}),
+		onDidChangeConfiguration: vi.fn(),
+	},
+	window: {
+		showErrorMessage: vi.fn(),
+		showWarningMessage: vi.fn(),
+		showInformationMessage: vi.fn(),
+	},
+	Uri: {
+		file: vi.fn((fsPath: string) => ({ fsPath })),
+	},
+}))
 
 import type { ModeConfig } from "@njust-ai-cj/types"
 

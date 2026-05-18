@@ -51,11 +51,13 @@ import * as os from "os"
 import {
 	estimateCangjieContextTokensForTest,
 	extractImports,
-	parseCjpmToml,
+} from "../cangjie-context"
+import { parseCjpmToml } from "../cangjieContext/cjpmProjectParser"
+import {
 	testLearnedFixPatternMatchesMessage,
 	testNormalizeLearnedFixText,
-	userMessageSuggestsCangjie,
-} from "../cangjie-context"
+} from "../cangjieContext/learnedFixMatching"
+import { userMessageSuggestsCangjie } from "../cangjieContext/cacheManagement"
 
 describe("userMessageSuggestsCangjie (Ask/Architect 语料触发)", () => {
 	it("matches toolchain tokens and 仓颉", () => {

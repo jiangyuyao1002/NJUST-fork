@@ -33,6 +33,24 @@ vi.mock("fs", async (importOriginal) => {
 	}
 })
 
+vi.mock("vscode", () => ({
+	workspace: {
+		workspaceFolders: [],
+		createFileSystemWatcher: vi.fn().mockReturnValue({
+			onDidChange: vi.fn(),
+			onDidCreate: vi.fn(),
+			onDidDelete: vi.fn(),
+			dispose: vi.fn(),
+		}),
+	},
+	window: {
+		showErrorMessage: vi.fn(),
+		showWarningMessage: vi.fn(),
+		showInformationMessage: vi.fn(),
+	},
+	RelativePattern: vi.fn(),
+}))
+
 vi.mock("../../../utils/storage", () => ({
 	getTaskDirectoryPath: getTaskDirectoryPathMock,
 }))

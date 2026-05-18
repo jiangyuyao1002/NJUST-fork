@@ -64,6 +64,15 @@ import { TokenBucketRateLimiter } from "../../services/rate-limiter/TokenBucketR
 import { BackpressureController } from "../stream/BackpressureController"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import {
+	finalizePendingStreamingToolCalls,
+	processTaskStreamChunk,
+} from "./TaskStreamChunkProcessor"
+import {
+	handleAttemptApiRequestError,
+	handleEmptyAssistantResponse,
+	handleMidStreamFailure,
+} from "./TaskRetryHandler"
 
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000
 
@@ -465,83 +474,18 @@ export class TaskExecutor {
 			yield firstValue
 			h.isWaitingForFirstChunk = false
 		} catch (error: UnsafeAny) {
-			h.isWaitingForFirstChunk = false
-			h.currentRequestAbortController = undefined
-
-			const recovery = await h.errorRecovery.handleApiError(error, retryAttempt)
-			if (recovery.action === "retry") {
-				yield* this.attemptApiRequest(recovery.nextAttempt)
-				return
-			}
-
-			// Only enter ERROR state when error is truly unrecoverable
-			if (autoApprovalEnabled) {
-				h.stateMachine.force(TaskState.RECOVERING_MAX_TOKENS)
-				if (unattendedRetryEnabled && retryAttempt >= unattendedMaxRetryAttempts) {
-					const { classifyApiError } = await import("../errors/apiErrorClassifier")
-					const errorType = classifyApiError(error)
-					if (persistentRetryHandler.isEligible(errorType)) {
-						const host = h.hostRef.deref()
-						if (host?.log) {
-							host.log(`[Task#${h.taskId}] Normal retry limit reached. Entering persistent retry for ${errorType}...`)
-						}
-						try {
-							await persistentRetryHandler.waitForRetry(
-								errorType,
-								(message, _retryCount, _elapsed) => {
-									void h.say("api_req_retry_delayed", message, undefined, true)
-								},
-							)
-						} catch (persistentErr) {
-							const stats = persistentRetryHandler.getStats()
-							throw new Error(
-								`[Task#${h.taskId}] Persistent retry ended after ${stats.totalRetries} attempts: ${getErrorMessage(persistentErr)}`,
-							)
-						}
-
-						if (h.abort) {
-							persistentRetryHandler.cancel()
-							throw new Error(
-								`[Task#attemptApiRequest] task ${h.taskId}.${h.instanceId} aborted during persistent retry`,
-							)
-						}
-
-						yield* this.attemptApiRequest(retryAttempt + 1)
-						return
-					}
-
-					throw new Error(
-						`[Task#${h.taskId}] Unattended retry limit reached (${unattendedMaxRetryAttempts}).`,
-					)
-				}
-				await h.streamProcessor.backoffAndAnnounce(retryAttempt, error)
-
-				if (h.abort) {
-					throw new Error(
-						`[Task#attemptApiRequest] task ${h.taskId}.${h.instanceId} aborted during retry`,
-					)
-				}
-
-				yield* this.attemptApiRequest(retryAttempt + 1)
-				return
-			} else {
-				h.stateMachine.force(TaskState.ERROR)
-				const { response } = await h.ask(
-					"api_req_failed",
-					getErrorMessage(error),
-				)
-
-				if (response !== "yesButtonClicked") {
-					throw new Error("API request failed")
-				}
-
-				await h.say("api_req_retried")
-
-				yield* this.attemptApiRequest()
-				return
-			}
+			yield* handleAttemptApiRequestError({
+				host: h,
+				error,
+				retryAttempt,
+				autoApprovalEnabled,
+				unattendedRetryEnabled,
+				unattendedMaxRetryAttempts,
+				retryApiRequest: (nextAttempt?: number, nextOptions?: { skipProviderRateLimit?: boolean }) =>
+					this.attemptApiRequest(nextAttempt, nextOptions),
+			})
+			return
 		}
-
 		// Delegate remainder: yield* requires AsyncIterable; reuse same iterator state after first manual next().
 		yield* {
 			[Symbol.asyncIterator]() {
@@ -895,246 +839,29 @@ export class TaskExecutor {
 							continue
 						}
 
-						switch (chunk.type) {
-							case "reasoning": {
-								reasoningMessage += chunk.text
-								// Only apply formatting if the message contains sentence-ending punctuation followed by **
-								let formattedReasoning = reasoningMessage
-								if (reasoningMessage.includes("**")) {
-									// Add line breaks before **Title** patterns that appear after sentence endings
-									// This targets section headers like "...end of sentence.**Title Here**"
-									// Handles periods, exclamation marks, and question marks
-									formattedReasoning = reasoningMessage.replace(
-										/([.!?])\*\*([^*\n]+)\*\*/g,
-										"$1\n\n**$2**",
-									)
-								}
-								await t.say("reasoning", formattedReasoning, undefined, true)
-								break
-							}
-							case "usage":
-								inputTokens += chunk.inputTokens
-								outputTokens += chunk.outputTokens
-								cacheWriteTokens += chunk.cacheWriteTokens ?? 0
-								cacheReadTokens += chunk.cacheReadTokens ?? 0
-								totalCost = chunk.totalCost
-								break
-							case "grounding":
-								// Handle grounding sources separately from regular content
-								// to prevent state persistence issues - store them separately
-								if (chunk.sources && chunk.sources.length > 0) {
-									pendingGroundingSources.push(...chunk.sources)
-								}
-								break
-							case "tool_call_partial": {
-								// Process raw tool call chunk through NativeToolCallParser
-								// which handles tracking, buffering, and emits events
-								const events = this.toolCallParser.processRawChunk({
-									index: chunk.index,
-									id: chunk.id,
-									name: chunk.name,
-									arguments: chunk.arguments,
-								})
-
-								for (const event of events) {
-									if (event.type === "tool_call_start") {
-										// Guard against duplicate tool_call_start events for the same tool ID.
-										// This can occur due to stream retry, reconnection, or API quirks.
-										// Without this check, duplicate tool_use blocks with the same ID would
-										// be added to assistantMessageContent, causing API 400 errors:
-										// "tool_use ids must be unique"
-										if (t.streamingToolCallIndices.has(event.id)) {
-											logger.warn("TaskExecutor",
-												`Ignoring duplicate tool_call_start for ID: ${event.id} (tool: ${event.name}) on task ${t.taskId}`,
-											)
-											continue
-										}
-
-										// Initialize streaming in NativeToolCallParser
-										this.toolCallParser.startStreamingToolCall(event.id, event.name as ToolName)
-
-										// Before adding a new tool, finalize any preceding text block
-										// This prevents the text block from blocking tool presentation
-										const lastBlock =
-											t.assistantMessageContent[t.assistantMessageContent.length - 1]
-										if (lastBlock?.type === "text" && lastBlock.partial) {
-											lastBlock.partial = false
-										}
-
-										// Track the index where this tool will be stored
-										const toolUseIndex = t.assistantMessageContent.length
-										t.streamingToolCallIndices.set(event.id, toolUseIndex)
-
-										// Create initial partial tool use
-										const partialToolUse: ToolUse = {
-											type: "tool_use",
-											name: event.name as ToolName,
-											params: {},
-											partial: true,
-										}
-
-										// Store the ID for native protocol
-										;partialToolUse.id = event.id
-
-										// Add to content and present
-										t.assistantMessageContent.push(partialToolUse)
-										t.userMessageContentReady = false
-										void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-									} else if (event.type === "tool_call_delta") {
-										// Process chunk using streaming JSON parser
-										const partialToolUse = this.toolCallParser.processStreamingChunk(
-											event.id,
-											event.delta,
-										)
-
-										if (partialToolUse) {
-											// Get the index for this tool call
-											const toolUseIndex = t.streamingToolCallIndices.get(event.id)
-											if (toolUseIndex !== undefined) {
-												// Store the ID for native protocol
-												;partialToolUse.id = event.id
-
-												// Update the existing tool use with new partial data
-												t.assistantMessageContent[toolUseIndex] = partialToolUse
-
-												// Present updated tool use
-												void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-											}
-										}
-									} else if (event.type === "tool_call_end") {
-										// Finalize the streaming tool call
-										const finalToolUse = this.toolCallParser.finalizeStreamingToolCall(event.id)
-
-										// Get the index for this tool call
-										const toolUseIndex = t.streamingToolCallIndices.get(event.id)
-
-										if (finalToolUse) {
-											const latest = this.placeFinalizedStreamingToolUse(t, event.id, finalToolUse)
-
-											// Try eager execution for safe auto-approve tools; fallback to regular path.
-											if (latest?.type === "tool_use") {
-												const state = await t.hostRef.deref()?.getState()
-												const enabled = state?.enableStreamingToolExecution !== false
-												if (enabled && (state?.autoApprovalEnabled ?? false)) {
-													const decision = t.toolExecution.streamingExecutor.shouldEagerExecute(t, latest)
-													if (decision === "eager") {
-														void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-														break
-													}
-												}
-											}
-
-											// Present the finalized tool call
-											void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-										} else if (toolUseIndex !== undefined) {
-											// finalizeStreamingToolCall returned null (malformed JSON or missing args)
-											// Mark the tool as non-partial so it's presented as complete, but execution
-											// will be short-circuited in presentAssistantMessage with a structured tool_result.
-											const existingToolUse = t.assistantMessageContent[toolUseIndex]
-											if (existingToolUse && existingToolUse.type === "tool_use") {
-												existingToolUse.partial = false
-												// Ensure it has the ID for native protocol
-												;existingToolUse.id = event.id
-											}
-
-											// Clean up tracking
-											t.streamingToolCallIndices.delete(event.id)
-
-											// Mark that we have new content to process
-											t.userMessageContentReady = false
-
-											// Present the tool call - validation will handle missing params
-											void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-										}
-									}
-								}
-								break
-							}
-
-							case "tool_call_end": {
-								const finalToolUse = this.toolCallParser.finalizeStreamingToolCall(chunk.id)
-								const toolUseIndex = t.streamingToolCallIndices.get(chunk.id)
-
-								if (finalToolUse) {
-									const latest = this.placeFinalizedStreamingToolUse(t, chunk.id, finalToolUse)
-									if (latest?.type === "tool_use") {
-										const state = await t.hostRef.deref()?.getState()
-										const enabled = state?.enableStreamingToolExecution !== false
-										if (enabled && (state?.autoApprovalEnabled ?? false)) {
-											const decision = t.toolExecution.streamingExecutor.shouldEagerExecute(t, latest)
-											if (decision === "eager") {
-												void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-												break
-											}
-										}
-									}
-
-									void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-								} else if (toolUseIndex !== undefined) {
-									const existingToolUse = t.assistantMessageContent[toolUseIndex]
-									if (existingToolUse && existingToolUse.type === "tool_use") {
-										existingToolUse.partial = false
-										;existingToolUse.id = chunk.id
-									}
-
-									t.streamingToolCallIndices.delete(chunk.id)
-									t.userMessageContentReady = false
-									void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-								}
-								break
-							}
-
-							case "tool_call": {
-								// Legacy: Handle complete tool calls (for backward compatibility)
-								// Convert native tool call to ToolUse format
-								const toolUse = NativeToolCallParser.parseToolCall({
-									id: chunk.id,
-									name: chunk.name as ToolName,
-									arguments: chunk.arguments,
-								})
-
-								if (!toolUse) {
-									logger.error("TaskExecutor", `Failed to parse tool call for task ${t.taskId}:`, chunk)
-									break
-								}
-
-								// Store the tool call ID on the ToolUse object for later reference
-								// This is needed to create tool_result blocks that reference the correct tool_use_id
-								toolUse.id = chunk.id
-
-								// Add the tool use to assistant message content
-								t.assistantMessageContent.push(toolUse)
-
-								// Mark that we have new content to process
-								t.userMessageContentReady = false
-
-								// Present the tool call to user - presentAssistantMessage will execute
-								// tools sequentially and accumulate all results in userMessageContent
-								void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-								break
-							}
-							case "text": {
-								assistantMessage += chunk.text
-								globalQueryProfiler.markFirstToken(requestProfileId)
-
-								// Native tool calling: text chunks are plain text.
-								// Create or update a text content block directly
-								const lastBlock = t.assistantMessageContent[t.assistantMessageContent.length - 1]
-								if (lastBlock?.type === "text" && lastBlock.partial) {
-									lastBlock.content = assistantMessage
-								} else {
-									t.assistantMessageContent.push({
-										type: "text",
-										content: assistantMessage,
-										partial: true,
-									})
-									t.userMessageContentReady = false
-								}
-								void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-								break
-							}
-						}
-
+						await processTaskStreamChunk({
+							task: t,
+							chunk,
+							toolCallParser: this.toolCallParser,
+							requestProfileId,
+							pendingGroundingSources,
+							finalizeToolUse: (task, id, finalToolUse) => this.placeFinalizedStreamingToolUse(task, id, finalToolUse),
+							appendReasoningText: (text) => {
+								reasoningMessage += text
+								return reasoningMessage
+							},
+							appendAssistantText: (text) => {
+								assistantMessage += text
+								return assistantMessage
+							},
+							addUsage: (usageChunk) => {
+								inputTokens += usageChunk.inputTokens
+								outputTokens += usageChunk.outputTokens
+								cacheWriteTokens += usageChunk.cacheWriteTokens ?? 0
+								cacheReadTokens += usageChunk.cacheReadTokens ?? 0
+								totalCost = usageChunk.totalCost
+							},
+						})
 						if (t.abort) {
 							logger.info("TaskExecutor", `Aborting stream for task ${t.taskId}, abandoned = ${t.abandoned}`)
 
@@ -1404,57 +1131,28 @@ export class TaskExecutor {
 					// Cline instance to finish aborting (error is thrown here when
 					// any function in the for loop throws due to t.abort).
 					if (!t.abandoned) {
-						// Determine cancellation reason
-						const cancelReason: ClineApiReqCancelReason = t.abort ? "user_cancelled" : "streaming_failed"
-
 						const rawErrorMessage = getErrorMessage(error)
 						const streamingFailedMessage = t.abort
 							? undefined
 							: `${i18nT("common:interruption.streamTerminatedByProvider")}: ${rawErrorMessage}`
 
-						// Clean up partial state
-						await abortStream(cancelReason, streamingFailedMessage)
+						const retryAction = await handleMidStreamFailure({
+							task: t,
+							error,
+							currentRetryAttempt: currentItem.retryAttempt ?? 0,
+							currentUserContent,
+							stack,
+							streamingFailedMessage,
+							abortStream,
+						})
 
-						if (t.abort) {
-							// User cancelled - abort the entire task
-							t.abortReason = cancelReason
-							await t.abortTask()
-						} else {
-							// Stream failed - log the error and retry with the same content
-							// The existing rate limiting will prevent rapid retries
-							logger.error("TaskExecutor",
-								`Stream failed for task ${t.taskId}.${t.instanceId}, will retry: ${streamingFailedMessage}`,
-							)
-
-							// Apply exponential backoff similar to first-chunk errors when auto-resubmit is enabled
-							const stateForBackoff = await t.hostRef.deref()?.getState()
-							if (stateForBackoff?.autoApprovalEnabled) {
-								await t.backoffAndAnnounce(currentItem.retryAttempt ?? 0, error)
-
-								// Check if task was aborted during the backoff
-								if (t.abort) {
-									logger.info("TaskExecutor",
-										`Task aborted during mid-stream retry backoff for task ${t.taskId}.${t.instanceId}`,
-									)
-									// Abort the entire task
-									t.abortReason = "user_cancelled"
-									await t.abortTask()
-									break
-								}
-							}
-
-							// Push the same content back onto the stack to retry, incrementing the retry attempt counter
-							stack.push({
-								userContent: currentUserContent,
-								includeFileDetails: false,
-								retryAttempt: (currentItem.retryAttempt ?? 0) + 1,
-							})
-
-							// Continue to retry the request
+						if (retryAction === "continue") {
 							continue
 						}
-					}
-				} finally {
+						if (retryAction === "break") {
+							break
+						}
+					}				} finally {
 					t.isStreaming = false
 					const profile = globalQueryProfiler.finish(requestProfileId, {
 						aborted: t.abort || t.abandoned,
@@ -1486,46 +1184,11 @@ export class TaskExecutor {
 				// to be completed or the user to reject a block in order to proceed
 				// and eventually set userMessageContentReady to true.)
 
-				// Finalize any remaining streaming tool calls that weren't explicitly ended
-				// This is critical for MCP tools which need tool_call_end events to be properly
-				// converted from ToolUse to McpToolUse via finalizeStreamingToolCall()
-				const finalizeEvents = this.toolCallParser.finalizeRawChunks()
-				for (const event of finalizeEvents) {
-					if (event.type === "tool_call_end") {
-						// Finalize the streaming tool call
-						const finalToolUse = this.toolCallParser.finalizeStreamingToolCall(event.id)
-
-						// Get the index for this tool call
-						const toolUseIndex = t.streamingToolCallIndices.get(event.id)
-
-						if (finalToolUse) {
-							this.placeFinalizedStreamingToolUse(t, event.id, finalToolUse)
-
-							// Present the finalized tool call
-							void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-						} else if (toolUseIndex !== undefined) {
-							// finalizeStreamingToolCall returned null (malformed JSON or missing args)
-							// We still need to mark the tool as non-partial so it gets executed
-							// The tool's validation will catch any missing required parameters
-							const existingToolUse = t.assistantMessageContent[toolUseIndex]
-							if (existingToolUse && existingToolUse.type === "tool_use") {
-								existingToolUse.partial = false
-								// Ensure it has the ID for native protocol
-								;existingToolUse.id = event.id
-							}
-
-							// Clean up tracking
-							t.streamingToolCallIndices.delete(event.id)
-
-							// Mark that we have new content to process
-							t.userMessageContentReady = false
-
-							// Present the tool call - validation will handle missing params
-							void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
-						}
-					}
-				}
-
+				await finalizePendingStreamingToolCalls({
+					task: t,
+					toolCallParser: this.toolCallParser,
+					finalizeToolUse: (task, id, finalToolUse) => this.placeFinalizedStreamingToolUse(task, id, finalToolUse),
+				})
 				// IMPORTANT: Capture partialBlocks AFTER finalizeRawChunks() to avoid double-presentation.
 				// Tools finalized above are already presented, so we only want blocks still partial after finalization.
 				const partialBlocks = t.assistantMessageContent.filter((block) => block.partial)
@@ -1849,102 +1512,20 @@ export class TaskExecutor {
 
 					continue
 				} else {
-					// If there's no assistant_responses, that means we got no text
-					// or tool_use content blocks from API which we should assume is
-					// an error.
+					const emptyResponseAction = await handleEmptyAssistantResponse({
+						task: t,
+						currentRetryAttempt: currentItem.retryAttempt ?? 0,
+						currentUserContent,
+						stack,
+					})
 
-					// Increment consecutive no-assistant-messages counter
-					t.consecutiveNoAssistantMessagesCount++
-
-					// Only show error and count toward mistake limit after 2 consecutive failures
-					// This provides a "grace retry" - first failure retries silently
-					if (t.consecutiveNoAssistantMessagesCount >= 2) {
-						await t.say("error", "MODEL_NO_ASSISTANT_MESSAGES")
-					}
-
-					// IMPORTANT: We already added the user message to
-					// apiConversationHistory at line 1876. Since the assistant failed to respond,
-					// we need to remove that message before retrying to avoid having two consecutive
-					// user messages (which would cause tool_result validation errors).
-					const state = await t.hostRef.deref()?.getState()
-					if (t.apiConversationHistory.length > 0) {
-						const lastMessage = t.apiConversationHistory[t.apiConversationHistory.length - 1]
-						if (lastMessage?.role === "user") {
-							// Remove the last user message that we added earlier
-							t.apiConversationHistory.pop()
-						}
-					}
-
-					// Check if we should auto-retry or prompt the user
-					// Reuse the state variable from above
-					if (state?.autoApprovalEnabled) {
-						// Auto-retry with backoff - don't persist failure message when retrying
-						await t.backoffAndAnnounce(
-							currentItem.retryAttempt ?? 0,
-							new Error(
-								"Unexpected API Response: The language model did not provide any assistant messages. This may indicate an issue with the API or the model's output.",
-							),
-						)
-
-						// Check if task was aborted during the backoff
-						if (t.abort) {
-							logger.info("TaskExecutor",
-								`Task aborted during empty-assistant retry backoff for task ${t.taskId}.${t.instanceId}`,
-							)
-							break
-						}
-
-						// Push the same content back onto the stack to retry, incrementing the retry attempt counter
-						// Mark that user message was removed so it gets re-added on retry
-						stack.push({
-							userContent: currentUserContent,
-							includeFileDetails: false,
-							retryAttempt: (currentItem.retryAttempt ?? 0) + 1,
-							userMessageWasRemoved: true,
-						})
-
-						// Continue to retry the request
+					if (emptyResponseAction === "continue") {
 						continue
-					} else {
-						// Prompt the user for retry decision
-						const { response } = await t.ask(
-							"api_req_failed",
-							"The model returned no assistant messages. This may indicate an issue with the API or the model's output.",
-						)
-
-						if (response === "yesButtonClicked") {
-							await t.say("api_req_retried")
-
-							// Push the same content back to retry
-							stack.push({
-								userContent: currentUserContent,
-								includeFileDetails: false,
-								retryAttempt: (currentItem.retryAttempt ?? 0) + 1,
-							})
-
-							// Continue to retry the request
-							continue
-						} else {
-							// User declined to retry
-							// Re-add the user message we removed.
-							await t.addToApiConversationHistory({
-								role: "user",
-								content: currentUserContent,
-							})
-
-							await t.say(
-								"error",
-								"Unexpected API Response: The language model did not provide any assistant messages. This may indicate an issue with the API or the model's output.",
-							)
-
-							await t.addToApiConversationHistory({
-								role: "assistant",
-								content: [{ type: "text", text: "Failure: I did not provide a response." }],
-							})
-						}
+					}
+					if (emptyResponseAction === "break") {
+						break
 					}
 				}
-
 				// If we reach here without continuing, return false (will always be false for now)
 				return false
 		} catch (error) {

@@ -117,6 +117,21 @@ import { presentAssistantMessage } from "../assistant-message"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
 import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
 import { getErrorMessage } from "../../shared/error-utils"
+import {
+	addToApiConversationHistoryWithTask,
+	addToClineMessagesWithTask,
+	findMessageByIdWithTask,
+	findMessageByTimestampWithTask,
+	flushPendingToolResultsToHistoryWithTask,
+	getSavedApiConversationHistoryWithTask,
+	getSavedClineMessagesWithTask,
+	overwriteApiConversationHistoryWithTask,
+	overwriteClineMessagesWithTask,
+	retrySaveApiConversationHistoryWithTask,
+	saveApiConversationHistoryWithTask,
+	saveClineMessagesWithTask,
+	updateClineMessageWithTask,
+} from "./TaskPersistence"
 
 export interface TaskOptions extends CreateTaskOptions {
 	host?: ITaskHost
@@ -1019,11 +1034,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// API Messages
 
 	private async getSavedApiConversationHistory(): Promise<ApiMessage[]> {
-		return this.msgMgr.getSavedApiConversationHistory()
+		return getSavedApiConversationHistoryWithTask(this.msgMgr)
 	}
 
 	async addToApiConversationHistory(message: Anthropic.MessageParam, reasoning?: string) {
-		return this.msgMgr.addToApiConversationHistory(message, reasoning)
+		return addToApiConversationHistoryWithTask(this.msgMgr, message, reasoning)
 	}
 
 	// NOTE: We intentionally do NOT mutate stored messages to merge consecutive user turns.
@@ -1031,7 +1046,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// so rewind/edit behavior can still reference original message boundaries.
 
 	async overwriteApiConversationHistory(newHistory: ApiMessage[]) {
-		return this.msgMgr.overwriteApiConversationHistory(newHistory)
+		return overwriteApiConversationHistoryWithTask(this.msgMgr, newHistory)
 	}
 
 	/**
@@ -1050,11 +1065,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * So we usually only need to flush the pending user message with tool_results.
 	 */
 	public async flushPendingToolResultsToHistory(): Promise<boolean> {
-		return this.msgMgr.flushPendingToolResultsToHistory()
+		return flushPendingToolResultsToHistoryWithTask(this.msgMgr)
 	}
 
 	private async saveApiConversationHistory(): Promise<boolean> {
-		return this.msgMgr.saveApiConversationHistory()
+		return saveApiConversationHistoryWithTask(this.msgMgr)
 	}
 
 	/**
@@ -1063,43 +1078,38 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * Used by delegation flow when flushPendingToolResultsToHistory reports failure.
 	 */
 	public async retrySaveApiConversationHistory(): Promise<boolean> {
-		return this.msgMgr.retrySaveApiConversationHistory()
+		return retrySaveApiConversationHistoryWithTask(this.msgMgr)
 	}
 
 	// Cline Messages
 
 	private async getSavedClineMessages(): Promise<ClineMessage[]> {
-		return this.msgMgr.getSavedClineMessages()
+		return getSavedClineMessagesWithTask(this.msgMgr)
 	}
 
 	private async addToClineMessages(message: Omit<ClineMessage, "id"> & { id?: string }) {
-		// Ensure every message has a unique id for stable lookup.
-		if (!message.id) {
-			message.id = uuidv7()
-		}
-		const messageWithId = message as ClineMessage
-		return this.msgMgr.addToClineMessages(messageWithId)
+		return addToClineMessagesWithTask(this.msgMgr, message)
 	}
 
 	public async overwriteClineMessages(newMessages: ClineMessage[]) {
-		return this.msgMgr.overwriteClineMessages(newMessages)
+		return overwriteClineMessagesWithTask(this.msgMgr, newMessages)
 	}
 
 	private async updateClineMessage(message: ClineMessage) {
-		return this.msgMgr.updateClineMessage(message)
+		return updateClineMessageWithTask(this.msgMgr, message)
 	}
 
 	private async saveClineMessages(): Promise<boolean> {
-		return this.msgMgr.saveClineMessages()
+		return saveClineMessagesWithTask(this.msgMgr)
 	}
 
 	/** @deprecated Prefer findMessageById for new code. */
 	private findMessageByTimestamp(ts: number): ClineMessage | undefined {
-		return this.msgMgr.findMessageByTimestamp(ts)
+		return findMessageByTimestampWithTask(this.msgMgr, ts)
 	}
 
 	private findMessageById(id: string): ClineMessage | undefined {
-		return this.msgMgr.findMessageById(id)
+		return findMessageByIdWithTask(this.msgMgr, id)
 	}
 
 	// Note that `partial` has three valid states true (partial message),

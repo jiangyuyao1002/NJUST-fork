@@ -8,7 +8,7 @@ export default defineConfig({
 	test: {
 		globals: true,
 		setupFiles: [path.resolve(__dirname, "./vitest.setup.ts")],
-		exclude: [...defaultExclude, "webview-ui/**", "apps/**", "packages/**", "**/out/**"],
+		exclude: [...defaultExclude, ".claude/**", "**/.claude/**", "webview-ui/**", "apps/**", "packages/**", "**/out/**"],
 		watch: false,
 		reporters,
 		silent,

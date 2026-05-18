@@ -51,6 +51,7 @@ logs
 # Claude Code local skills and settings
 .claude/skills/
 .claude/settings.local.json
+.claude/worktrees/
 
 # Cangjie symbol index (auto-generated)
 .cangjie-index/

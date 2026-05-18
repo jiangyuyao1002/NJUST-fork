@@ -65,7 +65,6 @@ import { McpServerManager } from "../../services/mcp/McpServerManager"
 import type { IMcpHubService } from "../../services/mcp/interfaces/IMcpHubService"
 
 import { CodeIndexManager } from "../../services/code-index/manager"
-import { cangjieDiagnosticModeSwitch } from "../../services/cangjie-lsp/cangjieDiagnosticModeSwitch"
 
 import type { IndexProgressUpdate } from "../../services/code-index/interfaces/manager"
 import { SkillsManager } from "../../services/skills/SkillsManager"
@@ -98,14 +97,25 @@ import { SettingsManager } from "./SettingsManager"
 import { TaskCoordinator } from "./TaskCoordinator"
 import { WebviewRouter } from "./WebviewRouter"
 import { getMergedCommandLists, getWorkspaceWebviewConfig, isBypassWarningActive } from "./ClineProviderState"
-import { shouldRebuildTaskApiHandler } from "./ClineProviderProfiles"
+import {
+	activateProviderProfileWithProvider,
+	deleteProviderProfileWithProvider,
+	getProviderProfileEntriesWithProvider,
+	getProviderProfileEntryWithProvider,
+	handleModeSwitchWithProvider,
+	hasProviderProfileEntryWithProvider,
+	restoreHistoryModeAndProfileWithProvider,
+	upsertProviderProfileWithProvider,
+} from "./ClineProviderModeSync"
+import {
+	delegateParentAndOpenChildWithProvider,
+	reopenParentFromDelegationWithProvider,
+} from "./ClineProviderDelegation"
 import { TaskStackManager } from "./TaskStackManager"
 import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
 import type { ClineMessage, TodoItem } from "@njust-ai-cj/types"
-import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore, type ApiMessage } from "../task-persistence"
-import { readTaskMessages } from "../task-persistence/taskMessages"
+import { TaskHistoryStore } from "../task-persistence"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
-import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
 import { logger } from "../../shared/logger"
 import { TIMING, LIMITS } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -679,75 +689,7 @@ export class ClineProvider
 		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
 		skipProfileRestoreFromHistory: boolean,
 	): Promise<void> {
-		if (historyItem.mode) {
-			const customModes = await this.customModesManager.getCustomModes()
-			const modeExists = getModeBySlug(historyItem.mode, customModes) !== undefined
-			if (!modeExists) {
-				this.log(
-					`Mode '${historyItem.mode}' from history no longer exists. Falling back to default mode '${defaultModeSlug}'.`,
-				)
-				historyItem.mode = defaultModeSlug
-			}
-			await this.updateGlobalState("mode", historyItem.mode)
-			const lockApiConfigAcrossModes = this.context.workspaceState.get("lockApiConfigAcrossModes", false)
-			if (!historyItem.apiConfigName && !lockApiConfigAcrossModes && !skipProfileRestoreFromHistory) {
-				await this.restoreModeBoundProfile(historyItem.mode)
-			}
-		}
-
-		if (historyItem.apiConfigName && !skipProfileRestoreFromHistory) {
-			await this.restoreTaskBoundProfile(historyItem.apiConfigName)
-		} else if (historyItem.apiConfigName && skipProfileRestoreFromHistory) {
-			this.log(
-				`Skipping restore of provider profile '${historyItem.apiConfigName}' for task ${historyItem.id} in CLI runtime.`,
-			)
-		}
-	}
-
-	private async restoreModeBoundProfile(mode: string): Promise<void> {
-		const [savedConfigId, listApiConfig] = await Promise.all([
-			this.providerSettingsManager.getModeConfigId(mode),
-			this.providerSettingsManager.listConfig(),
-		])
-		await this.settingsManager.setGlobalValue("listApiConfigMeta", listApiConfig)
-		if (!savedConfigId) {
-			return
-		}
-		const profile = listApiConfig.find(({ id }) => id === savedConfigId)
-		if (!profile?.name) {
-			return
-		}
-		try {
-			const fullProfile = await this.providerSettingsManager.getProfile({ name: profile.name })
-			if (fullProfile.apiProvider) {
-				await this.activateProviderProfile({ name: profile.name })
-			}
-		} catch (error) {
-			this.log(
-				`Failed to restore API configuration for mode '${mode}': ${
-					getErrorMessage(error)
-				}. Continuing with default configuration.`,
-			)
-		}
-	}
-
-	private async restoreTaskBoundProfile(apiConfigName: string): Promise<void> {
-		const listApiConfig = await this.providerSettingsManager.listConfig()
-		await this.settingsManager.setGlobalValue("listApiConfigMeta", listApiConfig)
-		const profile = listApiConfig.find(({ name }) => name === apiConfigName)
-		if (!profile?.name) {
-			this.log(`Provider profile '${apiConfigName}' from history no longer exists. Using current configuration.`)
-			return
-		}
-		try {
-			await this.activateProviderProfile({ name: profile.name }, { persistModeConfig: false, persistTaskHistory: false })
-		} catch (error) {
-			this.log(
-				`Failed to restore API configuration '${apiConfigName}' for task: ${
-					getErrorMessage(error)
-				}. Continuing with current configuration.`,
-			)
-		}
+		return restoreHistoryModeAndProfileWithProvider(this, historyItem, skipProfileRestoreFromHistory)
 	}
 
 	private async createTaskInstanceFromHistory(
@@ -822,93 +764,10 @@ export class ClineProvider
 	 * @param newMode The mode to switch to
 	 */
 	public async handleModeSwitch(newMode: Mode) {
-		await this.clearCangjieDiagnosticsIfNeeded(newMode)
-		await this.persistTaskModeSwitch(newMode)
-		await this.settingsManager.setGlobalValue("mode", newMode)
-
-		this.emit(NJUST_AI_CJEventName.ModeChanged, newMode)
-
-		const lockApiConfigAcrossModes = this.context.workspaceState.get("lockApiConfigAcrossModes", false)
-		if (lockApiConfigAcrossModes) {
-			await this.postStateToWebview()
-			return
-		}
-
-		await this.syncModeProviderProfile(newMode)
-		await this.postStateToWebview()
+		return handleModeSwitchWithProvider(this, newMode)
 	}
 
-	private async clearCangjieDiagnosticsIfNeeded(newMode: Mode): Promise<void> {
-		const previousMode = (await this.settingsManager.getGlobalValue("mode")) as Mode | undefined
-		if (previousMode === "cangjie" && newMode !== "cangjie") {
-			cangjieDiagnosticModeSwitch.clearExtensionCangjieDiagnostics()
-		}
-	}
-
-	private async persistTaskModeSwitch(newMode: Mode): Promise<void> {
-		const task = this.getCurrentTask()
-		if (!task) {
-			return
-		}
-
-		TelemetryService.instance.captureModeSwitch(task.taskId, newMode)
-		task.emit(NJUST_AI_CJEventName.TaskModeSwitched, task.taskId, newMode)
-
-		try {
-			const taskHistoryItem =
-				this.taskHistoryStore.get(task.taskId) ??
-				(this.getGlobalState("taskHistory") ?? []).find((item) => item.id === task.taskId)
-
-			if (taskHistoryItem) {
-				await this.updateTaskHistory({ ...taskHistoryItem, mode: newMode })
-			}
-
-			task.setTaskMode(newMode)
-		} catch (error) {
-			this.log(
-				`Failed to persist mode switch for task ${task.taskId}: ${getErrorMessage(error)}`,
-			)
-			throw error
-		}
-	}
-
-	private async syncModeProviderProfile(newMode: Mode): Promise<void> {
-		const [savedConfigId, listApiConfig] = await Promise.all([
-			this.providerSettingsManager.getModeConfigId(newMode),
-			this.providerSettingsManager.listConfig(),
-		])
-
-		await this.settingsManager.setGlobalValue("listApiConfigMeta", listApiConfig)
-
-		if (savedConfigId) {
-			await this.activateModeSavedProfile(newMode, listApiConfig, savedConfigId)
-			return
-		}
-
-		const currentApiConfigNameAfter = this.settingsManager.getGlobalValue("currentApiConfigName")
-		if (!currentApiConfigNameAfter) {
-			return
-		}
-
-		const config = listApiConfig.find((c) => c.name === currentApiConfigNameAfter)
-		if (config?.id) {
-			await this.providerSettingsManager.setModeConfig(newMode, config.id)
-		}
-	}
-
-	private async activateModeSavedProfile(newMode: Mode, listApiConfig: ProviderSettingsEntry[], savedConfigId: string): Promise<void> {
-		const profile = listApiConfig.find(({ id }) => id === savedConfigId)
-		if (!profile?.name) {
-			return
-		}
-
-		const fullProfile = await this.providerSettingsManager.getProfile({ name: profile.name })
-		if (!fullProfile.apiProvider) {
-			return
-		}
-
-		await this.activateProviderProfile({ name: profile.name })
-	}
+	// Provider Profile Management
 
 	// Provider Profile Management
 
@@ -921,38 +780,16 @@ export class ClineProvider
 	 * @param providerSettings The new provider settings to apply
 	 * @param options.forceRebuild Force rebuilding the API handler regardless of provider/model equality
 	 */
-	private updateTaskApiHandlerIfNeeded(
-		providerSettings: ProviderSettings,
-		options: { forceRebuild?: boolean } = {},
-	): void {
-		const task = this.getCurrentTask()
-		if (!task) return
-
-		const { forceRebuild = false } = options
-
-		// Determine if we need to rebuild using the previous configuration snapshot
-		const needsRebuild = shouldRebuildTaskApiHandler(task.apiConfiguration, providerSettings, forceRebuild)
-
-		if (needsRebuild) {
-			// Use updateApiConfiguration which handles both API handler rebuild and parser sync.
-			// Note: updateApiConfiguration is declared async but has no actual async operations,
-			// so we can safely call it without awaiting.
-			task.updateApiConfiguration(providerSettings)
-		} else {
-			task.updateApiConfiguration(providerSettings)
-		}
-	}
-
 	getProviderProfileEntries(): ProviderSettingsEntry[] {
-		return this.contextProxy.getValues().listApiConfigMeta || []
+		return getProviderProfileEntriesWithProvider(this)
 	}
 
 	getProviderProfileEntry(name: string): ProviderSettingsEntry | undefined {
-		return this.getProviderProfileEntries().find((profile) => profile.name === name)
+		return getProviderProfileEntryWithProvider(this, name)
 	}
 
 	public hasProviderProfileEntry(name: string): boolean {
-		return !!this.getProviderProfileEntry(name)
+		return hasProviderProfileEntryWithProvider(this, name)
 	}
 
 	async upsertProviderProfile(
@@ -960,147 +797,18 @@ export class ClineProvider
 		providerSettings: ProviderSettings,
 		activate: boolean = true,
 	): Promise<string | undefined> {
-		try {
-			// TODO: Do we need to be calling `activateProfile`? It's not
-			// clear to me what the source of truth should be; in some cases
-			// we rely on the `ContextProxy`'s data store and in other cases
-			// we rely on the `ProviderSettingsManager`'s data store. It might
-			// be simpler to unify these two.
-			const id = await this.providerSettingsManager.saveConfig(name, providerSettings)
-
-			if (activate) {
-				const { mode } = await this.getState()
-
-				// These promises do the following:
-				// 1. Adds or updates the list of provider profiles.
-				// 2. Sets the current provider profile.
-				// 3. Sets the current mode's provider profile.
-				// 4. Copies the provider settings to the context.
-				//
-				// Note: 1, 2, and 4 can be done in one `ContextProxy` call:
-				// this.contextProxy.setValues({ ...providerSettings, listApiConfigMeta: ..., currentApiConfigName: ... })
-				// We should probably switch to that and verify that it works.
-				// I left the original implementation in just to be safe.
-				await Promise.all([
-					this.settingsManager.setGlobalValue("listApiConfigMeta", await this.providerSettingsManager.listConfig()),
-					this.settingsManager.setGlobalValue("currentApiConfigName", name),
-					this.providerSettingsManager.setModeConfig(mode, id),
-					this.contextProxy.setProviderSettings(providerSettings),
-				])
-
-				// Change the provider for the current task.
-				// TODO: We should rename `buildApiHandler` for clarity (e.g. `getProviderClient`).
-				this.updateTaskApiHandlerIfNeeded(providerSettings, { forceRebuild: true })
-
-				// Keep the current task's sticky provider profile in sync with the newly-activated profile.
-				await this.persistStickyProviderProfileToCurrentTask(name)
-			} else {
-				await this.settingsManager.setGlobalValue("listApiConfigMeta", await this.providerSettingsManager.listConfig())
-			}
-
-			await this.postStateToWebview()
-			return id
-		} catch (error) {
-			this.log(
-				`Error create new api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-			)
-
-			vscode.window.showErrorMessage(t("common:errors.create_api_config"))
-			return undefined
-		}
+		return upsertProviderProfileWithProvider(this, name, providerSettings, activate)
 	}
 
-	async deleteProviderProfile(profileToDelete: ProviderSettingsEntry) {
-		const globalSettings = this.contextProxy.getValues()
-		let profileToActivate: string | undefined = globalSettings.currentApiConfigName
-
-		if (profileToDelete.name === profileToActivate) {
-			profileToActivate = this.getProviderProfileEntries().find(({ name }) => name !== profileToDelete.name)?.name
-		}
-
-		if (!profileToActivate) {
-			throw new Error("You cannot delete the last profile")
-		}
-
-		const entries = this.getProviderProfileEntries().filter(({ name }) => name !== profileToDelete.name)
-
-		await this.contextProxy.setValues({
-			...globalSettings,
-			currentApiConfigName: profileToActivate,
-			listApiConfigMeta: entries,
-		})
-
-		await this.postStateToWebview()
-	}
-
-	private async persistStickyProviderProfileToCurrentTask(apiConfigName: string): Promise<void> {
-		const task = this.getCurrentTask()
-		if (!task) {
-			return
-		}
-
-		try {
-			// Update in-memory state immediately so sticky behavior works even before the task has
-			// been persisted into taskHistory (it will be captured on the next save).
-			task.setTaskApiConfigName(apiConfigName)
-			await this.persistCurrentTaskProfileName(task.taskId, apiConfigName)
-		} catch (error) {
-			// If persistence fails, log the error but don't fail the profile switch.
-			this.log(
-				`Failed to persist provider profile switch for task ${task.taskId}: ${
-					getErrorMessage(error)
-				}`,
-			)
-		}
-	}
-
-	private async persistCurrentTaskProfileName(taskId: string, apiConfigName: string): Promise<void> {
-		const taskHistoryItem =
-			this.taskHistoryStore.get(taskId) ??
-			(this.getGlobalState("taskHistory") ?? []).find((item) => item.id === taskId)
-
-		if (taskHistoryItem) {
-			await this.updateTaskHistory({ ...taskHistoryItem, apiConfigName })
-		}
+	async deleteProviderProfile(profileToDelete: ProviderSettingsEntry): Promise<void> {
+		return deleteProviderProfileWithProvider(this, profileToDelete)
 	}
 
 	async activateProviderProfile(
 		args: { name: string } | { id: string },
 		options?: { persistModeConfig?: boolean; persistTaskHistory?: boolean },
-	) {
-		const { name, id, ...providerSettings } = await this.providerSettingsManager.activateProfile(args)
-
-		const persistModeConfig = options?.persistModeConfig ?? true
-		const persistTaskHistory = options?.persistTaskHistory ?? true
-		const listApiConfig = await this.providerSettingsManager.listConfig()
-
-		await Promise.all([
-			this.contextProxy.setValue("listApiConfigMeta", listApiConfig),
-			this.contextProxy.setValue("currentApiConfigName", name),
-			this.contextProxy.setProviderSettings(providerSettings),
-		])
-
-		await this.persistActivatedProfileModeBinding(id, persistModeConfig)
-		this.updateTaskApiHandlerIfNeeded(providerSettings, { forceRebuild: true })
-
-		if (persistTaskHistory) {
-			await this.persistStickyProviderProfileToCurrentTask(name)
-		}
-
-		await this.postStateToWebview()
-
-		if (providerSettings.apiProvider) {
-			this.emit(NJUST_AI_CJEventName.ProviderProfileChanged, { name, provider: providerSettings.apiProvider })
-		}
-	}
-
-	private async persistActivatedProfileModeBinding(id: string | undefined, persistModeConfig: boolean): Promise<void> {
-		if (!id || !persistModeConfig) {
-			return
-		}
-
-		const { mode } = await this.getState()
-		await this.providerSettingsManager.setModeConfig(mode, id)
+	): Promise<void> {
+		return activateProviderProfileWithProvider(this, args, options)
 	}
 
 	async updateCustomInstructions(instructions?: string) {
@@ -2092,164 +1800,7 @@ export class ClineProvider
 		isolationLevel?: string
 		forkedContextSummary?: string
 	}): Promise<Task> {
-		const { parentTaskId, message, initialTodos, mode, isolationLevel, forkedContextSummary } = params
-
-		// Metadata-driven delegation is always enabled
-
-		// 1) Get parent (must be current task)
-		const parent = this.getCurrentTask()
-		if (!parent) {
-			throw new Error("[delegateParentAndOpenChild] No current task")
-		}
-		if (parent.taskId !== parentTaskId) {
-			throw new Error(
-				`[delegateParentAndOpenChild] Parent mismatch: expected ${parentTaskId}, current ${parent.taskId}`,
-			)
-		}
-		// 2) Flush pending tool results to API history BEFORE disposing the parent.
-		//    This is critical: when tools are called before new_task,
-		//    their tool_result blocks are in userMessageContent but not yet saved to API history.
-		//    If we don't flush them, the parent's API conversation will be incomplete and
-		//    cause 400 errors when resumed (missing tool_result for tool_use blocks).
-		//
-		//    NOTE: We do NOT pass the assistant message here because the assistant message
-		//    is already added to apiConversationHistory by the normal flow in
-		//    recursivelyMakeClineRequests BEFORE tools start executing. We only need to
-		//    flush the pending user message with tool_results.
-		try {
-			const flushSuccess = await parent.flushPendingToolResultsToHistory()
-
-			if (!flushSuccess) {
-				logger.warn("ClineProvider", `delegateParentAndOpenChild: Flush failed for parent ${parentTaskId}, retrying...`)
-				const retrySuccess = await parent.retrySaveApiConversationHistory()
-
-				if (!retrySuccess) {
-					logger.error(
-						"ClineProvider",
-						`delegateParentAndOpenChild: CRITICAL: Parent ${parentTaskId} API history not persisted to disk. Child return may produce stale state.`,
-					)
-					vscode.window.showWarningMessage(
-						"Warning: Parent task state could not be saved. The parent task may lose recent context when resumed.",
-					)
-				}
-			}
-		} catch (error) {
-			this.log(
-				`[delegateParentAndOpenChild] Error flushing pending tool results (non-fatal): ${
-					getErrorMessage(error)
-				}`,
-			)
-		}
-
-		// 3) Enforce single-open invariant by closing/disposing the parent first
-		//    This ensures we never have >1 tasks open at any time during delegation.
-		//    Await abort completion to ensure clean disposal and prevent unhandled rejections.
-		try {
-			await this.stack.pop({ skipDelegationRepair: true })
-		} catch (error) {
-			this.log(
-				`[delegateParentAndOpenChild] Error during parent disposal (non-fatal): ${
-					getErrorMessage(error)
-				}`,
-			)
-			// Non-fatal: proceed with child creation even if parent cleanup had issues
-		}
-
-		// 3) Switch provider mode to child's requested mode BEFORE creating the child task
-		//    This ensures the child's system prompt and configuration are based on the correct mode.
-		//    The mode switch must happen before createTask() because the Task constructor
-		//    initializes its mode from provider.getState() during initializeTaskMode().
-		try {
-			await this.handleModeSwitch(mode as Mode)
-		} catch (e) {
-			this.log(
-				`[delegateParentAndOpenChild] handleModeSwitch failed for mode '${mode}': ${
-					(e as Error)?.message ?? String(e)
-				}`,
-			)
-		}
-
-		// 4) Create child as sole active (parent reference preserved for lineage)
-		// Pass initialStatus: "active" to ensure the child task's historyItem is created
-		// with status from the start, avoiding race conditions where the task might
-		// call attempt_completion before status is persisted separately.
-		//
-		// Pass startTask: false to prevent the child from beginning its task loop
-		// (and writing to globalState via saveClineMessages → updateTaskHistory)
-		// before we persist the parent's delegation metadata in step 5.
-		// Without this, the child's fire-and-forget startTask() races with step 5,
-		// and the last writer to globalState overwrites the other's changes—
-		// causing the parent's delegation fields to be lost.
-		const child = await this.createTask(message, undefined, parent, {
-			initialTodos,
-			initialStatus: "active",
-			startTask: false,
-		})
-		// Inherit streaming model snapshot for better prompt-cache/tool-schema reuse continuity.
-		if (parent.cachedStreamingModel) {
-			child.cachedStreamingModel = parent.cachedStreamingModel
-		}
-
-		// Apply forked isolation context if specified
-		let effectiveForkedSummary = forkedContextSummary
-		if (isolationLevel === "forked" && !effectiveForkedSummary) {
-			// Auto-generate context summary from parent when caller (e.g. NewTaskTool)
-			// requests forked isolation but doesn't provide a pre-built summary.
-			try {
-				const { generateParentContextSummary } = await import("../task/SubTaskContextBuilder")
-				const { DEFAULT_FORKED_CONTEXT_CONFIG } = await import("../task/SubTaskOptions")
-				if (parent.apiConversationHistory && parent.apiConversationHistory.length > 0) {
-					effectiveForkedSummary = generateParentContextSummary(
-						parent.apiConversationHistory,
-						DEFAULT_FORKED_CONTEXT_CONFIG.summaryMaxTokens,
-						DEFAULT_FORKED_CONTEXT_CONFIG,
-					)
-				}
-			} catch (e) {
-				this.log(
-					`[delegateParentAndOpenChild] Failed to auto-generate forked context summary: ${
-						(e as Error)?.message ?? String(e)
-					}`,
-				)
-			}
-		}
-		if (isolationLevel === "forked" && effectiveForkedSummary) {
-			child.forkedContextSummary = effectiveForkedSummary
-			child.isolationLevel = "forked"
-		}
-
-		// 5) Persist parent delegation metadata BEFORE the child starts writing.
-		try {
-			const { historyItem } = await this.getTaskWithId(parentTaskId)
-			const childIds = Array.from(new Set([...(historyItem.childIds ?? []), child.taskId]))
-			const updatedHistory: typeof historyItem = {
-				...historyItem,
-				status: "delegated",
-				delegatedToId: child.taskId,
-				awaitingChildId: child.taskId,
-				childIds,
-			}
-			await this.updateTaskHistory(updatedHistory)
-		} catch (err) {
-			this.log(
-				`[delegateParentAndOpenChild] Failed to persist parent metadata for ${parentTaskId} -> ${child.taskId}: ${
-					(err as Error)?.message ?? String(err)
-				}`,
-			)
-		}
-
-		// 6) Start the child task now that parent metadata is safely persisted.
-		child.start()
-
-		// 7) Emit TaskDelegated (provider-level)
-		try {
-			this.emit(NJUST_AI_CJEventName.TaskDelegated, parentTaskId, child.taskId)
-		} catch (error) {
-			// non-fatal
-			logger.warn("ClineProvider", "TaskDelegated event emission failed", error)
-		}
-
-		return child
+		return delegateParentAndOpenChildWithProvider(this, params)
 	}
 
 	/**
@@ -2260,203 +1811,7 @@ export class ClineProvider
 		childTaskId: string
 		completionResultSummary: string
 	}): Promise<void> {
-		const { parentTaskId, childTaskId, completionResultSummary } = params
-		const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
-
-		// 1) Load parent from history and current persisted messages
-		const { historyItem } = await this.getTaskWithId(parentTaskId)
-
-		let parentClineMessages: ClineMessage[] = []
-		try {
-			parentClineMessages = await readTaskMessages({
-				taskId: parentTaskId,
-				globalStoragePath,
-			})
-		} catch (error) {
-			logger.debug("ClineProvider", "Failed to read parent cline messages", error)
-			parentClineMessages = []
-		}
-
-		let parentApiMessages: ApiMessage[] = []
-		try {
-			parentApiMessages = (await readApiMessages({
-				taskId: parentTaskId,
-				globalStoragePath,
-			}))
-		} catch (error) {
-			logger.debug("ClineProvider", "Failed to read parent api messages", error)
-			parentApiMessages = []
-		}
-
-		// 2) Inject synthetic records: UI subtask_result and update API tool_result
-		const ts = Date.now()
-
-		// Defensive: ensure arrays
-		if (!Array.isArray(parentClineMessages)) parentClineMessages = []
-		if (!Array.isArray(parentApiMessages)) parentApiMessages = []
-
-		const subtaskUiMessage: ClineMessage = {
-			type: "say",
-			say: "subtask_result",
-			text: completionResultSummary,
-			ts,
-				id: crypto.randomUUID(),
-		}
-		parentClineMessages.push(subtaskUiMessage)
-		await saveTaskMessages({ messages: parentClineMessages, taskId: parentTaskId, globalStoragePath })
-
-		// Find the tool_use_id from the last assistant message's new_task tool_use
-		let toolUseId: string | undefined
-		for (let i = parentApiMessages.length - 1; i >= 0; i--) {
-			const msg = parentApiMessages[i]
-			if (!msg) continue
-			if (msg.role === "assistant" && Array.isArray(msg.content)) {
-				for (const block of msg.content) {
-					if (block.type === "tool_use" && block.name === "new_task") {
-						toolUseId = block.id
-						break
-					}
-				}
-				if (toolUseId) break
-			}
-		}
-
-		// Preferred: if the parent history contains the native tool_use for new_task,
-		// inject a matching tool_result for the Anthropic message contract:
-		// user → assistant (tool_use) → user (tool_result)
-		if (toolUseId) {
-			// Check if the last message is already a user message with a tool_result for this tool_use_id
-			// (in case this is a retry or the history was already updated)
-			const lastMsg = parentApiMessages[parentApiMessages.length - 1]
-			let alreadyHasToolResult = false
-			if (lastMsg?.role === "user" && Array.isArray(lastMsg.content)) {
-				for (const block of lastMsg.content) {
-					if (block.type === "tool_result" && block.tool_use_id === toolUseId) {
-						// Update the existing tool_result content
-						block.content = `Subtask ${childTaskId} completed.\n\nResult:\n${completionResultSummary}`
-						alreadyHasToolResult = true
-						break
-					}
-				}
-			}
-
-			// If no existing tool_result found, create a NEW user message with the tool_result
-			if (!alreadyHasToolResult) {
-				parentApiMessages.push({
-					role: "user",
-					content: [
-						{
-							type: "tool_result" as const,
-							tool_use_id: toolUseId,
-							content: `Subtask ${childTaskId} completed.\n\nResult:\n${completionResultSummary}`,
-						},
-					],
-					ts,
-				})
-			}
-
-			// Validate the newly injected tool_result against the preceding assistant message.
-			// This ensures the tool_result's tool_use_id matches a tool_use in the immediately
-			// preceding assistant message (Anthropic API requirement).
-			const lastMessage = parentApiMessages[parentApiMessages.length - 1]
-			if (lastMessage?.role === "user") {
-				const validatedMessage = validateAndFixToolResultIds(lastMessage, parentApiMessages.slice(0, -1))
-				parentApiMessages[parentApiMessages.length - 1] = validatedMessage
-			}
-		} else {
-			// If there is no corresponding tool_use in the parent API history, we cannot emit a
-			// tool_result. Fall back to a plain user text note so the parent can still resume.
-			parentApiMessages.push({
-				role: "user",
-				content: [
-					{
-						type: "text" as const,
-						text: `Subtask ${childTaskId} completed.\n\nResult:\n${completionResultSummary}`,
-					},
-				],
-				ts,
-			})
-		}
-
-		await saveApiMessages({ messages: parentApiMessages, taskId: parentTaskId, globalStoragePath })
-
-		// 3) Close child instance if still open (single-open-task invariant).
-		//    This MUST happen BEFORE updating the child's status to "completed" because
-		//    stack.pop() → abortTask(true) → saveClineMessages() writes
-		//    the historyItem with initialStatus (typically "active"), which would
-		//    overwrite a "completed" status set earlier.
-		const current = this.getCurrentTask()
-		if (current?.taskId === childTaskId) {
-			await this.stack.pop()
-		}
-
-		// 4) Update child metadata to "completed" status.
-		//    This runs after the abort so it overwrites the stale "active" status
-		//    that saveClineMessages() may have written during step 3.
-		try {
-			const { historyItem: childHistory } = await this.getTaskWithId(childTaskId)
-			await this.updateTaskHistory({
-				...childHistory,
-				status: "completed",
-			})
-		} catch (err) {
-			this.log(
-				`[reopenParentFromDelegation] Failed to persist child completed status for ${childTaskId}: ${
-					(err as Error)?.message ?? String(err)
-				}`,
-			)
-		}
-
-		// 5) Update parent metadata and persist BEFORE emitting completion event
-		const childIds = Array.from(new Set([...(historyItem.childIds ?? []), childTaskId]))
-		const updatedHistory: typeof historyItem = {
-			...historyItem,
-			status: "active",
-			completedByChildId: childTaskId,
-			completionResultSummary,
-			awaitingChildId: undefined,
-			childIds,
-		}
-		await this.updateTaskHistory(updatedHistory)
-
-		// 6) Emit TaskDelegationCompleted (provider-level)
-		try {
-			this.emit(NJUST_AI_CJEventName.TaskDelegationCompleted, parentTaskId, childTaskId, completionResultSummary)
-		} catch (error) {
-			// non-fatal
-			logger.warn("ClineProvider", "TaskDelegationCompleted event emission failed", error)
-		}
-
-		// 7) Reopen the parent from history as the sole active task (restores saved mode)
-		//    IMPORTANT: startTask=false to suppress resume-from-history ask scheduling
-		const parentInstance = await this.createTaskWithHistoryItem(updatedHistory, { startTask: false })
-
-		// 8) Inject restored histories into the in-memory instance before resuming
-		if (parentInstance) {
-			try {
-				await parentInstance.overwriteClineMessages(parentClineMessages)
-			} catch (error) {
-				// non-fatal
-				logger.warn("ClineProvider", "overwriteClineMessages failed", error)
-			}
-			try {
-				await parentInstance.overwriteApiConversationHistory(parentApiMessages)
-			} catch (error) {
-				// non-fatal
-				logger.warn("ClineProvider", "overwriteApiConversationHistory failed", error)
-			}
-
-			// Auto-resume parent without ask("resume_task")
-			await parentInstance.resumeAfterDelegation()
-		}
-
-		// 9) Emit TaskDelegationResumed (provider-level)
-		try {
-			this.emit(NJUST_AI_CJEventName.TaskDelegationResumed, parentTaskId, childTaskId)
-		} catch (error) {
-			// non-fatal
-			logger.warn("ClineProvider", "TaskDelegationResumed event emission failed", error)
-		}
+		return reopenParentFromDelegationWithProvider(this, params)
 	}
 
 	/**

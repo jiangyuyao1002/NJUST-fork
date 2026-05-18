@@ -12,6 +12,17 @@ vi.mock("fs/promises", () => ({
 	},
 }))
 
+vi.mock("vscode", () => ({
+	workspace: {
+		workspaceFolders: [],
+	},
+	window: {
+		showErrorMessage: vi.fn(),
+		showInformationMessage: vi.fn(),
+		showWarningMessage: vi.fn(),
+	},
+}))
+
 vi.mock("../McpHub", async () => {
 	const actual = await vi.importActual("../McpHub")
 	return actual
