@@ -2,8 +2,7 @@
 
 import { describe, it, expect, vi } from "vitest"
 import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
-import { ClineProvider } from "../core/webview/ClineProvider"
-import type { TaskStackManager } from "../core/webview/TaskStackManager"
+import { delegateParentAndOpenChildWithProvider, type IDelegationHost } from "../core/webview/ClineProviderDelegation"
 
 /** Minimal parent task surface used by delegateParentAndOpenChild (flush + lineage). */
 function createDelegationParentStub(overrides: { taskId?: string } = {}) {
@@ -56,13 +55,13 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 			getCurrentTask: vi.fn(() => parentTask),
 			stack: {
 				pop: stackPop,
-			} as unknown as TaskStackManager,
+			},
 			createTask,
 			getTaskWithId,
 			updateTaskHistory,
 			handleModeSwitch,
 			log: vi.fn(),
-		} as unknown as ClineProvider
+		} as unknown as IDelegationHost
 
 		const params = {
 			parentTaskId: "parent-1",
@@ -71,10 +70,7 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 			mode: "code",
 		}
 
-		const child = await ClineProvider.prototype.delegateParentAndOpenChild.call(
-			provider,
-			params,
-		)
+		const child = await delegateParentAndOpenChildWithProvider(provider, params)
 
 		expect(child.taskId).toBe("child-1")
 
@@ -144,15 +140,15 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 			getCurrentTask: vi.fn(() => parentTask),
 			stack: {
 				pop: stackPop,
-			} as unknown as TaskStackManager,
+			},
 			createTask,
 			getTaskWithId,
 			updateTaskHistory,
 			handleModeSwitch,
 			log: vi.fn(),
-		} as unknown as ClineProvider
+		} as unknown as IDelegationHost
 
-		await ClineProvider.prototype.delegateParentAndOpenChild.call(provider, {
+		await delegateParentAndOpenChildWithProvider(provider, {
 			parentTaskId: "parent-1",
 			message: "Do something",
 			initialTodos: [],

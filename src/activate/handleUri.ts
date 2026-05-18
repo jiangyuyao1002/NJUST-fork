@@ -1,21 +1,34 @@
 import * as vscode from "vscode"
 
-import { ClineProvider } from "../core/webview/ClineProvider"
+import { getVisibleInstance } from "./providerActionDispatcher"
+
+export interface IUriCallbackHandler {
+	handleOpenRouterCallback(code: string): Promise<void>
+	handleRequestyCallback(code: string, baseUrl: string | null): Promise<void>
+}
+
+let uriCallbackHandler: IUriCallbackHandler | undefined
+
+export function registerUriCallbackHandler(handler: IUriCallbackHandler): void {
+	uriCallbackHandler = handler
+}
 
 export const handleUri = async (uri: vscode.Uri) => {
 	const path = uri.path
 	const query = new URLSearchParams(uri.query.replace(/\+/g, "%2B"))
-	const visibleProvider = ClineProvider.getVisibleInstance()
+	const visibleProvider = getVisibleInstance() as IUriCallbackHandler | undefined
 
-	if (!visibleProvider) {
+	if (!visibleProvider && !uriCallbackHandler) {
 		return
 	}
+
+	const handler = visibleProvider ?? uriCallbackHandler!
 
 	switch (path) {
 		case "/openrouter": {
 			const code = query.get("code")
 			if (code) {
-				await visibleProvider.handleOpenRouterCallback(code)
+				await handler.handleOpenRouterCallback(code)
 			}
 			break
 		}
@@ -23,7 +36,7 @@ export const handleUri = async (uri: vscode.Uri) => {
 			const code = query.get("code")
 			const baseUrl = query.get("baseUrl")
 			if (code) {
-				await visibleProvider.handleRequestyCallback(code, baseUrl)
+				await handler.handleRequestyCallback(code, baseUrl)
 			}
 			break
 		}

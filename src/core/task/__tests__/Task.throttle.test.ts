@@ -3,11 +3,10 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
 import { NJUST_AI_CJEventName, ProviderSettings, TokenUsage, ToolUsage } from "@njust-ai-cj/types"
 
 import { Task } from "../Task"
-import { ClineProvider } from "../../webview/ClineProvider"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 import { hasToolUsageChanged, hasTokenUsageChanged } from "../../../shared/getApiMetrics"
 
 // Mock dependencies
-vi.mock("../../webview/ClineProvider")
 vi.mock("../../../integrations/terminal/TerminalRegistry", () => ({
 	TerminalRegistry: {
 		releaseTerminalsForTask: vi.fn(),
@@ -91,7 +90,7 @@ describe("Task token usage throttling", () => {
 
 		// Create task instance without starting it
 		task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			startTask: false,
 		})

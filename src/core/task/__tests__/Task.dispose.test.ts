@@ -3,10 +3,9 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
 import { ProviderSettings } from "@njust-ai-cj/types"
 
 import { Task } from "../Task"
-import { ClineProvider } from "../../webview/ClineProvider"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 
 // Mock dependencies
-vi.mock("../../webview/ClineProvider")
 vi.mock("../../../integrations/terminal/TerminalRegistry", () => ({
 	TerminalRegistry: {
 		releaseTerminalsForTask: vi.fn(),
@@ -50,7 +49,7 @@ describe("Task dispose method", () => {
 			apiKey: "test-key",
 		} as ProviderSettings
 		task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			startTask: false,
 		})

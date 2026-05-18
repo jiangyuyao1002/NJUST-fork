@@ -3,11 +3,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import type { ProviderSettings } from "@njust-ai-cj/types"
 
 import { Task } from "../Task"
-import { ClineProvider } from "../../webview/ClineProvider"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 import { tokenCountCache } from "../../../utils/tokenCountCache"
 import { buildApiHandler } from "../../../api"
 
-vi.mock("../../webview/ClineProvider")
 vi.mock("../../../integrations/terminal/TerminalRegistry", () => ({
 	TerminalRegistry: {
 		releaseTerminalsForTask: vi.fn(),
@@ -45,7 +44,7 @@ describe("Task.updateApiConfiguration", () => {
 			log: vi.fn(),
 		}
 		task = new Task({
-			provider: mockProvider as unknown as ClineProvider,
+			provider: mockProvider as unknown as ITaskHost,
 			apiConfiguration: { apiProvider: "anthropic", apiKey: "a" } as ProviderSettings,
 			startTask: false,
 		})

@@ -90,6 +90,15 @@ import { PlanEngine } from "../agent/PlanEngine"
 import { AgentOrchestrator } from "../agent/AgentOrchestrator"
 import { taskEventBus, type DisposableLike } from "../events/TaskEventBus"
 import { presentAssistantMessage } from "../assistant-message/presentAssistantMessage"
+import {
+	registerActionTarget,
+	unregisterActionTarget,
+	getVisibleInstance as _getVisibleInstance,
+	getInstance as _getInstance,
+	handleCodeAction,
+	handleTerminalAction,
+} from "../../activate/providerActionDispatcher"
+import { registerUriCallbackHandler } from "../../activate/handleUri"
 
 import { WebviewMessageRouter } from "./WebviewMessageRouter"
 import { PendingEditManager } from "./PendingEditManager"
@@ -147,7 +156,7 @@ export class ClineProvider
 	public readonly settingsManager: SettingsManager
 	public readonly taskCoordinator: TaskCoordinator
 	public readonly webviewRouter: WebviewRouter
-	private view?: vscode.WebviewView | vscode.WebviewPanel
+	public view?: vscode.WebviewView | vscode.WebviewPanel
 	public readonly stack: TaskStackManager
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private codeIndexManager?: CodeIndexManager
@@ -210,6 +219,8 @@ export class ClineProvider
 		})
 
 		ClineProvider.activeInstances.add(this)
+		registerActionTarget(this)
+		registerUriCallbackHandler(this)
 
 		void this.settingsManager.setGlobalValue("codebaseIndexModels", EMBEDDING_MODEL_PROFILES)
 
@@ -436,6 +447,7 @@ export class ClineProvider
 		this.taskHistory.flushGlobalStateWriteThrough()
 		this.log("Disposed all disposables")
 		ClineProvider.activeInstances.delete(this)
+		unregisterActionTarget(this)
 
 		// Clean up any event listeners attached to this provider
 		this.removeAllListeners()
@@ -444,26 +456,13 @@ export class ClineProvider
 	}
 
 	public static getVisibleInstance(): ClineProvider | undefined {
-		return findLast(Array.from(this.activeInstances), (instance) => instance.view?.visible === true)
+		const instance = _getVisibleInstance()
+		return instance as ClineProvider | undefined
 	}
 
 	public static async getInstance(): Promise<ClineProvider | undefined> {
-		let visibleProvider = ClineProvider.getVisibleInstance()
-
-		// If no visible provider, try to show the sidebar view
-		if (!visibleProvider) {
-			await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
-			// Wait briefly for the view to become visible
-			await delay(100)
-			visibleProvider = ClineProvider.getVisibleInstance()
-		}
-
-		// If still no visible provider, return
-		if (!visibleProvider) {
-			return
-		}
-
-		return visibleProvider
+		const instance = await _getInstance()
+		return instance as ClineProvider | undefined
 	}
 
 	public static async isActiveTask(): Promise<boolean> {
@@ -473,7 +472,6 @@ export class ClineProvider
 			return false
 		}
 
-		// Check if there is a cline instance in the stack (if this provider has an active task)
 		if (visibleProvider.getCurrentTask()) {
 			return true
 		}
@@ -486,31 +484,7 @@ export class ClineProvider
 		promptType: CodeActionName,
 		params: Record<string, string | unknown[]>,
 	): Promise<void> {
-		// Capture telemetry for code action usage
-		TelemetryService.instance.captureCodeActionUsed(promptType)
-
-		const visibleProvider = await ClineProvider.getInstance()
-
-		if (!visibleProvider) {
-			return
-		}
-
-		const { customSupportPrompts } = await visibleProvider.getState()
-
-		// TODO: Improve type safety for promptType.
-		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
-
-		if (command === "addToContext") {
-			await visibleProvider.postMessageToWebview({
-				type: "invoke",
-				invoke: "setChatBoxMessage",
-				text: `${prompt}\n\n`,
-			})
-			await visibleProvider.postMessageToWebview({ type: "action", action: "focusInput" })
-			return
-		}
-
-		await visibleProvider.createTask(prompt)
+		await handleCodeAction(command, promptType, params)
 	}
 
 	public static async handleTerminalAction(
@@ -518,37 +492,7 @@ export class ClineProvider
 		promptType: TerminalActionPromptType,
 		params: Record<string, string | unknown[]>,
 	): Promise<void> {
-		TelemetryService.instance.captureCodeActionUsed(promptType)
-
-		const visibleProvider = await ClineProvider.getInstance()
-
-		if (!visibleProvider) {
-			return
-		}
-
-		const { customSupportPrompts } = await visibleProvider.getState()
-		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
-
-		if (command === "terminalAddToContext") {
-			await visibleProvider.postMessageToWebview({
-				type: "invoke",
-				invoke: "setChatBoxMessage",
-				text: `${prompt}\n\n`,
-			})
-			await visibleProvider.postMessageToWebview({ type: "action", action: "focusInput" })
-			return
-		}
-
-		try {
-			await visibleProvider.createTask(prompt)
-		} catch (error) {
-			if (error instanceof OrganizationAllowListViolationError) {
-				// Errors from terminal commands seem to get swallowed / ignored.
-				vscode.window.showErrorMessage(error.message)
-			}
-
-			throw error
-		}
+		await handleTerminalAction(command, promptType, params)
 	}
 
 	async resolveWebviewView(webviewView: vscode.WebviewView | vscode.WebviewPanel) {
@@ -1686,6 +1630,10 @@ export class ClineProvider
 
 	// Modes
 
+	public async getCustomModes() {
+		return this.customModesManager.getCustomModes()
+	}
+
 	public async getModes(): Promise<{ slug: string; name: string }[]> {
 		try {
 			const customModes = await this.customModesManager.getCustomModes()
@@ -1870,3 +1818,4 @@ export class ClineProvider
 		}
 	}
 }
+

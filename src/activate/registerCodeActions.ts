@@ -4,7 +4,7 @@ import { CodeActionId, CodeActionName } from "@njust-ai-cj/types"
 
 import { getCodeActionCommand } from "../utils/commands"
 import { EditorUtils } from "../integrations/editor/EditorUtils"
-import { ClineProvider } from "../core/webview/ClineProvider"
+import { handleCodeAction } from "./providerActionDispatcher"
 
 export const registerCodeActions = (context: vscode.ExtensionContext) => {
 	registerCodeAction(context, "explainCode", "EXPLAIN")
@@ -18,7 +18,6 @@ const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActio
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCodeActionCommand(command), async (...args: any[]) => {
-			// Handle both code action and direct command cases.
 			let filePath: string
 			let selectedText: string
 			let startLine: number | undefined
@@ -26,10 +25,8 @@ const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActio
 			let diagnostics: UnsafeAny[] | undefined
 
 			if (args.length > 1) {
-				// Called from code action.
 				;[filePath, selectedText, startLine, endLine, diagnostics] = args
 			} else {
-				// Called directly from command palette.
 				const context = EditorUtils.getEditorContext()
 
 				if (!context) {
@@ -47,7 +44,7 @@ const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActio
 				...(userInput ? { userInput } : {}),
 			}
 
-			await ClineProvider.handleCodeAction(command, promptType, params)
+			await handleCodeAction(command, promptType, params)
 		}),
 	)
 }

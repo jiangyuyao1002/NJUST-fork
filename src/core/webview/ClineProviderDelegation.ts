@@ -11,7 +11,20 @@ import { readTaskMessages } from "../task-persistence/taskMessages"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
 import type { ClineProvider } from "./ClineProvider"
 
-export async function delegateParentAndOpenChildWithProvider(provider: ClineProvider, params: {
+export interface IDelegationHost {
+	getCurrentTask(): Task | undefined
+	log(message: string): void
+	stack: { pop(options?: { skipDelegationRepair?: boolean }): Promise<void> }
+	handleModeSwitch(mode: string): Promise<void>
+	createTask(text: string, images?: string[], parentTask?: Task, options?: unknown): Promise<Task>
+	getTaskWithId(id: string): Promise<{ historyItem: any }>
+	updateTaskHistory(item: any, options?: any): Promise<any[]>
+	emit(event: string, ...args: any[]): boolean
+	readonly contextProxy: { globalStorageUri: { fsPath: string } }
+	createTaskWithHistoryItem(historyItem: any, options?: { startTask?: boolean }): Promise<Task | undefined>
+}
+
+export async function delegateParentAndOpenChildWithProvider(provider: IDelegationHost, params: {
 		parentTaskId: string
 		message: string
 		initialTodos: TodoItem[]
@@ -179,7 +192,7 @@ export async function delegateParentAndOpenChildWithProvider(provider: ClineProv
 		return child
 	}
 
-export async function reopenParentFromDelegationWithProvider(provider: ClineProvider, params: {
+export async function reopenParentFromDelegationWithProvider(provider: IDelegationHost, params: {
 		parentTaskId: string
 		childTaskId: string
 		completionResultSummary: string

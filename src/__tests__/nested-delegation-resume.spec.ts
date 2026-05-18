@@ -56,7 +56,7 @@ vi.mock("../core/task-persistence", () => ({
 }))
 
 import { attemptCompletionTool } from "../core/tools/AttemptCompletionTool"
-import { ClineProvider } from "../core/webview/ClineProvider"
+import { reopenParentFromDelegationWithProvider, type IDelegationHost } from "../core/webview/ClineProviderDelegation"
 import type { Task } from "../core/task/Task"
 import { readTaskMessages } from "../core/task-persistence/taskMessages"
 import { readApiMessages } from "../core/task-persistence"
@@ -165,9 +165,9 @@ describe("Nested delegation resume (A → B → C)", () => {
 			stack: { pop: vi.fn().mockResolvedValue(undefined) },
 			// Wire through provider method so attemptCompletionTool can call it
 			reopenParentFromDelegation: vi.fn(async (params: any) => {
-				return await (ClineProvider.prototype as any).reopenParentFromDelegation.call(provider, params)
+				return await reopenParentFromDelegationWithProvider(provider, params)
 			}),
-		} as unknown as ClineProvider
+		} as unknown as IDelegationHost
 
 		// Empty histories for simplicity
 		vi.mocked(readTaskMessages).mockResolvedValue([])

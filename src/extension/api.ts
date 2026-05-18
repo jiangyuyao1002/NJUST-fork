@@ -24,15 +24,15 @@ import { IpcServer } from "@njust-ai-cj/ipc"
 
 import { Package } from "../shared/package"
 import { logger } from "../shared/logger"
-import { ClineProvider } from "../core/webview/ClineProvider"
 import { openClineInNewTab } from "../activate/registerCommands"
 import { getCommands } from "../services/command/commands"
 import { getModels } from "../api/providers/fetchers/modelCache"
 import { getErrorMessage } from "../shared/error-utils"
+import type { IProviderHost } from "./IProviderHost"
 
 export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJAPI {
 	private readonly outputChannel: vscode.OutputChannel
-	private readonly sidebarProvider: ClineProvider
+	private readonly sidebarProvider: IProviderHost
 	private readonly context: vscode.ExtensionContext
 	private readonly ipc?: IpcServer
 	private readonly log: (...args: UnsafeAny[]) => void
@@ -40,7 +40,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 
 	constructor(
 		outputChannel: vscode.OutputChannel,
-		provider: ClineProvider,
+		provider: IProviderHost,
 		socketPath?: string,
 		enableLogging = false,
 	) {
@@ -101,8 +101,6 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 						} catch (error) {
 							const errorMessage = getErrorMessage(error)
 							this.log(`[API] ResumeTask failed for taskId ${command.data}: ${errorMessage}`)
-							// Don't rethrow - we want to prevent IPC server crashes.
-							// The error is logged for debugging purposes.
 						}
 						break
 					case TaskCommandName.SendMessage:
@@ -184,14 +182,14 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 		images?: string[]
 		newTab?: boolean
 	}) {
-		let provider: ClineProvider
+		let provider: IProviderHost
 
 		if (newTab) {
 			await vscode.commands.executeCommand("workbench.action.files.revert")
 			await vscode.commands.executeCommand("workbench.action.closeAllEditors")
 
 			provider = await openClineInNewTab({ context: this.context, outputChannel: this.outputChannel })
-			this.registerListeners(provider)
+			this.registerListeners(provider as UnsafeAny)
 		} else {
 			await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
 
@@ -246,7 +244,6 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 	}
 
 	public async clearCurrentTask(_lastMessage?: string) {
-		// Legacy finishSubTask removed; clear current by closing active task instance.
 		await this.sidebarProvider.stack.pop()
 		await this.sidebarProvider.postStateToWebview()
 	}
@@ -258,9 +255,6 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 	public async sendMessage(text?: string, images?: string[]) {
 		const currentTask = this.sidebarProvider.getCurrentTask()
 
-		// In headless/sandbox flows the webview may not be launched, so routing
-		// through invoke=sendMessage drops the message. Deliver directly to the
-		// task ask-response channel instead.
 		if (!this.sidebarProvider.viewLaunched) {
 			if (!currentTask) {
 				this.log("[API#sendMessage] no current task in headless mode; message dropped")
@@ -311,16 +305,14 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 		}
 	}
 
-	private registerListeners(provider: ClineProvider) {
+	private registerListeners(provider: IProviderHost) {
 		provider.on(NJUST_AI_CJEventName.TaskCreated, (task) => {
-			// Task Lifecycle
-
 			task.on(NJUST_AI_CJEventName.TaskStarted, async () => {
 				this.emit(NJUST_AI_CJEventName.TaskStarted, task.taskId)
 				await this.fileLog(`[${new Date().toISOString()}] taskStarted -> ${task.taskId}\n`)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskCompleted, async (_, tokenUsage, toolUsage) => {
+			task.on(NJUST_AI_CJEventName.TaskCompleted, async (_: any, tokenUsage: any, toolUsage: any) => {
 				this.emit(NJUST_AI_CJEventName.TaskCompleted, task.taskId, tokenUsage, toolUsage, {
 					isSubtask: !!task.parentTaskId,
 				})
@@ -358,8 +350,6 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				this.emit(NJUST_AI_CJEventName.TaskIdle, task.taskId)
 			})
 
-			// Subtask Lifecycle
-
 			task.on(NJUST_AI_CJEventName.TaskPaused, () => {
 				this.emit(NJUST_AI_CJEventName.TaskPaused, task.taskId)
 			})
@@ -368,25 +358,23 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				this.emit(NJUST_AI_CJEventName.TaskUnpaused, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskSpawned, (childTaskId) => {
+			task.on(NJUST_AI_CJEventName.TaskSpawned, (childTaskId: UnsafeAny) => {
 				this.emit(NJUST_AI_CJEventName.TaskSpawned, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegated as UnsafeAny, (childTaskId: string) => {
+			task.on(NJUST_AI_CJEventName.TaskDelegated as UnsafeAny, (childTaskId: UnsafeAny) => {
 				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegated, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegationCompleted as UnsafeAny, (childTaskId: string, summary: string) => {
+			task.on(NJUST_AI_CJEventName.TaskDelegationCompleted as UnsafeAny, (childTaskId: UnsafeAny, summary: UnsafeAny) => {
 				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegationCompleted, task.taskId, childTaskId, summary)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegationResumed as UnsafeAny, (childTaskId: string) => {
+			task.on(NJUST_AI_CJEventName.TaskDelegationResumed as UnsafeAny, (childTaskId: UnsafeAny) => {
 				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegationResumed, task.taskId, childTaskId)
 			})
 
-			// Task Execution
-
-			task.on(NJUST_AI_CJEventName.Message, async (message) => {
+			task.on(NJUST_AI_CJEventName.Message, async (message: UnsafeAny) => {
 				this.emit(NJUST_AI_CJEventName.Message, { taskId: task.taskId, ...message })
 
 				if (message.message.partial !== true) {
@@ -394,7 +382,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				}
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskModeSwitched, (taskId, mode) => {
+			task.on(NJUST_AI_CJEventName.TaskModeSwitched, (taskId: UnsafeAny, mode: UnsafeAny) => {
 				this.emit(NJUST_AI_CJEventName.TaskModeSwitched, taskId, mode)
 			})
 
@@ -402,21 +390,17 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				this.emit(NJUST_AI_CJEventName.TaskAskResponded, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.QueuedMessagesUpdated, (taskId, messages) => {
+			task.on(NJUST_AI_CJEventName.QueuedMessagesUpdated, (taskId: UnsafeAny, messages: UnsafeAny) => {
 				this.emit(NJUST_AI_CJEventName.QueuedMessagesUpdated, taskId, messages)
 			})
 
-			// Task Analytics
-
-			task.on(NJUST_AI_CJEventName.TaskToolFailed, (taskId, tool, error) => {
+			task.on(NJUST_AI_CJEventName.TaskToolFailed, (taskId: UnsafeAny, tool: UnsafeAny, error: UnsafeAny) => {
 				this.emit(NJUST_AI_CJEventName.TaskToolFailed, taskId, tool, error)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskTokenUsageUpdated, (_, tokenUsage, toolUsage) => {
+			task.on(NJUST_AI_CJEventName.TaskTokenUsageUpdated, (_: UnsafeAny, tokenUsage: UnsafeAny, toolUsage: UnsafeAny) => {
 				this.emit(NJUST_AI_CJEventName.TaskTokenUsageUpdated, task.taskId, tokenUsage, toolUsage)
 			})
-
-			// Let's go!
 
 			this.emit(NJUST_AI_CJEventName.TaskCreated, task.taskId)
 		})

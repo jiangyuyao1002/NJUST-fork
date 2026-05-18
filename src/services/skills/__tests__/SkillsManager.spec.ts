@@ -111,12 +111,11 @@ vi.mock("../../../i18n", () => ({
 	},
 }))
 
-import { SkillsManager } from "../SkillsManager"
-import { ClineProvider } from "../../../core/webview/ClineProvider"
+import { SkillsManager, type SkillsManagerHost } from "../SkillsManager"
 
 describe("SkillsManager", () => {
 	let skillsManager: SkillsManager
-	let mockProvider: Partial<ClineProvider>
+	let mockProvider: Partial<SkillsManagerHost>
 
 	// Pre-computed paths for tests
 	const globalSkillsDir = p(GLOBAL_ROO_DIR, "skills")
@@ -142,7 +141,7 @@ describe("SkillsManager", () => {
 			} as any,
 		}
 
-		skillsManager = new SkillsManager(mockProvider as ClineProvider)
+		skillsManager = new SkillsManager(mockProvider as SkillsManagerHost)
 	})
 
 	afterEach(async () => {

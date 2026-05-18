@@ -10,8 +10,8 @@ import type { GlobalState, ProviderSettings } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Task } from "../Task"
-import { ClineProvider } from "../../webview/ClineProvider"
-import { ContextProxy } from "../../config/ContextProxy"
+import { createTestProvider } from "./testProviderFactory"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 
 // Mock @njust-ai-cj/core
 vi.mock("@njust-ai-cj/core", () => ({
@@ -193,12 +193,7 @@ describe("Grace Retry Error Handling", () => {
 			dispose: vi.fn(),
 		}
 
-		mockProvider = new ClineProvider(
-			mockExtensionContext,
-			mockOutputChannel,
-			"sidebar",
-			new ContextProxy(mockExtensionContext),
-		) as any
+		mockProvider = createTestProvider(mockExtensionContext, mockOutputChannel) as any
 
 		mockApiConfig = {
 			apiProvider: "anthropic",

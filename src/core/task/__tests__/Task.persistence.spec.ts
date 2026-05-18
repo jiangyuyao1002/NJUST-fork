@@ -10,8 +10,8 @@ import type { GlobalState, ProviderSettings } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Task } from "../Task"
-import { ClineProvider } from "../../webview/ClineProvider"
-import { ContextProxy } from "../../config/ContextProxy"
+import { createTestProvider } from "./testProviderFactory"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 
 // ─── Hoisted mocks ───────────────────────────────────────────────────────────
 
@@ -197,7 +197,7 @@ vi.mock("../../../utils/fs", () => ({
 // ─── Test suite ──────────────────────────────────────────────────────────────
 
 describe("Task persistence", () => {
-	let mockProvider: ClineProvider & Record<string, any>
+	let mockProvider: ITaskHost & Record<string, any>
 	let mockApiConfig: ProviderSettings
 	let mockOutputChannel: vscode.OutputChannel
 	let mockExtensionContext: vscode.ExtensionContext
@@ -241,12 +241,7 @@ describe("Task persistence", () => {
 			dispose: vi.fn(),
 		} as unknown as vscode.OutputChannel
 
-		mockProvider = new ClineProvider(
-			mockExtensionContext,
-			mockOutputChannel,
-			"sidebar",
-			new ContextProxy(mockExtensionContext),
-		) as ClineProvider & Record<string, any>
+		mockProvider = createTestProvider(mockExtensionContext, mockOutputChannel) as ITaskHost & Record<string, any>
 
 		mockApiConfig = {
 			apiProvider: "anthropic",

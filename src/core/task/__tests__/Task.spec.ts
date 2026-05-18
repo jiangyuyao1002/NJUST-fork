@@ -12,9 +12,9 @@ import type { GlobalState, ProviderSettings, ModelInfo } from "@njust-ai-cj/type
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Task } from "../Task"
-import { ClineProvider } from "../../webview/ClineProvider"
+import { createTestProvider } from "./testProviderFactory"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 import { ApiStreamChunk } from "../../../api/transform/stream"
-import { ContextProxy } from "../../config/ContextProxy"
 import { processUserContentMentions } from "../../mentions/processUserContentMentions"
 import { MultiSearchReplaceDiffStrategy } from "../../diff/strategies/multi-search-replace"
 import { getLastGlobalApiRequestTime } from "../globalApiTiming"
@@ -268,14 +268,8 @@ describe("Cline", () => {
 		}
 
 		// Setup mock provider with output channel
-		mockProvider = new ClineProvider(
-			mockExtensionContext,
-			mockOutputChannel,
-			"sidebar",
-			new ContextProxy(mockExtensionContext),
-		) as any
+		mockProvider = createTestProvider(mockExtensionContext, mockOutputChannel) as any
 
-		// Setup mock API configuration
 		mockApiConfig = {
 			apiProvider: "anthropic",
 			apiModelId: "claude-3-5-sonnet-20241022",
@@ -1969,7 +1963,7 @@ describe("Queued message processing after condense", () => {
 			dispose: vi.fn(),
 		}
 
-		const provider = new ClineProvider(ctx, output as any, "sidebar", new ContextProxy(ctx)) as any
+		const provider = createTestProvider(ctx, output as any) as any
 		provider.postMessageToWebview = vi.fn().mockResolvedValue(undefined)
 		provider.postStateToWebview = vi.fn().mockResolvedValue(undefined)
 		provider.postStateToWebviewWithoutTaskHistory = vi.fn().mockResolvedValue(undefined)
@@ -2102,12 +2096,7 @@ describe("pushToolResultToUserContent", () => {
 			dispose: vi.fn(),
 		}
 
-		mockProvider = new ClineProvider(
-			mockExtensionContext,
-			mockOutputChannel,
-			"sidebar",
-			new ContextProxy(mockExtensionContext),
-		) as any
+		mockProvider = createTestProvider(mockExtensionContext, mockOutputChannel) as any
 
 		mockProvider.postMessageToWebview = vi.fn().mockResolvedValue(undefined)
 		mockProvider.postStateToWebview = vi.fn().mockResolvedValue(undefined)

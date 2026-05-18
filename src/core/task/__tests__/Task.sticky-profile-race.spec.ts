@@ -6,7 +6,7 @@ import * as _vscode from "vscode"
 
 import type { ProviderSettings } from "@njust-ai-cj/types"
 import { Task } from "../Task"
-import { ClineProvider } from "../../webview/ClineProvider"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 
 vi.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
@@ -125,7 +125,7 @@ describe("Task - sticky provider profile init race", () => {
 			postStateToWebview: vi.fn().mockResolvedValue(undefined),
 			postStateToWebviewWithoutTaskHistory: vi.fn().mockResolvedValue(undefined),
 			updateTaskHistory: vi.fn().mockResolvedValue(undefined),
-		} as unknown as ClineProvider
+		} as unknown as ITaskHost
 
 		const task = new Task({
 			provider: mockProvider,

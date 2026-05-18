@@ -7,10 +7,27 @@ import { SYSTEM_PROMPT } from "../prompts/system"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
 import { Package } from "../../shared/package"
 
-import { ClineProvider } from "./ClineProvider"
 import { logger } from "../../shared/logger"
 
-export const generateSystemPrompt = async (provider: ClineProvider, message: WebviewMessage) => {
+export interface ISystemPromptHost {
+	getState(): Promise<{
+		apiConfiguration: UnsafeAny
+		customModePrompts?: UnsafeAny
+		customInstructions?: string | undefined
+		mcpEnabled: boolean
+		experiments: UnsafeAny
+		language?: string
+		enableSubfolderRules: boolean | undefined
+	}>
+	readonly cwd: string
+	readonly context: vscode.ExtensionContext
+	getMcpHub(): UnsafeAny
+	getSkillsManager(): UnsafeAny
+	getCustomModes(): Promise<UnsafeAny[]>
+	getCurrentTask(): { rooIgnoreController?: { getInstructions(): string | undefined } } | undefined
+}
+
+export const generateSystemPrompt = async (provider: ISystemPromptHost, message: WebviewMessage) => {
 	const {
 		apiConfiguration,
 		customModePrompts,
@@ -26,12 +43,10 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 	const cwd = provider.cwd
 
 	const mode = message.mode ?? defaultModeSlug
-	const customModes = await provider.customModesManager.getCustomModes()
+	const customModes = await provider.getCustomModes()
 
 	const rooIgnoreInstructions = provider.getCurrentTask()?.rooIgnoreController?.getInstructions()
 
-	// Create a temporary API handler to check model info for stealth mode.
-	// This avoids relying on an active Cline instance which might not exist during preview.
 	let modelInfo: { isStealthModel?: boolean } | undefined
 	try {
 		const tempApiHandler = buildApiHandler(apiConfiguration)
@@ -43,7 +58,7 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 	const systemPrompt = await SYSTEM_PROMPT(
 		provider.context,
 		cwd,
-		false, // supportsComputerUse — browser removed
+		false,
 		mcpEnabled ? provider.getMcpHub() : undefined,
 		diffStrategy,
 		mode,
@@ -62,10 +77,12 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 				.get<boolean>("newTaskRequireTodos", false),
 			isStealthModel: modelInfo?.isStealthModel,
 		},
-		undefined, // todoList
-		undefined, // modelId
+		undefined,
+		undefined,
 		provider.getSkillsManager(),
 	)
 
 	return systemPrompt
 }
+
+

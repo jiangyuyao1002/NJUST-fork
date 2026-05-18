@@ -6,6 +6,7 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { getCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
+import { getVisibleInstance } from "./providerActionDispatcher"
 import { ContextProxy } from "../core/config/ContextProxy"
 import { focusPanel } from "../utils/focusPanel"
 import { handleNewTask } from "./handleTask"
@@ -19,7 +20,7 @@ import { getErrorMessage } from "../shared/error-utils"
  * Helper to get the visible ClineProvider instance or log if not found.
  */
 export function getVisibleProviderOrLog(outputChannel: vscode.OutputChannel): ClineProvider | undefined {
-	const visibleProvider = ClineProvider.getVisibleInstance()
+	const visibleProvider = getVisibleInstance() as ClineProvider | undefined
 	if (!visibleProvider) {
 		outputChannel.appendLine("Cannot find any visible NJUST_AI_CJ instances.")
 		return undefined
