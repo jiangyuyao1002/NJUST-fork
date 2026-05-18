@@ -3,7 +3,7 @@
 import { describe, it, expect, beforeEach } from "vitest"
 
 import { Anthropic } from "@anthropic-ai/sdk"
-import { rooDefaultModelId } from "@njust-ai-cj/types"
+import { rooDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { ApiHandlerOptions } from "../../../shared/api"
 

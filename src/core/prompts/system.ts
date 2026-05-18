@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import crypto from "crypto"
 
 import { type ModeConfig, type PromptComponent, type CustomModePrompts, type TodoItem } from "@njust-ai-cj/types"
+import { renderPrompt } from "@njust-ai-cj/prompt-engine"
 
 import { Mode, modes, defaultModeSlug, getModeBySlug, getGroupName, getModeSelection } from "../../shared/modes"
 import { DiffStrategy } from "../../shared/tools"
@@ -34,7 +35,7 @@ import {
 } from "./sections/cangjie-context"
 import { Package } from "../../shared/package"
 import { getMultiFileContextSection } from "./sections/multi-file-context"
-import { applySystemPromptBudget, estimatePromptTokens, trimSectionsByBudget, derivePromptTokenBudget } from "./tokenBudget"
+import { estimatePromptTokens, trimSectionsByBudget, derivePromptTokenBudget } from "./tokenBudget"
 import type { SectionBudget } from "./tokenBudget"
 
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY = "\n\n====\n\nSYSTEM_PROMPT_DYNAMIC_BOUNDARY\n\n====\n\n"
@@ -396,14 +397,23 @@ HOW TO USE:
 		sec("sessionMemory"),
 	].filter((s) => s.length > 0)
 
-	const budgeted = applySystemPromptBudget(staticPart, dynamicSegments, settings?.contextWindow)
-	const fullPrompt = `${budgeted.staticPart}${SYSTEM_PROMPT_DYNAMIC_BOUNDARY}${budgeted.dynamicPart}`
+	const renderedPrompt = renderPrompt({
+		staticSections: [{ name: "static", text: staticPart, required: true }],
+		dynamicSections: dynamicSegments.map((text, index) => ({ name: `dynamic-${index}`, text, required: true })),
+		boundary: SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
+		maxPromptTokens: budget?.systemPromptMaxTokens,
+	})
 	const perToolHashes: Record<string, string> = {
 		toolDescriptions: crypto.createHash("sha256").update(toolUseText).digest("hex").slice(0, 16),
 		capabilitiesSection: crypto.createHash("sha256").update(capabilitiesText).digest("hex").slice(0, 16),
 		webSearchSection: crypto.createHash("sha256").update(webSearchText).digest("hex").slice(0, 16),
 	}
-	return { staticPart: budgeted.staticPart, dynamicPart: budgeted.dynamicPart, fullPrompt, perToolHashes }
+	return {
+		staticPart: renderedPrompt.staticPart,
+		dynamicPart: renderedPrompt.dynamicPart,
+		fullPrompt: renderedPrompt.fullPrompt,
+		perToolHashes,
+	}
 }
 
 /** Helper: resolve config from positional params (shared by SYSTEM_PROMPT_PARTS / SYSTEM_PROMPT). */

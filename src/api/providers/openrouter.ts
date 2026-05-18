@@ -2,14 +2,14 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import { z } from "zod"
 
+import { type ModelRecord } from "@njust-ai-cj/types"
 import {
-	type ModelRecord,
 	openRouterDefaultModelId,
 	openRouterDefaultModelInfo,
 	OPENROUTER_DEFAULT_PROVIDER_NAME,
 	OPEN_ROUTER_PROMPT_CACHING_MODELS,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
@@ -31,7 +31,7 @@ import { getModelEndpoints } from "./fetchers/modelEndpointCache"
 
 import { DEFAULT_HEADERS } from "./constants"
 import { BaseProvider } from "./base-provider"
-import type { ApiHandlerCreateMessageMetadata, SingleCompletionHandler } from "../index"
+import type { ApiHandlerCreateMessageMetadata, SingleCompletionHandler } from "../types"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { generateImageWithProvider, ImageGenerationResult } from "./utils/image-generation"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
@@ -200,7 +200,9 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 		const parsedError = extractErrorFromMetadataRaw(rawString)
 		const rawErrorMessage = parsedError || error?.message || "Unknown error"
 
-		const orError = new Error(`OpenRouter API Error ${error?.code}: ${rawErrorMessage}`) as Error & { status?: number }
+		const orError = new Error(`OpenRouter API Error ${error?.code}: ${rawErrorMessage}`) as Error & {
+			status?: number
+		}
 		if (error?.code) orError.status = error.code
 		throw orError
 	}
@@ -270,7 +272,9 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 			openAiMessages = openAiMessages.map((msg) => {
 				if (msg.role === "assistant") {
 					const toolCalls = (msg as Record<string, UnsafeAny>).tool_calls as UnsafeAny[] | undefined
-					const existingDetails = (msg as Record<string, UnsafeAny>).reasoning_details as UnsafeAny[] | undefined
+					const existingDetails = (msg as Record<string, UnsafeAny>).reasoning_details as
+						| UnsafeAny[]
+						| undefined
 
 					// Only inject if there are tool calls and no existing encrypted reasoning
 					if (toolCalls && toolCalls.length > 0) {
@@ -485,7 +489,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 			// Process finish_reason to emit tool_call_end events
 			// This ensures tool calls are finalized even if the stream doesn't properly close
 			if (finishReason) {
-				const endEvents = this.options.toolCallParser?.processFinishReason(finishReason) ?? [ ]
+				const endEvents = this.options.toolCallParser?.processFinishReason(finishReason) ?? []
 				for (const event of endEvents) {
 					yield event
 				}

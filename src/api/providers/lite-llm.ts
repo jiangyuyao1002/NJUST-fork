@@ -1,7 +1,7 @@
 import OpenAI from "openai"
 import { Anthropic } from "@anthropic-ai/sdk" // Keep for type usage only
 
-import { litellmDefaultModelId, litellmDefaultModelInfo } from "@njust-ai-cj/types"
+import { litellmDefaultModelId, litellmDefaultModelInfo } from "@njust-ai-cj/core/providers"
 
 import { calculateApiCostOpenAI } from "../../shared/cost"
 
@@ -11,7 +11,7 @@ import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { sanitizeOpenAiCallId } from "../../utils/tool-id"
 
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { RouterProvider } from "./router-provider"
 import { redactApiSecrets } from "../../utils/redactApiSecrets"
 
@@ -258,7 +258,9 @@ export class LiteLLMHandler extends RouterProvider implements SingleCompletionHa
 				// Extract cache-related information if available
 				// LiteLLM may use different field names for cache tokens
 				const cacheWriteTokens =
-					lastUsage.cache_creation_input_tokens || (lastUsage as Record<string, UnsafeAny>).prompt_cache_miss_tokens || 0
+					lastUsage.cache_creation_input_tokens ||
+					(lastUsage as Record<string, UnsafeAny>).prompt_cache_miss_tokens ||
+					0
 				const cacheReadTokens =
 					lastUsage.prompt_tokens_details?.cached_tokens ||
 					(lastUsage as Record<string, UnsafeAny>).cache_read_input_tokens ||

@@ -3,7 +3,6 @@ import * as path from "path"
 import fs from "fs/promises"
 import EventEmitter from "events"
 
-
 import delay from "delay"
 import axios from "axios"
 import pWaitFor from "p-wait-for"
@@ -33,8 +32,6 @@ import {
 	type ExtensionState,
 	type GlobalState,
 	NJUST_AI_CJEventName,
-	requestyDefaultModelId,
-	openRouterDefaultModelId,
 	DEFAULT_WRITE_DELAY_MS,
 	DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE,
 	DEFAULT_REQUEST_DELAY_SECONDS,
@@ -45,6 +42,7 @@ import {
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	isRetiredProvider,
 } from "@njust-ai-cj/types"
+import {} from "@njust-ai-cj/core/providers"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { Package } from "../../shared/package"
 import { formatLanguage } from "../../shared/language"
@@ -57,6 +55,7 @@ import { EMBEDDING_MODEL_PROFILES } from "../../shared/embeddingModels"
 import { ProfileValidator } from "../../shared/ProfileValidator"
 
 import { Terminal } from "../../integrations/terminal/Terminal"
+import { DiffViewProvider } from "../../integrations/editor/DiffViewProvider"
 
 import { getTheme } from "../../integrations/theme/getTheme"
 import WorkspaceTracker from "../../integrations/workspace/WorkspaceTracker"
@@ -69,7 +68,6 @@ import { CodeIndexManager } from "../../services/code-index/manager"
 import type { IndexProgressUpdate } from "../../services/code-index/interfaces/manager"
 import { SkillsManager } from "../../services/skills/SkillsManager"
 
-
 import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
 import { getWorkspaceGitInfo } from "../../utils/git"
 import { getWorkspacePath } from "../../utils/path"
@@ -79,16 +77,19 @@ import { setPanel } from "../../activate/registerCommands"
 
 import { t } from "../../i18n"
 
-import { forceFullModelDetailsLoad, hasLoadedFullDetails } from "../../api/providers/fetchers/lmstudio"
+import { forceFullModelDetailsLoad, hasLoadedFullDetails } from "../../api/providers/fetchers/lmstudio-full-details"
 
 import { ContextProxy } from "../config/ContextProxy"
 import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 import { CustomModesManager } from "../config/CustomModesManager"
 import { Task } from "../task/Task"
 import type { ITaskHost } from "../task/interfaces/ITaskHost"
+import type { ITaskDiffViewProvider } from "../task/interfaces/ITaskDiffViewProvider"
 import type { IMcpHubClient } from "../../services/mcp/interfaces/IMcpHubClient"
 import { PlanEngine } from "../agent/PlanEngine"
 import { AgentOrchestrator } from "../agent/AgentOrchestrator"
+import { taskEventBus, type DisposableLike } from "../events/TaskEventBus"
+import { presentAssistantMessage } from "../assistant-message/presentAssistantMessage"
 
 import { WebviewMessageRouter } from "./WebviewMessageRouter"
 import { PendingEditManager } from "./PendingEditManager"
@@ -114,6 +115,7 @@ import {
 import { TaskStackManager } from "./TaskStackManager"
 import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
 import type { ClineMessage, TodoItem } from "@njust-ai-cj/types"
+import { requestyDefaultModelId, openRouterDefaultModelId } from "@njust-ai-cj/core/providers"
 import { TaskHistoryStore } from "../task-persistence"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { logger } from "../../shared/logger"
@@ -131,12 +133,7 @@ export type ClineProviderEvents = {
 
 export class ClineProvider
 	extends EventEmitter<TaskProviderEvents>
-	implements
-		vscode.WebviewViewProvider,
-		TelemetryPropertiesProvider,
-		TaskProviderLike,
-		ITaskHost,
-		IMcpHubClient
+	implements vscode.WebviewViewProvider, TelemetryPropertiesProvider, TaskProviderLike, ITaskHost, IMcpHubClient
 {
 	// Used in package.json as the view's id. This value cannot be changed due
 	// to how VSCode caches views based on their id, and updating the id would
@@ -158,6 +155,7 @@ export class ClineProvider
 	protected mcpHub?: IMcpHubService // Change from private to protected
 	protected skillsManager?: SkillsManager
 	private taskCreationCallback: (task: Task) => void
+	private readonly assistantPresentationSubscription: DisposableLike
 	private currentWorkspacePath: string | undefined
 	private _disposed = false
 
@@ -207,8 +205,7 @@ export class ClineProvider
 			getState: () => this.getState(),
 			getTaskWithId: (id) => this.getTaskWithId(id),
 			updateTaskHistory: (item, options) => this.updateTaskHistory(item, options),
-			createTaskWithHistoryItem: (historyItem, options) =>
-				this.createTaskWithHistoryItem(historyItem, options),
+			createTaskWithHistoryItem: (historyItem, options) => this.createTaskWithHistoryItem(historyItem, options),
 			performPreparationTasks: (task) => this.performPreparationTasks(task),
 		})
 
@@ -228,17 +225,20 @@ export class ClineProvider
 		// Use Object.defineProperties with arrow function getters to preserve lexical `this`
 		// (object-literal getters would bind `this` to the config object, not ClineProvider).
 		this.taskHistory = new TaskHistoryService(
-			Object.defineProperties({
-				context: this.context,
-				contextProxy: this.contextProxy as unknown as TaskHistoryHost["contextProxy"],
-				taskHistoryStore: this.taskHistoryStore,
-				outputChannel: this.outputChannel,
-				stack: this.stack,
-				postMessageToWebview: (msg: ExtensionMessage) => this.postMessageToWebview(msg),
-			} as TaskHistoryHost, {
-				cwd: { get: () => this.cwd, enumerable: true, configurable: true },
-				isViewLaunched: { get: () => this.isViewLaunched, enumerable: true, configurable: true },
-			})
+			Object.defineProperties(
+				{
+					context: this.context,
+					contextProxy: this.contextProxy as unknown as TaskHistoryHost["contextProxy"],
+					taskHistoryStore: this.taskHistoryStore,
+					outputChannel: this.outputChannel,
+					stack: this.stack,
+					postMessageToWebview: (msg: ExtensionMessage) => this.postMessageToWebview(msg),
+				} as TaskHistoryHost,
+				{
+					cwd: { get: () => this.cwd, enumerable: true, configurable: true },
+					isViewLaunched: { get: () => this.isViewLaunched, enumerable: true, configurable: true },
+				},
+			),
 		)
 		this.taskHistory.initialize().catch((error) => {
 			this.log(`Failed to initialize TaskHistoryStore: ${error}`)
@@ -285,6 +285,16 @@ export class ClineProvider
 
 		this.planEngine = new PlanEngine(this, this.outputChannel)
 		this.agentOrchestrator = new AgentOrchestrator(this, this.outputChannel)
+		this.assistantPresentationSubscription = taskEventBus.on(
+			"task:assistant-message-requested",
+			async (_event, payload) => {
+				const task = (payload.data as { task?: Task } | undefined)?.task
+				if (!task || task.providerRef.deref() !== this) {
+					return
+				}
+				await presentAssistantMessage(task)
+			},
+		)
 
 		// Initialize Skills Manager for skill discovery
 		this.skillsManager = new SkillsManager(this)
@@ -324,7 +334,6 @@ export class ClineProvider
 
 	public async initializeCloudProfileSyncWhenReady(): Promise<void> {}
 
-
 	async performPreparationTasks(cline: Task) {
 		// LMStudio: We need to force model loading in order to read its context
 		// size; we do it now since we're starting a task with that model selected.
@@ -344,6 +353,9 @@ export class ClineProvider
 		}
 	}
 
+	createDiffViewProvider(cwd: string, task: unknown): ITaskDiffViewProvider {
+		return new DiffViewProvider(cwd, task as Task)
+	}
 
 	// Pending Edit Operations Management
 
@@ -402,6 +414,7 @@ export class ClineProvider
 		}
 
 		this.messageRouter.dispose()
+		this.assistantPresentationSubscription.dispose()
 		this.clearWebviewResources()
 
 		while (this.disposables.length) {
@@ -715,7 +728,6 @@ export class ClineProvider
 		})
 	}
 
-
 	// eslint-disable-next-line @typescript-eslint/require-await
 	private async applyPendingEditIfPresent(task: Task): Promise<void> {
 		const operationId = `task-${task.taskId}`
@@ -730,22 +742,29 @@ export class ClineProvider
 			try {
 				const { messageIndex, apiConversationHistoryIndex } = (() => {
 					const messageIndex = task.clineMessages.findIndex((msg) => msg.ts === pendingEdit.messageTs)
-					const apiConversationHistoryIndex = task.apiConversationHistory.findIndex((msg) => msg.ts === pendingEdit.messageTs)
+					const apiConversationHistoryIndex = task.apiConversationHistory.findIndex(
+						(msg) => msg.ts === pendingEdit.messageTs,
+					)
 					return { messageIndex, apiConversationHistoryIndex }
 				})()
 				if (messageIndex !== -1) {
 					await task.overwriteClineMessages(task.clineMessages.slice(0, messageIndex))
 					if (apiConversationHistoryIndex !== -1) {
-						await task.overwriteApiConversationHistory(task.apiConversationHistory.slice(0, apiConversationHistoryIndex))
+						await task.overwriteApiConversationHistory(
+							task.apiConversationHistory.slice(0, apiConversationHistoryIndex),
+						)
 					}
-					await task.handleWebviewAskResponse("messageResponse", pendingEdit.editedContent, pendingEdit.images)
+					await task.handleWebviewAskResponse(
+						"messageResponse",
+						pendingEdit.editedContent,
+						pendingEdit.images,
+					)
 				}
 			} catch (error) {
 				this.log(`[createTaskWithHistoryItem] Error processing pending edit: ${error}`)
 			}
 		}, 100)
 	}
-
 
 	public async postMessageToWebview(message: ExtensionMessage) {
 		await this.webviewRouter.postMessage(message)
@@ -1007,7 +1026,9 @@ export class ClineProvider
 			clineMessages: currentTask?.clineMessages || [],
 			currentTaskTodos: currentTask?.todoList || [],
 			messageQueue: currentTask?.messageQueueService?.messages,
-			taskHistory: this.taskHistory.initialized ? this.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task) : [],
+			taskHistory: this.taskHistory.initialized
+				? this.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task)
+				: [],
 			soundEnabled: state.soundEnabled ?? false,
 			ttsEnabled: state.ttsEnabled ?? false,
 			ttsSpeed: state.ttsSpeed ?? 1.0,
@@ -1025,7 +1046,8 @@ export class ClineProvider
 			writeDelayMs: state.writeDelayMs ?? DEFAULT_WRITE_DELAY_MS,
 			requestDelaySeconds: state.requestDelaySeconds ?? DEFAULT_REQUEST_DELAY_SECONDS,
 			terminalOutputPreviewSize: state.terminalOutputPreviewSize ?? DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE,
-			terminalShellIntegrationTimeout: state.terminalShellIntegrationTimeout ?? Terminal.defaultShellIntegrationTimeout,
+			terminalShellIntegrationTimeout:
+				state.terminalShellIntegrationTimeout ?? Terminal.defaultShellIntegrationTimeout,
 			terminalShellIntegrationDisabled: state.terminalShellIntegrationDisabled ?? true,
 			terminalCommandDelay: state.terminalCommandDelay ?? 0,
 			terminalPowershellCounter: state.terminalPowershellCounter ?? false,
@@ -1076,13 +1098,15 @@ export class ClineProvider
 				codebaseIndexEmbedderProvider: state.codebaseIndexConfig?.codebaseIndexEmbedderProvider ?? "openai",
 				codebaseIndexEmbedderBaseUrl: state.codebaseIndexConfig?.codebaseIndexEmbedderBaseUrl ?? "",
 				codebaseIndexEmbedderModelId: state.codebaseIndexConfig?.codebaseIndexEmbedderModelId ?? "",
-				codebaseIndexEmbedderModelDimension: state.codebaseIndexConfig?.codebaseIndexEmbedderModelDimension ?? 1536,
+				codebaseIndexEmbedderModelDimension:
+					state.codebaseIndexConfig?.codebaseIndexEmbedderModelDimension ?? 1536,
 				codebaseIndexOpenAiCompatibleBaseUrl: state.codebaseIndexConfig?.codebaseIndexOpenAiCompatibleBaseUrl,
 				codebaseIndexSearchMaxResults: state.codebaseIndexConfig?.codebaseIndexSearchMaxResults,
 				codebaseIndexSearchMinScore: state.codebaseIndexConfig?.codebaseIndexSearchMinScore,
 				codebaseIndexBedrockRegion: state.codebaseIndexConfig?.codebaseIndexBedrockRegion,
 				codebaseIndexBedrockProfile: state.codebaseIndexConfig?.codebaseIndexBedrockProfile,
-				codebaseIndexOpenRouterSpecificProvider: state.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
+				codebaseIndexOpenRouterSpecificProvider:
+					state.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
 			},
 			profileThresholds: state.profileThresholds ?? {},
 			hasOpenedModeSelector: this.settingsManager.getGlobalValue("hasOpenedModeSelector") ?? false,
@@ -1103,9 +1127,9 @@ export class ClineProvider
 				try {
 					const { openAiCodexOAuthManager } = await import("../../integrations/openai-codex/oauth")
 					return await openAiCodexOAuthManager.isAuthenticated()
-			} catch (error) {
-				logger.debug("ClineProvider", "OpenAI Codex OAuth authentication check failed", error)
-				return false
+				} catch (error) {
+					logger.debug("ClineProvider", "OpenAI Codex OAuth authentication check failed", error)
+					return false
 				}
 			})(),
 			...workspaceWebviewConfig,
@@ -1502,7 +1526,7 @@ export class ClineProvider
 			try {
 				await this.stack.pop()
 			} catch (error) {
-			logger.warn("ClineProvider", "Stack pop failed", error)
+				logger.warn("ClineProvider", "Stack pop failed", error)
 				// Non-fatal
 			}
 		}
@@ -1848,5 +1872,4 @@ export class ClineProvider
 			return vscode.Uri.file(filePath).toString()
 		}
 	}
-
 }

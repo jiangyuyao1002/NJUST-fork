@@ -1,4 +1,4 @@
-import { moonshotModels, moonshotDefaultModelId } from "@njust-ai-cj/types"
+import { moonshotModels, moonshotDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

@@ -8,7 +8,7 @@ import OpenAI from "openai"
 import { RequestyHandler } from "../requesty"
 import { ApiHandlerOptions } from "../../../shared/api"
 import { Package } from "../../../shared/package"
-import { ApiHandlerCreateMessageMetadata } from "../../index"
+import { ApiHandlerCreateMessageMetadata } from "../../types"
 
 const mockCreate = vitest.fn()
 

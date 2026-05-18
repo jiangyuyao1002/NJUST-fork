@@ -9,6 +9,8 @@ import {
 	type ProviderSettings,
 	isRetiredProvider,
 	DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
+} from "@njust-ai-cj/types"
+import {
 	openRouterDefaultModelId,
 	requestyDefaultModelId,
 	litellmDefaultModelId,
@@ -35,7 +37,7 @@ import {
 	qwenDefaultModelId,
 	doubaoDefaultModelId,
 	glmDefaultModelId,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import {
 	getProviderServiceConfig,
@@ -110,7 +112,6 @@ import { TemperatureControl } from "./TemperatureControl"
 import { RateLimitSecondsControl } from "./RateLimitSecondsControl"
 import { ConsecutiveMistakeLimitControl } from "./ConsecutiveMistakeLimitControl"
 import { BedrockCustomArn } from "./providers/BedrockCustomArn"
-
 
 import { BookOpenText } from "lucide-react"
 
@@ -467,7 +468,7 @@ const ApiOptions = ({
 		if (fromWelcomeView) {
 			const openRouterIndex = options.findIndex((opt) => opt.value === "openrouter")
 			if (openRouterIndex > 0) {
-				const [openRouterOption] = options.splice(openRouterIndex, 1) as [typeof options[0]]
+				const [openRouterOption] = options.splice(openRouterIndex, 1) as [(typeof options)[0]]
 				options.unshift(openRouterOption)
 			}
 		}

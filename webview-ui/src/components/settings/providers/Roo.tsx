@@ -1,9 +1,5 @@
-import {
-	type ProviderSettings,
-	type OrganizationAllowList,
-	type RouterModels,
-	rooDefaultModelId,
-} from "@njust-ai-cj/types"
+import { type ProviderSettings, type OrganizationAllowList, type RouterModels } from "@njust-ai-cj/types"
+import { rooDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { ModelPicker } from "../ModelPicker"
 
@@ -24,7 +20,6 @@ export const Roo = ({
 	modelValidationError,
 	simplifySettings,
 }: RooProps) => {
-
 	return (
 		<>
 			<ModelPicker

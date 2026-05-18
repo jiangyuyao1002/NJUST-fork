@@ -1,6 +1,7 @@
 import React from "react"
 
-import { type ProviderSettings, openAiCodexDefaultModelId, openAiCodexModels } from "@njust-ai-cj/types"
+import { type ProviderSettings } from "@njust-ai-cj/types"
+import { openAiCodexDefaultModelId, openAiCodexModels } from "@njust-ai-cj/core/providers"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Button } from "@src/components/ui"

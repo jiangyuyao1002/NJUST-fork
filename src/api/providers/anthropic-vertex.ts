@@ -2,14 +2,14 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"
 import { GoogleAuth, JWTInput } from "google-auth-library"
 
+import { type ModelInfo } from "@njust-ai-cj/types"
 import {
-	type ModelInfo,
 	type VertexModelId,
 	vertexDefaultModelId,
 	vertexModels,
 	ANTHROPIC_DEFAULT_MAX_TOKENS,
 	VERTEX_1M_CONTEXT_MODEL_IDS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 import { safeJsonParse } from "@njust-ai-cj/core"
 
 import { ApiHandlerOptions } from "../../shared/api"
@@ -24,7 +24,7 @@ import {
 } from "../../core/prompts/tools/native-tools/converters"
 
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { requireApiKey } from "../interfaces/api-key-validator"
 
 // https://docs.anthropic.com/en/api/claude-on-vertex-ai

@@ -2,7 +2,8 @@ import { useCallback } from "react"
 import { Checkbox } from "vscrui"
 import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
-import { type ProviderSettings, VERTEX_REGIONS, VERTEX_1M_CONTEXT_MODEL_IDS } from "@njust-ai-cj/types"
+import { type ProviderSettings } from "@njust-ai-cj/types"
+import { VERTEX_REGIONS, VERTEX_1M_CONTEXT_MODEL_IDS } from "@njust-ai-cj/core/providers"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@src/components/ui"

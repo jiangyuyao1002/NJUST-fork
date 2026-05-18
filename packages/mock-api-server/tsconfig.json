@@ -4,6 +4,6 @@
 		"types": ["node", "vitest/globals"],
 		"outDir": "dist"
 	},
-	"include": ["src", "__tests__"],
+	"include": ["src", "__tests__", "*.config.ts"],
 	"exclude": ["node_modules"]
 }

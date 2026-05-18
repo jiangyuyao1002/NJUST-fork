@@ -9,9 +9,8 @@ import {
 	type ReasoningEffort,
 	type OrganizationAllowList,
 	type ExtensionMessage,
-	azureOpenAiDefaultApiVersion,
-	openAiModelInfoSaneDefaults,
 } from "@njust-ai-cj/types"
+import { azureOpenAiDefaultApiVersion, openAiModelInfoSaneDefaults } from "@njust-ai-cj/core/providers"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Button, StandardTooltip } from "@src/components/ui"

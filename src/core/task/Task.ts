@@ -53,24 +53,18 @@ import { defaultModeSlug } from "../../shared/modes"
 import { DiffStrategy } from "../../shared/tools"
 import { logger } from "../../shared/logger"
 
-// services
-import { McpServerManager } from "../../services/mcp/McpServerManager"
 import { RepoPerTaskCheckpointService } from "../../services/checkpoints"
 
-// integrations
-import { DiffViewProvider } from "../../integrations/editor/DiffViewProvider"
 import { RooTerminalProcess } from "../../integrations/terminal/types"
 
 // utils
 import { getWorkspacePath } from "../../utils/path"
-import { CloudAgentOrchestrator, type ICloudAgentHost } from "./CloudAgentOrchestrator"
+import type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 import { tokenCountCache } from "../../utils/tokenCountCache"
 
 // prompts
 import { formatResponse } from "../prompts/responses"
-import {
-	type SystemPromptParts,
-} from "../prompts/system"
+import { type SystemPromptParts } from "../prompts/system"
 
 // core modules
 import { ToolRepetitionDetector } from "../tools/ToolRepetitionDetector"
@@ -78,17 +72,16 @@ import { ToolRepetitionDetector } from "../tools/ToolRepetitionDetector"
 import { FileContextTracker } from "../context-tracking/FileContextTracker"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { RooProtectedController } from "../protect/RooProtectedController"
-import { type AssistantMessageContent } from "../assistant-message"
+import { type AssistantMessageContent } from "../assistant-message/types"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
 import { ToolExecutionContext } from "./ToolExecutionContext"
 import { TokenGrowthTracker } from "../context-management/tokenGrowthTracker"
 import { taskEventBus, type TaskEventBus } from "../events/TaskEventBus"
 import type { ITaskHost } from "./interfaces/ITaskHost"
 import type { ITaskUINotifier } from "./interfaces/ITaskUINotifier"
+import { NullTaskDiffViewProvider, type ITaskDiffViewProvider } from "./interfaces/ITaskDiffViewProvider"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
-import {
-	type ApiMessage,
-} from "../task-persistence"
+import { type ApiMessage } from "../task-persistence"
 import { ErrorRecoveryHandler } from "./ErrorRecoveryHandler"
 import { PersistentRetryManager } from "./PersistentRetry"
 import {
@@ -113,7 +106,6 @@ import { TaskSubtaskHandler } from "./TaskSubtaskHandler"
 import { type TaskSubtaskHost } from "./interfaces/TaskSubtaskHost"
 import { TaskToolHandler } from "./TaskToolHandler"
 import { TaskExecutor, type TaskExecutorHost } from "./TaskExecutor"
-import { presentAssistantMessage } from "../assistant-message"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
 import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -362,7 +354,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	terminalProcess?: RooTerminalProcess
 
 	// Editing
-	diffViewProvider: DiffViewProvider
+	diffViewProvider: ITaskDiffViewProvider
 	diffStrategy?: DiffStrategy
 	didEditFile: boolean = false
 
@@ -438,7 +430,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				block.type === "tool_result" && block.tool_use_id === toolResult.tool_use_id,
 		)
 		if (existingResult) {
-			logger.warn("Task",
+			logger.warn(
+				"Task",
 				`pushToolResultToUserContent: Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`,
 			)
 			return false
@@ -457,7 +450,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	// Native tool call streaming state (track which index each tool is at)
 	private streamingToolCallIndices: Map<string, number> = new Map()
-	readonly toolExecution = new ToolExecutionContext(Math.max(1, Number(process.env.ROO_MAX_TOOL_CONCURRENCY ?? 10) || 10))
+	readonly toolExecution = new ToolExecutionContext(
+		Math.max(1, Number(process.env.ROO_MAX_TOOL_CONCURRENCY ?? 10) || 10),
+	)
 	private requestCacheReadWindow: number[] = []
 	private requestInputTokensWindow: number[] = []
 	private readonly tokenGrowthTracker = new TokenGrowthTracker({ maxWindowSize: 6, emaAlpha: 0.4 })
@@ -560,9 +555,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		return getGlobalApiTime()
 	}
 
-	/** Delegate to presentAssistantMessage(this) — used by TaskExecutor. */
+	/** Request assistant message presentation via outer event subscriber. */
 	public async presentAssistantMessage(): Promise<void> {
-		return presentAssistantMessage(this)
+		await this.eventBus.emitAsync("task:assistant-message-requested", {
+			taskId: this.taskId,
+			data: { task: this },
+		})
 	}
 
 	public get taskState(): TaskState {
@@ -655,7 +653,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
 		this.hostRef = new WeakRef(host)
 		this.globalStoragePath = host.context.globalStorageUri.fsPath
-		this.diffViewProvider = new DiffViewProvider(this.cwd, this)
+		this.diffViewProvider = host.createDiffViewProvider?.(this.cwd, this) ?? new NullTaskDiffViewProvider()
 		this.enableCheckpoints = enableCheckpoints
 		this.checkpointTimeout = checkpointTimeout
 
@@ -739,9 +737,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (startTask) {
 			this._started = true
 			if (task || images) {
-				void this.startTask(task, images).catch((error) => { logger.error("startTask failed", error) })
+				void this.startTask(task, images).catch((error) => {
+					logger.error("startTask failed", error)
+				})
 			} else if (historyItem) {
-				void this.resumeTaskFromHistory().catch((error) => { logger.error("resumeTaskFromHistory failed", error) })
+				void this.resumeTaskFromHistory().catch((error) => {
+					logger.error("resumeTaskFromHistory failed", error)
+				})
 			} else {
 				throw new Error("Either historyItem or task/images must be provided")
 			}
@@ -844,7 +846,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					this.updateApiConfiguration(newState.apiConfiguration)
 				}
 			} catch (error) {
-				logger.error("Task",
+				logger.error(
+					"Task",
 					`Failed to update API configuration on profile change for task ${this.taskId}.${this.instanceId}:`,
 					error,
 				)
@@ -1166,7 +1169,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			)
 			if (lastToolAskIndex !== -1) {
 				this.clineMessages[lastToolAskIndex]!.isAnswered = true
-				void this.updateClineMessage(this.clineMessages[lastToolAskIndex]!).catch((error) => { logger.warn("Task", "updateClineMessage failed", error) })
+				void this.updateClineMessage(this.clineMessages[lastToolAskIndex]!).catch((error) => {
+					logger.warn("Task", "updateClineMessage failed", error)
+				})
 				this.saveClineMessages().catch((error) => {
 					logger.error("Task", "Failed to save answered tool-ask state:", error)
 				})
@@ -1315,7 +1320,17 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		contextCondense?: ContextCondense,
 		contextTruncation?: ContextTruncation,
 	): Promise<undefined> {
-		return this.askSayHandler.say(type, text, images, partial, checkpoint, progressStatus, options, contextCondense, contextTruncation)
+		return this.askSayHandler.say(
+			type,
+			text,
+			images,
+			partial,
+			checkpoint,
+			progressStatus,
+			options,
+			contextCondense,
+			contextTruncation,
+		)
 	}
 
 	async sayAndCreateMissingParamError(toolName: ToolName, paramName: string, relPath?: string) {
@@ -1343,7 +1358,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				return { enabledToolCount: 0, enabledServerCount: 0 }
 			}
 
-			const mcpHub = await McpServerManager.getInstance(provider.context, provider)
+			const mcpHub = provider.getMcpHub()
 			if (!mcpHub) {
 				return { enabledToolCount: 0, enabledServerCount: 0 }
 			}
@@ -1376,7 +1391,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const { task, images } = this.metadata
 
 		if (task || images) {
-			void this.startTask(task ?? undefined, images ?? undefined).catch((error) => { logger.error("startTask failed", error) })
+			void this.startTask(task ?? undefined, images ?? undefined).catch((error) => {
+				logger.error("startTask failed", error)
+			})
 		}
 	}
 
@@ -1416,7 +1433,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	public markTaskCompleted(): void {
 		this.taskCompleted = true
 	}
-
 
 	/** Return a Promise that resolves when background switch is requested */
 	getBackgroundSignal(): Promise<void> {
@@ -1466,7 +1482,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		forkedConfig?: ForkedContextConfig,
 		cacheSafeParams?: CacheSafeParams,
 	) {
-		return this.subtaskHandler.startSubtask(message, initialTodos, mode, isolationLevel, forkedConfig, cacheSafeParams)
+		return this.subtaskHandler.startSubtask(
+			message,
+			initialTodos,
+			mode,
+			isolationLevel,
+			forkedConfig,
+			cacheSafeParams,
+		)
 	}
 
 	/**
@@ -1489,17 +1512,22 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const host: ICloudAgentHost = {
 			taskId: this.taskId,
 			cwd: this.cwd,
-			get abort() { return (this as UnsafeAny as { _task: Task })._task?.abort ?? false },
+			get abort() {
+				return (this as UnsafeAny as { _task: Task })._task?.abort ?? false
+			},
 			rooIgnoreController: this.rooIgnoreController,
 			rooProtectedController: this.rooProtectedController,
 			say: (type, text?, imgs?) => this.say(type, text, imgs),
 			ask: (type, text?, partial?) => this.ask(type, text, partial),
-			emit: (event, ...args) => (EventEmitter.prototype.emit.call(this, event, ...args) as boolean),
-			setCurrentRequestAbortController: (ctrl) => { this.currentRequestAbortController = ctrl },
+			emit: (event, ...args) => EventEmitter.prototype.emit.call(this, event, ...args) as boolean,
+			setCurrentRequestAbortController: (ctrl) => {
+				this.currentRequestAbortController = ctrl
+			},
 		}
 		// Patch the abort getter to actually read from this task instance
 		Object.defineProperty(host, "abort", { get: () => this.abort })
 
+		const { CloudAgentOrchestrator } = await import("./CloudAgentOrchestrator")
 		const orchestrator = new CloudAgentOrchestrator(host)
 		await orchestrator.run(userMessage, images)
 	}
@@ -1508,7 +1536,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	private async initiateTaskLoop(userContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {
 		// Kicks off the checkpoints initialization process in the background.
-		void getCheckpointService(this).catch((error) => { logger.warn("Task", "getCheckpointService failed", error) })
+		void getCheckpointService(this).catch((error) => {
+			logger.warn("Task", "getCheckpointService failed", error)
+		})
 
 		// Start skill/memory prefetch in parallel (non-blocking)
 		const provider = this.hostRef.deref()
@@ -1599,7 +1629,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private buildCleanConversationHistory(
 		messages: ApiMessage[],
 	): Array<
-		Anthropic.Messages.MessageParam | { type: "reasoning"; encrypted_content?: string; id?: string; summary?: UnsafeAny[] }
+		| Anthropic.Messages.MessageParam
+		| { type: "reasoning"; encrypted_content?: string; id?: string; summary?: UnsafeAny[] }
 	> {
 		return this.streamProcessor.buildCleanConversationHistory(messages)
 	}

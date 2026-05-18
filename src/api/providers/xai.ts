@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type XAIModelId, xaiDefaultModelId, xaiModels } from "@njust-ai-cj/types"
+import { type XAIModelId, xaiDefaultModelId, xaiModels } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
@@ -11,7 +11,7 @@ import { getModelParams } from "../transform/model-params"
 
 import { DEFAULT_HEADERS } from "./constants"
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { requireApiKey } from "../interfaces/api-key-validator"
 
@@ -136,9 +136,13 @@ export class XAIHandler extends BaseProvider implements SingleCompletionHandler 
 				// Fall back to direct fields in usage (used in test mocks)
 				const readTokens =
 					cachedTokens ||
-					("cache_read_input_tokens" in chunk.usage ? (chunk.usage as Record<string, UnsafeAny>).cache_read_input_tokens : 0)
+					("cache_read_input_tokens" in chunk.usage
+						? (chunk.usage as Record<string, UnsafeAny>).cache_read_input_tokens
+						: 0)
 				const writeTokens =
-					"cache_creation_input_tokens" in chunk.usage ? (chunk.usage as Record<string, UnsafeAny>).cache_creation_input_tokens : 0
+					"cache_creation_input_tokens" in chunk.usage
+						? (chunk.usage as Record<string, UnsafeAny>).cache_creation_input_tokens
+						: 0
 
 				yield {
 					type: "usage",

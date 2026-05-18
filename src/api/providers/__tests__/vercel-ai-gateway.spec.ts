@@ -10,7 +10,7 @@ import OpenAI from "openai"
 
 import { VercelAiGatewayHandler } from "../vercel-ai-gateway"
 import { ApiHandlerOptions } from "../../../shared/api"
-import { vercelAiGatewayDefaultModelId, VERCEL_AI_GATEWAY_DEFAULT_TEMPERATURE } from "@njust-ai-cj/types"
+import { vercelAiGatewayDefaultModelId, VERCEL_AI_GATEWAY_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
 
 // Mock dependencies
 vitest.mock("openai")

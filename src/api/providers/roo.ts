@@ -1,8 +1,8 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { rooDefaultModelId, getApiProtocol, type ImageGenerationApiMethod } from "@njust-ai-cj/types"
-
+import { getApiProtocol, type ImageGenerationApiMethod } from "@njust-ai-cj/types"
+import { rooDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { Package } from "../../shared/package"
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -13,7 +13,7 @@ import { convertToOpenAiMessages } from "../transform/openai-format"
 import type { RooReasoningParams } from "../transform/reasoning"
 import { getRooReasoning } from "../transform/reasoning"
 
-import type { ApiHandlerCreateMessageMetadata } from "../index"
+import type { ApiHandlerCreateMessageMetadata } from "../types"
 import { BaseOpenAiCompatibleProvider } from "./base-openai-compatible-provider"
 import { getModels, getModelsFromCache } from "../providers/fetchers/modelCache"
 import { handleOpenAIError } from "./utils/openai-error-handler"

@@ -732,6 +732,21 @@ importers:
         specifier: ^3.2.3
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.17.57)(@vitest/ui@3.2.4)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.30.1)(tsx@4.19.4)(yaml@2.9.0)
 
+  packages/prompt-engine:
+    devDependencies:
+      '@njust-ai-cj/config-typescript':
+        specifier: workspace:^
+        version: link:../config-typescript
+      '@types/node':
+        specifier: 20.x
+        version: 20.17.57
+      '@vitest/coverage-v8':
+        specifier: ^3.2.3
+        version: 3.2.4(vitest@3.2.4)
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@20.17.57)(@vitest/ui@3.2.4)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.30.1)(tsx@4.19.4)(yaml@2.9.0)
+
   packages/telemetry:
     dependencies:
       '@njust-ai-cj/types':
@@ -841,6 +856,9 @@ importers:
       '@njust-ai-cj/ipc':
         specifier: workspace:^
         version: link:../packages/ipc
+      '@njust-ai-cj/prompt-engine':
+        specifier: workspace:^
+        version: link:../packages/prompt-engine
       '@njust-ai-cj/telemetry':
         specifier: workspace:^
         version: link:../packages/telemetry
@@ -1145,6 +1163,9 @@ importers:
 
   webview-ui:
     dependencies:
+      '@njust-ai-cj/core':
+        specifier: workspace:^
+        version: link:../packages/core
       '@njust-ai-cj/types':
         specifier: workspace:^
         version: link:../packages/types

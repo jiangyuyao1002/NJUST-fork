@@ -5,7 +5,7 @@ import type { ClineApiReqInfo } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../shared/logger"
 
-import { Task } from "../task/Task"
+import type { Task } from "../task/Task"
 
 import { getWorkspacePath } from "../../utils/path"
 import { checkGitInstalled } from "../../utils/git"
@@ -13,7 +13,7 @@ import { t } from "../../i18n"
 
 import { getApiMetrics } from "../../shared/getApiMetrics"
 
-import { DIFF_VIEW_URI_SCHEME } from "../../integrations/editor/DiffViewProvider"
+import { DIFF_VIEW_URI_SCHEME } from "../../integrations/editor/diffViewConstants"
 
 import { CheckpointServiceOptions, RepoPerTaskCheckpointService } from "../../services/checkpoints"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -91,7 +91,8 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 						sendCheckpointInitWarn(task, "WAIT_TIMEOUT", WARNING_THRESHOLD_MS / 1000)
 					}
 
-					logger.info("Checkpoints",
+					logger.info(
+						"Checkpoints",
 						`[Task#getCheckpointService] waiting for service to initialize (${Math.round(elapsed / 1000)}s)`,
 					)
 					return !!task.checkpointService && !!task?.checkpointService?.isInitialized
@@ -203,7 +204,7 @@ async function checkGitInstallation(
 			log(`[Task#getCheckpointService] initShadowGit -> ${getErrorMessage(err)}`)
 			task.enableCheckpoints = false
 		}
-			task.checkpointServiceInitializing = false
+		task.checkpointServiceInitializing = false
 	} catch (err) {
 		log(`[Task#getCheckpointService] Unexpected error during Git check: ${getErrorMessage(err)}`)
 		logger.error("Checkpoints", "Git check error:", err)
@@ -317,7 +318,10 @@ export type CheckpointDiffOptions = {
 	mode: "from-init" | "checkpoint" | "to-current" | "full"
 }
 
-export async function checkpointDiff(task: Task, { ts: _ts, previousCommitHash: _previousCommitHash, commitHash, mode }: CheckpointDiffOptions) {
+export async function checkpointDiff(
+	task: Task,
+	{ ts: _ts, previousCommitHash: _previousCommitHash, commitHash, mode }: CheckpointDiffOptions,
+) {
 	const service = await getCheckpointService(task)
 
 	if (!service) {

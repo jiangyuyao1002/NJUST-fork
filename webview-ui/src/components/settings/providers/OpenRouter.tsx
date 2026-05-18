@@ -2,12 +2,8 @@ import { useCallback, useState } from "react"
 import { Checkbox } from "vscrui"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
-import {
-	type ProviderSettings,
-	type OrganizationAllowList,
-	type RouterModels,
-	openRouterDefaultModelId,
-} from "@njust-ai-cj/types"
+import { type ProviderSettings, type OrganizationAllowList, type RouterModels } from "@njust-ai-cj/types"
+import { openRouterDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { getOpenRouterAuthUrl } from "@src/oauth/urls"

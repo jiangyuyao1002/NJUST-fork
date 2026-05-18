@@ -4,17 +4,17 @@ import OpenAI from "openai"
 import * as os from "os"
 import * as path from "path"
 
-import { type ModelInfo, qwenCodeModels, qwenCodeDefaultModelId } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai-cj/types"
+import { qwenCodeModels, qwenCodeDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
-
 
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { ApiStream } from "../transform/stream"
 
 import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 
 const QWEN_OAUTH_BASE_URL = "https://chat.qwen.ai"
 const QWEN_OAUTH_TOKEN_ENDPOINT = `${QWEN_OAUTH_BASE_URL}/api/v1/oauth2/token`
@@ -84,7 +84,10 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			const credsStr = await fs.readFile(keyFile, "utf-8")
 			return JSON.parse(credsStr)
 		} catch (error) {
-			logger.error("QwenCode", `Error reading or parsing credentials file at ${getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)}`)
+			logger.error(
+				"QwenCode",
+				`Error reading or parsing credentials file at ${getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)}`,
+			)
 			throw new Error(`Failed to load Qwen OAuth credentials: ${error}`)
 		}
 	}

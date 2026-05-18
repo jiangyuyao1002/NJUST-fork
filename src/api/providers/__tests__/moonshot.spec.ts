@@ -27,7 +27,7 @@ vi.mock("@ai-sdk/openai-compatible", () => ({
 
 import type { Anthropic } from "@anthropic-ai/sdk"
 
-import { moonshotDefaultModelId } from "@njust-ai-cj/types"
+import { moonshotDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
 

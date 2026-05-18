@@ -1,6 +1,6 @@
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import * as path from "path"
-import * as vscode from "vscode"
+import type * as vscode from "vscode"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { fileExistsAtPath } from "../../utils/fs"
@@ -38,22 +38,38 @@ export class FileContextTracker {
 	}
 
 	// Gets the current working directory or returns undefined if it cannot be determined
-	private getCwd(): string | undefined {
-		const cwd = vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath).at(0)
+	private async getVscode(): Promise<typeof import("vscode") | undefined> {
+		try {
+			return await import("vscode")
+		} catch {
+			return undefined
+		}
+	}
+
+	private async getCwd(): Promise<string | undefined> {
+		const vscode = await this.getVscode()
+		const cwd = vscode?.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath).at(0)
 		if (!cwd) {
-			logger.info("FileContextTracker", "No workspace folder available - cannot determine current working directory")
+			logger.info(
+				"FileContextTracker",
+				"No workspace folder available - cannot determine current working directory",
+			)
 		}
 		return cwd
 	}
 
 	// File watchers are set up for each file that is tracked in the task metadata.
-	setupFileWatcher(filePath: string) {
+	async setupFileWatcher(filePath: string): Promise<void> {
 		// Only setup watcher if it doesn't already exist for this file
 		if (this.fileWatchers.has(filePath)) {
 			return
 		}
 
-		const cwd = this.getCwd()
+		const vscode = await this.getVscode()
+		const cwd = await this.getCwd()
+		if (!vscode) {
+			return
+		}
 		if (!cwd) {
 			return
 		}
@@ -70,9 +86,7 @@ export class FileContextTracker {
 				this.recentlyEditedByRoo.delete(filePath)
 			} else {
 				this.recentlyModifiedFiles.add(filePath)
-				this.pendingSave = this.pendingSave.then(() =>
-					this.trackFileContext(filePath, "user_edited"),
-				)
+				this.pendingSave = this.pendingSave.then(() => this.trackFileContext(filePath, "user_edited"))
 			}
 		})
 
@@ -84,7 +98,7 @@ export class FileContextTracker {
 	// This is the main entry point for FileContextTracker and is called when a file is passed to Roo via a tool, mention, or edit.
 	async trackFileContext(filePath: string, operation: RecordSource) {
 		try {
-			const cwd = this.getCwd()
+			const cwd = await this.getCwd()
 			if (!cwd) {
 				return
 			}

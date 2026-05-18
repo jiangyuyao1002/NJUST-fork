@@ -1,15 +1,13 @@
 import { v7 as uuidv7 } from "uuid"
-import * as vscode from "vscode"
 import EventEmitter from "events"
 
-import type { ClineProvider } from "../webview/ClineProvider"
-import type { Task } from "../task/Task"
 import type { SharedContext, AgentInfo } from "./types"
 import { generateParentContextSummary } from "../task/SubTaskContextBuilder"
 import { DEFAULT_FORKED_CONTEXT_CONFIG } from "../task/SubTaskOptions"
 import type { ForkedContextConfig } from "../task/SubTaskOptions"
 import { TIMING } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
+import type { AgentLogSink, AgentTaskController, AgentTaskLike } from "./AgentTaskController"
 
 type ApiMessage = { role: string; content: UnsafeAny; ts?: number }
 
@@ -54,11 +52,11 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 	private agents: Map<string, AgentInfo> = new Map()
 	private sharedContext: SharedContext
 	private sharedContextMutex: Promise<void> = Promise.resolve() // Serializes writes to sharedContext
-	private activeTasks: Map<string, Task> = new Map()
+	private activeTasks: Map<string, AgentTaskLike> = new Map()
 
 	constructor(
-		private readonly provider: ClineProvider,
-		private readonly outputChannel: vscode.OutputChannel,
+		private readonly provider: AgentTaskController,
+		private readonly outputChannel: AgentLogSink,
 	) {
 		super()
 		this.sharedContext = {
@@ -74,9 +72,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 	 * Returns when all tasks have completed (or failed).
 	 */
 	async runParallel(specs: ParallelTaskSpec[]): Promise<ParallelTaskResult[]> {
-		this.outputChannel.appendLine(
-			`[AgentOrchestrator] Starting ${specs.length} parallel tasks`,
-		)
+		this.outputChannel.appendLine(`[AgentOrchestrator] Starting ${specs.length} parallel tasks`)
 
 		// Detect cycles in dependency graph before scheduling
 		const cycleNodes = this.detectCycles(specs)
@@ -84,7 +80,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 			const cycleDescriptions = cycleNodes.join(" -> ")
 			throw new Error(
 				`Circular dependency detected among agents: ${cycleDescriptions}. ` +
-				`Tasks involved in cycles cannot be scheduled.`,
+					`Tasks involved in cycles cannot be scheduled.`,
 			)
 		}
 
@@ -93,16 +89,12 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 
 		const independentResults = await this.runBatch(independentSpecs)
 		const allResults = [...independentResults]
-		const completedIds = new Set(
-			independentResults.filter((r) => r.status === "completed").map((r) => r.agentId),
-		)
+		const completedIds = new Set(independentResults.filter((r) => r.status === "completed").map((r) => r.agentId))
 
 		// Resolve dependencies level by level (topological order)
 		let remainingDeps = [...dependentSpecs]
 		while (remainingDeps.length > 0) {
-			const readyDependents = remainingDeps.filter((s) =>
-				s.dependencies!.every((dep) => completedIds.has(dep)),
-			)
+			const readyDependents = remainingDeps.filter((s) => s.dependencies!.every((dep) => completedIds.has(dep)))
 
 			if (readyDependents.length === 0) {
 				// Dependencies can never be satisfied (should not happen after cycle check,
@@ -127,9 +119,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 					completedIds.add(r.agentId)
 				}
 			}
-			remainingDeps = remainingDeps.filter(
-				(s) => !readyDependents.includes(s),
-			)
+			remainingDeps = remainingDeps.filter((s) => !readyDependents.includes(s))
 		}
 
 		this.emit("allCompleted", allResults)
@@ -152,7 +142,9 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 			specNodes.set(spec.mode, spec)
 		}
 
-		const WHITE = 0, _GRAY = 1, _BLACK = 2
+		const WHITE = 0,
+			_GRAY = 1,
+			_BLACK = 2
 		const color = new Map<string, number>()
 		const parent = new Map<string, string>()
 
@@ -241,34 +233,30 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 
 		try {
 			const contextPrefix = this.buildSharedContextPrompt()
-			const fullMessage = contextPrefix
-				? `${contextPrefix}\n\nTask:\n${spec.message}`
-				: spec.message
+			const fullMessage = contextPrefix ? `${contextPrefix}\n\nTask:\n${spec.message}` : spec.message
 
 			await this.provider.handleModeSwitch(spec.mode as UnsafeAny)
 			const task = await this.provider.createTask(fullMessage)
 
 			agent.taskId = task.taskId
 			this.activeTasks.set(agentId, task)
-				let taskResult!: ParallelTaskResult
+			let taskResult!: ParallelTaskResult
 			try {
+				const result = await this.waitForCompletion(task)
 
-			const result = await this.waitForCompletion(task)
+				agent.status = "completed"
+				agent.completedAt = Date.now()
+				this.sharedContext.results.set(agentId, result)
 
-			agent.status = "completed"
-			agent.completedAt = Date.now()
-			this.sharedContext.results.set(agentId, result)
+				this.emit("agentCompleted", agent, result)
 
-			this.emit("agentCompleted", agent, result)
-
-			taskResult = {
-				agentId,
-				taskId: task.taskId,
-				mode: spec.mode,
-				status: "completed",
-				result,
-			}
-
+				taskResult = {
+					agentId,
+					taskId: task.taskId,
+					mode: spec.mode,
+					status: "completed",
+					result,
+				}
 			} finally {
 				this.activeTasks.delete(agentId)
 			}
@@ -290,7 +278,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 		}
 	}
 
-	private waitForCompletion(task: UnsafeAny): Promise<string> {
+	private waitForCompletion(task: AgentTaskLike): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error("Agent task timed out after 10 minutes"))
@@ -311,9 +299,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 						clearInterval(poll)
 						clearTimeout(timeout)
 
-						const errorMsg = messages.find(
-							(m: UnsafeAny) => m.type === "say" && m.say === "error",
-						)
+						const errorMsg = messages.find((m: UnsafeAny) => m.type === "say" && m.say === "error")
 						if (errorMsg) {
 							reject(new Error(errorMsg.text || "Task failed"))
 						} else {
@@ -333,9 +319,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 		const parts: string[] = []
 
 		if (this.sharedContext.modifiedFiles.size > 0) {
-			parts.push(
-				`Files modified by other agents:\n${Array.from(this.sharedContext.modifiedFiles).join("\n")}`,
-			)
+			parts.push(`Files modified by other agents:\n${Array.from(this.sharedContext.modifiedFiles).join("\n")}`)
 		}
 
 		if (this.sharedContext.results.size > 0) {
@@ -347,9 +331,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 			}
 		}
 
-		return parts.length > 0
-			? `[Shared Context]\n${parts.join("\n\n")}\n[End Shared Context]`
-			: ""
+		return parts.length > 0 ? `[Shared Context]\n${parts.join("\n\n")}\n[End Shared Context]` : ""
 	}
 
 	// Run an async operation under the shared-context mutex to prevent
@@ -384,7 +366,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 	async cancelAgent(agentId: string): Promise<void> {
 		const task = this.activeTasks.get(agentId)
 		if (task) {
-			await (task as Record<string, UnsafeAny>).abortTask?.()
+			await task.abortTask?.()
 			this.activeTasks.delete(agentId)
 		}
 
@@ -468,10 +450,7 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 	 * @param parentMessages - The parent task's API conversation history (mutated in place)
 	 * @returns The updated parent messages array
 	 */
-	aggregateSubtaskResult(
-		subtaskResult: SubtaskResult,
-		parentMessages: ApiMessage[],
-	): ApiMessage[] {
+	aggregateSubtaskResult(subtaskResult: SubtaskResult, parentMessages: ApiMessage[]): ApiMessage[] {
 		const resultMessage: ApiMessage = {
 			role: "user",
 			content: [

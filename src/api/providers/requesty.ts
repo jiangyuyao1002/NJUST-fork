@@ -1,7 +1,8 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics, requestyDefaultModelId, requestyDefaultModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics } from "@njust-ai-cj/types"
+import { requestyDefaultModelId, requestyDefaultModelInfo } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { calculateApiCostOpenAI } from "../../shared/cost"
@@ -14,7 +15,7 @@ import { AnthropicReasoningParams } from "../transform/reasoning"
 import { DEFAULT_HEADERS } from "./constants"
 import { getModels } from "./fetchers/modelCache"
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { toRequestyServiceUrl } from "../../shared/utils/requesty"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"

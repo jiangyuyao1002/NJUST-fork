@@ -14,12 +14,10 @@ import OpenAI from "openai"
 import { fromIni } from "@aws-sdk/credential-providers"
 import { Anthropic } from "@anthropic-ai/sdk"
 
+import { type ModelInfo, type ProviderSettings, ApiProviderError } from "@njust-ai-cj/types"
 import {
-	type ModelInfo,
-	type ProviderSettings,
 	type BedrockModelId,
 	type BedrockServiceTier,
-	ApiProviderError,
 	bedrockDefaultModelId,
 	bedrockModels,
 	bedrockDefaultPromptRouterModelId,
@@ -31,7 +29,7 @@ import {
 	BEDROCK_GLOBAL_INFERENCE_MODEL_IDS,
 	BEDROCK_SERVICE_TIER_MODEL_IDS,
 	BEDROCK_SERVICE_TIER_PRICING,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { ApiStream } from "../transform/stream"
@@ -44,7 +42,7 @@ import { convertToBedrockConverseMessages as sharedConverter } from "../transfor
 import { getModelParams } from "../transform/model-params"
 import { shouldUseReasoningBudget } from "../../shared/api"
 import { normalizeToolSchema } from "../../utils/json-schema"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 import { getErrorMessage } from "../../shared/error-utils"
 
@@ -449,11 +447,13 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 		// Check if 1M context is enabled for supported Claude 4 models
 		// Use parseBaseModelId to handle cross-region inference prefixes
 		const is1MContextEnabled =
-			(BEDROCK_1M_CONTEXT_MODEL_IDS as readonly string[]).includes(baseModelId) && this.options.awsBedrock1MContext
+			(BEDROCK_1M_CONTEXT_MODEL_IDS as readonly string[]).includes(baseModelId) &&
+			this.options.awsBedrock1MContext
 
 		// Determine if service tier should be applied (checked later when building payload)
 		const useServiceTier =
-			this.options.awsBedrockServiceTier && (BEDROCK_SERVICE_TIER_MODEL_IDS as readonly string[]).includes(baseModelId)
+			this.options.awsBedrockServiceTier &&
+			(BEDROCK_SERVICE_TIER_MODEL_IDS as readonly string[]).includes(baseModelId)
 		if (useServiceTier) {
 			logger.info("Service tier specified for Bedrock request", {
 				ctx: "bedrock",
@@ -511,12 +511,9 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 		let timeoutId: NodeJS.Timeout | undefined
 
 		try {
-			timeoutId = setTimeout(
-				() => {
-					controller.abort()
-				},
-				getApiRequestTimeout(),
-			)
+			timeoutId = setTimeout(() => {
+				controller.abort()
+			}, getApiRequestTimeout())
 
 			const command = new ConverseStreamCommand(payload)
 			const response = await this.client.send(command, {
@@ -568,7 +565,10 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 						//However, we want to keep the id of the model to be the ID for the router for
 						//subsequent requests so they are sent back through the router
 						const invokedArnInfo = this.parseArn(streamEvent.trace.promptRouter.invokedModelId)
-						const invokedModel = this.getModelById(invokedArnInfo.modelId as string, invokedArnInfo.modelType)
+						const invokedModel = this.getModelById(
+							invokedArnInfo.modelId as string,
+							invokedArnInfo.modelType,
+						)
 						if (invokedModel) {
 							invokedModel.id = modelConfig.id
 							this.costModelConfig = invokedModel
@@ -810,9 +810,9 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 		if (TelemetryService.hasInstance()) {
 			const origMsg = getErrorMessage(error)
 			const forTelemetry = new ApiProviderError(origMsg)
-			;forTelemetry.provider = this.providerName
-			;forTelemetry.modelId = modelId
-			;forTelemetry.operation = operation
+			forTelemetry.provider = this.providerName
+			forTelemetry.modelId = modelId
+			forTelemetry.operation = operation
 			TelemetryService.instance.captureException(forTelemetry)
 		}
 
@@ -1108,7 +1108,10 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 		// Check if 1M context is enabled for supported Claude 4 models
 		// Use parseBaseModelId to handle cross-region inference prefixes
 		const baseModelId = this.parseBaseModelId(modelConfig.id)
-		if ((BEDROCK_1M_CONTEXT_MODEL_IDS as readonly string[]).includes(baseModelId) && this.options.awsBedrock1MContext) {
+		if (
+			(BEDROCK_1M_CONTEXT_MODEL_IDS as readonly string[]).includes(baseModelId) &&
+			this.options.awsBedrock1MContext
+		) {
 			// Update context window and pricing to 1M tier when 1M context beta is enabled
 			const tier = modelConfig.info.tiers?.[0]
 			modelConfig.info = {
@@ -1132,7 +1135,10 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 
 		// Apply service tier pricing if specified and model supports it
 		const baseModelIdForTier = this.parseBaseModelId(modelConfig.id)
-		if (this.options.awsBedrockServiceTier && (BEDROCK_SERVICE_TIER_MODEL_IDS as readonly string[]).includes(baseModelIdForTier)) {
+		if (
+			this.options.awsBedrockServiceTier &&
+			(BEDROCK_SERVICE_TIER_MODEL_IDS as readonly string[]).includes(baseModelIdForTier)
+		) {
 			const pricingMultiplier = BEDROCK_SERVICE_TIER_PRICING[this.options.awsBedrockServiceTier]
 			if (pricingMultiplier && pricingMultiplier !== 1.0) {
 				// Apply pricing multiplier to all price fields

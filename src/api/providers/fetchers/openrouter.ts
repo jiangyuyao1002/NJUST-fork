@@ -1,13 +1,12 @@
 import axios from "axios"
 import { z } from "zod"
 
+import { type ModelInfo, isModelParameter } from "@njust-ai-cj/types"
 import {
-	type ModelInfo,
-	isModelParameter,
 	OPEN_ROUTER_REASONING_BUDGET_MODELS,
 	OPEN_ROUTER_REQUIRED_REASONING_BUDGET_MODELS,
 	anthropicModels,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
 import { logger } from "../../../shared/logger"
@@ -128,7 +127,10 @@ export async function getOpenRouterModels(options?: ApiHandlerOptions): Promise<
 			models[id] = parsedModel
 		}
 	} catch (error) {
-		logger.error("OpenRouter", `Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		logger.error(
+			"OpenRouter",
+			`Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 	}
 
 	return models
@@ -171,7 +173,10 @@ export async function getOpenRouterModelEndpoints(
 			})
 		}
 	} catch (error) {
-		logger.error("OpenRouter", `Error fetching model endpoints: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		logger.error(
+			"OpenRouter",
+			`Error fetching model endpoints: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 	}
 
 	return models

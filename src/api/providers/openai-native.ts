@@ -8,14 +8,16 @@ import { Package } from "../../shared/package"
 import {
 	type ModelInfo,
 	ApiProviderError,
-	openAiNativeDefaultModelId,
-	OpenAiNativeModelId,
-	openAiNativeModels,
-	OPENAI_NATIVE_DEFAULT_TEMPERATURE,
 	type VerbosityLevel,
 	type ReasoningEffortExtended,
 	type ServiceTier,
 } from "@njust-ai-cj/types"
+import {
+	openAiNativeDefaultModelId,
+	OpenAiNativeModelId,
+	openAiNativeModels,
+	OPENAI_NATIVE_DEFAULT_TEMPERATURE,
+} from "@njust-ai-cj/core/providers"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -27,7 +29,7 @@ import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
 
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { isMcpTool } from "../../utils/mcp-name"
 import { sanitizeOpenAiCallId } from "../../utils/tool-id"
 import { requireApiKey } from "../interfaces/api-key-validator"
@@ -206,14 +208,17 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 		})
 	}
 
-	private normalizeUsage(usage: OpenAiUsageData | undefined, model: OpenAiNativeModel): ApiStreamUsageChunk | undefined {
+	private normalizeUsage(
+		usage: OpenAiUsageData | undefined,
+		model: OpenAiNativeModel,
+	): ApiStreamUsageChunk | undefined {
 		if (!usage) return undefined
 
 		// Prefer detailed shapes when available (Responses API)
 		const inputDetails = usage.input_tokens_details ?? usage.prompt_tokens_details
 
 		// Extract cache information from details with better readability
-				const cachedFromDetails = inputDetails?.cached_tokens ?? 0
+		const cachedFromDetails = inputDetails?.cached_tokens ?? 0
 		const missFromDetails = inputDetails?.cache_miss_tokens ?? 0
 
 		// If total input tokens are missing but we have details, derive from them
@@ -237,7 +242,8 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			this.lastServiceTier || (this.options.openAiNativeServiceTier as ServiceTier | undefined) || undefined
 		const effectiveInfo = this.applyServiceTierPricing(model.info, effectiveTier)
 
-		const detailMiss = typeof inputDetails?.cache_miss_tokens === "number" ? inputDetails.cache_miss_tokens : undefined
+		const detailMiss =
+			typeof inputDetails?.cache_miss_tokens === "number" ? inputDetails.cache_miss_tokens : undefined
 		const detailCached = typeof inputDetails?.cached_tokens === "number" ? inputDetails.cached_tokens : undefined
 
 		const resolved = resolveOpenAiUsageForCost({
@@ -473,10 +479,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 				errMessage?.includes("stream")
 
 			const isStreamError =
-				errStatus === 502 ||
-				errStatus === 503 ||
-				errStatus === 504 ||
-				errMessage?.includes("stream")
+				errStatus === 502 || errStatus === 503 || errStatus === 504 || errMessage?.includes("stream")
 
 			if (isConnectionError || isStreamError) {
 				// For connection/stream errors, fallback to manual SSE via fetch
@@ -490,7 +493,10 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 		}
 	}
 
-	private formatFullConversation(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ResponsesInputItem[] {
+	private formatFullConversation(
+		systemPrompt: string,
+		messages: Anthropic.Messages.MessageParam[],
+	): ResponsesInputItem[] {
 		// Format the entire conversation history for the Responses API using structured format
 		// The Responses API (like Realtime API) accepts a list of items, which can be messages, function calls, or function call outputs.
 		const formattedInput: ResponsesInputItem[] = []
@@ -685,16 +691,18 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			if (TelemetryService.hasInstance()) {
 				const forTelemetry =
 					error instanceof ApiProviderError ? error : new ApiProviderError(errorMessage, { cause: error })
-				;forTelemetry.provider = this.providerName
-				;forTelemetry.modelId = model.id
-				;forTelemetry.operation = "createMessage"
+				forTelemetry.provider = this.providerName
+				forTelemetry.modelId = model.id
+				forTelemetry.operation = "createMessage"
 				TelemetryService.instance.captureException(forTelemetry)
 			}
 
 			if (error instanceof Error) {
 				// Re-throw with the original error message if it's already formatted
 				if (error.message.includes("Responses API")) {
-					throw error instanceof ApiProviderError ? error : new ApiProviderError(error.message, { cause: error })
+					throw error instanceof ApiProviderError
+						? error
+						: new ApiProviderError(error.message, { cause: error })
 				}
 				// Otherwise, wrap it with context
 				throw new ApiProviderError(`Failed to connect to Responses API: ${error.message}`)
@@ -1073,11 +1081,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 								}
 
 								// Check if the done event contains the complete output (as a fallback)
-								if (
-									!hasContent &&
-									parsed.response?.output &&
-									Array.isArray(parsed.response.output)
-								) {
+								if (!hasContent && parsed.response?.output && Array.isArray(parsed.response.output)) {
 									for (const outputItem of parsed.response.output) {
 										if (outputItem.type === "message" && outputItem.content) {
 											for (const content of outputItem.content) {
@@ -1178,8 +1182,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			}
 
 			if (buffer.trim().length > 0) {
-				const preview =
-					buffer.length > 300 ? `${buffer.trimStart().slice(0, 300)}…` : buffer.trimStart()
+				const preview = buffer.length > 300 ? `${buffer.trimStart().slice(0, 300)}…` : buffer.trimStart()
 				reportExtensionError("OpenAI-Native/SSE", new Error("Stream ended with incomplete buffer"), {
 					bufferChars: buffer.length,
 					preview,
@@ -1192,9 +1195,9 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			if (TelemetryService.hasInstance()) {
 				const msg = getErrorMessage(error)
 				const forTelemetry = new ApiProviderError(msg)
-				;forTelemetry.provider = this.providerName
-				;forTelemetry.modelId = model.id
-				;forTelemetry.operation = "createMessage"
+				forTelemetry.provider = this.providerName
+				forTelemetry.modelId = model.id
+				forTelemetry.operation = "createMessage"
 				TelemetryService.instance.captureException(forTelemetry)
 			}
 			if (error instanceof Error) {
@@ -1641,9 +1644,9 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 			if (TelemetryService.hasInstance()) {
 				const msg = getErrorMessage(error)
 				const forTelemetry = new ApiProviderError(msg)
-				;forTelemetry.provider = this.providerName
-				;forTelemetry.modelId = this.getModel().id
-				;forTelemetry.operation = "completePrompt"
+				forTelemetry.provider = this.providerName
+				forTelemetry.modelId = this.getModel().id
+				forTelemetry.operation = "completePrompt"
 				TelemetryService.instance.captureException(forTelemetry)
 			}
 			if (error instanceof Error) {

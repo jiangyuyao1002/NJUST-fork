@@ -20,13 +20,14 @@ import type {
 
 import type { ApiHandler } from "../../../api"
 import type { ApiStream } from "../../../api/transform/stream"
-import type { AssistantMessageContent } from "../../assistant-message"
+import type { AssistantMessageContent } from "../../assistant-message/types"
 import type { ApiMessage } from "../../task-persistence"
 import type { SystemPromptParts } from "../../prompts/system"
 import type { FileContextTracker } from "../../context-tracking/FileContextTracker"
 import type { PersistentRetryManager } from "../PersistentRetry"
 import type { TaskState } from "../TaskStateMachine"
 import type { ITaskHost } from "./ITaskHost"
+import type { ITaskDiffViewProvider } from "./ITaskDiffViewProvider"
 
 // ── Sub-interfaces ────────────────────────────────────────────────────────
 
@@ -138,11 +139,7 @@ export interface TaskExecutorStreamHost {
 
 /** Diff view and file context tracking. */
 export interface TaskExecutorServicesHost {
-	diffViewProvider: {
-		isEditing: boolean
-		reset(): Promise<void>
-		revertChanges(): Promise<void>
-	}
+	diffViewProvider: ITaskDiffViewProvider
 	fileContextTracker: FileContextTracker
 }
 
@@ -202,13 +199,12 @@ export interface TaskExecutorControlHost {
  * Full host contract for TaskExecutor.
  * Task.ts implements this shape; TaskExecutor.ts only imports this interface.
  */
-export type TaskExecutorHost =
-	& TaskExecutorIdentityHost
-	& TaskExecutorApiHost
-	& TaskExecutorDelegatesHost
-	& TaskExecutorTokenHost
-	& TaskExecutorRequestHost
-	& TaskExecutorStreamHost
-	& TaskExecutorServicesHost
-	& TaskExecutorMessagingHost
-	& TaskExecutorControlHost
+export type TaskExecutorHost = TaskExecutorIdentityHost &
+	TaskExecutorApiHost &
+	TaskExecutorDelegatesHost &
+	TaskExecutorTokenHost &
+	TaskExecutorRequestHost &
+	TaskExecutorStreamHost &
+	TaskExecutorServicesHost &
+	TaskExecutorMessagingHost &
+	TaskExecutorControlHost

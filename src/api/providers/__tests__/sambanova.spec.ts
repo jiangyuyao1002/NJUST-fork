@@ -5,7 +5,8 @@ import { describe, it, expect, beforeEach } from "vitest"
 import OpenAI from "openai"
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import { type SambaNovaModelId, sambaNovaDefaultModelId, sambaNovaModels } from "@njust-ai-cj/types"
+import { type SambaNovaModelId } from "@njust-ai-cj/types"
+import { sambaNovaDefaultModelId, sambaNovaModels } from "@njust-ai-cj/core/providers"
 
 import { SambaNovaHandler } from "../sambanova"
 

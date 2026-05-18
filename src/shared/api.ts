@@ -3,10 +3,10 @@ import {
 	type ProviderSettings,
 	type DynamicProvider,
 	type LocalProvider,
-	ANTHROPIC_DEFAULT_MAX_TOKENS,
 	isDynamicProvider,
 	isLocalProvider,
 } from "@njust-ai-cj/types"
+import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
 
 // ApiHandlerOptions
 // Extend ProviderSettings (minus apiProvider) with handler-specific toggles.
@@ -184,5 +184,6 @@ const _dynamicProviderExtras = {
 // Build the dynamic options union from the map, intersected with CommonFetchParams
 // so extra fields are always allowed while required ones are enforced.
 export type GetModelsOptions = {
-	[P in keyof typeof _dynamicProviderExtras]: ({ provider: P } & (typeof _dynamicProviderExtras)[P]) & CommonFetchParams
+	[P in keyof typeof _dynamicProviderExtras]: ({ provider: P } & (typeof _dynamicProviderExtras)[P]) &
+		CommonFetchParams
 }[RouterName]

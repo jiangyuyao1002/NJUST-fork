@@ -258,7 +258,6 @@ describe("TaskLifecycleHandler", () => {
 
 		handler.dispose()
 		handler.dispose()
-		await Promise.resolve()
 
 		expect(host.isDisposed).toBe(true)
 		expect(clearMcpInstructionsDeltaMock).toHaveBeenCalledWith("task-1")
@@ -269,11 +268,15 @@ describe("TaskLifecycleHandler", () => {
 		expect(host.messageQueueService.removeListener).toHaveBeenCalledWith("stateChanged", expect.any(Function))
 		expect(host.messageQueueService.dispose).toHaveBeenCalled()
 		expect(host.removeAllListeners).toHaveBeenCalled()
-		expect(releaseTerminalsForTaskMock).toHaveBeenCalledWith("task-1")
+		await vi.waitFor(() => expect(releaseTerminalsForTaskMock).toHaveBeenCalledWith("task-1"))
 		expect(host.rooIgnoreController).toBeUndefined()
 		expect(host.toolExecution.dispose).toHaveBeenCalled()
 		expect(host.fileContextTracker.dispose).toHaveBeenCalled()
-		expect(appendFileMock).toHaveBeenCalledWith(expect.stringContaining("task-metrics.jsonl"), expect.stringContaining('"trigger":"dispose"'), "utf8")
+		expect(appendFileMock).toHaveBeenCalledWith(
+			expect.stringContaining("task-metrics.jsonl"),
+			expect.stringContaining('"trigger":"dispose"'),
+			"utf8",
+		)
 	})
 
 	it("reverts an active diff view during streaming dispose", () => {
@@ -295,7 +298,11 @@ describe("TaskLifecycleHandler", () => {
 		handler.dispose()
 		await Promise.resolve()
 
-		expect(appendFileMock).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('"trigger":"abort"'), "utf8")
+		expect(appendFileMock).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.stringContaining('"trigger":"abort"'),
+			"utf8",
+		)
 	})
 
 	it("resumes history by cleaning stale UI messages and continuing with default resume text", async () => {
@@ -307,12 +314,11 @@ describe("TaskLifecycleHandler", () => {
 		] as any[]
 		const savedApi = [{ role: "assistant", content: "done" }] as any[]
 		const host = createHost({
-			getSavedClineMessages: vi.fn()
+			getSavedClineMessages: vi
+				.fn()
 				.mockResolvedValueOnce(savedClineMessages)
 				.mockResolvedValueOnce([{ ts: 1, type: "say", say: "text", text: "old" }]),
-			getSavedApiConversationHistory: vi.fn()
-				.mockResolvedValueOnce(savedApi)
-				.mockResolvedValueOnce(savedApi),
+			getSavedApiConversationHistory: vi.fn().mockResolvedValueOnce(savedApi).mockResolvedValueOnce(savedApi),
 		})
 		const handler = new TaskLifecycleHandler(host)
 
@@ -332,10 +338,12 @@ describe("TaskLifecycleHandler", () => {
 		const savedApi = [{ role: "user", content: "old request" }] as any[]
 		const host = createHost({
 			getSavedClineMessages: vi.fn().mockResolvedValue(savedClineMessages),
-			getSavedApiConversationHistory: vi.fn()
-				.mockResolvedValueOnce(savedApi)
-				.mockResolvedValueOnce(savedApi),
-			ask: vi.fn().mockResolvedValue({ response: "messageResponse", text: "continue", images: ["data:image/png;base64,aW1n"] }),
+			getSavedApiConversationHistory: vi.fn().mockResolvedValueOnce(savedApi).mockResolvedValueOnce(savedApi),
+			ask: vi.fn().mockResolvedValue({
+				response: "messageResponse",
+				text: "continue",
+				images: ["data:image/png;base64,aW1n"],
+			}),
 		})
 		const handler = new TaskLifecycleHandler(host)
 
@@ -357,7 +365,8 @@ describe("TaskLifecycleHandler", () => {
 		}
 		const host = createHost({
 			getSavedClineMessages: vi.fn().mockResolvedValue([{ ts: 1, type: "say", say: "text" }]),
-			getSavedApiConversationHistory: vi.fn()
+			getSavedApiConversationHistory: vi
+				.fn()
 				.mockResolvedValueOnce([assistant])
 				.mockResolvedValueOnce([assistant]),
 		})

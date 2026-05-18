@@ -1,36 +1,17 @@
 import axios from "axios"
 import { LLM, LLMInfo, LLMInstanceInfo, LMStudioClient } from "@lmstudio/sdk"
 
-import { type ModelInfo, lMStudioDefaultModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai-cj/types"
+import { lMStudioDefaultModelInfo } from "@njust-ai-cj/core/providers"
 
 import { logger } from "../../../shared/logger"
-import { flushModels } from "./modelCache"
 
 const modelsWithLoadedDetails = new Set<string>()
 
 export const hasLoadedFullDetails = (modelId: string): boolean => modelsWithLoadedDetails.has(modelId)
 
-export const forceFullModelDetailsLoad = async (baseUrl: string, modelId: string): Promise<void> => {
-	try {
-		// Test the connection to LM Studio first
-		// Crrors will be caught further down.
-		await axios.get(`${baseUrl}/v1/models`)
-		const lmsUrl = baseUrl.replace(/^http:\/\//, "ws://").replace(/^https:\/\//, "wss://")
-
-		const client = new LMStudioClient({ baseUrl: lmsUrl })
-		await client.llm.model(modelId)
-		// Flush and refresh cache to get updated model details
-		await flushModels({ provider: "lmstudio", baseUrl }, true)
-
-		// Mark this model as having full details loaded.
-		modelsWithLoadedDetails.add(modelId)
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "ECONNREFUSED") {
-			logger.warn("LMStudio", `Error connecting to LMStudio at ${baseUrl}`)
-		} else {
-			logger.error("LMStudio", `Error refreshing LMStudio model details: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
-		}
-	}
+export const markFullDetailsLoaded = (modelId: string): void => {
+	modelsWithLoadedDetails.add(modelId)
 }
 
 export const parseLMStudioModel = (rawModel: LLMInstanceInfo | LLMInfo): ModelInfo => {
@@ -118,7 +99,10 @@ export async function getLMStudioModels(baseUrl = "http://localhost:1234"): Prom
 		if ((error as NodeJS.ErrnoException).code === "ECONNREFUSED") {
 			logger.warn("LMStudio", `Error connecting to LMStudio at ${baseUrl}`)
 		} else {
-			logger.error("LMStudio", `Error fetching LMStudio models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+			logger.error(
+				"LMStudio",
+				`Error fetching LMStudio models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+			)
 		}
 	}
 

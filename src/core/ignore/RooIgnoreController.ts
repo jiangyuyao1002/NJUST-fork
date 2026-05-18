@@ -3,7 +3,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import fs from "fs/promises"
 import fsSync from "fs"
 import ignore, { Ignore } from "ignore"
-import * as vscode from "vscode"
+import type * as vscode from "vscode"
 import { logger } from "../../shared/logger"
 
 export const LOCK_TEXT_SYMBOL = "\u{1F512}"
@@ -24,7 +24,7 @@ export class RooIgnoreController {
 		this.ignoreInstance = ignore()
 		this.rooIgnoreContent = undefined
 		// Set up file watcher for .rooignore
-		this.setupFileWatcher()
+		void this.setupFileWatcher()
 	}
 
 	/**
@@ -38,7 +38,11 @@ export class RooIgnoreController {
 	/**
 	 * Set up the file watcher for .rooignore changes
 	 */
-	private setupFileWatcher(): void {
+	private async setupFileWatcher(): Promise<void> {
+		const vscode = await this.getVscode()
+		if (!vscode) {
+			return
+		}
 		const rooignorePattern = new vscode.RelativePattern(this.cwd, ".rooignore")
 		const fileWatcher = vscode.workspace.createFileSystemWatcher(rooignorePattern)
 
@@ -57,6 +61,18 @@ export class RooIgnoreController {
 
 		// Add fileWatcher itself to disposables
 		this.disposables.push(fileWatcher)
+	}
+
+	private async getVscode(): Promise<typeof import("vscode") | undefined> {
+		try {
+			const vscode = await import("vscode")
+			if (!vscode.RelativePattern || !vscode.workspace?.createFileSystemWatcher) {
+				return undefined
+			}
+			return vscode
+		} catch {
+			return undefined
+		}
 	}
 
 	/**

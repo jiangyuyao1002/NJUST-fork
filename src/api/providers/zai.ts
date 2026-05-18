@@ -1,20 +1,20 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
+import { type ModelInfo } from "@njust-ai-cj/types"
 import {
 	internationalZAiModels,
 	mainlandZAiModels,
 	internationalZAiDefaultModelId,
 	mainlandZAiDefaultModelId,
-	type ModelInfo,
 	ZAI_DEFAULT_TEMPERATURE,
 	zaiApiLineConfigs,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { type ApiHandlerOptions, getModelMaxOutputTokens, shouldUseReasoningEffort } from "../../shared/api"
 import { convertToZAiFormat } from "../transform/zai-format"
 
-import type { ApiHandlerCreateMessageMetadata } from "../index"
+import type { ApiHandlerCreateMessageMetadata } from "../types"
 import { BaseOpenAiCompatibleProvider } from "./base-openai-compatible-provider"
 import { requireApiKey } from "../interfaces/api-key-validator"
 

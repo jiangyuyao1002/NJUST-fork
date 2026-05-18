@@ -6,7 +6,7 @@ import {
 	vercelAiGatewayDefaultModelInfo,
 	VERCEL_AI_GATEWAY_DEFAULT_TEMPERATURE,
 	VERCEL_AI_GATEWAY_PROMPT_CACHING_MODELS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { ApiHandlerOptions } from "../../shared/api"
 
@@ -14,7 +14,7 @@ import { ApiStream } from "../transform/stream"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { addCacheBreakpoints } from "../transform/caching/vercel-ai-gateway"
 
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { RouterProvider } from "./router-provider"
 
 // Extend OpenAI's CompletionUsage to include Vercel AI Gateway specific fields

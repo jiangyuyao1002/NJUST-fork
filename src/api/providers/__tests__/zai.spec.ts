@@ -5,15 +5,15 @@ import { describe, it, expect, beforeEach } from "vitest"
 import OpenAI from "openai"
 import { Anthropic } from "@anthropic-ai/sdk"
 
+import { type InternationalZAiModelId } from "@njust-ai-cj/types"
 import {
-	type InternationalZAiModelId,
 	type MainlandZAiModelId,
 	internationalZAiDefaultModelId,
 	mainlandZAiDefaultModelId,
 	internationalZAiModels,
 	mainlandZAiModels,
 	ZAI_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { ZAiHandler } from "../zai"
 
@@ -290,9 +290,7 @@ describe("ZAiHandler", () => {
 		})
 
 		it("should throw when no API key is specified", () => {
-			expect(() => new ZAiHandler({ zaiApiLine: "international_coding" })).toThrow(
-				/Z.ai API key is required/,
-			)
+			expect(() => new ZAiHandler({ zaiApiLine: "international_coding" })).toThrow(/Z.ai API key is required/)
 		})
 	})
 

@@ -1,4 +1,5 @@
-import { RooModelsResponseSchema, type ModelInfo, type ModelRecord } from "@njust-ai-cj/types"
+import { type ModelInfo, type ModelRecord } from "@njust-ai-cj/types"
+import { RooModelsResponseSchema } from "@njust-ai-cj/core/providers"
 
 import { parseApiPrice } from "../../../shared/cost"
 

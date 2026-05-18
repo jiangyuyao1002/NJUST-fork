@@ -9,13 +9,8 @@ import {
 } from "@google/genai"
 import type { JWTInput } from "google-auth-library"
 
-import {
-	type ModelInfo,
-	type GeminiModelId,
-	ApiProviderError,
-	geminiDefaultModelId,
-	geminiModels,
-} from "@njust-ai-cj/types"
+import { type ModelInfo, ApiProviderError } from "@njust-ai-cj/types"
+import { type GeminiModelId, geminiDefaultModelId, geminiModels } from "@njust-ai-cj/core/providers"
 import { safeJsonParse } from "@njust-ai-cj/core"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
@@ -26,7 +21,7 @@ import { t } from "i18next"
 import type { ApiStream, GroundingSource } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
 
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { BaseProvider } from "./base-provider"
 import { requireApiKey } from "../interfaces/api-key-validator"
 
@@ -342,9 +337,9 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 				const modelId = this.getModel().id
 				if (TelemetryService.hasInstance()) {
 					const forTelemetry = new ApiProviderError(error.message)
-					;forTelemetry.provider = this.providerName
-					;forTelemetry.modelId = modelId
-					;forTelemetry.operation = "createMessage"
+					forTelemetry.provider = this.providerName
+					forTelemetry.modelId = modelId
+					forTelemetry.operation = "createMessage"
 					TelemetryService.instance.captureException(forTelemetry)
 				}
 				throw new ApiProviderError(t("common:errors.gemini.generate_stream", { error: error.message }))
@@ -370,7 +365,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 		// Gemini models perform better with the edit tool.
 		info = {
 			...info,
-includedTools: [...new Set([...(info.includedTools || []), "edit"])],
+			includedTools: [...new Set([...(info.includedTools || []), "edit"])],
 		}
 
 		// The `:thinking` suffix indicates that the model is a "Hybrid"
@@ -454,9 +449,9 @@ includedTools: [...new Set([...(info.includedTools || []), "edit"])],
 				const modelId = this.getModel().id
 				if (TelemetryService.hasInstance()) {
 					const forTelemetry = new ApiProviderError(error.message)
-					;forTelemetry.provider = this.providerName
-					;forTelemetry.modelId = modelId
-					;forTelemetry.operation = "completePrompt"
+					forTelemetry.provider = this.providerName
+					forTelemetry.modelId = modelId
+					forTelemetry.operation = "completePrompt"
 					TelemetryService.instance.captureException(forTelemetry)
 				}
 				throw new ApiProviderError(t("common:errors.gemini.generate_complete_prompt", { error: error.message }))

@@ -19,7 +19,7 @@ import {
 	qwenDefaultModelId,
 	doubaoDefaultModelId,
 	glmDefaultModelId,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { MODELS_BY_PROVIDER } from "../constants"
 

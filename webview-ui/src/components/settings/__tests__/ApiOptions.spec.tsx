@@ -3,8 +3,9 @@
 import { render, screen, fireEvent } from "@/utils/test-utils"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
-import { type ModelInfo, type ProviderSettings, openAiModelInfoSaneDefaults } from "@njust-ai-cj/types"
-import { openAiCodexDefaultModelId } from "@njust-ai-cj/types"
+import { type ModelInfo, type ProviderSettings } from "@njust-ai-cj/types"
+import { openAiModelInfoSaneDefaults } from "@njust-ai-cj/core/providers"
+import { openAiCodexDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import * as ExtensionStateContext from "@src/context/ExtensionStateContext"
 const { ExtensionStateContextProvider } = ExtensionStateContext

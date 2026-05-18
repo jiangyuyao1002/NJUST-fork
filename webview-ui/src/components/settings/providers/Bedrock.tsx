@@ -2,15 +2,14 @@ import { useCallback, useState, useEffect } from "react"
 import { Checkbox } from "vscrui"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
+import { type ProviderSettings, type ModelInfo } from "@njust-ai-cj/types"
 import {
-	type ProviderSettings,
-	type ModelInfo,
 	type BedrockServiceTier,
 	BEDROCK_REGIONS,
 	BEDROCK_1M_CONTEXT_MODEL_IDS,
 	BEDROCK_GLOBAL_INFERENCE_MODEL_IDS,
 	BEDROCK_SERVICE_TIER_MODEL_IDS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, StandardTooltip } from "@src/components/ui"

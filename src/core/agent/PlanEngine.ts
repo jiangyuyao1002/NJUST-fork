@@ -1,15 +1,15 @@
 import { getErrorMessage } from "../../shared/error-utils"
 import { v7 as uuidv7 } from "uuid"
-import * as vscode from "vscode"
 
-import type { ClineProvider } from "../webview/ClineProvider"
-import type {	Plan,
+import type {
+	Plan,
 	PlanStep,
 	PlanStepResult,
 	PlanStepStatus,
 	PlanGenerationOptions,
 	PlanExecutionOptions,
 } from "./types"
+import type { AgentLogSink, AgentTaskController, AgentTaskLike } from "./AgentTaskController"
 
 const PLAN_GENERATION_PROMPT = `You are a task planning assistant. Given a user's task description, generate a structured execution plan.
 
@@ -47,8 +47,8 @@ export class PlanEngine {
 	private abortController: AbortController | undefined
 
 	constructor(
-		private readonly provider: ClineProvider,
-		private readonly outputChannel: vscode.OutputChannel,
+		private readonly provider: AgentTaskController,
+		private readonly outputChannel: AgentLogSink,
 	) {}
 
 	async generatePlan(options: PlanGenerationOptions): Promise<Plan> {
@@ -86,9 +86,7 @@ export class PlanEngine {
 		try {
 			await this.executeSteps(plan, options)
 
-			const allCompleted = plan.steps.every(
-				(s) => s.status === "completed" || s.status === "skipped",
-			)
+			const allCompleted = plan.steps.every((s) => s.status === "completed" || s.status === "skipped")
 			plan.status = allCompleted ? "completed" : "failed"
 		} catch (error) {
 			if (this.abortController?.signal.aborted) {
@@ -96,9 +94,7 @@ export class PlanEngine {
 			} else {
 				plan.status = "failed"
 			}
-			this.outputChannel.appendLine(
-				`[PlanEngine] Plan execution stopped: ${getErrorMessage(error)}`,
-			)
+			this.outputChannel.appendLine(`[PlanEngine] Plan execution stopped: ${getErrorMessage(error)}`)
 		} finally {
 			plan.updatedAt = Date.now()
 			plan.completedSteps = plan.steps.filter((s) => s.status === "completed").length
@@ -124,9 +120,7 @@ export class PlanEngine {
 			const maxParallel = options.maxParallel || 1
 			const batch = readySteps.slice(0, maxParallel)
 
-			const results = await Promise.allSettled(
-				batch.map((step) => this.executeStep(plan, step, options)),
-			)
+			const results = await Promise.allSettled(batch.map((step) => this.executeStep(plan, step, options)))
 
 			for (let i = 0; i < results.length; i++) {
 				const result = results[i]!
@@ -147,11 +141,7 @@ export class PlanEngine {
 		}
 	}
 
-	private async executeStep(
-		plan: Plan,
-		step: PlanStep,
-		options: PlanExecutionOptions,
-	): Promise<PlanStepResult> {
+	private async executeStep(plan: Plan, step: PlanStep, options: PlanExecutionOptions): Promise<PlanStepResult> {
 		step.status = "running"
 		step.startedAt = Date.now()
 		options.onStepStart?.(step)
@@ -198,11 +188,14 @@ export class PlanEngine {
 		}
 	}
 
-	private waitForTaskCompletion(task: UnsafeAny): Promise<string> {
+	private waitForTaskCompletion(task: AgentTaskLike): Promise<string> {
 		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error("Task execution timed out"))
-			}, 10 * 60 * 1000)
+			const timeout = setTimeout(
+				() => {
+					reject(new Error("Task execution timed out"))
+				},
+				10 * 60 * 1000,
+			)
 
 			const pollInterval = setInterval(() => {
 				try {
@@ -219,9 +212,7 @@ export class PlanEngine {
 						clearInterval(pollInterval)
 						clearTimeout(timeout)
 
-						const errorMsg = messages.find(
-							(m: UnsafeAny) => m.type === "say" && m.say === "error",
-						)
+						const errorMsg = messages.find((m: UnsafeAny) => m.type === "say" && m.say === "error")
 						if (errorMsg) {
 							reject(new Error(errorMsg.text || "Task failed"))
 						} else {

@@ -4,6 +4,10 @@ import {
 	type ModelInfo,
 	type ModelRecord,
 	type RouterModels,
+	isDynamicProvider,
+	isRetiredProvider,
+} from "@njust-ai-cj/types"
+import {
 	anthropicModels,
 	bedrockModels,
 	deepSeekModels,
@@ -31,10 +35,8 @@ import {
 	lMStudioDefaultModelInfo,
 	BEDROCK_1M_CONTEXT_MODEL_IDS,
 	VERTEX_1M_CONTEXT_MODEL_IDS,
-	isDynamicProvider,
-	isRetiredProvider,
 	getProviderDefaultModelId,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { useRouterModels } from "./useRouterModels"
 import { useOpenRouterModelProviders } from "./useOpenRouterModelProviders"

@@ -80,6 +80,8 @@ jobs:
               uses: ./.github/actions/setup-node-pnpm
             - name: Run src tests with coverage
               run: pnpm test:coverage
+            - name: Run prompt-engine tests with coverage
+              run: pnpm --filter @njust-ai-cj/prompt-engine test:coverage
             - name: Run webview-ui tests with coverage
               run: pnpm --filter webview-ui test:coverage
             - name: Upload src coverage to Codecov
@@ -96,6 +98,14 @@ jobs:
                 token: ${{ secrets.CODECOV_TOKEN }}
                 files: ./coverage/webview-ui/coverage-final.json
                 flags: webview-ui
+                fail_ci_if_error: false
+                verbose: true
+            - name: Upload prompt-engine coverage to Codecov
+              uses: codecov/codecov-action@v4
+              with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+                files: ./coverage/prompt-engine/coverage-final.json
+                flags: prompt-engine
                 fail_ci_if_error: false
                 verbose: true
 

@@ -1,14 +1,13 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
+import { type OpenAiUsageMetrics, type ModelInfo } from "@njust-ai-cj/types"
 import {
 	deepSeekModels,
 	deepSeekDefaultModelId,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
-	type OpenAiUsageMetrics,
-	type ModelInfo,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { shouldUseReasoningBudget, type ApiHandlerOptions } from "../../shared/api"
 
@@ -18,7 +17,7 @@ import { convertToR1Format } from "../transform/r1-format"
 
 import { OpenAiHandler } from "./openai"
 import { handleOpenAIError } from "./utils/openai-error-handler"
-import type { ApiHandlerCreateMessageMetadata } from "../index"
+import type { ApiHandlerCreateMessageMetadata } from "../types"
 
 // Custom interface for DeepSeek params to support thinking mode
 type DeepSeekChatCompletionParams = OpenAI.Chat.ChatCompletionCreateParamsStreaming & {
@@ -81,8 +80,7 @@ export class DeepSeekHandler extends OpenAiHandler {
 		})
 
 		const useThinkingApi =
-			isLegacyReasoner ||
-			(isV4Model && shouldUseReasoningBudget({ model: modelInfo, settings: this.options }))
+			isLegacyReasoner || (isV4Model && shouldUseReasoningBudget({ model: modelInfo, settings: this.options }))
 
 		const requestOptions: DeepSeekChatCompletionParams = {
 			model: modelId,

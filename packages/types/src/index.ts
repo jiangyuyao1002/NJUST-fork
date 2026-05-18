@@ -35,5 +35,3 @@ export * from "./njust-ai-config-dir.js"
 export * from "./cangjie-rules-content.js"
 
 export { DEFAULT_CLOUD_AGENT_URL } from "./constants.js"
-
-export * from "./providers/index.js"

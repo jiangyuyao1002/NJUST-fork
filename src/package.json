@@ -1254,6 +1254,7 @@
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@njust-ai-cj/core": "workspace:^",
 		"@njust-ai-cj/ipc": "workspace:^",
+		"@njust-ai-cj/prompt-engine": "workspace:^",
 		"@njust-ai-cj/telemetry": "workspace:^",
 		"@njust-ai-cj/types": "workspace:^",
 		"@qdrant/js-client-rest": "^1.14.0",

@@ -8,7 +8,7 @@ import {
 	mistralDefaultModelId,
 	mistralModels,
 	MISTRAL_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import { ApiHandlerOptions } from "../../shared/api"
 
@@ -16,7 +16,7 @@ import { convertToMistralMessages } from "../transform/mistral-format"
 import { ApiStream } from "../transform/stream"
 
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { getErrorMessage } from "../../shared/error-utils"
 
 // Type helper to handle thinking chunks from Mistral API
@@ -97,7 +97,6 @@ export class MistralHandler extends BaseProvider implements SingleCompletionHand
 		requestOptions.toolChoice = "required"
 
 		// Temporary debug log for QA
-
 
 		let response
 		try {

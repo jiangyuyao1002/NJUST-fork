@@ -5,7 +5,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type FireworksModelId, fireworksDefaultModelId, fireworksModels } from "@njust-ai-cj/types"
+import { type FireworksModelId } from "@njust-ai-cj/types"
+import { fireworksDefaultModelId, fireworksModels } from "@njust-ai-cj/core/providers"
 
 import { FireworksHandler } from "../fireworks"
 

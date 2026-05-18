@@ -28,7 +28,7 @@ import { Package } from "./shared/package"
 import { formatLanguage } from "./shared/language"
 import { ContextProxy } from "./core/config/ContextProxy"
 import { ClineProvider } from "./core/webview/ClineProvider"
-import { DIFF_VIEW_URI_SCHEME } from "./integrations/editor/DiffViewProvider"
+import { DIFF_VIEW_URI_SCHEME } from "./integrations/editor/diffViewConstants"
 import { TerminalRegistry } from "./integrations/terminal/TerminalRegistry"
 import { McpServerManager } from "./services/mcp/McpServerManager"
 import { CodeIndexManager } from "./services/code-index/manager"
@@ -47,12 +47,19 @@ import { CangjieDocumentSymbolProvider } from "./services/cangjie-lsp/CangjieDoc
 import { CangjieFoldingRangeProvider } from "./services/cangjie-lsp/CangjieFoldingRangeProvider"
 import { CangjieHoverProvider } from "./services/cangjie-lsp/CangjieHoverProvider"
 import { CangjieTestCodeLensProvider } from "./services/cangjie-lsp/CangjieTestCodeLensProvider"
-import { CangjieDebugAdapterFactory, CangjieDebugConfigurationProvider } from "./services/cangjie-lsp/CangjieDebugAdapterFactory"
+import {
+	CangjieDebugAdapterFactory,
+	CangjieDebugConfigurationProvider,
+} from "./services/cangjie-lsp/CangjieDebugAdapterFactory"
 import { CangjieSymbolIndex } from "./services/cangjie-lsp/CangjieSymbolIndex"
 import { CangjieDefinitionProvider } from "./services/cangjie-lsp/CangjieDefinitionProvider"
 import { CangjieReferenceProvider } from "./services/cangjie-lsp/CangjieReferenceProvider"
 import { CangjieEnhancedRenameProvider } from "./services/cangjie-lsp/CangjieEnhancedRenameProvider"
-import { CangjieMacroCodeLensProvider, CangjieMacroHoverProvider, registerMacroCommands } from "./services/cangjie-lsp/CangjieMacroProvider"
+import {
+	CangjieMacroCodeLensProvider,
+	CangjieMacroHoverProvider,
+	registerMacroCommands,
+} from "./services/cangjie-lsp/CangjieMacroProvider"
 import { CangjieSemanticTokensProvider } from "./services/cangjie-lsp/CangjieSemanticTokensProvider"
 import { CangjieInlayHintsProvider } from "./services/cangjie-lsp/CangjieInlayHintsProvider"
 import { CangjieCallHierarchyProvider } from "./services/cangjie-lsp/CangjieCallHierarchyProvider"
@@ -128,9 +135,7 @@ function scheduleCangjieToolchainGapCheck(): void {
 				}
 			})
 	})().catch((err) => {
-		outputChannel?.appendLine(
-			`[CangjieToolchain] Gap check failed: ${getErrorMessage(err)}`,
-		)
+		outputChannel?.appendLine(`[CangjieToolchain] Gap check failed: ${getErrorMessage(err)}`)
 	})
 }
 
@@ -192,9 +197,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		})
 		.catch((e) => {
-			outputChannel.appendLine(
-				`[CangjieTestCleanup] 启动孤儿清理失败：${getErrorMessage(e)}`,
-			)
+			outputChannel.appendLine(`[CangjieTestCleanup] 启动孤儿清理失败：${getErrorMessage(e)}`)
 		})
 
 	registerCangjieRulesHotReload(context, outputChannel)
@@ -211,14 +214,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Each step has its own error handling so one failure doesn't block the other.
 	await Promise.allSettled([
 		initializeNetworkProxy(context, outputChannel).catch((err) =>
-			outputChannel.appendLine(
-				`[Startup] Network proxy init failed: ${getErrorMessage(err)}`,
-			),
+			outputChannel.appendLine(`[Startup] Network proxy init failed: ${getErrorMessage(err)}`),
 		),
 		migrateSettings(context, outputChannel).catch((err) =>
-			outputChannel.appendLine(
-				`[Startup] Settings migration failed: ${getErrorMessage(err)}`,
-			),
+			outputChannel.appendLine(`[Startup] Settings migration failed: ${getErrorMessage(err)}`),
 		),
 	])
 
@@ -283,9 +282,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	const cangjieLintConfig = new CangjieLintConfig(outputChannel)
 	context.subscriptions.push(cangjieLintConfig)
 	void cangjieLintConfig.initialize().catch((err) => {
-		outputChannel.appendLine(
-			`[CangjieLintConfig] Initialize failed: ${getErrorMessage(err)}`,
-		)
+		outputChannel.appendLine(`[CangjieLintConfig] Initialize failed: ${getErrorMessage(err)}`)
 	})
 
 	let cangjieMetricsCollector: CangjieMetricsCollector | undefined
@@ -304,9 +301,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Cangjie debugger — register before onCangjieActivated so setCompileGuard always has a target.
 	cangjieDebugFactory = new CangjieDebugAdapterFactory(undefined, outputChannel)
 	context.subscriptions.push(cangjieDebugFactory)
-	context.subscriptions.push(
-		vscode.debug.registerDebugAdapterDescriptorFactory("cangjie", cangjieDebugFactory),
-	)
+	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("cangjie", cangjieDebugFactory))
 	context.subscriptions.push(
 		vscode.debug.registerDebugConfigurationProvider("cangjie", new CangjieDebugConfigurationProvider()),
 	)
@@ -356,7 +351,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	})
 
-	void checkAndPromptSdkSetup(context, outputChannel).catch((err: unknown) => { logger.warn("Extension", "checkAndPromptSdkSetup failed", err) })
+	void checkAndPromptSdkSetup(context, outputChannel).catch((err: unknown) => {
+		logger.warn("Extension", "checkAndPromptSdkSetup failed", err)
+	})
 	void scheduleCangjieToolchainGapCheck()
 
 	void cangjieLspClient.start().catch((error) => {
@@ -385,9 +382,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			customModesManager: provider.customModesManager,
 		})
 	} catch (error) {
-		outputChannel.appendLine(
-			`[AutoImport] Error during auto-import: ${getErrorMessage(error)}`,
-		)
+		outputChannel.appendLine(`[AutoImport] Error during auto-import: ${getErrorMessage(error)}`)
 	}
 
 	registerCommands({ context, outputChannel, provider })
@@ -495,10 +490,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.languages.registerHoverProvider(
-			{ language: "cangjie", scheme: "file" },
-			new CangjieHoverProvider(),
-		),
+		vscode.languages.registerHoverProvider({ language: "cangjie", scheme: "file" }, new CangjieHoverProvider()),
 	)
 
 	context.subscriptions.push(
@@ -526,7 +518,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Test run/debug commands for CodeLens
 	context.subscriptions.push(
 		vscode.commands.registerCommand("njust-ai-cj.cangjieRunTest", (testName: string, fileUri?: vscode.Uri) => {
-			const folder = fileUri ? vscode.workspace.getWorkspaceFolder(fileUri) : vscode.workspace.workspaceFolders?.[0]
+			const folder = fileUri
+				? vscode.workspace.getWorkspaceFolder(fileUri)
+				: vscode.workspace.workspaceFolders?.[0]
 			const cwd = folder?.uri.fsPath
 			const terminal = vscode.window.createTerminal({ name: "Cangjie Test", cwd })
 			terminal.show()
@@ -554,9 +548,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(cangjieSymbolIndex)
 		setTimeout(() => {
 			void cangjieSymbolIndex?.initialize().catch((err) => {
-				outputChannel.appendLine(
-					`[SymbolIndex] Background initialization error: ${getErrorMessage(err)}`,
-				)
+				outputChannel.appendLine(`[SymbolIndex] Background initialization error: ${getErrorMessage(err)}`)
 			})
 		}, 1000)
 
@@ -610,13 +602,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		)
 
 		context.subscriptions.push(
-			vscode.languages.registerWorkspaceSymbolProvider(
-				new CangjieWorkspaceSymbolProvider(cangjieSymbolIndex),
-			),
+			vscode.languages.registerWorkspaceSymbolProvider(new CangjieWorkspaceSymbolProvider(cangjieSymbolIndex)),
 		)
 
 		if (cangjieLspClient && cangjieSymbolIndex) {
-			registerCangjieCommands(context, cangjieLspClient, cangjieSymbolIndex, () => provider.getCurrentTask()?.taskId)
+			registerCangjieCommands(
+				context,
+				cangjieLspClient,
+				cangjieSymbolIndex,
+				() => provider.getCurrentTask()?.taskId,
+			)
 		}
 	}
 
@@ -645,7 +640,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					(err: unknown) => {
 						outputChannel.appendLine(
 							`[McpToolsServer] Failed to persist auth token to secret storage: ${getErrorMessage(err)}. ` +
-							`MCP server authentication will not survive VS Code restart until this is resolved.`,
+								`MCP server authentication will not survive VS Code restart until this is resolved.`,
 						)
 					},
 				)
@@ -665,7 +660,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			rooToolsMcpServer
 				.start()
 				.then(() => {
-					outputChannel.appendLine(`[McpToolsServer] Started on http://${bindAddress}:${port}/mcp (workspace: ${wsPath})`)
+					outputChannel.appendLine(
+						`[McpToolsServer] Started on http://${bindAddress}:${port}/mcp (workspace: ${wsPath})`,
+					)
 					if (bindAddress === "0.0.0.0") {
 						outputChannel.appendLine(
 							`[McpToolsServer] WARNING: Server is accessible from remote machines. Ensure authToken is set and firewall rules are configured.`,
@@ -673,9 +670,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					}
 				})
 				.catch((error) => {
-					outputChannel.appendLine(
-						`[McpToolsServer] Failed to start: ${getErrorMessage(error)}`,
-					)
+					outputChannel.appendLine(`[McpToolsServer] Failed to start: ${getErrorMessage(error)}`)
 				})
 
 			context.subscriptions.push({
@@ -721,7 +716,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			{ path: path.join(context.extensionPath, "../packages/types"), pattern: "**/*.ts" },
 		]
 
-		logger.info("Extension",
+		logger.info(
+			"Extension",
 			`♻️♻️♻️ Core auto-reloading: Watching for changes in ${watchPaths.map(({ path }) => path).join(", ")}`,
 		)
 

@@ -2,7 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 
 import type { ModelInfo } from "@njust-ai-cj/types"
 
-import type { ApiHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { ApiHandler, ApiHandlerCreateMessageMetadata } from "../types"
 
 import { ApiStream } from "../transform/stream"
 import { countTokensDetailed, type TokenCountResult } from "../../utils/countTokens"

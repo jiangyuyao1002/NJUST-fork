@@ -1,7 +1,8 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import { Message, Ollama, Tool as OllamaTool, type Config as OllamaOptions } from "ollama"
-import { ModelInfo, openAiModelInfoSaneDefaults, DEEP_SEEK_DEFAULT_TEMPERATURE } from "@njust-ai-cj/types"
+import { ModelInfo } from "@njust-ai-cj/types"
+import { openAiModelInfoSaneDefaults, DEEP_SEEK_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
 import { ApiStream } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -10,7 +11,7 @@ import { getErrorMessage } from "../../shared/error-utils"
 import { getOllamaModels } from "./fetchers/ollama"
 import { TagMatcher } from "../../utils/tag-matcher"
 import { redactApiSecrets } from "../../utils/redactApiSecrets"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 
 interface OllamaChatOptions {
 	temperature: number
@@ -312,7 +313,11 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 					}
 				}
 			} catch (streamError: unknown) {
-				logger.error("Ollama", "Error processing Ollama stream:", redactApiSecrets(getErrorMessage(streamError)))
+				logger.error(
+					"Ollama",
+					"Error processing Ollama stream:",
+					redactApiSecrets(getErrorMessage(streamError)),
+				)
 				throw new Error(redactApiSecrets(`Ollama stream processing error: ${getErrorMessage(streamError)}`))
 			} finally {
 				// Flush accumulated matcher content on error to avoid losing partial output

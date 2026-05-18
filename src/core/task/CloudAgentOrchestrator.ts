@@ -1,10 +1,7 @@
 import * as vscode from "vscode"
 import { Package } from "../../shared/package"
-import { ClineAskResponse } from "../../shared/WebviewMessage"
-import {
-	applyCloudWorkspaceOps,
-	applySingleCloudWorkspaceOp,
-} from "../../services/cloud-agent/applyCloudWorkspaceOps"
+import type { ClineAskResponse } from "../../shared/WebviewMessage"
+import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../../services/cloud-agent/applyCloudWorkspaceOps"
 import { buildCloudWorkspaceOpToolMessage } from "../../services/cloud-agent/buildCloudWorkspaceOpToolMessage"
 import { CloudAgentClient } from "../../services/cloud-agent/CloudAgentClient"
 import { executeDeferredToolCall } from "../../services/cloud-agent/executeDeferredToolCall"
@@ -19,30 +16,13 @@ import type {
 	DeferredToolResult,
 	WorkspaceOp,
 } from "../../services/cloud-agent/types"
-import { allowRooIgnorePathAccess, type RooIgnoreController } from "../ignore/RooIgnoreController"
-import type { RooProtectedController } from "../protect/RooProtectedController"
+import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { AskIgnoredError } from "./AskIgnoredError"
-import { NJUST_AI_CJEventName, type ClineSay, type ClineAsk } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
 import { getErrorMessage } from "../../shared/error-utils"
+import type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 
-/**
- * Thin abstraction over the Task methods that CloudAgentOrchestrator needs,
- * avoiding a direct dependency on the full Task class.
- */
-export interface ICloudAgentHost {
-	readonly taskId: string
-	readonly cwd: string
-	readonly abort: boolean
-	readonly rooIgnoreController?: RooIgnoreController
-	readonly rooProtectedController?: RooProtectedController
-
-	say(type: ClineSay, text?: string, images?: string[]): Promise<void>
-	ask(type: ClineAsk, text?: string, partial?: boolean): Promise<{ response: ClineAskResponse; text?: string; images?: string[] }>
-	emit(event: string, ...args: unknown[]): boolean
-
-	/** Allow the orchestrator to set/clear the abort controller on the host. */
-	setCurrentRequestAbortController(controller: AbortController | undefined): void
-}
+export type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 
 interface CloudAgentConfig {
 	serverUrl: string
@@ -62,9 +42,7 @@ function readCloudAgentConfig(): CloudAgentConfig {
 	const deviceToken = getDeviceToken()
 	let apiKey = (config.get<string>("cloudAgent.apiKey", "") ?? "").trim()
 	if (!apiKey) {
-		apiKey = (
-			vscode.workspace.getConfiguration().get<string>(`${Package.name}.cloudAgent.apiKey`) ?? ""
-		).trim()
+		apiKey = (vscode.workspace.getConfiguration().get<string>(`${Package.name}.cloudAgent.apiKey`) ?? "").trim()
 	}
 	if (!apiKey) {
 		apiKey = (process.env.CLOUD_AGENT_MOCK_API_KEY ?? process.env.NJUST_CLOUD_AGENT_API_KEY ?? "").trim()
@@ -103,7 +81,9 @@ function makeCallbacks(host: ICloudAgentHost): CloudAgentCallbacks {
 	return {
 		onText: async (content) => host.say("text", content),
 		onReasoning: async (content) => host.say("reasoning", content),
-		onDone: async (summary) => { if (summary) await host.say("completion_result", summary) },
+		onDone: async (summary) => {
+			if (summary) await host.say("completion_result", summary)
+		},
 		onError: async (message) => host.say("error", message),
 	}
 }
@@ -196,8 +176,7 @@ export class CloudAgentOrchestrator {
 		} catch (error) {
 			if (this.host.abort) return
 			const isAbort =
-				error instanceof Error &&
-				(error.name === "AbortError" || /aborted|timeout/i.test(error.message))
+				error instanceof Error && (error.name === "AbortError" || /aborted|timeout/i.test(error.message))
 			if (isAbort) {
 				const errorMsg = getErrorMessage(error)
 				await this.host.say("error", `Cloud Agent request was cancelled or timed out: ${errorMsg}`)
@@ -260,14 +239,19 @@ export class CloudAgentOrchestrator {
 		let deferredResp: DeferredResponse
 		try {
 			const startClient = new CloudAgentClient(
-				cfg.serverUrl, cfg.deviceToken,
+				cfg.serverUrl,
+				cfg.deviceToken,
 				makeCallbacks(this.host),
 				makeClientOptions(cfg, startAbort.signal),
 			)
 			deferredResp = await startClient.deferredStart(this.host.taskId, userMessage, this.host.cwd, images)
 			await this.host.say(
 				"api_req_finished",
-				JSON.stringify({ tokensIn: deferredResp.tokens_in ?? 0, tokensOut: deferredResp.tokens_out ?? 0, cost: deferredResp.cost ?? 0 }),
+				JSON.stringify({
+					tokensIn: deferredResp.tokens_in ?? 0,
+					tokensOut: deferredResp.tokens_out ?? 0,
+					cost: deferredResp.cost ?? 0,
+				}),
 			)
 		} catch (error) {
 			if (this.host.abort) return
@@ -346,24 +330,24 @@ export class CloudAgentOrchestrator {
 				return
 			}
 
-			await this.host.say("api_req_started", JSON.stringify({ request: `Cloud Agent deferred/resume (iteration ${iteration})` }))
+			await this.host.say(
+				"api_req_started",
+				JSON.stringify({ request: `Cloud Agent deferred/resume (iteration ${iteration})` }),
+			)
 
 			const resumeAbort = new AbortController()
 			this.host.setCurrentRequestAbortController(resumeAbort)
 
 			try {
 				const resumeClient = new CloudAgentClient(
-					cfg.serverUrl, cfg.deviceToken,
+					cfg.serverUrl,
+					cfg.deviceToken,
 					makeCallbacks(this.host),
 					makeClientOptions(cfg, resumeAbort.signal),
 				)
 				deferredResp = await resumeClient.deferredResume(runIdForResume, this.host.taskId, toolResults)
 				const nextRev = deferredResp.server_revision
-				if (
-					lastServerRevision !== undefined &&
-					nextRev !== undefined &&
-					nextRev !== lastServerRevision
-				) {
+				if (lastServerRevision !== undefined && nextRev !== undefined && nextRev !== lastServerRevision) {
 					await this.host.say(
 						"error",
 						`[Deferred] 服务端 server_revision 已变更（${lastServerRevision} → ${nextRev}），为避免会话串线已中止。`,
@@ -390,7 +374,11 @@ export class CloudAgentOrchestrator {
 				lastNotifiedRunId = deferredResp.run_id
 				await this.host.say(
 					"api_req_finished",
-					JSON.stringify({ tokensIn: deferredResp.tokens_in ?? 0, tokensOut: deferredResp.tokens_out ?? 0, cost: deferredResp.cost ?? 0 }),
+					JSON.stringify({
+						tokensIn: deferredResp.tokens_in ?? 0,
+						tokensOut: deferredResp.tokens_out ?? 0,
+						cost: deferredResp.cost ?? 0,
+					}),
 				)
 			} catch (error) {
 				if (this.host.abort) break
@@ -444,7 +432,12 @@ export class CloudAgentOrchestrator {
 				await this.applyWorkspaceOps(finalParsed.operations, cfg.confirmRemoteWorkspaceOps)
 			}
 
-			if (cfg.compileLoopEnabled && cfg.applyRemoteWorkspaceOps && hadWorkspaceOpsForCompile && !this.host.abort) {
+			if (
+				cfg.compileLoopEnabled &&
+				cfg.applyRemoteWorkspaceOps &&
+				hadWorkspaceOpsForCompile &&
+				!this.host.abort
+			) {
 				await this.runCompileFeedbackLoop(cfg, callbacks, cfg.compileMaxRetries, cfg.confirmRemoteWorkspaceOps)
 			}
 
@@ -473,7 +466,9 @@ export class CloudAgentOrchestrator {
 			let compileResult: CloudCompileResult
 			try {
 				const compileClient = new CloudAgentClient(
-					cfg.serverUrl, cfg.deviceToken, callbacks,
+					cfg.serverUrl,
+					cfg.deviceToken,
+					callbacks,
 					makeClientOptions(cfg, compileAbort.signal),
 				)
 				compileResult = await compileClient.compile(this.host.taskId, this.host.cwd)
@@ -514,7 +509,9 @@ export class CloudAgentOrchestrator {
 			let fixResult: CloudRunResult
 			try {
 				const fixClient = new CloudAgentClient(
-					cfg.serverUrl, cfg.deviceToken, callbacks,
+					cfg.serverUrl,
+					cfg.deviceToken,
+					callbacks,
 					makeClientOptions(cfg, fixAbort.signal),
 				)
 				fixResult = await fixClient.submitTask(this.host.taskId, fixGoal, this.host.cwd)
@@ -599,7 +596,10 @@ export class CloudAgentOrchestrator {
 				: `workspace_ops stopped at operation ${(applied.failedAtIndex ?? 0) + 1} of ${ops.length}.`
 			await this.host.say("text", [header, ...lines].join("\n"))
 			if (!applied.ok) {
-				await this.host.say("error", `Workspace operation failed: ${applied.results.at(-1)?.message ?? "unknown"}`)
+				await this.host.say(
+					"error",
+					`Workspace operation failed: ${applied.results.at(-1)?.message ?? "unknown"}`,
+				)
 			}
 		}
 	}

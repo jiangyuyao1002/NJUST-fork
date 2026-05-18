@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest"
 import { Anthropic } from "@anthropic-ai/sdk"
 import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"
 
-import { VERTEX_1M_CONTEXT_MODEL_IDS } from "@njust-ai-cj/types"
+import { VERTEX_1M_CONTEXT_MODEL_IDS } from "@njust-ai-cj/core/providers"
 
 import { ApiStreamChunk } from "../../transform/stream"
 

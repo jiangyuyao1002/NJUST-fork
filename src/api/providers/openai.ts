@@ -2,14 +2,13 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI, { AzureOpenAI } from "openai"
 import axios from "axios"
 
+import { type ModelInfo, type OpenAiUsageMetrics } from "@njust-ai-cj/types"
 import {
-	type ModelInfo,
-	type OpenAiUsageMetrics,
 	azureOpenAiDefaultApiVersion,
 	openAiModelInfoSaneDefaults,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
@@ -24,7 +23,7 @@ import type { CacheableTextPart } from "../transform/caching/types"
 import { BaseProvider } from "./base-provider"
 import { DEFAULT_HEADERS } from "./constants"
 import { requireApiKey } from "../interfaces/api-key-validator"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 
@@ -138,7 +137,9 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 
 						if (Array.isArray(msg.content)) {
 							// NOTE: this is fine since env details will always be added at the end. but if it weren't there, and the user added a image_url type message, it would pop a text part before it and then move it after to the end.
-							let lastTextPart = msg.content.filter((part) => part.type === "text").pop() as CacheableTextPart | undefined
+							let lastTextPart = msg.content.filter((part) => part.type === "text").pop() as
+								| CacheableTextPart
+								| undefined
 
 							if (!lastTextPart) {
 								lastTextPart = { type: "text", text: "..." }

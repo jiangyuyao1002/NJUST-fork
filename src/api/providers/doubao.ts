@@ -1,6 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
+import { type OpenAiUsageMetrics, type ModelInfo } from "@njust-ai-cj/types"
 import {
 	doubaoCodingPlanBaseUrl,
 	doubaoDefaultBaseUrl,
@@ -8,10 +9,8 @@ import {
 	doubaoDefaultModelId,
 	doubaoSeedCodeCodingPlanModelId,
 	openAiModelInfoSaneDefaults,
-	type OpenAiUsageMetrics,
 	resolveDoubaoInferenceModelId,
-	type ModelInfo,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
@@ -21,7 +20,7 @@ import { convertToR1Format } from "../transform/r1-format"
 
 import { OpenAiHandler } from "./openai"
 import { handleOpenAIError } from "./utils/openai-error-handler"
-import type { ApiHandlerCreateMessageMetadata } from "../index"
+import type { ApiHandlerCreateMessageMetadata } from "../types"
 import { requireApiKey } from "../interfaces/api-key-validator"
 
 const doubaoCustomModelInfo: ModelInfo = {
@@ -110,11 +109,10 @@ export class DoubaoHandler extends OpenAiHandler {
 
 		let stream
 		try {
-			stream = await this.withRetry(
-				() => this.client.chat.completions.create(requestOptions),
-				undefined,
-				{ taskId: metadata?.taskId, provider: "Doubao" },
-			)
+			stream = await this.withRetry(() => this.client.chat.completions.create(requestOptions), undefined, {
+				taskId: metadata?.taskId,
+				provider: "Doubao",
+			})
 		} catch (error) {
 			throw handleOpenAIError(error, "Doubao")
 		}

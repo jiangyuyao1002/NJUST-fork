@@ -2,7 +2,8 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import * as vscode from "vscode"
 import OpenAI from "openai"
 
-import { type ModelInfo, openAiModelInfoSaneDefaults } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai-cj/types"
+import { openAiModelInfoSaneDefaults } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { SELECTOR_SEPARATOR, stringifyVsCodeLmModelSelector } from "../../shared/vsCodeSelectorUtils"
@@ -13,7 +14,7 @@ import { convertToVsCodeLmMessages, extractTextCountFromMessage } from "../trans
 
 import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 
 import { debugLog } from "../../utils/debugLog"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -66,7 +67,7 @@ function convertToVsCodeLmTools(tools: OpenAI.Chat.ChatCompletionTool[]): vscode
 export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
 	private client: vscode.LanguageModelChat | null
-private initPromise: Promise<void> | null = null
+	private initPromise: Promise<void> | null = null
 	private disposable: vscode.Disposable | null
 	private currentRequestCancellation: vscode.CancellationTokenSource | null
 
@@ -94,9 +95,7 @@ private initPromise: Promise<void> | null = null
 			// Ensure cleanup if constructor fails
 			this.dispose()
 
-			throw new Error(
-				`NJUST_AI_CJ <Language Model API>: Failed to initialize handler: ${getErrorMessage(error)}`,
-			)
+			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to initialize handler: ${getErrorMessage(error)}`)
 		}
 	}
 	/**
@@ -324,7 +323,9 @@ private initPromise: Promise<void> | null = null
 	}
 
 	private async getClient(): Promise<vscode.LanguageModelChat> {
-		if (this.initPromise) { await this.initPromise }
+		if (this.initPromise) {
+			await this.initPromise
+		}
 		if (!this.client) {
 			debugLog("NJUST_AI_CJ <Language Model API>: Getting client with options:", {
 				vsCodeLmModelSelector: this.options.vsCodeLmModelSelector,
@@ -603,7 +604,10 @@ export async function getVsCodeLmModels() {
 		const models = (await vscode.lm.selectChatModels({})) || []
 		return models.filter((model) => !VSCODE_LM_STATIC_BLACKLIST.includes(model.id))
 	} catch (error) {
-		logger.error("VsCodeLm", `Error fetching VS Code LM models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		logger.error(
+			"VsCodeLm",
+			`Error fetching VS Code LM models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 		return []
 	}
 }

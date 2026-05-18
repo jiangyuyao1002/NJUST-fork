@@ -1,5 +1,4 @@
-
-import type {  TaskLike, TodoItem } from "@njust-ai-cj/types"
+import type { TaskLike, TodoItem } from "@njust-ai-cj/types"
 import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
 
 import type { IMcpHubClient } from "../../../services/mcp/interfaces/IMcpHubClient"
@@ -8,6 +7,7 @@ import type { SkillsManager } from "../../../services/skills/SkillsManager"
 import type { ContextProxy } from "../../config/ContextProxy"
 
 import type { ITaskUINotifier } from "./ITaskUINotifier"
+import type { ITaskDiffViewProvider } from "./ITaskDiffViewProvider"
 
 export type { TaskHostState } from "./taskHostState"
 
@@ -45,6 +45,8 @@ export interface ITaskHost extends IMcpHubClient, ITaskUINotifier {
 	getTaskStackSize(): number
 
 	convertToWebviewUri(filePath: string): string
+
+	createDiffViewProvider?(cwd: string, task: unknown): ITaskDiffViewProvider
 
 	on(
 		event: NJUST_AI_CJEventName.ProviderProfileChanged,

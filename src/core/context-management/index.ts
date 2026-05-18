@@ -7,7 +7,7 @@ import { logger } from "../../shared/logger"
 import { ApiHandler, ApiHandlerCreateMessageMetadata } from "../../api"
 import { MAX_CONDENSE_THRESHOLD, MIN_CONDENSE_THRESHOLD, summarizeConversation, SummarizeResponse } from "../condense"
 import { ApiMessage } from "../task-persistence/apiMessages"
-import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/types"
+import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { preprocessMessages } from "./preprocess"
 import { postCompactRestore } from "./postCompactRestore"
@@ -59,7 +59,6 @@ export const TOKEN_BUFFER_TOKENS = 13000
  * The circuit breaker prevents this by cutting off after a small number of failures.
  */
 export const MAX_CONSECUTIVE_COMPACT_FAILURES = 3
-
 
 /**
  * Counts tokens for user content using the provider's token counting implementation.
@@ -127,7 +126,9 @@ function isToolUseWithWrite(message: ApiMessage): boolean {
 	return message.content.some(
 		(block: Anthropic.Messages.ContentBlockParam): boolean =>
 			block.type === "tool_use" &&
-			/write_to_file|apply_diff|insert_content|search_and_replace/.test((block as Anthropic.Messages.ToolUseBlockParam).name || ""),
+			/write_to_file|apply_diff|insert_content|search_and_replace/.test(
+				(block as Anthropic.Messages.ToolUseBlockParam).name || "",
+			),
 	)
 }
 
@@ -205,7 +206,12 @@ function evaluateMessageWeight(
  * @param {ContextHierarchy} [hierarchy] - Optional hierarchical context for CSA-enhanced scoring
  * @returns {TruncationResult} Object containing the tagged messages, truncation ID, and count of messages removed.
  */
-export function truncateConversation(messages: ApiMessage[], fracToRemove: number, taskId: string, hierarchy?: ContextHierarchy): TruncationResult {
+export function truncateConversation(
+	messages: ApiMessage[],
+	fracToRemove: number,
+	taskId: string,
+	hierarchy?: ContextHierarchy,
+): TruncationResult {
 	TelemetryService.instance.captureSlidingWindowTruncation(taskId)
 	const truncationId = crypto.randomUUID()
 
@@ -418,9 +424,7 @@ export function willManageContext({
 		contextPercent >= effectiveThreshold - 1.5 &&
 		contextPercent < effectiveThreshold
 
-	return (
-		contextPercent >= effectiveThreshold || prevContextTokens > allowedTokens || Boolean(nearCondenseThreshold)
-	)
+	return contextPercent >= effectiveThreshold || prevContextTokens > allowedTokens || Boolean(nearCondenseThreshold)
 }
 
 /**
@@ -562,7 +566,8 @@ export async function manageContext({
 			effectiveThreshold = profileThreshold
 		} else {
 			// Invalid threshold value, fall back to global setting
-			logger.warn("ContextManagement", 
+			logger.warn(
+				"ContextManagement",
 				`Invalid profile threshold ${profileThreshold} for profile "${currentProfileId}". Using global default of ${autoCondenseContextPercent}%`,
 			)
 			effectiveThreshold = autoCondenseContextPercent
@@ -571,7 +576,7 @@ export async function manageContext({
 	// If no specific threshold is found for the profile, fall back to global setting
 
 	// Run context analysis for observability before compaction decisions
-	(function() {
+	;(function () {
 		const analysisResult = analyzeContextTokens(preprocessedMessages, 0)
 		const suggestions = generateSuggestions(
 			analysisResult.breakdown,
@@ -581,8 +586,12 @@ export async function manageContext({
 			analysisResult.summaryMessageCount,
 		)
 		logCompactEvent("context_analysis", {
-			toolResultPct: Math.round((analysisResult.breakdown.toolResultTokens / Math.max(1, analysisResult.breakdown.totalTokens)) * 100),
-			summaryPct: Math.round((analysisResult.breakdown.summaryTokens / Math.max(1, analysisResult.breakdown.totalTokens)) * 100),
+			toolResultPct: Math.round(
+				(analysisResult.breakdown.toolResultTokens / Math.max(1, analysisResult.breakdown.totalTokens)) * 100,
+			),
+			summaryPct: Math.round(
+				(analysisResult.breakdown.summaryTokens / Math.max(1, analysisResult.breakdown.totalTokens)) * 100,
+			),
 			totalTokens: analysisResult.breakdown.totalTokens,
 			summaryCount: analysisResult.summaryMessageCount,
 			duplicateReads: analysisResult.duplicateReads.length,
@@ -630,65 +639,83 @@ export async function manageContext({
 				effectiveCacheReadTokens = Math.round(rollingHitRate * cacheAwareTokensBase)
 			}
 		}
-		const adjustedThreshold = effectiveCacheReadTokens !== undefined
-			? getAdjustedCompactThreshold(effectiveThreshold, effectiveCacheReadTokens, cacheAwareTokensBase)
-			: effectiveThreshold
+		const adjustedThreshold =
+			effectiveCacheReadTokens !== undefined
+				? getAdjustedCompactThreshold(effectiveThreshold, effectiveCacheReadTokens, cacheAwareTokensBase)
+				: effectiveThreshold
 
 		if (contextPercent >= adjustedThreshold || prevContextTokens > allowedTokens) {
-				logCompactEvent("compact_triggered", {
-					contextPercent,
-					prevContextTokens,
-					allowedTokens,
-					threshold: adjustedThreshold,
-				})
+			logCompactEvent("compact_triggered", {
+				contextPercent,
+				prevContextTokens,
+				allowedTokens,
+				threshold: adjustedThreshold,
+			})
 
-				// Execute pre-compact hooks (may abort via { abort: true })
-				const preHookResult = await ToolHookManager.instance.runPreCompactHooks({
-					taskId,
-					messageCount: preprocessedMessages.length,
-					tokenCount: prevContextTokens,
-				})
-				if (!preHookResult.allow) {
-					logger.warn("ContextManagement", 
-						"[Context Management] Pre-compact hook aborted compaction: " +
+			// Execute pre-compact hooks (may abort via { abort: true })
+			const preHookResult = await ToolHookManager.instance.runPreCompactHooks({
+				taskId,
+				messageCount: preprocessedMessages.length,
+				tokenCount: prevContextTokens,
+			})
+			if (!preHookResult.allow) {
+				logger.warn(
+					"ContextManagement",
+					"[Context Management] Pre-compact hook aborted compaction: " +
 						(preHookResult.reason || "unknown reason"),
-					)
-					logCompactEvent("compact_aborted_hook", { reason: preHookResult.reason })
-					// Return immediately — the hook explicitly opted out of compaction
-					// this turn. Skip truncation fallback as well.
-					return {
-						messages: preprocessedMessages,
-						prevContextTokens,
-						summary: "",
-						cost: 0,
-						compactFailures,
-					}
-				} else {
-				// Cache-aware check: skip compression if prompt cache hit rate is very high
-			if (effectiveCacheReadTokens !== undefined && shouldSkipCompactForCache(effectiveCacheReadTokens, cacheAwareTokensBase)) {
-			logger.info("ContextManagement",
-				`Skipping auto-compact: high prompt cache hit rate ` +
-				`(${((effectiveCacheReadTokens / Math.max(1, cacheAwareTokensBase)) * 100).toFixed(1)}%). ` +
-				`Compression would break cache and increase costs.`,
-			)
-				// Preserve cache by skipping condensation, but do not bypass hard context-window safety.
-				// If already over budget, fall through to truncation logic below.
-				if (prevContextTokens <= allowedTokens) {
-					return { messages: preprocessedMessages, prevContextTokens, summary: "", cost: 0, compactFailures }
-				}
-			}
-			// Circuit breaker: if condensation has failed too many times consecutively,
-			// skip it and fall through to truncation to avoid wasting API calls
-			else if (compactFailures >= MAX_CONSECUTIVE_COMPACT_FAILURES) {
-				logger.warn("ContextManagement", 
-					`[Context Management] Circuit breaker triggered: ` +
-					`${compactFailures} consecutive condensation failures. ` +
-					`Falling back to forced truncation.`,
 				)
-				// Force aggressive truncation (50% removal) with hierarchy-enhanced scoring
-				const hierarchy = buildContextHierarchy(preprocessedMessages, taskId)
-				const truncationResult = truncateConversation(preprocessedMessages, 0.5, taskId, hierarchy ?? undefined)
-				logCompactEvent("compact_truncation", {
+				logCompactEvent("compact_aborted_hook", { reason: preHookResult.reason })
+				// Return immediately — the hook explicitly opted out of compaction
+				// this turn. Skip truncation fallback as well.
+				return {
+					messages: preprocessedMessages,
+					prevContextTokens,
+					summary: "",
+					cost: 0,
+					compactFailures,
+				}
+			} else {
+				// Cache-aware check: skip compression if prompt cache hit rate is very high
+				if (
+					effectiveCacheReadTokens !== undefined &&
+					shouldSkipCompactForCache(effectiveCacheReadTokens, cacheAwareTokensBase)
+				) {
+					logger.info(
+						"ContextManagement",
+						`Skipping auto-compact: high prompt cache hit rate ` +
+							`(${((effectiveCacheReadTokens / Math.max(1, cacheAwareTokensBase)) * 100).toFixed(1)}%). ` +
+							`Compression would break cache and increase costs.`,
+					)
+					// Preserve cache by skipping condensation, but do not bypass hard context-window safety.
+					// If already over budget, fall through to truncation logic below.
+					if (prevContextTokens <= allowedTokens) {
+						return {
+							messages: preprocessedMessages,
+							prevContextTokens,
+							summary: "",
+							cost: 0,
+							compactFailures,
+						}
+					}
+				}
+				// Circuit breaker: if condensation has failed too many times consecutively,
+				// skip it and fall through to truncation to avoid wasting API calls
+				else if (compactFailures >= MAX_CONSECUTIVE_COMPACT_FAILURES) {
+					logger.warn(
+						"ContextManagement",
+						`[Context Management] Circuit breaker triggered: ` +
+							`${compactFailures} consecutive condensation failures. ` +
+							`Falling back to forced truncation.`,
+					)
+					// Force aggressive truncation (50% removal) with hierarchy-enhanced scoring
+					const hierarchy = buildContextHierarchy(preprocessedMessages, taskId)
+					const truncationResult = truncateConversation(
+						preprocessedMessages,
+						0.5,
+						taskId,
+						hierarchy ?? undefined,
+					)
+					logCompactEvent("compact_truncation", {
 						messagesRemoved: truncationResult.messagesRemoved,
 						hierarchyEnabled: !!hierarchy,
 						turnCount: hierarchy?.turnCount ?? 0,
@@ -700,124 +727,129 @@ export async function manageContext({
 							? `${hierarchy.adaptiveParams.attnContentWeight.toFixed(2)}/${hierarchy.adaptiveParams.attnFileWeight.toFixed(2)}/${hierarchy.adaptiveParams.attnToolWeight.toFixed(2)}/${hierarchy.adaptiveParams.attnTemporalWeight.toFixed(2)}`
 							: undefined,
 					})
-				return {
-					messages: truncationResult.messages,
-					prevContextTokens,
-					summary: "",
-					cost: 0,
-					error: "Circuit breaker: forced truncation after repeated condensation failures",
-					truncationId: truncationResult.truncationId,
-					messagesRemoved: truncationResult.messagesRemoved,
-					compactFailures,
-				}
-			} else {
-				// Build hierarchy to keep adaptive EMA params up-to-date, even when condense succeeds
-				buildContextHierarchy(preprocessedMessages, taskId)
-
-				// Try session memory compaction first — avoids an expensive LLM API
-				// call when structured conversation metadata is sufficient.
-				const smResult = tryBuildLightweightSummary(
-					preprocessedMessages,
-					taskId,
-					allowedTokens,
-				)
-				if (smResult) {
-					logCompactEvent("compact_sm_success", { method: "lightweight_summary" })
-					// Post-compact hooks (fire-and-forget)
-					ToolHookManager.instance.runPostCompactHooks({
-						taskId,
-						messageCountBefore: preprocessedMessages.length,
-						messageCountAfter: smResult.messages.length,
-						tokenCountBefore: prevContextTokens,
-						tokenCountAfter: 0, // SM-compact has no API call
-					}).catch((err: unknown) => { logger.warn("ContextManagement", "Failed to capture compact telemetry", err) })
-					compactFailures = 0
-					const restored = postCompactRestore(smResult.messages, {
-						recentFiles: filesReadByRoo?.slice(-5),
-					})
 					return {
-						messages: restored,
+						messages: truncationResult.messages,
 						prevContextTokens,
-						summary: smResult.summary,
+						summary: "",
 						cost: 0,
+						error: "Circuit breaker: forced truncation after repeated condensation failures",
+						truncationId: truncationResult.truncationId,
+						messagesRemoved: truncationResult.messagesRemoved,
 						compactFailures,
 					}
-				}
-
-				// Try persisted cross-session memories as zero-cost summary
-				const smMemoryResult = await trySessionMemoryCompaction(
-					preprocessedMessages,
-					cwd,
-					allowedTokens,
-				)
-				if (smMemoryResult) {
-					logCompactEvent("compact_sm_success", { method: "session_memory" })
-					// Post-compact hooks (fire-and-forget)
-					ToolHookManager.instance.runPostCompactHooks({
-						taskId,
-						messageCountBefore: preprocessedMessages.length,
-						messageCountAfter: smMemoryResult.messages.length,
-						tokenCountBefore: prevContextTokens,
-						tokenCountAfter: 0,
-					}).catch((err: unknown) => { logger.warn("ContextManagement", "Failed to capture memory compact telemetry", err) })
-					compactFailures = 0
-					const restored = postCompactRestore(smMemoryResult.messages, {
-						recentFiles: filesReadByRoo?.slice(-5),
-					})
-					return {
-						messages: restored,
-						prevContextTokens,
-						summary: smMemoryResult.summary,
-						cost: 0,
-						compactFailures,
-					}
-				}
-
-				// Attempt to intelligently condense the context via LLM
-				const result = await summarizeConversation({
-					messages: preprocessedMessages,
-					apiHandler,
-					systemPrompt,
-					taskId,
-					isAutomaticTrigger: true,
-					customCondensingPrompt,
-					metadata,
-					environmentDetails,
-					filesReadByRoo,
-					cwd,
-					rooIgnoreController,
-				})
-				if (result.error) {
-					// Condensation failed - increment circuit breaker counter
-					compactFailures++
-					logger.warn("ContextManagement", 
-						`[Context Management] Condensation failed (attempt ${compactFailures}/${MAX_CONSECUTIVE_COMPACT_FAILURES}): ${result.error}`,
-					)
-					error = result.error
-					errorDetails = result.errorDetails
-					cost = result.cost
 				} else {
-					// Success - reset circuit breaker counter
-					logCompactEvent("compact_llm_success", { method: "llm_condensation" })
-					// Post-compact hooks (fire-and-forget)
-					ToolHookManager.instance.runPostCompactHooks({
+					// Build hierarchy to keep adaptive EMA params up-to-date, even when condense succeeds
+					buildContextHierarchy(preprocessedMessages, taskId)
+
+					// Try session memory compaction first — avoids an expensive LLM API
+					// call when structured conversation metadata is sufficient.
+					const smResult = tryBuildLightweightSummary(preprocessedMessages, taskId, allowedTokens)
+					if (smResult) {
+						logCompactEvent("compact_sm_success", { method: "lightweight_summary" })
+						// Post-compact hooks (fire-and-forget)
+						ToolHookManager.instance
+							.runPostCompactHooks({
+								taskId,
+								messageCountBefore: preprocessedMessages.length,
+								messageCountAfter: smResult.messages.length,
+								tokenCountBefore: prevContextTokens,
+								tokenCountAfter: 0, // SM-compact has no API call
+							})
+							.catch((err: unknown) => {
+								logger.warn("ContextManagement", "Failed to capture compact telemetry", err)
+							})
+						compactFailures = 0
+						const restored = postCompactRestore(smResult.messages, {
+							recentFiles: filesReadByRoo?.slice(-5),
+						})
+						return {
+							messages: restored,
+							prevContextTokens,
+							summary: smResult.summary,
+							cost: 0,
+							compactFailures,
+						}
+					}
+
+					// Try persisted cross-session memories as zero-cost summary
+					const smMemoryResult = await trySessionMemoryCompaction(preprocessedMessages, cwd, allowedTokens)
+					if (smMemoryResult) {
+						logCompactEvent("compact_sm_success", { method: "session_memory" })
+						// Post-compact hooks (fire-and-forget)
+						ToolHookManager.instance
+							.runPostCompactHooks({
+								taskId,
+								messageCountBefore: preprocessedMessages.length,
+								messageCountAfter: smMemoryResult.messages.length,
+								tokenCountBefore: prevContextTokens,
+								tokenCountAfter: 0,
+							})
+							.catch((err: unknown) => {
+								logger.warn("ContextManagement", "Failed to capture memory compact telemetry", err)
+							})
+						compactFailures = 0
+						const restored = postCompactRestore(smMemoryResult.messages, {
+							recentFiles: filesReadByRoo?.slice(-5),
+						})
+						return {
+							messages: restored,
+							prevContextTokens,
+							summary: smMemoryResult.summary,
+							cost: 0,
+							compactFailures,
+						}
+					}
+
+					// Attempt to intelligently condense the context via LLM
+					const result = await summarizeConversation({
+						messages: preprocessedMessages,
+						apiHandler,
+						systemPrompt,
 						taskId,
-						messageCountBefore: preprocessedMessages.length,
-						messageCountAfter: result.messages.length,
-						tokenCountBefore: prevContextTokens,
-						tokenCountAfter: result.newContextTokens ?? prevContextTokens,
-					}).catch((err: unknown) => { logger.warn("ContextManagement", "Failed to capture compact telemetry", err) })
-					compactFailures = 0
-					const restored = postCompactRestore(result.messages, {
-						recentFiles: filesReadByRoo?.slice(-5),
-						activeSkills: undefined,
-						mcpDelta: undefined,
+						isAutomaticTrigger: true,
+						customCondensingPrompt,
+						metadata,
+						environmentDetails,
+						filesReadByRoo,
+						cwd,
+						rooIgnoreController,
 					})
-					return { ...result, messages: restored, prevContextTokens, compactFailures }
+					if (result.error) {
+						// Condensation failed - increment circuit breaker counter
+						compactFailures++
+						logger.warn(
+							"ContextManagement",
+							`[Context Management] Condensation failed (attempt ${compactFailures}/${MAX_CONSECUTIVE_COMPACT_FAILURES}): ${result.error}`,
+						)
+						error = result.error
+						errorDetails = result.errorDetails
+						cost = result.cost
+					} else {
+						// Success - reset circuit breaker counter
+						logCompactEvent("compact_llm_success", { method: "llm_condensation" })
+						// Post-compact hooks (fire-and-forget)
+						ToolHookManager.instance
+							.runPostCompactHooks({
+								taskId,
+								messageCountBefore: preprocessedMessages.length,
+								messageCountAfter: result.messages.length,
+								tokenCountBefore: prevContextTokens,
+								tokenCountAfter: result.newContextTokens ?? prevContextTokens,
+							})
+							.catch((err: unknown) => {
+								logger.warn("ContextManagement", "Failed to capture compact telemetry", err)
+							})
+						compactFailures = 0
+						const restored = postCompactRestore(result.messages, {
+							recentFiles: filesReadByRoo?.slice(-5),
+							activeSkills: undefined,
+							mcpDelta: undefined,
+						})
+						return { ...result, messages: restored, prevContextTokens, compactFailures }
+					}
 				}
 			}
 		}
-	}
 	}
 
 	// Fall back to sliding window truncation if needed
@@ -838,19 +870,16 @@ export async function manageContext({
 			apiHandler,
 		)
 
-	const tokenEstimates = await Promise.all(
-		effectiveMessages.map(async (msg) => {
-		const content = msg.content
-		if (Array.isArray(content)) {
-			return estimateTokenCount(content, apiHandler)
-		} else if (typeof content === "string") {
-			return estimateTokenCount(
-			[{ type: "text", text: content }],
-			apiHandler,
-			)
-		}
-		return 0
-		}),
+		const tokenEstimates = await Promise.all(
+			effectiveMessages.map(async (msg) => {
+				const content = msg.content
+				if (Array.isArray(content)) {
+					return estimateTokenCount(content, apiHandler)
+				} else if (typeof content === "string") {
+					return estimateTokenCount([{ type: "text", text: content }], apiHandler)
+				}
+				return 0
+			}),
 		)
 		for (const estimate of tokenEstimates) {
 			newContextTokensAfterTruncation += estimate
@@ -870,7 +899,15 @@ export async function manageContext({
 		}
 	}
 	// No truncation or condensation needed
-	return { messages: preprocessedMessages, summary: "", cost, prevContextTokens, error, errorDetails , compactFailures }
+	return {
+		messages: preprocessedMessages,
+		summary: "",
+		cost,
+		prevContextTokens,
+		error,
+		errorDetails,
+		compactFailures,
+	}
 }
 
 /**
@@ -912,11 +949,11 @@ function tryBuildLightweightSummary(
 					if (block.type === "tool_use") {
 						toolNames.add(block.name)
 						if (
-							["write_to_file", "apply_diff", "insert_content", "search_and_replace"].includes(
-								block.name,
-							)
+							["write_to_file", "apply_diff", "insert_content", "search_and_replace"].includes(block.name)
 						) {
-							const input = (block as Anthropic.Messages.ToolUseBlockParam).input as Record<string, unknown> | undefined
+							const input = (block as Anthropic.Messages.ToolUseBlockParam).input as
+								| Record<string, unknown>
+								| undefined
 							if (typeof input?.filePath === "string") fileOps.push(input.filePath)
 							else if (typeof input?.path === "string") fileOps.push(input.path)
 						}
@@ -935,9 +972,7 @@ function tryBuildLightweightSummary(
 	const sections: string[] = ["## Conversation Summary (auto-extracted)"]
 
 	if (userMessages.length > 0) {
-		sections.push(
-			`### User Messages\n${userMessages.map((m, i) => `${i + 1}. ${m}`).join("\n")}`,
-		)
+		sections.push(`### User Messages\n${userMessages.map((m, i) => `${i + 1}. ${m}`).join("\n")}`)
 	}
 
 	if (fileOps.length > 0) {

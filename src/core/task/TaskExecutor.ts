@@ -34,7 +34,8 @@ import type { ApiHandlerCreateMessageMetadata } from "../../api"
 import { resolveParallelNativeToolCalls } from "../../shared/parallelToolCalls"
 import { type ApiStream, GroundingSource } from "../../api/transform/stream"
 import { checkToolPromptConsistency } from "../prompts/toolPromptConsistency"
-import { markUserContentReadyIfDrained, isAnyToolUse, isToolUseBlock, type TypedBlock } from "../assistant-message"
+import { markUserContentReadyIfDrained } from "../assistant-message/streamState"
+import { isAnyToolUse, isToolUseBlock, type TypedBlock } from "../assistant-message/types"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
 import type { ApiMessage } from "../task-persistence"
 import { getModelMaxOutputTokens } from "../../shared/api"
@@ -64,15 +65,8 @@ import { TokenBucketRateLimiter } from "../../services/rate-limiter/TokenBucketR
 import { BackpressureController } from "../stream/BackpressureController"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import {
-	finalizePendingStreamingToolCalls,
-	processTaskStreamChunk,
-} from "./TaskStreamChunkProcessor"
-import {
-	handleAttemptApiRequestError,
-	handleEmptyAssistantResponse,
-	handleMidStreamFailure,
-} from "./TaskRetryHandler"
+import { finalizePendingStreamingToolCalls, processTaskStreamChunk } from "./TaskStreamChunkProcessor"
+import { handleAttemptApiRequestError, handleEmptyAssistantResponse, handleMidStreamFailure } from "./TaskRetryHandler"
 
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000
 
@@ -100,7 +94,7 @@ export class TaskExecutor {
 		id: string,
 		finalToolUse: ToolUse | McpToolUse,
 	): ToolUse | McpToolUse {
-		;finalToolUse.id = id
+		finalToolUse.id = id
 
 		const toolUseIndex = t.streamingToolCallIndices.get(id)
 		if (toolUseIndex !== undefined) {
@@ -119,10 +113,7 @@ export class TaskExecutor {
 	 * Attempt a single API request with error handling, retry, and context management.
 	 * Migrated from Task.ts — the original method body is preserved verbatim.
 	 */
-	async *attemptApiRequest(
-		retryAttempt: number = 0,
-		options: { skipProviderRateLimit?: boolean } = {},
-	): ApiStream {
+	async *attemptApiRequest(retryAttempt: number = 0, options: { skipProviderRateLimit?: boolean } = {}): ApiStream {
 		const h = this.host
 
 		if (h.parentTask) {
@@ -149,7 +140,8 @@ export class TaskExecutor {
 		const unattendedMaxRetryAttempts = state?.unattendedMaxRetryAttempts ?? 5
 
 		const _enablePersistentRetry = state?.enablePersistentRetry ?? false
-		const persistentRetryHandler = h.persistentRetryHandler ?? (h.persistentRetryHandler = new PersistentRetryManager())
+		const persistentRetryHandler =
+			h.persistentRetryHandler ?? (h.persistentRetryHandler = new PersistentRetryManager())
 
 		const customCondensingPrompt = state?.customSupportPrompts?.CONDENSE
 
@@ -186,7 +178,8 @@ export class TaskExecutor {
 			systemPromptParts.perToolHashes,
 		)
 		if (cacheBreak) {
-			logger.info("TaskExecutor",
+			logger.info(
+				"TaskExecutor",
 				`Prompt Cache break: source=${cacheBreak.changeSource} staticChanged=${cacheBreak.staticPartChanged} dynamicChanged=${cacheBreak.dynamicPartChanged} changedTools=${(cacheBreak.changedTools ?? []).join(",") || "none"}`,
 			)
 		}
@@ -196,11 +189,11 @@ export class TaskExecutor {
 			: undefined
 		const cacheAwareTotalTokens = h.requestInputTokensWindow.length
 			? Math.max(
-				1,
-				Math.round(
-					h.requestInputTokensWindow.reduce((sum, n) => sum + n, 0) / h.requestInputTokensWindow.length,
-				),
-			)
+					1,
+					Math.round(
+						h.requestInputTokensWindow.reduce((sum, n) => sum + n, 0) / h.requestInputTokensWindow.length,
+					),
+				)
 			: undefined
 
 		if (contextTokens) {
@@ -247,9 +240,7 @@ export class TaskExecutor {
 			})
 
 			if (contextManagementWillRun && autoCondenseContext) {
-				await h.hostRef
-					.deref()
-					?.postMessageToWebview({ type: "condenseTaskContextStarted", text: h.taskId })
+				await h.hostRef.deref()?.postMessageToWebview({ type: "condenseTaskContextStarted", text: h.taskId })
 			}
 
 			const contextMgmtTools: OpenAI.Chat.ChatCompletionTool[] = contextManagementWillRun
@@ -362,7 +353,9 @@ export class TaskExecutor {
 		const messagesSinceLastSummary = getMessagesSinceLastSummary(effectiveHistory)
 		const mergedForApi = mergeConsecutiveApiMessages(messagesSinceLastSummary, { roles: ["user"] })
 		const messagesWithoutImages = maybeRemoveImageBlocks(mergedForApi, h.api)
-		const cleanConversationHistory = h.streamProcessor.buildCleanConversationHistory(messagesWithoutImages as ApiMessage[])
+		const cleanConversationHistory = h.streamProcessor.buildCleanConversationHistory(
+			messagesWithoutImages as ApiMessage[],
+		)
 
 		const approvalResult = await h.autoApprovalHandler.checkAutoApprovalLimits(
 			state,
@@ -468,7 +461,10 @@ export class TaskExecutor {
 			await clearRetryEvents(h.globalStoragePath, h.taskId)
 			const firstValue = firstChunk.value
 			if ((firstValue as Record<string, UnsafeAny>)?.type === "error") {
-				const errMsg = (firstValue as Record<string, UnsafeAny>)?.message || (firstValue as Record<string, UnsafeAny>)?.error || "API stream error"
+				const errMsg =
+					(firstValue as Record<string, UnsafeAny>)?.message ||
+					(firstValue as Record<string, UnsafeAny>)?.error ||
+					"API stream error"
 				throw new Error(String(errMsg))
 			}
 			yield firstValue
@@ -505,7 +501,8 @@ export class TaskExecutor {
 		const parentRemaining = contextWindow - (parentUsage.contextTokens || 0)
 		const myTokens = myUsage.contextTokens || 0
 		if (parentRemaining > 0 && myTokens > parentRemaining * 0.8) {
-			logger.warn("TaskExecutor",
+			logger.warn(
+				"TaskExecutor",
 				`SubTask token usage (${myTokens}) approaching parent's remaining budget (${parentRemaining}) for task ${h.taskId}. ` +
 					`Consider completing this subtask soon.`,
 			)
@@ -845,7 +842,8 @@ export class TaskExecutor {
 							toolCallParser: this.toolCallParser,
 							requestProfileId,
 							pendingGroundingSources,
-							finalizeToolUse: (task, id, finalToolUse) => this.placeFinalizedStreamingToolUse(task, id, finalToolUse),
+							finalizeToolUse: (task, id, finalToolUse) =>
+								this.placeFinalizedStreamingToolUse(task, id, finalToolUse),
 							appendReasoningText: (text) => {
 								reasoningMessage += text
 								return reasoningMessage
@@ -863,7 +861,10 @@ export class TaskExecutor {
 							},
 						})
 						if (t.abort) {
-							logger.info("TaskExecutor", `Aborting stream for task ${t.taskId}, abandoned = ${t.abandoned}`)
+							logger.info(
+								"TaskExecutor",
+								`Aborting stream for task ${t.taskId}, abandoned = ${t.abandoned}`,
+							)
 
 							if (!t.abandoned) {
 								// Only need to gracefully abort if this instance
@@ -994,17 +995,16 @@ export class TaskExecutor {
 								const cacheSummary = globalCacheMetrics.getSummary()
 
 								const latencyMs = Date.now() - requestStartedAt
-							logger.info("TaskExecutor",
-								`Task Metrics: task=${t.taskId} mode=${await t.getTaskMode()} latencyMs=${latencyMs} input=${tokens.input} output=${tokens.output} cacheCreate=${tokens.cacheWrite} cacheRead=${tokens.cacheRead} contextTokens=${t.getTokenUsage().contextTokens ?? 0} cacheHitRate=${cacheSummary.cacheHitRate.toFixed(3)} estSavings=${(cacheSummary.estimatedSavingsPercent * 100).toFixed(1)}% requests=${cacheSummary.totalRequests}`,
-							)
+								logger.info(
+									"TaskExecutor",
+									`Task Metrics: task=${t.taskId} mode=${await t.getTaskMode()} latencyMs=${latencyMs} input=${tokens.input} output=${tokens.output} cacheCreate=${tokens.cacheWrite} cacheRead=${tokens.cacheRead} contextTokens=${t.getTokenUsage().contextTokens ?? 0} cacheHitRate=${cacheSummary.cacheHitRate.toFixed(3)} estSavings=${(cacheSummary.estimatedSavingsPercent * 100).toFixed(1)}% requests=${cacheSummary.totalRequests}`,
+								)
 								const runtimeTokenUsage = t.getTokenUsage()
 								const runtimeContextTokens = runtimeTokenUsage.contextTokens ?? 0
 								const runtimeModel = t.api.getModel().info
 								const runtimeContextWindow = runtimeModel?.contextWindow ?? 0
 								const runtimeContextPercent =
-									runtimeContextWindow > 0
-										? (runtimeContextTokens / runtimeContextWindow) * 100
-										: 0
+									runtimeContextWindow > 0 ? (runtimeContextTokens / runtimeContextWindow) * 100 : 0
 								const runtimeState = await t.hostRef.deref()?.getState()
 								const runtimeAutoCondenseContext = runtimeState?.autoCondenseContext ?? true
 								const runtimeAutoCondenseContextPercent =
@@ -1039,7 +1039,6 @@ export class TaskExecutor {
 										cacheBreaksBySource: globalPromptCacheBreakDetector.getBreaksBySource(),
 									},
 								})
-
 							}
 						}
 
@@ -1052,7 +1051,8 @@ export class TaskExecutor {
 							while (!item.done) {
 								// Check for timeout
 								if (performance.now() - startTime > timeoutMs) {
-									logger.warn("TaskExecutor",
+									logger.warn(
+										"TaskExecutor",
 										`Background Usage Collection timed out after ${timeoutMs}ms for model: ${modelId}, processed ${chunkCount} chunks`,
 									)
 									// Clean up the iterator before breaking
@@ -1095,7 +1095,8 @@ export class TaskExecutor {
 									lastApiReqIndex,
 								)
 							} else {
-								logger.warn("TaskExecutor",
+								logger.warn(
+									"TaskExecutor",
 									`Background Usage Collection: request ${apiReqIndex} is complete, but no usage info was found. Model: ${modelId}`,
 								)
 							}
@@ -1152,13 +1153,15 @@ export class TaskExecutor {
 						if (retryAction === "break") {
 							break
 						}
-					}				} finally {
+					}
+				} finally {
 					t.isStreaming = false
 					const profile = globalQueryProfiler.finish(requestProfileId, {
 						aborted: t.abort || t.abandoned,
 					})
 					if (profile) {
-						logger.info("TaskExecutor",
+						logger.info(
+							"TaskExecutor",
 							`Query Profiler: task=${profile.taskId} model=${profile.modelId} ttftMs=${profile.ttftMs ?? -1} e2eMs=${profile.e2eMs ?? -1} aborted=${profile.aborted}`,
 						)
 					}
@@ -1187,7 +1190,8 @@ export class TaskExecutor {
 				await finalizePendingStreamingToolCalls({
 					task: t,
 					toolCallParser: this.toolCallParser,
-					finalizeToolUse: (task, id, finalToolUse) => this.placeFinalizedStreamingToolUse(task, id, finalToolUse),
+					finalizeToolUse: (task, id, finalToolUse) =>
+						this.placeFinalizedStreamingToolUse(task, id, finalToolUse),
 				})
 				// IMPORTANT: Capture partialBlocks AFTER finalizeRawChunks() to avoid double-presentation.
 				// Tools finalized above are already presented, so we only want blocks still partial after finalization.
@@ -1238,7 +1242,9 @@ export class TaskExecutor {
 					t.consecutiveNoAssistantMessagesCount = 0
 					// Display grounding sources to the user if they exist
 					if (pendingGroundingSources.length > 0) {
-						const citationLinks = pendingGroundingSources.map((source: GroundingSource, i: number) => `[${i + 1}](${source.url})`)
+						const citationLinks = pendingGroundingSources.map(
+							(source: GroundingSource, i: number) => `[${i + 1}](${source.url})`,
+						)
 						const sourcesText = `${i18nT("common:gemini.sources")} ${citationLinks.join(", ")}`
 
 						await t.say("text", sourcesText, undefined, false, undefined, undefined, {
@@ -1272,10 +1278,11 @@ export class TaskExecutor {
 							if (mcpBlock.id) {
 								const sanitizedId = sanitizeToolUseId(mcpBlock.id)
 								// Pre-flight deduplication: Skip if we've already added this ID
-							if (seenToolUseIds.has(sanitizedId)) {
-								logger.warn("TaskExecutor",
-									`Pre-flight deduplication: Skipping duplicate MCP tool_use ID: ${sanitizedId} (tool: ${mcpBlock.name}) on task ${t.taskId}`,
-								)
+								if (seenToolUseIds.has(sanitizedId)) {
+									logger.warn(
+										"TaskExecutor",
+										`Pre-flight deduplication: Skipping duplicate MCP tool_use ID: ${sanitizedId} (tool: ${mcpBlock.name}) on task ${t.taskId}`,
+									)
 									continue
 								}
 								seenToolUseIds.add(sanitizedId)
@@ -1294,7 +1301,8 @@ export class TaskExecutor {
 								const sanitizedId = sanitizeToolUseId(toolCallId)
 								// Pre-flight deduplication: Skip if we've already added this ID
 								if (seenToolUseIds.has(sanitizedId)) {
-									logger.warn("TaskExecutor",
+									logger.warn(
+										"TaskExecutor",
 										`Pre-flight deduplication: Skipping duplicate tool_use ID: ${sanitizedId} (tool: ${toolUse.name}) on task ${t.taskId}`,
 									)
 									continue
@@ -1375,7 +1383,9 @@ export class TaskExecutor {
 					// If there is content to update then it will complete and
 					// update `t.userMessageContentReady` to true, which we
 					// `pWaitFor` before making the next request.
-					void t.presentAssistantMessage().catch((error) => { logger.error("presentAssistantMessage failed", error) })
+					void t.presentAssistantMessage().catch((error) => {
+						logger.error("presentAssistantMessage failed", error)
+					})
 				}
 
 				if (hasTextContent || hasToolUses) {
@@ -1419,11 +1429,12 @@ export class TaskExecutor {
 								),
 						)
 
-					logger.error("TaskExecutor",
-						`userMessageContentReady timed out after ${USER_MESSAGE_CONTENT_READY_TIMEOUT_MS}ms ` +
-							`(taskId=${t.taskId}, instance=${t.instanceId}, contentIndex=${t.currentStreamingContentIndex}, ` +
-							`blocks=${t.assistantMessageContent.length}, pendingTools=${pendingToolBlocks.length})`,
-					)
+						logger.error(
+							"TaskExecutor",
+							`userMessageContentReady timed out after ${USER_MESSAGE_CONTENT_READY_TIMEOUT_MS}ms ` +
+								`(taskId=${t.taskId}, instance=${t.instanceId}, contentIndex=${t.currentStreamingContentIndex}, ` +
+								`blocks=${t.assistantMessageContent.length}, pendingTools=${pendingToolBlocks.length})`,
+						)
 
 						for (const block of pendingToolBlocks) {
 							const toolUseId = (block as ToolUse | McpToolUse).id ?? ""
@@ -1528,33 +1539,35 @@ export class TaskExecutor {
 				}
 				// If we reach here without continuing, return false (will always be false for now)
 				return false
-		} catch (error) {
-			// A tool execution or presentAssistantMessage threw an unhandled
-			const h = this.host
-			// exception. Log it, notify the user, and end the task gracefully.
-			const errMsg = getErrorMessage(error)
-			logger.error("TaskExecutor",
-				`Unhandled error in request loop for task ${h.taskId}:`,
-				errMsg,
-				error instanceof Error ? error.stack : "",
-			)
-			// Release the presentAssistantMessage lock if it was held.
-			// presentAssistantMessageLocked may be stuck true if the exception
-			// escaped the while loop without reaching the finally block.
-			if (h.presentAssistantMessageLocked) {
-				logger.warn("TaskExecutor",
-					`Force-releasing stuck presentAssistantMessageLocked for task ${h.taskId}`,
+			} catch (error) {
+				// A tool execution or presentAssistantMessage threw an unhandled
+				const h = this.host
+				// exception. Log it, notify the user, and end the task gracefully.
+				const errMsg = getErrorMessage(error)
+				logger.error(
+					"TaskExecutor",
+					`Unhandled error in request loop for task ${h.taskId}:`,
+					errMsg,
+					error instanceof Error ? error.stack : "",
 				)
-				h.presentAssistantMessageLocked = false
-			}
-			// Notify the user through the UI
-			try {
-				await h.say("error", `Task ended unexpectedly: ${errMsg}`)
-			} catch (sayError) {
-				// Best-effort notification
-				logger.warn("TaskExecutor", "Failed to notify user about task error", sayError)
-			}
-			return true // End the task loop
+				// Release the presentAssistantMessage lock if it was held.
+				// presentAssistantMessageLocked may be stuck true if the exception
+				// escaped the while loop without reaching the finally block.
+				if (h.presentAssistantMessageLocked) {
+					logger.warn(
+						"TaskExecutor",
+						`Force-releasing stuck presentAssistantMessageLocked for task ${h.taskId}`,
+					)
+					h.presentAssistantMessageLocked = false
+				}
+				// Notify the user through the UI
+				try {
+					await h.say("error", `Task ended unexpectedly: ${errMsg}`)
+				} catch (sayError) {
+					// Best-effort notification
+					logger.warn("TaskExecutor", "Failed to notify user about task error", sayError)
+				}
+				return true // End the task loop
 			}
 		}
 

@@ -2,7 +2,8 @@
 
 import { describe, it, expect } from "vitest"
 
-import { type ModelInfo, ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai-cj/types"
+import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
 
 import { getModelParams } from "../model-params"
 import {

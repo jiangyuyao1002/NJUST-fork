@@ -54,7 +54,7 @@ import type { Anthropic } from "@anthropic-ai/sdk"
 import type OpenAI from "openai"
 import { MistralHandler } from "../mistral"
 import type { ApiHandlerOptions } from "../../../shared/api"
-import type { ApiHandlerCreateMessageMetadata } from "../../index"
+import type { ApiHandlerCreateMessageMetadata } from "../../types"
 import type { ApiStreamTextChunk, ApiStreamReasoningChunk, ApiStreamToolCallPartialChunk } from "../../transform/stream"
 
 describe("MistralHandler", () => {

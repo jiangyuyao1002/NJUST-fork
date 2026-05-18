@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest"
 
 import type { ModelInfo } from "@njust-ai-cj/types"
 
-import { ApiHandler } from "../../index"
+import { ApiHandler } from "../../types"
 import { ApiMessage } from "../../../core/task-persistence/apiMessages"
 import { maybeRemoveImageBlocks } from "../image-cleaning"
 

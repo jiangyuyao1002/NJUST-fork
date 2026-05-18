@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { VSCodeCheckbox, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
-import {
-	type ProviderSettings,
-	type OrganizationAllowList,
-	type RouterModels,
-	requestyDefaultModelId,
-} from "@njust-ai-cj/types"
+import { type ProviderSettings, type OrganizationAllowList, type RouterModels } from "@njust-ai-cj/types"
+import { requestyDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"

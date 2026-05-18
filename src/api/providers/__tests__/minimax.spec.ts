@@ -5,14 +5,16 @@ import { describe, it, expect, beforeEach } from "vitest"
 vitest.mock("vscode", () => ({
 	workspace: {
 		getConfiguration: vitest.fn().mockReturnValue({
-			get: vitest.fn().mockReturnValue(600), // Default timeout in seconds
+			get: vitest.fn().mockReturnValue(600),
+			// Default timeout in seconds
 		}),
 	},
 }))
 
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import { type MinimaxModelId, minimaxDefaultModelId, minimaxModels } from "@njust-ai-cj/types"
+import { type MinimaxModelId } from "@njust-ai-cj/types"
+import { minimaxDefaultModelId, minimaxModels } from "@njust-ai-cj/core/providers"
 
 import { MiniMaxHandler } from "../minimax"
 

@@ -12,15 +12,8 @@ import * as path from "path"
 import { promises as fs } from "fs"
 import type { Anthropic } from "@anthropic-ai/sdk"
 
-import type {
-	ClineAsk,
-	ClineApiReqInfo,
-	ClineMessage,
-} from "@njust-ai-cj/types"
-import {
-	NJUST_AI_CJEventName,
-	MAX_MCP_TOOLS_THRESHOLD,
-} from "@njust-ai-cj/types"
+import type { ClineAsk, ClineApiReqInfo, ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, MAX_MCP_TOOLS_THRESHOLD } from "@njust-ai-cj/types"
 
 import { findLastIndex } from "../../shared/array"
 import { DEFAULT_MODE_SLUG } from "../../shared/mode-constants"
@@ -31,11 +24,11 @@ import { globalCacheMetrics } from "../../utils/cacheMetrics"
 import { globalPromptCacheBreakDetector } from "../prompts/promptCacheBreakDetection"
 import { clearMcpInstructionsDelta } from "../prompts/sections/mcp-instructions-delta"
 import { deleteGeneratedCangjieTestFilesForTask } from "../../services/cangjie-lsp/cangjieGeneratedTestCleanup"
-import { TerminalRegistry } from "../../integrations/terminal/TerminalRegistry"
 import { OutputInterceptor } from "../../integrations/terminal/OutputInterceptor"
 import { safeDispose } from "./TaskLifecycle"
 import { logger } from "../../shared/logger"
 import { isToolUseBlock } from "../assistant-message/types"
+import type { ITaskDiffViewProvider } from "./interfaces/ITaskDiffViewProvider"
 
 // ── Host type ────────────────────────────────────────────────────────────
 // Structural contract: Task implements this shape at runtime.
@@ -53,10 +46,7 @@ export interface TaskLifecycleHost {
 	}
 	readonly toolExecution: { dispose(): void }
 	readonly fileContextTracker: { dispose(): void }
-	readonly diffViewProvider: {
-		readonly isEditing: boolean
-		revertChanges(): Promise<void>
-	}
+	readonly diffViewProvider: ITaskDiffViewProvider
 
 	abort: boolean
 	abandoned: boolean
@@ -74,8 +64,20 @@ export interface TaskLifecycleHost {
 	apiConversationHistory: ApiMessage[]
 
 	refreshWebviewState(): Promise<void>
-	say(type: UnsafeAny, text?: string, images?: string[], partial?: boolean, checkpoint?: UnsafeAny, progressStatus?: UnsafeAny, options?: UnsafeAny): Promise<undefined>
-	ask(type: UnsafeAny, text?: string, partial?: boolean): Promise<{ response: string; text?: string; images?: string[] }>
+	say(
+		type: UnsafeAny,
+		text?: string,
+		images?: string[],
+		partial?: boolean,
+		checkpoint?: UnsafeAny,
+		progressStatus?: UnsafeAny,
+		options?: UnsafeAny,
+	): Promise<undefined>
+	ask(
+		type: UnsafeAny,
+		text?: string,
+		partial?: boolean,
+	): Promise<{ response: string; text?: string; images?: string[] }>
 	emit(event: string, ...args: any[]): boolean
 	getEnabledMcpToolsCount(): Promise<{ enabledToolCount: number; enabledServerCount: number }>
 	getTaskMode(): Promise<string>
@@ -139,18 +141,20 @@ export class TaskLifecycleHandler {
 			} else {
 				const imageBlocks: Anthropic.ImageBlockParam[] = formatResponse.imageBlocks(images)
 
-				await t.initiateTaskLoop([
-					{
-						type: "text",
-						text: `<user_message>\n${task}\n</user_message>`,
-					},
-					...imageBlocks,
-				]).catch((error: UnsafeAny) => {
-					if (t.abandoned === true || t.abortReason === "user_cancelled") {
-						return
-					}
-					throw error
-				})
+				await t
+					.initiateTaskLoop([
+						{
+							type: "text",
+							text: `<user_message>\n${task}\n</user_message>`,
+						},
+						...imageBlocks,
+					])
+					.catch((error: UnsafeAny) => {
+						if (t.abandoned === true || t.abortReason === "user_cancelled") {
+							return
+						}
+						throw error
+					})
 			}
 		} catch (error) {
 			if (t.abandoned === true || t.abort === true || t.abortReason === "user_cancelled") {
@@ -274,7 +278,9 @@ export class TaskLifecycleHandler {
 							? previousAssistantMessage.content
 							: [{ type: "text" as const, text: previousAssistantMessage.content }]
 
-						const toolUseBlocks = assistantContent.filter(isToolUseBlock) as Anthropic.Messages.ToolUseBlock[]
+						const toolUseBlocks = assistantContent.filter(
+							isToolUseBlock,
+						) as Anthropic.Messages.ToolUseBlock[]
 
 						if (toolUseBlocks.length > 0) {
 							const existingToolResults = existingUserContent.filter(
@@ -378,7 +384,8 @@ export class TaskLifecycleHandler {
 			cacheBreaks: globalPromptCacheBreakDetector.getTotalBreaks(),
 			cacheBreaksBySource: breakSummary,
 		}
-		logger.info("TaskLifecycleHandler",
+		logger.info(
+			"TaskLifecycleHandler",
 			`Task Session Summary: trigger=${payload.trigger} task=${payload.taskId} cacheRequests=${payload.cacheRequests} cacheHitRate=${payload.cacheHitRate.toFixed(3)} cacheRead=${payload.cacheReadTokens} cacheCreate=${payload.cacheCreationTokens} estSavings=${(payload.estimatedSavingsPercent * 100).toFixed(1)}% cacheBreaks=${payload.cacheBreaks} breakBySource=${JSON.stringify(payload.cacheBreaksBySource)}`,
 		)
 
@@ -415,7 +422,11 @@ export class TaskLifecycleHandler {
 		try {
 			await t.saveClineMessages()
 		} catch (error) {
-			logger.error("TaskLifecycleHandler", `Error saving messages during abort for task ${t.taskId}.${t.instanceId}:`, error)
+			logger.error(
+				"TaskLifecycleHandler",
+				`Error saving messages during abort for task ${t.taskId}.${t.instanceId}:`,
+				error,
+			)
 		}
 		try {
 			t.dispose()
@@ -478,11 +489,13 @@ export class TaskLifecycleHandler {
 			logger.error("TaskLifecycleHandler", "Error removing event listeners:", error)
 		}
 
-		try {
-			TerminalRegistry.releaseTerminalsForTask(t.taskId)
-		} catch (error) {
-			logger.error("TaskLifecycleHandler", "Error releasing terminals:", error)
-		}
+		void import("../../integrations/terminal/TerminalRegistry")
+			.then(({ TerminalRegistry }) => {
+				TerminalRegistry.releaseTerminalsForTask(t.taskId)
+			})
+			.catch((error: UnsafeAny) => {
+				logger.error("TaskLifecycleHandler", "Error releasing terminals:", error)
+			})
 
 		void getTaskDirectoryPath(t.globalStoragePath, t.taskId)
 			.then((taskDir: string) => OutputInterceptor.cleanup(path.join(taskDir, "command-output")))
@@ -502,7 +515,11 @@ export class TaskLifecycleHandler {
 
 		safeDispose("DiffViewProvider", () => {
 			if (t.isStreaming && t.diffViewProvider.isEditing) {
-				t.diffViewProvider.revertChanges().catch((error: UnsafeAny) => logger.error("TaskLifecycleHandler", "DiffViewProvider revertChanges failed:", error))
+				t.diffViewProvider
+					.revertChanges()
+					.catch((error: UnsafeAny) =>
+						logger.error("TaskLifecycleHandler", "DiffViewProvider revertChanges failed:", error),
+					)
 			}
 		})
 	}

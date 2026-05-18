@@ -3,7 +3,10 @@
 import { describe, it, expect, beforeEach } from "vitest"
 
 import axios from "axios"
-import { VERCEL_AI_GATEWAY_VISION_ONLY_MODELS, VERCEL_AI_GATEWAY_VISION_AND_TOOLS_MODELS } from "@njust-ai-cj/types"
+import {
+	VERCEL_AI_GATEWAY_VISION_ONLY_MODELS,
+	VERCEL_AI_GATEWAY_VISION_AND_TOOLS_MODELS,
+} from "@njust-ai-cj/core/providers"
 
 import { getVercelAiGatewayModels, parseVercelAiGatewayModel } from "../vercel-ai-gateway"
 
@@ -92,9 +95,7 @@ describe("Vercel AI Gateway Fetchers", () => {
 			const models = await getVercelAiGatewayModels()
 
 			expect(models).toEqual({})
-			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Error fetching models"),
-			)
+			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Error fetching models"))
 			consoleErrorSpy.mockRestore()
 		})
 

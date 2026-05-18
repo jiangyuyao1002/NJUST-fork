@@ -1,7 +1,18 @@
-import * as vscode from "vscode"
-
 import { debugLog } from "../../utils/debugLog"
 import { logger } from "../../shared/logger"
+
+export interface DisposableLike {
+	dispose(): void
+}
+
+class Disposable implements DisposableLike {
+	constructor(private readonly disposeFn: () => void) {}
+
+	dispose(): void {
+		this.disposeFn()
+	}
+}
+
 /** Task-scoped domain events (B.1). */
 export type TaskEventName =
 	| "task:started"
@@ -13,22 +24,19 @@ export type TaskEventName =
 	| "task:llm-response"
 	| "task:tokens-updated"
 	| "task:llm-retry"
+	| "task:assistant-message-requested"
 
 export type TaskEventPayload = {
 	taskId?: string
 	data?: unknown
 }
 
-export type TaskEventListener = (event: TaskEventName, payload: TaskEventPayload) => void
+export type TaskEventListener = (event: TaskEventName, payload: TaskEventPayload) => void | Promise<void>
 
 /**
  * Optional middleware: log every emit (dev / diagnostics). No-op by default.
  */
-export type TaskEventBusMiddleware = (
-	event: TaskEventName,
-	payload: TaskEventPayload,
-	next: () => void,
-) => void
+export type TaskEventBusMiddleware = (event: TaskEventName, payload: TaskEventPayload, next: () => void) => void
 
 export class TaskEventBus {
 	private readonly listeners = new Map<TaskEventName, Set<TaskEventListener>>()
@@ -38,14 +46,14 @@ export class TaskEventBus {
 		this.middleware = mw
 	}
 
-	on(event: TaskEventName, listener: TaskEventListener): vscode.Disposable {
+	on(event: TaskEventName, listener: TaskEventListener): DisposableLike {
 		let set = this.listeners.get(event)
 		if (!set) {
 			set = new Set()
 			this.listeners.set(event, set)
 		}
 		set.add(listener)
-		return new vscode.Disposable(() => {
+		return new Disposable(() => {
 			set?.delete(listener)
 		})
 	}
@@ -73,6 +81,32 @@ export class TaskEventBus {
 			this.middleware(event, payload, run)
 		} else {
 			run()
+		}
+	}
+
+	async emitAsync(event: TaskEventName, payload: TaskEventPayload = {}): Promise<void> {
+		const run = async () => {
+			const set = this.listeners.get(event)
+			if (!set) {
+				return
+			}
+			for (const listener of [...set]) {
+				try {
+					await listener(event, payload)
+				} catch (e) {
+					logger.error("TaskEventBus", `listener error for ${event}:`, e)
+				}
+			}
+		}
+
+		if (this.middleware) {
+			await new Promise<void>((resolve) => {
+				this.middleware!(event, payload, () => {
+					void run().finally(resolve)
+				})
+			})
+		} else {
+			await run()
 		}
 	}
 }

@@ -4,13 +4,8 @@ import { v7 as uuidv7 } from "uuid"
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import {
-	type ModelInfo,
-	openAiCodexDefaultModelId,
-	OpenAiCodexModelId,
-	openAiCodexModels,
-	type ReasoningEffortExtended,
-} from "@njust-ai-cj/types"
+import { type ModelInfo, type ReasoningEffortExtended } from "@njust-ai-cj/types"
+import { openAiCodexDefaultModelId, OpenAiCodexModelId, openAiCodexModels } from "@njust-ai-cj/core/providers"
 
 import { Package } from "../../shared/package"
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -19,7 +14,7 @@ import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
 
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { isMcpTool } from "../../utils/mcp-name"
 import { sanitizeOpenAiCallId } from "../../utils/tool-id"
 import { openAiCodexOAuthManager } from "../../integrations/openai-codex/oauth"
@@ -191,13 +186,16 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		this.sessionId = uuidv7()
 	}
 
-	private normalizeUsage(usage: OpenAiCodexUsageData | undefined, _model: OpenAiCodexModel): ApiStreamUsageChunk | undefined {
+	private normalizeUsage(
+		usage: OpenAiCodexUsageData | undefined,
+		_model: OpenAiCodexModel,
+	): ApiStreamUsageChunk | undefined {
 		if (!usage) return undefined
 
 		const inputDetails = usage.input_tokens_details ?? usage.prompt_tokens_details
 
-					const cachedFromDetails = inputDetails?.cached_tokens ?? 0
-			const missFromDetails = inputDetails?.cache_miss_tokens ?? 0
+		const cachedFromDetails = inputDetails?.cached_tokens ?? 0
+		const missFromDetails = inputDetails?.cache_miss_tokens ?? 0
 
 		let totalInputTokens = usage.input_tokens ?? usage.prompt_tokens ?? 0
 		if (totalInputTokens === 0 && inputDetails && (cachedFromDetails > 0 || missFromDetails > 0)) {
@@ -308,7 +306,6 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		reasoningEffort: ReasoningEffortExtended | undefined,
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): ResponsesRequestBody {
-
 		// Per the implementation guide: Codex backend may reject max_output_tokens
 		// and prompt_cache_retention, so we omit them
 		const body: ResponsesRequestBody = {
@@ -414,7 +411,10 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		}
 	}
 
-	private formatFullConversation(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): CodexInputItem[] {
+	private formatFullConversation(
+		systemPrompt: string,
+		messages: Anthropic.Messages.MessageParam[],
+	): CodexInputItem[] {
 		const formattedInput: CodexInputItem[] = []
 
 		for (const message of messages) {
@@ -794,11 +794,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 									this.lastResponseId = parsed.response.id as string
 								}
 
-								if (
-									!hasContent &&
-									parsed.response?.output &&
-									Array.isArray(parsed.response.output)
-								) {
+								if (!hasContent && parsed.response?.output && Array.isArray(parsed.response.output)) {
 									for (const outputItem of parsed.response.output) {
 										if (outputItem.type === "message" && outputItem.content) {
 											for (const content of outputItem.content) {
@@ -1111,7 +1107,9 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 
 	private getReasoningEffort(model: OpenAiCodexModel): ReasoningEffortExtended | undefined {
 		const selected = this.options.reasoningEffort ?? model.info.reasoningEffort
-		return selected && selected !== "disable" && selected !== "none" ? (selected as ReasoningEffortExtended) : undefined
+		return selected && selected !== "disable" && selected !== "none"
+			? (selected as ReasoningEffortExtended)
+			: undefined
 	}
 
 	override getModel() {

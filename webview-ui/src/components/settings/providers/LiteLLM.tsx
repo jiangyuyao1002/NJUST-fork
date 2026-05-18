@@ -1,12 +1,8 @@
 import { useCallback, useState, useEffect, useRef } from "react"
 import { VSCodeTextField, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 
-import {
-	type ProviderSettings,
-	type OrganizationAllowList,
-	type ExtensionMessage,
-	litellmDefaultModelId,
-} from "@njust-ai-cj/types"
+import { type ProviderSettings, type OrganizationAllowList, type ExtensionMessage } from "@njust-ai-cj/types"
+import { litellmDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { RouterName } from "@roo/api"
 

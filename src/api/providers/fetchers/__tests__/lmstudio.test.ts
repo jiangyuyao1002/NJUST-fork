@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import axios from "axios"
 import { LMStudioClient, LLMInstanceInfo, LLMInfo } from "@lmstudio/sdk"
 
-import { ModelInfo, lMStudioDefaultModelInfo } from "@njust-ai-cj/types"
+import { ModelInfo } from "@njust-ai-cj/types"
+import { lMStudioDefaultModelInfo } from "@njust-ai-cj/core/providers"
 
 import { getLMStudioModels, parseLMStudioModel } from "../lmstudio"
 
@@ -412,9 +413,7 @@ describe("LMStudio Fetcher", () => {
 			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/v1/models`)
 			expect(MockedLMStudioClientConstructor).not.toHaveBeenCalled()
 			expect(mockListLoaded).not.toHaveBeenCalled()
-			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Error fetching LMStudio models"),
-			)
+			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Error fetching LMStudio models"))
 			expect(result).toEqual({})
 			consoleErrorSpy.mockRestore()
 		})
@@ -449,9 +448,7 @@ describe("LMStudio Fetcher", () => {
 			expect(MockedLMStudioClientConstructor).toHaveBeenCalledTimes(1)
 			expect(MockedLMStudioClientConstructor).toHaveBeenCalledWith({ baseUrl: lmsUrl })
 			expect(mockListLoaded).toHaveBeenCalledTimes(1)
-			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Error fetching LMStudio models"),
-			)
+			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Error fetching LMStudio models"))
 			expect(result).toEqual({})
 			consoleErrorSpy.mockRestore()
 		})

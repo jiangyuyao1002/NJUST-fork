@@ -15,7 +15,8 @@ vitest.mock("@njust-ai-cj/telemetry", () => ({
 
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import { type ModelInfo, geminiDefaultModelId, ApiProviderError } from "@njust-ai-cj/types"
+import { type ModelInfo, ApiProviderError } from "@njust-ai-cj/types"
+import { geminiDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { t } from "i18next"
 import { GeminiHandler } from "../gemini"
@@ -182,12 +183,12 @@ describe("GeminiHandler", () => {
 			expect(modelInfo.info.includedTools).toContain("edit")
 		})
 
-			it("should not duplicate included tool entries if already present", () => {
-				const modelInfo = handler.getModel()
-				const includedCount = modelInfo.info.includedTools!.filter((t: string) => t === "edit").length
-				expect(includedCount).toBe(1)
-			})
+		it("should not duplicate included tool entries if already present", () => {
+			const modelInfo = handler.getModel()
+			const includedCount = modelInfo.info.includedTools!.filter((t: string) => t === "edit").length
+			expect(includedCount).toBe(1)
 		})
+	})
 
 	describe("calculateCost", () => {
 		// Mock ModelInfo based on gemini-1.5-flash-latest pricing (per 1M tokens)

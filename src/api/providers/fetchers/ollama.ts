@@ -1,5 +1,6 @@
 import axios from "axios"
-import { ModelInfo, ollamaDefaultModelInfo } from "@njust-ai-cj/types"
+import { ModelInfo } from "@njust-ai-cj/types"
+import { ollamaDefaultModelInfo } from "@njust-ai-cj/core/providers"
 import { z } from "zod"
 
 import { logger } from "../../../shared/logger"
@@ -108,13 +109,19 @@ export async function getOllamaModels(
 
 			await Promise.all(modelInfoPromises)
 		} else {
-			logger.error("Ollama", `Error parsing Ollama models response: ${JSON.stringify(parsedResponse.error, null, 2)}`)
+			logger.error(
+				"Ollama",
+				`Error parsing Ollama models response: ${JSON.stringify(parsedResponse.error, null, 2)}`,
+			)
 		}
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code === "ECONNREFUSED") {
 			logger.warn("Ollama", `Failed connecting to Ollama at ${baseUrl}`)
 		} else {
-			logger.error("Ollama", `Error fetching Ollama models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+			logger.error(
+				"Ollama",
+				`Error fetching Ollama models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+			)
 		}
 	}
 

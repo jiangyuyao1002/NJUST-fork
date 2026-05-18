@@ -1,9 +1,8 @@
 import { isRetiredProvider, type ProviderSettings } from "@njust-ai-cj/types"
 
-import type { ApiHandler } from "../index"
+import type { ApiHandler } from "../types"
 import type { ApiHandlerOptions } from "../../shared/api"
 import type { IToolCallParser } from "../interfaces/IToolCallParser"
-import { defaultToolCallParser } from "../../core/assistant-message/ToolCallParserImpl"
 
 export type ProviderId = NonNullable<ProviderSettings["apiProvider"]>
 
@@ -45,7 +44,11 @@ export class ProviderRegistry {
 	 * Register (or override) a handler factory for a provider ID.
 	 * Providers can call this at module load time for self-registration.
 	 */
-	register(id: ProviderId, factory: ProviderFactory, strategyOrOptions?: TokenCountingStrategy | IProviderRegistrationOptions): void {
+	register(
+		id: ProviderId,
+		factory: ProviderFactory,
+		strategyOrOptions?: TokenCountingStrategy | IProviderRegistrationOptions,
+	): void {
 		const options =
 			typeof strategyOrOptions === "string"
 				? { tokenCountingStrategy: strategyOrOptions }
@@ -87,11 +90,11 @@ export class ProviderRegistry {
 		return this.strategies.get(id) ?? "tiktoken"
 	}
 
-	createHandler(configuration: ProviderSettings): ApiHandler {
+	createHandler(configuration: ProviderSettings, dependencies: IProviderRegistryDependencies = {}): ApiHandler {
 		const { apiProvider, ...optionsBase } = configuration
 		const options: ApiHandlerOptions = {
 			...optionsBase,
-			toolCallParser: this.dependencies.toolCallParser ?? defaultToolCallParser,
+			toolCallParser: dependencies.toolCallParser ?? this.dependencies.toolCallParser,
 		}
 
 		if (apiProvider && isRetiredProvider(apiProvider)) {

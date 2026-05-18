@@ -1,11 +1,12 @@
-import { type ModelInfo, type VertexModelId, vertexDefaultModelId, vertexModels } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai-cj/types"
+import { type VertexModelId, vertexDefaultModelId, vertexModels } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
 import { getModelParams } from "../transform/model-params"
 
 import { GeminiHandler } from "./gemini"
-import { SingleCompletionHandler } from "../index"
+import { SingleCompletionHandler } from "../types"
 
 export class VertexHandler extends GeminiHandler implements SingleCompletionHandler {
 	constructor(options: ApiHandlerOptions) {
@@ -27,7 +28,7 @@ export class VertexHandler extends GeminiHandler implements SingleCompletionHand
 		// Vertex Gemini models perform better with the edit tool.
 		info = {
 			...info,
-						includedTools: [...new Set([...(info.includedTools || []), "edit"])],
+			includedTools: [...new Set([...(info.includedTools || []), "edit"])],
 		}
 
 		// The `:thinking` suffix indicates that the model is a "Hybrid"

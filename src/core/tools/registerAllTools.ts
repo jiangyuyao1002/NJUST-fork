@@ -5,14 +5,17 @@
  * This module is imported once at startup (side-effect import) to populate
  * the registry before any tool dispatch occurs.
  *
- * Adding a new tool requires only adding the import and register() call here.
+ * Adding a new tool requires adding its import and one entry in the list below.
  *
- * Tools can be registered in two ways:
- *   - Unconditional: always available (toolRegistry.register)
- *   - Conditional: available only when a runtime condition is met
- *     (toolRegistry.registerConditional) — e.g., platform checks, feature flags
+ * Tool registration is routed through ToolRegistrationPipeline middleware.
  */
 import { toolRegistry } from "./ToolRegistry"
+import {
+	createToolRegistrationPipeline,
+	registerConditionalTools,
+	registerStaticTools,
+	wireToolSearchRegistry,
+} from "./ToolRegistrationPipeline"
 
 // Tool singletons
 import { listFilesTool } from "./ListFilesTool"
@@ -104,25 +107,13 @@ const allTools = [
 	configTool,
 ] as const
 
-for (const tool of allTools) {
-	toolRegistry.register(tool)
-}
+const conditionalTools = [
+	{ tool: new PowerShellTool(), condition: () => PowerShellTool.isAvailable() },
+	{ tool: new WorktreeTool(), condition: () => WorktreeTool.isAvailable() },
+] as const
 
-// Wire up ToolSearchTool with the registry (it implements the ToolRegistry interface)
-toolSearchTool.setToolRegistry(toolRegistry)
-
-// ── Conditional tool registration ────────────────────────────────────
-// These tools are only available when their runtime conditions are met.
-// They don't appear in the initial tool list; ToolSearchTool can discover them.
-
-// PowerShellTool: only on Windows
-toolRegistry.registerConditional(
-	new PowerShellTool(),
-	() => PowerShellTool.isAvailable(),
-)
-
-// WorktreeTool: available when git is present (deferred, discovered via ToolSearchTool)
-toolRegistry.registerConditional(
-	new WorktreeTool(),
-	() => WorktreeTool.isAvailable(),
-)
+void createToolRegistrationPipeline(
+	registerStaticTools(allTools),
+	wireToolSearchRegistry(toolSearchTool),
+	registerConditionalTools(conditionalTools),
+)({ registry: toolRegistry })

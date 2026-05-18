@@ -28,7 +28,7 @@ vi.mock("@aws-sdk/client-bedrock-runtime", () => {
 
 import { AwsBedrockHandler } from "../bedrock"
 import { ConverseStreamCommand } from "@aws-sdk/client-bedrock-runtime"
-import type { ApiHandlerCreateMessageMetadata } from "../../index"
+import type { ApiHandlerCreateMessageMetadata } from "../../types"
 
 const mockConverseStreamCommand = vi.mocked(ConverseStreamCommand)
 

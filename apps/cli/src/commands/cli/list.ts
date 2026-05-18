@@ -6,7 +6,7 @@ import pWaitFor from "p-wait-for"
 
 import type { TaskSessionEntry } from "@njust-ai-cj/core/cli"
 import type { Command, ModelRecord, WebviewMessage } from "@njust-ai-cj/types"
-import { getProviderDefaultModelId } from "@njust-ai-cj/types"
+import { getProviderDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { ExtensionHost, type ExtensionHostOptions } from "@/agent/index.js"
 import { readWorkspaceTaskSessions } from "@/lib/task-history/index.js"

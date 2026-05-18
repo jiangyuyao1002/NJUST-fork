@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { ApiHandler } from "../../index"
+import type { ApiHandler } from "../../types"
 import { ProviderRegistry, createProviderRegistry, type ProviderFactory } from "../ProviderRegistry"
 
 const fakeHandler = {} as ApiHandler

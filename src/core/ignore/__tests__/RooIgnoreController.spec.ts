@@ -124,6 +124,10 @@ describe("RooIgnoreController", () => {
 		 * Tests the file watcher setup
 		 */
 		it("should set up file watcher for .rooignore changes", async () => {
+			await vi.waitFor(() => {
+				expect(vscode.workspace.createFileSystemWatcher).toHaveBeenCalled()
+			})
+
 			// Check that watcher was created with correct pattern
 			expect(vscode.workspace.createFileSystemWatcher).toHaveBeenCalledWith(
 				expect.objectContaining({

@@ -2,13 +2,13 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { Stream as AnthropicStream } from "@anthropic-ai/sdk/streaming"
 import { CacheControlEphemeral } from "@anthropic-ai/sdk/resources"
 
+import { type ModelInfo } from "@njust-ai-cj/types"
 import {
-	type ModelInfo,
 	type AnthropicModelId,
 	anthropicDefaultModelId,
 	anthropicModels,
 	ANTHROPIC_DEFAULT_MAX_TOKENS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { logger } from "../../shared/logger"
@@ -19,7 +19,7 @@ import { filterNonAnthropicBlocks } from "../transform/anthropic-filter"
 import { handleProviderError } from "./utils/error-handler"
 
 import { BaseProvider } from "./base-provider"
-import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
+import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { calculateApiCostAnthropic } from "../../shared/cost"
 import {
 	convertOpenAIToolsToAnthropic,
@@ -177,7 +177,13 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 											...message,
 											content:
 												typeof message.content === "string"
-													? [{ type: "text", text: message.content, cache_control: cacheControl }]
+													? [
+															{
+																type: "text",
+																text: message.content,
+																cache_control: cacheControl,
+															},
+														]
 													: message.content.map((content, contentIndex) =>
 															contentIndex === message.content.length - 1
 																? { ...content, cache_control: cacheControl }
@@ -190,7 +196,7 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 								stream: true,
 								...nativeToolParams,
 							},
-							// Prompt caching is now GA â€” no special beta header needed.
+							// Prompt caching is now GA ï¿?no special beta header needed.
 							// Pass remaining betas (e.g. fine-grained-tool-streaming, context-1m) if any.
 							betas && betas.length > 0 ? { headers: { "anthropic-beta": betas.join(",") } } : undefined,
 						),
@@ -422,14 +428,16 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 	async completePrompt(prompt: string) {
 		const { id: model, temperature } = this.getModel()
 
-		const message = await this.withRetry(() => this.client.messages.create({
-			model,
-			max_tokens: ANTHROPIC_DEFAULT_MAX_TOKENS,
-			thinking: undefined,
-			temperature,
-			messages: [{ role: "user", content: prompt }],
-			stream: false,
-		}))
+		const message = await this.withRetry(() =>
+			this.client.messages.create({
+				model,
+				max_tokens: ANTHROPIC_DEFAULT_MAX_TOKENS,
+				thinking: undefined,
+				temperature,
+				messages: [{ role: "user", content: prompt }],
+				stream: false,
+			}),
+		)
 
 		const content = message.content.find(({ type }) => type === "text")
 		return content?.type === "text" ? content.text : ""

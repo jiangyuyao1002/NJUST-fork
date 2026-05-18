@@ -2,7 +2,10 @@ import axios from "axios"
 import { z } from "zod"
 
 import type { ModelInfo } from "@njust-ai-cj/types"
-import { VERCEL_AI_GATEWAY_VISION_ONLY_MODELS, VERCEL_AI_GATEWAY_VISION_AND_TOOLS_MODELS } from "@njust-ai-cj/types"
+import {
+	VERCEL_AI_GATEWAY_VISION_ONLY_MODELS,
+	VERCEL_AI_GATEWAY_VISION_AND_TOOLS_MODELS,
+} from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
 import { logger } from "../../../shared/logger"
@@ -79,7 +82,10 @@ export async function getVercelAiGatewayModels(_options?: ApiHandlerOptions): Pr
 			models[id] = parseVercelAiGatewayModel({ id, model })
 		}
 	} catch (error) {
-		logger.error("VercelAiGateway", `Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		logger.error(
+			"VercelAiGateway",
+			`Error fetching models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 	}
 
 	return models
