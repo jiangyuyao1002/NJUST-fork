@@ -1,6 +1,7 @@
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as crypto from "crypto"
+import { z } from "zod"
 
 // ────────────────────────────── Types ──────────────────────────────
 
@@ -29,6 +30,20 @@ export interface TaskFilter {
 	priority?: TaskBoardItem["priority"]
 	limit?: number
 }
+
+const taskBoardItemSchema = z.object({
+	id: z.string().min(1),
+	title: z.string(),
+	description: z.string().optional(),
+	status: z.enum(["pending", "in_progress", "completed", "failed"]),
+	priority: z.enum(["high", "medium", "low"]),
+	dependsOn: z.array(z.string()).optional(),
+	createdAt: z.number(),
+	updatedAt: z.number(),
+	metadata: z.record(z.unknown()).optional(),
+})
+
+const persistedTaskBoardSchema = z.array(z.unknown())
 
 // ────────────────────────────── TaskBoard ──────────────────────────────
 
@@ -206,14 +221,13 @@ export class TaskBoard {
 	private async load(): Promise<void> {
 		try {
 			const raw = await fs.readFile(this.filePath, "utf8")
-			const items: TaskBoardItem[] = JSON.parse(raw)
+			const persistedItems = persistedTaskBoardSchema.parse(JSON.parse(raw))
 
 			this.tasks.clear()
-			if (Array.isArray(items)) {
-				for (const item of items) {
-					if (item.id) {
-						this.tasks.set(item.id, item)
-					}
+			for (const item of persistedItems) {
+				const parsed = taskBoardItemSchema.safeParse(item)
+				if (parsed.success) {
+					this.tasks.set(parsed.data.id, parsed.data)
 				}
 			}
 		} catch {

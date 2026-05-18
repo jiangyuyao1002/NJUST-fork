@@ -126,9 +126,13 @@ jobs:
               uses: actions/checkout@v4
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
-            - name: Run pnpm audit
+            - name: Run pnpm audit (high)
               continue-on-error: true
               run: pnpm audit --audit-level=high
-            - name: Run src package audit
+            - name: Run pnpm audit (critical)
+              run: pnpm audit --audit-level=critical
+            - name: Run src package audit (high)
               continue-on-error: true
               run: cd src && pnpm audit --audit-level=high
+            - name: Run src package audit (critical)
+              run: cd src && pnpm audit --audit-level=critical

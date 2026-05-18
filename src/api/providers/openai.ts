@@ -1,6 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI, { AzureOpenAI } from "openai"
 import axios from "axios"
+import { z } from "zod"
 
 import { type ModelInfo, type OpenAiUsageMetrics } from "@njust-ai-cj/types"
 import {
@@ -26,6 +27,16 @@ import { requireApiKey } from "../interfaces/api-key-validator"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 import { handleOpenAIError } from "./utils/openai-error-handler"
+
+const openAiModelsResponseSchema = z.object({
+	data: z.array(z.unknown()),
+})
+
+const openAiModelListItemSchema = z
+	.object({
+		id: z.string().min(1),
+	})
+	.passthrough()
 
 // TODO: Rename this to OpenAICompatibleHandler. Also, I think the
 // `OpenAINativeHandler` can subclass from this, since it's obviously
@@ -579,7 +590,15 @@ export async function getOpenAiModels(baseUrl?: string, apiKey?: string, openAiH
 		}
 
 		const response = await axios.get(`${trimmedBaseUrl}/models`, config)
-		const modelsArray = response.data?.data?.map((model: UnsafeAny) => model.id) || []
+		const parsedResponse = openAiModelsResponseSchema.safeParse(response.data)
+		if (!parsedResponse.success) {
+			return []
+		}
+
+		const modelsArray = parsedResponse.data.data
+			.map((model) => openAiModelListItemSchema.safeParse(model))
+			.filter((result) => result.success)
+			.map((result) => result.data.id)
 		return [...new Set<string>(modelsArray)]
 	} catch {
 		return []

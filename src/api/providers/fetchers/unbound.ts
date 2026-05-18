@@ -1,9 +1,32 @@
 import axios from "axios"
+import { z } from "zod"
 
 import type { ModelInfo } from "@njust-ai-cj/types"
 
 import { logger } from "../../../shared/logger"
 import { parseApiPrice } from "../../../shared/cost"
+
+const unboundModelSchema = z
+	.object({
+		id: z.string().min(1),
+		max_output_tokens: z.number().optional(),
+		context_window: z.number().optional(),
+		supports_caching: z.boolean().optional(),
+		supports_vision: z.boolean().optional(),
+		input_price: z.union([z.string(), z.number()]).optional(),
+		output_price: z.union([z.string(), z.number()]).optional(),
+		description: z.string().optional(),
+		caching_price: z.union([z.string(), z.number()]).optional(),
+		cached_price: z.union([z.string(), z.number()]).optional(),
+	})
+	.passthrough()
+
+const unboundModelsResponseSchema = z.union([
+	z.object({ data: z.array(z.unknown()) }).passthrough(),
+	z.array(z.unknown()),
+])
+
+type UnboundModel = z.infer<typeof unboundModelSchema>
 
 export async function getUnboundModels(apiKey?: string | null): Promise<Record<string, ModelInfo>> {
 	const models: Record<string, ModelInfo> = {}
@@ -16,10 +39,25 @@ export async function getUnboundModels(apiKey?: string | null): Promise<Record<s
 		}
 
 		const response = await axios.get("https://api.getunbound.ai/models", { headers })
-		const raw = response.data?.data ?? response.data
-		const rawModels = Array.isArray(raw) ? raw : []
+		const parsedResponse = unboundModelsResponseSchema.safeParse(response.data)
+		const rawModels = parsedResponse.success
+			? Array.isArray(parsedResponse.data)
+				? parsedResponse.data
+				: parsedResponse.data.data
+			: []
 
-		for (const rawModel of rawModels) {
+		if (!parsedResponse.success) {
+			logger.error("Unbound", "Models response is invalid", parsedResponse.error.format())
+		}
+
+		for (const rawModelCandidate of rawModels) {
+			const parsedModel = unboundModelSchema.safeParse(rawModelCandidate)
+			if (!parsedModel.success) {
+				logger.error("Unbound", "Skipping invalid model entry", parsedModel.error.format())
+				continue
+			}
+
+			const rawModel: UnboundModel = parsedModel.data
 			const modelInfo: ModelInfo = {
 				maxTokens: rawModel.max_output_tokens ?? 8192,
 				contextWindow: rawModel.context_window ?? 200_000,

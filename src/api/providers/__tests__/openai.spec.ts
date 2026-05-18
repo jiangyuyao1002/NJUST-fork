@@ -1296,4 +1296,16 @@ describe("getOpenAiModels", () => {
 
 		expect(result).toEqual(["gpt-4", "gpt-3.5-turbo"])
 	})
+
+	it("should ignore model entries without string IDs", async () => {
+		vi.mocked(axios.get).mockResolvedValueOnce({
+			data: {
+				data: [{ id: "model-1" }, { id: 123 }, { owned_by: "missing-id" }],
+			},
+		})
+
+		const result = await getOpenAiModels("https://api.example.com/v1", "test-key")
+
+		expect(result).toEqual(["model-1"])
+	})
 })

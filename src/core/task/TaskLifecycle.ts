@@ -7,6 +7,7 @@
 
 import type { ClineMessage } from "@njust-ai-cj/types"
 import { logger } from "../../shared/logger"
+import { clineApiReqInfoSchema } from "@njust-ai-cj/types"
 
 // ─── History Message Cleanup ─────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ export function cleanHistoryForResumption(messages: ClineMessage[]): ClineMessag
 
 	if (lastApiReqIndex !== -1) {
 		try {
-			const info = JSON.parse(result[lastApiReqIndex]!.text || "{}")
+			const info = clineApiReqInfoSchema.parse(JSON.parse(result[lastApiReqIndex]!.text || "{}"))
 			if (info.cost === undefined && info.cancelReason === undefined) {
 				result.splice(lastApiReqIndex, 1)
 			}

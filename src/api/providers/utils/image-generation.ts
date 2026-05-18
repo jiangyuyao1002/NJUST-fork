@@ -1,36 +1,57 @@
+import { z } from "zod"
 import { t } from "../../../i18n"
 
-// Image generation types
-interface ImageGenerationResponse {
-	choices?: Array<{
-		message?: {
-			content?: string
-			images?: Array<{
-				type?: string
-				image_url?: {
-					url?: string
-				}
-			}>
-		}
-	}>
-	error?: {
-		message?: string
-		type?: string
-		code?: string
-	}
-}
+const apiErrorResponseSchema = z
+	.object({
+		error: z
+			.object({
+				message: z.string().optional(),
+				type: z.string().optional(),
+				code: z.string().optional(),
+			})
+			.optional(),
+	})
+	.passthrough()
 
-interface ImagesApiResponse {
-	data?: Array<{
-		b64_json?: string
-		url?: string
-	}>
-	error?: {
-		message?: string
-		type?: string
-		code?: string
-	}
-}
+const imageGenerationResponseSchema = apiErrorResponseSchema.extend({
+	choices: z
+		.array(
+			z
+				.object({
+					message: z
+						.object({
+							content: z.string().optional(),
+							images: z
+								.array(
+									z
+										.object({
+											type: z.string().optional(),
+											image_url: z.object({ url: z.string().optional() }).optional(),
+										})
+										.passthrough(),
+								)
+								.optional(),
+						})
+						.passthrough()
+						.optional(),
+				})
+				.passthrough(),
+		)
+		.optional(),
+})
+
+const imagesApiResponseSchema = apiErrorResponseSchema.extend({
+	data: z
+		.array(
+			z
+				.object({
+					b64_json: z.string().optional(),
+					url: z.string().optional(),
+				})
+				.passthrough(),
+		)
+		.optional(),
+})
 
 export interface ImageGenerationResult {
 	success: boolean
@@ -106,7 +127,7 @@ export async function generateImageWithProvider(options: ImageGenerationOptions)
 			})
 
 			try {
-				const errorJson = JSON.parse(errorText)
+				const errorJson = apiErrorResponseSchema.parse(JSON.parse(errorText))
 				if (errorJson.error?.message) {
 					errorMessage = t("tools:generateImage.failedWithMessage", {
 						message: errorJson.error.message,
@@ -121,7 +142,14 @@ export async function generateImageWithProvider(options: ImageGenerationOptions)
 			}
 		}
 
-		const result: ImageGenerationResponse = await response.json()
+		const parsedResult = imageGenerationResponseSchema.safeParse(await response.json())
+		if (!parsedResult.success) {
+			return {
+				success: false,
+				error: t("tools:generateImage.invalidImageData"),
+			}
+		}
+		const result = parsedResult.data
 
 		if (result.error) {
 			return {
@@ -232,7 +260,7 @@ export async function generateImageWithImagesApi(options: ImagesApiOptions): Pro
 			})
 
 			try {
-				const errorJson = JSON.parse(errorText)
+				const errorJson = apiErrorResponseSchema.parse(JSON.parse(errorText))
 				if (errorJson.error?.message) {
 					errorMessage = t("tools:generateImage.failedWithMessage", {
 						message: errorJson.error.message,
@@ -247,7 +275,14 @@ export async function generateImageWithImagesApi(options: ImagesApiOptions): Pro
 			}
 		}
 
-		const result: ImagesApiResponse = await response.json()
+		const parsedResult = imagesApiResponseSchema.safeParse(await response.json())
+		if (!parsedResult.success) {
+			return {
+				success: false,
+				error: t("tools:generateImage.invalidImageData"),
+			}
+		}
+		const result = parsedResult.data
 
 		if (result.error) {
 			return {

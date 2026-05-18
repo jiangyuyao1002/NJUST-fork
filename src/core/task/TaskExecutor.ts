@@ -11,6 +11,7 @@
 import type { Anthropic } from "@anthropic-ai/sdk"
 import type OpenAI from "openai"
 import pWaitFor from "p-wait-for"
+import { z } from "zod"
 
 import type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 export type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
@@ -21,7 +22,6 @@ import type {
 	ClineApiReqCancelReason,
 	ContextCondense,
 	ContextTruncation,
-	ToolName,
 } from "@njust-ai-cj/types"
 import {
 	DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
@@ -67,6 +67,7 @@ import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { finalizePendingStreamingToolCalls, processTaskStreamChunk } from "./TaskStreamChunkProcessor"
 import { handleAttemptApiRequestError, handleEmptyAssistantResponse, handleMidStreamFailure } from "./TaskRetryHandler"
+import { clineApiReqInfoSchema } from "@njust-ai-cj/types"
 
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000
 
@@ -140,8 +141,7 @@ export class TaskExecutor {
 		const unattendedMaxRetryAttempts = state?.unattendedMaxRetryAttempts ?? 5
 
 		const _enablePersistentRetry = state?.enablePersistentRetry ?? false
-		const persistentRetryHandler =
-			h.persistentRetryHandler ?? (h.persistentRetryHandler = new PersistentRetryManager())
+		h.persistentRetryHandler ??= new PersistentRetryManager()
 
 		const customCondensingPrompt = state?.customSupportPrompts?.CONDENSE
 
@@ -697,7 +697,9 @@ export class TaskExecutor {
 						return
 					}
 
-					const existingData = JSON.parse(t.clineMessages[lastApiReqIndex].text || "{}")
+					const existingData = clineApiReqInfoSchema.parse(
+						JSON.parse(t.clineMessages[lastApiReqIndex].text || "{}"),
+					)
 
 					// Calculate total tokens and cost using provider-aware function
 					const modelId = getModelId(t.apiConfiguration)

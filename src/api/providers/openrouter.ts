@@ -63,6 +63,22 @@ const OpenRouterErrorResponseSchema = z.object({
 		.optional(),
 })
 
+const OpenRouterMetadataRawSchema = z
+	.object({
+		message: z.string().optional(),
+		error: z
+			.union([
+				z.string(),
+				z
+					.object({
+						message: z.string().optional(),
+					})
+					.passthrough(),
+			])
+			.optional(),
+	})
+	.passthrough()
+
 // OpenRouter error structure that may include error.metadata.raw with actual upstream error
 // This is for caught exceptions which have the error wrapped in an "error" property
 interface _OpenRouterErrorResponse {
@@ -95,21 +111,16 @@ function extractErrorFromMetadataRaw(raw: string | undefined): string | undefine
 	}
 
 	try {
-		const parsed = JSON.parse(raw)
+		const parsed = OpenRouterMetadataRawSchema.parse(JSON.parse(raw))
 		// Check for common error message fields
-		if (typeof parsed === "object" && parsed !== null) {
-			// Check for direct message field
-			if (typeof parsed.message === "string") {
-				return parsed.message
-			}
-			// Check for nested error.message field (e.g., Anthropic error format)
-			if (typeof parsed.error === "object" && parsed.error !== null && typeof parsed.error.message === "string") {
-				return parsed.error.message
-			}
-			// Check for error as a string
-			if (typeof parsed.error === "string") {
-				return parsed.error
-			}
+		if (typeof parsed.message === "string") {
+			return parsed.message
+		}
+		if (typeof parsed.error === "object" && parsed.error !== null && typeof parsed.error.message === "string") {
+			return parsed.error.message
+		}
+		if (typeof parsed.error === "string") {
+			return parsed.error
 		}
 		// If we can't extract a specific field, return the raw string
 		return raw

@@ -15,13 +15,17 @@ import { logger } from "../../../shared/logger"
 import { redactApiSecrets } from "../../../utils/redactApiSecrets"
 
 type ProviderErrorLike = Error & {
-	error?: { metadata?: { raw?: UnsafeAny } }
+	error?: { metadata?: { raw?: unknown } }
 	status?: number
-	errorDetails?: UnsafeAny
+	errorDetails?: unknown
 	code?: string
-	$metadata?: UnsafeAny
-	headers?: UnsafeAny
+	$metadata?: unknown
+	headers?: unknown
 	retryAfter?: number
+}
+
+function hasNumericStatus(value: unknown): value is { status: number } {
+	return typeof value === "object" && value !== null && typeof (value as { status?: unknown }).status === "number"
 }
 
 /**
@@ -121,9 +125,8 @@ export function handleProviderError(
 	)
 
 	// Also try to preserve status for non-Error exceptions (e.g., plain objects with status)
-	const anyErr = error as { status?: UnsafeAny }
-	if (typeof anyErr?.status === "number") {
-		wrapped.status = anyErr.status
+	if (hasNumericStatus(error)) {
+		wrapped.status = error.status
 	}
 
 	return wrapped

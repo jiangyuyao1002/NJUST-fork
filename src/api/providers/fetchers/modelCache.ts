@@ -47,7 +47,11 @@ async function _readModels(router: RouterName): Promise<ModelRecord | undefined>
 	const cacheDir = await getCacheDirectoryPath(ContextProxy.instance.globalStorageUri.fsPath)
 	const filePath = path.join(cacheDir, filename)
 	const exists = await fileExistsAtPath(filePath)
-	return exists ? JSON.parse(await fs.readFile(filePath, "utf8")) : undefined
+	if (!exists) {
+		return undefined
+	}
+
+	return modelRecordSchema.parse(JSON.parse(await fs.readFile(filePath, "utf8")))
 }
 
 /**
@@ -294,7 +298,7 @@ export function getModelsFromCache(provider: ProviderName): ModelRecord | undefi
 			// This ensures the data conforms to ModelRecord = Record<string, ModelInfo>
 			const validation = modelRecordSchema.safeParse(models)
 			if (!validation.success) {
-			logger.error("ModelCache", `Invalid disk cache data structure for ${provider}:`, validation.error.format())
+				logger.error("ModelCache", `Invalid disk cache data structure for ${provider}:`, validation.error.format())
 				return undefined
 			}
 

@@ -38,7 +38,7 @@ export interface TaskSubtaskHost {
 	initiateTaskLoop(userMessage: UnsafeAny[]): Promise<void>
 
 	// Event emitter
-	emit(event: string, ...args: any[]): boolean
+	emit(event: string, ...args: unknown[]): boolean
 }
 
 export type { IsolationLevel, ForkedContextConfig, CacheSafeParams }

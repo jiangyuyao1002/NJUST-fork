@@ -15,7 +15,7 @@ export function getMergedCommandLists(
 	}
 }
 
-export function isBypassWarningActive(state: {
+export function computePermissionMode(state: {
 	autoApprovalEnabled?: boolean
 	alwaysAllowExecute?: boolean
 	alwaysAllowWrite?: boolean
@@ -26,8 +26,9 @@ export function isBypassWarningActive(state: {
 	alwaysAllowMcp?: boolean
 	alwaysAllowModeSwitch?: boolean
 	alwaysAllowSubtasks?: boolean
-}, bypassWarningDismissedAt: number | undefined): boolean {
-	return (state.autoApprovalEnabled ?? false) &&
+}): "default" | "bypass" {
+	const allBypass =
+		(state.autoApprovalEnabled ?? false) &&
 		(state.alwaysAllowExecute ?? false) &&
 		(state.alwaysAllowWrite ?? false) &&
 		(state.alwaysAllowWriteOutsideWorkspace ?? false) &&
@@ -36,8 +37,9 @@ export function isBypassWarningActive(state: {
 		(state.alwaysAllowReadOnlyOutsideWorkspace ?? false) &&
 		(state.alwaysAllowMcp ?? false) &&
 		(state.alwaysAllowModeSwitch ?? false) &&
-		(state.alwaysAllowSubtasks ?? false) &&
-		!((bypassWarningDismissedAt ?? 0) || false)
+		(state.alwaysAllowSubtasks ?? false)
+
+	return allBypass ? "bypass" : "default"
 }
 
 export function getWorkspaceWebviewConfig(): {

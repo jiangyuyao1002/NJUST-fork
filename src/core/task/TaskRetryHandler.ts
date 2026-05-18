@@ -3,7 +3,6 @@ import type { Anthropic } from "@anthropic-ai/sdk"
 import type { ApiStream } from "../../api/transform/stream"
 import type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 import { TaskState } from "./TaskStateMachine"
-import { formatResponse } from "../prompts/responses"
 import { getErrorMessage } from "../../shared/error-utils"
 import { logger } from "../../shared/logger"
 

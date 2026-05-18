@@ -51,7 +51,6 @@ export function registerSettingsHandlers(router: MessageRouter): void {
 	router.register("enhancementApiConfigId", handleEnhancementApiConfigId)
 	router.register("lockApiConfigAcrossModes", handleLockApiConfigAcrossModes)
 	router.register("autoApprovalEnabled", handleAutoApprovalEnabled)
-	router.register("bypassWarningDismissed", handleBypassWarningDismissed)
 	router.register("taskSyncEnabled", handleTaskSyncEnabled)
 	router.register("hasOpenedModeSelector", handleHasOpenedModeSelector)
 	router.register("debugSetting", handleDebugSetting)
@@ -477,11 +476,6 @@ async function handleAutoApprovalEnabled(context: MessageHandlerContext, message
 	await provider.postStateToWebview()
 }
 
-async function handleBypassWarningDismissed(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
-	const { updateGlobalState, provider } = context
-	await updateGlobalState("bypassWarningDismissedAt", Date.now())
-	await provider.postStateToWebview()
-}
 
 async function handleTaskSyncEnabled(_context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	// no-op

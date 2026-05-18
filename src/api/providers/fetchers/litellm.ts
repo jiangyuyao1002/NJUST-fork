@@ -1,10 +1,43 @@
 import axios from "axios"
+import { z } from "zod"
 
 import type { ModelRecord } from "@njust-ai-cj/types"
 
 import { logger } from "../../../shared/logger"
 import { DEFAULT_HEADERS } from "../constants"
 import { getErrorMessage } from "../../../shared/error-utils"
+
+const liteLlmModelInfoSchema = z
+	.object({
+		max_output_tokens: z.number().optional(),
+		max_tokens: z.number().optional(),
+		max_input_tokens: z.number().optional(),
+		supports_vision: z.boolean().optional(),
+		supports_prompt_caching: z.boolean().optional(),
+		input_cost_per_token: z.number().optional(),
+		output_cost_per_token: z.number().optional(),
+		cache_creation_input_token_cost: z.number().optional(),
+		cache_read_input_token_cost: z.number().optional(),
+	})
+	.passthrough()
+
+const liteLlmModelEntrySchema = z
+	.object({
+		model_name: z.string().min(1),
+		model_info: liteLlmModelInfoSchema,
+		litellm_params: z
+			.object({
+				model: z.string().min(1),
+			})
+			.passthrough(),
+	})
+	.passthrough()
+
+const liteLlmModelsResponseSchema = z.object({
+	data: z.array(z.unknown()),
+})
+
+type LiteLlmModelEntry = z.infer<typeof liteLlmModelEntrySchema>
 /**
  * Fetches available models from a LiteLLM server
  *
@@ -31,16 +64,23 @@ export async function getLiteLLMModels(apiKey: string, baseUrl: string): Promise
 		const url = urlObj.href
 		// Added timeout to prevent indefinite hanging
 		const response = await axios.get(url, { headers, timeout: 5000 })
+		const parsedResponse = liteLlmModelsResponseSchema.safeParse(response.data)
 		const models: ModelRecord = {}
 
-		// Process the model info from the response
-		if (response.data?.data && Array.isArray(response.data.data)) {
-			for (const model of response.data.data) {
+		if (parsedResponse.success) {
+			for (const rawModel of parsedResponse.data.data) {
+				const parsedModel = liteLlmModelEntrySchema.safeParse(rawModel)
+				if (!parsedModel.success) {
+					logger.error("LiteLLM", "Skipping invalid LiteLLM model entry", parsedModel.error.format())
+					continue
+				}
+
+				const model: LiteLlmModelEntry = parsedModel.data
 				const modelName = model.model_name
 				const modelInfo = model.model_info
-				const litellmModelName = model?.litellm_params?.model as string | undefined
+				const litellmModelName = model.litellm_params.model
 
-				if (!modelName || !modelInfo || !litellmModelName) continue
+				if (!litellmModelName) continue
 
 				models[modelName] = {
 					maxTokens: modelInfo.max_output_tokens || modelInfo.max_tokens || 8192,

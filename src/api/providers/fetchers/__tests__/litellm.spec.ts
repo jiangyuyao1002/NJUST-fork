@@ -242,6 +242,36 @@ describe("getLiteLLMModels", () => {
 		})
 	})
 
+	it("ignores model entries that fail response schema validation", async () => {
+		mockedAxios.get.mockResolvedValue({
+			data: {
+				data: [
+					{
+						model_name: "valid-model",
+						model_info: {
+							max_tokens: 4096,
+							max_input_tokens: 128000,
+						},
+						litellm_params: {
+							model: "openai/valid-model",
+						},
+					},
+					{
+						model_name: "invalid-model",
+						model_info: "not an object",
+						litellm_params: {
+							model: "openai/invalid-model",
+						},
+					},
+				],
+			},
+		})
+
+		const result = await getLiteLLMModels("test-api-key", "http://localhost:4000")
+
+		expect(Object.keys(result)).toEqual(["valid-model"])
+	})
+
 	it("makes request without authorization header when no API key provided", async () => {
 		const mockResponse = {
 			data: {

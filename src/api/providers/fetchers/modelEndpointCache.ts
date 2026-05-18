@@ -3,8 +3,9 @@ import fs from "fs/promises"
 
 import NodeCache from "node-cache"
 import sanitize from "sanitize-filename"
+import { z } from "zod"
 
-import type { ModelRecord } from "@njust-ai-cj/types"
+import { modelInfoSchema, type ModelRecord } from "@njust-ai-cj/types"
 
 import { ContextProxy } from "../../../core/config/ContextProxy"
 import { RouterName } from "../../../shared/api"
@@ -17,6 +18,7 @@ import { getOpenRouterModelEndpoints } from "./openrouter"
 import { getModels } from "./modelCache"
 
 const memoryCache = new NodeCache({ stdTTL: 5 * 60, checkperiod: 5 * 60 })
+const modelRecordSchema = z.record(z.string(), modelInfoSchema)
 
 const getCacheKey = (router: RouterName, modelId: string) => sanitize(`${router}_${modelId}`)
 
@@ -31,7 +33,10 @@ async function readModelEndpoints(key: string): Promise<ModelRecord | undefined>
 	const cacheDir = await getCacheDirectoryPath(ContextProxy.instance.globalStorageUri.fsPath)
 	const filePath = path.join(cacheDir, filename)
 	const exists = await fileExistsAtPath(filePath)
-	return exists ? JSON.parse(await fs.readFile(filePath, "utf8")) : undefined
+	if (!exists) {
+		return undefined
+	}
+	return modelRecordSchema.parse(JSON.parse(await fs.readFile(filePath, "utf8")))
 }
 
 export const getModelEndpoints = async ({

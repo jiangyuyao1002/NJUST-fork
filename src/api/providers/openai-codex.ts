@@ -3,6 +3,7 @@ import { ensureAllRequired, ensureAdditionalPropertiesFalse } from "./schema-uti
 import { v7 as uuidv7 } from "uuid"
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
+import { z } from "zod"
 
 import { type ModelInfo, type ReasoningEffortExtended } from "@njust-ai-cj/types"
 import { openAiCodexDefaultModelId, OpenAiCodexModelId, openAiCodexModels } from "@njust-ai-cj/core/providers"
@@ -129,6 +130,46 @@ interface ResponsesClientLike {
 		): Promise<AsyncIterable<ResponsesStreamEvent>>
 	}
 }
+
+const codexErrorResponseSchema = z
+	.object({
+		error: z
+			.object({
+				message: z.string().optional(),
+			})
+			.passthrough()
+			.optional(),
+		message: z.string().optional(),
+		detail: z.string().optional(),
+	})
+	.passthrough()
+
+const codexResponsesStreamEventSchema = z.object({}).passthrough()
+
+const codexCompleteResponseSchema = z
+	.object({
+		text: z.string().optional(),
+		output: z
+			.array(
+				z
+					.object({
+						type: z.string().optional(),
+						content: z
+							.array(
+								z
+									.object({
+										type: z.string().optional(),
+										text: z.string().optional(),
+									})
+									.passthrough(),
+							)
+							.optional(),
+					})
+					.passthrough(),
+			)
+			.optional(),
+	})
+	.passthrough()
 
 export class OpenAiCodexHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
@@ -536,7 +577,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 				let errorDetails = ""
 
 				try {
-					const errorJson = JSON.parse(errorText)
+					const errorJson = codexErrorResponseSchema.parse(JSON.parse(errorText))
 					if (errorJson.error?.message) {
 						errorDetails = errorJson.error.message
 					} else if (errorJson.message) {
@@ -625,7 +666,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 						}
 
 						try {
-							const parsed = JSON.parse(data)
+							const parsed = codexResponsesStreamEventSchema.parse(JSON.parse(data)) as ResponsesStreamEvent
 
 							// Capture response metadata
 							if (parsed.response?.output && Array.isArray(parsed.response.output)) {
@@ -843,7 +884,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 						}
 					} else if (line.trim() && !line.startsWith(":")) {
 						try {
-							const parsed = JSON.parse(line)
+							const parsed = codexResponsesStreamEventSchema.parse(JSON.parse(line)) as ResponsesStreamEvent
 							if (parsed.content || parsed.text || parsed.message) {
 								hasContent = true
 								this.sawTextOutputInCurrentResponse = true
@@ -1222,7 +1263,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 				)
 			}
 
-			const responseData = await response.json()
+			const responseData = codexCompleteResponseSchema.parse(await response.json())
 
 			if (responseData?.output && Array.isArray(responseData.output)) {
 				for (const outputItem of responseData.output) {

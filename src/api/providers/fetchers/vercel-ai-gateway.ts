@@ -47,8 +47,8 @@ export type VercelAiGatewayModel = z.infer<typeof vercelAiGatewayModelSchema>
  */
 
 const vercelAiGatewayModelsResponseSchema = z.object({
-	object: z.string(),
-	data: z.array(vercelAiGatewayModelSchema),
+	object: z.string().optional(),
+	data: z.array(z.unknown()),
 })
 
 type VercelAiGatewayModelsResponse = z.infer<typeof vercelAiGatewayModelsResponseSchema>
@@ -64,13 +64,20 @@ export async function getVercelAiGatewayModels(_options?: ApiHandlerOptions): Pr
 	try {
 		const response = await axios.get<VercelAiGatewayModelsResponse>(`${baseURL}/models`)
 		const result = vercelAiGatewayModelsResponseSchema.safeParse(response.data)
-		const data = result.success ? result.data.data : response.data.data
 
 		if (!result.success) {
 			logger.error("VercelAiGateway", `Models response is invalid ${JSON.stringify(result.error.format())}`)
+		} else if (result.data.object === undefined) {
+			logger.error("VercelAiGateway", "Models response is missing object field")
 		}
 
-		for (const model of data) {
+		for (const rawModel of result.success ? result.data.data : []) {
+			const parsedModel = vercelAiGatewayModelSchema.safeParse(rawModel)
+			if (!parsedModel.success) {
+				logger.error("VercelAiGateway", `Skipping invalid model entry ${JSON.stringify(parsedModel.error.format())}`)
+				continue
+			}
+			const model = parsedModel.data
 			const { id } = model
 
 			// Only include language models for chat inference.

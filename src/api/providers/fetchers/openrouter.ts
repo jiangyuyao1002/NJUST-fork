@@ -30,7 +30,7 @@ const openRouterPricingSchema = z.object({
 })
 
 const modelRouterBaseModelSchema = z.object({
-	name: z.string(),
+	name: z.string().optional(),
 	description: z.string().optional(),
 	context_length: z.number(),
 	max_completion_tokens: z.number().nullish(),
@@ -68,7 +68,7 @@ export type OpenRouterModelEndpoint = z.infer<typeof openRouterModelEndpointSche
  */
 
 const openRouterModelsResponseSchema = z.object({
-	data: z.array(openRouterModelSchema),
+	data: z.array(z.unknown()),
 })
 
 type OpenRouterModelsResponse = z.infer<typeof openRouterModelsResponseSchema>
@@ -84,7 +84,7 @@ const openRouterModelEndpointsResponseSchema = z.object({
 		description: z.string().optional(),
 		architecture: openRouterArchitectureSchema.optional(),
 		supported_parameters: z.array(z.string()).optional(),
-		endpoints: z.array(openRouterModelEndpointSchema),
+		endpoints: z.array(z.unknown()),
 	}),
 })
 
@@ -101,13 +101,18 @@ export async function getOpenRouterModels(options?: ApiHandlerOptions): Promise<
 	try {
 		const response = await axios.get<OpenRouterModelsResponse>(`${baseURL}/models`)
 		const result = openRouterModelsResponseSchema.safeParse(response.data)
-		const data = result.success ? result.data.data : response.data.data
 
 		if (!result.success) {
 			logger.error("OpenRouter", "Models response is invalid", result.error.format())
 		}
 
-		for (const model of data) {
+		for (const rawModel of result.success ? result.data.data : []) {
+			const parsedModel = openRouterModelSchema.safeParse(rawModel)
+			if (!parsedModel.success) {
+				logger.error("OpenRouter", "Skipping invalid model entry", parsedModel.error.format())
+				continue
+			}
+			const model = parsedModel.data
 			const { id, architecture, top_provider, supported_parameters = [] } = model
 
 			// Skip image generation models (models that output images)
@@ -115,7 +120,7 @@ export async function getOpenRouterModels(options?: ApiHandlerOptions): Promise<
 				continue
 			}
 
-			const parsedModel = parseOpenRouterModel({
+			const parsedModelInfo = parseOpenRouterModel({
 				id,
 				model,
 				inputModality: architecture?.input_modalities,
@@ -124,7 +129,7 @@ export async function getOpenRouterModels(options?: ApiHandlerOptions): Promise<
 				supportedParameters: supported_parameters,
 			})
 
-			models[id] = parsedModel
+			models[id] = parsedModelInfo
 		}
 	} catch (error) {
 		logger.error(
@@ -150,20 +155,26 @@ export async function getOpenRouterModelEndpoints(
 	try {
 		const response = await axios.get<OpenRouterModelEndpointsResponse>(`${baseURL}/models/${modelId}/endpoints`)
 		const result = openRouterModelEndpointsResponseSchema.safeParse(response.data)
-		const data = result.success ? result.data.data : response.data.data
 
 		if (!result.success) {
 			logger.error("OpenRouter", "Model endpoints response is invalid", result.error.format())
+			return models
 		}
 
-		const { id, architecture, endpoints } = data
+		const { id, architecture, endpoints } = result.data.data
 
 		// Skip image generation models (models that output images)
 		if (architecture?.output_modalities?.includes("image")) {
 			return models
 		}
 
-		for (const endpoint of endpoints) {
+		for (const rawEndpoint of endpoints) {
+			const parsedEndpoint = openRouterModelEndpointSchema.safeParse(rawEndpoint)
+			if (!parsedEndpoint.success) {
+				logger.error("OpenRouter", "Skipping invalid model endpoint entry", parsedEndpoint.error.format())
+				continue
+			}
+			const endpoint = parsedEndpoint.data
 			models[endpoint.tag ?? endpoint.provider_name] = parseOpenRouterModel({
 				id,
 				model: endpoint,

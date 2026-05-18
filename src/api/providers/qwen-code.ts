@@ -3,6 +3,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import * as os from "os"
 import * as path from "path"
+import { z } from "zod"
 
 import { type ModelInfo } from "@njust-ai-cj/types"
 import { qwenCodeModels, qwenCodeDefaultModelId } from "@njust-ai-cj/core/providers"
@@ -22,13 +23,26 @@ const QWEN_OAUTH_CLIENT_ID = "f0304373b74a44d2b584a3fb70ca9e56"
 const QWEN_DIR = ".qwen"
 const QWEN_CREDENTIAL_FILENAME = "oauth_creds.json"
 
-interface QwenOAuthCredentials {
-	access_token: string
-	refresh_token: string
-	token_type: string
-	expiry_date: number
-	resource_url?: string
-}
+const qwenOAuthCredentialsSchema = z.object({
+	access_token: z.string(),
+	refresh_token: z.string(),
+	token_type: z.string(),
+	expiry_date: z.number(),
+	resource_url: z.string().optional(),
+})
+
+const qwenTokenResponseSchema = z
+	.object({
+		access_token: z.string().optional(),
+		refresh_token: z.string().optional(),
+		token_type: z.string().optional(),
+		expires_in: z.number().optional(),
+		error: z.string().optional(),
+		error_description: z.string().optional(),
+	})
+	.passthrough()
+
+type QwenOAuthCredentials = z.infer<typeof qwenOAuthCredentialsSchema>
 
 interface QwenCodeHandlerOptions extends ApiHandlerOptions {
 	qwenCodeOauthPath?: string
@@ -82,7 +96,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 		try {
 			const keyFile = getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)
 			const credsStr = await fs.readFile(keyFile, "utf-8")
-			return JSON.parse(credsStr)
+			return qwenOAuthCredentialsSchema.parse(JSON.parse(credsStr))
 		} catch (error) {
 			logger.error(
 				"QwenCode",
@@ -135,10 +149,14 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			throw new Error(`Token refresh failed: ${response.status} ${response.statusText}. Response: ${errorText}`)
 		}
 
-		const tokenData = await response.json()
+		const tokenData = qwenTokenResponseSchema.parse(await response.json())
 
 		if (tokenData.error) {
 			throw new Error(`Token refresh failed: ${tokenData.error} - ${tokenData.error_description}`)
+		}
+
+		if (!tokenData.access_token || !tokenData.token_type || typeof tokenData.expires_in !== "number") {
+			throw new Error("Token refresh failed: unexpected response format")
 		}
 
 		const newCredentials = {

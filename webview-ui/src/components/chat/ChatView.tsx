@@ -107,29 +107,18 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		customModes,
 		soundEnabled,
 		soundVolume,
-		bypassWarningActive,
+		permissionMode,
 		messageQueue = [],
 		cwd = "",
 	} = useExtensionState()
 
-	// Show a WarningRow when the user sends a message with a retired provider.
 	const [showRetiredProviderWarning, setShowRetiredProviderWarning] = useState(false)
-	const [bypassWarningDismissed, setBypassWarningDismissed] = useState(false)
 
 	// When the provider changes, clear the retired-provider warning.
 	const providerName = apiConfiguration?.apiProvider
 	useEffect(() => {
 		setShowRetiredProviderWarning(false)
 	}, [providerName])
-
-	// When bypassWarningActive goes from false -> true, re-show the banner.
-	const prevBypassActive = useRef(bypassWarningActive)
-	useEffect(() => {
-		if (bypassWarningActive && !prevBypassActive.current) {
-			setBypassWarningDismissed(false)
-		}
-		prevBypassActive.current = bypassWarningActive
-	}, [bypassWarningActive])
 
 	const messagesRef = useRef(messages)
 
@@ -1627,6 +1616,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					}}
 				/>
 			)}
+			{permissionMode === "bypass" && <BypassWarningBanner />}
 			{task ? (
 				<>
 					<TaskHeader
@@ -1797,12 +1787,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					}
 				}}
 			/>
-		{bypassWarningActive && !bypassWarningDismissed && (
-				<BypassWarningBanner
-					onDismiss={() => setBypassWarningDismissed(true)}
-				/>
-			)}
-
 			{showRetiredProviderWarning && (
 				<div className="px-[15px] py-1">
 					<WarningRow

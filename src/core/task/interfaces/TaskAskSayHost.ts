@@ -48,7 +48,7 @@ export interface TaskAskSayHost {
 	messageQueueService: MessageQueueService
 
 	// Event emitter
-	emit(event: string, ...args: any[]): boolean
+	emit(event: string, ...args: unknown[]): boolean
 
 	// Notifier
 	notifier?: {

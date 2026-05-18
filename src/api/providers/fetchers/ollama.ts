@@ -28,7 +28,7 @@ const _OllamaModelInfoResponseSchema = z.object({
 	parameters: z.string().optional(),
 	template: z.string().optional(),
 	details: OllamaModelDetailsSchema,
-	model_info: z.record(z.string(), z.any()),
+	model_info: z.record(z.string(), z.unknown()),
 	capabilities: z.array(z.string()).optional(),
 })
 
@@ -98,7 +98,12 @@ export async function getOllamaModels(
 							{ headers },
 						)
 						.then((ollamaModelInfo) => {
-							const modelInfo = parseOllamaModel(ollamaModelInfo.data)
+							const parsedModelInfo = _OllamaModelInfoResponseSchema.safeParse(ollamaModelInfo.data)
+							if (!parsedModelInfo.success) {
+								logger.error("Ollama", "Error parsing Ollama model info response", parsedModelInfo.error.format())
+								return
+							}
+							const modelInfo = parseOllamaModel(parsedModelInfo.data)
 							// Only include models that support native tools
 							if (modelInfo) {
 								models[ollamaModel.name] = modelInfo

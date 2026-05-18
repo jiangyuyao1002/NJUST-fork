@@ -105,7 +105,6 @@ export interface ExtensionMessage {
 		| "planUpdate"
 		| "transcriptionResult"
 		| "transcriptionError"
-		| "bypassWarningDismissed"
 		| "taskMetrics"
 	text?: string
 	/** For fileContent: { path, content, error? } */
@@ -314,7 +313,7 @@ export type ExtensionState = Pick<
 	cloudUserInfo: CloudUserInfo | null
 	cloudIsAuthenticated: boolean
 	cloudAuthSkipModel?: boolean // Flag indicating auth completed without model selection (user should pick 3rd-party provider)
-	bypassWarningActive?: boolean
+	permissionMode?: "default" | "bypass"
 	cloudApiUrl?: string
 	cloudOrganizations?: CloudOrganizationMembership[]
 	sharingEnabled: boolean
@@ -435,7 +434,6 @@ export interface WebviewMessage {
 		| "openMention"
 		| "cancelTask"
 		| "cancelAutoApproval"
-		| "bypassWarningDismissed"
 		| "updateVSCodeSetting"
 		| "getVSCodeSetting"
 		| "vsCodeSetting"
@@ -839,3 +837,14 @@ export interface ClineApiReqInfo {
 }
 
 export type ClineApiReqCancelReason = "streaming_failed" | "user_cancelled"
+
+/**
+ * Zod schema to parse/validate stringified ClineApiReqInfo from message text.
+ * Used internally for cost/cancelReason updates during lifecycle.
+ */
+export const clineApiReqInfoSchema = z
+	.object({
+		cost: z.number().optional(),
+		cancelReason: z.enum(["streaming_failed", "user_cancelled"]).optional(),
+	})
+	.passthrough()

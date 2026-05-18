@@ -13,6 +13,7 @@ import {
 import OpenAI from "openai"
 import { fromIni } from "@aws-sdk/credential-providers"
 import { Anthropic } from "@anthropic-ai/sdk"
+import { z } from "zod"
 
 import { type ModelInfo, type ProviderSettings, ApiProviderError } from "@njust-ai-cj/types"
 import {
@@ -53,6 +54,8 @@ interface BedrockError extends Error {
 	__type?: string
 	code?: string
 }
+
+const bedrockStreamEventSchema = z.object({}).passthrough()
 
 function isBedrockError(error: UnsafeAny): error is BedrockError {
 	return error instanceof Error && ("status" in error || "$metadata" in error || "__type" in error)
@@ -529,7 +532,10 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 				// Parse the chunk as JSON if it's a string (for tests)
 				let streamEvent: StreamEvent
 				try {
-					streamEvent = typeof chunk === "string" ? JSON.parse(chunk) : (chunk as UnsafeAny as StreamEvent)
+					streamEvent =
+						typeof chunk === "string"
+							? (bedrockStreamEventSchema.parse(JSON.parse(chunk)) as StreamEvent)
+							: (chunk as UnsafeAny as StreamEvent)
 				} catch (e) {
 					logger.error("Failed to parse stream event", {
 						ctx: "bedrock",

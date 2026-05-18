@@ -29,6 +29,7 @@ import { safeDispose } from "./TaskLifecycle"
 import { logger } from "../../shared/logger"
 import { isToolUseBlock } from "../assistant-message/types"
 import type { ITaskDiffViewProvider } from "./interfaces/ITaskDiffViewProvider"
+import { clineApiReqInfoSchema } from "@njust-ai-cj/types"
 
 // ── Host type ────────────────────────────────────────────────────────────
 // Structural contract: Task implements this shape at runtime.
@@ -78,7 +79,7 @@ export interface TaskLifecycleHost {
 		text?: string,
 		partial?: boolean,
 	): Promise<{ response: string; text?: string; images?: string[] }>
-	emit(event: string, ...args: any[]): boolean
+	emit(event: string, ...args: unknown[]): boolean
 	getEnabledMcpToolsCount(): Promise<{ enabledToolCount: number; enabledServerCount: number }>
 	getTaskMode(): Promise<string>
 	initiateCloudAgentLoop(message: string, images?: string[]): Promise<void>
@@ -196,7 +197,9 @@ export class TaskLifecycleHandler {
 
 			if (lastApiReqStartedIndex !== -1) {
 				const lastApiReqStarted = modifiedClineMessages[lastApiReqStartedIndex]!
-				const { cost, cancelReason }: ClineApiReqInfo = JSON.parse(lastApiReqStarted.text || "{}")
+				const { cost, cancelReason }: ClineApiReqInfo = clineApiReqInfoSchema.parse(
+					JSON.parse(lastApiReqStarted.text || "{}"),
+				)
 
 				if (cost === undefined && cancelReason === undefined) {
 					modifiedClineMessages.splice(lastApiReqStartedIndex, 1)

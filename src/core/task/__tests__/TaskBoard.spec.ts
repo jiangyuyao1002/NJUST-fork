@@ -132,4 +132,19 @@ describe("TaskBoard", () => {
 
 		await expect(board.listTasks()).resolves.toEqual([])
 	})
+
+	it("ignores persisted task entries that do not match the task schema", async () => {
+		vi.mocked(fs.readFile).mockResolvedValueOnce(
+			JSON.stringify([
+				storedTask({ id: "valid" }),
+				storedTask({ id: "invalid-status", status: "done" as TaskBoardItem["status"] }),
+				{ id: "missing-fields" },
+			]),
+		)
+		const board = new TaskBoard("C:\\work", "session")
+
+		const tasks = await board.listTasks()
+
+		expect(tasks.map((task) => task.id)).toEqual(["valid"])
+	})
 })

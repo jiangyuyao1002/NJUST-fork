@@ -3,6 +3,7 @@ import { ensureAllRequired, ensureAdditionalPropertiesFalse } from "./schema-uti
 import { v7 as uuidv7 } from "uuid"
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
+import { z } from "zod"
 
 import { Package } from "../../shared/package"
 import {
@@ -132,6 +133,20 @@ interface OpenAiUsageData {
 	prompt_tokens_details?: { cached_tokens?: number; cache_miss_tokens?: number }
 	output_tokens_details?: { reasoning_tokens?: number }
 }
+
+const openAiErrorResponseSchema = z
+	.object({
+		error: z
+			.object({
+				message: z.string().optional(),
+			})
+			.passthrough()
+			.optional(),
+		message: z.string().optional(),
+	})
+	.passthrough()
+
+const openAiResponsesStreamEventSchema = z.object({}).passthrough()
 
 export class OpenAiNativeHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
@@ -630,7 +645,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 
 				// Try to parse error as JSON for better error messages
 				try {
-					const errorJson = JSON.parse(errorText)
+					const errorJson = openAiErrorResponseSchema.parse(JSON.parse(errorText))
 					if (errorJson.error?.message) {
 						errorDetails = errorJson.error.message
 					} else if (errorJson.message) {
@@ -750,7 +765,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 						}
 
 						try {
-							const parsed = JSON.parse(data)
+							const parsed = openAiResponsesStreamEventSchema.parse(JSON.parse(data)) as ResponsesStreamEvent
 
 							// Capture resolved service tier if present
 							if (parsed.response?.service_tier) {
@@ -1164,7 +1179,7 @@ export class OpenAiNativeHandler extends BaseProvider implements SingleCompletio
 					// Also try to parse non-SSE formatted lines
 					else if (line.trim() && !line.startsWith(":")) {
 						try {
-							const parsed = JSON.parse(line)
+							const parsed = openAiResponsesStreamEventSchema.parse(JSON.parse(line)) as ResponsesStreamEvent
 
 							// Try to extract content from various possible locations
 							if (parsed.content || parsed.text || parsed.message) {

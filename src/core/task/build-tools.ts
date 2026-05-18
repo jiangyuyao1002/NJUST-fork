@@ -2,6 +2,7 @@ import path from "path"
 import { createHash } from "crypto"
 
 import type OpenAI from "openai"
+import { z } from "zod"
 
 import type { ProviderSettings, ModeConfig, ModelInfo } from "@njust-ai-cj/types"
 import { customToolRegistry, formatNative } from "@njust-ai-cj/core"
@@ -16,6 +17,8 @@ import {
 	resolveToolAlias,
 } from "../prompts/tools/filter-tools-for-mode"
 import { globalToolSchemaCache } from "../tools/toolSchemaCache"
+
+const allowedFunctionNamesSchema = z.array(z.string())
 
 interface BuildToolsOptions {
 	provider: ITaskHost
@@ -129,7 +132,9 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 			const allowedNames = globalToolSchemaCache.get("__allowedFunctionNames__")
 			return {
 				tools: cachedTools.filter((t) => getToolName(t) !== "__allowedFunctionNames__").sort((a, b) => getToolName(a).localeCompare(getToolName(b))),
-				allowedFunctionNames: allowedNames ? JSON.parse(allowedNames.hash) : undefined,
+				allowedFunctionNames: allowedNames
+					? allowedFunctionNamesSchema.parse(JSON.parse(allowedNames.hash))
+					: undefined,
 			}
 		}
 		return { tools: cachedTools.sort((a, b) => getToolName(a).localeCompare(getToolName(b))) }

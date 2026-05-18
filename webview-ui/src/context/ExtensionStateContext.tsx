@@ -227,6 +227,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		currentApiConfigName: "default",
 		listApiConfigMeta: [],
 		mode: defaultModeSlug,
+		permissionMode: "default",
 		customModePrompts: defaultPrompts,
 		customSupportPrompts: {},
 		experiments: experimentDefault,

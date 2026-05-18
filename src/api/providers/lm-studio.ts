@@ -1,6 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import axios from "axios"
+import { z } from "zod"
 
 import { type ModelInfo } from "@njust-ai-cj/types"
 import { openAiModelInfoSaneDefaults, LMSTUDIO_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
@@ -18,6 +19,16 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 import { getModelsFromCache } from "./fetchers/modelCache"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 import { handleOpenAIError } from "./utils/openai-error-handler"
+
+const lmStudioModelsResponseSchema = z.object({
+	data: z.array(z.unknown()),
+})
+
+const lmStudioModelListItemSchema = z
+	.object({
+		id: z.string().min(1),
+	})
+	.passthrough()
 
 export class LmStudioHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
@@ -227,7 +238,15 @@ export async function getLmStudioModels(baseUrl = "http://localhost:1234") {
 		}
 
 		const response = await axios.get(`${baseUrl}/v1/models`)
-		const modelsArray = response.data?.data?.map((model: UnsafeAny) => model.id) || []
+		const parsedResponse = lmStudioModelsResponseSchema.safeParse(response.data)
+		if (!parsedResponse.success) {
+			return []
+		}
+
+		const modelsArray = parsedResponse.data.data
+			.map((model) => lmStudioModelListItemSchema.safeParse(model))
+			.filter((result) => result.success)
+			.map((result) => result.data.id)
 		return [...new Set<string>(modelsArray)]
 	} catch {
 		return []

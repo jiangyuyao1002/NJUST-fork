@@ -97,7 +97,7 @@ import { WebviewContentProvider } from "./WebviewContentProvider"
 import { SettingsManager } from "./SettingsManager"
 import { TaskCoordinator } from "./TaskCoordinator"
 import { WebviewRouter } from "./WebviewRouter"
-import { getMergedCommandLists, getWorkspaceWebviewConfig, isBypassWarningActive } from "./ClineProviderState"
+import { getMergedCommandLists, getWorkspaceWebviewConfig, computePermissionMode } from "./ClineProviderState"
 import {
 	activateProviderProfileWithProvider,
 	deleteProviderProfileWithProvider,
@@ -1013,10 +1013,7 @@ export class ClineProvider
 			alwaysAllowModeSwitch: state.alwaysAllowModeSwitch ?? false,
 			alwaysAllowSubtasks: state.alwaysAllowSubtasks ?? false,
 			allowedMaxRequests: state.allowedMaxRequests,
-			bypassWarningActive: isBypassWarningActive(
-				state,
-				this.settingsManager.getGlobalValue("bypassWarningDismissedAt"),
-			),
+			permissionMode: computePermissionMode(state),
 			allowedMaxCost: state.allowedMaxCost,
 			autoCondenseContext: state.autoCondenseContext ?? true,
 			autoCondenseContextPercent: state.autoCondenseContextPercent ?? DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
