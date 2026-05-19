@@ -3,6 +3,7 @@ import { isRetiredProvider, type ProviderSettings } from "@njust-ai-cj/types"
 import type { ApiHandler } from "../types"
 import type { ApiHandlerOptions } from "../../shared/api"
 import type { IToolCallParser } from "../interfaces/IToolCallParser"
+import { wrapApiHandler } from "../retry/ApiRetryWrapper"
 
 export type ProviderId = NonNullable<ProviderSettings["apiProvider"]>
 
@@ -108,7 +109,8 @@ export class ProviderRegistry {
 		if (!factory) {
 			throw new Error(`API provider "${id}" is not registered`)
 		}
-		return factory(options)
+		const handler = factory(options)
+		return wrapApiHandler(handler)
 	}
 }
 

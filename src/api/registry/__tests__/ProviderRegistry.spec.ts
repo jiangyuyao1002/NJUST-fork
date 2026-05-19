@@ -11,7 +11,8 @@ describe("ProviderRegistry", () => {
 		const registry = new ProviderRegistry()
 		registry.register("anthropic", fakeFactory, "native")
 
-		expect(registry.createHandler({ apiProvider: "anthropic" })).toBe(fakeHandler)
+		const handler = registry.createHandler({ apiProvider: "anthropic" })
+		expect(handler.getModel).toBe(fakeHandler.getModel)
 		expect(registry.getTokenCountingStrategy("anthropic")).toBe("native")
 	})
 
@@ -29,7 +30,8 @@ describe("ProviderRegistry", () => {
 			return fakeHandler
 		})
 
-		expect(registry.createHandler({ apiProvider: "anthropic" })).toBe(fakeHandler)
+		const handler = registry.createHandler({ apiProvider: "anthropic" })
+		expect(handler.getModel).toBe(fakeHandler.getModel)
 		expect(injectedParser).toBe(toolCallParser)
 	})
 
@@ -51,7 +53,8 @@ describe("ProviderRegistry", () => {
 		)
 
 		registry.register("anthropic", () => replacement, { override: true, tokenCountingStrategy: "estimated" })
-		expect(registry.createHandler({ apiProvider: "anthropic" })).toBe(replacement)
+		const handler = registry.createHandler({ apiProvider: "anthropic" })
+		expect(handler.getModel).toBe(replacement.getModel)
 		expect(registry.get("anthropic")?.tokenCountingStrategy).toBe("estimated")
 		expect(registry.has("anthropic")).toBe(true)
 		expect(registry.size()).toBe(1)

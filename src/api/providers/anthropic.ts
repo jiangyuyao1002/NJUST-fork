@@ -162,59 +162,55 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 					const lastUserMsgIndex = userMsgIndices[userMsgIndices.length - 1] ?? -1
 					const secondLastMsgUserIndex = userMsgIndices[userMsgIndices.length - 2] ?? -1
 
-					stream = await this.withRetry(() =>
-						this.client.messages.create(
-							{
-								model: modelId,
-								max_tokens: maxTokens ?? ANTHROPIC_DEFAULT_MAX_TOKENS,
-								temperature,
-								thinking,
-								// Setting cache breakpoint for system prompt so new tasks can reuse it.
-								system: systemBlocksWithCache,
-								messages: sanitizedMessages.map((message, index) => {
-									if (index === lastUserMsgIndex || index === secondLastMsgUserIndex) {
-										return {
-											...message,
-											content:
-												typeof message.content === "string"
-													? [
-															{
-																type: "text",
-																text: message.content,
-																cache_control: cacheControl,
-															},
-														]
-													: message.content.map((content, contentIndex) =>
-															contentIndex === message.content.length - 1
-																? { ...content, cache_control: cacheControl }
-																: content,
-														),
-										}
+					stream = await this.client.messages.create(
+						{
+							model: modelId,
+							max_tokens: maxTokens ?? ANTHROPIC_DEFAULT_MAX_TOKENS,
+							temperature,
+							thinking,
+							// Setting cache breakpoint for system prompt so new tasks can reuse it.
+							system: systemBlocksWithCache,
+							messages: sanitizedMessages.map((message, index) => {
+								if (index === lastUserMsgIndex || index === secondLastMsgUserIndex) {
+									return {
+										...message,
+										content:
+											typeof message.content === "string"
+												? [
+														{
+															type: "text",
+															text: message.content,
+															cache_control: cacheControl,
+														},
+													]
+												: message.content.map((content, contentIndex) =>
+														contentIndex === message.content.length - 1
+															? { ...content, cache_control: cacheControl }
+															: content,
+													),
 									}
-									return message
-								}),
-								stream: true,
-								...nativeToolParams,
-							},
-							// Prompt caching is now GA ï¿?no special beta header needed.
-							// Pass remaining betas (e.g. fine-grained-tool-streaming, context-1m) if any.
-							betas && betas.length > 0 ? { headers: { "anthropic-beta": betas.join(",") } } : undefined,
-						),
+								}
+								return message
+							}),
+							stream: true,
+							...nativeToolParams,
+						},
+						// Prompt caching is now GA ï¿½?no special beta header needed.
+						// Pass remaining betas (e.g. fine-grained-tool-streaming, context-1m) if any.
+						betas && betas.length > 0 ? { headers: { "anthropic-beta": betas.join(",") } } : undefined,
 					)
 					break
 				}
 				default: {
-					stream = (await this.withRetry(() =>
-						this.client.messages.create({
-							model: modelId,
-							max_tokens: maxTokens ?? ANTHROPIC_DEFAULT_MAX_TOKENS,
-							temperature,
-							system: systemBlocksNoCache,
-							messages: sanitizedMessages,
-							stream: true,
-							...nativeToolParams,
-						}),
-					)) as UnsafeAny
+					stream = await this.client.messages.create({
+						model: modelId,
+						max_tokens: maxTokens ?? ANTHROPIC_DEFAULT_MAX_TOKENS,
+						temperature,
+						system: systemBlocksNoCache,
+						messages: sanitizedMessages,
+						stream: true,
+						...nativeToolParams,
+					}) as UnsafeAny
 					break
 				}
 			}
@@ -428,16 +424,14 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 	async completePrompt(prompt: string) {
 		const { id: model, temperature } = this.getModel()
 
-		const message = await this.withRetry(() =>
-			this.client.messages.create({
-				model,
-				max_tokens: ANTHROPIC_DEFAULT_MAX_TOKENS,
-				thinking: undefined,
-				temperature,
-				messages: [{ role: "user", content: prompt }],
-				stream: false,
-			}),
-		)
+		const message = await this.client.messages.create({
+			model,
+			max_tokens: ANTHROPIC_DEFAULT_MAX_TOKENS,
+			thinking: undefined,
+			temperature,
+			messages: [{ role: "user", content: prompt }],
+			stream: false,
+		})
 
 		const content = message.content.find(({ type }) => type === "text")
 		return content?.type === "text" ? content.text : ""

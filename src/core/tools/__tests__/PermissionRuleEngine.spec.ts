@@ -70,16 +70,35 @@ describe("PermissionRuleEngine", () => {
 			expect(recordSecurityMetric).toHaveBeenCalledWith("permission_bypass_allow", expect.any(Object))
 		})
 
-		it.each(["execute_command", "write_to_file", "apply_diff", "delete_file"] as const)(
-			"asks for hardened tool %s even in bypass mode",
-			(toolName) => {
-				const engine = new PermissionRuleEngine()
-				engine.setMode("bypass")
+		it("denies forbidden commands in bypass mode", () => {
+			const engine = new PermissionRuleEngine()
+			engine.setMode("bypass")
 
-				expect(engine.evaluate(toolName, {}, writeTool)).toBe("ask")
-				expect(recordSecurityMetric).toHaveBeenCalledWith("permission_bypass_hardened_ask", expect.any(Object))
-			},
-		)
+			expect(engine.evaluate("execute_command", { command: "rm -rf /" }, destructive)).toBe("deny")
+			expect(recordSecurityMetric).toHaveBeenCalledWith("permission_bypass_deny", expect.any(Object))
+		})
+
+		it("allows hardened tools in bypass mode when classifier passes", () => {
+			const engine = new PermissionRuleEngine()
+			engine.setMode("bypass")
+
+			expect(engine.evaluate("write_to_file", { path: "a.ts", content: "hello" }, writeTool)).toBe("allow")
+			expect(recordSecurityMetric).toHaveBeenCalledWith("permission_bypass_allow", expect.any(Object))
+		})
+
+		it("denies write_to_file in bypass mode when secrets are detected", () => {
+			const engine = new PermissionRuleEngine()
+			engine.setMode("bypass")
+
+			expect(
+				engine.evaluate(
+					"write_to_file",
+					{ path: "config.ts", content: "const apiKey = 'sk-1234567890abcdef'" },
+					writeTool,
+				),
+			).toBe("deny")
+			expect(recordSecurityMetric).toHaveBeenCalledWith("permission_bypass_deny", expect.any(Object))
+		})
 	})
 
 	describe("rule evaluation", () => {

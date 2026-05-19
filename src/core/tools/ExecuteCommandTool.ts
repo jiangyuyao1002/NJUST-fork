@@ -117,8 +117,21 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			task.consecutiveMistakeCount = 0
 
 			const safetyCheck = checkCommandSafety(canonicalCommand)
+			const isBypassMode = (task as Task & { permissionRuleEngine?: { getMode(): string } }).permissionRuleEngine?.getMode?.() === "bypass"
 
-			if (safetyCheck.requiresConfirmation) {
+			// Always block forbidden commands, even in bypass mode
+			if (safetyCheck.riskLevel === "forbidden") {
+				logger.warn("ExecuteCommandTool", "execute_command: forbidden command blocked:", canonicalCommand)
+				recordSecurityMetric("execute_command_high_risk", {
+					cmd: canonicalCommand.slice(0, 240),
+					riskLevel: safetyCheck.riskLevel,
+					reasons: safetyCheck.reasons.slice(0, 5).join(", "),
+				})
+				pushToolResult(formatResponse.toolError(`Forbidden command blocked: ${safetyCheck.reasons.join("; ")}`))
+				return
+			}
+
+			if (safetyCheck.requiresConfirmation && !isBypassMode) {
 				logger.warn("ExecuteCommandTool", "execute_command: high-risk pattern; user must approve in UI:", canonicalCommand)
 				recordSecurityMetric("execute_command_high_risk", {
 					cmd: canonicalCommand.slice(0, 240),
@@ -128,13 +141,15 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			}
 
 			await reportProgress?.({ icon: "terminal", text: "Waiting for command approval" } as UnsafeAny)
-			const approvalMessage = safetyCheck.requiresConfirmation
+			const approvalMessage = safetyCheck.requiresConfirmation && !isBypassMode
 				? `[High risk] This command may destroy data. Confirm to run:\n${canonicalCommand}\n\nReasons: ${safetyCheck.reasons.join("; ")}`
 				: canonicalCommand
-			const didApprove = await askApproval("command", approvalMessage)
 
-			if (!didApprove) {
-				return
+			if (!isBypassMode) {
+				const didApprove = await askApproval("command", approvalMessage)
+				if (!didApprove) {
+					return
+				}
 			}
 
 			const saveAllBeforeExecute = vscode.workspace

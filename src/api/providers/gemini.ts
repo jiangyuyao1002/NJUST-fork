@@ -208,7 +208,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 		const params: GenerateContentParameters = { model, contents, config }
 
 		try {
-			const result = await this.withRetry(() => this.client.models.generateContentStream(params))
+			const result = await this.client.models.generateContentStream(params)
 
 			let lastUsageMetadata: GenerateContentResponseUsageMetadata | undefined
 			let pendingGroundingMetadata: GroundingMetadata | undefined
@@ -434,7 +434,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 				config: promptConfig,
 			}
 
-			const result = await this.withRetry(() => this.client.models.generateContent(request))
+			const result = await this.client.models.generateContent(request)
 
 			let text = result.text ?? ""
 

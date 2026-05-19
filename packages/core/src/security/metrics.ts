@@ -10,6 +10,7 @@ type SecurityMetricName =
 	| "permission_deny"
 	| "permission_bypass_allow"
 	| "permission_bypass_hardened_ask"
+	| "permission_bypass_deny"
 	| "permission_auto_downgrade"
 	| "execute_command_high_risk"
 	| "tool_exec_duration_ms"

@@ -312,6 +312,32 @@ export class BashCommandAnalyzer {
 	}
 }
 
+// ── Secrets detection ────────────────────────────────────────────────
+
+const SECRET_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
+	{ pattern: /-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/, reason: "Private key detected" },
+	{ pattern: /AKIA[0-9A-Z]{16}/, reason: "AWS Access Key ID detected" },
+	{ pattern: /ghp_[a-zA-Z0-9]{36}/, reason: "GitHub personal access token detected" },
+	{ pattern: /gho_[a-zA-Z0-9]{36}/, reason: "GitHub OAuth token detected" },
+	{ pattern: /ghs_[a-zA-Z0-9]{36}/, reason: "GitHub server-to-server token detected" },
+	{ pattern: /xox[baprs]-[0-9]{10,13}-[0-9]{10,13}(-[a-zA-Z0-9]{24})?/, reason: "Slack token detected" },
+	{ pattern: /eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*/, reason: "JWT token detected" },
+	{ pattern: /api[_-]?key\s*[:=]\s*["']?[a-zA-Z0-9_\-]{16,}["']?/i, reason: "API key detected" },
+	{ pattern: /password\s*[:=]\s*["'][^"']{8,}["']/i, reason: "Hard-coded password detected" },
+	{ pattern: /secret\s*[:=]\s*["'][^"']{8,}["']/i, reason: "Hard-coded secret detected" },
+	{ pattern: /token\s*[:=]\s*["'][^"']{8,}["']/i, reason: "Hard-coded token detected" },
+]
+
+function detectSecrets(content: string): { found: boolean; reasons: string[] } {
+	const reasons: string[] = []
+	for (const { pattern, reason } of SECRET_PATTERNS) {
+		if (pattern.test(content)) {
+			reasons.push(reason)
+		}
+	}
+	return { found: reasons.length > 0, reasons }
+}
+
 // ── ClassifierStrategy implementation ────────────────────────────────
 
 /**
@@ -320,8 +346,11 @@ export class BashCommandAnalyzer {
  * This is the default classifier enabled in the PermissionRuleEngine.
  * It uses static regex patterns for high-confidence, zero-latency classification.
  *
- * Only activates for `execute_command` tool invocations with a string `command`
- * parameter. All other tools pass through with a neutral "allow" result.
+ * Activates for:
+ *   - `execute_command` with a string `command` parameter
+ *   - `write_to_file` with a string `content` parameter (secrets detection)
+ *
+ * All other tools pass through with a neutral "allow" result.
  */
 export class StaticPatternClassifier implements ClassifierStrategy {
 	readonly name = "static-pattern"
@@ -332,26 +361,37 @@ export class StaticPatternClassifier implements ClassifierStrategy {
 		input: Record<string, unknown>,
 		_context: ClassifierContext,
 	): ClassifyResult {
-		if (toolName !== "execute_command" || typeof input.command !== "string") {
+		if (toolName === "execute_command" && typeof input.command === "string") {
+			const analysis = analyzeBashCommand(input.command)
 			return {
-				action: "allow",
-				reason: "Not a bash command — no pattern analysis needed",
-				confidence: 0.3,
+				action: riskToAction(analysis.riskLevel),
+				reason:
+					analysis.reasons.length > 0 ? analysis.reasons.join("; ") : "No security risks detected",
+				confidence: riskToConfidence(analysis.riskLevel),
+				metadata: {
+					riskLevel: analysis.riskLevel,
+					patternCount: analysis.reasons.length,
+					segments: analysis.segments?.length,
+				},
 			}
 		}
 
-		const analysis = analyzeBashCommand(input.command)
+		if (toolName === "write_to_file" && typeof input.content === "string") {
+			const secretCheck = detectSecrets(input.content)
+			if (secretCheck.found) {
+				return {
+					action: "deny",
+					reason: `Secrets detected in file content: ${secretCheck.reasons.join("; ")}`,
+					confidence: 0.95,
+					metadata: { secretPatterns: secretCheck.reasons.length },
+				}
+			}
+		}
 
 		return {
-			action: riskToAction(analysis.riskLevel),
-			reason:
-				analysis.reasons.length > 0 ? analysis.reasons.join("; ") : "No security risks detected",
-			confidence: riskToConfidence(analysis.riskLevel),
-			metadata: {
-				riskLevel: analysis.riskLevel,
-				patternCount: analysis.reasons.length,
-				segments: analysis.segments?.length,
-			},
+			action: "allow",
+			reason: "No pattern analysis needed",
+			confidence: 0.3,
 		}
 	}
 

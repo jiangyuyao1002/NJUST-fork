@@ -627,15 +627,8 @@ describe("Cline", () => {
 					startTask: false,
 				})
 
-				// Mock delay to track countdown timing
-				const mockDelay = vi.mocked(delay)
-				mockDelay.mockClear()
-				mockDelay.mockResolvedValue(undefined)
-
-				// Mock say to track messages
-				const saySpy = vi.spyOn(cline, "say")
-
-				// Create a stream that fails on first chunk
+				// Replace the wrapped API with a plain mock so Task-level retry
+				// behaviour can be tested in isolation from Provider-level retries.
 				const mockError = Object.assign(new Error("Rate limit exceeded"), { status: 429 })
 				const mockFailedStream = {
 					// eslint-disable-next-line require-yield
@@ -656,7 +649,6 @@ describe("Cline", () => {
 					},
 				} as AsyncGenerator<ApiStreamChunk>
 
-				// Create a successful stream for retry
 				const mockSuccessStream = {
 					async *[Symbol.asyncIterator]() {
 						yield { type: "text", text: "Success" }
@@ -675,15 +667,26 @@ describe("Cline", () => {
 					},
 				} as AsyncGenerator<ApiStreamChunk>
 
-				// Mock createMessage to fail first then succeed
 				let firstAttempt = true
-				vi.spyOn(cline.api, "createMessage").mockImplementation(() => {
-					if (firstAttempt) {
-						firstAttempt = false
-						return mockFailedStream
-					}
-					return mockSuccessStream
-				})
+				cline.api = {
+					createMessage: vi.fn().mockImplementation(() => {
+						if (firstAttempt) {
+							firstAttempt = false
+							return mockFailedStream
+						}
+						return mockSuccessStream
+					}),
+					getModel: vi.fn().mockReturnValue({ id: "test-model", info: {} as any }),
+					countTokens: vi.fn().mockResolvedValue(0),
+				} as any
+
+				// Mock delay to track countdown timing
+				const mockDelay = vi.mocked(delay)
+				mockDelay.mockClear()
+				mockDelay.mockResolvedValue(undefined)
+
+				// Mock say to track messages
+				const saySpy = vi.spyOn(cline, "say")
 
 				// Set up mock state
 				mockProvider.getState = vi.fn().mockResolvedValue({
@@ -749,6 +752,8 @@ describe("Cline", () => {
 					task: "test task",
 				})
 
+				// Replace wrapped API with plain mock so Task-level retry is tested
+				// in isolation from Provider-level retries.
 				const mockError = new Error("Persistent API Error")
 				const mockFailedStream = {
 					// eslint-disable-next-line require-yield
@@ -769,7 +774,11 @@ describe("Cline", () => {
 					},
 				} as AsyncGenerator<ApiStreamChunk>
 
-				vi.spyOn(cline.api, "createMessage").mockImplementation(() => mockFailedStream)
+				cline.api = {
+					createMessage: vi.fn().mockImplementation(() => mockFailedStream),
+					getModel: vi.fn().mockReturnValue({ id: "test-model", info: {} as any }),
+					countTokens: vi.fn().mockResolvedValue(0),
+				} as any
 
 				mockProvider.getState = vi.fn().mockResolvedValue({
 					autoApprovalEnabled: true,
@@ -793,15 +802,8 @@ describe("Cline", () => {
 					startTask: false,
 				})
 
-				// Mock delay to track countdown timing
-				const mockDelay = vi.mocked(delay)
-				mockDelay.mockClear()
-				mockDelay.mockResolvedValue(undefined)
-
-				// Mock say to track messages
-				const saySpy = vi.spyOn(cline, "say")
-
-				// Create a stream that fails on first chunk
+				// Replace wrapped API with plain mock so Task-level retry is tested
+				// in isolation from Provider-level retries.
 				const mockError = Object.assign(new Error("Rate limit exceeded"), { status: 429 })
 				const mockFailedStream = {
 					// eslint-disable-next-line require-yield
@@ -822,7 +824,6 @@ describe("Cline", () => {
 					},
 				} as AsyncGenerator<ApiStreamChunk>
 
-				// Create a successful stream for retry
 				const mockSuccessStream = {
 					async *[Symbol.asyncIterator]() {
 						yield { type: "text", text: "Success" }
@@ -841,15 +842,26 @@ describe("Cline", () => {
 					},
 				} as AsyncGenerator<ApiStreamChunk>
 
-				// Mock createMessage to fail first then succeed
 				let firstAttempt = true
-				vi.spyOn(cline.api, "createMessage").mockImplementation(() => {
-					if (firstAttempt) {
-						firstAttempt = false
-						return mockFailedStream
-					}
-					return mockSuccessStream
-				})
+				cline.api = {
+					createMessage: vi.fn().mockImplementation(() => {
+						if (firstAttempt) {
+							firstAttempt = false
+							return mockFailedStream
+						}
+						return mockSuccessStream
+					}),
+					getModel: vi.fn().mockReturnValue({ id: "test-model", info: {} as any }),
+					countTokens: vi.fn().mockResolvedValue(0),
+				} as any
+
+				// Mock delay to track countdown timing
+				const mockDelay = vi.mocked(delay)
+				mockDelay.mockClear()
+				mockDelay.mockResolvedValue(undefined)
+
+				// Mock say to track messages
+				const saySpy = vi.spyOn(cline, "say")
 
 				// Set up mock state
 				mockProvider.getState = vi.fn().mockResolvedValue({

@@ -90,18 +90,7 @@ function matchToolPattern(pattern: string, toolName: string): boolean {
  *  - Denial tracking with auto-downgrade (configurable threshold)
  *  - Extended rule sources (policySettings for organization-level policies)
  */
-/**
- * Tools that always require user confirmation even in bypass mode.
- * These can cause irreversible damage to the workspace or system.
- */
-const BYPASS_HARDENED_TOOLS = new Set([
-	"execute_command",
-	"write_to_file",
-	"apply_diff",
-	"delete_file",
-	"insert_content",
-	"search_and_replace",
-])
+
 
 export class PermissionRuleEngine {
 	private rules: PermissionRule[] = []
@@ -264,17 +253,21 @@ export class PermissionRuleEngine {
 		switch (this.mode) {
 			case "bypass": {
 				const audit = summarizeParamsForAudit(toolName, params)
-				if (toolMeta.isDestructive || BYPASS_HARDENED_TOOLS.has(toolName)) {
+				// In bypass mode we skip user-confirmation pop-ups, but we still run
+				// the classifier chain so that dangerous commands / network ops /
+				// secrets are blocked automatically.
+				const classifierAction = this.runClassifierChainSync(toolName, params, toolMeta)
+				if (classifierAction === "deny") {
 					logger.warn(
 						"PermissionRuleEngine",
-						`Permission mode is "bypass" but tool=${toolName} is hardened: requiring confirmation. params=${audit}`,
+						`Permission mode is "bypass" but classifier denied tool=${toolName}. params=${audit}`,
 					)
-					recordSecurityMetric("permission_bypass_hardened_ask", { tool: toolName, paramSummary: audit })
-					return "ask"
+					recordSecurityMetric("permission_bypass_deny", { tool: toolName, paramSummary: audit })
+					return "deny"
 				}
 				logger.warn(
 					"PermissionRuleEngine",
-					`Permission mode is "bypass": auto-allowing tool=${toolName} (all permission checks skipped). params=${audit}`,
+					`Permission mode is "bypass": auto-allowing tool=${toolName} (user confirmation skipped). params=${audit}`,
 				)
 				recordSecurityMetric("permission_bypass_allow", { tool: toolName, paramSummary: audit })
 				return "allow"
@@ -401,9 +394,11 @@ export class PermissionRuleEngine {
 		switch (this.mode) {
 			case "bypass": {
 				const audit = summarizeParamsForAudit(toolName, params)
-				if (toolMeta.isDestructive || BYPASS_HARDENED_TOOLS.has(toolName)) {
-					recordSecurityMetric("permission_bypass_hardened_ask", { tool: toolName, paramSummary: audit })
-					return "ask"
+				// Run classifier chain even in bypass mode (dangerous command / network / secrets checks).
+				const classifierAction = this.runClassifierChainSync(toolName, params, toolMeta)
+				if (classifierAction === "deny") {
+					recordSecurityMetric("permission_bypass_deny", { tool: toolName, paramSummary: audit })
+					return "deny"
 				}
 				recordSecurityMetric("permission_bypass_allow", { tool: toolName, paramSummary: audit })
 				return "allow"

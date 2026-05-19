@@ -14,9 +14,6 @@ import { BaseProvider } from "./base-provider"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { calculateApiCostOpenAI, resolveOpenAiUsageForCost } from "../../shared/cost"
 import { getApiRequestTimeout } from "./utils/timeout-config"
-import { analyzeErrorForRetry } from "../retry/ApiErrorClassifier"
-import { computeBackoffMs, DEFAULT_API_RETRY_OPTIONS, delayMs } from "../retry/ApiRetryStrategy"
-import { taskEventBus } from "../../core/events/TaskEventBus"
 
 type BaseOpenAiCompatibleProviderOptions<ModelName extends string> = ApiHandlerOptions & {
 	providerName: string
@@ -42,41 +39,6 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 
 	protected override shouldUseStrictMode(): boolean {
 		return false
-	}
-
-	/**
-	 * Retries only the transport/setup phase (before any chunks are yielded).
-	 * Mid-stream failures are handled by the task loop.
-	 */
-	private async openStreamWithRetry(
-		systemPrompt: string,
-		messages: Anthropic.Messages.MessageParam[],
-		metadata?: ApiHandlerCreateMessageMetadata,
-	): Promise<Awaited<ReturnType<BaseOpenAiCompatibleProvider<ModelName>["createStream"]>>> {
-		let lastError: UnsafeAny
-		for (let attempt = 0; attempt < DEFAULT_API_RETRY_OPTIONS.maxAttempts; attempt++) {
-			try {
-				return await this.createStream(systemPrompt, messages, metadata)
-			} catch (error) {
-				lastError = error
-				const decision = analyzeErrorForRetry(error)
-				if (!decision.shouldRetry || attempt >= DEFAULT_API_RETRY_OPTIONS.maxAttempts - 1) {
-					throw error
-				}
-				const delay = computeBackoffMs(attempt, DEFAULT_API_RETRY_OPTIONS, decision.retryAfterSeconds)
-				taskEventBus.emit("task:llm-retry", {
-					taskId: metadata?.taskId,
-					data: {
-						attempt: attempt + 1,
-						delayMs: delay,
-						category: decision.category,
-						provider: this.providerName,
-					},
-				})
-				await delayMs(delay)
-			}
-		}
-		throw lastError ?? new Error(`${this.providerName}: failed to open stream`)
 	}
 
 	constructor({
@@ -157,7 +119,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 		messages: Anthropic.Messages.MessageParam[],
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): ApiStream {
-		const stream = await this.openStreamWithRetry(systemPrompt, messages, metadata)
+		const stream = await this.createStream(systemPrompt, messages, metadata)
 
 		const matcher = new TagMatcher(
 			"think",
