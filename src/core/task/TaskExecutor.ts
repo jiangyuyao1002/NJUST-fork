@@ -25,7 +25,9 @@ import {
 	getApiProtocol,
 	getModelId,
 	isRetiredProvider,
+	TelemetryEventName,
 } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import type { ApiHandlerCreateMessageMetadata } from "../../api"
 import { resolveParallelNativeToolCalls } from "../../shared/parallelToolCalls"
@@ -693,6 +695,7 @@ export class TaskExecutor {
 					errMsg,
 					error instanceof Error ? error.stack : "",
 				)
+				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				if (h.presentAssistantMessageLocked) {
 					logger.warn(
 						"TaskExecutor",

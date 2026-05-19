@@ -2,6 +2,7 @@ import { serializeError } from "serialize-error"
 import { Anthropic } from "@anthropic-ai/sdk"
 
 import type { ToolName, ClineAsk, ToolProgressStatus } from "@njust-ai-cj/types"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { customToolRegistry } from "@njust-ai-cj/core"
 
 import { t } from "../../i18n"
@@ -11,6 +12,7 @@ import type { ToolResponse, ToolUse, McpToolUse, PushToolResultOptions } from ".
 import { getErrorMessage, wrapAsError } from "../../shared/error-utils"
 
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import { Task } from "../task/Task"
 import { TaskState } from "../task/TaskStateMachine"
@@ -137,6 +139,7 @@ export async function presentAssistantMessage(cline: Task) {
 					`Block content:`,
 					JSON.stringify(cline.assistantMessageContent[cline.currentStreamingContentIndex], null, 2),
 				)
+				TelemetryService.reportError(error, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 				cline.presentAssistantMessageLocked = false
 				return
 			}
@@ -530,6 +533,7 @@ export async function presentAssistantMessage(cline: Task) {
 							"[presentAssistantMessage] Auto-approve eager batch path failed; falling back to serial execution:",
 							err,
 						)
+						TelemetryService.reportError(err, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 					}
 					// Native tool calling is the only supported tool calling mechanism.
 					// A tool_use block without an id is invalid and cannot be executed.
@@ -902,6 +906,7 @@ export async function presentAssistantMessage(cline: Task) {
 								content: typeof errorContent === "string" ? errorContent : "(validation error)",
 								is_error: true,
 							})
+							TelemetryService.reportError(error, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 
 							break
 						}
@@ -989,6 +994,7 @@ export async function presentAssistantMessage(cline: Task) {
 									`[presentAssistantMessage] Tool ${block.name} failed after retries:`,
 									getErrorMessage(err),
 								)
+								TelemetryService.reportError(err, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 								pushToolResult(
 									formatResponse.toolError(`Tool ${block.name} failed: ${getErrorMessage(err)}`),
 								)
@@ -1015,6 +1021,7 @@ export async function presentAssistantMessage(cline: Task) {
 											} catch (parseParamsError: UnsafeAny) {
 												const message = `Custom tool "${block.name}" argument validation failed: ${getErrorMessage(parseParamsError)}`
 												logger.error("PresentAssistantMessage", message)
+												TelemetryService.reportError(parseParamsError, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 												cline.consecutiveMistakeCount++
 												await cline.say("error", message)
 												pushToolResult(formatResponse.toolError(message))
@@ -1038,6 +1045,7 @@ export async function presentAssistantMessage(cline: Task) {
 									} catch (executionError: UnsafeAny) {
 										cline.consecutiveMistakeCount++
 										cline.recordToolError("custom_tool", getErrorMessage(executionError))
+										TelemetryService.reportError(executionError, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 										await handleError(
 											`executing custom tool "${block.name}"`,
 											wrapAsError(executionError),
@@ -1127,5 +1135,6 @@ async function checkpointSaveAndMark(task: Task) {
 			`[Task#presentAssistantMessage] Error saving checkpoint: ${error instanceof Error ? getErrorMessage(error) : String(error)}`,
 			error,
 		)
+		TelemetryService.reportError(error, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 	}
 }

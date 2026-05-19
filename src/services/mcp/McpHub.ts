@@ -23,6 +23,7 @@ import {
 	type McpServer,
 	type McpTool,
 	type McpToolCallResponse,
+	TelemetryEventName,
 	NJUST_AI_CONFIG_DIR,
 } from "@njust-ai-cj/types"
 
@@ -37,6 +38,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { TIMING } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
 import {
@@ -184,7 +186,10 @@ export class McpHub implements IMcpHubService {
 	constructor(provider: IMcpHubClient) {
 		this.providerRef = new WeakRef(provider)
 		void this.watchMcpSettingsFile()
-		this.watchProjectMcpFile().catch((err) => logger.error("McpHub", "watchProjectMcpFile failed:", err))
+		this.watchProjectMcpFile().catch((err) => {
+			logger.error("McpHub", "watchProjectMcpFile failed:", err)
+			TelemetryService.reportError(err, TelemetryEventName.MCP_ERROR)
+		})
 		this.setupWorkspaceFoldersWatcher()
 		this.initializationPromise = Promise.all([
 			this.initializeGlobalMcpServers(),
@@ -347,6 +352,7 @@ export class McpHub implements IMcpHubService {
 			} catch (parseError) {
 				const errorMessage = t("mcp:errors.invalid_settings_syntax")
 				logger.error("McpHub", errorMessage, parseError)
+				TelemetryService.reportError(parseError, TelemetryEventName.MCP_ERROR)
 				vscode.window.showErrorMessage(errorMessage)
 				return
 			}
@@ -433,6 +439,7 @@ export class McpHub implements IMcpHubService {
 			} catch (parseError) {
 				const errorMessage = t("mcp:errors.invalid_settings_syntax")
 				logger.error("McpHub", errorMessage, parseError)
+				TelemetryService.reportError(parseError, TelemetryEventName.MCP_ERROR)
 				vscode.window.showErrorMessage(errorMessage)
 				return
 			}
@@ -587,6 +594,7 @@ export class McpHub implements IMcpHubService {
 						await this.updateServerConnections(config.mcpServers || {}, source, false)
 					} catch (error) {
 						this.showErrorMessage(`Failed to initialize ${source} MCP servers with raw config`, error)
+						TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 					}
 				}
 			}
@@ -598,6 +606,7 @@ export class McpHub implements IMcpHubService {
 			} else {
 				this.showErrorMessage(`Failed to initialize ${source} MCP servers`, error)
 			}
+			TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 		}
 	}
 
@@ -799,6 +808,7 @@ export class McpHub implements IMcpHubService {
 					logger.info("McpHub", `refreshTools: Refreshed ${tools.length} tool(s) for server "${name}"`)
 				} catch (error) {
 					logger.error("McpHub", `refreshTools: Failed to refresh tools for "${name}":`, error)
+					TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 					result.set(name, -1) // -1 signals failure
 				}
 			}),
@@ -827,6 +837,7 @@ export class McpHub implements IMcpHubService {
 				}
 			} catch (error) {
 				logger.error("McpHub", `Failed to close transport for ${name}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			}
 		}
 
@@ -942,6 +953,7 @@ export class McpHub implements IMcpHubService {
 						await this.restartConnection(name, source)
 					} catch (error) {
 						logger.error("McpHub", `Failed to restart server ${name} after change in ${changedPath}:`, error)
+						TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 					}
 				})
 
@@ -964,6 +976,7 @@ export class McpHub implements IMcpHubService {
 						await this.restartConnection(name, source)
 					} catch (error) {
 						logger.error("McpHub", `Failed to restart server ${name} after change in ${filePath}:`, error)
+						TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 					}
 				})
 
@@ -1079,6 +1092,7 @@ export class McpHub implements IMcpHubService {
 				_globalServers = globalConfig.mcpServers || {}
 			} catch (error) {
 				logger.warn("McpHub", "Error reading global MCP config:", error)
+				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			}
 
 			const projectPath = await this.getProjectMcpPath()
@@ -1090,6 +1104,7 @@ export class McpHub implements IMcpHubService {
 					_projectServers = projectConfig.mcpServers || {}
 				} catch (error) {
 					logger.warn("McpHub", "Error reading project MCP config:", error)
+					TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 				}
 			}
 
@@ -1165,6 +1180,7 @@ export class McpHub implements IMcpHubService {
 				await targetClient.onMcpServersUpdated(serversToSend)
 			} catch (error) {
 				logger.error("McpHub", "Error calling onMcpServersUpdated:", error)
+				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			}
 		} else {
 			logger.error("McpHub", "No target provider available (neither from getInstance nor providerRef) - cannot send mcpServers message to webview")
@@ -1258,6 +1274,7 @@ export class McpHub implements IMcpHubService {
 			timeout = (parsedConfig.timeout ?? 60) * 1000
 		} catch (error) {
 			logger.error("McpHub", "Failed to parse server config for timeout:", error)
+			TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			// Default to 60 seconds if parsing fails
 			timeout = 60 * 1000
 		}
@@ -1350,6 +1367,7 @@ export class McpHub implements IMcpHubService {
 						error: errorMessage,
 					})
 					logger.error("McpHub", `Failed to disconnect MCP server ${conn.server.name}: ${errorMessage}`)
+					TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 				}
 			}
 
@@ -1369,6 +1387,7 @@ export class McpHub implements IMcpHubService {
 				await this.refreshAllConnections()
 			} catch (error) {
 				logger.error("McpHub", `Failed to refresh MCP connections after disabling: ${error}`)
+				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 				vscode.window.showErrorMessage(t("mcp:errors.refresh_after_disable"))
 			}
 		} else {
@@ -1377,6 +1396,7 @@ export class McpHub implements IMcpHubService {
 				await this.refreshAllConnections()
 			} catch (error) {
 				logger.error("McpHub", `Failed to refresh MCP connections after enabling: ${error}`)
+				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 				vscode.window.showErrorMessage(t("mcp:errors.refresh_after_enable"))
 			}
 		}
@@ -1411,6 +1431,7 @@ export class McpHub implements IMcpHubService {
 				await this.deleteConnection(connection.server.name, connection.server.source)
 			} catch (error) {
 				logger.error("McpHub", `Failed to close connection for ${connection.server.name}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			}
 		}
 

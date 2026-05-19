@@ -10,7 +10,8 @@
  */
 import type { Anthropic } from "@anthropic-ai/sdk"
 import type { ClineMessage, ProviderSettings } from "@njust-ai-cj/types"
-import { NJUST_AI_CJEventName, getApiProtocol, getModelId, isRetiredProvider } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, TelemetryEventName, getApiProtocol, getModelId, isRetiredProvider } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { defaultModeSlug } from "../../shared/modes"
 import {
 	type ApiMessage,
@@ -263,6 +264,7 @@ export class TaskMessageManager {
 				logger.warn("TaskMessageManager",
 					`flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved for task ${this.ctx.taskId}`,
 				)
+				TelemetryService.reportError(new Error("flushPendingToolResultsToHistory timeout"), TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			})
 		}
 
@@ -305,6 +307,7 @@ export class TaskMessageManager {
 			return true
 		} catch (error) {
 			logger.error("TaskMessageManager", "Failed to save API conversation history:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			return false
 		}
 	}
@@ -384,6 +387,7 @@ export class TaskMessageManager {
 			return true
 		} catch (error) {
 			logger.error("TaskMessageManager", "Failed to save Roo messages:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			return false
 		}
 	}

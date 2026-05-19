@@ -1,11 +1,12 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { getApiProtocol, type ImageGenerationApiMethod } from "@njust-ai-cj/types"
+import { getApiProtocol, type ImageGenerationApiMethod, TelemetryEventName } from "@njust-ai-cj/types"
 import { rooDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import { Package } from "../../shared/package"
 import type { ApiHandlerOptions } from "../../shared/api"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../shared/logger"
 import { ApiStream } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
@@ -66,6 +67,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 
 		this.loadDynamicModels(this.fetcherBaseURL, sessionToken).catch((error) => {
 			logger.error("RooHandler", "Failed to load dynamic models:", error)
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 		})
 	}
 
@@ -328,6 +330,8 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 
 			logger.error("RooHandler", `Error during message streaming: ${JSON.stringify(errorContext)}`)
 
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
+
 			throw error
 		}
 	}
@@ -353,6 +357,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 				baseURL,
 				hasApiKey: Boolean(apiKey),
 			})
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 		}
 	}
 

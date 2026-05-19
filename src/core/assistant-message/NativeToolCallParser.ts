@@ -1,6 +1,6 @@
 import { parseJSON } from "partial-json"
 
-import { type ToolName, toolNames, type FileEntry } from "@njust-ai-cj/types"
+import { type ToolName, toolNames, type FileEntry, TelemetryEventName } from "@njust-ai-cj/types"
 import { customToolRegistry } from "@njust-ai-cj/core"
 
 import {
@@ -19,6 +19,7 @@ import type {
 import { MCP_TOOL_PREFIX, MCP_TOOL_SEPARATOR, parseMcpToolName, normalizeMcpToolName } from "../../utils/mcp-name"
 import { getErrorMessage } from "../../shared/error-utils"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 /**
  * Helper type to extract properly typed native arguments for a given tool.
@@ -1188,6 +1189,7 @@ export class NativeToolCallParser {
 			)
 
 			logger.error("NativeToolCallParser", `Tool call: ${JSON.stringify(toolCall, null, 2)}`)
+			TelemetryService.reportError(error, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 			return null
 		}
 	}
@@ -1230,6 +1232,7 @@ export class NativeToolCallParser {
 			return result
 		} catch (error) {
 			logger.error("NativeToolCallParser", `Failed to parse dynamic MCP tool:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
 			return null
 		}
 	}

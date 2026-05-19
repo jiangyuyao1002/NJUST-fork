@@ -16,7 +16,8 @@ import {
 } from "@njust-ai-cj/types"
 import { findLastIndex } from "../../shared/array"
 import { formatResponse } from "../../core/prompts/responses"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import type { TaskAskSayHost } from "./interfaces/TaskAskSayHost"
 import { logger } from "../../shared/logger"
 import pWaitFor from "p-wait-for"
@@ -246,6 +247,7 @@ export class TaskAskSayHandler {
 				this.host.clineMessages[lastFollowUpIndex]!.isAnswered = true
 				this.host.saveClineMessages().catch((error) => {
 					logger.error("TaskAskSayHandler", "Failed to save answered follow-up state:", error)
+					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			}
 		}
@@ -260,6 +262,7 @@ export class TaskAskSayHandler {
 				void this.host.updateClineMessage(this.host.clineMessages[lastToolAskIndex]!)
 				this.host.saveClineMessages().catch((error) => {
 					logger.error("TaskAskSayHandler", "Failed to save answered tool-ask state:", error)
+					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			}
 		}

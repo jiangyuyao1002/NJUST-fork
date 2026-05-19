@@ -65,6 +65,12 @@ export class TelemetryService {
 		return !!TelemetryService._instance
 	}
 
+	static reportError(error: unknown, event: string): void {
+		if (TelemetryService._instance) {
+			TelemetryService._instance.captureException(error, { event })
+		}
+	}
+
 	static getInstance(): TelemetryService {
 		return TelemetryService.instance
 	}

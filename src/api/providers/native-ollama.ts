@@ -1,11 +1,12 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import { Message, Ollama, Tool as OllamaTool, type Config as OllamaOptions } from "ollama"
-import { ModelInfo } from "@njust-ai-cj/types"
+import { ModelInfo, TelemetryEventName } from "@njust-ai-cj/types"
 import { openAiModelInfoSaneDefaults, DEEP_SEEK_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
 import { ApiStream } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import type { ApiHandlerOptions } from "../../shared/api"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { getOllamaModels } from "./fetchers/ollama"
@@ -318,6 +319,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 					"Error processing Ollama stream:",
 					redactApiSecrets(getErrorMessage(streamError)),
 				)
+				TelemetryService.reportError(streamError, TelemetryEventName.API_PROVIDER_ERROR)
 				throw new Error(redactApiSecrets(`Ollama stream processing error: ${getErrorMessage(streamError)}`))
 			} finally {
 				// Flush accumulated matcher content on error to avoid losing partial output

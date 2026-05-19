@@ -5,7 +5,7 @@ import * as os from "os"
 import * as path from "path"
 import { z } from "zod"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo, TelemetryEventName } from "@njust-ai-cj/types"
 import { qwenCodeModels, qwenCodeDefaultModelId } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -13,6 +13,7 @@ import type { ApiHandlerOptions } from "../../shared/api"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { ApiStream } from "../transform/stream"
 
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
@@ -102,6 +103,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 				"QwenCode",
 				`Error reading or parsing credentials file at ${getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)}`,
 			)
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 			throw new Error(`Failed to load Qwen OAuth credentials: ${error}`)
 		}
 	}
@@ -172,6 +174,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			await fs.writeFile(filePath, JSON.stringify(newCredentials, null, 2))
 		} catch (error) {
 			logger.error("QwenCode", "Failed to save refreshed credentials:", error)
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 			// Continue with the refreshed token in memory even if file write fails
 		}
 

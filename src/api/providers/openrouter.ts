@@ -2,7 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import { z } from "zod"
 
-import { type ModelRecord } from "@njust-ai-cj/types"
+import { type ModelRecord, TelemetryEventName } from "@njust-ai-cj/types"
 import {
 	openRouterDefaultModelId,
 	openRouterDefaultModelInfo,
@@ -36,6 +36,7 @@ import { handleOpenAIError } from "./utils/openai-error-handler"
 import { generateImageWithProvider, ImageGenerationResult } from "./utils/image-generation"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { globalCostTracker } from "../../utils/costTracker"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../shared/logger"
 import { requireApiKey } from "../interfaces/api-key-validator"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -169,6 +170,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 		// Load models asynchronously to populate cache before getModel() is called
 		this.loadDynamicModels().catch((error) => {
 			logger.error("OpenRouter", "Failed to load dynamic models:", error)
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 		})
 	}
 
@@ -194,6 +196,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 				error: getErrorMessage(error),
 				stack: error instanceof Error ? error.stack : undefined,
 			})
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 		}
 	}
 

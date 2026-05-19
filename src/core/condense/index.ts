@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk"
 import crypto from "crypto"
 
 import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 import { t } from "../../i18n"
 import { ApiHandler, ApiHandlerCreateMessageMetadata } from "../../api"
@@ -431,6 +432,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 				"[summarizeConversation] Cache-sharing path failed, falling back to simplified path:",
 				getErrorMessage(err),
 			)
+			TelemetryService.reportError(err, TelemetryEventName.CONDENSE_ERROR)
 		}
 	}
 
@@ -462,6 +464,7 @@ export async function summarizeConversation(options: SummarizeConversationOption
 		} catch (error) {
 			// Non-PTL error or exhausted retries — fail
 			logger.error("Condense", "Error during condensing API call:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CONDENSE_ERROR)
 			const errorMessage = getErrorMessage(error)
 
 			let errorDetails = ""
@@ -551,6 +554,7 @@ ${commandBlocks}
 			}
 		} catch (error) {
 			logger.error("Condense", "[summarizeConversation] Failed to generate folded file context:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CONDENSE_ERROR)
 			// Continue without folded context - non-critical failure
 		}
 	}

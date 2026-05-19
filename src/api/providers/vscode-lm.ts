@@ -2,7 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import * as vscode from "vscode"
 import OpenAI from "openai"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo, TelemetryEventName } from "@njust-ai-cj/types"
 import { openAiModelInfoSaneDefaults } from "@njust-ai-cj/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -12,6 +12,7 @@ import { normalizeToolSchema } from "../../utils/json-schema"
 import { ApiStream } from "../transform/stream"
 import { convertToVsCodeLmMessages, extractTextCountFromMessage } from "../transform/vscode-lm-format"
 
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
@@ -87,6 +88,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 						this.ensureCleanState()
 					} catch (error) {
 						logger.error("VsCodeLm", "Error during configuration change cleanup:", error)
+						TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 					}
 				}
 			})
@@ -119,6 +121,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			// Handle errors during client initialization
 			const errorMessage = getErrorMessage(error)
 			logger.error("VsCodeLm", "Client initialization failed:", errorMessage)
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to initialize client: ${errorMessage}`)
 		}
 	}
@@ -294,6 +297,8 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			const errorMessage = getErrorMessage(error)
 			logger.warn("VsCodeLm", "Token counting failed:", errorMessage)
 
+			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
+
 			// Log additional error details if available
 			if (error instanceof Error && error.stack) {
 				debugLog("Token counting error stack:", error.stack)
@@ -341,6 +346,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			} catch (error) {
 				const message = getErrorMessage(error)
 				logger.error("VsCodeLm", "Client creation failed:", message)
+				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to create client: ${message}`)
 			}
 		}
@@ -468,6 +474,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 						}
 					} catch (error) {
 						logger.error("VsCodeLm", "Failed to process tool call:", error)
+						TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 						// Continue processing other chunks even if one fails
 						continue
 					}
@@ -492,12 +499,14 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				throw new Error("NJUST_AI_CJ <Language Model API>: Request cancelled by user")
 			}
 
-			if (error instanceof Error) {
+				if (error instanceof Error) {
 				logger.error("VsCodeLm", "Stream error details:", {
 					message: error.message,
 					stack: error.stack,
 					name: error.name,
 				})
+
+				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 
 				// Return original error if it's already an Error instance
 				throw error
@@ -505,11 +514,13 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				// Handle error-like objects
 				const errorDetails = JSON.stringify(error, null, 2)
 				logger.error("VsCodeLm", "Stream error object:", errorDetails)
+				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorDetails}`)
 			} else {
 				// Fallback for UnsafeAny error types
 				const errorMessage = String(error)
 				logger.error("VsCodeLm", "Unknown stream error:", errorMessage)
+				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorMessage}`)
 			}
 		}
@@ -608,6 +619,7 @@ export async function getVsCodeLmModels() {
 			"VsCodeLm",
 			`Error fetching VS Code LM models: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
 		)
+		TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 		return []
 	}
 }

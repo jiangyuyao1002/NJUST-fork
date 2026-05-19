@@ -29,6 +29,7 @@ import {
 	type ModelInfo,
 	type ClineApiReqCancelReason,
 	NJUST_AI_CJEventName,
+	TelemetryEventName,
 	TaskStatus,
 	TodoItem,
 	QueuedMessage,
@@ -38,6 +39,7 @@ import {
 	MIN_CHECKPOINT_TIMEOUT_SECONDS,
 	countEnabledMcpTools,
 } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 // api
 import { ApiHandler, buildApiHandler } from "../../api"
@@ -644,6 +646,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		this.rooIgnoreController.initialize().catch((error) => {
 			logger.error("Task", "Failed to initialize RooIgnoreController:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		})
 
 		this.apiConfiguration = apiConfiguration
@@ -739,10 +742,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			if (task || images) {
 				void this.startTask(task, images).catch((error) => {
 					logger.error("startTask failed", error)
+					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			} else if (historyItem) {
 				void this.resumeTaskFromHistory().catch((error) => {
 					logger.error("resumeTaskFromHistory failed", error)
+					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			} else {
 				throw new Error("Either historyItem or task/images must be provided")
@@ -851,6 +856,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					`Failed to update API configuration on profile change for task ${this.taskId}.${this.instanceId}:`,
 					error,
 				)
+				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			}
 		}
 
@@ -1157,6 +1163,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// Save the updated messages
 				this.saveClineMessages().catch((error) => {
 					logger.error("Task", "Failed to save answered follow-up state:", error)
+					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			}
 		}
@@ -1174,6 +1181,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				})
 				this.saveClineMessages().catch((error) => {
 					logger.error("Task", "Failed to save answered tool-ask state:", error)
+					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			}
 		}
@@ -1287,6 +1295,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 		} catch (error) {
 			logger.error("Task", "submitUserMessage: Failed to submit user message:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 	}
 
@@ -1367,6 +1376,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			return countEnabledMcpTools(servers)
 		} catch (error) {
 			logger.error("Task", "getEnabledMcpToolsCount: Error counting MCP tools:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			return { enabledToolCount: 0, enabledServerCount: 0 }
 		}
 	}
@@ -1393,6 +1403,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (task || images) {
 			void this.startTask(task ?? undefined, images ?? undefined).catch((error) => {
 				logger.error("startTask failed", error)
+				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			})
 		}
 	}
@@ -1538,6 +1549,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Kicks off the checkpoints initialization process in the background.
 		void getCheckpointService(this).catch((error) => {
 			logger.warn("Task", "getCheckpointService failed", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		})
 
 		// Start skill/memory prefetch in parallel (non-blocking)
@@ -1758,14 +1770,16 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				const queued = this.messageQueueService.dequeueMessage()
 				if (queued) {
 					setTimeout(() => {
-						this.submitUserMessage(queued.text, queued.images).catch((err) =>
-							logger.error("Task", "Failed to submit queued message:", err),
-						)
+						this.submitUserMessage(queued.text, queued.images).catch((err) => {
+							logger.error("Task", "Failed to submit queued message:", err)
+							TelemetryService.reportError(err, TelemetryEventName.TASK_LIFECYCLE_ERROR)
+						})
 					}, 0)
 				}
 			}
 		} catch (e) {
 			logger.error("Task", "Queue processing error:", e)
+			TelemetryService.reportError(e, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 	}
 }

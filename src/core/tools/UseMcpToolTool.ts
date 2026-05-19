@@ -1,4 +1,4 @@
-import type { ClineAskUseMcpServer, McpExecutionStatus } from "@njust-ai-cj/types"
+import { TelemetryEventName, type ClineAskUseMcpServer, type McpExecutionStatus } from "@njust-ai-cj/types"
 
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
@@ -9,6 +9,7 @@ import { toolNamesMatch } from "../../utils/mcp-name"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { getErrorMessage } from "../../shared/error-utils"
 
 interface UseMcpToolParams {
@@ -248,6 +249,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			return { isValid: true, availableTools: server.tools.map((t) => t.name), resolvedToolName: tool.name }
 		} catch (error) {
 			logger.error("UseMcpToolTool", "Error validating MCP tool existence:", error)
+			TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			return { isValid: false, error: `Validation failed: ${getErrorMessage(error)}` }
 		}
 	}

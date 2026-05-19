@@ -13,7 +13,8 @@ import { promises as fs } from "fs"
 import type { Anthropic } from "@anthropic-ai/sdk"
 
 import type { ClineAsk, ClineApiReqInfo, ClineMessage } from "@njust-ai-cj/types"
-import { NJUST_AI_CJEventName, MAX_MCP_TOOLS_THRESHOLD } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, MAX_MCP_TOOLS_THRESHOLD, TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { findLastIndex } from "../../shared/array"
 import { DEFAULT_MODE_SLUG } from "../../shared/mode-constants"
@@ -399,6 +400,7 @@ export class TaskLifecycleHandler {
 			})
 			.catch((error: UnsafeAny) => {
 				logger.error("TaskLifecycleHandler", `Failed to persist metrics for task ${t.taskId}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			})
 	}
 
@@ -430,11 +432,13 @@ export class TaskLifecycleHandler {
 				`Error saving messages during abort for task ${t.taskId}.${t.instanceId}:`,
 				error,
 			)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 		try {
 			t.dispose()
 		} catch (error) {
 			logger.error("TaskLifecycleHandler", `Error during task ${t.taskId}.${t.instanceId} disposal:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 	}
 
@@ -456,12 +460,14 @@ export class TaskLifecycleHandler {
 			deleteGeneratedCangjieTestFilesForTask(t.taskId)
 		} catch (e) {
 			logger.error("TaskLifecycleHandler", "Error deleting generated Cangjie test files:", e)
+			TelemetryService.reportError(e, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 
 		try {
 			t.cancelCurrentRequest()
 		} catch (error) {
 			logger.error("TaskLifecycleHandler", "Error cancelling current request:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 
 		try {
@@ -474,6 +480,7 @@ export class TaskLifecycleHandler {
 			}
 		} catch (error) {
 			logger.error("TaskLifecycleHandler", "Error removing provider profile change listener:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 
 		try {
@@ -484,12 +491,14 @@ export class TaskLifecycleHandler {
 			t.messageQueueService.dispose()
 		} catch (error) {
 			logger.error("TaskLifecycleHandler", "Error disposing message queue:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 
 		try {
 			t.removeAllListeners()
 		} catch (error) {
 			logger.error("TaskLifecycleHandler", "Error removing event listeners:", error)
+			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 		}
 
 		void import("../../integrations/terminal/TerminalRegistry")
@@ -498,12 +507,14 @@ export class TaskLifecycleHandler {
 			})
 			.catch((error: UnsafeAny) => {
 				logger.error("TaskLifecycleHandler", "Error releasing terminals:", error)
+				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			})
 
 		void getTaskDirectoryPath(t.globalStoragePath, t.taskId)
 			.then((taskDir: string) => OutputInterceptor.cleanup(path.join(taskDir, "command-output")))
 			.catch((error: UnsafeAny) => {
 				logger.error("TaskLifecycleHandler", "Error cleaning up command output artifacts:", error)
+				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			})
 
 		safeDispose("RooIgnoreController", () => {
@@ -520,9 +531,10 @@ export class TaskLifecycleHandler {
 			if (t.isStreaming && t.diffViewProvider.isEditing) {
 				t.diffViewProvider
 					.revertChanges()
-					.catch((error: UnsafeAny) =>
-						logger.error("TaskLifecycleHandler", "DiffViewProvider revertChanges failed:", error),
-					)
+					.catch((error: UnsafeAny) => {
+						logger.error("TaskLifecycleHandler", "DiffViewProvider revertChanges failed:", error)
+						TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
+					})
 			}
 		})
 	}

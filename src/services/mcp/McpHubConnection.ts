@@ -10,6 +10,8 @@ import type { ConnectedMcpConnection, McpConnection } from "./McpHub"
 import { injectVariables } from "../../utils/config"
 import { sanitizeMcpName } from "../../utils/mcp-name"
 import { logger } from "../../shared/logger"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 type McpHubInternal = UnsafeAny
 
@@ -132,6 +134,7 @@ export async function connectToServerWithHub(
 						}
 					} catch (reconnectErr) {
 						logger.error("McpHub", `Streamable HTTP "${name}" reconnect failed:`, reconnectErr)
+						TelemetryService.reportError(reconnectErr, TelemetryEventName.MCP_ERROR)
 						// onclose will fire again and trigger the next attempt
 					}
 				}, delay)
