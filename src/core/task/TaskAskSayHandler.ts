@@ -20,13 +20,8 @@ import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
 import type { TaskAskSayHost } from "./interfaces/TaskAskSayHost"
 import { logger } from "../../shared/logger"
 import pWaitFor from "p-wait-for"
-
-class AskIgnoredError extends Error {
-	constructor(public readonly reason: string) {
-		super(`Ask ignored: ${reason}`)
-		this.name = "AskIgnoredError"
-	}
-}
+import { AskIgnoredError } from "./AskIgnoredError"
+import { TaskAbortedError } from "./TaskErrors"
 
 // eslint-disable-next-line @typescript-eslint/require-await
 async function checkAutoApproval({
@@ -59,7 +54,7 @@ export class TaskAskSayHandler {
 		isProtected?: boolean,
 	): Promise<{ response: ClineAskResponse; text?: string; images?: string[] }> {
 		if (this.host.abort) {
-			throw new Error(`[NJUST_AI_CJ#ask] task ${this.host.taskId}.${this.host.instanceId} aborted`)
+			throw new TaskAbortedError(this.host.taskId, this.host.instanceId)
 		}
 
 		let askTs: number
@@ -284,7 +279,7 @@ export class TaskAskSayHandler {
 		contextTruncation?: ContextTruncation,
 	): Promise<undefined> {
 		if (this.host.abort) {
-			throw new Error(`[NJUST_AI_CJ#say] task ${this.host.taskId}.${this.host.instanceId} aborted`)
+			throw new TaskAbortedError(this.host.taskId, this.host.instanceId)
 		}
 
 		if (partial !== undefined) {

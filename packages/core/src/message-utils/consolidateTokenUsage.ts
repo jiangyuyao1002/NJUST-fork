@@ -1,5 +1,7 @@
 import type { TokenUsage, ToolUsage, ToolName, ClineMessage } from "@njust-ai-cj/types"
 
+import { logger } from "../shared/logger.js"
+
 export type ParsedApiReqStartedTextType = {
 	tokensIn: number
 	tokensOut: number
@@ -63,7 +65,7 @@ export function consolidateTokenUsage(messages: ClineMessage[]): TokenUsage {
 					result.totalCost += cost
 				}
 			} catch (error) {
-				console.error("Error parsing JSON:", error)
+			logger.error("consolidateTokenUsage", "Error parsing JSON:", error)
 			}
 		} else if (message.type === "say" && message.say === "condense_context") {
 			result.totalCost += message.contextCondense?.cost ?? 0

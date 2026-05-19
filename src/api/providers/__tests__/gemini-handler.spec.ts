@@ -19,8 +19,7 @@ describe("GeminiHandler backend support", () => {
 		} as ApiHandlerOptions
 		const handler = new GeminiHandler(options)
 		const stub = vi.fn().mockReturnValue((async function* () {})())
-		// @ts-expect-error access private client
-		handler["client"].models.generateContentStream = stub
+		handler._client.models.generateContentStream = stub
 		await handler.createMessage("instr", [] as any).next()
 		const config = stub.mock.calls[0][0].config
 		// createMessage always uses function declarations only
@@ -37,8 +36,7 @@ describe("GeminiHandler backend support", () => {
 		} as ApiHandlerOptions
 		const handler = new GeminiHandler(options)
 		const stub = vi.fn().mockResolvedValue({ text: "ok" })
-		// @ts-expect-error access private client
-		handler["client"].models.generateContent = stub
+		handler._client.models.generateContent = stub
 		const res = await handler.completePrompt("hi")
 		expect(res).toBe("ok")
 		const promptConfig = stub.mock.calls[0][0].config
@@ -69,8 +67,7 @@ describe("GeminiHandler backend support", () => {
 			}
 
 			const stub = vi.fn().mockReturnValue(mockStream())
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			const messages = []
 			for await (const chunk of handler.createMessage("test", [] as any)) {
@@ -109,8 +106,7 @@ describe("GeminiHandler backend support", () => {
 			}
 
 			const stub = vi.fn().mockReturnValue(mockStream())
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			const messages = []
 			for await (const chunk of handler.createMessage("test", [] as any)) {
@@ -145,8 +141,7 @@ describe("GeminiHandler backend support", () => {
 
 			const mockError = new Error("API rate limit exceeded")
 			const stub = vi.fn().mockRejectedValue(mockError)
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			await expect(async () => {
 				const generator = handler.createMessage("test", [] as any)
@@ -190,8 +185,7 @@ describe("GeminiHandler backend support", () => {
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			await handler
 				.createMessage("test", [] as any, {
@@ -217,8 +211,7 @@ describe("GeminiHandler backend support", () => {
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			await handler
 				.createMessage("test", [] as any, {
@@ -242,8 +235,7 @@ describe("GeminiHandler backend support", () => {
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			await handler
 				.createMessage("test", [] as any, {
@@ -267,8 +259,7 @@ describe("GeminiHandler backend support", () => {
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			await handler
 				.createMessage("test", [] as any, {
@@ -292,8 +283,7 @@ describe("GeminiHandler backend support", () => {
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
-			// @ts-expect-error access private client
-			handler["client"].models.generateContentStream = stub
+			handler._client.models.generateContentStream = stub
 
 			await handler
 				.createMessage("test", [] as any, {

@@ -5,6 +5,7 @@ import type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 import { TaskState } from "./TaskStateMachine"
 import { getErrorMessage } from "../../shared/error-utils"
 import { logger } from "../../shared/logger"
+import { TaskAbortedError, TaskRetryExhaustedError } from "./TaskErrors"
 
 interface RetryApiRequest {
 	(retryAttempt?: number, options?: { skipProviderRateLimit?: boolean }): ApiStream
@@ -64,21 +65,19 @@ export async function* handleAttemptApiRequestError(options: {
 
 				if (host.abort) {
 					persistentRetryHandler.cancel()
-					throw new Error(
-						`[Task#attemptApiRequest] task ${host.taskId}.${host.instanceId} aborted during persistent retry`,
-					)
+					throw new TaskAbortedError(host.taskId, host.instanceId)
 				}
 
 				yield* retryApiRequest(retryAttempt + 1)
 				return
 			}
 
-			throw new Error(`[Task#${host.taskId}] Unattended retry limit reached (${unattendedMaxRetryAttempts}).`)
+			throw new TaskRetryExhaustedError(host.taskId, unattendedMaxRetryAttempts)
 		}
 
 		await host.streamProcessor.backoffAndAnnounce(retryAttempt, error)
 		if (host.abort) {
-			throw new Error(`[Task#attemptApiRequest] task ${host.taskId}.${host.instanceId} aborted during retry`)
+			throw new TaskAbortedError(host.taskId, host.instanceId)
 		}
 
 		yield* retryApiRequest(retryAttempt + 1)

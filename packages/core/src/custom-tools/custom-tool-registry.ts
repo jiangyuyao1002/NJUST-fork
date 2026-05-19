@@ -18,6 +18,7 @@ import type { CustomToolDefinition, SerializedCustomToolDefinition, CustomToolPa
 
 import type { StoredCustomTool, LoadResult } from "./types.js"
 import { serializeCustomTool } from "./serialize.js"
+import { logger } from "../shared/logger.js"
 import { runEsbuild, NODE_BUILTIN_MODULES, COMMONJS_REQUIRE_BANNER } from "./esbuild-runner.js"
 
 export interface RegistryOptions {
@@ -65,7 +66,7 @@ export class CustomToolRegistry {
 				const filePath = path.join(toolDir, file)
 
 				try {
-					console.log(`[CustomToolRegistry] importing tool from ${filePath}`)
+					logger.info("CustomToolRegistry", `importing tool from ${filePath}`)
 					const mod = await this.import(filePath)
 
 					for (const [exportName, value] of Object.entries(mod)) {
@@ -76,18 +77,18 @@ export class CustomToolRegistry {
 						}
 
 						this.tools.set(def.name, { ...def, source: filePath })
-						console.log(`[CustomToolRegistry] loaded tool ${def.name} from ${filePath}`)
+						logger.info("CustomToolRegistry", `loaded tool ${def.name} from ${filePath}`)
 						result.loaded.push(def.name)
 					}
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error)
-					console.error(`[CustomToolRegistry] import(${filePath}) failed: ${message}`)
+					logger.error("CustomToolRegistry", `import(${filePath}) failed: ${message}`)
 					result.failed.push({ file, error: message })
 				}
 			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
-			console.error(`[CustomToolRegistry] loadFromDirectory(${toolDir}) failed: ${message}`)
+			logger.error("CustomToolRegistry", `loadFromDirectory(${toolDir}) failed: ${message}`)
 		}
 
 		return result
@@ -256,8 +257,9 @@ export class CustomToolRegistry {
 					}
 				}
 			} catch (error) {
-				console.error(
-					`[CustomToolRegistry] clearCache failed to clean disk cache: ${error instanceof Error ? error.message : String(error)}`,
+				logger.error(
+					"CustomToolRegistry",
+					`clearCache failed to clean disk cache: ${error instanceof Error ? error.message : String(error)}`,
 				)
 			}
 		}
@@ -361,13 +363,14 @@ export class CustomToolRegistry {
 				const stat = fs.statSync(srcPath)
 				if (stat.isFile()) {
 					fs.copyFileSync(srcPath, destPath)
-					console.log(`[CustomToolRegistry] copied ${envFile} to tool cache directory`)
+					logger.info("CustomToolRegistry", `copied ${envFile} to tool cache directory`)
 				}
 			}
 		} catch (error) {
 			// Non-fatal: log but don't fail if we can't copy env files.
-			console.warn(
-				`[CustomToolRegistry] failed to copy .env files: ${error instanceof Error ? error.message : String(error)}`,
+			logger.warn(
+				"CustomToolRegistry",
+				`failed to copy .env files: ${error instanceof Error ? error.message : String(error)}`,
 			)
 		}
 	}

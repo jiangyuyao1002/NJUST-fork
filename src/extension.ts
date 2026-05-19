@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as fs from "fs"
+import * as os from "os"
 import * as path from "path"
 
 // Load environment variables from .env file
@@ -636,7 +637,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (legacyToken?.trim()) {
 				authToken = legacyToken.trim()
 				context.secrets.store(MCP_AUTH_TOKEN_SECRET_KEY, authToken).then(
-					() => {},
+					() => {
+						mcpServerConfig.update("mcpServer.authToken", undefined, vscode.ConfigurationTarget.Global)
+					},
 					(err: unknown) => {
 						outputChannel.appendLine(
 							`[McpToolsServer] Failed to persist auth token to secret storage: ${getErrorMessage(err)}. ` +
@@ -706,7 +709,23 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)
 
 	// Implements the `NJUST_AI_CJAPI` interface.
-	const socketPath = process.env.NJUST_AI_CJ_IPC_SOCKET_PATH
+	const rawSocketPath = process.env.NJUST_AI_CJ_IPC_SOCKET_PATH
+	let socketPath: string | undefined
+	if (typeof rawSocketPath === "string" && rawSocketPath.length > 0) {
+		const tmpDir = os.tmpdir()
+		const resolved = path.resolve(rawSocketPath)
+		const resolvedTmp = path.resolve(tmpDir)
+		if (
+			!rawSocketPath.includes("\0") &&
+			resolved.toLowerCase().startsWith(resolvedTmp.toLowerCase())
+		) {
+			socketPath = rawSocketPath
+		} else {
+			outputChannel.appendLine(
+				`[Security] NJUST_AI_CJ_IPC_SOCKET_PATH rejected: must resolve within os.tmpdir() (${tmpDir})`,
+			)
+		}
+	}
 	const enableLogging = typeof socketPath === "string"
 
 	// Watch the core files and automatically reload the extension host.

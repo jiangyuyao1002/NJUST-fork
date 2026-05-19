@@ -38,6 +38,7 @@ async function main() {
 			"process.env.PKG_OUTPUT_CHANNEL": '"NJUST_AI_CJ-Nightly"',
 			...(gitSha ? { "process.env.PKG_SHA": `"${gitSha}"` } : {}),
 		},
+		...(production ? { drop: ["console"] } : {}),
 	}
 
 	const srcDir = path.join(__dirname, "..", "..", "src")

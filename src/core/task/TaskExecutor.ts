@@ -53,6 +53,7 @@ import { t as i18nT } from "../../i18n"
 import { processUserContentMentions } from "../mentions/processUserContentMentions"
 
 import { debugLog } from "../../utils/debugLog"
+import { TaskAbortedError, TaskAutoApprovalError } from "./TaskErrors"
 import { TokenBucketRateLimiter } from "../../services/rate-limiter/TokenBucketRateLimiter"
 import { BackpressureController } from "../stream/BackpressureController"
 import { logger } from "../../shared/logger"
@@ -352,7 +353,7 @@ export class TaskExecutor {
 		)
 
 		if (!approvalResult.shouldProceed) {
-			throw new Error("Auto-approval limit reached and user did not approve continuation")
+			throw new TaskAutoApprovalError("Auto-approval limit reached and user did not approve continuation")
 		}
 
 		const modelInfo = modelSnapshot.info
@@ -512,7 +513,7 @@ export class TaskExecutor {
 
 			if (t.abort) {
 				t.stateMachine.force(TaskState.ERROR)
-				throw new Error(`[NJUST_AI_CJ#recursivelyMakeClineRequests] task ${t.taskId}.${t.instanceId} aborted`)
+				throw new TaskAbortedError(t.taskId, t.instanceId)
 			}
 
 			if (t.consecutiveMistakeLimit > 0 && t.consecutiveMistakeCount >= t.consecutiveMistakeLimit) {

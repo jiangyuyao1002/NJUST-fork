@@ -44,8 +44,6 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 
 		const project = this.options.vertexProjectId ?? "not-provided"
 		const location = this.options.vertexRegion ?? "not-provided"
-		// For Vertex AI, project/location are used instead of API key
-		// For Gemini API, require the API key
 		const apiKey = isVertex
 			? (this.options.geminiApiKey ?? "not-provided")
 			: requireApiKey(this.options.geminiApiKey, "Gemini")
@@ -69,6 +67,11 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 				: isVertex
 					? new GoogleGenAI({ vertexai: true, project, location })
 					: new GoogleGenAI({ apiKey })
+	}
+
+	/** @internal Exposed for test mocking only. */
+	get _client(): GoogleGenAI {
+		return this.client
 	}
 
 	async *createMessage(

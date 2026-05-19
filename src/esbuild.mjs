@@ -28,6 +28,7 @@ async function main() {
 		format: "cjs",
 		sourcesContent: false,
 		platform: "node",
+		...(production ? { drop: ["console"] } : {}),
 	}
 
 	const srcDir = __dirname

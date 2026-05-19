@@ -22,6 +22,7 @@ import { PersistentRetryManager } from "./PersistentRetry"
 import { logger } from "../../shared/logger"
 import { TIMING, LIMITS } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TaskAbortedError } from "./TaskErrors"
 
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = TIMING.MAX_EXPONENTIAL_BACKOFF_MS / 1000
 const FORCED_CONTEXT_REDUCTION_PERCENT = LIMITS.FORCED_CONTEXT_REDUCTION_PERCENT
@@ -203,7 +204,7 @@ export class TaskStreamProcessor {
 			for (let i = finalDelay; i > 0; i--) {
 				// Check abort flag during countdown to allow early exit
 				if (this.task.abort) {
-					throw new Error(`[Task#${this.task.taskId}] Aborted during retry countdown`)
+					throw new TaskAbortedError(this.task.taskId, this.task.instanceId)
 				}
 
 				await this.task.say("api_req_retry_delayed", `${headerText}<retry_timer>${i}</retry_timer>`, undefined, true)

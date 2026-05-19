@@ -23,6 +23,7 @@ import {
 	finalizePendingStreamingToolCalls,
 } from "./TaskStreamChunkProcessor"
 import { TaskState } from "./TaskStateMachine"
+import { TaskAbortedError } from "./TaskErrors"
 import {
 	handleMidStreamFailure,
 	handleEmptyAssistantResponse,
@@ -542,9 +543,7 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 
 	if (t.abort || t.abandoned) {
 		t.stateMachine.force(TaskState.ERROR)
-		throw new Error(
-			`[NJUST_AI_CJ#recursivelyMakeClineRequests] task ${t.taskId}.${t.instanceId} aborted`,
-		)
+		throw new TaskAbortedError(t.taskId, t.instanceId)
 	}
 
 	t.didCompleteReadingStream = true

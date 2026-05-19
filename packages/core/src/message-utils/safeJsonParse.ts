@@ -5,6 +5,8 @@
  * @param defaultValue Value to return if parsing fails
  * @returns Parsed JSON object or defaultValue if parsing fails
  */
+import { logger } from "../shared/logger.js"
+
 export function safeJsonParse<T>(jsonString: string | null | undefined, defaultValue?: T): T | undefined {
 	if (!jsonString) {
 		return defaultValue
@@ -13,8 +15,7 @@ export function safeJsonParse<T>(jsonString: string | null | undefined, defaultV
 	try {
 		return JSON.parse(jsonString) as T
 	} catch (error) {
-		// Log the error to the console for debugging.
-		console.error("Error parsing JSON:", error)
+		logger.error("safeJsonParse", "Error parsing JSON:", error)
 		return defaultValue
 	}
 }

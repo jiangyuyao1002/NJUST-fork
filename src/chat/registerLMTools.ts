@@ -3,6 +3,7 @@ import * as vscode from "vscode"
 
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import { getErrorMessage } from "../shared/error-utils"
+import { validateRegexPattern } from "../utils/safeRegex"
 
 interface ToolDefinition {
 	name: string
@@ -237,7 +238,13 @@ async function executeTool(
 				100,
 			)
 
-			const regex = new RegExp(pattern, "gi")
+			let regex: RegExp | undefined
+			const validation = validateRegexPattern(pattern)
+			if (validation.valid) {
+				regex = new RegExp(pattern, "gi")
+			} else {
+				regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")
+			}
 			for (const file of files.slice(0, 50)) {
 				try {
 					const content = await vscode.workspace.fs.readFile(file)

@@ -32,6 +32,5 @@ export * from "./type-fu.js"
 export * from "./vscode-extension-host.js"
 export * from "./vscode.js"
 export * from "./njust-ai-config-dir.js"
-export * from "./cangjie-rules-content.js"
 
 export { DEFAULT_CLOUD_AGENT_URL } from "./constants.js"

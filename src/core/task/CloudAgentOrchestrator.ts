@@ -21,6 +21,7 @@ import { AskIgnoredError } from "./AskIgnoredError"
 import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
 import { getErrorMessage } from "../../shared/error-utils"
 import type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
+import { TaskAbortedError } from "./TaskErrors"
 
 export type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 
@@ -176,7 +177,8 @@ export class CloudAgentOrchestrator {
 		} catch (error) {
 			if (this.host.abort) return
 			const isAbort =
-				error instanceof Error && (error.name === "AbortError" || /aborted|timeout/i.test(error.message))
+				error instanceof TaskAbortedError ||
+				(error instanceof Error && (error.name === "AbortError" || /aborted|timeout/i.test(error.message)))
 			if (isAbort) {
 				const errorMsg = getErrorMessage(error)
 				await this.host.say("error", `Cloud Agent request was cancelled or timed out: ${errorMsg}`)
