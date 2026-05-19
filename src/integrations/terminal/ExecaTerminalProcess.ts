@@ -10,6 +10,8 @@ import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { normalizeDotSlashCommandForWindowsShell } from "../../utils/hostShellCommand"
 import { filterSensitiveEnv } from "../../utils/env"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export class ExecaTerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<RooTerminal>
@@ -140,9 +142,11 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 		} catch (error) {
 			if (error instanceof ExecaError) {
 				logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#run] shell execution error: ${error.message}`)
+				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 				this.emit("shell_execution_complete", { exitCode: error.exitCode ?? 0, signalName: error.signal })
 			} else {
 				logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#run] shell execution error: ${getErrorMessage(error)}`)
+				TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
 
 				this.emit("shell_execution_complete", { exitCode: 1 })
 			}
@@ -206,10 +210,12 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 							process.kill(pid, "SIGKILL")
 						} catch (e) {
 							logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to send SIGKILL to child PID ${pid}: ${getErrorMessage(e)}`)
+							TelemetryService.reportError(e instanceof Error ? e : new Error(getErrorMessage(e)), TelemetryEventName.UTILITY_ERROR)
 						}
 					}
 				} else {
-					logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to get process tree for PID ${this.pid}: ${err.message}`)
+					logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to get process tree for PID ${this.pid}: ${getErrorMessage(err)}`)
+					TelemetryService.reportError(err instanceof Error ? err : new Error(getErrorMessage(err)), TelemetryEventName.UTILITY_ERROR)
 				}
 			})
 		}

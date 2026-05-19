@@ -1,5 +1,7 @@
 import { logger } from "../shared/logger"
 import { getErrorMessage } from "../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 interface Say {
 	speak: (text: string, voice?: string, speed?: number, callback?: (err?: string) => void) => void
@@ -38,6 +40,7 @@ export const playTts = async (message: string, options: PlayTtsOptions = {}) => 
 	} catch (error) {
 		// TTS playback errors are non-critical — log but don't throw
 		logger.warn("Tts", `TTS playback interrupted: ${getErrorMessage(error)}`)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 	}
 }
 

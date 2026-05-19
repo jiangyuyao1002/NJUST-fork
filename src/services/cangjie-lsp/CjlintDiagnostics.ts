@@ -7,6 +7,8 @@ import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
 import type { CangjieLintConfig } from "./CangjieLintConfig"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const execFileAsync = promisify(execFile)
 
@@ -129,6 +131,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 		} catch (error) {
 			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjLint] Error (single file): ${message}`)
+			TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 		} finally {
 			this.running = false
 		}
@@ -204,6 +207,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 		} catch (error) {
 			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjLint] Error: ${message}`)
+			TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 		} finally {
 			this.running = false
 		}
@@ -281,6 +285,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 		} catch (error) {
 			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjLint] Failed to parse report ${reportPath}: ${message}`)
+			TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 		}
 	}
 

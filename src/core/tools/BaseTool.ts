@@ -1,4 +1,5 @@
 import type { ToolName } from "@njust-ai-cj/types"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { type ZodSchema, ZodError } from "zod"
 
 import { AskIgnoredError } from "../task/AskIgnoredError"
@@ -17,6 +18,7 @@ import { RetryableError } from "./errors"
 import { DualSchemaAdapter, type JSONSchema } from "./DualSchemaAdapter"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 // ── Progress data types (Task 4.1) ───────────────────────────────────
 /**
@@ -414,6 +416,7 @@ export abstract class BaseTool<TName extends ToolName> {
 					return
 				}
 				logger.error("BaseTool", "Error in handlePartial:", error)
+				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 				await callbacks.handleError(
 					`handling partial ${this.name}`,
 					error instanceof Error ? error : new Error(String(error)),
@@ -447,6 +450,7 @@ export abstract class BaseTool<TName extends ToolName> {
 			}
 		} catch (error) {
 			logger.error("BaseTool", "Error parsing parameters:", error)
+			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			const errorMessage = `Failed to parse ${this.name} parameters: ${getErrorMessage(error)}`
 			await callbacks.handleError(`parsing ${this.name} args`, new Error(errorMessage))
 			toolSpan.end("error", { stage: "parse", error: errorMessage })
@@ -621,6 +625,7 @@ export abstract class BaseTool<TName extends ToolName> {
 							.catch((err) => {
 								// If persistence fails, fall back to token truncation
 								logger.error("BaseTool", "ToolResultStorage: Failed to persist result:", err)
+								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 								const tokens = estimateTokens(content)
 								if (tokens > singleMax) {
 									const truncated = truncateToolResult(content, singleMax)

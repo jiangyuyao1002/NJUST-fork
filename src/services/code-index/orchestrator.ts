@@ -8,6 +8,8 @@ import { CacheManager } from "./cache-manager"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Manages the code indexing workflow, coordinating between different services and managers.
@@ -79,6 +81,7 @@ export class CodeIndexOrchestrator {
 			]
 		} catch (error) {
 			logger.error("CodeIndexOrchestrator", "Failed to start file watcher:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			throw error
 		}
 	}
@@ -293,6 +296,7 @@ export class CodeIndexOrchestrator {
 					await this.vectorStore.clearCollection()
 				} catch (cleanupError) {
 					logger.error("CodeIndexOrchestrator", "Failed to clean up after error:", cleanupError)
+					TelemetryService.reportError(cleanupError, TelemetryEventName.CODE_INDEX_ERROR)
 				}
 			}
 
@@ -365,6 +369,7 @@ export class CodeIndexOrchestrator {
 			} catch (error: unknown) {
 				const message = getErrorMessage(error)
 				logger.error("CodeIndexOrchestrator", "Failed to clear vector collection:", error)
+				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 				this.stateManager.setSystemState("Error", `Failed to clear vector collection: ${message}`)
 			}
 

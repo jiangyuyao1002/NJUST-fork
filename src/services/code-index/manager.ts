@@ -11,6 +11,8 @@ import { CacheManager } from "./cache-manager"
 import { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
 import fs from "fs/promises"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import ignore from "ignore"
 import path from "path"
 import { t as _t } from "../../i18n"
@@ -288,6 +290,7 @@ export class CodeIndexManager {
 		} catch (error) {
 			// Log error but continue with recovery - clearing service instances is more important
 			logger.error("CodeIndexManager", "Failed to clear error state during recovery:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 		} finally {
 			// Force re-initialization by clearing service instances
 			// This ensures a clean slate even if state update failed
@@ -379,6 +382,7 @@ export class CodeIndexManager {
 		} catch (error) {
 			// Should never happen: reading file failed even though it exists
 			logger.error("CodeIndexManager", "Unexpected error loading .gitignore:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 		}
 
 		// Create RooIgnoreController instance
@@ -457,6 +461,7 @@ export class CodeIndexManager {
 				} catch (error) {
 					// Error state already set in _recreateServices
 					logger.error("CodeIndexManager", "Failed to recreate services:", error)
+					TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 					// Re-throw the error so the caller knows validation failed
 					throw error
 			}

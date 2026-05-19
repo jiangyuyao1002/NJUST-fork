@@ -2,6 +2,9 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as os from "os"
 
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+
 import { Package } from "../../shared/package"
 import { fileExistsAtPath } from "../../utils/fs"
 import { t } from "../../i18n"
@@ -64,6 +67,7 @@ export async function autoImportSettings(
 
 		// Log error but don't fail extension activation
 		logger.warn("AutoImportSettings", "Auto-import settings error:", error)
+		TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 	}
 }
 

@@ -2,6 +2,8 @@ import * as vscode from "vscode"
 import * as path from "path"
 
 import { logger } from "../../shared/logger"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 /**
  * Represents an effective range in a document along with the corresponding text.
@@ -93,6 +95,7 @@ export class EditorUtils {
 			}
 		} catch (error) {
 			logger.error("EditorUtils", "Error getting effective range:", error)
+			TelemetryService.reportError(error, TelemetryEventName.EDITOR_ERROR)
 			return null
 		}
 	}
@@ -124,6 +127,7 @@ export class EditorUtils {
 			return filePath
 		} catch (error) {
 			logger.error("EditorUtils", "Error getting file path:", error)
+			TelemetryService.reportError(error, TelemetryEventName.EDITOR_ERROR)
 			return document.uri.fsPath
 		}
 	}
@@ -206,6 +210,7 @@ export class EditorUtils {
 			}
 		} catch (error) {
 			logger.error("EditorUtils", "Error getting editor context:", error)
+			TelemetryService.reportError(error, TelemetryEventName.EDITOR_ERROR)
 			return null
 		}
 	}

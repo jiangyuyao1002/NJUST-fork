@@ -3,6 +3,8 @@ import { normalizeDeferredResponse } from "./normalizeDeferredResponse"
 import { parseWorkspaceOps } from "./parseWorkspaceOps"
 import { logger } from "../../shared/logger"
 import { ApiRetryExecutor, type ApiRetryOptions } from "../../api/retry/ApiRetryStrategy"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { analyzeErrorForRetry } from "../../api/retry/ApiErrorClassifier"
 import type {	CloudAgentCallbacks,
 	CloudAgentClientOptions,
@@ -114,6 +116,7 @@ export class CloudAgentClient {
 		} catch (e) {
 			const msg = getErrorMessage(e)
 			logger.warn("CloudAgentClient", `deferred/abort failed: ${msg}`)
+			TelemetryService.reportError(e instanceof Error ? e : new Error(msg), TelemetryEventName.UTILITY_ERROR)
 		} finally {
 			if (timer) clearTimeout(timer)
 		}

@@ -6,6 +6,8 @@ import type { McpResource, McpTool } from "@njust-ai-cj/types"
 
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 type McpHubInternal = UnsafeAny
 
@@ -53,6 +55,7 @@ export async function fetchToolsListWithHub(
 			}
 		} catch (error) {
 			logger.error("McpHub", `Failed to read tool configuration for ${serverName}:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			// Continue with empty configs
 		}
 
@@ -98,6 +101,7 @@ export async function fetchToolsListWithHub(
 		return tools
 	} catch (error) {
 		logger.error("McpHub", `Failed to fetch tools for ${serverName}:`, error)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		return []
 	}
 }

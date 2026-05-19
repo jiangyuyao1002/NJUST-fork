@@ -9,6 +9,8 @@ import { ICodeParser, CodeBlock } from "../interfaces"
 import { scannerExtensions, shouldUseFallbackChunking } from "../shared/supported-extensions"
 import { MAX_BLOCK_CHARS, MIN_BLOCK_CHARS, MIN_CHUNK_REMAINDER_CHARS, MAX_CHARS_TOLERANCE_FACTOR } from "../constants"
 import { logger } from "../../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Implementation of the code parser interface
@@ -53,6 +55,7 @@ export class CodeParser implements ICodeParser {
 				fileHash = this.createFileHash(content)
 			} catch (error) {
 				logger.error("Parser", `Error reading file ${filePath}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 				return []
 			}
 		}
@@ -113,6 +116,7 @@ export class CodeParser implements ICodeParser {
 					await pendingLoad
 				} catch (error) {
 					logger.error("Parser", `Error in pending parser load for ${filePath}:`, error)
+					TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 					return []
 				}
 			} else {
@@ -125,6 +129,7 @@ export class CodeParser implements ICodeParser {
 					}
 				} catch (error) {
 					logger.error("Parser", `Error loading language parser for ${filePath}:`, error)
+					TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 					return []
 				} finally {
 					this.pendingLoads.delete(ext)

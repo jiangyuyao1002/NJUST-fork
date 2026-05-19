@@ -6,6 +6,8 @@ import { promisify } from "util"
 
 import { logger } from "../shared/logger"
 
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import type { GitRepositoryInfo, GitCommit } from "@njust-ai-cj/types"
 
 import { truncateOutput } from "../integrations/misc/extract-text"
@@ -278,6 +280,7 @@ export async function searchCommits(query: string, cwd: string): Promise<GitComm
 		return commits
 	} catch (error) {
 		logger.error("Git", "Error searching commits:", error)
+		TelemetryService.reportError(error, TelemetryEventName.GIT_ERROR)
 		return []
 	}
 }
@@ -319,6 +322,7 @@ export async function getCommitInfo(hash: string, cwd: string): Promise<string> 
 		return truncateOutput(output, GIT_OUTPUT_LINE_LIMIT)
 	} catch (error) {
 		logger.error("Git", "Error getting commit info:", error)
+		TelemetryService.reportError(error, TelemetryEventName.GIT_ERROR)
 		return `Failed to get commit info: ${getErrorMessage(error)}`
 	}
 }
@@ -348,6 +352,7 @@ export async function getWorkingState(cwd: string): Promise<string> {
 		return truncateOutput(output, lineLimit)
 	} catch (error) {
 		logger.error("Git", "Error getting working state:", error)
+		TelemetryService.reportError(error, TelemetryEventName.GIT_ERROR)
 		return `Failed to get working state: ${getErrorMessage(error)}`
 	}
 }
@@ -399,6 +404,7 @@ export async function getGitStatus(cwd: string, maxFiles: number = 20): Promise<
 		return output.join("\n")
 	} catch (error) {
 		logger.error("Git", "Error getting git status:", error)
+		TelemetryService.reportError(error, TelemetryEventName.GIT_ERROR)
 		return null
 	}
 }

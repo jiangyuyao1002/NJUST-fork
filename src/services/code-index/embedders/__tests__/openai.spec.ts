@@ -10,6 +10,7 @@ vitest.mock("openai")
 // Mock TelemetryService
 vitest.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
+		reportError: vitest.fn(),
 		instance: {
 			captureEvent: vitest.fn(),
 		},

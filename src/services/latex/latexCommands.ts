@@ -6,6 +6,8 @@ import { promisify } from "util"
 import { Package } from "../../shared/package"
 import { resolveLatexmkExecutable, resolvePdflatexExecutable } from "./latexResolve"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const execFileAsync = promisify(execFile)
 
@@ -109,6 +111,7 @@ export function registerLatexCommands(context: vscode.ExtensionContext, _outputC
 		} catch (e) {
 			const msg = getErrorMessage(e)
 			latexChannel.appendLine(`\n[LaTeX] 错误: ${msg}`)
+			TelemetryService.reportError(e instanceof Error ? e : new Error(msg), TelemetryEventName.UTILITY_ERROR)
 			void vscode.window.showErrorMessage(
 				`LaTeX 编译失败。请安装 MiKTeX 或 TeX Live，或将 MiKTeX 的 bin 加入系统 PATH；也可在设置中填写 njust-ai-cj.latex.latexmkPath（latexmk.exe 完整路径）。详情见输出「${LATEX_OUTPUT_CHANNEL}」。`,
 			)

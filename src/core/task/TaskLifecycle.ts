@@ -8,6 +8,8 @@
 import type { ClineMessage } from "@njust-ai-cj/types"
 import { logger } from "../../shared/logger"
 import { clineApiReqInfoSchema } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 // ─── History Message Cleanup ─────────────────────────────────────────────────
 
@@ -114,6 +116,7 @@ export function safeDispose(label: string, fn: () => void): void {
 		fn()
 	} catch (error) {
 		logger.error("TaskLifecycle", `Error during dispose (${label}):`, error)
+		TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 	}
 }
 

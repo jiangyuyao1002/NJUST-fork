@@ -8,6 +8,8 @@ import { DEFAULT_MAX_SEARCH_RESULTS, DEFAULT_SEARCH_MIN_SCORE, QDRANT_CODE_BLOCK
 import { t } from "../../../i18n"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Qdrant implementation of the vector store interface
@@ -136,6 +138,7 @@ export class QdrantVectorStore implements IVectorStore {
 		} catch (error: UnsafeAny) {
 			if (error instanceof Error) {
 				logger.warn("QdrantVectorStore", `Warning during getCollectionInfo for "${this.collectionName}". Collection may not exist or another error occurred:`, error.message)
+				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			}
 			return null
 		}
@@ -197,6 +200,7 @@ export class QdrantVectorStore implements IVectorStore {
 		} catch (error: UnsafeAny) {
 			const errorMessage = getErrorMessage(error)
 			logger.error("QdrantVectorStore", `Failed to initialize Qdrant collection "${this.collectionName}":`, errorMessage)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 
 			// If this is already a vector dimension mismatch error (identified by cause), re-throw it as-is
 			if (error instanceof Error && error.cause !== undefined) {
@@ -268,6 +272,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			}
 
 			logger.error("QdrantVectorStore", `CRITICAL: Failed to recreate collection ${this.collectionName} for dimension change (${existingVectorSize} -> ${this.vectorSize}). ${contextualErrorMessage}`)
+			TelemetryService.reportError(recreationError, TelemetryEventName.CODE_INDEX_ERROR)
 
 			// Create a comprehensive error message for the user
 			const dimensionMismatchError = new Error(
@@ -295,8 +300,9 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 		} catch (indexError: UnsafeAny) {
 			const errorMessage = getErrorMessage(indexError).toLowerCase()
 			if (!errorMessage.includes("already exists")) {
-				logger.warn("QdrantVectorStore", `Could not create payload index for type on ${this.collectionName}. Details:`, getErrorMessage(indexError))
-			}
+					logger.warn("QdrantVectorStore", `Could not create payload index for type on ${this.collectionName}. Details:`, getErrorMessage(indexError))
+					TelemetryService.reportError(indexError, TelemetryEventName.CODE_INDEX_ERROR)
+				}
 		}
 
 		// Create indexes for pathSegments fields
@@ -310,6 +316,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 				const errorMessage = getErrorMessage(indexError).toLowerCase()
 				if (!errorMessage.includes("already exists")) {
 					logger.warn("QdrantVectorStore", `Could not create payload index for pathSegments.${i} on ${this.collectionName}. Details:`, getErrorMessage(indexError))
+					TelemetryService.reportError(indexError, TelemetryEventName.CODE_INDEX_ERROR)
 				}
 			}
 		}
@@ -355,6 +362,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			})
 		} catch (error) {
 			logger.error("QdrantVectorStore", "Failed to upsert points:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			throw error
 		}
 	}
@@ -448,6 +456,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			return filteredPoints as VectorStoreSearchResult[]
 		} catch (error) {
 			logger.error("QdrantVectorStore", "Failed to search points:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			throw error
 		}
 	}
@@ -522,6 +531,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 				// Include first few file paths for debugging (avoid logging too many)
 				samplePaths: filePaths.slice(0, 3),
 			})
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 		}
 	}
 
@@ -536,6 +546,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			}
 		} catch (error) {
 			logger.error("QdrantVectorStore", `Failed to delete collection ${this.collectionName}:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			throw error // Re-throw to allow calling code to handle it
 		}
 	}
@@ -551,6 +562,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 				})
 		} catch (error) {
 			logger.error("QdrantVectorStore", "Failed to clear collection:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			throw error
 		}
 	}
@@ -598,6 +610,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			return pointsCount > 0
 		} catch (error) {
 			logger.warn("QdrantVectorStore", "Failed to check if collection has data:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			return false
 		}
 	}
@@ -629,6 +642,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			logger.info("QdrantVectorStore", "Marked indexing as complete")
 		} catch (error) {
 			logger.error("QdrantVectorStore", "Failed to mark indexing as complete:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			throw error
 		}
 	}
@@ -660,6 +674,7 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			logger.info("QdrantVectorStore", "Marked indexing as incomplete (in progress)")
 		} catch (error) {
 			logger.error("QdrantVectorStore", "Failed to mark indexing as incomplete:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			throw error
 		}
 	}

@@ -22,6 +22,7 @@ vi.mock("vscode", () => ({
 // Mock other dependencies
 vi.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
+		reportError: vi.fn(),
 		instance: {
 			captureCheckpointCreated: vi.fn(),
 			captureCheckpointRestored: vi.fn(),

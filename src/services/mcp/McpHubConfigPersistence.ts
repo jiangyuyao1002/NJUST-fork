@@ -5,6 +5,8 @@ import * as vscode from "vscode"
 import { t } from "../../i18n"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 type McpHubInternal = UnsafeAny
 
@@ -54,6 +56,7 @@ export async function toggleServerDisabledWithHub(
 				}
 			} catch (error) {
 				logger.error("McpHub", `Failed to refresh capabilities for ${serverName}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			}
 		}
 
@@ -86,6 +89,7 @@ export async function readServerConfigFromFileWithHub(
 		await fs.access(configPath)
 	} catch (error) {
 		logger.error("McpHub", "Settings file not accessible:", error)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		throw new Error("Settings file not accessible")
 	}
 
@@ -133,6 +137,7 @@ export async function updateServerConfigWithHub(
 		await fs.access(configPath)
 	} catch (error) {
 		logger.error("McpHub", "Settings file not accessible:", error)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		throw new Error("Settings file not accessible")
 	}
 

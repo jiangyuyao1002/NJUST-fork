@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import delay from "delay"
 
 import type { CommandId } from "@njust-ai-cj/types"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { getCommand } from "../utils/commands"
@@ -150,6 +151,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			}
 		} catch (error) {
 			outputChannel.appendLine(`Error focusing input: ${error}`)
+			TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 		}
 	},
 	focusPanel: async () => {
@@ -157,6 +159,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			await focusPanel(tabPanel, sidebarPanel)
 		} catch (error) {
 			outputChannel.appendLine(`Error focusing panel: ${error}`)
+			TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 		}
 	},
 	acceptInput: () => {
@@ -192,6 +195,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			outputChannel.appendLine(
 				`[openMarkdownPreview] Built-in Markdown preview failed: ${getErrorMessage(e)}`,
 			)
+			TelemetryService.reportError(e, TelemetryEventName.EXTENSION_INIT_ERROR)
 			void vscode.window.showWarningMessage(t("common:markdown_preview.builtin_unavailable"))
 		}
 	},

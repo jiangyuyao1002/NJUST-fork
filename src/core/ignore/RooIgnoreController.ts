@@ -5,6 +5,8 @@ import fsSync from "fs"
 import ignore, { Ignore } from "ignore"
 import type * as vscode from "vscode"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export const LOCK_TEXT_SYMBOL = "\u{1F512}"
 
@@ -94,6 +96,7 @@ export class RooIgnoreController {
 		} catch (error) {
 			// Should never happen: reading file failed even though it exists
 			logger.error("RooIgnoreController", "Unexpected error loading .rooignore:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 
@@ -201,6 +204,7 @@ export class RooIgnoreController {
 				.map((x) => x.path)
 		} catch (error) {
 			logger.error("RooIgnoreController", "Error filtering paths:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			return [] // Fail closed for security
 		}
 	}

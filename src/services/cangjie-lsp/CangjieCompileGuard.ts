@@ -13,6 +13,8 @@ import { recordCompileHistoryEvent } from "./cangjieCompileHistory"
 import { analyzeCompileOutput, formatAnalysisSummary, getFixDirectiveForLearning, normalizeErrorPattern } from "./CangjieErrorAnalyzer"
 import type { CangjieMetricsCollector } from "./CangjieMetricsCollector"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const execFileAsync = promisify(execFile)
 
@@ -140,6 +142,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 					`[CompileGuard] Unhandled error in post-save pipeline: ` +
 					`${getErrorMessage(err)}`,
 				)
+				TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 			})
 			}, this.COMPILE_DEBOUNCE_MS)
 			this.compileDebounceByCwd.set(cwd, t)

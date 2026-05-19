@@ -6,6 +6,8 @@ import type { ToolName } from "@njust-ai-cj/types"
 
 import { globalQueryProfiler } from "../../utils/queryProfiler"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 type FinalizeToolUse = (
 	task: TaskExecutorHost,
@@ -28,6 +30,7 @@ export interface ProcessTaskStreamChunkOptions {
 function presentAssistantMessage(task: TaskExecutorHost): void {
 	void task.presentAssistantMessage().catch((error) => {
 		logger.error("presentAssistantMessage failed", error)
+		TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 	})
 }
 

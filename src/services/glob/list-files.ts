@@ -8,6 +8,8 @@ import { arePathsEqual } from "../../utils/path"
 import { getBinPath } from "../../services/ripgrep"
 import { DIRS_TO_IGNORE } from "./constants"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Context object for directory scanning operations
@@ -103,6 +105,7 @@ async function getFirstLevelDirectories(dirPath: string, ignoreInstance: ReturnT
 		}
 	} catch (err) {
 		logger.warn("ListFiles", `Could not read directory ${absolutePath}: ${err}`)
+		TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.CODE_INDEX_ERROR)
 	}
 
 	return directories
@@ -343,6 +346,7 @@ async function createIgnoreInstance(dirPath: string): Promise<ReturnType<typeof 
 		} catch (err) {
 			// Continue if we can't read a .gitignore file
 			logger.warn("ListFiles", `Could not read .gitignore at ${gitignoreFile}: ${err}`)
+			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.CODE_INDEX_ERROR)
 		}
 	}
 
@@ -495,6 +499,7 @@ async function listFilteredDirectories(
 		} catch (err) {
 			// Continue if we can't read a directory
 			logger.warn("ListFiles", `Could not read directory ${currentPath}: ${err}`)
+			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.CODE_INDEX_ERROR)
 		}
 
 		return false // Limit not reached

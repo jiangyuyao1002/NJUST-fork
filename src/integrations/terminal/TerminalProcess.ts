@@ -7,6 +7,8 @@ import type { ExitCodeDetails } from "./types"
 import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { Terminal } from "./Terminal"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export class TerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<Terminal>
@@ -134,6 +136,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 		} catch (error) {
 			// Stream timeout or other error occurred
 			logger.error("TerminalProcess", "Stream error:", getErrorMessage(error))
+			TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
 
 			// Emit completed event with error message
 			this.emit(

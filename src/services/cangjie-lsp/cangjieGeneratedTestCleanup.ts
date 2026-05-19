@@ -2,6 +2,8 @@ import * as fs from "fs"
 import * as path from "path"
 import type { Memento } from "vscode"
 import type { HistoryItem } from "@njust-ai-cj/types"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getStorageBasePath } from "../../utils/storage"
@@ -45,6 +47,7 @@ async function loadHistoryIndexMap(globalStorageUriFsPath: string): Promise<Map<
 		}
 	} catch (e) {
 		logger.warn("CangjieTestCleanup", "读取任务历史索引失败（孤儿清理将跳过非 __no_task__ 的精确判断）:", e)
+		TelemetryService.reportError(e, TelemetryEventName.CANGJIE_LSP_ERROR)
 	}
 	return m
 }
@@ -92,6 +95,7 @@ function removeTaskEntryAndDeleteFiles(taskId: string): number {
 			}
 		} catch (e) {
 			logger.warn("CangjieTestCleanup", `删除失败 ${p}:`, e)
+			TelemetryService.reportError(e, TelemetryEventName.CANGJIE_LSP_ERROR)
 		}
 	}
 	return removed

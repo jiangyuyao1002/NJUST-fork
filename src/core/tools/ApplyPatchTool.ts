@@ -1,7 +1,7 @@
 import fs from "fs/promises"
 import path from "path"
 
-import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
+import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS, TelemetryEventName } from "@njust-ai-cj/types"
 
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -25,6 +25,7 @@ import {
 } from "./cangjiePreflightCheck"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 interface ApplyPatchParams {
 	patch: string
@@ -604,6 +605,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				await fs.unlink(absolutePath)
 			} catch (error) {
 				logger.error("ApplyPatchTool", `Failed to delete original file after move: ${error}`)
+				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			}
 
 			await task.fileContextTracker.trackFileContext(change.movePath, "roo_edited" as RecordSource)

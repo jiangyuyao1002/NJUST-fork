@@ -29,6 +29,8 @@ import { isPathInIgnoredDirectory } from "../../glob/ignore-utils"
 import { Package } from "../../../shared/package"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export class DirectoryScanner implements IDirectoryScanner {
 	private readonly batchSegmentThreshold: number
@@ -250,6 +252,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 						throw error
 				}
 				logger.error("DirectoryScanner", `Error processing file ${filePath} in workspace ${scanWorkspace}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 				if (onError) {
 						onError(
 							error instanceof Error
@@ -340,6 +343,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 				}
 			} catch (error: unknown) {
 				logger.error("DirectoryScanner", `Failed to batch-delete ${deletedFilePaths.length} files from workspace ${scanWorkspace}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 				if (onError) {
 					onError(
 						error instanceof Error
@@ -398,6 +402,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 						const errorMessage = getErrorMessage(deleteError)
 
 						logger.error("DirectoryScanner", `Failed to delete points for ${uniqueFilePaths.length} files before upsert in workspace ${scanWorkspace}:`, deleteError)
+						TelemetryService.reportError(deleteError, TelemetryEventName.CODE_INDEX_ERROR)
 
 							// Re-throw with workspace context
 						throw new Error(
@@ -443,6 +448,7 @@ export class DirectoryScanner implements IDirectoryScanner {
 			} catch (error) {
 				lastError = error as Error
 				logger.error("DirectoryScanner", `Error processing batch (attempt ${attempts}) in workspace ${scanWorkspace}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 
 				if (attempts < MAX_BATCH_RETRIES) {
 					const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempts - 1)

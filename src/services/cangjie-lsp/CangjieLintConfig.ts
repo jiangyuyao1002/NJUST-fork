@@ -1,6 +1,8 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 // ---------------------------------------------------------------------------
 // .cjlintrc configuration file support
@@ -115,6 +117,7 @@ export class CangjieLintConfig implements vscode.Disposable {
 			)
 		} catch (err) {
 			this.outputChannel.appendLine(`[LintConfig] Failed to parse ${this.configPath}: ${err}`)
+			TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 			this.config = { ...DEFAULT_CONFIG }
 		}
 	}

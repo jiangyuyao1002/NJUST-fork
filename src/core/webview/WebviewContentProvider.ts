@@ -13,6 +13,8 @@ import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 export interface WebviewContentProviderHost {
 	readonly extensionUri: vscode.Uri
@@ -41,6 +43,7 @@ export class WebviewContentProvider {
 			}
 		} catch (err) {
 			logger.error("WebviewContentProvider", "Failed to read Vite port file:", err)
+			TelemetryService.reportError(err, TelemetryEventName.WEBVIEW_ERROR)
 		}
 
 		const localServerUrl = `localhost:${localPort}`

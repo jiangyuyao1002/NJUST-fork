@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type HistoryItem } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, type HistoryItem, TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Task } from "../task/Task"
@@ -137,6 +137,7 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 							"AttemptCompletionTool",
 							`Failed to get history for task ${task.taskId}: ${(err as Error)?.message ?? String(err)}. Skipping delegation.`,
 						)
+						TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 						// Fall through to normal completion ask flow
 					}
 				}

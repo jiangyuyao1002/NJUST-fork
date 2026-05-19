@@ -9,6 +9,7 @@ import {
 	getApiProtocol,
 	getModelId,
 	isRetiredProvider,
+	TelemetryEventName,
 } from "@njust-ai-cj/types"
 import pWaitFor from "p-wait-for"
 
@@ -40,6 +41,7 @@ import { globalCacheMetrics } from "../../utils/cacheMetrics"
 import { globalPromptCacheBreakDetector } from "../prompts/promptCacheBreakDetection"
 import { sanitizeToolUseId } from "../../utils/tool-id"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { getErrorMessage } from "../../shared/error-utils"
 import { debugLog } from "../../utils/debugLog"
 import { t as i18nT } from "../../i18n"
@@ -447,6 +449,7 @@ export async function consumeApiStream(config: ConsumeStreamConfig): Promise<Str
 				}
 			} catch (error) {
 				logger.error("TaskStreamConsumer", "Error draining stream for usage data:", error)
+				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 				if (
 					bgInputTokens > 0 ||
 					bgOutputTokens > 0 ||
@@ -469,6 +472,7 @@ export async function consumeApiStream(config: ConsumeStreamConfig): Promise<Str
 
 		drainStreamInBackgroundToFindAllUsage(lastApiReqIndex).catch((error) => {
 			logger.error("TaskStreamConsumer", "Background usage collection failed:", error)
+			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 		})
 	} catch (error) {
 		if (!t.abandoned) {
@@ -683,9 +687,10 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 	}
 
 	if (partialBlocks.length > 0) {
-		void t.presentAssistantMessage().catch((error) => {
-			logger.error("presentAssistantMessage failed", error)
-		})
+	void t.presentAssistantMessage().catch((error) => {
+		logger.error("presentAssistantMessage failed", error)
+		TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+	})
 	}
 
 	if (hasTextContent || hasToolUses) {

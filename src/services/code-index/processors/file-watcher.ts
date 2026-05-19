@@ -26,6 +26,8 @@ import { isPathInIgnoredDirectory } from "../../glob/ignore-utils"
 import { Package } from "../../../shared/package"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Implementation of the file watcher interface
@@ -274,6 +276,7 @@ export class FileWatcher implements IFileWatcher {
 				} catch (e) {
 					const error = e as Error
 					logger.error("FileWatcher", `Unhandled exception processing file ${fileDetail.path}:`, e)
+					TelemetryService.reportError(e as Error, TelemetryEventName.CODE_INDEX_ERROR)
 					return { path: fileDetail.path, result: undefined, error: error }
 				}
 			})

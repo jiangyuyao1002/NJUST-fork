@@ -10,6 +10,8 @@ import {
 } from "vscode-languageclient/node"
 import { Package } from "../../shared/package"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const CANGJIE_LANGUAGE_ID = "cangjie"
 const LSP_SERVER_NAME = "Cangjie Language Server"
@@ -391,6 +393,7 @@ export class CangjieLspClient {
 				.catch((err) => {
 					const msg = getErrorMessage(err)
 					this.extensionOutputChannel.appendLine(`[CangjieLSP] Config restart failed: ${msg}`)
+					TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 				})
 		})
 	}
@@ -581,6 +584,7 @@ export class CangjieLspClient {
 		} catch (error) {
 			const message = getErrorMessage(error)
 			this.extensionOutputChannel.appendLine(`[CangjieLSP] Failed to start server: ${message}`)
+			TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 			this.setState("error", message)
 			if (message.includes("initialize fail") || message.includes("system api")) {
 				vscode.window.showErrorMessage(
@@ -651,6 +655,7 @@ export class CangjieLspClient {
 			} catch (error) {
 				const message = getErrorMessage(error)
 				this.extensionOutputChannel.appendLine(`[CangjieLSP] Error stopping server: ${message}`)
+				TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 			}
 			this.client = undefined
 		}

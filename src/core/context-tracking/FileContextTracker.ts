@@ -9,6 +9,8 @@ import { ContextProxy } from "../config/ContextProxy"
 import type { FileMetadataEntry, RecordSource, TaskMetadata } from "./FileContextTrackerTypes"
 import type { ITaskHost } from "../task/interfaces/ITaskHost"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 // This class is responsible for tracking file operations that may result in stale context.
 // If a user modifies a file outside of Roo, the context may become stale and need to be updated.
@@ -109,6 +111,7 @@ export class FileContextTracker {
 			await this.setupFileWatcher(filePath)
 		} catch (error) {
 			logger.error("FileContextTracker", "Failed to track file operation:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 
@@ -139,6 +142,7 @@ export class FileContextTracker {
 			}
 		} catch (error) {
 			logger.error("FileContextTracker", "Failed to read task metadata:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		}
 		return { files_in_context: [] }
 	}
@@ -152,6 +156,7 @@ export class FileContextTracker {
 			await safeWriteJson(filePath, metadata)
 		} catch (error) {
 			logger.error("FileContextTracker", "Failed to save task metadata:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 
@@ -214,6 +219,7 @@ export class FileContextTracker {
 			await this.saveTaskMetadata(taskId, metadata)
 		} catch (error) {
 			logger.error("FileContextTracker", "Failed to add file to metadata:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 
@@ -273,6 +279,7 @@ export class FileContextTracker {
 			return uniquePaths
 		} catch (error) {
 			logger.error("FileContextTracker", "Failed to get files read by Roo:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			return []
 		}
 	}

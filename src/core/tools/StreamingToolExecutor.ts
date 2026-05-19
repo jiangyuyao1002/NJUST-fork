@@ -3,6 +3,8 @@ import type { Task } from "../task/Task"
 import { ConcurrentToolExecutor } from "./ConcurrentToolExecutor"
 import { logger } from "../../shared/logger"
 import { toolRegistry } from "./ToolRegistry"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { classifyToolCategory, ToolExecutionScheduler } from "../task/ToolExecutionOrchestrator"
 import type { AdaptiveConcurrencyController } from "./AdaptiveConcurrencyController"
 
@@ -121,6 +123,7 @@ export class StreamingToolExecutor {
 			// Log the aggregate error but don't re-throw — doing so would trigger the
 			// serial fallback path and re-execute already-completed tools.
 			logger.error("StreamingToolExecutor", "eager batch completed with errors:", err)
+			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 

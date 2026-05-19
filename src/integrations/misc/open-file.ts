@@ -5,6 +5,8 @@ import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { t } from "../../i18n"
 
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 interface OpenFileOptions {
 	create?: boolean
@@ -151,5 +153,6 @@ export async function openFile(filePath: string, options: OpenFileOptions = {}) 
 		} else {
 			vscode.window.showErrorMessage(t("common:errors.could_not_open_file_generic"))
 		}
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 	}
 }

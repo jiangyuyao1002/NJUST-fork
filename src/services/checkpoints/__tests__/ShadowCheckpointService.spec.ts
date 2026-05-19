@@ -35,6 +35,11 @@ const removeTempDir = async (dir: string) => {
 	await fs.rm(dir, { recursive: true, force: true })
 }
 
+const createGit = (baseDir: string | { baseDir: string }) =>
+	typeof baseDir === "string"
+		? simpleGit({ baseDir, unsafe: { allowUnsafeEditor: true } })
+		: simpleGit({ ...baseDir, unsafe: { allowUnsafeEditor: true } })
+
 const withoutGitEnv = () => {
 	const env: Record<string, string> = {}
 
@@ -64,7 +69,7 @@ const initWorkspaceRepo = async ({
 	await fs.mkdir(workspaceDir, { recursive: true })
 
 	// Initialize git repo.
-	const git = simpleGit(workspaceDir).env(withoutGitEnv())
+	const git = createGit(workspaceDir).env(withoutGitEnv())
 	await git.init()
 	await git.addConfig("user.name", userName)
 	await git.addConfig("user.email", userEmail)
@@ -419,7 +424,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 
 				// Create a primary workspace repo.
 				await fs.mkdir(workspaceDir, { recursive: true })
-				const mainGit = simpleGit(workspaceDir).env(withoutGitEnv())
+				const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 				await mainGit.init()
 				await mainGit.addConfig("user.name", "NJUST_AI_CJ")
 				await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
@@ -427,7 +432,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 				// Create a nested repo inside the workspace.
 				const nestedRepoPath = path.join(workspaceDir, "nested-project")
 				await fs.mkdir(nestedRepoPath, { recursive: true })
-				const nestedGit = simpleGit(nestedRepoPath).env(withoutGitEnv())
+				const nestedGit = createGit(nestedRepoPath).env(withoutGitEnv())
 				await nestedGit.init()
 				await nestedGit.addConfig("user.name", "NJUST_AI_CJ")
 				await nestedGit.addConfig("user.email", "support@njust-ai-cj.local")
@@ -489,7 +494,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 
 				// Create a primary workspace repo without any nested repos.
 				await fs.mkdir(workspaceDir, { recursive: true })
-				const mainGit = simpleGit(workspaceDir).env(withoutGitEnv())
+				const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 				await mainGit.init()
 				await mainGit.addConfig("user.name", "NJUST_AI_CJ")
 				await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
@@ -915,7 +920,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 				// Create a separate git directory to simulate GIT_DIR pointing elsewhere
 				const externalGitDir = path.join(tmpDir, `external-git-${Date.now()}`)
 				await fs.mkdir(externalGitDir, { recursive: true })
-				const externalGit = simpleGit(externalGitDir).env(withoutGitEnv())
+				const externalGit = createGit(externalGitDir).env(withoutGitEnv())
 				await externalGit.init()
 				await externalGit.addConfig("user.name", "External User")
 				await externalGit.addConfig("user.email", "external@example.com")
@@ -963,7 +968,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 					// Verify the checkpoint was saved in the shadow repo, not the external repo
 					// Temporarily clear GIT_DIR to check the external repo
 					delete process.env.GIT_DIR
-					const externalGitCheck = simpleGit({ baseDir: externalGitDir }).env(withoutGitEnv())
+					const externalGitCheck = createGit({ baseDir: externalGitDir }).env(withoutGitEnv())
 					const externalLogAfter = await externalGitCheck.log()
 					const externalCommitCountAfter = externalLogAfter.total
 					// Restore GIT_DIR
@@ -1005,7 +1010,7 @@ describe("worktree path comparison", () => {
 
 		try {
 			await fs.mkdir(workspaceDir, { recursive: true })
-			const mainGit = simpleGit(workspaceDir).env(withoutGitEnv())
+			const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 			await mainGit.init()
 			await mainGit.addConfig("user.name", "NJUST_AI_CJ")
 			await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
@@ -1040,7 +1045,7 @@ describe("worktree path comparison", () => {
 
 		try {
 			await fs.mkdir(workspaceDir, { recursive: true })
-			const mainGit = simpleGit(workspaceDir).env(withoutGitEnv())
+			const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 			await mainGit.init()
 			await mainGit.addConfig("user.name", "NJUST_AI_CJ")
 			await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
@@ -1058,7 +1063,7 @@ describe("worktree path comparison", () => {
 			await service1.initShadowGit()
 
 			// Remove core.worktree from the shadow git config
-			const shadowGit = simpleGit(shadowDir).env(withoutGitEnv())
+			const shadowGit = createGit(shadowDir).env(withoutGitEnv())
 			await shadowGit.raw(["config", "--unset", "core.worktree"])
 
 			// Second init should throw because core.worktree is missing

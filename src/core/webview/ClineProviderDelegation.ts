@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type ClineMessage, type TodoItem } from "@njust-ai-cj/types"
+import { NJUST_AI_CJEventName, type ClineMessage, type TodoItem, TelemetryEventName } from "@njust-ai-cj/types"
 
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -10,6 +10,7 @@ import { readApiMessages, saveApiMessages, saveTaskMessages, type ApiMessage } f
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
 import type { ClineProvider } from "./ClineProvider"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 export interface IDelegationHost {
 	getCurrentTask(): Task | undefined
@@ -187,6 +188,7 @@ export async function delegateParentAndOpenChildWithProvider(provider: IDelegati
 		} catch (error) {
 			// non-fatal
 			logger.warn("ClineProvider", "TaskDelegated event emission failed", error)
+			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 		}
 
 		return child
@@ -362,6 +364,7 @@ export async function reopenParentFromDelegationWithProvider(provider: IDelegati
 		} catch (error) {
 			// non-fatal
 			logger.warn("ClineProvider", "TaskDelegationCompleted event emission failed", error)
+			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 		}
 
 		// 7) Reopen the parent from history as the sole active task (restores saved mode)
@@ -375,12 +378,14 @@ export async function reopenParentFromDelegationWithProvider(provider: IDelegati
 			} catch (error) {
 				// non-fatal
 				logger.warn("ClineProvider", "overwriteClineMessages failed", error)
+				TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			}
 			try {
 				await parentInstance.overwriteApiConversationHistory(parentApiMessages)
 			} catch (error) {
 				// non-fatal
 				logger.warn("ClineProvider", "overwriteApiConversationHistory failed", error)
+				TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			}
 
 			// Auto-resume parent without ask("resume_task")
@@ -393,6 +398,7 @@ export async function reopenParentFromDelegationWithProvider(provider: IDelegati
 		} catch (error) {
 			// non-fatal
 			logger.warn("ClineProvider", "TaskDelegationResumed event emission failed", error)
+			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 		}
 	}
 

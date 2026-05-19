@@ -4,6 +4,8 @@ import * as fs from "fs/promises"
 import { constants as fsConstants } from "fs"
 
 import { logger } from "../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { Package } from "../shared/package"
 import { t } from "../i18n"
 import { getErrorMessage } from "../shared/error-utils"
@@ -42,6 +44,7 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 	} catch (error) {
 		// If path is unusable, report error and fall back to default path
 		logger.error("StorageProvider", `Custom storage path is unusable: ${getErrorMessage(error)}`)
+		TelemetryService.reportError(error, TelemetryEventName.STORAGE_ERROR)
 		if (vscode.window) {
 			vscode.window.showErrorMessage(t("common:errors.custom_storage_path_unusable", { path: customStoragePath }))
 		}
@@ -148,6 +151,7 @@ export async function promptForCustomStoragePath(): Promise<void> {
 			}
 		} catch (error) {
 			logger.error("StorageProvider", "Failed to update configuration", error)
+			TelemetryService.reportError(error, TelemetryEventName.STORAGE_ERROR)
 		}
 	}
 }

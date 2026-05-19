@@ -5,6 +5,8 @@ import { detectCangjieHome } from "./cangjieToolUtils"
 import type { CangjieCompileGuard } from "./CangjieCompileGuard"
 import { Package } from "../../shared/package"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Provides a DebugAdapterDescriptor for the "cangjie" debug type.
@@ -154,6 +156,7 @@ export class CangjieDebugAdapterFactory implements vscode.DebugAdapterDescriptor
 				} catch (e) {
 					const msg = getErrorMessage(e)
 					this.logChannel?.appendLine(`[Cangjie DAP] hotReload skipped or timed out: ${msg}`)
+					TelemetryService.reportError(e, TelemetryEventName.CANGJIE_LSP_ERROR)
 				}
 			}
 		})

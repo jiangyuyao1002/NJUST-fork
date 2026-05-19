@@ -12,6 +12,8 @@ import { Package } from "../../../shared/package"
 import { t } from "../../../i18n"
 import { withValidationErrorHandling, formatEmbeddingError } from "../shared/validation-helpers"
 import { logger } from "../../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Amazon Bedrock implementation of the embedder interface with batching and rate limiting
@@ -161,6 +163,7 @@ export class BedrockEmbedder implements IEmbedder {
 
 				// Log the error for debugging
 				logger.error("BedrockEmbedder", `Bedrock embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
+				try { TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR) } catch { /* best-effort */ }
 
 				// Format and throw the error
 				throw formatEmbeddingError(error, MAX_RETRIES)

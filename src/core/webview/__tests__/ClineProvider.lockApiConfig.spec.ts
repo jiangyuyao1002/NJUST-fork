@@ -195,6 +195,7 @@ vi.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
 		hasInstance: vi.fn().mockReturnValue(true),
 		createInstance: vi.fn(),
+		reportError: vi.fn(),
 		get instance() {
 			return {
 				trackEvent: vi.fn(),

@@ -2,6 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import crypto from "crypto"
 
 import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { logger } from "../../shared/logger"
 
 import { ApiHandler, ApiHandlerCreateMessageMetadata } from "../../api"
@@ -757,6 +758,7 @@ export async function manageContext({
 							})
 							.catch((err: unknown) => {
 								logger.warn("ContextManagement", "Failed to capture compact telemetry", err)
+								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 							})
 						compactFailures = 0
 						const restored = postCompactRestore(smResult.messages, {
@@ -786,6 +788,7 @@ export async function manageContext({
 							})
 							.catch((err: unknown) => {
 								logger.warn("ContextManagement", "Failed to capture memory compact telemetry", err)
+								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 							})
 						compactFailures = 0
 						const restored = postCompactRestore(smMemoryResult.messages, {
@@ -838,6 +841,7 @@ export async function manageContext({
 							})
 							.catch((err: unknown) => {
 								logger.warn("ContextManagement", "Failed to capture compact telemetry", err)
+								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 							})
 						compactFailures = 0
 						const restored = postCompactRestore(result.messages, {

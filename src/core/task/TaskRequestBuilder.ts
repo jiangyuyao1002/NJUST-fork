@@ -4,6 +4,7 @@ import crypto from "crypto"
 
 import {
 	type ContextCondense,
+	TelemetryEventName,
 } from "@njust-ai-cj/types"
 import { Package } from "../../shared/package"
 import { defaultModeSlug } from "../../shared/modes"
@@ -27,6 +28,7 @@ import { summarizeConversation } from "../condense"
 
 import type { Task } from "./Task"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 /**
  * TaskRequestBuilder handles system prompt generation, prompt caching,
@@ -383,6 +385,7 @@ export class TaskRequestBuilder {
 				}
 			} catch (error) {
 				logger.warn("TaskRequestBuilder", "System prompt prefetch failed:", error)
+				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			}
 		})().finally(() => {
 			this.prefetchInFlight = undefined
@@ -406,6 +409,7 @@ export class TaskRequestBuilder {
 			return await this.task.fileContextTracker.getFilesReadByRoo()
 		} catch (error) {
 			logger.error("TaskRequestBuilder", `Failed to get files read by Roo:`, error)
+			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			return undefined
 		}
 	}

@@ -15,10 +15,12 @@ if (fs.existsSync(envPath)) {
 	} catch (e) {
 		// Best-effort only: never fail extension activation due to optional env loading.
 		logger.warn("Extension", "Failed to load environment variables:", e)
+		TelemetryService.reportError(e, TelemetryEventName.EXTENSION_INIT_ERROR)
 	}
 }
 
 import { customToolRegistry } from "@njust-ai-cj/core"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
@@ -137,6 +139,7 @@ function scheduleCangjieToolchainGapCheck(): void {
 			})
 	})().catch((err) => {
 		outputChannel?.appendLine(`[CangjieToolchain] Gap check failed: ${getErrorMessage(err)}`)
+		TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
 	})
 }
 
@@ -199,6 +202,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		.catch((e) => {
 			outputChannel.appendLine(`[CangjieTestCleanup] 启动孤儿清理失败：${getErrorMessage(e)}`)
+			TelemetryService.reportError(e, TelemetryEventName.EXTENSION_INIT_ERROR)
 		})
 
 	registerCangjieRulesHotReload(context, outputChannel)
@@ -214,12 +218,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	// - Settings migration (independent of network proxy)
 	// Each step has its own error handling so one failure doesn't block the other.
 	await Promise.allSettled([
-		initializeNetworkProxy(context, outputChannel).catch((err) =>
-			outputChannel.appendLine(`[Startup] Network proxy init failed: ${getErrorMessage(err)}`),
-		),
-		migrateSettings(context, outputChannel).catch((err) =>
-			outputChannel.appendLine(`[Startup] Settings migration failed: ${getErrorMessage(err)}`),
-		),
+		initializeNetworkProxy(context, outputChannel).catch((err) => {
+			outputChannel.appendLine(`[Startup] Network proxy init failed: ${getErrorMessage(err)}`)
+			TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
+		}),
+		migrateSettings(context, outputChannel).catch((err) => {
+			outputChannel.appendLine(`[Startup] Settings migration failed: ${getErrorMessage(err)}`)
+			TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
+		}),
 	])
 
 	// Initialize terminal shell execution handlers.
@@ -273,6 +279,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					outputChannel.appendLine(
 						`[CodeIndexManager] Error during background CodeIndexManager configuration/indexing for ${folder.uri.fsPath}: ${message}`,
 					)
+					TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 				})
 
 				context.subscriptions.push(manager)
@@ -284,6 +291,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(cangjieLintConfig)
 	void cangjieLintConfig.initialize().catch((err) => {
 		outputChannel.appendLine(`[CangjieLintConfig] Initialize failed: ${getErrorMessage(err)}`)
+		TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
 	})
 
 	let cangjieMetricsCollector: CangjieMetricsCollector | undefined
@@ -354,12 +362,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	void checkAndPromptSdkSetup(context, outputChannel).catch((err: unknown) => {
 		logger.warn("Extension", "checkAndPromptSdkSetup failed", err)
+		TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
 	})
 	void scheduleCangjieToolchainGapCheck()
 
 	void cangjieLspClient.start().catch((error) => {
 		const message = getErrorMessage(error)
 		outputChannel.appendLine(`[CangjieLSP] Error during startup: ${message}`)
+		TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 	})
 
 	// cjpm tasks are always registered (user may run tasks before opening .cj files).
@@ -384,6 +394,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	} catch (error) {
 		outputChannel.appendLine(`[AutoImport] Error during auto-import: ${getErrorMessage(error)}`)
+		TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 	}
 
 	registerCommands({ context, outputChannel, provider })
@@ -550,6 +561,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		setTimeout(() => {
 			void cangjieSymbolIndex?.initialize().catch((err) => {
 				outputChannel.appendLine(`[SymbolIndex] Background initialization error: ${getErrorMessage(err)}`)
+				TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
 			})
 		}, 1000)
 
@@ -674,6 +686,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				})
 				.catch((error) => {
 					outputChannel.appendLine(`[McpToolsServer] Failed to start: ${getErrorMessage(error)}`)
+					TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 				})
 
 			context.subscriptions.push({

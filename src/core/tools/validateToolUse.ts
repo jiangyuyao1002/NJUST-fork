@@ -1,11 +1,12 @@
 import type { ToolName, ModeConfig, GroupOptions, GroupEntry } from "@njust-ai-cj/types"
-import { toolNames as validToolNames } from "@njust-ai-cj/types"
+import { toolNames as validToolNames, TelemetryEventName } from "@njust-ai-cj/types"
 import { customToolRegistry } from "@njust-ai-cj/core"
 
 import { type Mode, FileRestrictionError, getModeBySlug, getGroupName } from "../../shared/modes"
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS, TOOL_ALIASES } from "../../shared/tools"
 import { isAllowedCangjieCommand } from "../task/CangjieRuntimePolicy"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 /**
  * Merge `params` with typed `nativeArgs` for mode and schema validation.
@@ -188,6 +189,7 @@ function doesFileMatchRegex(filePath: string, pattern: string): boolean {
 		return regex.test(filePath)
 	} catch (error) {
 		logger.error("ValidateToolUse", `Invalid regex pattern: ${pattern}`, error)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		return false
 	}
 }

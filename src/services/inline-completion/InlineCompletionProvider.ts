@@ -8,6 +8,8 @@ import { CompletionCache } from "./CompletionCache"
 import { GenericCompletionEngine } from "./GenericCompletionEngine"
 import { resolveInlineCompletionApiHandler } from "./inlineCompletionApi"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 function delayWithCancellation(ms: number, token: vscode.CancellationToken): Promise<void> {
 	return new Promise((resolve, reject) => {
@@ -141,6 +143,7 @@ export class InlineCompletionProvider implements vscode.InlineCompletionItemProv
 			this.outputChannel?.appendLine(
 				`[InlineCompletion] Request failed: ${getErrorMessage(error)}`,
 			)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			return null
 		}
 

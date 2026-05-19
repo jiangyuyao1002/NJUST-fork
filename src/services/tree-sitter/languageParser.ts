@@ -1,6 +1,8 @@
 import * as path from "path"
 import { Parser as ParserT, Language as LanguageT, Query as QueryT } from "web-tree-sitter"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import {
 	javascriptQuery,
 	typescriptQuery,
@@ -47,6 +49,7 @@ async function loadLanguage(langName: string, sourceDirectory?: string) {
 		return await Language.load(wasmPath)
 	} catch (error) {
 		logger.error("LanguageParser", `Error loading language: ${wasmPath}: ${error instanceof Error ? error.message : error}`)
+		TelemetryService.reportError(error, TelemetryEventName.PARSER_ERROR)
 		throw error
 	}
 }
@@ -85,6 +88,7 @@ export async function loadRequiredLanguageParsers(filesToParse: string[], source
 			isParserInitialized = true
 		} catch (error) {
 			logger.error("LanguageParser", `Error initializing parser: ${error instanceof Error ? error.message : error}`)
+			TelemetryService.reportError(error, TelemetryEventName.PARSER_ERROR)
 			throw error
 		}
 	}

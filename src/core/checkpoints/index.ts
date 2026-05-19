@@ -1,7 +1,7 @@
 import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 
-import type { ClineApiReqInfo } from "@njust-ai-cj/types"
+import { type ClineApiReqInfo, TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { logger } from "../../shared/logger"
 
@@ -48,6 +48,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 			provider?.log(message)
 		} catch (error) {
 			logger.debug("Checkpoints", `log failed: ${getErrorMessage(error)}`)
+			TelemetryService.reportError(error, TelemetryEventName.CHECKPOINT_ERROR)
 		}
 	}
 
@@ -126,6 +127,7 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 			sendCheckpointInitWarn(task, "INIT_TIMEOUT", task.checkpointTimeout)
 		}
 		log(`[Task#getCheckpointService] ${getErrorMessage(err)}`)
+		TelemetryService.reportError(err, TelemetryEventName.CHECKPOINT_ERROR)
 		task.enableCheckpoints = false
 		task.checkpointServiceInitializing = false
 		return undefined
@@ -188,10 +190,12 @@ async function checkGitInstallation(
 				).catch((err) => {
 					log("[Task#getCheckpointService] caught unexpected error in say('checkpoint_saved')")
 					logger.error("Checkpoints", "say('checkpoint_saved') error:", err)
+					TelemetryService.reportError(err, TelemetryEventName.CHECKPOINT_ERROR)
 				})
 			} catch (err) {
 				log("[Task#getCheckpointService] caught unexpected error in on('checkpoint'), disabling checkpoints")
 				logger.error("Checkpoints", "on('checkpoint') error:", err)
+				TelemetryService.reportError(err, TelemetryEventName.CHECKPOINT_ERROR)
 				task.enableCheckpoints = false
 			}
 		})
@@ -202,12 +206,14 @@ async function checkGitInstallation(
 			await service.initShadowGit()
 		} catch (err) {
 			log(`[Task#getCheckpointService] initShadowGit -> ${getErrorMessage(err)}`)
+			TelemetryService.reportError(err, TelemetryEventName.CHECKPOINT_ERROR)
 			task.enableCheckpoints = false
 		}
 		task.checkpointServiceInitializing = false
 	} catch (err) {
 		log(`[Task#getCheckpointService] Unexpected error during Git check: ${getErrorMessage(err)}`)
 		logger.error("Checkpoints", "Git check error:", err)
+		TelemetryService.reportError(err, TelemetryEventName.CHECKPOINT_ERROR)
 		task.enableCheckpoints = false
 		task.checkpointServiceInitializing = false
 	}
@@ -227,6 +233,7 @@ export async function checkpointSave(task: Task, force = false, suppressMessage 
 		.saveCheckpoint(`Task: ${task.taskId}, Time: ${Date.now()}`, { allowEmpty: force, suppressMessage })
 		.catch((err) => {
 			logger.error("Checkpoints", "checkpointSave caught unexpected error, disabling checkpoints:", err)
+			TelemetryService.reportError(err, TelemetryEventName.CHECKPOINT_ERROR)
 			task.enableCheckpoints = false
 		})
 }
@@ -301,6 +308,7 @@ export async function checkpointRestore(
 		void provider?.cancelTask()
 	} catch (error) {
 		provider?.log(`[checkpointRestore] disabling checkpoints for this task: ${getErrorMessage(error)}`)
+		TelemetryService.reportError(error, TelemetryEventName.CHECKPOINT_ERROR)
 		task.enableCheckpoints = false
 	}
 }
@@ -394,6 +402,7 @@ export async function checkpointDiff(
 	} catch (error) {
 		const provider = task.providerRef.deref()
 		provider?.log(`[checkpointDiff] disabling checkpoints for this task: ${getErrorMessage(error)}`)
+		TelemetryService.reportError(error, TelemetryEventName.CHECKPOINT_ERROR)
 		task.enableCheckpoints = false
 	}
 }

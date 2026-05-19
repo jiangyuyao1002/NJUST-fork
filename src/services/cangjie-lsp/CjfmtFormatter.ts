@@ -7,6 +7,8 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const execFileAsync = promisify(execFile)
 
@@ -129,6 +131,7 @@ export class CjfmtFormatter implements vscode.DocumentFormattingEditProvider, vs
 		} catch (error) {
 			const message = getErrorMessage(error)
 			this.outputChannel.appendLine(`[CjFmt] Error: ${message}`)
+			TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 			vscode.window.showErrorMessage(`Cangjie format failed: ${message}`)
 			return []
 		} finally {

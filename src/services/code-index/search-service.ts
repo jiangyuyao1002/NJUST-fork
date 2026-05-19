@@ -5,6 +5,8 @@ import { IVectorStore } from "./interfaces/vector-store"
 import { CodeIndexConfigManager } from "./config-manager"
 import { CodeIndexStateManager } from "./state-manager"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Service responsible for searching the code index.
@@ -67,6 +69,7 @@ export class CodeIndexSearchService {
 			return results
 		} catch (error) {
 			logger.error("CodeIndexSearchService", "Error during search:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			this.stateManager.setSystemState("Error", `Search failed: ${(error as Error).message}`)
 
 			throw error // Re-throw the error after setting state

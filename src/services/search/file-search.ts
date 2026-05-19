@@ -7,6 +7,8 @@ import { byLengthAsc, Fzf } from "fzf"
 import { getBinPath } from "../ripgrep"
 import { Package } from "../../shared/package"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export type FileResult = { path: string; type: "file" | "folder"; label?: string }
 
@@ -190,6 +192,7 @@ export async function searchWorkspaceFiles(
 		return verifiedResults
 	} catch (error) {
 		logger.error("FileSearch", "Error in searchWorkspaceFiles:", error)
+		TelemetryService.reportError(error, TelemetryEventName.SEARCH_ERROR)
 		return []
 	}
 }

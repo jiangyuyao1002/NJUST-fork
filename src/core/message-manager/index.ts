@@ -6,6 +6,8 @@ import { getTaskDirectoryPath } from "../../utils/storage"
 
 import { debugLog } from "../../utils/debugLog"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 export interface RewindOptions {
 	/** Whether to include the target message in deletion (edit=true, delete=false) */
 	includeTargetMessage?: boolean
@@ -233,6 +235,7 @@ export class MessageManager {
 			// Cleanup artifacts asynchronously (fire-and-forget with error handling)
 			this.cleanupOrphanedArtifacts(validIds).catch((error) => {
 				logger.error("MessageManager", "Error cleaning up orphaned command output artifacts:", error)
+				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			})
 		}
 

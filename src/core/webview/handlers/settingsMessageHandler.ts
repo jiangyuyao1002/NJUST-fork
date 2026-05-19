@@ -5,6 +5,7 @@ import {
 	type ModelRecord,
 	type WebviewMessage,
 	ExperimentId,
+	TelemetryEventName,
 } from "@njust-ai-cj/types"
 
 import { type RouterName, toRouterName } from "../../../shared/api"
@@ -22,6 +23,7 @@ import { debugLog } from "../../../utils/debugLog"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -187,6 +189,7 @@ async function handleGetVSCodeSetting(context: MessageHandlerContext, message: W
 			})
 		} catch (error) {
 			logger.error("SettingsMessageHandler", `Failed to get VSCode setting ${message.setting}:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			await provider.postMessageToWebview({
 				type: "vsCodeSetting",
 				setting,
@@ -315,6 +318,7 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 	const safeGetModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
 		try { return await getModels(options) } catch (error) {
 			logger.error("SettingsMessageHandler", `Failed to fetch models for ${options.provider}:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			throw error
 		}
 	}

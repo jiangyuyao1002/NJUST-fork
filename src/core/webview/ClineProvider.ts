@@ -41,6 +41,7 @@ import {
 	DEFAULT_MODES,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	isRetiredProvider,
+	TelemetryEventName,
 } from "@njust-ai-cj/types"
 import {} from "@njust-ai-cj/core/providers"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
@@ -359,6 +360,7 @@ export class ClineProvider
 			} catch (error) {
 				const msg = getErrorMessage(error)
 				this.log(`Failed to load full model details for LM Studio: ${msg}`)
+				TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 				vscode.window.showErrorMessage(msg)
 			}
 		}
@@ -1468,6 +1470,7 @@ export class ClineProvider
 				await this.stack.pop()
 			} catch (error) {
 				logger.warn("ClineProvider", "Stack pop failed", error)
+				TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 				// Non-fatal
 			}
 		}
@@ -1568,6 +1571,7 @@ export class ClineProvider
 			},
 		).catch(() => {
 			logger.error("ClineProvider", "cancelTask: Failed to abort task")
+			TelemetryService.reportError(new Error("cancelTask: Failed to abort task"), TelemetryEventName.WEBVIEW_ERROR)
 		})
 
 		// Defensive safeguard: if current instance already changed, skip rehydrate
@@ -1813,6 +1817,7 @@ export class ClineProvider
 			} else {
 				logger.error("ClineProvider", "Failed to convert to webview URI:", error)
 			}
+			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			// Return file URI as fallback
 			return vscode.Uri.file(filePath).toString()
 		}

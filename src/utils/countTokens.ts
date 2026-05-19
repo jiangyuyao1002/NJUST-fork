@@ -4,6 +4,8 @@ import workerpool from "workerpool"
 import { logger } from "../shared/logger"
 import { countTokensResultSchema } from "../workers/types"
 import { tiktoken } from "./tiktoken"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 let pool: workerpool.Pool | null | undefined = undefined
 
@@ -62,6 +64,7 @@ export async function countTokensDetailed(
 	} catch (error) {
 		pool = null
 		logger.error("CountTokens", String(error))
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		return { total: await tiktoken(content), strategy: "tiktoken" }
 	}
 }

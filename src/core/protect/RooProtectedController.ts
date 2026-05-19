@@ -1,6 +1,8 @@
 import path from "path"
 import ignore, { Ignore } from "ignore"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export const SHIELD_SYMBOL = "\u{1F6E1}"
 
@@ -55,6 +57,7 @@ export class RooProtectedController {
 		} catch (error) {
 			// Fail-closed: if we can't determine protection status, assume protected
 			logger.warn("RooProtectedController", `Error checking protection for ${filePath} (treating as protected):`, error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			return true
 		}
 	}

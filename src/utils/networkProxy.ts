@@ -15,6 +15,8 @@ import { Package } from "../shared/package"
 
 import { logger } from "../shared/logger"
 import { getErrorMessage } from "../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Proxy configuration state
@@ -245,6 +247,7 @@ async function configureGlobalProxy(config: ProxyConfig): Promise<void> {
 		log(
 			`Failed to load global-agent (proxy support is only available in debug/dev builds): ${getErrorMessage(error)}`,
 		)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		return
 	}
 
@@ -256,6 +259,7 @@ async function configureGlobalProxy(config: ProxyConfig): Promise<void> {
 		log(`global-agent bootstrap() completed successfully`)
 	} catch (error) {
 		log(`global-agent bootstrap() FAILED: ${getErrorMessage(error)}`)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		return
 	}
 
@@ -319,6 +323,7 @@ async function configureUndiciProxy(config: ProxyConfig): Promise<void> {
 		}
 	} catch (error) {
 		log(`Failed to configure undici proxy dispatcher: ${getErrorMessage(error)}`)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 	}
 }
 /**

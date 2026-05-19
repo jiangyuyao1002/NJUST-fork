@@ -5,6 +5,8 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const execFileAsync = promisify(execFile)
 
@@ -71,6 +73,7 @@ export class CangjieProfiler implements vscode.Disposable {
 		} catch (error: unknown) {
 			const msg = getErrorMessage(error)
 			this.outputChannel.appendLine(`[Profiler] Profile failed: ${msg}`)
+			TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 			return { success: false, output: msg, hotPaths: [] }
 		}
 	}

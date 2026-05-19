@@ -13,6 +13,8 @@ import {
 import { Package } from "../../shared/package"
 import { extractCangjieImportPackagePrefixes, posixPathMatchesImportPackage } from "./cangjieImportPaths"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const INDEX_DIR = ".cangjie-index"
 const INDEX_FILE = "symbols.json"
@@ -491,6 +493,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			this.dirty = false
 		} catch (err) {
 			this.outputChannel.appendLine(`[SymbolIndex] Failed to save: ${err}`)
+			TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 		}
 	}
 
@@ -644,6 +647,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 					`[SymbolIndex] Failed to reindex ${filePath}: ${getErrorMessage(err)}`,
 				)
 			}
+			TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 		}
 	}
 

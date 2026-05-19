@@ -1,6 +1,8 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs/promises"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { fileExistsAtPath } from "./fs"
 import { GlobalFileNames } from "../shared/globalFileNames"
 import { getSettingsDirectoryPath } from "./storage"
@@ -60,9 +62,11 @@ export async function migrateSettings(
 			await migrateCustomModesToYaml(settingsDir, outputChannel)
 		} catch (error) {
 			outputChannel.appendLine(`Error in file migrations: ${error}`)
+			TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 		}
 	} catch (error) {
 		outputChannel.appendLine(`Error migrating settings files: ${error}`)
+		TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 	}
 }
 
@@ -111,9 +115,11 @@ async function migrateCustomModesToYaml(settingsDir: string, outputChannel: vsco
 			outputChannel.appendLine(
 				`Error parsing custom_modes.json: ${parseError}. File might be corrupted. Skipping migration.`,
 			)
+			TelemetryService.reportError(parseError, TelemetryEventName.EXTENSION_INIT_ERROR)
 		}
 	} catch (fileError) {
 		outputChannel.appendLine(`Error reading custom_modes.json: ${fileError}. Skipping migration.`)
+		TelemetryService.reportError(fileError, TelemetryEventName.EXTENSION_INIT_ERROR)
 	}
 }
 
@@ -168,5 +174,6 @@ async function migrateDefaultCommands(
 		outputChannel.appendLine("[Default Commands Migration] Migration marked as complete")
 	} catch (error) {
 		outputChannel.appendLine(`[Default Commands Migration] Error migrating default commands: ${error}`)
+		TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 	}
 }

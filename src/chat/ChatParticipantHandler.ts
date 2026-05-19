@@ -2,6 +2,8 @@ import * as vscode from "vscode"
 
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import type { ClineMessage } from "@njust-ai-cj/types"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { getErrorMessage } from "../shared/error-utils"
 
 const PARTICIPANT_ID = "njust-ai-cj.agent"
@@ -90,6 +92,7 @@ export class ChatParticipantHandler {
 			const message = getErrorMessage(error)
 			stream.markdown(`**Error:** ${message}`)
 			this.outputChannel.appendLine(`[ChatParticipant] Error: ${message}`)
+			TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 			return { metadata: { command } }
 		}
 	}

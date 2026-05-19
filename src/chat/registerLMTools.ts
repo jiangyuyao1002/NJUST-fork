@@ -1,6 +1,9 @@
 import * as path from "path"
 import * as vscode from "vscode"
 
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import { getErrorMessage } from "../shared/error-utils"
 import { validateRegexPattern } from "../utils/safeRegex"
@@ -153,6 +156,7 @@ export function registerLMTools(
 			outputChannel.appendLine(
 				`[LMTools] Failed to register tool ${def.name}: ${getErrorMessage(error)}`,
 			)
+			TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 		}
 	}
 }
@@ -176,6 +180,7 @@ function createLMTool(
 			} catch (error) {
 				const message = getErrorMessage(error)
 				outputChannel.appendLine(`[LMTools] Error in ${def.name}: ${message}`)
+				TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 				return new vscode.LanguageModelToolResult([
 					new vscode.LanguageModelTextPart(`Error: ${message}`),
 				])

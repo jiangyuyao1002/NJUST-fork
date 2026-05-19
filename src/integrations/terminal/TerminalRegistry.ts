@@ -2,6 +2,8 @@ import * as vscode from "vscode"
 
 import { logger } from "../../shared/logger"
 import { arePathsEqual } from "../../utils/path"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 import { RooTerminal, RooTerminalProvider } from "./types"
 import { TerminalProcess } from "./TerminalProcess"
@@ -114,6 +116,7 @@ export class TerminalRegistry {
 			}
 		} catch (error) {
 			logger.error("TerminalRegistry", "Error setting up shell execution handlers:", error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 

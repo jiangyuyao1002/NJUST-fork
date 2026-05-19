@@ -7,6 +7,7 @@ import {
 	type WebviewMessage,
 	checkoutDiffPayloadSchema,
 	checkoutRestorePayloadSchema,
+	TelemetryEventName,
 } from "@njust-ai-cj/types"
 import { type ApiMessage } from "../../task-persistence/apiMessages"
 import { saveTaskMessages } from "../../task-persistence"
@@ -21,6 +22,7 @@ import { resolveIncomingImages } from "./shared-utils"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 export function registerTaskHandlers(router: MessageRouter): void {
 	router.register("webviewDidLaunch", handleWebviewDidLaunch)
@@ -125,6 +127,7 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 		}
 	} catch (e) {
 		logger.error("TaskMessageHandler", "Error in delete message:", e)
+		TelemetryService.reportError(e, TelemetryEventName.WEBVIEW_ERROR)
 		vscode.window.showErrorMessage(t("common:errors.message.error_deleting_message", { error: getErrorMessage(e) }))
 	}
 }
@@ -198,6 +201,7 @@ async function doEditConfirm(context: MessageHandlerContext, messageTs: number, 
 		await currentCline.submitUserMessage(editedContent, images)
 	} catch (e) {
 		logger.error("TaskMessageHandler", "Error in edit message:", e)
+		TelemetryService.reportError(e, TelemetryEventName.WEBVIEW_ERROR)
 		vscode.window.showErrorMessage(t("common:errors.message.error_editing_message", { error: getErrorMessage(e) }))
 	}
 }
@@ -309,6 +313,7 @@ async function handleGetTaskWithAggregatedCosts(context: MessageHandlerContext, 
 		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: taskId, historyItem: result.historyItem, aggregatedCosts: result.aggregatedCosts })
 	} catch (error) {
 		logger.error("TaskMessageHandler", "Error getting task with aggregated costs:", error)
+		TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: message.text, error: getErrorMessage(error) })
 	}
 }

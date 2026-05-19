@@ -10,6 +10,8 @@ import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { getErrorMessage } from "../../shared/error-utils"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export type ReadTaskMessagesOptions = {
 	taskId: string
@@ -38,6 +40,7 @@ export async function readTaskMessages({
 			logger.warn("TaskMessages", 
 				`[readTaskMessages] Failed to parse ${filePath} for task ${taskId}, returning empty: ${getErrorMessage(error)}`,
 			)
+			TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
 			return []
 		}
 	}

@@ -1,7 +1,8 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
-import { NJUST_AI_CONFIG_DIR } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR, TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 import type { CompileResult } from "./CangjieCompileGuard"
 
 // ---------------------------------------------------------------------------
@@ -228,6 +229,7 @@ export class CangjieMetricsCollector implements vscode.Disposable {
 			this.dirty = false
 		} catch (err) {
 			this.outputChannel.appendLine(`[Metrics] Failed to save: ${err}`)
+			TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 		}
 	}
 

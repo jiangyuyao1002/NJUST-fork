@@ -4,6 +4,9 @@ import * as path from "path"
 
 import type { HistoryItem } from "@njust-ai-cj/types"
 
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { getStorageBasePath } from "../../utils/storage"
@@ -135,6 +138,7 @@ export class TaskHistoryStore {
 		// Synchronously flush the index (best-effort)
 		this.flushIndex().catch((err) => {
 			logger.error("TaskHistoryStore", "Error flushing index on dispose:", err)
+			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 		})
 	}
 
@@ -441,6 +445,7 @@ export class TaskHistoryStore {
 		// Write WAL marker immediately to survive crashes during the debounce window
 		this.writeWalMarker().catch((err) => {
 			logger.error("TaskHistoryStore", "Failed to write WAL marker:", err)
+			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 		})
 
 		if (this.indexWriteTimer) {
@@ -455,6 +460,7 @@ export class TaskHistoryStore {
 				await this.clearWalMarker()
 			} catch (err) {
 				logger.error("TaskHistoryStore", "Failed to write index:", err)
+				TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 			}
 		}, TaskHistoryStore.INDEX_WRITE_DEBOUNCE_MS)
 	}
@@ -529,21 +535,25 @@ export class TaskHistoryStore {
 						watchDebounce = setTimeout(() => {
 							this.reconcile().catch((err) => {
 								logger.error("TaskHistoryStore", "Reconciliation after fs.watch failed:", err)
+								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 							})
 						}, 500)
 					})
 
 					this.fsWatcher.on("error", (err) => {
 						logger.error("TaskHistoryStore", "fs.watch error:", err)
+						TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 						// fs.watch is unreliable on some platforms; periodic reconciliation
 						// serves as the fallback.
 					})
 				} catch (err) {
 					logger.error("TaskHistoryStore", "Failed to start fs.watch:", err)
+					TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 				}
 			})
 			.catch((err) => {
 				logger.error("TaskHistoryStore", "Failed to get tasks dir for watcher:", err)
+				TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 			})
 	}
 
@@ -564,6 +574,7 @@ export class TaskHistoryStore {
 				await this.reconcile()
 			} catch (err) {
 				logger.error("TaskHistoryStore", "Periodic reconciliation failed:", err)
+				TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 			}
 			this.startPeriodicReconciliation()
 		}, TaskHistoryStore.RECONCILE_INTERVAL_MS)

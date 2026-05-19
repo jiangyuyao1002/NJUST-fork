@@ -23,6 +23,7 @@ vitest.mock("@aws-sdk/credential-providers", () => ({
 // Mock TelemetryService
 vitest.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
+		reportError: vitest.fn(),
 		instance: {
 			captureEvent: vitest.fn(),
 		},

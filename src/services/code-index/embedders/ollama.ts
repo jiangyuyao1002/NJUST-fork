@@ -6,6 +6,8 @@ import { t } from "../../../i18n"
 import { withValidationErrorHandling } from "../shared/validation-helpers"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 // Timeout constants for Ollama API requests
 const OLLAMA_EMBEDDING_TIMEOUT_MS = 60000 // 60 seconds for embedding requests
@@ -115,6 +117,7 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 		} catch (error: UnsafeAny) {
 			// Log the original error for debugging purposes
 			logger.error("OllamaEmbedder", "Ollama embedding failed:", error)
+			try { TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR) } catch { /* best-effort */ }
 
 			const err = error as Record<string, UnsafeAny>
 

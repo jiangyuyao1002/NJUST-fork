@@ -5,6 +5,8 @@ import matter from "gray-matter"
 import { getGlobalRooDirectory, getProjectRooDirectoryForCwd } from "../roo-config"
 import { getBuiltInCommands, getBuiltInCommand } from "./built-in-commands"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Maximum depth for resolving symlinks to prevent cyclic symlink loops
@@ -343,6 +345,7 @@ async function scanCommandDirectory(
 				}
 			} catch (error) {
 				logger.warn("Commands", `Failed to read command file ${resolvedPath}:`, error)
+				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			}
 		}
 	} catch {

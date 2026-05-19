@@ -14,6 +14,8 @@ import {
 	SKILL_NAME_MAX_LENGTH,
 	NJUST_AI_CONFIG_DIR,
 } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
 
@@ -192,6 +194,7 @@ export class SkillsManager {
 			})
 		} catch (error) {
 			logger.error("SkillsManager", `Failed to load skill at ${skillDir}:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 

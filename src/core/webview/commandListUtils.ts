@@ -3,6 +3,8 @@
  */
 
 import { logger } from "../../shared/logger"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 /**
  * Normalizes a command list by filtering invalid entries and trimming whitespace.
@@ -39,6 +41,7 @@ export function mergeCommandLists(
 		if (commandType) {
 			logger.error("CommandListUtils", `Error merging ${commandType} commands:`, error)
 		}
+		TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 		return []
 	}
 }

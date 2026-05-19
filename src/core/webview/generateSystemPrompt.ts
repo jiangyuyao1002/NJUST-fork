@@ -8,6 +8,8 @@ import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-
 import { Package } from "../../shared/package"
 
 import { logger } from "../../shared/logger"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 export interface ISystemPromptHost {
 	getState(): Promise<{
@@ -53,6 +55,7 @@ export const generateSystemPrompt = async (provider: ISystemPromptHost, message:
 		modelInfo = tempApiHandler.getModel().info
 	} catch (error) {
 		logger.error("GenerateSystemPrompt", "Error fetching model info for system prompt preview:", error)
+		TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 	}
 
 	const systemPrompt = await SYSTEM_PROMPT(

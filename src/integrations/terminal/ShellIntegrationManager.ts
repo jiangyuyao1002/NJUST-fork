@@ -6,6 +6,8 @@ import * as vscode from "vscode"
 
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export class ShellIntegrationManager {
 	public static terminalTmpDirs: Map<number, string> = new Map()
@@ -100,6 +102,7 @@ export class ShellIntegrationManager {
 			return true
 		} catch (error: unknown) {
 			logger.error("ShellIntegrationManager", `Error cleaning up temporary directory ${tmpDir}: ${getErrorMessage(error)}`)
+			TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
 
 			return false
 		}

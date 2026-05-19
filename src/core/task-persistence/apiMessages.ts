@@ -9,6 +9,8 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 export type ApiMessage = Anthropic.MessageParam & {
 	ts?: number
@@ -85,6 +87,7 @@ export async function readApiMessages({
 			logger.warn("ApiMessages", 
 				`[readApiMessages] Error parsing API conversation history file, returning empty. TaskId: ${taskId}, Path: ${filePath}, Error: ${error}`,
 			)
+			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			return []
 		}
 	} else {
@@ -112,6 +115,7 @@ export async function readApiMessages({
 					`[readApiMessages] Error parsing OLD API conversation history file (claude_messages.json), returning empty. TaskId: ${taskId}, Path: ${oldPath}, Error: ${error}`,
 				)
 				// DO NOT unlink oldPath if parsing failed.
+				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 				return []
 			}
 		}

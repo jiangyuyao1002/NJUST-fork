@@ -4,6 +4,8 @@ import { ICacheManager } from "./interfaces/cache"
 import debounce from "lodash.debounce"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Manages the cache for code indexing
@@ -51,6 +53,7 @@ export class CacheManager implements ICacheManager {
 			await safeWriteJson(this.cachePath.fsPath, this.fileHashes)
 		} catch (error) {
 			logger.error("CacheManager", "Failed to save cache:", error)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 		}
 	}
 
@@ -63,6 +66,7 @@ export class CacheManager implements ICacheManager {
 			this.fileHashes = {}
 		} catch (error) {
 			logger.error("CacheManager", "Failed to clear cache file:", error, this.cachePath)
+			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 		}
 	}
 

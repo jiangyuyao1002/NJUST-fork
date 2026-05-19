@@ -3,6 +3,8 @@ import { McpHub } from "./McpHub"
 import type { IMcpHubClient } from "./interfaces/IMcpHubClient"
 import type { IMcpHubService } from "./interfaces/IMcpHubService"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Singleton manager for MCP server instances.
@@ -70,6 +72,7 @@ export class McpServerManager {
 		this.providers.forEach((provider) => {
 			provider.postMessageToWebview(message).catch((error) => {
 				logger.error("McpServerManager", "Failed to notify provider:", error)
+				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			})
 		})
 	}

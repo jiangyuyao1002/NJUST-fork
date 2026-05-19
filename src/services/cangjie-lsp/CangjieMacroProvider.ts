@@ -8,6 +8,8 @@ import { resolveCangjieToolPath, buildCangjieToolEnv, CJC_CONFIG_KEY } from "./c
 import type { CangjieSymbolIndex } from "./CangjieSymbolIndex"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 const execFileAsync = promisify(execFile)
 
@@ -30,6 +32,7 @@ async function formatExpandedCangjieWithCjfmt(expanded: string, outputChannel: v
 	} catch (e) {
 		const msg = getErrorMessage(e)
 		outputChannel.appendLine(`[MacroExpand] cjfmt skipped: ${msg}`)
+		TelemetryService.reportError(e, TelemetryEventName.CANGJIE_LSP_ERROR)
 	} finally {
 		try {
 			fs.unlinkSync(tmpIn)
@@ -196,6 +199,7 @@ export function registerMacroCommands(context: vscode.ExtensionContext, outputCh
 				} catch (err) {
 					const msg = getErrorMessage(err)
 					outputChannel.appendLine(`[MacroExpand] Error: ${msg}`)
+					TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 
 					if (msg.includes("--expand-macros")) {
 						vscode.window.showWarningMessage(

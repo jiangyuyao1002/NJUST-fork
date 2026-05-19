@@ -5,6 +5,8 @@ import { parse as parseToml } from "smol-toml"
 import { getCjpmTreeSummaryForPrompt } from "../../../../services/cangjie-lsp/cjpmTreeForPrompt"
 import { CangjieSymbolIndex } from "../../../../services/cangjie-lsp/CangjieSymbolIndex"
 import { logger } from "../../../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { simpleHash } from "./budget"
 
 const PACKAGE_DECL_REGEX = /^\s*package\s+([\w.]+)\s*$/m
@@ -397,6 +399,7 @@ export async function parseCjpmTomlContent(content: string, cwd: string): Promis
 		if (fromSmol) return fromSmol
 	} catch (e) {
 		logger.warn("CangjieContext", "[cangjie-context] smol-toml parse failed, using regex fallback:", e)
+		TelemetryService.reportError(e instanceof Error ? e : new Error(String(e)), TelemetryEventName.UTILITY_ERROR)
 	}
 	try {
 		const sections = splitTomlSections(content)

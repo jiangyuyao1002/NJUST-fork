@@ -13,6 +13,8 @@ import { t } from "../../../i18n"
 import { withValidationErrorHandling, formatEmbeddingError, HttpError } from "../shared/validation-helpers"
 import { handleOpenAIError } from "../../../api/providers/utils/openai-error-handler"
 import { logger } from "../../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 
 /**
  * Estimates token count with character-set awareness.
@@ -201,6 +203,7 @@ export class OpenAiEmbedder extends OpenAiNativeHandler implements IEmbedder {
 
 				// Log the error for debugging
 				logger.error("OpenAIEmbedder", `OpenAI embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
+				try { TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR) } catch { /* best-effort */ }
 
 				// Format and throw the error
 				throw formatEmbeddingError(error, MAX_RETRIES)

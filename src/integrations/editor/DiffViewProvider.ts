@@ -5,7 +5,7 @@ import * as diff from "diff"
 import stripBom from "strip-bom"
 import delay from "delay"
 
-import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
+import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS, TelemetryEventName } from "@njust-ai-cj/types"
 
 import { logger } from "../../shared/logger"
 import { createDirectoriesForFile } from "../../utils/fs"
@@ -13,6 +13,7 @@ import { arePathsEqual, getReadablePath } from "../../utils/path"
 import { formatResponse } from "../../core/prompts/responses"
 import { diagnosticsToProblemsString, getNewDiagnostics } from "../diagnostics"
 import type { Task } from "../../core/task/Task"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { DecorationController } from "./DecorationController"
 import { DIFF_VIEW_URI_SCHEME } from "./diffViewConstants"
@@ -104,6 +105,7 @@ export class DiffViewProvider {
 					await vscode.window.tabGroups.close(tab)
 				} catch (err) {
 					logger.error("DiffViewProvider", `Failed to close tab ${tab.label}`, err)
+					TelemetryService.reportError(err, TelemetryEventName.EDITOR_ERROR)
 				}
 			}
 			this.documentWasOpen = true
@@ -247,6 +249,7 @@ export class DiffViewProvider {
 			} catch (error) {
 				// Log error but continue - delay failure shouldn't break the save operation
 				logger.warn("DiffViewProvider", `Failed to apply write delay: ${error}`)
+				TelemetryService.reportError(error, TelemetryEventName.EDITOR_ERROR)
 			}
 
 			const postDiagnostics = vscode.languages.getDiagnostics()
@@ -692,6 +695,7 @@ export class DiffViewProvider {
 				await delay(safeDelayMs)
 			} catch (error) {
 				logger.warn("DiffViewProvider", `Failed to apply write delay: ${error}`)
+				TelemetryService.reportError(error, TelemetryEventName.EDITOR_ERROR)
 			}
 
 			const postDiagnostics = vscode.languages.getDiagnostics()

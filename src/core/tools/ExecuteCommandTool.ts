@@ -4,7 +4,7 @@ import * as vscode from "vscode"
 
 import delay from "delay"
 
-import { CommandExecutionStatus, DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE, PersistedCommandOutput } from "@njust-ai-cj/types"
+import { CommandExecutionStatus, DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE, PersistedCommandOutput, TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Task } from "../task/Task"
@@ -343,6 +343,7 @@ export async function executeCommandInTerminal(
 			})
 			.catch((error) => {
 				logger.error("ExecuteCommandTool", "Failed to publish command output:", error)
+				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			})
 
 		return commandOutputSayChain

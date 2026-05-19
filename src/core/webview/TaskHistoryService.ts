@@ -23,6 +23,8 @@ import { pruneStaleRegistrations, NO_TASK_KEY } from "../../services/cangjie-lsp
 import { aggregateTaskCostsRecursive, type AggregatedCosts } from "./aggregateTaskCosts"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 export interface TaskHistoryHost {
 	readonly context: vscode.ExtensionContext
@@ -131,6 +133,7 @@ export class TaskHistoryService {
 					"TaskHistoryService",
 					`getTaskWithId: api_conversation_history.json corrupted for task ${id}, returning empty history: ${getErrorMessage(error)}`,
 				)
+				TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			}
 		} else {
 			logger.warn(
@@ -252,6 +255,7 @@ export class TaskHistoryService {
 						"TaskHistoryService",
 						`deleteTaskWithId: failed to delete associated shadow repository or branch: ${getErrorMessage(error)}`,
 					)
+					TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 				}
 
 				try {
@@ -263,6 +267,7 @@ export class TaskHistoryService {
 						"TaskHistoryService",
 						`deleteTaskWithId: failed to remove task directory: ${getErrorMessage(error)}`,
 					)
+					TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 				}
 			}
 		} catch (error) {

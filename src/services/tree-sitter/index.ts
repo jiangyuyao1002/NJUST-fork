@@ -2,6 +2,8 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { LanguageParser, loadRequiredLanguageParsers } from "./languageParser"
 import { logger } from "../../shared/logger"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai-cj/types"
 import { fileExistsAtPath } from "../../utils/fs"
 import { parseMarkdown } from "./markdownParser"
 import { parseCangjie } from "./cangjieParser"
@@ -351,6 +353,7 @@ async function parseFile(
 		return processCaptures(captures, lines, extLang)
 	} catch (error) {
 		logger.error("TreeSitter", `Error parsing file:`, error)
+		TelemetryService.reportError(error, TelemetryEventName.PARSER_ERROR)
 		// Return null on parsing error to avoid showing error messages in the output
 		return null
 	}

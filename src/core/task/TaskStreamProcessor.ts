@@ -5,6 +5,7 @@ import {
 	type ContextCondense,
 	type ContextTruncation,
 	DEFAULT_REQUEST_DELAY_SECONDS,
+	TelemetryEventName,
 } from "@njust-ai-cj/types"
 
 import type { Task } from "./Task"
@@ -23,6 +24,7 @@ import { logger } from "../../shared/logger"
 import { TIMING, LIMITS } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
 import { TaskAbortedError } from "./TaskErrors"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = TIMING.MAX_EXPONENTIAL_BACKOFF_MS / 1000
 const FORCED_CONTEXT_REDUCTION_PERCENT = LIMITS.FORCED_CONTEXT_REDUCTION_PERCENT
@@ -47,6 +49,7 @@ export class TaskStreamProcessor {
 			return await this.task.fileContextTracker.getFilesReadByRoo()
 		} catch (error) {
 			logger.error("TaskStreamProcessor", `Failed to get files read by Roo:`, error)
+			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			return undefined
 		}
 	}
@@ -229,6 +232,7 @@ export class TaskStreamProcessor {
 			}
 
 			logger.error("TaskStreamProcessor", "Exponential backoff failed:", err)
+			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
 		}
 	}
 

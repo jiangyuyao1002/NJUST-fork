@@ -32,6 +32,7 @@ vitest.mock("lodash.debounce", () => ({ default: vitest.fn((fn) => fn) }))
 // Mock TelemetryService
 vitest.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
+		reportError: vitest.fn(),
 		instance: {
 			captureEvent: vitest.fn(),
 		},
