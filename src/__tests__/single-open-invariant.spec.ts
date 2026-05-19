@@ -1,7 +1,7 @@
 // npx vitest run __tests__/single-open-invariant.spec.ts
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { ClineProvider } from "../core/task/__tests__/testProviderFactory"
+import { ClineProvider } from "../core/webview/ClineProvider"
 import { API } from "../extension/api"
 import * as ProfileValidatorMod from "../shared/ProfileValidator"
 import type { TaskStackManager } from "../core/webview/TaskStackManager"

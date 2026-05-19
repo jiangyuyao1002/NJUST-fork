@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import type { ClineProvider } from "../../webview/ClineProvider"
 import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 
 // All vi.mock() calls are hoisted to the top of the file by Vitest
 // and are applied before any imports are resolved
@@ -150,7 +150,7 @@ vi.mock("../../../utils/fs", () => ({
 import { Task } from "../Task"
 
 describe("Task grounding sources handling", () => {
-	let mockProvider: Partial<ClineProvider>
+	let mockProvider: Partial<ITaskHost>
 	let mockApiConfiguration: ProviderSettings
 
 	beforeEach(() => {
@@ -180,7 +180,7 @@ describe("Task grounding sources handling", () => {
 	it("should strip grounding sources from assistant message before persisting to API history", async () => {
 		// Create a task instance
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,
@@ -238,7 +238,7 @@ Sources: [1](https://example.com), [2](https://another.com)
 
 	it("should not modify assistant message when no grounding sources are present", async () => {
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,

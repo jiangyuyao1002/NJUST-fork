@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import type { ClineProvider } from "../../webview/ClineProvider"
 import type { ProviderSettings, ModelInfo } from "@njust-ai-cj/types"
+import type { ITaskHost } from "../interfaces/ITaskHost"
 
 // All vi.mock() calls are hoisted to the top of the file by Vitest
 // and are applied before any imports are resolved
@@ -150,7 +150,7 @@ vi.mock("../../../utils/fs", () => ({
 import { Task } from "../Task"
 
 describe("Task reasoning preservation", () => {
-	let mockProvider: Partial<ClineProvider>
+	let mockProvider: Partial<ITaskHost>
 	let mockApiConfiguration: ProviderSettings
 
 	beforeEach(() => {
@@ -180,7 +180,7 @@ describe("Task reasoning preservation", () => {
 	it("should append reasoning to assistant message when preserveReasoning is true", async () => {
 		// Create a task instance
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,
@@ -247,7 +247,7 @@ describe("Task reasoning preservation", () => {
 	it("should NOT append reasoning to assistant message when preserveReasoning is false", async () => {
 		// Create a task instance
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,
@@ -305,7 +305,7 @@ describe("Task reasoning preservation", () => {
 	it("should handle empty reasoning message gracefully when preserveReasoning is true", async () => {
 		// Create a task instance
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,
@@ -359,7 +359,7 @@ describe("Task reasoning preservation", () => {
 	it("should handle undefined preserveReasoning (defaults to false)", async () => {
 		// Create a task instance
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,
@@ -403,7 +403,7 @@ describe("Task reasoning preservation", () => {
 
 	it("should embed encrypted reasoning as first assistant content block", async () => {
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,
@@ -449,7 +449,7 @@ describe("Task reasoning preservation", () => {
 
 	it("should store plain text reasoning from streaming for all providers", async () => {
 		const task = new Task({
-			provider: mockProvider as ClineProvider,
+			provider: mockProvider as ITaskHost,
 			apiConfiguration: mockApiConfiguration,
 			task: "Test task",
 			startTask: false,

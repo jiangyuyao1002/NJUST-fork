@@ -1,13 +1,10 @@
-import * as vscode from "vscode"
-import { ClineProvider } from "../../webview/ClineProvider"
-import { ContextProxy } from "../../config/ContextProxy"
-
-export { ClineProvider }
+import type { ITaskHost } from "../interfaces/ITaskHost"
+import type { ContextProxy } from "../../config/ContextProxy"
 
 export function createTestProvider(
-	mockContext?: Partial<vscode.ExtensionContext>,
-	mockOutputChannel?: Partial<vscode.OutputChannel>,
-): ClineProvider {
+	mockContext?: Partial<import("vscode").ExtensionContext>,
+	mockOutputChannel?: Partial<import("vscode").OutputChannel>,
+): ITaskHost {
 	const context = {
 		extensionUri: { fsPath: "/test/extension" },
 		globalStorageUri: { fsPath: "/test/storage" },
@@ -44,7 +41,7 @@ export function createTestProvider(
 			persistent: true,
 		} as any,
 		...mockContext,
-	} as unknown as vscode.ExtensionContext
+	} as unknown as import("vscode").ExtensionContext
 
 	const outputChannel = {
 		appendLine: vi.fn(),
@@ -56,8 +53,45 @@ export function createTestProvider(
 		show: vi.fn(),
 		dispose: vi.fn(),
 		...mockOutputChannel,
-	} as unknown as vscode.OutputChannel
+	} as unknown as import("vscode").OutputChannel
 
-	const contextProxy = new ContextProxy(context)
-	return new ClineProvider(context, outputChannel, "sidebar", contextProxy)
+	const contextProxy = {
+		context,
+		outputChannel,
+		getState: vi.fn().mockResolvedValue({}),
+		setState: vi.fn().mockResolvedValue(undefined),
+		getSecret: vi.fn().mockResolvedValue(undefined),
+		setSecret: vi.fn().mockResolvedValue(undefined),
+		deleteSecret: vi.fn().mockResolvedValue(undefined),
+		getWorkspaceState: vi.fn().mockResolvedValue(undefined),
+		setWorkspaceState: vi.fn().mockResolvedValue(undefined),
+		getGlobalState: vi.fn().mockResolvedValue(undefined),
+		setGlobalState: vi.fn().mockResolvedValue(undefined),
+	} as unknown as ContextProxy
+
+	return {
+		contextProxy,
+		context,
+		cwd: "/mock/workspace/path",
+		log: vi.fn(),
+		getState: vi.fn().mockResolvedValue({}),
+		getMcpHub: vi.fn().mockReturnValue(undefined),
+		getSkillsManager: vi.fn().mockReturnValue(undefined),
+		delegateParentAndOpenChild: vi.fn().mockResolvedValue({} as any),
+		setMode: vi.fn().mockResolvedValue(undefined),
+		setProviderProfile: vi.fn().mockResolvedValue(undefined),
+		handleModeSwitch: vi.fn().mockResolvedValue(undefined),
+		cancelTask: vi.fn().mockResolvedValue(undefined),
+		getTaskStackSize: vi.fn().mockReturnValue(0),
+		convertToWebviewUri: vi.fn((filePath: string) => filePath),
+		createDiffViewProvider: vi.fn().mockReturnValue(undefined),
+		on: vi.fn(),
+		off: vi.fn(),
+		postMessageToWebview: vi.fn().mockResolvedValue(undefined),
+		postStateToWebviewWithoutTaskHistory: vi.fn().mockResolvedValue(undefined),
+		updateTaskHistory: vi.fn().mockResolvedValue([]),
+		ensureMcpServersDirectoryExists: vi.fn().mockResolvedValue("/test/mcp-servers"),
+		ensureSettingsDirectoryExists: vi.fn().mockResolvedValue("/test/settings"),
+		getExtensionPackageVersion: vi.fn().mockReturnValue("1.0.0"),
+	} as unknown as ITaskHost
 }
