@@ -19,6 +19,7 @@ import { DualSchemaAdapter, type JSONSchema } from "./DualSchemaAdapter"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { createToolValidator, validateToolParams } from "./toolParamValidator"
 
 // ── Progress data types (Task 4.1) ───────────────────────────────────
 /**
@@ -462,22 +463,16 @@ export abstract class BaseTool<TName extends ToolName> {
 		// Validation pipeline: Zod schema → preprocessInput → business logic
 		// Step 1: Zod schema validation (structural)
 		if (this.inputSchema) {
-			try {
-				this.inputSchema.parse(params)
-			} catch (schemaError) {
-				if (schemaError instanceof ZodError) {
-					const errorMsg = schemaError.errors
-						.map((e) => `${e.path.join(".")}: ${e.message}`)
-						.join("; ")
-					callbacks.pushToolResult(
-						formatResponse.toolError(
-							`Invalid tool input: ${errorMsg}. Please check the tool parameters and try again.`,
-						),
-					)
-					toolSpan.end("error", { stage: "schema", error: errorMsg })
-					return
-				}
-				throw schemaError
+			const validator = createToolValidator(this.inputSchema)
+			const validation = validator.validate(params as Record<string, unknown>)
+			if (!validation.valid) {
+				callbacks.pushToolResult(
+					formatResponse.toolError(
+						validation.error || "Invalid tool input. Please check the tool parameters and try again.",
+					),
+				)
+				toolSpan.end("error", { stage: "schema", error: validation.error || "invalid_input" })
+				return
 			}
 		}
 

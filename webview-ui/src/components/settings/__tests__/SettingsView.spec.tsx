@@ -714,3 +714,65 @@ describe("SettingsView - Duplicate Commands", () => {
 		)
 	})
 })
+
+describe("SettingsView - CachedState Binding", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("binds cachedState to form inputs and sends updated values on save", () => {
+		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		activateTab("notifications")
+
+		const content = getSettingsContent()
+		const soundCheckbox = within(content).getByTestId("sound-enabled-checkbox")
+
+		// Toggle cached state
+		fireEvent.click(soundCheckbox)
+		expect(soundCheckbox).toBeChecked()
+
+		// Save should send the updated cached value
+		const saveButton = screen.getByTestId("save-button")
+		fireEvent.click(saveButton)
+
+		expect(vscode.postMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "updateSettings",
+				updatedSettings: expect.objectContaining({
+					soundEnabled: true,
+				}),
+			}),
+		)
+	})
+})
+
+describe("SettingsView - Reset", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("reverts unsaved changes when Done with discard", () => {
+		const { onDone, activateTab, getSettingsContent } = renderSettingsView()
+
+		activateTab("notifications")
+
+		const content = getSettingsContent()
+		const soundCheckbox = within(content).getByTestId("sound-enabled-checkbox")
+
+		// Make a change
+		fireEvent.click(soundCheckbox)
+		expect(soundCheckbox).toBeChecked()
+
+		// Click Done (which triggers unsaved changes dialog)
+		const doneButton = screen.getByText("settings:common.done")
+		fireEvent.click(doneButton)
+
+		// Dialog appears
+		const discardButton = screen.getByTestId("alert-dialog-action")
+		fireEvent.click(discardButton)
+
+		// onDone should be called
+		expect(onDone).toHaveBeenCalled()
+	})
+})

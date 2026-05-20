@@ -39,8 +39,11 @@
 				"core/task/TaskResultAggregator.ts",
 				"core/task/TaskStack.ts",
 				"core/tools/helpers/ToolErrorClassifier.ts",
-				"core/tools/permissions/PermissionContext.ts",
-				"core/webview/WebviewHost.ts",
+			"core/tools/permissions/PermissionContext.ts",
+			"core/assistant-message/index.ts",
+			"core/message-queue/index.ts",
+			"core/security/index.ts",
+			"core/webview/WebviewHost.ts",
 				"services/marketplace/index.ts",
 				"services/mcp/McpConfigLoader.ts",
 				"services/mcp/McpConnectionManager.ts",
@@ -59,8 +62,18 @@
 				"src/components/plan/PlanView.tsx"
 			]
 		},
-		"packages/{build,config-eslint,config-typescript,evals,telemetry,types,vscode-shim}": {
+		"packages/types": {
+			"project": ["src/**/*.ts"],
+			"ignore": ["src/providers/index.ts", "src/providers/*.ts"]
+		},
+		"packages/{build,evals,telemetry,vscode-shim}": {
 			"project": ["src/**/*.ts"]
+		},
+		"packages/config-typescript": {
+			"project": ["*.json"]
+		},
+		"packages/config-eslint": {
+			"project": ["*.js", "__tests__/**/*.ts"]
 		},
 		"packages/ipc": {
 			"project": ["src/**/*.ts"],
@@ -72,8 +85,10 @@
 				"src/ipc-server.ts"
 			]
 		},
-		"apps/{cli,web-roo-code}": {
-			"entry": ["src/index.ts"],
+		"apps/cli": {
+			"project": ["src/**/*.ts"]
+		},
+		"apps/web-roo-code": {
 			"project": ["src/**/*.{ts,tsx}"]
 		}
 	}

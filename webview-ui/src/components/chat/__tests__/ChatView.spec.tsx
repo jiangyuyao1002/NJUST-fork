@@ -146,6 +146,15 @@ vi.mock("../common/TelemetryBanner", () => ({
 	},
 }))
 
+// Mock StandardTooltip to pass through clicks
+vi.mock("@/components/ui", async () => {
+	const actual = await vi.importActual("@/components/ui")
+	return {
+		...actual,
+		StandardTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	}
+})
+
 // Mock i18n
 vi.mock("react-i18next", () => ({
 	useTranslation: () => ({
@@ -1085,5 +1094,144 @@ describe("ChatView - Context Condensing Indicator Tests", () => {
 			},
 			{ timeout: 2000 },
 		)
+	})
+})
+
+describe("ChatView - Tool Approval Interaction", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("shows approve and reject buttons for tool ask messages", async () => {
+		const { getByText } = renderChatView()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 2000,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "tool",
+					ts: Date.now(),
+					text: JSON.stringify({ tool: "readFile", path: "test.txt" }),
+					partial: false,
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(getByText("chat:approve.title")).toBeInTheDocument()
+			expect(getByText("chat:reject.title")).toBeInTheDocument()
+		})
+	})
+
+	it("sends askResponse 'yes' when approve is clicked", async () => {
+		const { getByText } = renderChatView()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 2000,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "tool",
+					ts: Date.now(),
+					text: JSON.stringify({ tool: "readFile", path: "test.txt" }),
+					partial: false,
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(getByText("chat:approve.title")).toBeInTheDocument()
+		})
+
+		fireEvent.click(getByText("chat:approve.title"))
+
+		await waitFor(() => {
+			expect(vscode.postMessage).toHaveBeenCalledWith(
+				expect.objectContaining({
+					type: "askResponse",
+					askResponse: "yesButtonClicked",
+				}),
+			)
+		})
+	})
+
+	it("sends askResponse 'no' when reject is clicked", async () => {
+		const { getByText } = renderChatView()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 2000,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "tool",
+					ts: Date.now(),
+					text: JSON.stringify({ tool: "readFile", path: "test.txt" }),
+					partial: false,
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(getByText("chat:reject.title")).toBeInTheDocument()
+		})
+
+		fireEvent.click(getByText("chat:reject.title"))
+
+		await waitFor(() => {
+			expect(vscode.postMessage).toHaveBeenCalledWith(
+				expect.objectContaining({
+					type: "askResponse",
+					askResponse: "noButtonClicked",
+				}),
+			)
+		})
+	})
+
+	it("renders message list with chat rows", async () => {
+		const { container } = renderChatView()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 2000,
+					text: "First task",
+				},
+				{
+					type: "say",
+					say: "text",
+					ts: Date.now() - 1000,
+					text: "Hello from AI",
+				},
+				{
+					type: "ask",
+					ask: "followup",
+					ts: Date.now(),
+					text: "What next?",
+				},
+			],
+		})
+
+		await waitFor(() => {
+			const rows = container.querySelectorAll('[data-testid="chat-row"]')
+			expect(rows.length).toBeGreaterThanOrEqual(2)
+		})
 	})
 })
