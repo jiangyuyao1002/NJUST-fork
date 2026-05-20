@@ -942,9 +942,8 @@ export class McpHub implements IMcpHubService {
 			// Setup watchers for custom watchPaths if defined
 			if (config.watchPaths && config.watchPaths.length > 0) {
 				const watchPathsWatcher = chokidar.watch(config.watchPaths, {
-					// persistent: true,
-					// ignoreInitial: true,
-					// awaitWriteFinish: true,
+					ignoreInitial: true,
+					awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
 				})
 
 				watchPathsWatcher.on("change", async (changedPath) => {
@@ -965,9 +964,8 @@ export class McpHub implements IMcpHubService {
 			if (filePath) {
 				// we use chokidar instead of onDidSaveTextDocument because it doesn't require the file to be open in the editor
 				const indexJsWatcher = chokidar.watch(filePath, {
-					// persistent: true,
-					// ignoreInitial: true,
-					// awaitWriteFinish: true, // This helps with atomic writes
+					ignoreInitial: true,
+					awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
 				})
 
 				indexJsWatcher.on("change", async () => {

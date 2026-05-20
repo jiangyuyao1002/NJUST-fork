@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 
 import type { ApiHandler, ApiHandlerCreateMessageMetadata, SingleCompletionHandler } from "../types"
-import type { ApiStream } from "../transform/stream"
+import type { ApiStream, ApiStreamChunk } from "../transform/stream"
 import {
 	analyzeErrorForRetry,
 	ApiErrorCategory,
@@ -31,11 +31,12 @@ async function* wrapStreamWithRetry(
 	let lastError: unknown
 
 	for (let attempt = 0; attempt < config.maxAttempts; attempt++) {
-		const stream = createStream()
-		const iterator = stream[Symbol.asyncIterator]()
+		let iterator: AsyncIterator<ApiStreamChunk> | undefined
 
 		// Retry loop only covers the *first* next() call (stream open phase).
 		try {
+			const stream = createStream()
+			iterator = stream[Symbol.asyncIterator]()
 			const first = await iterator.next()
 
 			if (first.done) {
@@ -67,7 +68,7 @@ async function* wrapStreamWithRetry(
 
 		// First chunk succeeded — proxy the rest of the stream WITHOUT retry.
 		try {
-			yield* { [Symbol.asyncIterator]: () => iterator }
+			yield* { [Symbol.asyncIterator]: () => iterator! }
 			return
 		} catch (error) {
 			// Mid-stream error — pass through untouched.

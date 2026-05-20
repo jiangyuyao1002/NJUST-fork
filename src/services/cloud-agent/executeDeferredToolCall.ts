@@ -9,6 +9,41 @@ import {
 import type { DeferredToolCall, DeferredToolResult } from "./types"
 import { getErrorMessage } from "../../shared/error-utils"
 
+function expectString(args: Record<string, UnsafeAny>, key: string): string {
+	const val = args[key]
+	if (typeof val !== "string") {
+		throw new TypeError(`Expected "${key}" to be a string, got ${typeof val}`)
+	}
+	return val
+}
+
+function expectOptionalString(args: Record<string, UnsafeAny>, key: string): string | undefined {
+	const val = args[key]
+	if (val === undefined || val === null) return undefined
+	if (typeof val !== "string") {
+		throw new TypeError(`Expected "${key}" to be a string or undefined, got ${typeof val}`)
+	}
+	return val
+}
+
+function expectOptionalNumber(args: Record<string, UnsafeAny>, key: string): number | undefined {
+	const val = args[key]
+	if (val === undefined || val === null) return undefined
+	if (typeof val !== "number" || Number.isNaN(val)) {
+		throw new TypeError(`Expected "${key}" to be a number or undefined, got ${typeof val}`)
+	}
+	return val
+}
+
+function expectOptionalBoolean(args: Record<string, UnsafeAny>, key: string): boolean | undefined {
+	const val = args[key]
+	if (val === undefined || val === null) return undefined
+	if (typeof val !== "boolean") {
+		throw new TypeError(`Expected "${key}" to be a boolean or undefined, got ${typeof val}`)
+	}
+	return val
+}
+
 /**
  * Execute a single deferred tool call locally and return an MCP-shaped result.
  * Unknown tools yield an is_error result rather than throwing.
@@ -33,23 +68,23 @@ export async function executeDeferredToolCall(
 		switch (call.tool) {
 			case "read_file":
 				content = await execReadFile(cwd, {
-					path: args.path as string,
-					start_line: args.start_line as number | undefined,
-					end_line: args.end_line as number | undefined,
+					path: expectString(args, "path"),
+					start_line: expectOptionalNumber(args, "start_line"),
+					end_line: expectOptionalNumber(args, "end_line"),
 				})
 				break
 
 			case "write_file":
 				content = await execWriteFile(cwd, {
-					path: args.path as string,
-					content: args.content as string,
+					path: expectString(args, "path"),
+					content: expectString(args, "content"),
 				})
 				break
 
 			case "apply_diff":
 				content = await execApplyDiff(cwd, {
-					path: args.path as string,
-					diff: args.diff as string,
+					path: expectString(args, "path"),
+					diff: expectString(args, "diff"),
 				})
 				break
 
@@ -58,24 +93,24 @@ export async function executeDeferredToolCall(
 				const p = typeof raw === "string" ? raw.trim() : ""
 				content = await execListFiles(cwd, {
 					path: p || ".",
-					recursive: args.recursive as boolean | undefined,
+					recursive: expectOptionalBoolean(args, "recursive"),
 				})
 				break
 			}
 
 			case "search_files":
 				content = await execSearchFiles(cwd, {
-					path: (args.path as string) ?? ".",
-					regex: args.regex as string,
-					file_pattern: args.file_pattern as string | undefined,
+					path: expectOptionalString(args, "path") ?? ".",
+					regex: expectString(args, "regex"),
+					file_pattern: expectOptionalString(args, "file_pattern"),
 				})
 				break
 
 			case "execute_command":
 				content = await execCommand(cwd, {
-					command: args.command as string,
-					cwd: args.cwd as string | undefined,
-					timeout: args.timeout as number | undefined,
+					command: expectString(args, "command"),
+					cwd: expectOptionalString(args, "cwd"),
+					timeout: expectOptionalNumber(args, "timeout"),
 				})
 				break
 
