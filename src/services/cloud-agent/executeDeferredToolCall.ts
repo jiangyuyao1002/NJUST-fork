@@ -51,6 +51,8 @@ function expectOptionalBoolean(args: Record<string, UnsafeAny>, key: string): bo
 export async function executeDeferredToolCall(
 	cwd: string,
 	call: DeferredToolCall,
+	allowedCommands?: string[],
+	deniedCommands?: string[],
 ): Promise<DeferredToolResult> {
 	try {
 		const args = call.arguments
@@ -111,7 +113,7 @@ export async function executeDeferredToolCall(
 					command: expectString(args, "command"),
 					cwd: expectOptionalString(args, "cwd"),
 					timeout: expectOptionalNumber(args, "timeout"),
-				})
+				}, allowedCommands, deniedCommands)
 				break
 
 			default:

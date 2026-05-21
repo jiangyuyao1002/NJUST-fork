@@ -7,6 +7,7 @@ import { regexSearchFiles } from "../../services/ripgrep"
 import { listFiles } from "../../services/glob/list-files"
 import { checkCommandSafety } from "../../core/tools/helpers/commandSafety"
 import { filterSensitiveEnv } from "../../utils/env"
+import { getCommandDecision } from "../../core/auto-approval"
 
 /**
  * Ensures a resolved path stays within the workspace boundary (after realpath, to reduce symlink escape).
@@ -151,32 +152,43 @@ export async function execCommand(
 ): Promise<string> {
 	let execCwd = workspaceCwd
 	if (params.cwd) {
-		execCwd = path.isAbsolute(params.cwd) ? params.cwd : path.resolve(workspaceCwd, params.cwd)
+		const resolvedCwd = path.isAbsolute(params.cwd) ? params.cwd : path.resolve(workspaceCwd, params.cwd)
+		execCwd = await ensureWithinWorkspace(workspaceCwd, resolvedCwd)
 	}
 
-		if (deniedCommands?.length) {
-			const cmd = params.command.trim()
-			const baseName = cmd.split(/\s+/)[0]?.replace(/^.*[/\\]/, "").toLowerCase()
-			for (const denied of deniedCommands) {
-				if (cmd.startsWith(denied) || baseName === denied.toLowerCase()) {
-					throw new Error(`Command denied by policy: ${denied}`)
-				}
-			}
+	// Use the full command decision logic that properly handles:
+	// - Command chaining (&&, ||, ;, |, &)
+	// - Longest prefix match for allow/deny lists
+	// - Conflict resolution between allowed and denied commands
+	if (allowedCommands?.length || deniedCommands?.length) {
+		const decision = getCommandDecision(
+			params.command,
+			allowedCommands ?? [],
+			deniedCommands ?? [],
+		)
+
+		if (decision === "auto_deny") {
+			throw new Error(`Command denied by policy: ${params.command}`)
 		}
 
-		// Run the same security analysis used by the interactive execute_command tool.
-		// Forbidden patterns (e.g. rm -rf /, mkfs, fork bombs) are rejected outright.
-		// Dangerous patterns are allowed but flagged in the result.
-		const safetyCheck = checkCommandSafety(params.command)
-		if (safetyCheck.riskLevel === "forbidden") {
-			throw new Error(
-				`Command blocked for safety: ${safetyCheck.reasons.join("; ")}`,
-			)
+		if (decision === "ask_user") {
+			throw new Error(`Command requires explicit approval: ${params.command}`)
 		}
-		const safetyWarning =
-			safetyCheck.riskLevel === "dangerous"
-				? `\n[Safety warning] ${safetyCheck.reasons.join("; ")}`
-				: ""
+	}
+
+	// Run the same security analysis used by the interactive execute_command tool.
+	// Forbidden patterns (e.g. rm -rf /, mkfs, fork bombs) are rejected outright.
+	// Dangerous patterns are allowed but flagged in the result.
+	const safetyCheck = checkCommandSafety(params.command)
+	if (safetyCheck.riskLevel === "forbidden") {
+		throw new Error(
+			`Command blocked for safety: ${safetyCheck.reasons.join("; ")}`,
+		)
+	}
+	const safetyWarning =
+		safetyCheck.riskLevel === "dangerous"
+			? `\n[Safety warning] ${safetyCheck.reasons.join("; ")}`
+			: ""
 
 	const timeoutMs = (params.timeout ?? 30) * 1000
 

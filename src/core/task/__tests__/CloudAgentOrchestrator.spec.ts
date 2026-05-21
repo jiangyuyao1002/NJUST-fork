@@ -39,6 +39,8 @@ const DEFAULT_CONFIG: Record<string, any> = {
 	"cloudAgent.deferredProtocol": true,
 	"cloudAgent.compileLoop.enabled": true,
 	"cloudAgent.compileLoop.maxRetries": 3,
+	"allowedCommands": [],
+	"deniedCommands": [],
 }
 
 function mockVscodeConfig(overrides: Record<string, any> = {}) {
@@ -469,6 +471,8 @@ describe("CloudAgentOrchestrator", () => {
 			expect(executeDeferredToolCall).toHaveBeenCalledWith(
 				"/test/workspace",
 				{ call_id: "c1", tool: "read_file", arguments: { path: "a.ts" } },
+				[],
+				[],
 			)
 			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
 				"run-1",

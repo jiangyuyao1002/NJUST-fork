@@ -35,6 +35,8 @@ interface CloudAgentConfig {
 	useDeferredProtocol: boolean
 	compileLoopEnabled: boolean
 	compileMaxRetries: number
+	allowedCommands: string[]
+	deniedCommands: string[]
 }
 
 function readCloudAgentConfig(): CloudAgentConfig {
@@ -75,6 +77,8 @@ function readCloudAgentConfig(): CloudAgentConfig {
 		useDeferredProtocol: config.get<boolean>("cloudAgent.deferredProtocol", true) ?? true,
 		compileLoopEnabled: config.get<boolean>("cloudAgent.compileLoop.enabled", true) ?? true,
 		compileMaxRetries: config.get<number>("cloudAgent.compileLoop.maxRetries", 3) ?? 3,
+		allowedCommands: config.get<string[]>("allowedCommands") ?? [],
+		deniedCommands: config.get<string[]>("deniedCommands") ?? [],
 	}
 }
 
@@ -300,7 +304,7 @@ export class CloudAgentOrchestrator {
 			for (const call of pendingTools) {
 				if (this.host.abort) break
 				await this.host.say("text", `[Deferred] executing tool: ${call.tool} (${call.call_id})`)
-				const result = await executeDeferredToolCall(this.host.cwd, call)
+				const result = await executeDeferredToolCall(this.host.cwd, call, cfg.allowedCommands, cfg.deniedCommands)
 				toolResults.push(result)
 				if (result.is_error) {
 					await this.host.say("text", `[Deferred] tool ${call.tool} error: ${result.content.slice(0, 500)}`)

@@ -122,7 +122,7 @@ export async function checkAutoApproval({
 			return { decision: "ask" }
 		}
 
-		// Always classify dangerous commands first â€?pattern rules cannot override this.
+		// Always classify dangerous commands first - pattern rules cannot override this.
 		const risk = classifyBashCommand(text)
 		if (risk === "dangerous") return { decision: "deny" }
 
@@ -200,3 +200,4 @@ export async function checkAutoApproval({
 }
 
 export { AutoApprovalHandler } from "./AutoApprovalHandler.js"
+export { getCommandDecision, getSingleCommandDecision } from "./commands.js"
