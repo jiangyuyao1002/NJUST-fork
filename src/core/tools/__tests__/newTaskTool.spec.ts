@@ -316,52 +316,6 @@ describe("newTaskTool", () => {
 		expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("Delegated to child task"), undefined)
 	})
 
-	it("should error when mode parameter is missing", async () => {
-		const block: ToolUse<"new_task"> = {
-			type: "tool_use",
-			name: "new_task",
-			params: {
-				// mode missing
-				message: "Test message",
-				todos: "[ ] Test todo",
-			},
-			partial: false,
-		}
-
-		await newTaskTool.handle(mockCline as any, withNativeArgs(block), {
-			askApproval: mockAskApproval,
-			handleError: mockHandleError,
-			pushToolResult: mockPushToolResult,
-		})
-
-		expect(mockSayAndCreateMissingParamError).toHaveBeenCalledWith("new_task", "mode")
-		expect(mockCline.consecutiveMistakeCount).toBe(1)
-		expect(mockCline.recordToolError).toHaveBeenCalledWith("new_task")
-	})
-
-	it("should error when message parameter is missing", async () => {
-		const block: ToolUse<"new_task"> = {
-			type: "tool_use",
-			name: "new_task",
-			params: {
-				mode: "code",
-				// message missing
-				todos: "[ ] Test todo",
-			},
-			partial: false,
-		}
-
-		await newTaskTool.handle(mockCline as any, withNativeArgs(block), {
-			askApproval: mockAskApproval,
-			handleError: mockHandleError,
-			pushToolResult: mockPushToolResult,
-		})
-
-		expect(mockSayAndCreateMissingParamError).toHaveBeenCalledWith("new_task", "message")
-		expect(mockCline.consecutiveMistakeCount).toBe(1)
-		expect(mockCline.recordToolError).toHaveBeenCalledWith("new_task")
-	})
-
 	it("should parse todos with different statuses correctly", async () => {
 		const block: ToolUse<"new_task"> = {
 			type: "tool_use",

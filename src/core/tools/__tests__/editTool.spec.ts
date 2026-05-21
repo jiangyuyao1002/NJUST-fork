@@ -296,35 +296,6 @@ describe("editTool", () => {
 		})
 	})
 
-	describe("missing required params", () => {
-		it("returns error when file_path is missing", async () => {
-			const result = await executeEditTool({ file_path: undefined })
-
-			expect(result).toBe("Missing param error")
-			expect(mockTask.consecutiveMistakeCount).toBe(1)
-			expect(mockTask.recordToolError).toHaveBeenCalledWith("edit")
-			expect(mockTask.sayAndCreateMissingParamError).toHaveBeenCalledWith("edit", "file_path")
-		})
-
-		it("returns error when old_string is missing", async () => {
-			// When old_string is undefined, it is coerced to "" by EditTool.execute,
-			// which triggers the "file already exists" branch since the file exists.
-			const result = await executeEditTool({ old_string: undefined })
-
-			expect(result).toContain("File already exists")
-			expect(mockTask.consecutiveMistakeCount).toBe(1)
-			expect(mockTask.recordToolError).toHaveBeenCalledWith("edit", expect.stringContaining("File already exists"))
-		})
-
-		it("returns error when new_string is missing", async () => {
-			const result = await executeEditTool({ new_string: undefined })
-
-			expect(result).toBe("Tool result message")
-			expect(mockTask.consecutiveMistakeCount).toBe(0)
-			expect(mockTask.recordToolError).not.toHaveBeenCalled()
-		})
-	})
-
 	describe("file access", () => {
 		it("returns error when file does not exist", async () => {
 			const result = await executeEditTool({}, { fileExists: false })

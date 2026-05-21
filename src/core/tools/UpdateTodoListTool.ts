@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -16,6 +18,12 @@ let approvedTodoList: TodoItem[] | undefined = undefined
 
 export class UpdateTodoListTool extends BaseTool<"update_todo_list"> {
 	readonly name = "update_todo_list" as const
+
+	protected override get inputSchema() {
+		return z.object({
+			todos: z.string().min(1, "todos is required"),
+		})
+	}
 
 	async execute(params: UpdateTodoListParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { pushToolResult, handleError, askApproval } = callbacks

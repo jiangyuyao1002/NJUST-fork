@@ -3,6 +3,7 @@ import * as cheerio from "cheerio"
 import dns from "node:dns/promises"
 import net from "node:net"
 import TurndownService from "turndown"
+import { z } from "zod"
 
 import { BaseTool, type ToolCallbacks } from "./BaseTool"
 import type { Task } from "../task/Task"
@@ -48,6 +49,14 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 		return "web fetch http url page content"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			url: z.string().url("url must be a valid URL"),
+			format: z.enum(["text", "html", "json", "markdown"]).optional(),
+			maxLength: z.number().int().positive().optional(),
+		})
+	}
+
 	async execute(
 		params: { url: string; format?: "text" | "html" | "json" | "markdown"; maxLength?: number },
 		_task: Task,
@@ -55,12 +64,6 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 	): Promise<void> {
 		try {
 			const { url, format = "text", maxLength = DEFAULT_MAX_LENGTH } = params
-
-			// Validate URL: only HTTP/HTTPS allowed
-			if (!url || typeof url !== "string") {
-				pushToolResult(formatResponse.toolError("url is required and must be a non-empty string."))
-				return
-			}
 
 			let parsedUrl: URL
 			let hostname: string

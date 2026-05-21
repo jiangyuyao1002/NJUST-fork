@@ -11,6 +11,7 @@
 import path from "path"
 import * as fs from "fs/promises"
 import { isBinaryFile } from "isbinaryfile"
+import { z } from "zod"
 
 import type { ReadFileParams, ReadFileMode, ReadFileToolParams, FileEntry, LineRange } from "@njust-ai-cj/types"
 import { isLegacyReadFileParams, type ClineSayTool } from "@njust-ai-cj/types"
@@ -133,6 +134,17 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 
 	override userFacingName(): string {
 		return "Read File"
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			path: z.string().min(1, "path is required"),
+			mode: z.string().optional(),
+			offset: z.number().int().positive().optional(),
+			limit: z.number().int().positive().optional(),
+			start_line: z.number().int().positive().optional(),
+			end_line: z.number().int().positive().optional(),
+		})
 	}
 
 	async execute(params: ReadFileToolParams, task: Task, callbacks: ToolCallbacks): Promise<void> {

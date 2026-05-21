@@ -1,3 +1,4 @@
+import { z } from "zod"
 import { TelemetryEventName, type ClineAskUseMcpServer, type McpExecutionStatus } from "@njust-ai-cj/types"
 
 import { Task } from "../task/Task"
@@ -32,6 +33,14 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 
 	override userFacingName(): string {
 		return "Use MCP Tool"
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			server_name: z.string().min(1, "server_name is required"),
+			tool_name: z.string().min(1, "tool_name is required"),
+			arguments: z.record(z.unknown()).optional(),
+		})
 	}
 
 	async execute(params: UseMcpToolParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
@@ -103,37 +112,11 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 	private async validateParams(
 		task: Task,
 		params: UseMcpToolParams,
-		pushToolResult: (content: string) => void,
+		_pushToolResult: (content: string) => void,
 	): Promise<ValidationResult> {
-		if (!params.server_name) {
-			task.consecutiveMistakeCount++
-			task.recordToolError("use_mcp_tool")
-			pushToolResult(await task.sayAndCreateMissingParamError("use_mcp_tool", "server_name"))
-			return { isValid: false }
-		}
-
-		if (!params.tool_name) {
-			task.consecutiveMistakeCount++
-			task.recordToolError("use_mcp_tool")
-			pushToolResult(await task.sayAndCreateMissingParamError("use_mcp_tool", "tool_name"))
-			return { isValid: false }
-		}
-
 		// Native-only: arguments are already a structured object.
 		let parsedArguments: Record<string, UnsafeAny> | undefined
 		if (params.arguments !== undefined) {
-			if (typeof params.arguments !== "object" || params.arguments === null || Array.isArray(params.arguments)) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("use_mcp_tool")
-				await task.say("error", t("mcp:errors.invalidJsonArgument", { toolName: params.tool_name }))
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(
-					formatResponse.toolError(
-						formatResponse.invalidMcpToolArgumentError(params.server_name, params.tool_name),
-					),
-				)
-				return { isValid: false }
-			}
 			parsedArguments = params.arguments
 		}
 

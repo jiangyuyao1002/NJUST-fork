@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { TaskBoard } from "../task/TaskBoard"
 import { formatResponse } from "../prompts/responses"
@@ -23,18 +25,16 @@ export class TaskGetTool extends BaseTool<"task_get"> {
 		return true
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			taskId: z.string().min(1, "taskId is required"),
+		})
+	}
+
 	override async execute(params: TaskGetParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { handleError, pushToolResult } = callbacks
 
 		try {
-			if (!params.taskId) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("task_get")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("task_get", "taskId"))
-				return
-			}
-
 			const board = new TaskBoard(task.cwd, task.taskId)
 			const found = await board.getTask(params.taskId)
 

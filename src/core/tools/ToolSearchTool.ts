@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { BaseTool, type ToolCallbacks } from "./BaseTool"
 import type { Task } from "../task/Task"
 import type { ToolName } from "@njust-ai-cj/types"
@@ -56,6 +58,12 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 		return "Tool Search"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			query: z.string().min(1, "query is required"),
+		})
+	}
+
 	// ── Execution ───────────────────────────────────────────────────────
 
 	// eslint-disable-next-line @typescript-eslint/require-await
@@ -65,11 +73,6 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 		{ pushToolResult }: ToolCallbacks,
 	): Promise<void> {
 		const { query } = params
-
-		if (!query || query.trim().length === 0) {
-			pushToolResult("Error: query parameter is required and cannot be empty.")
-			return
-		}
 
 		if (!this.registry) {
 			pushToolResult("Error: Tool registry is not configured. No tools available to search.")

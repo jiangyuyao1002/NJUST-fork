@@ -1,5 +1,6 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
-import { formatResponse } from "../prompts/responses"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 
@@ -32,26 +33,17 @@ export class SleepTool extends BaseTool<"sleep"> {
 		return "sleep wait delay pause timer"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			seconds: z.number().nonnegative("seconds must be a non-negative number"),
+		})
+	}
+
 	async execute(params: SleepParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { pushToolResult, handleError } = callbacks
 
 		try {
 			const { seconds } = params
-
-			if (seconds === undefined || seconds === null) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("sleep")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("sleep", "seconds"))
-				return
-			}
-
-			if (typeof seconds !== "number" || isNaN(seconds) || seconds < 0) {
-				pushToolResult(
-					formatResponse.toolError("The 'seconds' parameter must be a non-negative number."),
-				)
-				return
-			}
 
 			const clampedSeconds = Math.min(seconds, MAX_SLEEP_SECONDS)
 

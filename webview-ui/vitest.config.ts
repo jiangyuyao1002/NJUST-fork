@@ -12,6 +12,7 @@ export default defineConfig({
 		reporters,
 		silent,
 		environment: "jsdom",
+		pool: "forks",
 		include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
 		onConsoleLog,
 		coverage: {

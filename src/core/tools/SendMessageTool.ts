@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -24,27 +26,18 @@ export class SendMessageTool extends BaseTool<"send_message"> {
 		return false
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			targetTaskId: z.string().min(1, "targetTaskId is required"),
+			message: z.string().min(1, "message is required"),
+		})
+	}
+
 	async execute(params: SendMessageToolParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { targetTaskId, message } = params
 		const { askApproval, handleError, pushToolResult } = callbacks
 
 		try {
-			// Validate required parameters
-			if (!targetTaskId) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("send_message")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("send_message", "targetTaskId"))
-				return
-			}
-
-			if (!message) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("send_message")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("send_message", "message"))
-				return
-			}
 
 			// Get the provider to find the target task
 			const provider = task.providerRef.deref()

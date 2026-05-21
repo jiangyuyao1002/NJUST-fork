@@ -31,9 +31,8 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import type { ApiHandlerCreateMessageMetadata } from "../../api"
 import { resolveParallelNativeToolCalls } from "../../shared/parallelToolCalls"
-import { type ApiStream, GroundingSource } from "../../api/transform/stream"
+import { type ApiStream } from "../../api/transform/stream"
 import { checkToolPromptConsistency } from "../prompts/toolPromptConsistency"
-import { isAnyToolUse } from "../assistant-message/types"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
 import type { ApiMessage } from "../task-persistence"
 import { getModelMaxOutputTokens } from "../../shared/api"
@@ -61,7 +60,6 @@ import { BackpressureController } from "../stream/BackpressureController"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { handleAttemptApiRequestError } from "./TaskRetryHandler"
-import { clineApiReqInfoSchema } from "@njust-ai-cj/types"
 import {
 	consumeApiStream,
 	finalizeStreamResponse,

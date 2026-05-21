@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import type { ToolUse } from "../../shared/tools"
@@ -26,28 +28,23 @@ export class AskFollowupQuestionTool extends BaseTool<"ask_followup_question"> {
 		return "Ask Followup Question"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			question: z.string().min(1, "question is required"),
+			follow_up: z.array(
+				z.object({
+					text: z.string().min(1),
+					mode: z.string().optional(),
+				}),
+			),
+		})
+	}
+
 	async execute(params: AskFollowupQuestionParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { question, follow_up } = params
 		const { handleError, pushToolResult } = callbacks
 
-		const recordMissingParamError = async (paramName: string): Promise<void> => {
-			task.consecutiveMistakeCount++
-			task.recordToolError("ask_followup_question")
-			task.didToolFailInCurrentTurn = true
-			pushToolResult(await task.sayAndCreateMissingParamError("ask_followup_question", paramName))
-		}
-
 		try {
-			if (!question) {
-				await recordMissingParamError("question")
-				return
-			}
-
-			if (!follow_up || !Array.isArray(follow_up)) {
-				await recordMissingParamError("follow_up")
-				return
-			}
-
 			// Transform follow_up suggestions to the format expected by task.ask
 			const follow_up_json = {
 				question,

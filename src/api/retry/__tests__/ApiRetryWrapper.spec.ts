@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 
-import { wrapApiHandler, RetryWrapperOptions } from "../ApiRetryWrapper"
+import { wrapApiHandler } from "../ApiRetryWrapper"
 import { ApiErrorCategory } from "../ApiErrorClassifier"
 import { DEFAULT_API_RETRY_OPTIONS } from "../ApiRetryStrategy"
 import * as ApiRetryStrategy from "../ApiRetryStrategy"
@@ -81,6 +81,7 @@ describe("wrapApiHandler", () => {
 			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
+				// eslint-disable-next-line require-yield
 				return (async function* () {
 					calls++
 					throw error500
@@ -105,6 +106,7 @@ describe("wrapApiHandler", () => {
 			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
+				// eslint-disable-next-line require-yield
 				return (async function* () {
 					calls++
 					throw error503
@@ -129,6 +131,7 @@ describe("wrapApiHandler", () => {
 			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
+				// eslint-disable-next-line require-yield
 				return (async function* () {
 					calls++
 					throw error503
@@ -160,6 +163,7 @@ describe("wrapApiHandler", () => {
 			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
+				// eslint-disable-next-line require-yield
 				return (async function* () {
 					calls++
 					throw error
@@ -238,6 +242,7 @@ describe("wrapApiHandler", () => {
 			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
+				// eslint-disable-next-line require-yield
 				return (async function* () {
 					calls++
 					throw error500

@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { ignoreAbortError } from "../../utils/errorHandling"
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
@@ -19,6 +21,13 @@ interface RunSlashCommandParams {
 
 export class RunSlashCommandTool extends BaseTool<"run_slash_command"> {
 	readonly name = "run_slash_command" as const
+
+	protected override get inputSchema() {
+		return z.object({
+			command: z.string().min(1, "command is required"),
+			args: z.string().optional(),
+		})
+	}
 
 	async execute(params: RunSlashCommandParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { command: commandName, args } = params

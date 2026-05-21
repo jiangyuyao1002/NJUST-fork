@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type { ClineAskUseMcpServer } from "@njust-ai-cj/types"
 
 import type { ToolUse } from "../../shared/tools"
@@ -15,25 +16,18 @@ interface AccessMcpResourceParams {
 export class AccessMcpResourceTool extends BaseTool<"access_mcp_resource"> {
 	readonly name = "access_mcp_resource" as const
 
+	protected override get inputSchema() {
+		return z.object({
+			server_name: z.string().min(1, "server_name is required"),
+			uri: z.string().min(1, "uri is required"),
+		})
+	}
+
 	async execute(params: AccessMcpResourceParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { askApproval, handleError, pushToolResult } = callbacks
 		const { server_name, uri } = params
 
 		try {
-			if (!server_name) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("access_mcp_resource")
-				pushToolResult(await task.sayAndCreateMissingParamError("access_mcp_resource", "server_name"))
-				return
-			}
-
-			if (!uri) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("access_mcp_resource")
-				pushToolResult(await task.sayAndCreateMissingParamError("access_mcp_resource", "uri"))
-				return
-			}
-
 			task.consecutiveMistakeCount = 0
 
 			const completeMessage = JSON.stringify({

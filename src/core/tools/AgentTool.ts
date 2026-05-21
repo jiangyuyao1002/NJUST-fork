@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { ignoreAbortError } from "../../utils/errorHandling"
 import { formatResponse } from "../prompts/responses"
@@ -25,33 +27,19 @@ export class AgentTool extends BaseTool<"agent"> {
 		return "agent sub-agent spawn delegate fork"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			task: z.string().min(1, "task is required"),
+			agentType: z.enum(["explore", "implement", "verify", "custom"]).optional(),
+			maxTurns: z.number().int().positive().optional(),
+		})
+	}
+
 	async execute(params: AgentToolParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { task: taskDescription, agentType = "custom", maxTurns } = params
 		const { askApproval, handleError, pushToolResult } = callbacks
 
 		try {
-			// Validate required parameter
-			if (!taskDescription) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("agent")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("agent", "task"))
-				return
-			}
-
-			// Validate agentType
-			const validTypes: SubAgentType[] = ["explore", "implement", "verify", "custom"]
-			if (!validTypes.includes(agentType)) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("agent")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(
-					formatResponse.toolError(
-						`Invalid agentType: "${agentType}". Must be one of: ${validTypes.join(", ")}`,
-					),
-				)
-				return
-			}
 
 			const host = task.providerRef.deref()
 

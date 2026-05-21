@@ -21,7 +21,7 @@ describe("askFollowupQuestionTool", () => {
 		}
 
 		mockPushToolResult = vi.fn((result) => {
-			toolResult = result
+			_toolResult = result
 		})
 	})
 
@@ -111,89 +111,6 @@ describe("askFollowupQuestionTool", () => {
 			),
 			false,
 		)
-	})
-
-	describe("parameter validation", () => {
-		it("should handle missing follow_up parameter", async () => {
-			const block: ToolUse = {
-				type: "tool_use",
-				name: "ask_followup_question",
-				params: {
-					question: "What would you like to do?",
-				},
-				nativeArgs: {
-					question: "What would you like to do?",
-					follow_up: undefined as any,
-				},
-				partial: false,
-			}
-
-			await askFollowupQuestionTool.handle(mockCline, block as ToolUse<"ask_followup_question">, {
-				askApproval: vi.fn(),
-				handleError: vi.fn(),
-				pushToolResult: mockPushToolResult,
-			})
-
-			expect(mockCline.sayAndCreateMissingParamError).toHaveBeenCalledWith("ask_followup_question", "follow_up")
-			expect(mockCline.recordToolError).toHaveBeenCalledWith("ask_followup_question")
-			expect(mockCline.didToolFailInCurrentTurn).toBe(true)
-			expect(mockCline.consecutiveMistakeCount).toBe(1)
-			expect(mockCline.ask).not.toHaveBeenCalled()
-		})
-
-		it("should handle null follow_up parameter", async () => {
-			const block: ToolUse = {
-				type: "tool_use",
-				name: "ask_followup_question",
-				params: {
-					question: "What would you like to do?",
-				},
-				nativeArgs: {
-					question: "What would you like to do?",
-					follow_up: null as any,
-				},
-				partial: false,
-			}
-
-			await askFollowupQuestionTool.handle(mockCline, block as ToolUse<"ask_followup_question">, {
-				askApproval: vi.fn(),
-				handleError: vi.fn(),
-				pushToolResult: mockPushToolResult,
-			})
-
-			expect(mockCline.sayAndCreateMissingParamError).toHaveBeenCalledWith("ask_followup_question", "follow_up")
-			expect(mockCline.recordToolError).toHaveBeenCalledWith("ask_followup_question")
-			expect(mockCline.didToolFailInCurrentTurn).toBe(true)
-			expect(mockCline.consecutiveMistakeCount).toBe(1)
-			expect(mockCline.ask).not.toHaveBeenCalled()
-		})
-
-		it("should handle non-array follow_up parameter", async () => {
-			const block: ToolUse = {
-				type: "tool_use",
-				name: "ask_followup_question",
-				params: {
-					question: "What would you like to do?",
-				},
-				nativeArgs: {
-					question: "What would you like to do?",
-					follow_up: "not an array" as any,
-				} as any,
-				partial: false,
-			}
-
-			await askFollowupQuestionTool.handle(mockCline, block as ToolUse<"ask_followup_question">, {
-				askApproval: vi.fn(),
-				handleError: vi.fn(),
-				pushToolResult: mockPushToolResult,
-			})
-
-			expect(mockCline.sayAndCreateMissingParamError).toHaveBeenCalledWith("ask_followup_question", "follow_up")
-			expect(mockCline.recordToolError).toHaveBeenCalledWith("ask_followup_question")
-			expect(mockCline.didToolFailInCurrentTurn).toBe(true)
-			expect(mockCline.consecutiveMistakeCount).toBe(1)
-			expect(mockCline.ask).not.toHaveBeenCalled()
-		})
 	})
 
 	describe("handlePartial with native protocol", () => {

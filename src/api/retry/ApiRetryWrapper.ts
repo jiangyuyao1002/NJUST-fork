@@ -67,13 +67,8 @@ async function* wrapStreamWithRetry(
 		}
 
 		// First chunk succeeded — proxy the rest of the stream WITHOUT retry.
-		try {
-			yield* { [Symbol.asyncIterator]: () => iterator! }
-			return
-		} catch (error) {
-			// Mid-stream error — pass through untouched.
-			throw error
-		}
+		yield* { [Symbol.asyncIterator]: () => iterator! }
+		return
 	}
 
 	throw lastError

@@ -11,7 +11,6 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Task } from "../Task"
 import { createTestProvider } from "./testProviderFactory"
-import type { ITaskHost } from "../interfaces/ITaskHost"
 
 // Mock delay before any imports that might use it
 vi.mock("delay", () => ({

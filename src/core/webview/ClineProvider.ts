@@ -3,7 +3,6 @@ import * as path from "path"
 import fs from "fs/promises"
 import EventEmitter from "events"
 
-import delay from "delay"
 import axios from "axios"
 import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
@@ -12,16 +11,11 @@ import type { McpServer } from "@njust-ai-cj/types"
 import {
 	type TaskProviderLike,
 	type TaskProviderEvents,
-	type ProviderName,
 	type ProviderSettings,
 	type NJUST_AI_CJSettings,
 	type ProviderSettingsEntry,
-	type StaticAppProperties,
-	type DynamicAppProperties,
-	type TaskProperties,
-	type GitProperties,
-	type TelemetryProperties,
 	type TelemetryPropertiesProvider,
+	type TelemetryProperties,
 	type CodeActionId,
 	type CodeActionName,
 	type TerminalActionId,
@@ -32,26 +26,14 @@ import {
 	type ExtensionState,
 	type GlobalState,
 	NJUST_AI_CJEventName,
-	DEFAULT_WRITE_DELAY_MS,
-	DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE,
-	DEFAULT_REQUEST_DELAY_SECONDS,
-	DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
-	DEFAULT_MAX_OPEN_TABS_CONTEXT,
-	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_MODES,
-	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
-	isRetiredProvider,
 	TelemetryEventName,
 } from "@njust-ai-cj/types"
 import {} from "@njust-ai-cj/core/providers"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { Package } from "../../shared/package"
-import { formatLanguage } from "../../shared/language"
-import { findLast } from "../../shared/array"
-import { supportPrompt } from "../../shared/support-prompt"
 
-import { Mode, defaultModeSlug, getModeBySlug } from "../../shared/modes"
-import { experimentDefault } from "../../shared/experiments"
+import { Mode } from "../../shared/modes"
 import { EMBEDDING_MODEL_PROFILES } from "../../shared/embeddingModels"
 import { ProfileValidator } from "../../shared/ProfileValidator"
 
@@ -70,7 +52,6 @@ import type { IndexProgressUpdate } from "../../services/code-index/interfaces/m
 import { SkillsManager } from "../../services/skills/SkillsManager"
 
 import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
-import { getWorkspaceGitInfo } from "../../utils/git"
 import { getWorkspacePath } from "../../utils/path"
 import { OrganizationAllowListViolationError } from "../../utils/errors"
 
@@ -107,7 +88,13 @@ import { WebviewContentProvider } from "./WebviewContentProvider"
 import { SettingsManager } from "./SettingsManager"
 import { TaskCoordinator } from "./TaskCoordinator"
 import { WebviewRouter } from "./WebviewRouter"
-import { getMergedCommandLists, getWorkspaceWebviewConfig, computePermissionMode } from "./ClineProviderState"
+import { getMergedCommandLists } from "./ClineProviderState"
+import {
+	buildWebviewState,
+	getState,
+	getTelemetryProperties,
+	type ClineProviderState,
+} from "./WebviewStateBuilder"
 import {
 	activateProviderProfileWithProvider,
 	deleteProviderProfileWithProvider,
@@ -124,12 +111,11 @@ import {
 } from "./ClineProviderDelegation"
 import { TaskStackManager } from "./TaskStackManager"
 import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
-import type { ClineMessage, TodoItem } from "@njust-ai-cj/types"
+import type { TodoItem } from "@njust-ai-cj/types"
 import { requestyDefaultModelId, openRouterDefaultModelId } from "@njust-ai-cj/core/providers"
 import { TaskHistoryStore } from "../task-persistence"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { logger } from "../../shared/logger"
-import { TIMING, LIMITS } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
 
 /**
@@ -162,7 +148,7 @@ export class ClineProvider
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private codeIndexManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
-	protected mcpHub?: IMcpHubService // Change from private to protected
+	public mcpHub?: IMcpHubService // Must be public to satisfy IWebviewStateHost
 	protected skillsManager?: SkillsManager
 	private taskCreationCallback: (task: Task) => void
 	private readonly assistantPresentationSubscription: DisposableLike
@@ -188,10 +174,26 @@ export class ClineProvider
 	public readonly planEngine: PlanEngine
 	public readonly agentOrchestrator: AgentOrchestrator
 
+	get cloudAuthSkipModel(): boolean {
+		return this.context.globalState.get<boolean>("roo-auth-skip-model") ?? false
+	}
+
+	get lockApiConfigAcrossModes(): boolean {
+		return this.context.workspaceState.get("lockApiConfigAcrossModes", false)
+	}
+
+	get extensionVersion(): string {
+		return this.context.extension?.packageJSON?.version ?? ""
+	}
+
+	get extensionPackageJSON(): { name?: string; version?: string } | undefined {
+		return this.context.extension?.packageJSON
+	}
+
 	constructor(
 		readonly context: vscode.ExtensionContext,
 		private readonly outputChannel: vscode.OutputChannel,
-		private readonly renderContext: "sidebar" | "editor" = "sidebar",
+		public readonly renderContext: "sidebar" | "editor" = "sidebar",
 		public readonly contextProxy: ContextProxy,
 	) {
 		super()
@@ -931,152 +933,9 @@ export class ClineProvider
 	}
 
 	async getStateToPostToWebview(): Promise<ExtensionState> {
-		const state = await this.getState()
-		const commandLists = getMergedCommandLists(state.allowedCommands, state.deniedCommands)
-		return await this.buildWebviewState(state, commandLists)
-	}
-
-	private async buildWebviewState(
-		state: Awaited<ReturnType<ClineProvider["getState"]>>,
-		commandLists: { allowedCommands: string[]; deniedCommands: string[] },
-	): Promise<ExtensionState> {
-		const { allowedCommands, deniedCommands } = commandLists
-		const cloudOrganizations: ExtensionState["cloudOrganizations"] = []
-		const workspaceWebviewConfig = getWorkspaceWebviewConfig()
-		const currentTask = this.getCurrentTask()
-
-		return {
-			version: this.context.extension?.packageJSON?.version ?? "",
-			apiConfiguration: state.apiConfiguration,
-			customInstructions: state.customInstructions,
-			alwaysAllowReadOnly: state.alwaysAllowReadOnly ?? false,
-			alwaysAllowReadOnlyOutsideWorkspace: state.alwaysAllowReadOnlyOutsideWorkspace ?? false,
-			alwaysAllowWrite: state.alwaysAllowWrite ?? false,
-			alwaysAllowWriteOutsideWorkspace: state.alwaysAllowWriteOutsideWorkspace ?? false,
-			alwaysAllowWriteProtected: state.alwaysAllowWriteProtected ?? false,
-			alwaysAllowExecute: state.alwaysAllowExecute ?? false,
-			alwaysAllowMcp: state.alwaysAllowMcp ?? false,
-			alwaysAllowModeSwitch: state.alwaysAllowModeSwitch ?? false,
-			alwaysAllowSubtasks: state.alwaysAllowSubtasks ?? false,
-			allowedMaxRequests: state.allowedMaxRequests,
-			permissionMode: computePermissionMode(state),
-			allowedMaxCost: state.allowedMaxCost,
-			autoCondenseContext: state.autoCondenseContext ?? true,
-			autoCondenseContextPercent: state.autoCondenseContextPercent ?? DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
-			uriScheme: vscode.env.uriScheme,
-			currentTaskId: currentTask?.taskId,
-			currentTaskItem: currentTask?.taskId ? this.taskHistoryStore.get(currentTask.taskId) : undefined,
-			clineMessages: currentTask?.clineMessages || [],
-			currentTaskTodos: currentTask?.todoList || [],
-			messageQueue: currentTask?.messageQueueService?.messages,
-			taskHistory: this.taskHistory.initialized
-				? this.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task)
-				: [],
-			soundEnabled: state.soundEnabled ?? false,
-			ttsEnabled: state.ttsEnabled ?? false,
-			ttsSpeed: state.ttsSpeed ?? 1.0,
-			enableCheckpoints: state.enableCheckpoints ?? true,
-			checkpointTimeout: state.checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
-			enableWebSearch: state.enableWebSearch ?? false,
-			enableStreamingToolExecution: state.enableStreamingToolExecution ?? true,
-			webSearchProvider: state.webSearchProvider ?? "baidu-free",
-			serpApiEngine: state.serpApiEngine ?? "bing",
-			webSearchApiKey: state.webSearchApiKey ?? "",
-			shouldShowAnnouncement: state.lastShownAnnouncementId !== this.latestAnnouncementId,
-			allowedCommands,
-			deniedCommands,
-			soundVolume: state.soundVolume ?? 0.5,
-			writeDelayMs: state.writeDelayMs ?? DEFAULT_WRITE_DELAY_MS,
-			requestDelaySeconds: state.requestDelaySeconds ?? DEFAULT_REQUEST_DELAY_SECONDS,
-			terminalOutputPreviewSize: state.terminalOutputPreviewSize ?? DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE,
-			terminalShellIntegrationTimeout:
-				state.terminalShellIntegrationTimeout ?? Terminal.defaultShellIntegrationTimeout,
-			terminalShellIntegrationDisabled: state.terminalShellIntegrationDisabled ?? true,
-			terminalCommandDelay: state.terminalCommandDelay ?? 0,
-			terminalPowershellCounter: state.terminalPowershellCounter ?? false,
-			terminalZshClearEolMark: state.terminalZshClearEolMark ?? true,
-			terminalZshOhMy: state.terminalZshOhMy ?? false,
-			terminalZshP10k: state.terminalZshP10k ?? false,
-			terminalZdotdir: state.terminalZdotdir ?? false,
-			mcpEnabled: state.mcpEnabled ?? true,
-			currentApiConfigName: state.currentApiConfigName ?? "default",
-			listApiConfigMeta: state.listApiConfigMeta ?? [],
-			pinnedApiConfigs: state.pinnedApiConfigs ?? {},
-			mode: state.mode ?? defaultModeSlug,
-			customModePrompts: state.customModePrompts ?? {},
-			customSupportPrompts: state.customSupportPrompts ?? {},
-			enhancementApiConfigId: state.enhancementApiConfigId,
-			autoApprovalEnabled: state.autoApprovalEnabled ?? false,
-			customModes: state.customModes,
-			experiments: state.experiments ?? experimentDefault,
-			mcpServers: this.mcpHub?.getAllServers() ?? [],
-			maxOpenTabsContext: state.maxOpenTabsContext ?? DEFAULT_MAX_OPEN_TABS_CONTEXT,
-			maxWorkspaceFiles: state.maxWorkspaceFiles ?? 200,
-			cwd: this.cwd,
-			disabledTools: state.disabledTools,
-			showRooIgnoredFiles: state.showRooIgnoredFiles ?? false,
-			enableSubfolderRules: state.enableSubfolderRules ?? false,
-			language: state.language ?? formatLanguage(vscode.env.language),
-			fontFamily: state.fontFamily ?? "serif",
-			renderContext: this.renderContext,
-			maxImageFileSize: state.maxImageFileSize ?? 5,
-			maxTotalImageSize: state.maxTotalImageSize ?? 20,
-			settingsImportedAt: this.settingsImportedAt,
-			historyPreviewCollapsed: state.historyPreviewCollapsed ?? false,
-			reasoningBlockCollapsed: state.reasoningBlockCollapsed ?? true,
-			enterBehavior: state.enterBehavior ?? "send",
-			cloudUserInfo: state.cloudUserInfo,
-			cloudIsAuthenticated: state.cloudIsAuthenticated ?? false,
-			cloudAuthSkipModel: this.context.globalState.get<boolean>("roo-auth-skip-model") ?? false,
-			cloudOrganizations,
-			sharingEnabled: state.sharingEnabled ?? false,
-			publicSharingEnabled: state.publicSharingEnabled ?? false,
-			organizationAllowList: state.organizationAllowList,
-			organizationSettingsVersion: state.organizationSettingsVersion,
-			customCondensingPrompt: state.customCondensingPrompt,
-			codebaseIndexModels: state.codebaseIndexModels ?? EMBEDDING_MODEL_PROFILES,
-			codebaseIndexConfig: {
-				codebaseIndexEnabled: state.codebaseIndexConfig?.codebaseIndexEnabled ?? false,
-				codebaseIndexQdrantUrl: state.codebaseIndexConfig?.codebaseIndexQdrantUrl ?? "http://localhost:6333",
-				codebaseIndexEmbedderProvider: state.codebaseIndexConfig?.codebaseIndexEmbedderProvider ?? "openai",
-				codebaseIndexEmbedderBaseUrl: state.codebaseIndexConfig?.codebaseIndexEmbedderBaseUrl ?? "",
-				codebaseIndexEmbedderModelId: state.codebaseIndexConfig?.codebaseIndexEmbedderModelId ?? "",
-				codebaseIndexEmbedderModelDimension:
-					state.codebaseIndexConfig?.codebaseIndexEmbedderModelDimension ?? 1536,
-				codebaseIndexOpenAiCompatibleBaseUrl: state.codebaseIndexConfig?.codebaseIndexOpenAiCompatibleBaseUrl,
-				codebaseIndexSearchMaxResults: state.codebaseIndexConfig?.codebaseIndexSearchMaxResults,
-				codebaseIndexSearchMinScore: state.codebaseIndexConfig?.codebaseIndexSearchMinScore,
-				codebaseIndexBedrockRegion: state.codebaseIndexConfig?.codebaseIndexBedrockRegion,
-				codebaseIndexBedrockProfile: state.codebaseIndexConfig?.codebaseIndexBedrockProfile,
-				codebaseIndexOpenRouterSpecificProvider:
-					state.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
-			},
-			profileThresholds: state.profileThresholds ?? {},
-			hasOpenedModeSelector: this.settingsManager.getGlobalValue("hasOpenedModeSelector") ?? false,
-			lockApiConfigAcrossModes: state.lockApiConfigAcrossModes ?? false,
-			alwaysAllowFollowupQuestions: state.alwaysAllowFollowupQuestions ?? false,
-			followupAutoApproveTimeoutMs: state.followupAutoApproveTimeoutMs ?? TIMING.FOLLOWUP_AUTO_APPROVE_TIMEOUT_MS,
-			includeDiagnosticMessages: state.includeDiagnosticMessages ?? true,
-			maxDiagnosticMessages: state.maxDiagnosticMessages ?? LIMITS.MAX_DIAGNOSTIC_MESSAGES,
-			includeTaskHistoryInEnhance: state.includeTaskHistoryInEnhance ?? true,
-			includeCurrentTime: state.includeCurrentTime ?? true,
-			includeCurrentCost: state.includeCurrentCost ?? true,
-			maxGitStatusFiles: state.maxGitStatusFiles ?? 0,
-			taskSyncEnabled: state.taskSyncEnabled,
-			imageGenerationProvider: state.imageGenerationProvider,
-			openRouterImageApiKey: state.openRouterImageApiKey,
-			openRouterImageGenerationSelectedModel: state.openRouterImageGenerationSelectedModel,
-			openAiCodexIsAuthenticated: await (async () => {
-				try {
-					const { openAiCodexOAuthManager } = await import("../../integrations/openai-codex/oauth")
-					return await openAiCodexOAuthManager.isAuthenticated()
-				} catch (error) {
-					logger.debug("ClineProvider", "OpenAI Codex OAuth authentication check failed", error)
-					return false
-				}
-			})(),
-			...workspaceWebviewConfig,
-		}
+		const providerState = await this.getState()
+		const commandLists = getMergedCommandLists(providerState.allowedCommands, providerState.deniedCommands)
+		return await buildWebviewState(this, providerState, commandLists)
 	}
 
 	/**
@@ -1085,151 +944,8 @@ export class ClineProvider
 	 * https://www.eliostruyf.com/devhack-code-extension-storage-options/
 	 */
 
-	async getState(): Promise<
-		Omit<
-			ExtensionState,
-			"clineMessages" | "renderContext" | "hasOpenedModeSelector" | "version" | "shouldShowAnnouncement"
-		>
-	> {
-		const stateValues = this.contextProxy.getValues()
-		const customModes = await this.customModesManager.getCustomModes()
-
-		// Determine apiProvider with the same logic as before, while filtering retired providers.
-		const apiProvider: ProviderName =
-			stateValues.apiProvider && !isRetiredProvider(stateValues.apiProvider)
-				? stateValues.apiProvider
-				: "anthropic"
-
-		// Build the apiConfiguration object combining state values and secrets.
-		const providerSettings = this.contextProxy.getProviderSettings()
-
-		// Ensure apiProvider is set properly if not already in state
-		if (!providerSettings.apiProvider) {
-			providerSettings.apiProvider = apiProvider
-		}
-
-		const organizationAllowList = ORGANIZATION_ALLOW_ALL
-		const cloudUserInfo = null
-		const cloudIsAuthenticated = false
-		const sharingEnabled = false
-		const publicSharingEnabled = false
-		const organizationSettingsVersion = -1
-		const taskSyncEnabled = false
-
-		// Return the same structure as before.
-		return {
-			apiConfiguration: providerSettings,
-			lastShownAnnouncementId: stateValues.lastShownAnnouncementId,
-			customInstructions: stateValues.customInstructions,
-			apiModelId: stateValues.apiModelId,
-			alwaysAllowReadOnly: stateValues.alwaysAllowReadOnly ?? false,
-			alwaysAllowReadOnlyOutsideWorkspace: stateValues.alwaysAllowReadOnlyOutsideWorkspace ?? false,
-			alwaysAllowWrite: stateValues.alwaysAllowWrite ?? false,
-			alwaysAllowWriteOutsideWorkspace: stateValues.alwaysAllowWriteOutsideWorkspace ?? false,
-			alwaysAllowWriteProtected: stateValues.alwaysAllowWriteProtected ?? false,
-			alwaysAllowExecute: stateValues.alwaysAllowExecute ?? false,
-			alwaysAllowMcp: stateValues.alwaysAllowMcp ?? false,
-			alwaysAllowModeSwitch: stateValues.alwaysAllowModeSwitch ?? false,
-			alwaysAllowSubtasks: stateValues.alwaysAllowSubtasks ?? false,
-			alwaysAllowFollowupQuestions: stateValues.alwaysAllowFollowupQuestions ?? false,
-			followupAutoApproveTimeoutMs: stateValues.followupAutoApproveTimeoutMs ?? 60000,
-			diagnosticsEnabled: stateValues.diagnosticsEnabled ?? true,
-			allowedMaxRequests: stateValues.allowedMaxRequests,
-			allowedMaxCost: stateValues.allowedMaxCost,
-			autoCondenseContext: stateValues.autoCondenseContext ?? true,
-			autoCondenseContextPercent: stateValues.autoCondenseContextPercent ?? DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
-			taskHistory: this.taskHistory.initialized ? this.taskHistoryStore.getAll() : [],
-			allowedCommands: stateValues.allowedCommands,
-			deniedCommands: stateValues.deniedCommands,
-			soundEnabled: stateValues.soundEnabled ?? false,
-			ttsEnabled: stateValues.ttsEnabled ?? false,
-			ttsSpeed: stateValues.ttsSpeed ?? 1.0,
-			enableCheckpoints: stateValues.enableCheckpoints ?? true,
-			checkpointTimeout: stateValues.checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
-			enableWebSearch: stateValues.enableWebSearch ?? false,
-			enableStreamingToolExecution: stateValues.enableStreamingToolExecution ?? true,
-			webSearchProvider: stateValues.webSearchProvider ?? "baidu-free",
-			serpApiEngine: stateValues.serpApiEngine ?? "bing",
-			webSearchApiKey: stateValues.webSearchApiKey ?? "",
-			soundVolume: stateValues.soundVolume,
-			writeDelayMs: stateValues.writeDelayMs ?? DEFAULT_WRITE_DELAY_MS,
-			requestDelaySeconds: stateValues.requestDelaySeconds ?? DEFAULT_REQUEST_DELAY_SECONDS,
-			terminalOutputPreviewSize: stateValues.terminalOutputPreviewSize ?? DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE,
-			terminalShellIntegrationTimeout:
-				stateValues.terminalShellIntegrationTimeout ?? Terminal.defaultShellIntegrationTimeout,
-			terminalShellIntegrationDisabled: stateValues.terminalShellIntegrationDisabled ?? true,
-			terminalCommandDelay: stateValues.terminalCommandDelay ?? 0,
-			terminalPowershellCounter: stateValues.terminalPowershellCounter ?? false,
-			terminalZshClearEolMark: stateValues.terminalZshClearEolMark ?? true,
-			terminalZshOhMy: stateValues.terminalZshOhMy ?? false,
-			terminalZshP10k: stateValues.terminalZshP10k ?? false,
-			terminalZdotdir: stateValues.terminalZdotdir ?? false,
-			mode: stateValues.mode ?? defaultModeSlug,
-			// When the user has not chosen a language in settings, follow VS Code's display language (typically matches OS after install).
-			language: stateValues.language ?? formatLanguage(vscode.env.language),
-			fontFamily: stateValues.fontFamily ?? "serif",
-			mcpEnabled: stateValues.mcpEnabled ?? true,
-			mcpServers: this.mcpHub?.getAllServers() ?? [],
-			currentApiConfigName: stateValues.currentApiConfigName ?? "default",
-			listApiConfigMeta: stateValues.listApiConfigMeta ?? [],
-			pinnedApiConfigs: stateValues.pinnedApiConfigs ?? {},
-			modeApiConfigs: stateValues.modeApiConfigs ?? ({} as Record<Mode, string>),
-			customModePrompts: stateValues.customModePrompts ?? {},
-			customSupportPrompts: stateValues.customSupportPrompts ?? {},
-			enhancementApiConfigId: stateValues.enhancementApiConfigId,
-			experiments: stateValues.experiments ?? experimentDefault,
-			autoApprovalEnabled: stateValues.autoApprovalEnabled ?? false,
-			customModes,
-			maxOpenTabsContext: stateValues.maxOpenTabsContext ?? DEFAULT_MAX_OPEN_TABS_CONTEXT,
-			maxWorkspaceFiles: stateValues.maxWorkspaceFiles ?? 200,
-			disabledTools: stateValues.disabledTools,
-			showRooIgnoredFiles: stateValues.showRooIgnoredFiles ?? false,
-			enableSubfolderRules: stateValues.enableSubfolderRules ?? false,
-			maxImageFileSize: stateValues.maxImageFileSize ?? 5,
-			maxTotalImageSize: stateValues.maxTotalImageSize ?? 20,
-			historyPreviewCollapsed: stateValues.historyPreviewCollapsed ?? false,
-			reasoningBlockCollapsed: stateValues.reasoningBlockCollapsed ?? true,
-			enterBehavior: stateValues.enterBehavior ?? "send",
-			cloudUserInfo,
-			cloudIsAuthenticated,
-			sharingEnabled,
-			publicSharingEnabled,
-			organizationAllowList,
-			organizationSettingsVersion,
-			customCondensingPrompt: stateValues.customCondensingPrompt,
-			codebaseIndexModels: stateValues.codebaseIndexModels ?? EMBEDDING_MODEL_PROFILES,
-			codebaseIndexConfig: {
-				codebaseIndexEnabled: stateValues.codebaseIndexConfig?.codebaseIndexEnabled ?? false,
-				codebaseIndexQdrantUrl:
-					stateValues.codebaseIndexConfig?.codebaseIndexQdrantUrl ?? "http://localhost:6333",
-				codebaseIndexEmbedderProvider:
-					stateValues.codebaseIndexConfig?.codebaseIndexEmbedderProvider ?? "openai",
-				codebaseIndexEmbedderBaseUrl: stateValues.codebaseIndexConfig?.codebaseIndexEmbedderBaseUrl ?? "",
-				codebaseIndexEmbedderModelId: stateValues.codebaseIndexConfig?.codebaseIndexEmbedderModelId ?? "",
-				codebaseIndexEmbedderModelDimension:
-					stateValues.codebaseIndexConfig?.codebaseIndexEmbedderModelDimension,
-				codebaseIndexOpenAiCompatibleBaseUrl:
-					stateValues.codebaseIndexConfig?.codebaseIndexOpenAiCompatibleBaseUrl,
-				codebaseIndexSearchMaxResults: stateValues.codebaseIndexConfig?.codebaseIndexSearchMaxResults,
-				codebaseIndexSearchMinScore: stateValues.codebaseIndexConfig?.codebaseIndexSearchMinScore,
-				codebaseIndexBedrockRegion: stateValues.codebaseIndexConfig?.codebaseIndexBedrockRegion,
-				codebaseIndexBedrockProfile: stateValues.codebaseIndexConfig?.codebaseIndexBedrockProfile,
-				codebaseIndexOpenRouterSpecificProvider:
-					stateValues.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
-			},
-			profileThresholds: stateValues.profileThresholds ?? {},
-			lockApiConfigAcrossModes: this.context.workspaceState.get("lockApiConfigAcrossModes", false),
-			includeDiagnosticMessages: stateValues.includeDiagnosticMessages ?? true,
-			maxDiagnosticMessages: stateValues.maxDiagnosticMessages ?? 50,
-			includeTaskHistoryInEnhance: stateValues.includeTaskHistoryInEnhance ?? true,
-			includeCurrentTime: stateValues.includeCurrentTime ?? true,
-			includeCurrentCost: stateValues.includeCurrentCost ?? true,
-			maxGitStatusFiles: stateValues.maxGitStatusFiles ?? 0,
-			taskSyncEnabled,
-			imageGenerationProvider: stateValues.imageGenerationProvider,
-			openRouterImageApiKey: stateValues.openRouterImageApiKey,
-			openRouterImageGenerationSelectedModel: stateValues.openRouterImageGenerationSelectedModel,
-		}
+	async getState(): Promise<ClineProviderState> {
+		return getState(this)
 	}
 
 	/**
@@ -1674,83 +1390,9 @@ export class ClineProvider
 
 	// Telemetry
 
-	private _appProperties?: StaticAppProperties
-	private _gitProperties?: GitProperties
-
-	private getAppProperties(): StaticAppProperties {
-		if (!this._appProperties) {
-			const packageJSON = this.context.extension?.packageJSON
-
-			this._appProperties = {
-				appName: packageJSON?.name ?? Package.name,
-				appVersion: packageJSON?.version ?? Package.version,
-				vscodeVersion: vscode.version,
-				platform: process.platform,
-				editorName: vscode.env.appName,
-			}
-		}
-
-		return this._appProperties
-	}
-
-	public get appProperties(): StaticAppProperties {
-		return this._appProperties ?? this.getAppProperties()
-	}
-
-	private getCloudProperties(): Record<string, unknown> {
-		return {}
-	}
-
-	private async getTaskProperties(): Promise<DynamicAppProperties & TaskProperties> {
-		const { language = "en", mode, apiConfiguration } = await this.getState()
-
-		const task = this.getCurrentTask()
-		const todoList = task?.todoList
-		let todos: { total: number; completed: number; inProgress: number; pending: number } | undefined
-
-		if (todoList && todoList.length > 0) {
-			todos = {
-				total: todoList.length,
-				completed: todoList.filter((todo) => todo.status === "completed").length,
-				inProgress: todoList.filter((todo) => todo.status === "in_progress").length,
-				pending: todoList.filter((todo) => todo.status === "pending").length,
-			}
-		}
-
-		const apiProvider = apiConfiguration?.apiProvider
-
-		return {
-			language,
-			mode,
-			taskId: task?.taskId,
-			parentTaskId: task?.parentTaskId,
-			apiProvider: apiProvider && !isRetiredProvider(apiProvider) ? apiProvider : undefined,
-			modelId: task?.api?.getModel().id,
-			diffStrategy: task?.diffStrategy?.getName(),
-			isSubtask: task ? !!task.parentTaskId : undefined,
-			...(todos && { todos }),
-		}
-	}
-
-	private async getGitProperties(): Promise<GitProperties> {
-		if (!this._gitProperties) {
-			this._gitProperties = await getWorkspaceGitInfo()
-		}
-
-		return this._gitProperties
-	}
-
-	public get gitProperties(): GitProperties | undefined {
-		return this._gitProperties
-	}
-
 	public async getTelemetryProperties(): Promise<TelemetryProperties> {
-		return {
-			...this.getAppProperties(),
-			...this.getCloudProperties(),
-			...(await this.getTaskProperties()),
-			...(await this.getGitProperties()),
-		}
+		const state = await this.getState()
+		return getTelemetryProperties(this, state)
 	}
 
 	public get cwd() {

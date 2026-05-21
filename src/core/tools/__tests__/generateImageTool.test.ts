@@ -222,58 +222,6 @@ describe("generateImageTool", () => {
 		})
 	})
 
-	describe("missing parameters", () => {
-		it("should handle missing prompt parameter", async () => {
-			const block: ToolUse = {
-				type: "tool_use",
-				name: "generate_image",
-				params: {
-					path: "test-image.png",
-				},
-				nativeArgs: {
-					path: "test-image.png",
-				} as any,
-				partial: false,
-			}
-
-			await generateImageTool.handle(mockCline as Task, block as ToolUse<"generate_image">, {
-				askApproval: mockAskApproval,
-				handleError: mockHandleError,
-				pushToolResult: mockPushToolResult,
-			})
-
-			expect(mockCline.consecutiveMistakeCount).toBe(1)
-			expect(mockCline.recordToolError).toHaveBeenCalledWith("generate_image")
-			expect(mockCline.sayAndCreateMissingParamError).toHaveBeenCalledWith("generate_image", "prompt")
-			expect(mockPushToolResult).toHaveBeenCalledWith("Missing parameter error", undefined)
-		})
-
-		it("should handle missing path parameter", async () => {
-			const block: ToolUse = {
-				type: "tool_use",
-				name: "generate_image",
-				params: {
-					prompt: "Generate a test image",
-				},
-				nativeArgs: {
-					prompt: "Generate a test image",
-				} as any,
-				partial: false,
-			}
-
-			await generateImageTool.handle(mockCline as Task, block as ToolUse<"generate_image">, {
-				askApproval: mockAskApproval,
-				handleError: mockHandleError,
-				pushToolResult: mockPushToolResult,
-			})
-
-			expect(mockCline.consecutiveMistakeCount).toBe(1)
-			expect(mockCline.recordToolError).toHaveBeenCalledWith("generate_image")
-			expect(mockCline.sayAndCreateMissingParamError).toHaveBeenCalledWith("generate_image", "path")
-			expect(mockPushToolResult).toHaveBeenCalledWith("Missing parameter error", undefined)
-		})
-	})
-
 	describe("experiment validation", () => {
 		it("should error when image generation experiment is disabled", async () => {
 			// Disable the experiment

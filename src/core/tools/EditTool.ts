@@ -1,6 +1,7 @@
 import { getErrorMessage } from "../../shared/error-utils"
 import fs from "fs/promises"
 import path from "path"
+import { z } from "zod"
 
 import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
 
@@ -54,6 +55,16 @@ export class EditTool extends BaseTool<"edit"> {
 		return ["search_and_replace", "edit_file", "search_replace"]
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			file_path: z.string().min(1, "file_path is required"),
+			old_string: z.string(),
+			new_string: z.string(),
+			replace_all: z.boolean().optional(),
+			expected_replacements: z.number().int().positive().optional(),
+		})
+	}
+
 	async execute(params: EditParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		// Coerce old_string/new_string to handle malformed native tool calls
 		const file_path = params.file_path
@@ -64,28 +75,6 @@ export class EditTool extends BaseTool<"edit"> {
 		const { askApproval, handleError, pushToolResult } = callbacks
 
 		try {
-			// Validate required parameters
-			if (!file_path) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("edit")
-				pushToolResult(await task.sayAndCreateMissingParamError("edit", "file_path"))
-				return
-			}
-
-			// old_string must be provided (can be empty for file creation)
-			if (old_string === undefined || old_string === null) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("edit")
-				pushToolResult(await task.sayAndCreateMissingParamError("edit", "old_string"))
-				return
-			}
-
-			if (new_string === undefined || new_string === null) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("edit")
-				pushToolResult(await task.sayAndCreateMissingParamError("edit", "new_string"))
-				return
-			}
 
 			// Check old_string !== new_string (skip for file creation with empty old_string)
 			if (old_string !== "" && old_string === new_string) {

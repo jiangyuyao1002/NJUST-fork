@@ -1,5 +1,6 @@
 import path from "path"
 import fs from "fs/promises"
+import { z } from "zod"
 
 import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
@@ -40,6 +41,13 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 		return "Apply Diff"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			path: z.string().min(1, "path is required"),
+			diff: z.string().min(1, "diff is required"),
+		})
+	}
+
 	async execute(params: ApplyDiffParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { askApproval, handleError, pushToolResult } = callbacks
 		const { path: relPath } = params
@@ -50,19 +58,6 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 		}
 
 		try {
-			if (!relPath) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("apply_diff")
-				pushToolResult(await task.sayAndCreateMissingParamError("apply_diff", "path"))
-				return
-			}
-
-			if (!diffContent) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("apply_diff")
-				pushToolResult(await task.sayAndCreateMissingParamError("apply_diff", "diff"))
-				return
-			}
 
 			const accessAllowed = allowRooIgnorePathAccess(task.rooIgnoreController, relPath)
 

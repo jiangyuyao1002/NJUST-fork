@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { TaskBoard, type TaskBoardItem } from "../task/TaskBoard"
 
@@ -18,18 +20,20 @@ export class TaskUpdateTool extends BaseTool<"task_update"> {
 		return "Task Update"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			taskId: z.string().min(1, "taskId is required"),
+			status: z.enum(["completed", "pending", "in_progress", "failed"]).optional(),
+			title: z.string().optional(),
+			description: z.string().optional(),
+			priority: z.enum(["high", "medium", "low"]).optional(),
+		})
+	}
+
 	override async execute(params: TaskUpdateParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { handleError, pushToolResult } = callbacks
 
 		try {
-			if (!params.taskId) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("task_update")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("task_update", "taskId"))
-				return
-			}
-
 			const board = new TaskBoard(task.cwd, task.taskId)
 
 			const updates: Partial<Pick<TaskBoardItem, "title" | "description" | "status" | "priority">> = {}

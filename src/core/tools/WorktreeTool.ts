@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { BaseTool, type ToolCallbacks, type ValidationResult } from "./BaseTool"
 import { Task } from "../task/Task"
 
@@ -39,6 +41,22 @@ export class WorktreeTool extends BaseTool<"custom_tool"> {
 
 	override userFacingName(): string {
 		return "worktree"
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			action: z.enum(["enter", "exit"]),
+			branch: z.string().optional(),
+			path: z.string().optional(),
+		}).refine(
+			(data) => {
+				if (data.action === "enter") {
+					return !!(data.branch || data.path)
+				}
+				return true
+			},
+			{ message: "Either 'branch' or 'path' is required for 'enter' action", path: ["branch"] },
+		)
 	}
 
 	override validateInput(params: WorktreeParams): ValidationResult {

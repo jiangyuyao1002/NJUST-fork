@@ -1,6 +1,6 @@
 import type { ToolName } from "@njust-ai-cj/types"
 import { TelemetryEventName } from "@njust-ai-cj/types"
-import { type ZodSchema, ZodError } from "zod"
+import { type ZodSchema } from "zod"
 
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import type { PermissionRuleEngine } from "./permissions/PermissionRuleEngine"
@@ -19,7 +19,7 @@ import { DualSchemaAdapter, type JSONSchema } from "./DualSchemaAdapter"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { createToolValidator, validateToolParams } from "./toolParamValidator"
+import { createToolValidator } from "./toolParamValidator"
 
 // ── Progress data types (Task 4.1) ───────────────────────────────────
 /**

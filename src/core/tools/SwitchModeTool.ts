@@ -1,5 +1,6 @@
 import delay from "delay"
 import * as vscode from "vscode"
+import { z } from "zod"
 
 import { Task } from "../task/Task"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -16,18 +17,18 @@ interface SwitchModeParams {
 export class SwitchModeTool extends BaseTool<"switch_mode"> {
 	readonly name = "switch_mode" as const
 
+	protected override get inputSchema() {
+		return z.object({
+			mode_slug: z.string().min(1, "mode_slug is required"),
+			reason: z.string().optional(),
+		})
+	}
+
 	async execute(params: SwitchModeParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { mode_slug, reason } = params
 		const { askApproval, handleError, pushToolResult } = callbacks
 
 		try {
-			if (!mode_slug) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("switch_mode")
-				pushToolResult(await task.sayAndCreateMissingParamError("switch_mode", "mode_slug"))
-				return
-			}
-
 			task.consecutiveMistakeCount = 0
 
 			// Verify the mode exists

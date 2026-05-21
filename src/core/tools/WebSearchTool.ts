@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { BaseTool, type ToolCallbacks } from "./BaseTool"
 import { toolResultCache } from "./helpers/ToolResultCache"
 import type { Task } from "../task/Task"
@@ -15,6 +17,13 @@ class WebSearchToolImpl extends BaseTool<"web_search"> {
 		return typeof partial.search_query === "string" && partial.search_query.length > 0
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			search_query: z.string().min(1, "search_query is required"),
+			count: z.number().int().positive().optional().nullable(),
+		})
+	}
+
 	async execute(
 		params: { search_query: string; count?: number | null },
 		task: Task,
@@ -30,11 +39,6 @@ class WebSearchToolImpl extends BaseTool<"web_search"> {
 			const query = params.search_query
 			const count = params.count ?? 5
 			await reportProgress?.({ icon: "search", text: "Validating web search request" })
-
-			if (!query || query.trim().length === 0) {
-				pushToolResult("Error: search_query is required and cannot be empty.")
-				return
-			}
 
 			const provider = task.providerRef.deref()
 			const state = await provider?.getState()

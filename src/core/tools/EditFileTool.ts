@@ -1,6 +1,7 @@
 ﻿import { getErrorMessage } from "../../shared/error-utils"
 import fs from "fs/promises"
 import path from "path"
+import { z } from "zod"
 
 import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
 
@@ -55,6 +56,15 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 
 	private didSendPartialToolAsk = false
 	private partialToolAskRelPath: string | undefined
+
+	protected override get inputSchema() {
+		return z.object({
+			file_path: z.string().min(1, "file_path is required"),
+			old_string: z.string().optional().default(""),
+			new_string: z.string().optional().default(""),
+			expected_replacements: z.number().int().positive().optional(),
+		})
+	}
 
 	override validateInput(params: EditFileParams): ValidationResult {
 		if (!params.file_path || params.file_path.trim() === "") {

@@ -47,28 +47,6 @@ describe("AgentTool", () => {
 		expect(tool.searchHint).toContain("sub-agent")
 	})
 
-	it("requires a task description", async () => {
-		const task = createTask()
-		const callbacks = createCallbacks()
-
-		await tool.execute({ task: "" }, task, callbacks as any)
-
-		expect(task.consecutiveMistakeCount).toBe(1)
-		expect(task.recordToolError).toHaveBeenCalledWith("agent")
-		expect(task.didToolFailInCurrentTurn).toBe(true)
-		expect(callbacks.pushToolResult).toHaveBeenCalledWith("missing task")
-	})
-
-	it("rejects unknown agent types", async () => {
-		const task = createTask()
-		const callbacks = createCallbacks()
-
-		await tool.execute({ task: "inspect", agentType: "other" as any }, task, callbacks as any)
-
-		expect(task.recordToolError).toHaveBeenCalledWith("agent")
-		expect(callbacks.pushToolResult).toHaveBeenCalledWith(expect.stringContaining("Invalid agentType"))
-	})
-
 	it("reports lost provider reference", async () => {
 		const task = createTask({ providerRef: { deref: () => undefined } })
 		const callbacks = createCallbacks()

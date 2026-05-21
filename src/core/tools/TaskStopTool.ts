@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { formatResponse } from "../prompts/responses"
@@ -24,12 +26,15 @@ export class TaskStopTool extends BaseTool<"task_stop"> {
 		return "Task Stop"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			taskId: z.string().min(1, "taskId is required"),
+			reason: z.string().optional(),
+		})
+	}
+
 	override async execute(params: TaskStopParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { pushToolResult } = callbacks
-		if (!params.taskId) {
-			pushToolResult(await task.sayAndCreateMissingParamError("task_stop", "taskId"))
-			return
-		}
 
 		const provider = task.providerRef.deref() as UnsafeAny
 		if (!provider?.getTaskWithId) {

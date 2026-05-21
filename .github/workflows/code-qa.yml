@@ -69,6 +69,17 @@ jobs:
             - name: Run unit tests
               run: pnpm test
 
+    e2e-test:
+        name: e2e-test
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Setup Node.js and pnpm
+              uses: ./.github/actions/setup-node-pnpm
+            - name: Run E2E tests
+              run: xvfb-run -a pnpm --filter @njust-ai-cj/vscode-e2e test:ci
+
     coverage:
         runs-on: ubuntu-latest
         steps:

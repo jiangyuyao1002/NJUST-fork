@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { TaskBoard, type CreateTaskParams, type TaskBoardItem } from "../task/TaskBoard"
 
@@ -17,18 +19,19 @@ export class TaskCreateTool extends BaseTool<"task_create"> {
 		return "Task Create"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			title: z.string().min(1, "title is required"),
+			description: z.string().optional(),
+			priority: z.enum(["high", "medium", "low"]).optional(),
+			dependsOn: z.array(z.string()).optional(),
+		})
+	}
+
 	override async execute(params: TaskCreateParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { handleError, pushToolResult } = callbacks
 
 		try {
-			if (!params.title) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("task_create")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("task_create", "title"))
-				return
-			}
-
 			const board = new TaskBoard(task.cwd, task.taskId)
 
 			const createParams: CreateTaskParams = {

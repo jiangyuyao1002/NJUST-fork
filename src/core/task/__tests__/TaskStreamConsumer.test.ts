@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import { consumeApiStream, finalizeStreamResponse } from "../TaskStreamConsumer"
-import type { ConsumeStreamConfig, FinalizeConfig, StackItem, FinalizeToolUseFn } from "../TaskStreamConsumer"
+import type { StackItem, FinalizeToolUseFn } from "../TaskStreamConsumer"
 import type { TaskExecutorHost } from "../interfaces/ITaskExecutorHost"
 import { TaskState } from "../TaskStateMachine"
 import { NativeToolCallParser } from "../../assistant-message/NativeToolCallParser"
@@ -330,7 +330,7 @@ describe("TaskStreamConsumer — consumeApiStream", () => {
 
 	it("abort 时中断流并返回 proceed", async () => {
 		const host = createMockHost()
-		let callCount = 0
+		const _callCount = 0
 		async function* abortStream() {
 			yield { type: "text", text: "partial" }
 			;(host as any).abort = true
@@ -409,6 +409,7 @@ describe("TaskStreamConsumer — consumeApiStream", () => {
 		const { handleMidStreamFailure } = await import("../TaskRetryHandler")
 		;(handleMidStreamFailure as any).mockResolvedValueOnce("break")
 
+		// eslint-disable-next-line require-yield
 		async function* errorStream() {
 			throw new Error("Stream error")
 		}
@@ -433,6 +434,7 @@ describe("TaskStreamConsumer — consumeApiStream", () => {
 		const host = createMockHost({ abandoned: true })
 		const { handleMidStreamFailure } = await import("../TaskRetryHandler")
 
+		// eslint-disable-next-line require-yield
 		async function* errorStream() {
 			throw new Error("Stream error")
 		}
@@ -503,12 +505,12 @@ describe("TaskStreamConsumer — consumeApiStream", () => {
 })
 
 describe("TaskStreamConsumer — finalizeStreamResponse", () => {
-	let mockHost: TaskExecutorHost
+	let _mockHost: TaskExecutorHost
 	let toolCallParser: NativeToolCallParser
 
 	beforeEach(() => {
 		vi.clearAllMocks()
-		mockHost = createMockHost()
+		_mockHost = createMockHost()
 		toolCallParser = new NativeToolCallParser()
 	})
 

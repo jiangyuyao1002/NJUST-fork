@@ -1,6 +1,7 @@
 import fs from "fs/promises"
 import * as path from "path"
 import * as vscode from "vscode"
+import { z } from "zod"
 
 import delay from "delay"
 
@@ -63,6 +64,14 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 	readonly name = "execute_command" as const
 	override readonly maxResultSizeChars = 100_000
 
+	protected override get inputSchema() {
+		return z.object({
+			command: z.string().min(1, "command is required"),
+			cwd: z.string().optional().nullable(),
+			timeout: z.number().optional().nullable(),
+		})
+	}
+
 	override validateInput(params: ExecuteCommandParams): ValidationResult {
 		if (!params.command || params.command.trim() === "") {
 			return { valid: false, error: "Command is required and cannot be empty." }
@@ -75,12 +84,6 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 		const { handleError, pushToolResult, askApproval, reportProgress } = callbacks
 
 		try {
-			if (!command) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("execute_command")
-				pushToolResult(await task.sayAndCreateMissingParamError("execute_command", "command"))
-				return
-			}
 
 			const canonicalCommand = unescapeHtmlEntities(command)
 			await reportProgress?.({ icon: "terminal", text: "Preparing command execution" })

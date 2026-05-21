@@ -21,7 +21,7 @@ export interface IProviderActionTarget {
 	createTask(text: string, images?: string[], parentTask?: unknown, options?: unknown, configuration?: unknown): Promise<unknown>
 }
 
-let activeInstances: Set<IProviderActionTarget & { constructor: { name: string } }> = new Set()
+const activeInstances: Set<IProviderActionTarget & { constructor: { name: string } }> = new Set()
 
 export function registerActionTarget(target: IProviderActionTarget): void {
 	activeInstances.add(target as IProviderActionTarget & { constructor: { name: string } })

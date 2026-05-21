@@ -11,7 +11,7 @@
  * **Aliases:** Some tool names are aliases of canonical tools (see TOOL_ALIASES).
  * Validation resolves only safe compatibility aliases to the canonical schema.
  */
-import { z, type ZodTypeAny } from "zod"
+import { z } from "zod"
 
 import {
 	optionalBooleanCoerced,

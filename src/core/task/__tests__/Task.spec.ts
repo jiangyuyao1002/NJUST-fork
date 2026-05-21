@@ -13,7 +13,6 @@ import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { Task } from "../Task"
 import { createTestProvider } from "./testProviderFactory"
-import type { ITaskHost } from "../interfaces/ITaskHost"
 import { ApiStreamChunk } from "../../../api/transform/stream"
 import { processUserContentMentions } from "../../mentions/processUserContentMentions"
 import { MultiSearchReplaceDiffStrategy } from "../../diff/strategies/multi-search-replace"

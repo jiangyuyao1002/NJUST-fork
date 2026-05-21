@@ -212,23 +212,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 		return baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`
 	}
 
-	private async callApiWithRetry<T>(apiCall: () => Promise<T>): Promise<T> {
-		try {
-			return await apiCall()
-		} catch (error: unknown) {
-			const err = error as Record<string, unknown>
-			if (err.status === 401) {
-				// Token expired, refresh and retry
-				this.credentials = await this.refreshAccessToken(this.credentials!)
-				const client = this.ensureClient()
-				client.apiKey = this.credentials.access_token
-				client.baseURL = this.getBaseUrl(this.credentials)
-				return await apiCall()
-			} else {
-				throw error
-			}
-		}
-	}
+
 
 	override async *createMessage(
 		systemPrompt: string,
@@ -258,7 +242,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			parallel_tool_calls: metadata?.parallelToolCalls ?? false,
 		}
 
-		const stream = await this.callApiWithRetry(() => client.chat.completions.create(requestOptions))
+		const stream = await client.chat.completions.create(requestOptions)
 
 		let fullContent = ""
 
@@ -359,7 +343,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			max_completion_tokens: model.info.maxTokens,
 		}
 
-		const response = await this.callApiWithRetry(() => client.chat.completions.create(requestOptions))
+		const response = await client.chat.completions.create(requestOptions)
 
 		return response.choices[0]?.message.content || ""
 	}

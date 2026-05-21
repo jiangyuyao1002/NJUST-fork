@@ -392,6 +392,7 @@ ${packed.join("\n\n")}
 /**
  * Enhance a cjc/cjlint error message with documentation references and fix suggestions.
  * Called when terminal output contains compilation errors.
+ */
 
 export function enhanceCjcErrorOutput(errorOutput: string, cwd: string, extensionPath?: string): Promise<string> {
 	return enhanceCjcErrorOutputFromModule(errorOutput, cwd, extensionPath)

@@ -69,25 +69,6 @@ describe("skillTool", () => {
 		}
 	})
 
-	it("should handle missing skill parameter", async () => {
-		const block: ToolUse<"skill"> = {
-			type: "tool_use" as const,
-			name: "skill" as const,
-			params: {},
-			partial: false,
-			nativeArgs: {
-				skill: "",
-			},
-		}
-
-		await skillTool.handle(mockTask as Task, block, mockCallbacks)
-
-		expect(mockTask.consecutiveMistakeCount).toBe(1)
-		expect(mockTask.recordToolError).toHaveBeenCalledWith("skill")
-		expect(mockTask.sayAndCreateMissingParamError).toHaveBeenCalledWith("skill", "skill")
-		expect(mockCallbacks.pushToolResult).toHaveBeenCalledWith("Missing parameter error", undefined)
-	})
-
 	it("should handle skill not found", async () => {
 		const block: ToolUse<"skill"> = {
 			type: "tool_use" as const,

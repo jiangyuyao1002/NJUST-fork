@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -17,20 +19,18 @@ interface SkillParams {
 export class SkillTool extends BaseTool<"skill"> {
 	readonly name = "skill" as const
 
+	protected override get inputSchema() {
+		return z.object({
+			skill: z.string().min(1, "skill is required"),
+			args: z.string().optional(),
+		})
+	}
+
 	async execute(params: SkillParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { skill: skillName, args } = params
 		const { askApproval, handleError, pushToolResult } = callbacks
 
 		try {
-			// Validate skill name parameter
-			if (!skillName) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("skill")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("skill", "skill"))
-				return
-			}
-
 			task.consecutiveMistakeCount = 0
 
 			// Get SkillsManager from provider

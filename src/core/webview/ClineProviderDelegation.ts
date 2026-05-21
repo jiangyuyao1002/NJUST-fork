@@ -9,7 +9,6 @@ import type { Task } from "../task/Task"
 import { readApiMessages, saveApiMessages, saveTaskMessages, type ApiMessage } from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
-import type { ClineProvider } from "./ClineProvider"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 export interface IDelegationHost {
@@ -18,10 +17,13 @@ export interface IDelegationHost {
 	stack: { pop(options?: { skipDelegationRepair?: boolean }): Promise<void> }
 	handleModeSwitch(mode: string): Promise<void>
 	createTask(text: string, images?: string[], parentTask?: Task, options?: unknown): Promise<Task>
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	getTaskWithId(id: string): Promise<{ historyItem: any }>
-	updateTaskHistory(item: any, options?: any): Promise<any[]>
-	emit(event: string, ...args: any[]): boolean
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	updateTaskHistory(item: any, options?: unknown): Promise<unknown[]>
+	emit(event: string, ...args: unknown[]): boolean
 	readonly contextProxy: { globalStorageUri: { fsPath: string } }
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	createTaskWithHistoryItem(historyItem: any, options?: { startTask?: boolean }): Promise<Task | undefined>
 }
 

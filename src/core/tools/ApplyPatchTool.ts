@@ -1,7 +1,9 @@
 import fs from "fs/promises"
 import path from "path"
+import { z } from "zod"
 
 import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS, TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -25,7 +27,6 @@ import {
 } from "./cangjiePreflightCheck"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
 
 interface ApplyPatchParams {
 	patch: string
@@ -50,6 +51,12 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 
 	override userFacingName(): string {
 		return "Apply Patch"
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			patch: z.string().min(1, "patch is required"),
+		})
 	}
 
 	private static readonly FILE_HEADER_MARKERS = ["*** Add File: ", "*** Delete File: ", "*** Update File: "] as const
@@ -86,14 +93,6 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 		const { handleError, pushToolResult } = callbacks
 
 		try {
-			// Validate required parameters
-			if (!patch) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("apply_patch")
-				pushToolResult(await task.sayAndCreateMissingParamError("apply_patch", "patch"))
-				return
-			}
-
 			// Parse the patch
 			let parsedPatch
 			try {

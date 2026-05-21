@@ -43,25 +43,6 @@ describe("runSlashCommandTool", () => {
 		}
 	})
 
-	it("should handle missing command parameter", async () => {
-		const block: ToolUse<"run_slash_command"> = {
-			type: "tool_use" as const,
-			name: "run_slash_command" as const,
-			params: {},
-			partial: false,
-			nativeArgs: {
-				command: "",
-			},
-		}
-
-		await runSlashCommandTool.handle(mockTask as Task, block, mockCallbacks)
-
-		expect(mockTask.consecutiveMistakeCount).toBe(1)
-		expect(mockTask.recordToolError).toHaveBeenCalledWith("run_slash_command")
-		expect(mockTask.sayAndCreateMissingParamError).toHaveBeenCalledWith("run_slash_command", "command")
-		expect(mockCallbacks.pushToolResult).toHaveBeenCalledWith("Missing parameter error", undefined)
-	})
-
 	it("should handle command not found", async () => {
 		const block: ToolUse<"run_slash_command"> = {
 			type: "tool_use" as const,

@@ -227,7 +227,7 @@ describe("editFileTool", () => {
 			const result = await executeEditFileTool({ file_path: undefined })
 
 			expect(result).toContain("Error:")
-			expect(result).toContain("File path is required")
+			expect(result).toContain("file_path")
 			expect(mockTask.consecutiveMistakeCount).toBe(0)
 			expect(mockTask.recordToolError).not.toHaveBeenCalledWith("edit_file")
 			expect(mockTask.didToolFailInCurrentTurn).toBe(false)
@@ -333,17 +333,6 @@ describe("editFileTool", () => {
 				expect(mockAskApproval).toHaveBeenCalled()
 			})
 
-			it("handles null values as strings in native mode", async () => {
-				await executeWithNativeArgs(
-					{ file_path: testFilePath, old_string: null, new_string: "New content" },
-					{ fileExists: false },
-				)
-
-				// null is coerced to "" via ?? operator
-				expect(mockTask.consecutiveMistakeCount).toBe(0)
-				expect(mockTask.diffViewProvider.editType).toBe("create")
-				expect(mockAskApproval).toHaveBeenCalled()
-			})
 		})
 	})
 

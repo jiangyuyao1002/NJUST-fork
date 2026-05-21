@@ -10,14 +10,6 @@ describe("toolSearchTool", () => {
 		pushToolResult.mockReset()
 	})
 
-	it("returns validation error for empty query", async () => {
-		await toolSearchTool.execute({ query: "   " }, mockTask, {
-			pushToolResult,
-		} as any)
-
-		expect(pushToolResult).toHaveBeenCalledWith("Error: query parameter is required and cannot be empty.")
-	})
-
 	it("finds deferred tools by keyword", async () => {
 		toolSearchTool.setToolRegistry({
 			getAllTools: () =>

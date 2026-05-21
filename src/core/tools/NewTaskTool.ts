@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { z } from "zod"
 
 import { TodoItem } from "@njust-ai-cj/types"
 
@@ -21,6 +22,14 @@ interface NewTaskParams {
 export class NewTaskTool extends BaseTool<"new_task"> {
 	readonly name = "new_task" as const
 	override readonly requiresCheckpoint = true
+
+	protected override get inputSchema() {
+		return z.object({
+			mode: z.string().min(1, "mode is required"),
+			message: z.string().min(1, "message is required"),
+			todos: z.string().optional(),
+		})
+	}
 
 	async execute(params: NewTaskParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { mode, message, todos, isolation_level } = params

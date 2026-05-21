@@ -20,7 +20,6 @@ import { isMcpTool } from "../../utils/mcp-name"
 import { sanitizeOpenAiCallId } from "../../utils/tool-id"
 import { openAiCodexOAuthManager } from "../../integrations/openai-codex/oauth"
 import { t } from "../../i18n"
-import { getErrorMessage } from "../../shared/error-utils"
 
 export type OpenAiCodexModel = ReturnType<OpenAiCodexHandler["getModel"]>
 
@@ -291,7 +290,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		this.streamedToolCallIds.clear()
 
 		// Get access token from OAuth manager
-		let accessToken = await openAiCodexOAuthManager.getAccessToken()
+		const accessToken = await openAiCodexOAuthManager.getAccessToken()
 		if (!accessToken) {
 			throw new Error(
 				t("common:errors.openAiCodex.notAuthenticated", {
@@ -312,32 +311,9 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 		// Notably: max_output_tokens and prompt_cache_retention may be rejected
 		const requestBody = this.buildRequestBody(model, formattedInput, systemPrompt, reasoningEffort, metadata)
 
-		// Make the request with retry on auth failure
-		for (let attempt = 0; attempt < 2; attempt++) {
-			try {
-				yield* this.executeRequest(requestBody, model, accessToken, metadata?.taskId)
-				return
-			} catch (error) {
-				const message = getErrorMessage(error)
-				const isAuthFailure = /unauthorized|invalid token|not authenticated|authentication|401/i.test(message)
-
-				if (attempt === 0 && isAuthFailure) {
-					// Force refresh the token for retry
-					const refreshed = await openAiCodexOAuthManager.forceRefreshAccessToken()
-					if (!refreshed) {
-						throw new Error(
-							t("common:errors.openAiCodex.notAuthenticated", {
-								defaultValue:
-									"Not authenticated with OpenAI Codex. Please sign in using the OpenAI Codex OAuth flow.",
-							}),
-						)
-					}
-					accessToken = refreshed
-					continue
-				}
-				throw error
-			}
-		}
+		// Make the request
+		// Auth failures (4xx) are NOT retried by the retry wrapper — they require user intervention.
+		yield* this.executeRequest(requestBody, model, accessToken, metadata?.taskId)
 	}
 
 	private buildRequestBody(

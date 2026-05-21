@@ -2,6 +2,7 @@
 // Importing this file triggers self-registration of all built-in providers.
 import { providerRegistry } from "../registry/ProviderRegistry"
 import type { ApiHandlerOptions } from "../../shared/api"
+import type { ApiHandler } from "../types"
 
 import { AnthropicHandler } from "./anthropic"
 import { AwsBedrockHandler } from "./bedrock"
@@ -44,7 +45,7 @@ providerRegistry.register("ollama", (o: ApiHandlerOptions) => new NativeOllamaHa
 providerRegistry.register("lmstudio", (o: ApiHandlerOptions) => new LmStudioHandler(o), "estimated")
 providerRegistry.register("gemini", (o: ApiHandlerOptions) => new GeminiHandler(o))
 providerRegistry.register("openai-codex", (o: ApiHandlerOptions) => new OpenAiCodexHandler(o))
-providerRegistry.register("openai-native", (o: ApiHandlerOptions) => new OpenAiNativeHandler(o))
+providerRegistry.register("openai-native", (o: ApiHandlerOptions) => new OpenAiNativeHandler(o) as ApiHandler)
 providerRegistry.register("deepseek", (o: ApiHandlerOptions) => new DeepSeekHandler(o))
 providerRegistry.register("qwen-code", (o: ApiHandlerOptions) => new QwenCodeHandler(o))
 providerRegistry.register("moonshot", (o: ApiHandlerOptions) => new MoonshotHandler(o))

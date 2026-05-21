@@ -1,8 +1,8 @@
+import { z } from "zod"
 
 import { BaseTool, type ToolCallbacks, type ValidationResult } from "./BaseTool"
 import { Task } from "../task/Task"
 import type { ToolUse } from "../../shared/tools"
-import { formatResponse } from "../prompts/responses"
 import { ignoreAbortError } from "../../utils/errorHandling"
 
 interface PowerShellParams {
@@ -35,6 +35,14 @@ export class PowerShellTool extends BaseTool<"execute_command"> {
 		return "powershell windows command shell ps1 script"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			command: z.string().min(1, "command is required"),
+			cwd: z.string().optional(),
+			timeout: z.number().optional(),
+		})
+	}
+
 	override validateInput(params: PowerShellParams): ValidationResult {
 		if (!params.command || params.command.trim() === "") {
 			return { valid: false, error: "PowerShell command is required and cannot be empty." }
@@ -54,13 +62,6 @@ export class PowerShellTool extends BaseTool<"execute_command"> {
 		const { handleError, pushToolResult, askApproval } = callbacks
 
 		try {
-			if (!command) {
-				task.consecutiveMistakeCount++
-				pushToolResult(
-					formatResponse.toolError("PowerShell command is required and cannot be empty."),
-				)
-				return
-			}
 
 			// Wrap using -EncodedCommand (Base64) to prevent PowerShell metacharacter injection
 			const encoded = Buffer.from(command, "utf-8").toString("base64")

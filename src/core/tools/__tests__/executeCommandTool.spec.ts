@@ -221,29 +221,6 @@ describe("executeCommandTool", () => {
 	})
 
 	describe("Error handling", () => {
-		it("should handle missing command parameter", async () => {
-			// Setup
-			mockToolUse.params.command = undefined
-			mockToolUse.nativeArgs = { command: "" }
-
-			// Execute directly via execute() — BaseTool.handle() catches this earlier via validateInput()
-			await executeCommandTool.execute(
-				{ command: "" },
-				mockCline as unknown as Task,
-				{
-					askApproval: mockAskApproval as unknown as AskApproval,
-					handleError: mockHandleError as unknown as HandleError,
-					pushToolResult: mockPushToolResult as unknown as PushToolResult,
-				},
-			)
-
-			// Verify
-			expect(mockCline.consecutiveMistakeCount).toBe(1)
-			expect(mockCline.recordToolError).toHaveBeenCalledWith("execute_command")
-			expect(mockCline.sayAndCreateMissingParamError).toHaveBeenCalledWith("execute_command", "command")
-			expect(mockPushToolResult).toHaveBeenCalledWith("Missing parameter error")
-		})
-
 		it("should handle command rejection", async () => {
 			// Setup
 			mockToolUse.params.command = "echo test"

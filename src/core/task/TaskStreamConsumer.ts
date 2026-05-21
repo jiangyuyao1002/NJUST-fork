@@ -537,7 +537,7 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 		placeFinalizedStreamingToolUse,
 		consumptionResult,
 		requestProfileId,
-		lastApiReqIndex,
+		lastApiReqIndex: _lastApiReqIndex,
 		retryAttempt,
 		currentUserContent,
 		stack,

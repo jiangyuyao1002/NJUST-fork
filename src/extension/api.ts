@@ -312,7 +312,8 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				await this.fileLog(`[${new Date().toISOString()}] taskStarted -> ${task.taskId}\n`)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskCompleted, async (_: any, tokenUsage: any, toolUsage: any) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			task.on(NJUST_AI_CJEventName.TaskCompleted, async (_: unknown, tokenUsage: any, toolUsage: any) => {
 				this.emit(NJUST_AI_CJEventName.TaskCompleted, task.taskId, tokenUsage, toolUsage, {
 					isSubtask: !!task.parentTaskId,
 				})

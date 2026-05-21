@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { readTaskMessages } from "../task-persistence"
 import { Task } from "../task/Task"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -24,12 +26,16 @@ export class TaskOutputTool extends BaseTool<"task_output"> {
 		return true
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			taskId: z.string().min(1, "taskId is required"),
+			offset: z.number().int().nonnegative().optional(),
+			limit: z.number().int().positive().optional(),
+		})
+	}
+
 	override async execute(params: TaskOutputParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { pushToolResult } = callbacks
-		if (!params.taskId) {
-			pushToolResult(await task.sayAndCreateMissingParamError("task_output", "taskId"))
-			return
-		}
 
 		try {
 			const messages = await readTaskMessages({

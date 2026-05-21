@@ -69,15 +69,6 @@ describe("webFetchTool", () => {
 		expect(webFetchTool.isPartialArgsStable({ url: "not url" })).toBe(false)
 	})
 
-	it("requires a non-empty url", async () => {
-		const callbacks = createCallbacks()
-
-		await webFetchTool.execute({ url: "" }, {} as any, callbacks as any)
-
-		expect(callbacks.pushToolResult).toHaveBeenCalledWith(expect.stringContaining("url is required"))
-		expect(callbacks.askApproval).not.toHaveBeenCalled()
-	})
-
 	it("reports unsafe urls before approval", async () => {
 		assertSafeOutboundUrlMock.mockRejectedValueOnce(new Error("Blocked private host"))
 		const callbacks = createCallbacks()

@@ -464,15 +464,6 @@ describe("ReadCommandOutputTool", () => {
 			expect(mockTask.say).toHaveBeenCalledWith("error", expect.stringContaining("Invalid offset"))
 		})
 
-		it("should handle missing artifact_id parameter", async () => {
-			await tool.execute({ artifact_id: "" }, mockTask, mockCallbacks)
-
-			expect(mockTask.consecutiveMistakeCount).toBeGreaterThan(0)
-			expect(mockTask.recordToolError).toHaveBeenCalledWith("read_command_output")
-			expect(mockTask.didToolFailInCurrentTurn).toBe(true)
-			expect(mockTask.sayAndCreateMissingParamError).toHaveBeenCalledWith("read_command_output", "artifact_id")
-		})
-
 		it("should handle missing global storage path", async () => {
 			const artifactId = "cmd-1706119234567.txt"
 

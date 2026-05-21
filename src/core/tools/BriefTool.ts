@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -37,21 +39,17 @@ export class BriefTool extends BaseTool<"brief"> {
 		return true
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			content: z.string().min(1, "content is required"),
+			maxLength: z.number().positive().optional().nullable(),
+		})
+	}
+
 	async execute(params: BriefParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { handleError, pushToolResult } = callbacks
-		const recordMissingParamError = async (paramName: string): Promise<void> => {
-			task.consecutiveMistakeCount++
-			task.recordToolError("custom_tool")
-			task.didToolFailInCurrentTurn = true
-			pushToolResult(await task.sayAndCreateMissingParamError("custom_tool", paramName))
-		}
 
 		try {
-			if (!params.content) {
-				await recordMissingParamError("content")
-				return
-			}
-
 			const maxLength = typeof params.maxLength === "number" && params.maxLength > 0
 				? params.maxLength
 				: DEFAULT_MAX_LENGTH

@@ -24,6 +24,7 @@ import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { clearOpenAiCodexAuthCache } from "../WebviewStateBuilder"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -506,6 +507,7 @@ async function handleOpenAiCodexSignIn(context: MessageHandlerContext, _message:
 		openAiCodexOAuthManager
 			.waitForCallback()
 			.then(async () => {
+				clearOpenAiCodexAuthCache()
 				vscode.window.showInformationMessage("Successfully signed in to OpenAI Codex")
 				await provider.postStateToWebview()
 			})
@@ -526,6 +528,7 @@ async function handleOpenAiCodexSignOut(context: MessageHandlerContext, _message
 	try {
 		const { openAiCodexOAuthManager } = await import("../../../integrations/openai-codex/oauth")
 		await openAiCodexOAuthManager.clearCredentials()
+		clearOpenAiCodexAuthCache()
 		vscode.window.showInformationMessage("Signed out from OpenAI Codex")
 		await provider.postStateToWebview()
 	} catch (error) {

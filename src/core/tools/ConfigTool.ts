@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -41,22 +43,27 @@ export class ConfigTool extends BaseTool<"config"> {
 		return true
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			action: z.enum(["get", "set", "list"]),
+			key: z.string().optional(),
+			value: z.unknown().optional(),
+		}).refine(
+			(data) => {
+				if (data.action === "get" || data.action === "set") {
+					return typeof data.key === "string" && data.key.length > 0
+				}
+				return true
+			},
+			{ message: "key is required for get and set actions", path: ["key"] },
+		)
+	}
+
 	override async execute(params: ConfigParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { askApproval, handleError, pushToolResult } = callbacks
-		const recordMissingParamError = async (paramName: string): Promise<void> => {
-			task.consecutiveMistakeCount++
-			task.recordToolError("custom_tool")
-			task.didToolFailInCurrentTurn = true
-			pushToolResult(await task.sayAndCreateMissingParamError("custom_tool", paramName))
-		}
 
 		try {
 			const { action, key, value } = params
-
-			if (!action || !["get", "set", "list"].includes(action)) {
-				await recordMissingParamError("action")
-				return
-			}
 
 			// Dynamically import vscode to avoid hard dependency at module level
 			const vscode = await import("vscode")
@@ -64,12 +71,8 @@ export class ConfigTool extends BaseTool<"config"> {
 
 			switch (action) {
 				case "get": {
-					if (!key) {
-						await recordMissingParamError("key")
-						return
-					}
 					task.consecutiveMistakeCount = 0
-					const val = config.get(key)
+					const val = config.get(key!)
 					pushToolResult(JSON.stringify({ key, value: val }, null, 2))
 					return
 				}
@@ -99,11 +102,6 @@ export class ConfigTool extends BaseTool<"config"> {
 				}
 
 				case "set": {
-					if (!key) {
-						await recordMissingParamError("key")
-						return
-					}
-
 					// Require user approval for write operations
 					const didApprove = await askApproval("tool")
 					if (!didApprove) {
@@ -111,7 +109,7 @@ export class ConfigTool extends BaseTool<"config"> {
 					}
 
 					task.consecutiveMistakeCount = 0
-					await config.update(key, value, vscode.ConfigurationTarget.Workspace)
+					await config.update(key!, value, vscode.ConfigurationTarget.Workspace)
 					pushToolResult(JSON.stringify({ success: true, key, value }, null, 2))
 					return
 				}

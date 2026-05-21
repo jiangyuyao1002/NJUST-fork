@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { z } from "zod"
 
 import { Task } from "../task/Task"
 import { CodeIndexManager } from "../../services/code-index/manager"
@@ -26,6 +27,13 @@ export class CodebaseSearchTool extends BaseTool<"codebase_search"> {
 	override getEagerExecutionDecision() { return "eager" as const }
 	override isPartialArgsStable(partial: Partial<{query: string; path?: string}>): boolean {
 		return typeof partial.query === "string" && partial.query.length > 0
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			query: z.string().min(1, "query is required"),
+			path: z.string().optional(),
+		})
 	}
 
 	async execute(params: CodebaseSearchParams, task: Task, callbacks: ToolCallbacks): Promise<void> {

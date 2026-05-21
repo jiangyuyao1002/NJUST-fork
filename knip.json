@@ -45,8 +45,8 @@
 			"core/security/index.ts",
 			"core/webview/WebviewHost.ts",
 				"services/marketplace/index.ts",
-				"services/mcp/McpConfigLoader.ts",
-				"services/mcp/McpConnectionManager.ts",
+				"services/mcp/McpHubConfigPersistence.ts",
+				"services/mcp/McpHubConnection.ts",
 				"services/mcp/transport/TransportFactory.ts",
 				"services/tree-sitter/cangjieSourceScanner.ts"
 			]

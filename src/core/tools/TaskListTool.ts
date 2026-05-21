@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { TaskBoard, type TaskFilter } from "../task/TaskBoard"
 
@@ -22,6 +24,14 @@ export class TaskListTool extends BaseTool<"task_list"> {
 
 	override isConcurrencySafe(): boolean {
 		return true
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			status: z.enum(["completed", "pending", "in_progress", "failed"]).optional(),
+			priority: z.enum(["high", "medium", "low"]).optional(),
+			limit: z.number().int().positive().optional(),
+		})
 	}
 
 	override async execute(params: TaskListParams, task: Task, callbacks: ToolCallbacks): Promise<void> {

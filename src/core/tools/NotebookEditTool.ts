@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 
@@ -32,54 +34,29 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 		return "notebook jupyter cell edit ipynb"
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			path: z.string().min(1, "path is required"),
+			action: z.enum(["insert", "edit", "delete"]),
+			cellIndex: z.number().int().nonnegative("cellIndex must be a non-negative integer"),
+			content: z.string().optional(),
+			cellType: z.enum(["code", "markdown"]).optional(),
+		}).refine(
+			(data) => {
+				if (data.action === "insert" || data.action === "edit") {
+					return typeof data.content === "string" && data.content.length > 0
+				}
+				return true
+			},
+			{ message: "content is required for insert and edit actions", path: ["content"] },
+		)
+	}
+
 	async execute(params: NotebookEditParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { pushToolResult, handleError } = callbacks
 
 		try {
 			const { path, action, cellIndex, content, cellType } = params
-
-			// Validate required parameters
-			if (!path) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("notebook_edit")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("notebook_edit", "path"))
-				return
-			}
-
-			if (!action) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("notebook_edit")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("notebook_edit", "action"))
-				return
-			}
-
-			if (cellIndex === undefined || cellIndex === null) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("notebook_edit")
-				task.didToolFailInCurrentTurn = true
-				pushToolResult(await task.sayAndCreateMissingParamError("notebook_edit", "cellIndex"))
-				return
-			}
-
-			if (!["insert", "edit", "delete"].includes(action)) {
-				pushToolResult(
-					formatResponse.toolError(
-						`Invalid action '${action}'. Must be one of: insert, edit, delete.`,
-					),
-				)
-				return
-			}
-
-			if ((action === "insert" || action === "edit") && !content) {
-				pushToolResult(
-					formatResponse.toolError(
-						`The 'content' parameter is required for '${action}' action.`,
-					),
-				)
-				return
-			}
 
 			// Try to use VS Code Notebook API
 			let vscode: typeof import("vscode")

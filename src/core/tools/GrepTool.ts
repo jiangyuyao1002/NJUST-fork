@@ -1,4 +1,5 @@
 import path from "path"
+import { z } from "zod"
 
 import { type ClineSayTool } from "@njust-ai-cj/types"
 
@@ -42,6 +43,16 @@ export class GrepTool extends BaseTool<"grep"> {
 
 	override get searchHint(): string | undefined {
 		return "regex text search grep ripgrep pattern"
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			pattern: z.string().min(1, "pattern is required"),
+			path: z.string().optional(),
+			include: z.string().optional(),
+			exclude: z.string().optional(),
+			contextLines: z.number().int().nonnegative().optional(),
+		})
 	}
 
 	override validateInput(params: GrepParams): ValidationResult {

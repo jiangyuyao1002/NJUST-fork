@@ -70,7 +70,7 @@ export class TaskEventBus {
 			}
 			for (const listener of [...set]) {
 				try {
-					listener(event, payload)
+					void listener(event, payload)
 				} catch (e) {
 					logger.error("TaskEventBus", `listener error for ${event}:`, e)
 				}

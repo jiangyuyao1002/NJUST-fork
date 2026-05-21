@@ -1,6 +1,7 @@
 import path from "path"
 import fs from "fs/promises"
 import * as vscode from "vscode"
+import { z } from "zod"
 import {
 	GenerateImageParams,
 	IMAGE_GENERATION_MODEL_IDS,
@@ -27,6 +28,14 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 
 	override get shouldDefer() { return true }
 
+	protected override get inputSchema() {
+		return z.object({
+			prompt: z.string().min(1, "prompt is required"),
+			path: z.string().min(1, "path is required"),
+			image: z.string().optional(),
+		})
+	}
+
 	async execute(params: GenerateImageParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { prompt, path: relPath, image: inputImagePath } = params
 		const { handleError, pushToolResult, askApproval } = callbacks
@@ -44,20 +53,6 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 					"Image generation is an experimental feature that must be enabled in settings. Please enable 'Image Generation' in the Experimental Settings section.",
 				),
 			)
-			return
-		}
-
-		if (!prompt) {
-			task.consecutiveMistakeCount++
-			task.recordToolError("generate_image")
-			pushToolResult(await task.sayAndCreateMissingParamError("generate_image", "prompt"))
-			return
-		}
-
-		if (!relPath) {
-			task.consecutiveMistakeCount++
-			task.recordToolError("generate_image")
-			pushToolResult(await task.sayAndCreateMissingParamError("generate_image", "path"))
 			return
 		}
 

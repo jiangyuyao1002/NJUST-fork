@@ -1,4 +1,5 @@
 import * as path from "path"
+import { z } from "zod"
 
 import { type ClineSayTool } from "@njust-ai-cj/types"
 
@@ -29,6 +30,13 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 	override getEagerExecutionDecision() { return "eager" as const }
 	override isPartialArgsStable(partial: Partial<{path: string; recursive?: boolean}>): boolean {
 		return typeof partial.path === "string"
+	}
+
+	protected override get inputSchema() {
+		return z.object({
+			path: z.string().min(1, "path is required"),
+			recursive: z.boolean().optional(),
+		})
 	}
 
 	async execute(params: ListFilesParams, task: Task, callbacks: ToolCallbacks): Promise<void> {

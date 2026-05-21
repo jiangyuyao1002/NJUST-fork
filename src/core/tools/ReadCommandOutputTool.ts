@@ -1,5 +1,6 @@
 import * as fs from "fs/promises"
 import * as path from "path"
+import { z } from "zod"
 
 import { validateRegexPattern } from "../../utils/safeRegex"
 import { Task } from "../task/Task"
@@ -96,6 +97,15 @@ export class ReadCommandOutputTool extends BaseTool<"read_command_output"> {
 		return typeof partial.artifact_id === "string" && partial.artifact_id.length > 0
 	}
 
+	protected override get inputSchema() {
+		return z.object({
+			artifact_id: z.string().min(1, "artifact_id is required"),
+			search: z.string().optional(),
+			offset: z.number().int().nonnegative().optional(),
+			limit: z.number().int().positive().optional(),
+		})
+	}
+
 	/**
 	 * Execute the read_command_output tool.
 	 *
@@ -113,16 +123,6 @@ export class ReadCommandOutputTool extends BaseTool<"read_command_output"> {
 		const cached = toolResultCache.get(cacheKey)
 		if (cached) {
 			pushToolResult(cached)
-			return
-		}
-
-		// Validate required parameters
-		if (!artifact_id) {
-			task.consecutiveMistakeCount++
-			task.recordToolError("read_command_output")
-			task.didToolFailInCurrentTurn = true
-			const errorMsg = await task.sayAndCreateMissingParamError("read_command_output", "artifact_id")
-			pushToolResult(`Error: ${errorMsg}`)
 			return
 		}
 

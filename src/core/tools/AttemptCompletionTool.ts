@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { z } from "zod"
 
 import { NJUST_AI_CJEventName, type HistoryItem, TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
@@ -38,6 +39,12 @@ interface DelegationProvider {
 
 export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 	readonly name = "attempt_completion" as const
+
+	protected override get inputSchema() {
+		return z.object({
+			result: z.string().min(1, "result is required"),
+		})
+	}
 
 	async execute(params: AttemptCompletionParams, task: Task, callbacks: AttemptCompletionCallbacks): Promise<void> {
 		const { result } = params
@@ -82,13 +89,6 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 		}
 
 		try {
-			if (!result) {
-				task.consecutiveMistakeCount++
-				task.recordToolError("attempt_completion")
-				pushToolResult(await task.sayAndCreateMissingParamError("attempt_completion", "result"))
-				return
-			}
-
 			task.consecutiveMistakeCount = 0
 
 			await task.say("completion_result", result, undefined, false)
