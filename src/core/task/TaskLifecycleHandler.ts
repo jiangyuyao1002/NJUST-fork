@@ -12,7 +12,7 @@ import * as path from "path"
 import { promises as fs } from "fs"
 import type { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ClineAsk, ClineApiReqInfo, ClineMessage } from "@njust-ai-cj/types"
+import type { ClineAsk, ClineApiReqInfo, ClineMessage, ClineSay, ToolProgressStatus } from "@njust-ai-cj/types"
 import { NJUST_AI_CJEventName, MAX_MCP_TOOLS_THRESHOLD, TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 
@@ -67,18 +67,19 @@ export interface TaskLifecycleHost {
 
 	refreshWebviewState(): Promise<void>
 	say(
-		type: UnsafeAny,
+		type: ClineSay,
 		text?: string,
 		images?: string[],
 		partial?: boolean,
-		checkpoint?: UnsafeAny,
-		progressStatus?: UnsafeAny,
-		options?: UnsafeAny,
+		checkpoint?: Record<string, unknown>,
+		progressStatus?: ToolProgressStatus,
+		options?: { isNonInteractive?: boolean },
 	): Promise<undefined>
 	ask(
-		type: UnsafeAny,
+		type: ClineAsk,
 		text?: string,
 		partial?: boolean,
+		progressStatus?: ToolProgressStatus,
 	): Promise<{ response: string; text?: string; images?: string[] }>
 	emit(event: string, ...args: unknown[]): boolean
 	getEnabledMcpToolsCount(): Promise<{ enabledToolCount: number; enabledServerCount: number }>

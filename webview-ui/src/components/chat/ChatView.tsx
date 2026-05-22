@@ -80,6 +80,7 @@ export interface ChatViewRef {
 }
 
 export const MAX_IMAGES_PER_MESSAGE = 20 // This is the Anthropic limit.
+const MAX_AGGREGATED_COST_ENTRIES = 200
 
 const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0
 
@@ -187,28 +188,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const autoApproveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 	const userRespondedRef = useRef<boolean>(false)
 	const [currentFollowUpTs, setCurrentFollowUpTs] = useState<number | null>(null)
-	const _cappedSetAggregatedCostsMap = useCallback(
-		(updater: (prev: typeof aggregatedCostsMap) => typeof aggregatedCostsMap) => {
-			setAggregatedCostsMap((prev) => {
-				const next = updater(prev)
-				if (next.size <= MAX_AGGREGATED_COST_ENTRIES) return next
-				// Evict oldest entries (Map iteration is insertion-ordered)
-				const excess = next.size - MAX_AGGREGATED_COST_ENTRIES
-				let removed = 0
-				for (const key of next.keys()) {
-					if (removed >= excess) break
-					next.delete(key)
-					removed++
-				}
-				return new Map(next)
-			})
-		},
-		[],
-	)
-
-		const MAX_AGGREGATED_COST_ENTRIES = 200
-
-		const [aggregatedCostsMap, setAggregatedCostsMap] = useState<
+	const [aggregatedCostsMap, setAggregatedCostsMap] = useState<
 		Map<
 			string,
 			{
@@ -993,6 +973,16 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						setAggregatedCostsMap((prev) => {
 							const newMap = new Map(prev)
 							newMap.set(message.text!, message.aggregatedCosts!)
+							// Evict oldest entries if over limit (Map iteration is insertion-ordered)
+							if (newMap.size > MAX_AGGREGATED_COST_ENTRIES) {
+								const excess = newMap.size - MAX_AGGREGATED_COST_ENTRIES
+								let removed = 0
+								for (const key of newMap.keys()) {
+									if (removed >= excess) break
+									newMap.delete(key)
+									removed++
+								}
+							}
 							return newMap
 						})
 					}

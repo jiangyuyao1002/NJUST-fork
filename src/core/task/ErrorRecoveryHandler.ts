@@ -59,6 +59,11 @@ export class ErrorRecoveryHandler {
 			errorKind: classified,
 			errorMessage: getErrorMessage(error),
 			timestamp: Date.now(),
+		}).catch((writeErr) => {
+			logger.warn(
+				"ErrorRecoveryHandler",
+				`Failed to persist retry event for task ${this.task.taskId}: ${getErrorMessage(writeErr)}`,
+			)
 		})
 	
 		switch (recoveryAction) {
@@ -189,16 +194,15 @@ export class ErrorRecoveryHandler {
 			}
 	
 			case "model_fallback": {
-				// Retries exhausted for model_overloaded / timeout → suggest model fallback
-				const classified2 = classifyApiError(error)
-				logger.warn("ErrorRecoveryHandler",
-					`Retries exhausted for ${classified2} errors on task ${this.task.taskId}. ` +
-						`Recommending model fallback...`,
-				)
-				return {
-					action: "model_fallback",
-					errorCategory: classified2,
-					reason: `Model retries exhausted after ${retryAttempt} attempts due to ${classified2}. Fallback recommended.`,
+			// Retries exhausted for model_overloaded / timeout → suggest model fallback
+			logger.warn("ErrorRecoveryHandler",
+				`Retries exhausted for ${classified} errors on task ${this.task.taskId}. ` +
+					`Recommending model fallback...`,
+			)
+			return {
+				action: "model_fallback",
+				errorCategory: classified,
+					reason: `Model retries exhausted after ${retryAttempt} attempts due to ${classified}. Fallback recommended.`,
 				}
 			}
 			

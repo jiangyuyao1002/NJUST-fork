@@ -101,7 +101,7 @@ export interface TaskExecutorDelegatesHost {
 		dispose(): void
 		streamingExecutor: { shouldEagerExecute(task: UnsafeAny, block: UnsafeAny): string | null }
 	}
-	compactFailures: number
+	compactFailureCount: number
 }
 
 /** Token window tracking and tool caching. */

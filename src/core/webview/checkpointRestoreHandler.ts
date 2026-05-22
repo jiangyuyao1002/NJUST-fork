@@ -45,7 +45,7 @@ export async function handleCheckpointRestoreOperation(config: CheckpointRestore
 			await pWaitFor(() => currentCline.abort === true, {
 				timeout: 1000,
 				interval: 50,
-			}).catch(() => {})
+			}).catch((e) => logger.warn("CheckpointRestore", `Abort wait timed out: ${e}`))
 		}
 
 		if (operation === "edit" && editData) {

@@ -120,7 +120,8 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 									argumentHint: cmd.argumentHint,
 								})),
 							])
-						} catch {
+						} catch (e) {
+							logger.warn("ExtensionAPI", `CommandsRequest failed: ${e}`)
 							sendResponse(NJUST_AI_CJEventName.CommandsResponse, [[]])
 						}
 
@@ -129,7 +130,8 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 						try {
 							const modes = await this.sidebarProvider.getModes()
 							sendResponse(NJUST_AI_CJEventName.ModesResponse, [modes])
-						} catch {
+						} catch (e) {
+							logger.warn("ExtensionAPI", `ModesRequest failed: ${e}`)
 							sendResponse(NJUST_AI_CJEventName.ModesResponse, [[]])
 						}
 
@@ -143,7 +145,8 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 							})
 
 							sendResponse(NJUST_AI_CJEventName.ModelsResponse, [models])
-						} catch {
+						} catch (e) {
+							logger.warn("ExtensionAPI", `ModelsRequest failed: ${e}`)
 							sendResponse(NJUST_AI_CJEventName.ModelsResponse, [{}])
 						}
 

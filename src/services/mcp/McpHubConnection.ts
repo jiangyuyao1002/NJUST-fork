@@ -1,7 +1,8 @@
 import * as vscode from "vscode"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 
-import type { ConnectedMcpConnection, McpConnection } from "./McpHub"
+import type { ConnectedMcpConnection, McpConnection, McpHubInternal, ServerConfigSchema } from "./McpHub"
+import type { z } from "zod"
 
 import { injectVariables } from "../../utils/config"
 import { sanitizeMcpName } from "../../utils/mcp-name"
@@ -10,12 +11,10 @@ import { logger } from "../../shared/logger"
 import { TransportFactory } from "./transport/TransportFactory"
 import type { TransportCallbacks } from "./transport/ITransportStrategy"
 
-type McpHubInternal = UnsafeAny
-
 export async function connectToServerWithHub(
 	hub: McpHubInternal,
 	name: string,
-	config: UnsafeAny,
+	config: z.infer<typeof ServerConfigSchema>,
 	source: "global" | "project" = "global",
 ): Promise<void> {
 	// Remove existing connection if it exists with the same source

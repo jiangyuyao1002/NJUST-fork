@@ -208,6 +208,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		includeDiagnosticMessages,
 		maxDiagnosticMessages,
 		includeTaskHistoryInEnhance,
+		autoApprovalEnabled,
 		imageGenerationProvider,
 		openRouterImageApiKey,
 		openRouterImageGenerationSelectedModel,
@@ -808,6 +809,11 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								allowedMaxRequests={allowedMaxRequests ?? undefined}
 								allowedMaxCost={allowedMaxCost ?? undefined}
 								deniedCommands={deniedCommands}
+								autoApprovalEnabled={autoApprovalEnabled}
+								setAutoApprovalEnabled={(value) => {
+									setCachedState((prev) => ({ ...prev, autoApprovalEnabled: value }))
+									vscode.postMessage({ type: "autoApprovalEnabled", bool: value })
+								}}
 								setCachedStateField={setCachedStateField}
 							/>
 						)}

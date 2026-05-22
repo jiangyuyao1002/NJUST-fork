@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 
 import {
 	type ProviderSettings,
@@ -487,7 +487,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		vscode.postMessage({ type: "webviewDidLaunch" })
 	}, [])
 
-	const contextValue: ExtensionStateContextType = {
+	const contextValue = useMemo<ExtensionStateContextType>(() => ({
 		...state,
 		reasoningBlockCollapsed: state.reasoningBlockCollapsed ?? true,
 		didHydrateState,
@@ -609,7 +609,28 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		skills,
 		latestTaskMetrics,
 		taskMetricsHistory,
-	}
+	}), [
+		state,
+		theme,
+		mcpServers,
+		currentCheckpoint,
+		filePaths,
+		openedTabs,
+		commands,
+		extensionRouterModels,
+		alwaysAllowFollowupQuestions,
+		followupAutoApproveTimeoutMs,
+		includeTaskHistoryInEnhance,
+		includeCurrentTime,
+		includeCurrentCost,
+		didHydrateState,
+		showWelcome,
+		skills,
+		latestTaskMetrics,
+		taskMetricsHistory,
+		setListApiConfigMeta,
+		setApiConfiguration,
+	])
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>
 }

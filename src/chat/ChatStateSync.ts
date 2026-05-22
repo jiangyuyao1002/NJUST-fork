@@ -99,7 +99,7 @@ export class ChatStateSync {
 				}
 				synced.lastSyncedIndex = messages.length
 
-				if (currentTask.didFinishAbortingStream || currentTask.abandoned) {
+				if (currentTask.didFinishAbortingStream || currentTask.abandoned || currentTask.taskCompleted) {
 					this.stopPolling(taskId)
 				}
 			} catch {

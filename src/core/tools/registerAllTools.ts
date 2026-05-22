@@ -60,7 +60,8 @@ import { briefTool } from "./BriefTool"
 import { configTool } from "./ConfigTool"
 
 // Conditional tools
-import { PowerShellTool } from "./PowerShellTool"
+// PowerShellTool deprecated — use execute_command with powershell.exe directly.
+// import { PowerShellTool } from "./PowerShellTool"
 import { WorktreeTool } from "./WorktreeTool"
 
 // Register all tools with the central registry
@@ -108,7 +109,8 @@ const allTools = [
 ] as const
 
 const conditionalTools = [
-	{ tool: new PowerShellTool(), condition: () => PowerShellTool.isAvailable() },
+	// PowerShellTool deprecated — use execute_command with powershell.exe directly.
+	// { tool: new PowerShellTool(), condition: () => PowerShellTool.isAvailable() },
 	{ tool: new WorktreeTool(), condition: () => WorktreeTool.isAvailable() },
 ] as const
 

@@ -77,6 +77,31 @@ export type DisconnectedMcpConnection = {
 
 export type McpConnection = ConnectedMcpConnection | DisconnectedMcpConnection
 
+/** Narrow interface for hub operations used by extracted helper modules. */
+export interface McpHubInternal {
+	connections: McpConnection[]
+	sanitizedNameRegistry: Map<string, string>
+	providerRef: { deref(): { getExtensionPackageVersion(): string } | undefined }
+	isMcpEnabled(): Promise<boolean>
+	deleteConnection(name: string, source?: "global" | "project"): Promise<void>
+	findConnection(serverName: string, source?: "global" | "project"): McpConnection | undefined
+	createPlaceholderConnection(name: string, config: unknown, source: string, reason: string): McpConnection
+	setupFileWatcher(name: string, config: unknown, source: string): void
+	removeFileWatchersForServer(serverName: string): void
+	connectToServer(name: string, config: unknown, source?: "global" | "project"): Promise<void>
+	notifyWebviewOfServerChanges(): Promise<void>
+	fetchToolsList(name: string, source?: string): Promise<McpTool[]>
+	fetchResourcesList(name: string, source?: string): Promise<McpResource[]>
+	fetchResourceTemplatesList(name: string, source?: string): Promise<McpResourceTemplate[]>
+	showErrorMessage(message: string, error: unknown): void
+	getProjectMcpPath(): Promise<string>
+	getMcpSettingsFilePath(): Promise<string>
+	validateServerConfig(config: unknown, serverName: string): { valid: boolean; message?: string }
+	setProgrammaticUpdateFlag(): void
+	scheduleProgrammaticUpdateFlagReset(): void
+	updateServerConnections(servers: Record<string, unknown>, source: "global" | "project"): Promise<void>
+}
+
 // Enum for disable reasons
 export enum DisableReason {
 	MCP_DISABLED = "mcpDisabled",
@@ -681,7 +706,7 @@ export class McpHub implements IMcpHubService {
 		config: z.infer<typeof ServerConfigSchema>,
 		source: "global" | "project" = "global",
 	): Promise<void> {
-		return connectToServerWithHub(this, name, config, source)
+		return connectToServerWithHub(this as unknown as McpHubInternal, name, config, source)
 	}
 	private appendErrorMessage(connection: McpConnection, error: string, level: "error" | "warn" | "info" = "error") {
 		appendErrorMessageToConnection(connection, error, level)
@@ -743,11 +768,11 @@ export class McpHub implements IMcpHubService {
 	}
 
 	private async fetchToolsList(serverName: string, source?: "global" | "project"): Promise<McpTool[]> {
-		return fetchToolsListWithHub(this, serverName, source)
+		return fetchToolsListWithHub(this as unknown as McpHubInternal, serverName, source)
 	}
 
 	private async fetchResourcesList(serverName: string, source?: "global" | "project"): Promise<McpResource[]> {
-		return fetchResourcesListWithHub(this, serverName, source)
+		return fetchResourcesListWithHub(this as unknown as McpHubInternal, serverName, source)
 	}
 	private async fetchResourceTemplatesList(
 		serverName: string,
@@ -1190,7 +1215,7 @@ export class McpHub implements IMcpHubService {
 		disabled: boolean,
 		source?: "global" | "project",
 	): Promise<void> {
-		return toggleServerDisabledWithHub(this, serverName, disabled, source)
+		return toggleServerDisabledWithHub(this as unknown as McpHubInternal, serverName, disabled, source)
 	}
 
 	/**
@@ -1203,7 +1228,7 @@ export class McpHub implements IMcpHubService {
 		serverName: string,
 		source: "global" | "project" = "global",
 	): Promise<z.infer<typeof ServerConfigSchema>> {
-		return readServerConfigFromFileWithHub(this, serverName, source)
+		return readServerConfigFromFileWithHub(this as unknown as McpHubInternal, serverName, source)
 	}
 
 	/**
@@ -1217,7 +1242,7 @@ export class McpHub implements IMcpHubService {
 		configUpdate: Record<string, UnsafeAny>,
 		source: "global" | "project" = "global",
 	): Promise<void> {
-		return updateServerConfigWithHub(this, serverName, configUpdate, source)
+		return updateServerConfigWithHub(this as unknown as McpHubInternal, serverName, configUpdate, source)
 	}
 
 	public async updateServerTimeout(
@@ -1225,11 +1250,11 @@ export class McpHub implements IMcpHubService {
 		timeout: number,
 		source?: "global" | "project",
 	): Promise<void> {
-		return updateServerTimeoutWithHub(this, serverName, timeout, source)
+		return updateServerTimeoutWithHub(this as unknown as McpHubInternal, serverName, timeout, source)
 	}
 
 	public async deleteServer(serverName: string, source?: "global" | "project"): Promise<void> {
-		return deleteServerWithHub(this, serverName, source)
+		return deleteServerWithHub(this as unknown as McpHubInternal, serverName, source)
 	}
 	async readResource(serverName: string, uri: string, source?: "global" | "project"): Promise<McpResourceResponse> {
 		const connection = this.findConnection(serverName, source)

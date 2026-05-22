@@ -104,9 +104,6 @@ export class CloudAgentClient {
 			}
 			if (resp.status === 404) {
 				// Older servers — expected until upgraded.
-				// Still clean up local session state so counters / caches
-				// don't leak across connection attempts.
-				(this as Record<string, UnsafeAny>).localSessionCleanup?.()
 				return
 			}
 			if (!resp.ok) {

@@ -350,7 +350,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	toolRepetitionDetector: ToolRepetitionDetector
 	rooIgnoreController?: RooIgnoreController
 	rooProtectedController?: RooProtectedController
-	compactFailures: number = 0
+	// compactFailureCount lives at line 319 (ErrorRecoveryHandler uses it)
 	toolCallParser = new NativeToolCallParser()
 	fileContextTracker: FileContextTracker
 	terminalProcess?: RooTerminalProcess
@@ -637,7 +637,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			: (workspacePath ?? getWorkspacePath(path.join(os.homedir(), "Desktop")))
 
 		this.instanceId = crypto.randomUUID().slice(0, 8)
-		this.taskNumber = -1
 
 		this.rooIgnoreController = new RooIgnoreController(this.cwd)
 		this.rooProtectedController = new RooProtectedController(this.cwd)

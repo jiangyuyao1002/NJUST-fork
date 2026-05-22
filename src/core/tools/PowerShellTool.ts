@@ -12,6 +12,11 @@ interface PowerShellParams {
 }
 
 /**
+ * @deprecated Use execute_command tool with powershell.exe directly. This tool
+ * is deprecated because its Base64 encoding was incorrect (utf-8 instead of
+ * utf16le) and it never actually executed commands — it only returned a
+ * message. Removed from registry in registerAllTools.ts.
+ *
  * PowerShellTool — execute PowerShell commands on Windows.
  *
  * Only available on Windows (process.platform === "win32").

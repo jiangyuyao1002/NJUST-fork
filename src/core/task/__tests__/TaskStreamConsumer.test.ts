@@ -203,7 +203,7 @@ function createMockHost(overrides: Record<string, unknown> = {}): TaskExecutorHo
 			dispose: vi.fn(),
 			streamingExecutor: { shouldEagerExecute: vi.fn().mockReturnValue(null) },
 		} as any,
-		compactFailures: 0,
+		compactFailureCount: 0,
 		requestCacheReadWindow: [],
 		requestInputTokensWindow: [],
 		cachedToolDefinitions: undefined,

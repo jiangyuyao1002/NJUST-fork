@@ -7,8 +7,7 @@ import { safeWriteJson } from "../../utils/safeWriteJson"
 import { logger } from "../../shared/logger"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { TelemetryEventName } from "@njust-ai-cj/types"
-
-type McpHubInternal = UnsafeAny
+import type { McpHubInternal } from "./McpHub"
 
 export async function toggleServerDisabledWithHub(
 	hub: McpHubInternal,

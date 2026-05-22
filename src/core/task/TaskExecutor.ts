@@ -280,10 +280,10 @@ export class TaskExecutor {
 					enableMicroCompact: true,
 					cacheReadTokens,
 					cacheAwareTotalTokens,
-					compactFailures: h.compactFailures,
+					compactFailures: h.compactFailureCount,
 					isSubAgent: h.parentTask !== undefined,
 				})
-				h.compactFailures = truncateResult.compactFailures ?? 0
+				h.compactFailureCount = truncateResult.compactFailures ?? 0
 				if (truncateResult.messages !== h.apiConversationHistory) {
 					await h.overwriteApiConversationHistory(truncateResult.messages)
 				}
@@ -583,13 +583,9 @@ export class TaskExecutor {
 			})
 
 			if (slashCommandMode) {
-				const provider = t.hostRef.deref()
-				if (provider) {
-					const state = await provider.getState()
-					const targetMode = getModeBySlug(slashCommandMode, state?.customModes)
-					if (targetMode) {
-						await provider.handleModeSwitch(slashCommandMode)
-					}
+				const targetMode = getModeBySlug(slashCommandMode, state?.customModes)
+				if (targetMode && provider) {
+					await provider.handleModeSwitch(slashCommandMode)
 				}
 			}
 

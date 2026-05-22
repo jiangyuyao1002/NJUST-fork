@@ -32,6 +32,14 @@ docs/_site/
 .env.*
 !.env.*.sample
 
+# Private keys / certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+*.crt
+
 # Logging
 logs
 *.log

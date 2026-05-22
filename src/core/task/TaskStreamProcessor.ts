@@ -242,7 +242,7 @@ export class TaskStreamProcessor {
 	 */
 	private inferErrorCategory(error: UnsafeAny): string {
 		if (!error) {
-			return "UnsafeAny"
+			return "unknown"
 		}
 
 		const status = error.status ?? error.statusCode
@@ -290,7 +290,7 @@ export class TaskStreamProcessor {
 			return "media_too_large"
 		}
 
-		return "UnsafeAny"
+		return "unknown"
 	}
 
 	/**
