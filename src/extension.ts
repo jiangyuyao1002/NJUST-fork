@@ -4,21 +4,6 @@ import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
 
-// Load environment variables from .env file
-// The extension-level .env is optional (not shipped in production builds).
-// Avoid calling dotenvx when the file doesn't exist, otherwise dotenvx emits
-// a noisy [MISSING_ENV_FILE] error to the extension host console.
-const envPath = path.join(__dirname, "..", ".env")
-if (fs.existsSync(envPath)) {
-	try {
-		dotenvx.config({ path: envPath })
-	} catch (e) {
-		// Best-effort only: never fail extension activation due to optional env loading.
-		logger.warn("Extension", "Failed to load environment variables:", e)
-		TelemetryService.reportError(e, TelemetryEventName.EXTENSION_INIT_ERROR)
-	}
-}
-
 import { customToolRegistry } from "@njust-ai-cj/core"
 import { TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
@@ -146,6 +131,21 @@ function scheduleCangjieToolchainGapCheck(): void {
 // This method is called when your extension is activated.
 // Your extension is activated the very first time the command is executed.
 export async function activate(context: vscode.ExtensionContext) {
+	// Load environment variables from .env file
+	// The extension-level .env is optional (not shipped in production builds).
+	// Avoid calling dotenvx when the file doesn't exist, otherwise dotenvx emits
+	// a noisy [MISSING_ENV_FILE] error to the extension host console.
+	const envPath = path.join(__dirname, "..", ".env")
+	if (fs.existsSync(envPath)) {
+		try {
+			dotenvx.config({ path: envPath })
+		} catch (e) {
+			// Best-effort only: never fail extension activation due to optional env loading.
+			logger.warn("Extension", "Failed to load environment variables:", e)
+			TelemetryService.reportError(e, TelemetryEventName.EXTENSION_INIT_ERROR)
+		}
+	}
+
 	startupProfiler.start("activate")
 	extensionContext = context
 	process.on("unhandledRejection", (reason, _promise) => {

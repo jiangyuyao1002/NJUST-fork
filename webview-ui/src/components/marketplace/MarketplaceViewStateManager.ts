@@ -345,7 +345,7 @@ export class MarketplaceViewStateManager {
 		})
 	}
 
-	public async handleMessage(message: any): Promise<void> {
+	public async handleMessage(message: unknown): Promise<void> {
 		// Handle empty or invalid message
 		if (!message || !message.type || message.type === "invalidType") {
 			this.state = {

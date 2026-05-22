@@ -31,8 +31,8 @@ export function parseUnifiedDiff(source: string, filePath?: string): DiffLine[] 
 		if (!patch) return []
 
 		const lines: DiffLine[] = []
-		let prevHunk: any = null
-		for (const hunk of (patch as any).hunks || []) {
+		let prevHunk: { newStart: number; newLines: number; oldStart: number; oldLines: number } | null = null
+		for (const hunk of (patch as { hunks?: { newStart: number; newLines: number; oldStart: number; oldLines: number; lines?: string[] }[] }).hunks || []) {
 			// Insert a compact "hidden lines" separator between hunks
 			if (prevHunk) {
 				const gapNew = hunk.newStart - (prevHunk.newStart + prevHunk.newLines)

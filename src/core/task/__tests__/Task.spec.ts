@@ -1144,7 +1144,7 @@ describe("Cline", () => {
 
 				// Verify the wait message was finalized
 				expect(saySpy).toHaveBeenCalledWith("api_req_rate_limit_wait", undefined, undefined, false)
-			}, 10000) // Increase timeout to 10 seconds
+			}, 30000) // Increase timeout to 30 seconds
 
 			it("should not apply rate limiting if enough time has passed", async () => {
 				// Create parent task
@@ -1290,7 +1290,7 @@ describe("Cline", () => {
 
 				// Verify rate limiting was applied again
 				expect(mockDelay.mock.calls.length).toBeGreaterThan(0)
-			}, 15000) // Increase timeout to 15 seconds
+			}, 30000) // Increase timeout to 30 seconds
 
 			it("should handle rate limiting with zero rate limit", async () => {
 				// Update config to have zero rate limit

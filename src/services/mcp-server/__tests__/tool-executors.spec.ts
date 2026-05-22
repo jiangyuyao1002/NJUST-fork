@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest"
 import * as path from "path"
 import * as fs from "fs/promises"
-import { execCommand, execListFiles, execSearchFiles } from "../tool-executors"
+import { execCommand, execListFiles, execSearchFiles, execWriteFile, execApplyDiff } from "../tool-executors"
 import { tmpdir } from "os"
 import { mkdtemp, rm } from "fs/promises"
 
@@ -277,5 +277,85 @@ describe("execSearchFiles with rooIgnoreController", () => {
 			undefined,
 			undefined,
 		)
+	})
+})
+
+describe("symlink escape prevention", () => {
+	let workspaceCwd: string
+	let tempDir: string
+
+	async function setupDirs() {
+		tempDir = await mkdtemp(path.join(tmpdir(), "test-symlink-"))
+		workspaceCwd = path.join(tempDir, "workspace")
+		await fs.mkdir(workspaceCwd, { recursive: true })
+	}
+
+	async function createSymlink(target: string, linkPath: string) {
+		// Use junction on Windows (no admin required), dir symlink on Unix
+		const type = process.platform === "win32" ? "junction" : "dir"
+		await fs.symlink(target, linkPath, type)
+	}
+
+	afterEach(async () => {
+		await rm(tempDir, { recursive: true, force: true }).catch(() => {})
+	})
+
+	it("rejects write_file through symlink to outside directory", async () => {
+		await setupDirs()
+		const outsideDir = path.join(tempDir, "outside")
+		await fs.mkdir(outsideDir, { recursive: true })
+		const linkDir = path.join(workspaceCwd, "link")
+		await createSymlink(outsideDir, linkDir)
+
+		await expect(
+			execWriteFile(workspaceCwd, { path: "link/new.txt", content: "escaped" }),
+		).rejects.toThrow("Path escapes workspace boundary")
+	})
+
+	it("rejects apply_diff through symlink to outside directory", async () => {
+		await setupDirs()
+		const outsideDir = path.join(tempDir, "outside")
+		await fs.mkdir(outsideDir, { recursive: true })
+		await fs.writeFile(path.join(outsideDir, "existing.txt"), "original", "utf-8")
+		const linkDir = path.join(workspaceCwd, "link")
+		await createSymlink(outsideDir, linkDir)
+
+		await expect(
+			execApplyDiff(workspaceCwd, { path: "link/existing.txt", diff: "--- original\n+++ modified\n@@ -1 +1 @@\n-original\n+escaped\n" }),
+		).rejects.toThrow("Path escapes workspace boundary")
+	})
+
+	it("allows write_file in real subdirectory", async () => {
+		await setupDirs()
+		const realSubdir = path.join(workspaceCwd, "subdir")
+		await fs.mkdir(realSubdir, { recursive: true })
+
+		const result = await execWriteFile(workspaceCwd, { path: "subdir/new.txt", content: "safe" })
+
+		expect(result).toContain("Created new file")
+		const written = await fs.readFile(path.join(realSubdir, "new.txt"), "utf-8")
+		expect(written).toBe("safe")
+	})
+
+	it("allows write_file in nested non-existent directories", async () => {
+		await setupDirs()
+
+		const result = await execWriteFile(workspaceCwd, { path: "newdir/subdir/new.txt", content: "nested" })
+
+		expect(result).toContain("Created new file")
+		const written = await fs.readFile(path.join(workspaceCwd, "newdir", "subdir", "new.txt"), "utf-8")
+		expect(written).toBe("nested")
+	})
+
+	it("rejects write_file through symlink to outside directory with nested path", async () => {
+		await setupDirs()
+		const outsideDir = path.join(tempDir, "outside")
+		await fs.mkdir(outsideDir, { recursive: true })
+		const linkDir = path.join(workspaceCwd, "link")
+		await createSymlink(outsideDir, linkDir)
+
+		await expect(
+			execWriteFile(workspaceCwd, { path: "link/newdir/new.txt", content: "escaped" }),
+		).rejects.toThrow("Path escapes workspace boundary")
 	})
 })

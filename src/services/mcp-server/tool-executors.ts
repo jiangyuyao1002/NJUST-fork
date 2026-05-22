@@ -11,17 +11,46 @@ import { getCommandDecision } from "../../core/auto-approval"
 import type { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
 
 /**
+ * Resolves the real path of a file, handling non-existent files by
+ * finding the nearest existing parent directory and resolving symlinks.
+ */
+async function resolveRealPath(filePath: string): Promise<string> {
+	try {
+		return await fs.realpath(filePath)
+	} catch {
+		// File doesn't exist - find nearest existing parent and resolve its real path
+		let current = filePath
+		const missingParts: string[] = []
+
+		while (true) {
+			const parent = path.dirname(current)
+			if (parent === current) {
+				// Reached root, return original
+				return filePath
+			}
+
+			try {
+				const realParent = await fs.realpath(parent)
+				// Found existing parent, reconstruct path with real parent.
+				// current is the first missing segment below realParent;
+				// missingParts are the segments below current (in original order).
+				return path.join(realParent, path.basename(current), ...missingParts)
+			} catch {
+				missingParts.unshift(path.basename(current))
+				current = parent
+			}
+		}
+	}
+}
+
+/**
  * Ensures a resolved path stays within the workspace boundary (after realpath, to reduce symlink escape).
  * Throws if the path attempts to escape.
  */
 async function ensureWithinWorkspace(cwd: string, relPath: string): Promise<string> {
 	const resolved = path.resolve(cwd, relPath)
-	let base = path.resolve(cwd)
-	try {
-		base = await fs.realpath(base)
-	} catch {
-		/* use logical cwd if missing */
-	}
+	const base = await resolveRealPath(path.resolve(cwd))
+
 	// Validate the resolved path stays within the workspace boundary.
 	// On Unix, path.relative is the canonical check since filesystems are case-sensitive.
 	// On Windows, NTFS/FAT are case-insensitive so we normalize case before comparing,
@@ -36,15 +65,7 @@ async function ensureWithinWorkspace(cwd: string, relPath: string): Promise<stri
 		return !rel.startsWith("..") && !path.isAbsolute(rel)
 	}
 
-	let target = resolved
-	try {
-		target = await fs.realpath(resolved)
-	} catch {
-		if (!isWithin(base, resolved)) {
-			throw new Error(`Path escapes workspace boundary: ${relPath}`)
-		}
-		return resolved
-	}
+	const target = await resolveRealPath(resolved)
 	if (!isWithin(base, target)) {
 		throw new Error(`Path escapes workspace boundary: ${relPath}`)
 	}

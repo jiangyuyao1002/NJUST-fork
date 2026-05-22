@@ -17,8 +17,9 @@ suite("NJUST_AI_CJ Subtasks", () => {
 			if (message.type === "ask" && message.ask === "tool" && typeof message.text === "string") {
 				try {
 					sawNewTaskTool = sawNewTaskTool || JSON.parse(message.text).tool === "newTask"
-				} catch {
-				}
+			} catch {
+				// Intentionally ignore JSON parse errors for non-tool messages.
+			}
 			}
 			if (message.type === "say" && message.partial === false) {
 				messages[taskId] = messages[taskId] || []

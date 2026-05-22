@@ -10,6 +10,14 @@
 
 import { enhanceErrorWithSourceMaps } from "./sourceMapUtils"
 
+declare global {
+	interface Window {
+		__applySourceMaps?: (error: Error) => Promise<Error>
+		__testSourceMaps?: () => void
+		__checkSourceMap?: (scriptUrl: string) => Promise<boolean>
+	}
+}
+
 /**
  * Initialize source map support for production builds
  */
@@ -119,7 +127,7 @@ export function exposeSourceMapsForDebugging(): void {
 
 	try {
 		// Add a global function to manually apply source maps to an error
-		;(window as any).__applySourceMaps = async (error: Error) => {
+		;window.__applySourceMaps = async (error: Error) => {
 			if (!(error instanceof Error)) {
 				console.error("Not an Error object:", error)
 				return error
@@ -128,7 +136,7 @@ export function exposeSourceMapsForDebugging(): void {
 		}
 
 		// Add a global function to test source map functionality
-		;(window as any).__testSourceMaps = () => {
+		;window.__testSourceMaps = () => {
 			try {
 				// Intentionally cause an error
 				const obj: any = undefined
@@ -136,7 +144,7 @@ export function exposeSourceMapsForDebugging(): void {
 			} catch (e) {
 				if (e instanceof Error) {
 					console.log("Original error:", e)
-					;(window as any).__applySourceMaps(e).then((enhanced: Error) => {
+					;window.__applySourceMaps?.(e).then((enhanced: Error) => {
 						console.log("Enhanced error:", enhanced)
 
 						// Log the source mapped stack if available
@@ -154,7 +162,7 @@ export function exposeSourceMapsForDebugging(): void {
 		}
 
 		// Add a global function to check if source maps are available for a script
-		;(window as any).__checkSourceMap = async (scriptUrl: string) => {
+		;window.__checkSourceMap = async (scriptUrl: string) => {
 			try {
 				const response = await fetch(`${scriptUrl}.map`)
 				if (response.ok) {

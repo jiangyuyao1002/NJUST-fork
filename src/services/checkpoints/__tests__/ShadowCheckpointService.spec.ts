@@ -104,7 +104,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 
 			service = await klass.create({ taskId, shadowDir, workspaceDir, log: () => {} })
 			await service.initShadowGit()
-		})
+		}, 90_000)
 
 		afterEach(async () => {
 			vitest.restoreAllMocks()

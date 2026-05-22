@@ -2,7 +2,7 @@ import i18next from "i18next"
 import { initReactI18next } from "react-i18next"
 
 // Build translations object
-const translations: Record<string, Record<string, any>> = {}
+const translations: Record<string, Record<string, unknown>> = {}
 
 // Dynamically load locale files
 const localeFiles = import.meta.glob("./locales/**/*.json", { eager: true })
@@ -22,7 +22,7 @@ Object.entries(localeFiles).forEach(([path, module]) => {
 		}
 
 		// Add namespace resources to language
-		translations[language][namespace] = (module as any).default || module
+		translations[language][namespace] = (module as { default?: unknown }).default || module
 	}
 })
 

@@ -7,7 +7,7 @@ import { AutoApprovalHandler } from "../AutoApprovalHandler.js"
 
 describe("AutoApprovalHandler", () => {
 	let handler: AutoApprovalHandler
-	let mockAskForApproval: any
+	let mockAskForApproval: ReturnType<typeof vi.fn>
 	let mockState: GlobalState
 
 	beforeEach(() => {
@@ -324,7 +324,7 @@ describe("AutoApprovalHandler", () => {
 			const messages: ClineMessage[] = [
 				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 0.1 }), ts: 1 },
 			]
-			const spy = vi.spyOn(Array.prototype, "forEach" as any)
+			const spy = vi.spyOn(Array.prototype, "forEach")
 
 			await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			const callsAfterFirst = spy.mock.calls.length

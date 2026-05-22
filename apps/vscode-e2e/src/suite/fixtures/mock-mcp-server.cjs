@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports, no-undef */
 const fs = require("fs/promises")
 const path = require("path")
 

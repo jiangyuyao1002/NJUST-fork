@@ -3,6 +3,10 @@
 import { describe, test, expect, vi, beforeEach } from "vitest"
 
 import type * as vscode from "vscode"
+import * as fsModule from "fs"
+import * as dotenvxModule from "@dotenvx/dotenvx"
+
+import { activate } from "../extension"
 
 vi.mock("vscode", () => {
 	const mockRegFn = () =>
@@ -101,14 +105,18 @@ vi.mock("vscode-languageclient/node", () => ({
 
 // Mock all cangjie-lsp modules to prevent deep vscode dependency chains after resetModules.
 // Use mockResolvedValue for functions that extension.ts awaits or calls .then() on.
-const mockAsyncFn = () => vi.fn().mockResolvedValue(undefined)
-const mockConstructor = () =>
-	vi.fn().mockImplementation(() => ({
-		initialize: vi.fn().mockResolvedValue(undefined),
-		dispose: vi.fn(),
-		onCangjieActivated: vi.fn(),
-		start: vi.fn().mockResolvedValue(undefined),
-	}))
+// Factory variables must be hoisted because vi.mock is hoisted to the top of the file.
+const { mockAsyncFn, mockConstructor } = vi.hoisted(() => {
+	const mockAsyncFn = () => vi.fn().mockResolvedValue(undefined)
+	const mockConstructor = () =>
+		vi.fn().mockImplementation(() => ({
+			initialize: vi.fn().mockResolvedValue(undefined),
+			dispose: vi.fn(),
+			onCangjieActivated: vi.fn(),
+			start: vi.fn().mockResolvedValue(undefined),
+		}))
+	return { mockAsyncFn, mockConstructor }
+})
 vi.mock("../services/cangjie-lsp/CangjieLspClient", () => ({ CangjieLspClient: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/CangjieLspStatusBar", () => ({ CangjieLspStatusBar: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/CjfmtFormatter", () => ({ CjfmtFormatter: mockConstructor() }))
@@ -278,7 +286,7 @@ vi.mock("../core/webview/ClineProvider", async () => {
 })
 
 // Mock modelCache to prevent network requests during module loading
-const mockRefreshModels = vi.fn().mockResolvedValue({})
+const mockRefreshModels = vi.hoisted(() => vi.fn().mockResolvedValue({}))
 vi.mock("../api/providers/fetchers/modelCache", () => ({
 	flushModels: vi.fn(),
 	getModels: vi.fn().mockResolvedValue([]),
@@ -306,33 +314,21 @@ describe("extension.ts", () => {
 	})
 
 	test("does not call dotenvx.config when optional .env does not exist", async () => {
-		vi.resetModules()
 		vi.clearAllMocks()
+		vi.mocked(fsModule.existsSync).mockReturnValue(false)
 
-		const fs = await import("fs")
-		vi.mocked(fs.existsSync).mockReturnValue(false)
-
-		const dotenvx = await import("@dotenvx/dotenvx")
-
-		const { activate } = await import("../extension")
 		await activate(mockContext)
 
-		expect(dotenvx.config).not.toHaveBeenCalled()
+		expect(dotenvxModule.config).not.toHaveBeenCalled()
 	})
 
 	test("calls dotenvx.config when optional .env exists", async () => {
-		vi.resetModules()
 		vi.clearAllMocks()
+		vi.mocked(fsModule.existsSync).mockReturnValue(true)
 
-		const fs = await import("fs")
-		vi.mocked(fs.existsSync).mockReturnValue(true)
-
-		const dotenvx = await import("@dotenvx/dotenvx")
-
-		const { activate } = await import("../extension")
 		await activate(mockContext)
 
-		expect(dotenvx.config).toHaveBeenCalledTimes(1)
+		expect(dotenvxModule.config).toHaveBeenCalledTimes(1)
 	})
 
 	// Cloud-related auth tests removed in simplified version
