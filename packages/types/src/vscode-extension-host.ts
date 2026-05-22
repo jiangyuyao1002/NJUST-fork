@@ -811,6 +811,7 @@ export interface ClineSayTool {
 	args?: string
 	source?: string
 	description?: string
+	todos?: TodoItem[]
 	// Properties for skill tool
 	skill?: string
 }

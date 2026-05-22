@@ -12,6 +12,7 @@ import { fileExistsAtPath, createDirectoriesForFile } from "../../utils/fs"
 import { stripLineNumbers, everyLineHasLineNumbers } from "../../integrations/misc/extract-text"
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
+import { logger } from "../../shared/logger"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
 import { z } from "zod"
 import { unescapeHtmlEntities } from "../../utils/text-normalization"
@@ -147,7 +148,8 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			if (fileExists) {
 				try {
 					previousContent = await fs.readFile(absolutePath, "utf-8")
-				} catch {
+				} catch (err) {
+					logger.warn("WriteToFileTool", "Pre-read failed (file may be new):", err)
 					previousContent = undefined
 				}
 			}

@@ -329,24 +329,20 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					setShowWelcome(!checkExistKey(newState.apiConfiguration))
 					setDidHydrateState(true)
 					// Update alwaysAllowFollowupQuestions if present in state message
-					if ((newState as any).alwaysAllowFollowupQuestions !== undefined) {
-						setAlwaysAllowFollowupQuestions((newState as any).alwaysAllowFollowupQuestions)
+					if (newState.alwaysAllowFollowupQuestions !== undefined) {
+						setAlwaysAllowFollowupQuestions(newState.alwaysAllowFollowupQuestions)
 					}
-					// Update followupAutoApproveTimeoutMs if present in state message
-					if ((newState as any).followupAutoApproveTimeoutMs !== undefined) {
-						setFollowupAutoApproveTimeoutMs((newState as any).followupAutoApproveTimeoutMs)
+					if (newState.followupAutoApproveTimeoutMs !== undefined) {
+						setFollowupAutoApproveTimeoutMs(newState.followupAutoApproveTimeoutMs)
 					}
-					// Update includeTaskHistoryInEnhance if present in state message
-					if ((newState as any).includeTaskHistoryInEnhance !== undefined) {
-						setIncludeTaskHistoryInEnhance((newState as any).includeTaskHistoryInEnhance)
+					if (newState.includeTaskHistoryInEnhance !== undefined) {
+						setIncludeTaskHistoryInEnhance(newState.includeTaskHistoryInEnhance)
 					}
-					// Update includeCurrentTime if present in state message
-					if ((newState as any).includeCurrentTime !== undefined) {
-						setIncludeCurrentTime((newState as any).includeCurrentTime)
+					if (newState.includeCurrentTime !== undefined) {
+						setIncludeCurrentTime(newState.includeCurrentTime)
 					}
-					// Update includeCurrentCost if present in state message
-					if ((newState as any).includeCurrentCost !== undefined) {
-						setIncludeCurrentCost((newState as any).includeCurrentCost)
+					if (newState.includeCurrentCost !== undefined) {
+						setIncludeCurrentCost(newState.includeCurrentCost)
 					}
 					break
 				}
@@ -548,7 +544,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			setState((prevState) => ({ ...prevState, terminalShellIntegrationDisabled: value })),
 		setTerminalZdotdir: (value) => setState((prevState) => ({ ...prevState, terminalZdotdir: value })),
 		setMcpEnabled: (value) => setState((prevState) => ({ ...prevState, mcpEnabled: value })),
-		setTaskSyncEnabled: (value) => setState((prevState) => ({ ...prevState, taskSyncEnabled: value }) as any),
+		setTaskSyncEnabled: (value) => setState((prevState) => ({ ...prevState, taskSyncEnabled: value })),
 		setCurrentApiConfigName: (value) => setState((prevState) => ({ ...prevState, currentApiConfigName: value })),
 		setListApiConfigMeta,
 		setMode: (value: Mode) => setState((prevState) => ({ ...prevState, mode: value })),

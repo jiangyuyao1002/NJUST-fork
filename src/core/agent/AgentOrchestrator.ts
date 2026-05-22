@@ -8,6 +8,7 @@ import type { ForkedContextConfig } from "../task/SubTaskOptions"
 import { TIMING } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
 import type { AgentLogSink, AgentTaskController, AgentTaskLike } from "./AgentTaskController"
+import { waitForTaskCompletion } from "./sharedTaskWait"
 
 type ApiMessage = { role: string; content: UnsafeAny; ts?: number }
 
@@ -279,39 +280,11 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 	}
 
 	private waitForCompletion(task: AgentTaskLike): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error("Agent task timed out after 10 minutes"))
-			}, TIMING.AGENT_TASK_TIMEOUT_MS)
-
-			const poll = setInterval(() => {
-				try {
-					const messages = task.clineMessages || []
-					const lastMsg = messages[messages.length - 1]
-
-					if (lastMsg?.type === "say" && lastMsg.say === "completion_result") {
-						clearInterval(poll)
-						clearTimeout(timeout)
-						resolve(lastMsg.text || "Completed")
-					}
-
-					if (task.didFinishAbortingStream || task.abandoned) {
-						clearInterval(poll)
-						clearTimeout(timeout)
-
-						const errorMsg = messages.find((m: UnsafeAny) => m.type === "say" && m.say === "error")
-						if (errorMsg) {
-							reject(new Error(errorMsg.text || "Task failed"))
-						} else {
-							resolve("Completed (no explicit result)")
-						}
-					}
-				} catch (e) {
-					clearInterval(poll)
-					clearTimeout(timeout)
-					reject(e)
-				}
-			}, 500)
+		return waitForTaskCompletion(task, {
+			timeoutMs: TIMING.AGENT_TASK_TIMEOUT_MS,
+			timeoutMessage: "Agent task timed out after 10 minutes",
+			completedMessage: "Completed",
+			noResultMessage: "Completed (no explicit result)",
 		})
 	}
 

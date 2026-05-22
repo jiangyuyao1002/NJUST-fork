@@ -224,7 +224,7 @@ export class TaskHistoryService {
 							}
 						}
 					} catch (_error) {
-						logger.info("TaskHistoryService", `deleteTaskWithId: child task ${taskId} not found, skipping`)
+						logger.warn("TaskHistoryService", `deleteTaskWithId: child task ${taskId} not found or error during deletion:`, _error)
 					}
 				}
 

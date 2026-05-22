@@ -421,7 +421,7 @@ const TaskHeader = ({
 					</>
 				)}
 				{/* Todo list - always shown at bottom when todos exist */}
-				{hasTodos && <TodoListDisplay todos={todos ?? (task as any)?.tool?.todos ?? []} />}
+				{hasTodos && <TodoListDisplay todos={todos ?? []} />}
 			</div>
 		</div>
 	)

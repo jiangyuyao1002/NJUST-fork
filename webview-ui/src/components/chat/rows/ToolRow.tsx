@@ -222,8 +222,8 @@ export const ToolRow = ({
 				</div>
 			)
 		}
-		case "updateTodoList" as any: {
-			const todos = (tool as any).todos || []
+		case "updateTodoList": {
+			const todos = tool.todos || []
 			const previousTodos = getPreviousTodos(clineMessages, message.ts)
 			return <TodoChangeDisplay previousTodos={previousTodos} newTodos={todos} />
 		}

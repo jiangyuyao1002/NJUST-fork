@@ -39,7 +39,7 @@ jobs:
             - name: Check repository hygiene and dependency policy seed
               run: pnpm syncpack:lint
 
-    compile:
+    lint:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -48,6 +48,14 @@ jobs:
               uses: ./.github/actions/setup-node-pnpm
             - name: Lint
               run: pnpm lint
+
+    typecheck:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Setup Node.js and pnpm
+              uses: ./.github/actions/setup-node-pnpm
             - name: Check types
               run: pnpm check-types
 
@@ -81,7 +89,23 @@ jobs:
               run: xvfb-run -a pnpm --filter @njust-ai-cj/vscode-e2e test:ci
 
     coverage:
+        name: coverage (${{ matrix.name }})
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include:
+                    - name: src
+                      command: pnpm test:coverage
+                      files: ./coverage/src/coverage-final.json
+                      flags: src
+                    - name: prompt-engine
+                      command: pnpm --filter @njust-ai-cj/prompt-engine test:coverage
+                      files: ./coverage/prompt-engine/coverage-final.json
+                      flags: prompt-engine
+                    - name: webview-ui
+                      command: pnpm --filter @njust-ai-cj/vscode-webview test:coverage
+                      files: ./coverage/webview-ui/coverage-final.json
+                      flags: webview-ui
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -89,34 +113,14 @@ jobs:
                 fetch-depth: 0 # 获取完整历史用于 PR 比较
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
-            - name: Run src tests with coverage
-              run: pnpm test:coverage
-            - name: Run prompt-engine tests with coverage
-              run: pnpm --filter @njust-ai-cj/prompt-engine test:coverage
-            - name: Run webview-ui tests with coverage
-              run: pnpm --filter webview-ui test:coverage
-            - name: Upload src coverage to Codecov
+            - name: Run ${{ matrix.name }} tests with coverage
+              run: ${{ matrix.command }}
+            - name: Upload ${{ matrix.name }} coverage to Codecov
               uses: codecov/codecov-action@v4
               with:
                 token: ${{ secrets.CODECOV_TOKEN }}
-                files: ./coverage/src/coverage-final.json
-                flags: src
-                fail_ci_if_error: false
-                verbose: true
-            - name: Upload webview-ui coverage to Codecov
-              uses: codecov/codecov-action@v4
-              with:
-                token: ${{ secrets.CODECOV_TOKEN }}
-                files: ./coverage/webview-ui/coverage-final.json
-                flags: webview-ui
-                fail_ci_if_error: false
-                verbose: true
-            - name: Upload prompt-engine coverage to Codecov
-              uses: codecov/codecov-action@v4
-              with:
-                token: ${{ secrets.CODECOV_TOKEN }}
-                files: ./coverage/prompt-engine/coverage-final.json
-                flags: prompt-engine
+                files: ${{ matrix.files }}
+                flags: ${{ matrix.flags }}
                 fail_ci_if_error: false
                 verbose: true
 

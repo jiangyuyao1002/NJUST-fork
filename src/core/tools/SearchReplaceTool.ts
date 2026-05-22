@@ -11,6 +11,7 @@ import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { RecordSource } from "../context-tracking/FileContextTrackerTypes"
 import { fileExistsAtPath } from "../../utils/fs"
+import { logger } from "../../shared/logger"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
@@ -116,7 +117,8 @@ export class SearchReplaceTool extends BaseTool<"search_replace"> {
 				fileContent = await fs.readFile(absolutePath, "utf8")
 				// Normalize line endings to LF for consistent matching
 				fileContent = fileContent.replace(/\r\n/g, "\n")
-			} catch {
+			} catch (err) {
+				logger.error("SearchReplaceTool", "Failed to read file:", err)
 				task.consecutiveMistakeCount++
 				task.recordToolError("search_replace")
 				const errorMessage = `Failed to read file '${relPath}'. Please verify file permissions and try again.`

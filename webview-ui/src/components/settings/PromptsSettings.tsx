@@ -150,7 +150,7 @@ const PromptsSettings = ({
 						onInput={(e) => {
 							const value =
 								(e as unknown as CustomEvent)?.detail?.target?.value ??
-								((e as any).target as HTMLTextAreaElement).value
+								(e.target as HTMLTextAreaElement).value
 							updateSupportPrompt(activeSupportOption, value)
 						}}
 						rows={6}

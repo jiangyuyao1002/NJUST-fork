@@ -34,6 +34,22 @@ const SECRET_PATTERNS = [
 
 const patterns = SECRET_PATTERNS
 
+const ALLOWLISTED_FINDINGS = [
+	{ file: /^\.roo\/skills\/cangjie-full-docs\/libs_stdx\/logger\/logger_samples\/logger_sample\.md$/, name: "Password" },
+	{ file: /^CangjieCorpus-1\.0\.0\/libs\/stdx\/logger\/logger_samples\/logger_sample\.md$/, name: "Password" },
+	{ file: /^src\/utils\/__tests__\/git\.spec\.ts$/, name: "GitHub personal access token" },
+	{ file: /^webview-ui\/src\/i18n\/locales\/(?:en|zh-CN|zh-TW)\/settings\.json$/, name: "JSON API key" },
+]
+
+function normalizePath(file) {
+	return file.replaceAll("\\", "/")
+}
+
+function isAllowlisted(file, name) {
+	const normalized = normalizePath(file)
+	return ALLOWLISTED_FINDINGS.some((entry) => entry.name === name && entry.file.test(normalized))
+}
+
 async function main() {
 	const isAllFiles = process.argv.includes("--all-files")
 	const isStaged = process.argv.includes("--staged")
@@ -108,6 +124,8 @@ async function main() {
 			// If the pattern has a fileName matcher, check the file name first
 			if (fileName && !fileName.test(file)) continue
 			if (pattern.test(content)) {
+				if (isAllowlisted(file, name)) continue
+
 				if (!foundIssues) {
 					console.log("\n⚠️  Potential secrets detected in staged files:\n")
 					foundIssues = true

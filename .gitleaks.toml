@@ -1,0 +1,33 @@
+title = "NJUST_AI_CJ Gitleaks Config"
+
+[extend]
+# Use default gitleaks rules as base
+useDefault = true
+
+[[rules]]
+id = "njust-ai-cj-test-keys"
+description = "Test API keys used in tests"
+regex = '''sk-test-[a-zA-Z0-9]{20,}'''
+tags = ["test", "api-key"]
+
+[allowlist]
+# Allow test fixtures and mock data
+paths = [
+	'''__tests__''',
+	'''\.spec\.(ts|tsx|js|jsx)$''',
+	'''\.test\.(ts|tsx|js|jsx)$''',
+	'''src/test-cloud-agent-mock\.mjs$''',
+	'''^\.roo/skills/cangjie-full-docs/libs_stdx/logger/logger_samples/logger_sample\.md$''',
+	'''^CangjieCorpus-1\.0\.0/libs/stdx/logger/logger_samples/logger_sample\.md$''',
+	'''^webview-ui/src/i18n/locales/(en|zh-CN|zh-TW)/settings\.json$''',
+]
+
+# Allow specific test patterns
+regexes = [
+	'''sk-test-[a-zA-Z0-9]+''',
+	'''test-api-key-[a-zA-Z0-9]+''',
+	'''mock-token-[a-zA-Z0-9]+''',
+]
+
+# Allow specific files
+commits = []

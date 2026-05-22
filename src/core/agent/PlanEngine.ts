@@ -12,6 +12,7 @@ import type {
 	PlanExecutionOptions,
 } from "./types"
 import type { AgentLogSink, AgentTaskController, AgentTaskLike } from "./AgentTaskController"
+import { waitForTaskCompletion } from "./sharedTaskWait"
 
 const PLAN_GENERATION_PROMPT = `You are a task planning assistant. Given a user's task description, generate a structured execution plan.
 
@@ -192,42 +193,10 @@ export class PlanEngine {
 	}
 
 	private waitForTaskCompletion(task: AgentTaskLike): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(
-				() => {
-					reject(new Error("Task execution timed out"))
-				},
-				10 * 60 * 1000,
-			)
-
-			const pollInterval = setInterval(() => {
-				try {
-					const messages = task.clineMessages || []
-					const lastMsg = messages[messages.length - 1]
-
-					if (lastMsg?.type === "say" && lastMsg.say === "completion_result") {
-						clearInterval(pollInterval)
-						clearTimeout(timeout)
-						resolve(lastMsg.text || "Task completed")
-					}
-
-					if (task.didFinishAbortingStream || task.abandoned) {
-						clearInterval(pollInterval)
-						clearTimeout(timeout)
-
-						const errorMsg = messages.find((m: UnsafeAny) => m.type === "say" && m.say === "error")
-						if (errorMsg) {
-							reject(new Error(errorMsg.text || "Task failed"))
-						} else {
-							resolve("Task completed (no explicit result)")
-						}
-					}
-				} catch (error) {
-					clearInterval(pollInterval)
-					clearTimeout(timeout)
-					reject(error)
-				}
-			}, 500)
+		return waitForTaskCompletion(task, {
+			timeoutMessage: "Task execution timed out",
+			completedMessage: "Task completed",
+			noResultMessage: "Task completed (no explicit result)",
 		})
 	}
 

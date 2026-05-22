@@ -10,6 +10,7 @@ import { formatResponse } from "../prompts/responses"
 import { parseMarkdownChecklist } from "./UpdateTodoListTool"
 import { Package } from "../../shared/package"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { logger } from "../../shared/logger"
 import type { ToolUse } from "../../shared/tools"
 
 interface NewTaskParams {
@@ -84,7 +85,8 @@ export class NewTaskTool extends BaseTool<"new_task"> {
 			if (todos) {
 				try {
 					todoItems = parseMarkdownChecklist(todos)
-				} catch {
+				} catch (err) {
+					logger.warn("NewTaskTool", "Failed to parse todos:", err)
 					task.consecutiveMistakeCount++
 					task.recordToolError("new_task")
 					task.didToolFailInCurrentTurn = true

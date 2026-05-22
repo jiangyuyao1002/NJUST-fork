@@ -17,6 +17,7 @@
  */
 
 import type { ClassifierStrategy, ClassifierContext, ClassifyResult } from "./ClassifierStrategy"
+import { logger } from "../../../shared/logger"
 
 export type RiskLevel = "safe" | "medium" | "dangerous" | "forbidden"
 
@@ -418,8 +419,9 @@ export class StaticPatternClassifier implements ClassifierStrategy {
 			setImmediate(() => {
 				try {
 					resolve(this.classifySync(toolName, input, context))
-				} catch {
-					resolve({ action: "allow", reason: "Classifier error", confidence: 0 })
+				} catch (err) {
+					logger.error("BashCommandAnalyzer", "Classifier error, falling back to block:", err)
+					resolve({ action: "deny", reason: "Classifier error", confidence: 0 })
 				}
 			})
 		})

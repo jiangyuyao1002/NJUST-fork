@@ -607,7 +607,8 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 					})
 
 					if (hasAnyDenial) task.didRejectTool = true
-				} catch {
+				} catch (err) {
+					logger.error("ReadFileTool", "Approval callback failed:", err)
 					task.didRejectTool = true
 					remaining.forEach((fr) => {
 						updateFileResult(fr.path, {

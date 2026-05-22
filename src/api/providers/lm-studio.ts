@@ -179,7 +179,8 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 				inputTokens,
 				outputTokens,
 			} as const
-		} catch {
+		} catch (err) {
+			logger.error("LmStudioProvider", "Stream creation failed:", err)
 			throw new Error(
 				"Please check the LM Studio developer logs to debug what went wrong. You may need to load the model with a larger context length to work with NJUST_AI_CJ's prompts.",
 			)
@@ -223,7 +224,8 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 				throw handleOpenAIError(error, this.providerName)
 			}
 			return response.choices[0]?.message.content || ""
-		} catch {
+		} catch (err) {
+			logger.error("LmStudioProvider", "Completion failed:", err)
 			throw new Error(
 				"Please check the LM Studio developer logs to debug what went wrong. You may need to load the model with a larger context length to work with NJUST_AI_CJ's prompts.",
 			)

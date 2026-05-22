@@ -5,8 +5,6 @@
 		"types": ["vitest/globals"],
 		"outDir": "dist",
 		"module": "esnext",
-		"moduleResolution": "Bundler",
-		"noUncheckedIndexedAccess": false,
-		"useUnknownInCatchVariables": false
+		"moduleResolution": "Bundler"
 	}
 }

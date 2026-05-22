@@ -61,6 +61,7 @@ export interface TaskLifecycleHost {
 	persistentRetryHandler?: { cancel(): void } | undefined
 	providerProfileChangeListener?: (() => void) | undefined
 	messageQueueStateChangedHandler?: (() => void) | undefined
+	queuedMessageTimer?: ReturnType<typeof setTimeout> | undefined
 	rooIgnoreController?: { dispose(): void } | undefined
 	clineMessages: ClineMessage[]
 	apiConversationHistory: ApiMessage[]
@@ -454,6 +455,10 @@ export class TaskLifecycleHandler {
 		t.isDisposed = true
 
 		logger.info("TaskLifecycleHandler", `Disposing task ${t.taskId}.${t.instanceId}`)
+		if (t.queuedMessageTimer) {
+			clearTimeout(t.queuedMessageTimer)
+			t.queuedMessageTimer = undefined
+		}
 		this.emitTaskSessionMetricsSummary(t.abort ? "abort" : "dispose")
 		clearMcpInstructionsDelta(t.taskId)
 

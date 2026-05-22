@@ -294,7 +294,8 @@ export async function executeCommandInTerminal(
 
 	try {
 		await fs.access(workingDir)
-	} catch {
+	} catch (err) {
+		logger.error("ExecuteCommandTool", "Working directory access failed:", err)
 		return [false, `Working directory '${workingDir}' does not exist.`]
 	}
 
@@ -432,7 +433,7 @@ export async function executeCommandInTerminal(
 					process.continue()
 				}
 			} catch (_error) {
-				// Silently handle ask errors (e.g., "Current ask promise was ignored")
+				logger.warn("ExecuteCommandTool", "Ask promise was ignored or failed:", _error)
 			}
 		},
 		onCompleted: async (output: string | undefined) => {

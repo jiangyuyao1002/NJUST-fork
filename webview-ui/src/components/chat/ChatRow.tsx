@@ -510,7 +510,7 @@ export const ChatRowContent = ({
 						/>
 					)
 
-				case "tool" as any:
+				case "tool":
 					return (
 						<SayToolResultRow
 							message={message}

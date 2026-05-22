@@ -91,7 +91,7 @@ export const SayToolResultRow = ({
 		return <CodebaseSearchResultsDisplay results={results} />
 	}
 
-	if (message.say === "tool" as any) {
+	if (message.say === "tool") {
 		const sayTool = JSON.parse(message.text || "{}") as ClineSayTool
 		if (!sayTool) return null
 

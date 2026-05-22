@@ -23,6 +23,7 @@ vi.mock("../../../api", () => ({
 }))
 vi.mock("@njust-ai-cj/telemetry", () => ({
 	TelemetryService: {
+		reportError: vi.fn(),
 		instance: {
 			captureTaskCreated: vi.fn(),
 			captureTaskRestarted: vi.fn(),
@@ -61,7 +62,7 @@ describe("Task dispose method", () => {
 		}
 	})
 
-	test("marks isDisposed but does not call removeAllListeners (lifecycleHandler returns early)", () => {
+	test("marks isDisposed and removes listeners", () => {
 		const listener1 = vi.fn(() => {})
 		;(task as any).on("TaskStarted", listener1)
 		expect(task.listenerCount("TaskStarted")).toBe(1)
@@ -70,17 +71,17 @@ describe("Task dispose method", () => {
 		task.dispose()
 
 		expect(task.isDisposed).toBe(true)
-		expect(removeAllListenersSpy).not.toHaveBeenCalled()
-		expect(task.listenerCount("TaskStarted")).toBe(1)
+		expect(removeAllListenersSpy).toHaveBeenCalled()
+		expect(task.listenerCount("TaskStarted")).toBe(0)
 	})
 
-	test("does not throw when removeAllListeners throws (lifecycleHandler not reached)", () => {
+	test("does not throw when removeAllListeners throws", () => {
 		task.removeAllListeners = vi.fn(() => {
 			throw new Error("Test error")
 		})
 		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 		expect(() => task.dispose()).not.toThrow()
-		expect(consoleErrorSpy).not.toHaveBeenCalled()
+		expect(consoleErrorSpy).toHaveBeenCalled()
 		consoleErrorSpy.mockRestore()
 	})
 
@@ -89,7 +90,21 @@ describe("Task dispose method", () => {
 		expect(task.isDisposed).toBe(true)
 	})
 
-	test("leaves all listeners attached after dispose (lifecycleHandler early return)", () => {
+	test("clears queued message timer through public dispose", () => {
+		vi.useFakeTimers()
+		const callback = vi.fn()
+		const timer = setTimeout(callback, 1000)
+		;(task as any).queuedMessageTimer = timer
+
+		task.dispose()
+
+		expect((task as any).queuedMessageTimer).toBeUndefined()
+		vi.advanceTimersByTime(1000)
+		expect(callback).not.toHaveBeenCalled()
+		vi.useRealTimers()
+	})
+
+	test("removes all listeners during dispose", () => {
 		const listeners = {
 			TaskStarted: vi.fn(() => {}),
 			TaskAborted: vi.fn(() => {}),
@@ -124,14 +139,14 @@ describe("Task dispose method", () => {
 
 		task.dispose()
 		expect(task.isDisposed).toBe(true)
-		expect(task.listenerCount("TaskStarted")).toBe(1)
-		expect(task.listenerCount("TaskAborted")).toBe(1)
-		expect(task.listenerCount("TaskIdle")).toBe(1)
-		expect(task.listenerCount("TaskActive")).toBe(1)
-		expect(task.listenerCount("TaskAskResponded")).toBe(1)
-		expect(task.listenerCount("Message")).toBe(1)
-		expect(task.listenerCount("TaskTokenUsageUpdated")).toBe(1)
-		expect(task.listenerCount("TaskToolFailed")).toBe(1)
-		expect(task.listenerCount("TaskUnpaused")).toBe(1)
+		expect(task.listenerCount("TaskStarted")).toBe(0)
+		expect(task.listenerCount("TaskAborted")).toBe(0)
+		expect(task.listenerCount("TaskIdle")).toBe(0)
+		expect(task.listenerCount("TaskActive")).toBe(0)
+		expect(task.listenerCount("TaskAskResponded")).toBe(0)
+		expect(task.listenerCount("Message")).toBe(0)
+		expect(task.listenerCount("TaskTokenUsageUpdated")).toBe(0)
+		expect(task.listenerCount("TaskToolFailed")).toBe(0)
+		expect(task.listenerCount("TaskUnpaused")).toBe(0)
 	})
 })

@@ -822,7 +822,7 @@ const ModesView = () => {
 						onChange={(e) => {
 							const value =
 								(e as unknown as CustomEvent)?.detail?.target?.value ??
-								((e as any).target as HTMLTextAreaElement).value
+								(e.target as HTMLTextAreaElement).value
 							const customMode = findModeBySlug(visualMode, customModes)
 							if (customMode) {
 								// For custom modes, update the JSON file
@@ -877,7 +877,7 @@ const ModesView = () => {
 						onChange={(e) => {
 							const value =
 								(e as unknown as CustomEvent)?.detail?.target?.value ??
-								((e as any).target as HTMLTextAreaElement).value
+								(e.target as HTMLTextAreaElement).value
 							const customMode = findModeBySlug(visualMode, customModes)
 							if (customMode) {
 								// For custom modes, update the JSON file
@@ -932,7 +932,7 @@ const ModesView = () => {
 						onChange={(e) => {
 							const value =
 								(e as unknown as CustomEvent)?.detail?.target?.value ??
-								((e as any).target as HTMLTextAreaElement).value
+								(e.target as HTMLTextAreaElement).value
 							const customMode = findModeBySlug(visualMode, customModes)
 							if (customMode) {
 								// For custom modes, update the JSON file
@@ -1083,7 +1083,7 @@ const ModesView = () => {
 						onChange={(e) => {
 							const value =
 								(e as unknown as CustomEvent)?.detail?.target?.value ??
-								((e as any).target as HTMLTextAreaElement).value
+								(e.target as HTMLTextAreaElement).value
 							const customMode = findModeBySlug(visualMode, customModes)
 							if (customMode) {
 								// For custom modes, update the JSON file
@@ -1187,7 +1187,7 @@ const ModesView = () => {
 						onChange={(e) => {
 							const value =
 								(e as unknown as CustomEvent)?.detail?.target?.value ??
-								((e as any).target as HTMLTextAreaElement).value
+								(e.target as HTMLTextAreaElement).value
 							setCustomInstructions(value ?? undefined)
 							vscode.postMessage({
 								type: "customInstructions",

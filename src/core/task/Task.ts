@@ -1221,8 +1221,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		try {
 			this.toolCallParser.clearAllStreamingToolCalls()
 			this.toolCallParser.clearRawChunkState()
-		} catch {
-			// non-fatal
+		} catch (err) {
+			logger.error("Task", "Failed to clear streaming tool call state:", err)
 		}
 		this.debouncedEmitTokenUsage.cancel()
 
@@ -1476,8 +1476,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	public isDisposed = false
 
 	public dispose(): void {
-		if (this.isDisposed) return
-		this.isDisposed = true
 		return this.lifecycleHandler.dispose()
 	}
 
@@ -1768,12 +1766,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			if (!this.messageQueueService.isEmpty()) {
 				const queued = this.messageQueueService.dequeueMessage()
 				if (queued) {
-					setTimeout(() => {
-						this.submitUserMessage(queued.text, queued.images).catch((err) => {
-							logger.error("Task", "Failed to submit queued message:", err)
-							TelemetryService.reportError(err, TelemetryEventName.TASK_LIFECYCLE_ERROR)
-						})
-					}, 0)
+				this.queuedMessageTimer = setTimeout(() => {
+					this.queuedMessageTimer = undefined
+					this.submitUserMessage(queued.text, queued.images).catch((err) => {
+						logger.error("Task", "Failed to submit queued message:", err)
+						TelemetryService.reportError(err, TelemetryEventName.TASK_LIFECYCLE_ERROR)
+					})
+				}, 0)
 				}
 			}
 		} catch (e) {

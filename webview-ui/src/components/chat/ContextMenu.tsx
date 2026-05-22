@@ -66,8 +66,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 
 	// get the icons base uri on mount
 	useEffect(() => {
-		const w = window as any
-		setMaterialIconsBaseUri(w.MATERIAL_ICONS_BASE_URI)
+		const w = window as unknown as Record<string, string | undefined>
+		setMaterialIconsBaseUri(w.MATERIAL_ICONS_BASE_URI ?? "")
 	}, [])
 
 	const renderOptionContent = (option: ContextMenuQueryItem) => {
@@ -274,6 +274,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 			onMouseDown={onMouseDown}>
 			<div
 				ref={menuRef}
+				role="listbox"
+				aria-label={t("chat:contextMenu.title")}
 				style={{
 					backgroundColor: "var(--vscode-dropdown-background)",
 					border: "1px solid var(--vscode-editorGroup-border)",
@@ -321,6 +323,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 					filteredOptions.map((option, index) => (
 						<div
 							key={`${option.type}-${option.value || index}`}
+							role="option"
+							aria-selected={index === selectedIndex}
 							onClick={() => isOptionSelectable(option) && onSelect(option.type, option.value)}
 							style={{
 								padding:

@@ -7,11 +7,13 @@
 		".": "./src/index.ts"
 	},
 	"scripts": {
+		"lint": "eslint src --ext=ts --max-warnings=0",
 		"test": "vitest run",
 		"check-types": "tsc --noEmit",
 		"start": "tsx src/index.ts"
 	},
 	"devDependencies": {
+		"@njust-ai-cj/config-eslint": "workspace:^",
 		"@njust-ai-cj/config-typescript": "workspace:^",
 		"@types/node": "20.x",
 		"tsx": "^4.19.3",

@@ -93,6 +93,7 @@ export async function waitForClineInitialization(provider: ICheckpointRestoreHos
 		})
 		return true
 	} catch (_error) {
+		logger.error("CheckpointRestore", "Initialization timeout:", _error)
 		vscode.window.showErrorMessage(t("common:errors.checkpoint_timeout"))
 		return false
 	}
