@@ -34,16 +34,14 @@ export const SystemEventRow = ({
 	message,
 	icon,
 	title,
-	isExpanded,
-	onToggleExpand,
+	isExpanded: _isExpanded,
+	onToggleExpand: _onToggleExpand,
 	isStreaming,
 	isLast,
 	currentCheckpoint,
-	clineMessages,
+	clineMessages: _clineMessages,
 }: SystemEventRowProps) => {
 	const { t } = useTranslation()
-
-	const type = message.type === "ask" ? message.ask : message.say
 
 	// Say cases
 	if (message.type === "say") {

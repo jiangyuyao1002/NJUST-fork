@@ -27,16 +27,9 @@ import { useSelectedModel } from "../ui/hooks/useSelectedModel"
 import {
 	MessageCircleQuestionMark,
 	TerminalSquare,
-	MessageCircle,
-	Check,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-	CloudAgentDeferredToolCard,
-	isCloudAgentAssistantTextMessage,
-	parseDeferredExecutingTool,
-	parseDeferredToolError,
-} from "./cloud-agent/CloudAgentChatBlocks"
+import { isCloudAgentAssistantTextMessage } from "./cloud-agent/CloudAgentChatBlocks"
 import { ProgressIndicator } from "./ProgressIndicator"
 
 import { ToolRow } from "./rows/ToolRow"
@@ -48,7 +41,7 @@ import { FollowUpRow } from "./rows/FollowUpRow"
 import { McpServerRow } from "./rows/McpServerRow"
 import { SayToolResultRow } from "./rows/SayToolResultRow"
 import { SystemEventRow } from "./rows/SystemEventRow"
-import { headerStyle, normalColor, errorColor, successColor, cancelledColor } from "./rows/constants"
+import { normalColor, errorColor, successColor, cancelledColor } from "./rows/constants"
 
 interface ChatRowProps {
 	message: ClineMessage
@@ -67,7 +60,7 @@ interface ChatRowProps {
 	hasCheckpoint?: boolean
 }
 
-interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange"> {}
+type ChatRowContentProps = Omit<ChatRowProps, "onHeightChange">
 
 const ChatRow = memo(
 	(props: ChatRowProps) => {

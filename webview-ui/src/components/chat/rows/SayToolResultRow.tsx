@@ -29,9 +29,9 @@ interface SayToolResultRowProps {
 
 export const SayToolResultRow = ({
 	message,
-	isExpanded,
-	onToggleExpand,
-	clineMessages,
+	isExpanded: _isExpanded,
+	onToggleExpand: _onToggleExpand,
+	clineMessages: _clineMessages,
 	currentTaskItem,
 }: SayToolResultRowProps) => {
 	const { t } = useTranslation()

@@ -1,5 +1,4 @@
 import React from "react"
-import { useTranslation } from "react-i18next"
 
 import type { ClineMessage, FollowUpData, SuggestionItem } from "@njust-ai-cj/types"
 
@@ -29,8 +28,6 @@ export const FollowUpRow = ({
 	isFollowUpAnswered,
 	isFollowUpAutoApprovalPaused,
 }: FollowUpRowProps) => {
-	const { t } = useTranslation()
-
 	return (
 		<>
 			{title && (

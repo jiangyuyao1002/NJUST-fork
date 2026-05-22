@@ -31,7 +31,13 @@ import {
 
 import { headerStyle } from "./constants"
 
-function getPreviousTodos(messages: ClineMessage[], currentMessageTs: number): any[] {
+interface TodoItem {
+	id?: string
+	content: string
+	status?: string
+}
+
+function getPreviousTodos(messages: ClineMessage[], currentMessageTs: number): TodoItem[] {
 	const previousUpdateIndex = messages
 		.slice()
 		.reverse()
@@ -221,7 +227,7 @@ export const ToolRow = ({
 			const previousTodos = getPreviousTodos(clineMessages, message.ts)
 			return <TodoChangeDisplay previousTodos={previousTodos} newTodos={todos} />
 		}
-		case "readFile":
+		case "readFile": {
 			const isBatchRequest = message.type === "ask" && tool.batchFiles && Array.isArray(tool.batchFiles)
 
 			if (isBatchRequest) {
@@ -287,6 +293,7 @@ export const ToolRow = ({
 					</div>
 				</>
 			)
+		}
 		case "skill": {
 			const skillInfo = tool
 			return (

@@ -32,7 +32,7 @@ export const ApiRequestRow = ({
 	apiReqStreamingFailedMessage,
 	apiRequestFailedMessage,
 	isCloudAgentUi,
-	isLast,
+	isLast: _isLast,
 }: ApiRequestRowProps) => {
 	const { t, i18n } = useTranslation()
 	const type = message.type === "ask" ? message.ask : message.say
