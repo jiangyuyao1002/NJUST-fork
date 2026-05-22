@@ -13,6 +13,7 @@ import type {
 	CloudCompileResult,
 	CloudRunResult,
 	DeferredResponse,
+	DeferredToolCall,
 	DeferredToolResult,
 	WorkspaceOp,
 } from "../../services/cloud-agent/types"
@@ -304,7 +305,25 @@ export class CloudAgentOrchestrator {
 			for (const call of pendingTools) {
 				if (this.host.abort) break
 				await this.host.say("text", `[Deferred] executing tool: ${call.tool} (${call.call_id})`)
-				const result = await executeDeferredToolCall(this.host.cwd, call, cfg.allowedCommands, cfg.deniedCommands)
+				const approvalResult = await this.approveDeferredToolCall(call)
+				if (approvalResult) {
+					toolResults.push(approvalResult)
+					if (approvalResult.is_error) {
+						await this.host.say(
+							"text",
+							`[Deferred] tool ${call.tool} error: ${approvalResult.content.slice(0, 500)}`,
+						)
+					}
+					continue
+				}
+				const result = await executeDeferredToolCall(
+					this.host.cwd,
+					call,
+					cfg.allowedCommands,
+					cfg.deniedCommands,
+					this.host.rooIgnoreController,
+					this.host.rooProtectedController,
+				)
 				toolResults.push(result)
 				if (result.is_error) {
 					await this.host.say("text", `[Deferred] tool ${call.tool} error: ${result.content.slice(0, 500)}`)
@@ -454,6 +473,85 @@ export class CloudAgentOrchestrator {
 		}
 	}
 
+	private getDeferredStringArg(call: DeferredToolCall, key: string): string | undefined {
+		const val = call.arguments[key]
+		return typeof val === "string" ? val : undefined
+	}
+
+	private getWorkspaceOpFromDeferredTool(call: DeferredToolCall): WorkspaceOp | undefined {
+		if (call.tool === "write_file") {
+			const path = this.getDeferredStringArg(call, "path")
+			const content = this.getDeferredStringArg(call, "content")
+			if (!path || content === undefined) return undefined
+			return { op: "write_file", path, content }
+		}
+
+		if (call.tool === "apply_diff") {
+			const path = this.getDeferredStringArg(call, "path")
+			const diff = this.getDeferredStringArg(call, "diff")
+			if (!path || diff === undefined) return undefined
+			return { op: "apply_diff", path, diff }
+		}
+
+		return undefined
+	}
+
+	private async approveDeferredToolCall(call: DeferredToolCall): Promise<DeferredToolResult | undefined> {
+		if (call.tool === "write_file" || call.tool === "apply_diff") {
+			const op = this.getWorkspaceOpFromDeferredTool(call)
+			if (!op) return undefined
+
+			const accessAllowed = allowRooIgnorePathAccess(this.host.rooIgnoreController, op.path)
+			if (!accessAllowed) {
+				return { call_id: call.call_id, content: `Access denied by .rooignore: ${op.path}`, is_error: true }
+			}
+
+			const isWriteProtected = this.host.rooProtectedController?.isWriteProtected(op.path) || false
+			const toolJson = await buildCloudWorkspaceOpToolMessage(this.host.cwd, op, { isWriteProtected })
+			const askResult = await this.host.ask("tool", toolJson, false)
+			if (askResult.text) {
+				await this.host.say("user_feedback", askResult.text, askResult.images)
+			}
+			if (askResult.response !== "yesButtonClicked") {
+				return {
+					call_id: call.call_id,
+					content: `Deferred tool rejected by user: ${call.tool}`,
+					is_error: true,
+				}
+			}
+
+			return undefined
+		}
+
+		if (call.tool === "execute_command") {
+			const command = this.getDeferredStringArg(call, "command")
+			if (!command) return undefined
+
+			const blockedPath = this.host.rooIgnoreController?.validateCommand(command)
+			if (blockedPath) {
+				return {
+					call_id: call.call_id,
+					content: `Access denied by .rooignore: ${blockedPath}`,
+					is_error: true,
+				}
+			}
+
+			const askResult = await this.host.ask("command", command, false)
+			if (askResult.text) {
+				await this.host.say("user_feedback", askResult.text, askResult.images)
+			}
+			if (askResult.response !== "yesButtonClicked") {
+				return {
+					call_id: call.call_id,
+					content: `Deferred tool rejected by user: ${call.tool}`,
+					is_error: true,
+				}
+			}
+		}
+
+		return undefined
+	}
+
 	// ── Compile feedback loop ───────────────────────────────────────────
 
 	private async runCompileFeedbackLoop(
@@ -587,7 +685,12 @@ export class CloudAgentOrchestrator {
 					continue
 				}
 
-				const single = await applySingleCloudWorkspaceOp(this.host.cwd, op)
+				const single = await applySingleCloudWorkspaceOp(
+					this.host.cwd,
+					op,
+					this.host.rooIgnoreController,
+					this.host.rooProtectedController,
+				)
 				await this.host.say("text", single.message)
 				if (!single.ok) {
 					await this.host.say("error", `Workspace operation failed: ${single.message}`)
@@ -595,7 +698,13 @@ export class CloudAgentOrchestrator {
 				}
 			}
 		} else {
-			const applied = await applyCloudWorkspaceOps(this.host.cwd, ops, () => this.host.abort)
+			const applied = await applyCloudWorkspaceOps(
+				this.host.cwd,
+				ops,
+				() => this.host.abort,
+				this.host.rooIgnoreController,
+				this.host.rooProtectedController,
+			)
 			const lines = applied.results.map((r) => `${r.ok ? "OK" : "FAIL"} ${r.path}: ${r.message}`)
 			const header = applied.ok
 				? `workspace_ops applied (${applied.results.length} operation(s)).`

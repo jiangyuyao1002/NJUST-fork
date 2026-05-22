@@ -2,7 +2,7 @@ import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
 
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../applyCloudWorkspaceOps"
 
@@ -69,5 +69,40 @@ describe("applyCloudWorkspaceOps", () => {
 		expect(r.ok).toBe(false)
 		expect(r.failedAtIndex).toBe(1)
 		expect(r.results).toHaveLength(1)
+	})
+
+	it("rejects ops denied by .rooignore even without per-op confirmation", async () => {
+		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "cloud-ws-"))
+		const rooIgnoreController = { validateAccess: vi.fn(() => false) }
+
+		const r = await applyCloudWorkspaceOps(
+			tmpDir,
+			[{ op: "write_file", path: "secret.txt", content: "secret" }],
+			undefined,
+			rooIgnoreController as any,
+		)
+
+		expect(r.ok).toBe(false)
+		expect(r.failedAtIndex).toBe(0)
+		expect(r.results[0].message).toContain("Access denied by .rooignore")
+		await expect(fs.readFile(path.join(tmpDir, "secret.txt"), "utf-8")).rejects.toThrow()
+	})
+
+	it("rejects write-protected ops even without per-op confirmation", async () => {
+		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "cloud-ws-"))
+		const rooProtectedController = { isWriteProtected: vi.fn(() => true) }
+
+		const r = await applyCloudWorkspaceOps(
+			tmpDir,
+			[{ op: "write_file", path: ".njust_ai/settings.json", content: "{}" }],
+			undefined,
+			undefined,
+			rooProtectedController as any,
+		)
+
+		expect(r.ok).toBe(false)
+		expect(r.failedAtIndex).toBe(0)
+		expect(r.results[0].message).toContain("Write protected")
+		await expect(fs.readFile(path.join(tmpDir, ".njust_ai/settings.json"), "utf-8")).rejects.toThrow()
 	})
 })

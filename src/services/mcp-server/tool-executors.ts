@@ -8,6 +8,7 @@ import { listFiles } from "../../services/glob/list-files"
 import { checkCommandSafety } from "../../core/tools/helpers/commandSafety"
 import { filterSensitiveEnv } from "../../utils/env"
 import { getCommandDecision } from "../../core/auto-approval"
+import type { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
 
 /**
  * Ensures a resolved path stays within the workspace boundary (after realpath, to reduce symlink escape).
@@ -103,7 +104,11 @@ export interface ListFilesParams {
 	recursive?: boolean
 }
 
-export async function execListFiles(cwd: string, params: ListFilesParams): Promise<string> {
+export async function execListFiles(
+	cwd: string,
+	params: ListFilesParams,
+	rooIgnoreController?: RooIgnoreController,
+): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
 
 	if (!(await fileExistsAtPath(absPath))) {
@@ -112,7 +117,9 @@ export async function execListFiles(cwd: string, params: ListFilesParams): Promi
 
 	const [files, didHitLimit] = await listFiles(absPath, params.recursive ?? false, 500)
 
-	const relFiles = files.map((f) => path.relative(cwd, f).replace(/\\/g, "/"))
+	const relFiles = files
+		.map((f) => path.relative(cwd, f).replace(/\\/g, "/"))
+		.filter((relPath) => !rooIgnoreController || rooIgnoreController.validateAccess(relPath))
 	let result = relFiles.join("\n")
 
 	if (didHitLimit) {
@@ -128,14 +135,18 @@ export interface SearchFilesParams {
 	file_pattern?: string
 }
 
-export async function execSearchFiles(cwd: string, params: SearchFilesParams): Promise<string> {
+export async function execSearchFiles(
+	cwd: string,
+	params: SearchFilesParams,
+	rooIgnoreController?: RooIgnoreController,
+): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
 
 	if (!(await fileExistsAtPath(absPath))) {
 		throw new Error(`Directory not found: ${params.path}`)
 	}
 
-	return await regexSearchFiles(cwd, absPath, params.regex, params.file_pattern)
+	return await regexSearchFiles(cwd, absPath, params.regex, params.file_pattern, rooIgnoreController)
 }
 
 export interface ExecuteCommandParams {

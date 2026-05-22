@@ -353,6 +353,8 @@ describe("CloudAgentOrchestrator", () => {
 				"/test/workspace",
 				[{ op: "write_file", path: "a.ts", content: "x" }],
 				expect.any(Function),
+				undefined,
+				undefined,
 			)
 		})
 
@@ -473,11 +475,198 @@ describe("CloudAgentOrchestrator", () => {
 				{ call_id: "c1", tool: "read_file", arguments: { path: "a.ts" } },
 				[],
 				[],
+				undefined,
+				undefined,
 			)
 			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
 				"run-1",
 				"test-task-id",
 				[{ call_id: "c1", content: "file content", is_error: false }],
+			)
+		})
+
+		it("asks for approval before executing deferred write_file", async () => {
+			mockClientInstance.deferredStart.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "pending",
+				pending_tools: [
+					{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } },
+				],
+			})
+			mockClientInstance.deferredResume.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "done",
+				ok: true,
+			})
+			vi.mocked(executeDeferredToolCall).mockResolvedValueOnce({
+				call_id: "c1",
+				content: "file written",
+				is_error: false,
+			})
+			const host = createMockHost()
+			const orch = new CloudAgentOrchestrator(host)
+
+			await orch.run("hello")
+
+			expect(host.ask).toHaveBeenCalledWith(
+				"tool",
+				'{"tool":"write_file","path":"a.ts","content":"x"}',
+				false,
+			)
+			expect(executeDeferredToolCall).toHaveBeenCalledWith(
+				"/test/workspace",
+				{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } },
+				[],
+				[],
+				undefined,
+				undefined,
+			)
+		})
+
+		it("does not execute deferred write_file when approval is rejected", async () => {
+			mockClientInstance.deferredStart.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "pending",
+				pending_tools: [
+					{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } },
+				],
+			})
+			mockClientInstance.deferredResume.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "done",
+				ok: true,
+			})
+			const host = createMockHost({
+				ask: vi.fn().mockResolvedValue({ response: "noButtonClicked" }),
+			})
+			const orch = new CloudAgentOrchestrator(host)
+
+			await orch.run("hello")
+
+			expect(executeDeferredToolCall).not.toHaveBeenCalled()
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
+				"run-1",
+				"test-task-id",
+				[
+					{
+						call_id: "c1",
+						content: "Deferred tool rejected by user: write_file",
+						is_error: true,
+					},
+				],
+			)
+		})
+
+		it("does not execute deferred execute_command when approval is rejected", async () => {
+			mockClientInstance.deferredStart.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "pending",
+				pending_tools: [
+					{ call_id: "c1", tool: "execute_command", arguments: { command: "npm test" } },
+				],
+			})
+			mockClientInstance.deferredResume.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "done",
+				ok: true,
+			})
+			const host = createMockHost({
+				ask: vi.fn().mockResolvedValue({ response: "noButtonClicked" }),
+			})
+			const orch = new CloudAgentOrchestrator(host)
+
+			await orch.run("hello")
+
+			expect(host.ask).toHaveBeenCalledWith("command", "npm test", false)
+			expect(executeDeferredToolCall).not.toHaveBeenCalled()
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
+				"run-1",
+				"test-task-id",
+				[
+					{
+						call_id: "c1",
+						content: "Deferred tool rejected by user: execute_command",
+						is_error: true,
+					},
+				],
+			)
+		})
+
+		it("rejects deferred execute_command when .rooignore blocks it", async () => {
+			mockClientInstance.deferredStart.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "pending",
+				pending_tools: [
+					{ call_id: "c1", tool: "execute_command", arguments: { command: "cat .rooignore/secret.txt" } },
+				],
+			})
+			mockClientInstance.deferredResume.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "done",
+				ok: true,
+			})
+			const rooIgnoreController = {
+				validateAccess: vi.fn(() => true),
+				validateCommand: vi.fn((cmd: string) => {
+					if (cmd.includes(".rooignore")) return ".rooignore/secret.txt"
+					return undefined
+				}),
+			}
+			const host = createMockHost({ rooIgnoreController: rooIgnoreController as any })
+			const orch = new CloudAgentOrchestrator(host)
+
+			await orch.run("hello")
+
+			expect(rooIgnoreController.validateCommand).toHaveBeenCalledWith("cat .rooignore/secret.txt")
+			expect(host.ask).not.toHaveBeenCalled()
+			expect(executeDeferredToolCall).not.toHaveBeenCalled()
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
+				"run-1",
+				"test-task-id",
+				[
+					{
+						call_id: "c1",
+						content: "Access denied by .rooignore: .rooignore/secret.txt",
+						is_error: true,
+					},
+				],
+			)
+		})
+
+		it("rejects deferred write_file when .rooignore blocks it", async () => {
+			mockClientInstance.deferredStart.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "pending",
+				pending_tools: [
+					{ call_id: "c1", tool: "write_file", arguments: { path: ".rooignore/blocked.txt", content: "x" } },
+				],
+			})
+			mockClientInstance.deferredResume.mockResolvedValueOnce({
+				run_id: "run-1",
+				status: "done",
+				ok: true,
+			})
+			const rooIgnoreController = {
+				validateAccess: vi.fn((p: string) => !p.includes(".rooignore")),
+				validateCommand: vi.fn(() => undefined),
+			}
+			const host = createMockHost({ rooIgnoreController: rooIgnoreController as any })
+			const orch = new CloudAgentOrchestrator(host)
+
+			await orch.run("hello")
+
+			expect(host.ask).not.toHaveBeenCalled()
+			expect(executeDeferredToolCall).not.toHaveBeenCalled()
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
+				"run-1",
+				"test-task-id",
+				[
+					{
+						call_id: "c1",
+						content: "Access denied by .rooignore: .rooignore/blocked.txt",
+						is_error: true,
+					},
+				],
 			)
 		})
 

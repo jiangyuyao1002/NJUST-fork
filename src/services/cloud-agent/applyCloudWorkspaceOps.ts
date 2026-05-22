@@ -2,6 +2,8 @@ import { execApplyDiff, execWriteFile } from "../mcp-server/tool-executors"
 
 import type { WorkspaceOp } from "./types"
 import { getErrorMessage } from "../../shared/error-utils"
+import { allowRooIgnorePathAccess, type RooIgnoreController } from "../../core/ignore/RooIgnoreController"
+import type { RooProtectedController } from "../../core/protect/RooProtectedController"
 
 export interface CloudWorkspaceOpResult {
 	path: string
@@ -19,8 +21,21 @@ export interface ApplyCloudWorkspaceOpsResult {
 /**
  * Apply a single validated workspace op (write_file or apply_diff).
  */
-export async function applySingleCloudWorkspaceOp(cwd: string, op: WorkspaceOp): Promise<CloudWorkspaceOpResult> {
+export async function applySingleCloudWorkspaceOp(
+	cwd: string,
+	op: WorkspaceOp,
+	rooIgnoreController?: RooIgnoreController,
+	rooProtectedController?: RooProtectedController,
+): Promise<CloudWorkspaceOpResult> {
 	try {
+		const accessAllowed = allowRooIgnorePathAccess(rooIgnoreController, op.path)
+		if (!accessAllowed) {
+			return { path: op.path, ok: false, message: `Access denied by .rooignore: ${op.path}` }
+		}
+		const isWriteProtected = rooProtectedController?.isWriteProtected(op.path) || false
+		if (isWriteProtected) {
+			return { path: op.path, ok: false, message: `Write protected: ${op.path}` }
+		}
 		if (op.op === "write_file") {
 			const message = await execWriteFile(cwd, { path: op.path, content: op.content })
 			return { path: op.path, ok: true, message }
@@ -40,6 +55,8 @@ export async function applyCloudWorkspaceOps(
 	cwd: string,
 	ops: WorkspaceOp[],
 	isAborted?: () => boolean,
+	rooIgnoreController?: RooIgnoreController,
+	rooProtectedController?: RooProtectedController,
 ): Promise<ApplyCloudWorkspaceOpsResult> {
 	const results: CloudWorkspaceOpResult[] = []
 
@@ -53,7 +70,7 @@ export async function applyCloudWorkspaceOps(
 		}
 
 		const op = ops[i]!
-		const single = await applySingleCloudWorkspaceOp(cwd, op)
+		const single = await applySingleCloudWorkspaceOp(cwd, op, rooIgnoreController, rooProtectedController)
 		results.push(single)
 		if (!single.ok) {
 			return { results, failedAtIndex: i, ok: false }

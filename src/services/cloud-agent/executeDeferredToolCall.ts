@@ -8,6 +8,8 @@ import {
 } from "../mcp-server/tool-executors"
 import type { DeferredToolCall, DeferredToolResult } from "./types"
 import { getErrorMessage } from "../../shared/error-utils"
+import { allowRooIgnorePathAccess, type RooIgnoreController } from "../../core/ignore/RooIgnoreController"
+import type { RooProtectedController } from "../../core/protect/RooProtectedController"
 
 function expectString(args: Record<string, UnsafeAny>, key: string): string {
 	const val = args[key]
@@ -53,6 +55,8 @@ export async function executeDeferredToolCall(
 	call: DeferredToolCall,
 	allowedCommands?: string[],
 	deniedCommands?: string[],
+	rooIgnoreController?: RooIgnoreController,
+	rooProtectedController?: RooProtectedController,
 ): Promise<DeferredToolResult> {
 	try {
 		const args = call.arguments
@@ -68,53 +72,122 @@ export async function executeDeferredToolCall(
 		let content: string
 
 		switch (call.tool) {
-			case "read_file":
+			case "read_file": {
+				const readPath = expectString(args, "path")
+				const readAccessAllowed = allowRooIgnorePathAccess(rooIgnoreController, readPath)
+				if (!readAccessAllowed) {
+					return {
+						call_id: call.call_id,
+						content: `Access denied by .rooignore: ${readPath}`,
+						is_error: true,
+					}
+				}
 				content = await execReadFile(cwd, {
-					path: expectString(args, "path"),
+					path: readPath,
 					start_line: expectOptionalNumber(args, "start_line"),
 					end_line: expectOptionalNumber(args, "end_line"),
 				})
 				break
+			}
 
-			case "write_file":
-				content = await execWriteFile(cwd, {
-					path: expectString(args, "path"),
-					content: expectString(args, "content"),
-				})
-				break
-
-			case "apply_diff":
-				content = await execApplyDiff(cwd, {
-					path: expectString(args, "path"),
-					diff: expectString(args, "diff"),
-				})
-				break
-
-			case "list_files": {
-				const raw = args.path
-				const p = typeof raw === "string" ? raw.trim() : ""
-				content = await execListFiles(cwd, {
-					path: p || ".",
-					recursive: expectOptionalBoolean(args, "recursive"),
-				})
+			case "write_file": {
+				const writePath = expectString(args, "path")
+				const accessAllowed = allowRooIgnorePathAccess(rooIgnoreController, writePath)
+				if (!accessAllowed) {
+					return {
+						call_id: call.call_id,
+						content: `Access denied by .rooignore: ${writePath}`,
+						is_error: true,
+					}
+				}
+				const isWriteProtected = rooProtectedController?.isWriteProtected(writePath) || false
+				if (isWriteProtected) {
+					return {
+						call_id: call.call_id,
+						content: `Write protected: ${writePath}`,
+						is_error: true,
+					}
+				}
+				content = await execWriteFile(cwd, { path: writePath, content: expectString(args, "content") })
 				break
 			}
 
-			case "search_files":
-				content = await execSearchFiles(cwd, {
-					path: expectOptionalString(args, "path") ?? ".",
-					regex: expectString(args, "regex"),
-					file_pattern: expectOptionalString(args, "file_pattern"),
-				})
+			case "apply_diff": {
+				const diffPath = expectString(args, "path")
+				const accessAllowed = allowRooIgnorePathAccess(rooIgnoreController, diffPath)
+				if (!accessAllowed) {
+					return {
+						call_id: call.call_id,
+						content: `Access denied by .rooignore: ${diffPath}`,
+						is_error: true,
+					}
+				}
+				const isWriteProtected = rooProtectedController?.isWriteProtected(diffPath) || false
+				if (isWriteProtected) {
+					return {
+						call_id: call.call_id,
+						content: `Write protected: ${diffPath}`,
+						is_error: true,
+					}
+				}
+				content = await execApplyDiff(cwd, { path: diffPath, diff: expectString(args, "diff") })
 				break
+			}
 
-			case "execute_command":
+			case "list_files": {
+				const raw = args.path
+				const listPath = typeof raw === "string" ? raw.trim() : ""
+				const listAccessAllowed = allowRooIgnorePathAccess(rooIgnoreController, listPath || ".")
+				if (!listAccessAllowed) {
+					return {
+						call_id: call.call_id,
+						content: `Access denied by .rooignore: ${listPath || "."}`,
+						is_error: true,
+					}
+				}
+				content = await execListFiles(
+					cwd,
+					{ path: listPath || ".", recursive: expectOptionalBoolean(args, "recursive") },
+					rooIgnoreController,
+				)
+				break
+			}
+
+			case "search_files": {
+				const searchPath = expectOptionalString(args, "path") ?? "."
+				const searchAccessAllowed = allowRooIgnorePathAccess(rooIgnoreController, searchPath)
+				if (!searchAccessAllowed) {
+					return {
+						call_id: call.call_id,
+						content: `Access denied by .rooignore: ${searchPath}`,
+						is_error: true,
+					}
+				}
+				content = await execSearchFiles(
+					cwd,
+					{ path: searchPath, regex: expectString(args, "regex"), file_pattern: expectOptionalString(args, "file_pattern") },
+					rooIgnoreController,
+				)
+				break
+			}
+
+			case "execute_command": {
+				const command = expectString(args, "command")
+				const blockedPath = rooIgnoreController?.validateCommand(command)
+				if (blockedPath) {
+					return {
+						call_id: call.call_id,
+						content: `Access denied by .rooignore: ${blockedPath}`,
+						is_error: true,
+					}
+				}
 				content = await execCommand(cwd, {
-					command: expectString(args, "command"),
+					command,
 					cwd: expectOptionalString(args, "cwd"),
 					timeout: expectOptionalNumber(args, "timeout"),
 				}, allowedCommands, deniedCommands)
 				break
+			}
 
 			default:
 				return {
