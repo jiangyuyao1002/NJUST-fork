@@ -93,3 +93,8 @@ devflow/
 
 # Local agent workspace artifacts
 .agents/
+.opencode/
+
+# Local analysis outputs and credentials
+.scannerwork/
+sonar-project.properties

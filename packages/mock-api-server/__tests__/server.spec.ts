@@ -267,6 +267,8 @@ describe("MockAPIServer", () => {
 		await first.close()
 		handle = undefined
 
+		await new Promise((resolve) => setTimeout(resolve, 100))
+
 		const server = await start({ port: requestedPort })
 
 		expect(server.port).toBe(requestedPort)

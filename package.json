@@ -36,6 +36,7 @@
     "@changesets/cli": "^2.27.10",
     "@dotenvx/dotenvx": "^1.34.0",
     "@njust-ai-cj/config-typescript": "workspace:^",
+    "@sonar/scan": "^4.3.6",
     "@types/glob": "^9.0.0",
     "@types/node": "20.x",
     "@vitest/coverage-istanbul": "^3.2.3",

@@ -84,7 +84,7 @@ function readCjpmPackageName(projectRoot: string): string | undefined {
 
 const PKG_SUPPOSED_RE = /package\s+name\s+supposed\s+to\s+be\s+'([^']+)'/i
 
-function filterFalsePackageDiagnostics(
+export function filterFalsePackageDiagnostics(
 	diagnostics: vscode.Diagnostic[],
 	realPackageName: string | undefined,
 	uri: vscode.Uri,

@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const { pWaitForMock } = vi.hoisted(() => ({
+const { pWaitForMock, checkAutoApprovalMock } = vi.hoisted(() => ({
 	pWaitForMock: vi.fn(),
+	checkAutoApprovalMock: vi.fn(),
 }))
 
 vi.mock("p-wait-for", () => ({
 	default: pWaitForMock,
+}))
+
+vi.mock("../../auto-approval", () => ({
+	checkAutoApproval: checkAutoApprovalMock,
 }))
 
 import { TaskAskSayHandler } from "../TaskAskSayHandler"
@@ -64,6 +69,7 @@ function createHost(overrides: Record<string, unknown> = {}) {
 describe("TaskAskSayHandler", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		checkAutoApprovalMock.mockResolvedValue({ decision: "ask" })
 		pWaitForMock.mockImplementation(async (predicate: () => boolean) => {
 			predicate()
 			return undefined
@@ -294,5 +300,55 @@ describe("TaskAskSayHandler", () => {
 			text: expect.stringContaining("without value for required parameter 'path'"),
 		}))
 		expect(result).toContain("Missing value for required parameter 'path'")
+	})
+
+	describe("auto-approval", () => {
+		it("calls approveAsk when checkAutoApproval returns approve", async () => {
+			checkAutoApprovalMock.mockResolvedValue({ decision: "approve" })
+			const host = createHost()
+			const handler = new TaskAskSayHandler(host)
+
+			const result = await handler.ask("tool", "run?", false)
+
+			expect(checkAutoApprovalMock).toHaveBeenCalledWith(expect.objectContaining({ ask: "tool", text: "run?" }))
+			expect(host.approveAsk).toHaveBeenCalled()
+			expect(result.response).toBe("yesButtonClicked")
+		})
+
+		it("calls denyAsk when checkAutoApproval returns deny", async () => {
+			checkAutoApprovalMock.mockResolvedValue({ decision: "deny" })
+			const host = createHost()
+			const handler = new TaskAskSayHandler(host)
+
+			const result = await handler.ask("tool", "run?", false)
+
+			expect(host.denyAsk).toHaveBeenCalled()
+			expect(result.response).toBe("noButtonClicked")
+		})
+
+		it("schedules timeout and resolves via fn when checkAutoApproval returns timeout", async () => {
+			vi.useFakeTimers()
+			const timeoutFn = vi.fn(() => ({ askResponse: "messageResponse", text: "auto", images: ["img"] }))
+			checkAutoApprovalMock.mockResolvedValue({
+				decision: "timeout",
+				timeout: 500,
+				fn: timeoutFn,
+			})
+
+			const host = createHost()
+			pWaitForMock.mockImplementation(async (predicate: () => boolean) => {
+				vi.runOnlyPendingTimers()
+				predicate()
+			})
+
+			const handler = new TaskAskSayHandler(host)
+			const result = await handler.ask("followup", "Q?", false)
+
+			expect(timeoutFn).toHaveBeenCalled()
+			expect(host.handleWebviewAskResponse).toHaveBeenCalledWith("messageResponse", "auto", ["img"])
+			expect(result).toEqual({ response: "messageResponse", text: "auto", images: ["img"] })
+
+			vi.useRealTimers()
+		})
 	})
 })

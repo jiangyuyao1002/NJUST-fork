@@ -3,6 +3,7 @@ import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotoc
 import { logger } from "../../../shared/logger"
 import { TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { mergeSafeEnv } from "../../../utils/env"
 
 import type { ITransportStrategy, TransportCallbacks } from "./ITransportStrategy"
 
@@ -30,14 +31,19 @@ export class StdioTransportStrategy implements ITransportStrategy {
 		const args =
 			isWindows && !isAlreadyWrapped ? ["/c", config.command, ...(config.args || [])] : config.args
 
+		const mergedEnv = mergeSafeEnv(getDefaultEnvironment(), config.env || {}, name)
+		const env: Record<string, string> = {}
+		for (const [key, value] of Object.entries(mergedEnv)) {
+			if (value !== undefined) {
+				env[key] = value
+			}
+		}
+
 		const transport = new StdioClientTransport({
 			command,
 			args,
 			cwd: config.cwd,
-			env: {
-				...getDefaultEnvironment(),
-				...(config.env || {}),
-			},
+			env,
 			stderr: "pipe",
 		})
 

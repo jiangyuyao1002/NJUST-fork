@@ -23,26 +23,7 @@ import { logger } from "../../shared/logger"
 import pWaitFor from "p-wait-for"
 import { AskIgnoredError } from "./AskIgnoredError"
 import { TaskAbortedError } from "./TaskErrors"
-
-// eslint-disable-next-line @typescript-eslint/require-await
-async function checkAutoApproval({
-	state: _state,
-	ask: _ask,
-	text: _text,
-	isProtected: _isProtected,
-}: {
-	state: UnsafeAny
-	ask: ClineAsk
-	text?: string
-	isProtected?: boolean
-}): Promise<{
-	decision: "ask" | "approve" | "deny" | "timeout"
-	fn?: () => { askResponse: ClineAskResponse; text?: string; images?: string[] }
-	timeout?: number
-}> {
-	// TODO: Implement auto-approval logic
-	return { decision: "ask" }
-}
+import { checkAutoApproval } from "../auto-approval"
 
 export class TaskAskSayHandler {
 	constructor(private host: TaskAskSayHost) {}
