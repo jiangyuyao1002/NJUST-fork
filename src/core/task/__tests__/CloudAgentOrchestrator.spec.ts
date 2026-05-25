@@ -979,7 +979,7 @@ describe("CloudAgentOrchestrator", () => {
 	})
 
 	describe("runCompileFeedbackLoop()", () => {
-		it("reports compile success", async () => {
+		it("reports compile success (local)", async () => {
 			mockVscodeConfig({
 				"cloudAgent.deferredProtocol": false,
 				"cloudAgent.compileLoop.enabled": true,
@@ -991,16 +991,18 @@ describe("CloudAgentOrchestrator", () => {
 				cost: 0.01,
 				workspaceOps: [{ op: "write_file", path: "a.ts", content: "x" }],
 			})
-			mockClientInstance.compile.mockResolvedValueOnce({ success: true, output: "" })
-			const host = createMockHost()
+			const host = createMockHost({
+				compileLocal: vi.fn().mockResolvedValue({ success: true, output: "" }),
+			})
 			const orch = new CloudAgentOrchestrator(host)
 
 			await orch.run("hello")
 
 			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译通过"))
+			expect(host.compileLocal).toHaveBeenCalledWith("/test/workspace")
 		})
 
-		it("retries on compile failure and submits fix", async () => {
+		it("retries on local compile failure and submits fix", async () => {
 			mockVscodeConfig({
 				"cloudAgent.deferredProtocol": false,
 				"cloudAgent.compileLoop.enabled": true,
@@ -1021,10 +1023,12 @@ describe("CloudAgentOrchestrator", () => {
 					cost: 0.005,
 					workspaceOps: [{ op: "write_file", path: "a.ts", content: "fixed" }],
 				})
-			mockClientInstance.compile
-				.mockResolvedValueOnce({ success: false, output: "error: line 5" })
-				.mockResolvedValueOnce({ success: true, output: "" })
-			const host = createMockHost()
+			const host = createMockHost({
+				compileLocal: vi
+					.fn()
+					.mockResolvedValueOnce({ success: false, output: "error: line 5" })
+					.mockResolvedValueOnce({ success: true, output: "" }),
+			})
 			const orch = new CloudAgentOrchestrator(host)
 
 			await orch.run("hello")
@@ -1036,7 +1040,7 @@ describe("CloudAgentOrchestrator", () => {
 			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译通过"))
 		})
 
-		it("stops after maxRetries reached", async () => {
+		it("stops after maxRetries reached (local)", async () => {
 			mockVscodeConfig({
 				"cloudAgent.deferredProtocol": false,
 				"cloudAgent.compileLoop.enabled": true,
@@ -1049,11 +1053,9 @@ describe("CloudAgentOrchestrator", () => {
 				cost: 0.01,
 				workspaceOps: [{ op: "write_file", path: "a.ts", content: "x" }],
 			})
-			mockClientInstance.compile.mockResolvedValue({
-				success: false,
-				output: "error: syntax",
+			const host = createMockHost({
+				compileLocal: vi.fn().mockResolvedValue({ success: false, output: "error: syntax" }),
 			})
-			const host = createMockHost()
 			const orch = new CloudAgentOrchestrator(host)
 
 			await orch.run("hello")
@@ -1064,7 +1066,7 @@ describe("CloudAgentOrchestrator", () => {
 			)
 		})
 
-		it("reports compile request failure", async () => {
+		it("reports local compile failure when compileLocal throws", async () => {
 			mockVscodeConfig({
 				"cloudAgent.deferredProtocol": false,
 				"cloudAgent.compileLoop.enabled": true,
@@ -1076,15 +1078,39 @@ describe("CloudAgentOrchestrator", () => {
 				cost: 0.01,
 				workspaceOps: [{ op: "write_file", path: "a.ts", content: "x" }],
 			})
-			mockClientInstance.compile.mockRejectedValueOnce(new Error("compile request failed"))
-			const host = createMockHost()
+			const host = createMockHost({
+				compileLocal: vi.fn().mockRejectedValue(new Error("cjpm not found")),
+			})
 			const orch = new CloudAgentOrchestrator(host)
 
 			await orch.run("hello")
 
 			expect(host.say).toHaveBeenCalledWith(
 				"error",
-				expect.stringContaining("编译请求失败"),
+				expect.stringContaining("本地编译失败"),
+			)
+		})
+
+		it("stops when compileLocal is not configured", async () => {
+			mockVscodeConfig({
+				"cloudAgent.deferredProtocol": false,
+				"cloudAgent.compileLoop.enabled": true,
+			})
+			mockClientInstance.submitTask.mockResolvedValueOnce({
+				memorySummary: "done",
+				tokensIn: 100,
+				tokensOut: 200,
+				cost: 0.01,
+				workspaceOps: [{ op: "write_file", path: "a.ts", content: "x" }],
+			})
+			const host = createMockHost() // compileLocal undefined
+			const orch = new CloudAgentOrchestrator(host)
+
+			await orch.run("hello")
+
+			expect(host.say).toHaveBeenCalledWith(
+				"error",
+				expect.stringContaining("本地编译功能未配置"),
 			)
 		})
 
@@ -1108,8 +1134,9 @@ describe("CloudAgentOrchestrator", () => {
 					cost: 0.005,
 					workspaceOps: [],
 				})
-			mockClientInstance.compile.mockResolvedValueOnce({ success: false, output: "error" })
-			const host = createMockHost()
+			const host = createMockHost({
+				compileLocal: vi.fn().mockResolvedValueOnce({ success: false, output: "error" }),
+			})
 			const orch = new CloudAgentOrchestrator(host)
 
 			await orch.run("hello")
@@ -1141,8 +1168,9 @@ describe("CloudAgentOrchestrator", () => {
 					workspaceOps: [],
 					workspaceOpsParseError: "invalid format",
 				})
-			mockClientInstance.compile.mockResolvedValueOnce({ success: false, output: "error" })
-			const host = createMockHost()
+			const host = createMockHost({
+				compileLocal: vi.fn().mockResolvedValueOnce({ success: false, output: "error" }),
+			})
 			const orch = new CloudAgentOrchestrator(host)
 
 			await orch.run("hello")

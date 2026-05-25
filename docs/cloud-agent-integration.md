@@ -15,7 +15,7 @@
 | 项目 | 说明 |
 |------|------|
 | 角色 | 扩展作为 **HTTP 客户端**，你们的部署作为 **HTTP 服务端** |
-| 调用顺序（deferred，默认） | `GET /health` → `POST /v1/deferred/start` → 本地执行 tool_calls → `POST /v1/deferred/resume` → 循环至 `status == "done"` → （可选）`POST /v1/compile` 编译反馈 |
+| 调用顺序（deferred，默认） | `GET /health` → `POST /v1/run/deferred/start` → 本地执行 tool_calls → `POST /v1/run/deferred/resume` → 循环至 `status == "done"` → （可选）`POST /v1/run/compile` 编译反馈 |
 | 调用顺序（legacy） | `GET /health` → `POST /v1/run` → （可选）`POST /v1/compile` 编译反馈 |
 | Base URL | 用户设置项 `njust-ai-cj.cloudAgent.serverUrl`；扩展会去掉末尾 `/` |
 | 协议切换 | `njust-ai-cj.cloudAgent.deferredProtocol`（默认 **true**）；设为 false 回退到 legacy `/v1/run` |
@@ -92,7 +92,7 @@
 
 当 `njust-ai-cj.cloudAgent.deferredProtocol` 为 **true**（默认）时，扩展使用 deferred 协议代替单次 `/v1/run`。
 
-### 4a.1 `POST /v1/deferred/start`
+### 4a.1 `POST /v1/run/deferred/start`
 
 #### 请求体
 
@@ -162,7 +162,7 @@
 }
 ```
 
-### 4a.3 `POST /v1/deferred/resume`
+### 4a.3 `POST /v1/run/deferred/resume`
 
 #### 请求体
 
@@ -188,7 +188,7 @@
   │─── GET /health ────────────────────>│
   │<── 200 ─────────────────────────────│
   │                                     │
-  │─── POST /v1/deferred/start ────────>│
+  │─── POST /v1/run/deferred/start ────>│
   │    { goal, session_id, ... }        │
   │<── { run_id, status:"pending",  ────│
   │      tool_calls:[...],              │
@@ -197,7 +197,7 @@
   │  [扩展写盘 workspace_ops]           │
   │  [扩展执行 tool_calls]              │
   │                                     │
-  │─── POST /v1/deferred/resume ───────>│
+  │─── POST /v1/run/deferred/resume ───>│
   │    { run_id, tool_results:[...] }   │
   │<── { status:"pending", ... } ───────│  ← 可能多次迭代
   │  ...                                │

@@ -174,6 +174,12 @@ export class ClineProvider
 	public readonly planEngine: PlanEngine
 	public readonly agentOrchestrator: AgentOrchestrator
 
+	/**
+	 * Optional compile function injected by extension.ts when CangjieCompileGuard
+	 * is available. Used by CloudAgentOrchestrator to run local cjpm builds.
+	 */
+	compileLocal?: (cwd: string) => Promise<{ success: boolean; output: string }>
+
 	get cloudAuthSkipModel(): boolean {
 		return this.context.globalState.get<boolean>("roo-auth-skip-model") ?? false
 	}

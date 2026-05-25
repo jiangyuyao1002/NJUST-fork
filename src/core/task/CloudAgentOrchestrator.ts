@@ -10,7 +10,6 @@ import { parseWorkspaceOps } from "../../services/cloud-agent/parseWorkspaceOps"
 import { getDeviceToken } from "../../services/cloud-agent/deviceToken"
 import type {
 	CloudAgentCallbacks,
-	CloudCompileResult,
 	CloudRunResult,
 	DeferredResponse,
 	DeferredToolCall,
@@ -45,9 +44,6 @@ function readCloudAgentConfig(): CloudAgentConfig {
 	const serverUrl = (config.get<string>("cloudAgent.serverUrl", "") ?? "").trim()
 	const deviceToken = getDeviceToken()
 	let apiKey = (config.get<string>("cloudAgent.apiKey", "") ?? "").trim()
-	if (!apiKey) {
-		apiKey = (vscode.workspace.getConfiguration().get<string>(`${Package.name}.cloudAgent.apiKey`) ?? "").trim()
-	}
 	if (!apiKey) {
 		apiKey = (process.env.CLOUD_AGENT_MOCK_API_KEY ?? process.env.NJUST_CLOUD_AGENT_API_KEY ?? "").trim()
 	}
@@ -560,29 +556,26 @@ export class CloudAgentOrchestrator {
 		maxRetries: number,
 		confirmOps: boolean,
 	): Promise<void> {
+		if (!this.host.compileLocal) {
+			await this.host.say(
+				"error",
+				"[Compile] 本地编译功能未配置，无法执行编译反馈循环。请确认 Cangjie SDK 已安装且 CangjieCompileGuard 已初始化。",
+			)
+			return
+		}
+
 		// maxRetries = maximum number of compile attempts (including the first). Fix rounds = maxRetries - 1 at most.
 		for (let attempt = 1; attempt <= maxRetries && !this.host.abort; attempt++) {
-			await this.host.say("text", `[Compile] 编译检查 (${attempt}/${maxRetries})...`)
+			await this.host.say("text", `[Compile] 本地编译检查 (${attempt}/${maxRetries})...`)
 
-			const compileAbort = new AbortController()
-			this.host.setCurrentRequestAbortController(compileAbort)
-
-			let compileResult: CloudCompileResult
+			let compileResult: { success: boolean; output: string }
 			try {
-				const compileClient = new CloudAgentClient(
-					cfg.serverUrl,
-					cfg.deviceToken,
-					callbacks,
-					makeClientOptions(cfg, compileAbort.signal),
-				)
-				compileResult = await compileClient.compile(this.host.taskId, this.host.cwd)
+				compileResult = await this.host.compileLocal(this.host.cwd)
 			} catch (error) {
 				if (this.host.abort) break
 				const msg = getErrorMessage(error)
-				await this.host.say("error", `[Compile] 编译请求失败: ${msg}`)
+				await this.host.say("error", `[Compile] 本地编译失败: ${msg}`)
 				break
-			} finally {
-				this.host.setCurrentRequestAbortController(undefined)
 			}
 
 			if (compileResult.success) {

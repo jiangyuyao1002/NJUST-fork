@@ -59,7 +59,7 @@ export function parseWorkspaceOps(data: unknown): ParseWorkspaceOpsResult {
 	if (!parsed.success) {
 		return {
 			operations: [],
-			error: parsed.error.flatten().formErrors.join("; ") || parsed.error.message,
+			error: parsed.error.flatten().formErrors.join("; ") || parsed.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join("; ") || parsed.error.message,
 		}
 	}
 

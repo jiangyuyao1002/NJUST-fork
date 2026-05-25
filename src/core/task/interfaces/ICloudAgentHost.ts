@@ -24,4 +24,11 @@ export interface ICloudAgentHost {
 	emit(event: string, ...args: unknown[]): boolean
 
 	setCurrentRequestAbortController(controller: AbortController | undefined): void
+
+	/**
+	 * Compile the local workspace using the Cangjie SDK (cjpm build).
+	 * Called by CloudAgentOrchestrator when compileLoop is enabled.
+	 * Should throw if the SDK is not available so the orchestrator can abort.
+	 */
+	compileLocal?(cwd: string): Promise<{ success: boolean; output: string }>
 }

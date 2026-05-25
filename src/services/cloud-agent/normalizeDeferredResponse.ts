@@ -124,5 +124,6 @@ export function normalizeDeferredResponse(raw: unknown): DeferredResponse {
 		)
 	}
 
-	return { ...r, pending_tools, run_id: runId }
+	const { tool_calls: _tc, ...rest } = r as DeferredResponse & { tool_calls?: unknown[] }
+	return { ...rest, pending_tools, run_id: runId }
 }

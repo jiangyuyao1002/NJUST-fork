@@ -1531,6 +1531,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			setCurrentRequestAbortController: (ctrl) => {
 				this.currentRequestAbortController = ctrl
 			},
+			compileLocal: async (cwd) => {
+				const provider = this.hostRef.deref()
+				if (!provider?.compileLocal) {
+					throw new Error("本地编译功能未配置，请确认 Cangjie SDK 已安装。")
+				}
+				return provider.compileLocal(cwd)
+			},
 		}
 		// Patch the abort getter to actually read from this task instance
 		Object.defineProperty(host, "abort", { get: () => this.abort })

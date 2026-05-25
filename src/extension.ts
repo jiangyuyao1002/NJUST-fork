@@ -258,8 +258,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Clean up legacy storage
 		await context.globalState.update("njustCloudDeviceToken", undefined)
 		outputChannel.appendLine("[CloudAgent] Device token generated and saved to SecretStorage.")
-		setDeviceToken(deviceToken)
 	}
+	setDeviceToken(deviceToken)
 
 	const contextProxy = await ContextProxy.getInstance(context)
 
@@ -378,6 +378,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Initialize the provider.
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
+
+	// Inject local compile capability for CloudAgentOrchestrator.
+	provider.compileLocal = async (cwd) => {
+		if (!cangjieCompileGuard) {
+			throw new Error("CangjieCompileGuard 未初始化，无法执行本地编译。")
+		}
+		const result = await cangjieCompileGuard.compile(cwd)
+		return { success: result.success, output: result.output }
+	}
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, provider, {

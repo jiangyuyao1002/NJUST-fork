@@ -57,4 +57,6 @@ export interface ITaskHost extends IMcpHubClient, ITaskUINotifier {
 		event: NJUST_AI_CJEventName.ProviderProfileChanged,
 		listener: (config: { name: string; provider?: string }) => void | Promise<void>,
 	): void
+
+	compileLocal?(cwd: string): Promise<{ success: boolean; output: string }>
 }
