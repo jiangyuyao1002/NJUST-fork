@@ -1,3 +1,5 @@
+import * as fs from "fs"
+import * as path from "path"
 import * as vscode from "vscode"
 import { Package } from "../../shared/package"
 import type { ClineAskResponse } from "../../shared/WebviewMessage"
@@ -212,11 +214,10 @@ export class CloudAgentOrchestrator {
 		}
 
 		if (cfg.applyRemoteWorkspaceOps && ops.length > 0) {
-			await this.applyWorkspaceOps(ops, cfg.confirmRemoteWorkspaceOps)
-		}
-
-		if (cfg.compileLoopEnabled && cfg.applyRemoteWorkspaceOps && ops.length > 0 && !this.host.abort) {
-			await this.runCompileFeedbackLoop(cfg, callbacks, cfg.compileMaxRetries, cfg.confirmRemoteWorkspaceOps)
+			const applied = await this.applyWorkspaceOps(ops, cfg.confirmRemoteWorkspaceOps)
+			if (cfg.compileLoopEnabled && applied && !this.host.abort) {
+				await this.runCompileFeedbackLoop(cfg, callbacks, cfg.compileMaxRetries, cfg.confirmRemoteWorkspaceOps)
+			}
 		}
 	}
 
@@ -287,8 +288,10 @@ export class CloudAgentOrchestrator {
 					`Cloud Agent 响应中的 workspace_ops 无效，已跳过写盘。校验信息：${workspaceOpsParseError}`,
 				)
 			} else if (ops.length > 0 && cfg.applyRemoteWorkspaceOps) {
-				hadWorkspaceOpsForCompile = true
-				await this.applyWorkspaceOps(ops, cfg.confirmRemoteWorkspaceOps)
+				const applied = await this.applyWorkspaceOps(ops, cfg.confirmRemoteWorkspaceOps)
+				if (applied) {
+					hadWorkspaceOpsForCompile = true
+				}
 			} else if (ops.length > 0) {
 				await this.host.say(
 					"text",
@@ -449,8 +452,10 @@ export class CloudAgentOrchestrator {
 					`Cloud Agent 最终响应中的 workspace_ops 无效，已跳过写盘。校验信息：${finalParsed.error}`,
 				)
 			} else if (finalParsed.operations.length > 0 && cfg.applyRemoteWorkspaceOps) {
-				hadWorkspaceOpsForCompile = true
-				await this.applyWorkspaceOps(finalParsed.operations, cfg.confirmRemoteWorkspaceOps)
+				const applied = await this.applyWorkspaceOps(finalParsed.operations, cfg.confirmRemoteWorkspaceOps)
+				if (applied) {
+					hadWorkspaceOpsForCompile = true
+				}
 			}
 
 			if (
@@ -564,13 +569,19 @@ export class CloudAgentOrchestrator {
 			return
 		}
 
+		const compileCwd = this.resolveCjpmRoot(this.host.cwd)
+		if (!compileCwd) {
+			await this.host.say("text", `[Compile] 未找到 cjpm.toml，跳过编译反馈循环。`)
+			return
+		}
+
 		// maxRetries = maximum number of compile attempts (including the first). Fix rounds = maxRetries - 1 at most.
 		for (let attempt = 1; attempt <= maxRetries && !this.host.abort; attempt++) {
 			await this.host.say("text", `[Compile] 本地编译检查 (${attempt}/${maxRetries})...`)
 
 			let compileResult: { success: boolean; output: string }
 			try {
-				compileResult = await this.host.compileLocal(this.host.cwd)
+				compileResult = await this.host.compileLocal(compileCwd)
 			} catch (error) {
 				if (this.host.abort) break
 				const msg = getErrorMessage(error)
@@ -583,10 +594,14 @@ export class CloudAgentOrchestrator {
 				break
 			}
 
+			let outputForAgent = compileResult.output
+			if (!outputForAgent.trim()) {
+				outputForAgent = "[编译进程异常退出，无输出。请检查 cjpm 是否已正确安装。]"
+			}
 			const truncatedOutput =
-				compileResult.output.length > 8000
-					? compileResult.output.slice(0, 8000) + "\n...(output truncated)"
-					: compileResult.output
+				outputForAgent.length > 8000
+					? outputForAgent.slice(0, 8000) + "\n...(output truncated)"
+					: outputForAgent
 			await this.host.say("text", `[Compile] 编译失败:\n\`\`\`\n${truncatedOutput}\n\`\`\``)
 
 			if (attempt >= maxRetries) {
@@ -643,13 +658,28 @@ export class CloudAgentOrchestrator {
 				break
 			}
 
-			await this.applyWorkspaceOps(fixOps, confirmOps)
+			const applied = await this.applyWorkspaceOps(fixOps, confirmOps)
+			if (!applied) {
+				await this.host.say("error", "[Compile] 修正代码未能应用到本地，停止编译反馈循环。")
+				break
+			}
 		}
+	}
+
+	private resolveCjpmRoot(startDir: string): string | undefined {
+		let dir = path.resolve(startDir)
+		for (let i = 0; i < 20; i++) {
+			if (fs.existsSync(path.join(dir, "cjpm.toml"))) return dir
+			const parent = path.dirname(dir)
+			if (parent === dir) break
+			dir = parent
+		}
+		return undefined
 	}
 
 	// ── Workspace ops application ───────────────────────────────────────
 
-	private async applyWorkspaceOps(ops: WorkspaceOp[], confirmOps: boolean): Promise<void> {
+	private async applyWorkspaceOps(ops: WorkspaceOp[], confirmOps: boolean): Promise<boolean> {
 		if (confirmOps) {
 			for (let i = 0; i < ops.length && !this.host.abort; i++) {
 				const op = ops[i]!
@@ -669,7 +699,7 @@ export class CloudAgentOrchestrator {
 						await this.host.say("user_feedback", askResult.text, askResult.images)
 					}
 				} catch (err) {
-					if (err instanceof AskIgnoredError) break
+					if (err instanceof AskIgnoredError) return false
 					throw err
 				}
 
@@ -687,7 +717,7 @@ export class CloudAgentOrchestrator {
 				await this.host.say("text", single.message)
 				if (!single.ok) {
 					await this.host.say("error", `Workspace operation failed: ${single.message}`)
-					break
+					return false
 				}
 			}
 		} else {
@@ -708,7 +738,9 @@ export class CloudAgentOrchestrator {
 					"error",
 					`Workspace operation failed: ${applied.results.at(-1)?.message ?? "unknown"}`,
 				)
+				return false
 			}
 		}
+		return true
 	}
 }

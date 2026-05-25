@@ -8,7 +8,24 @@ import { listFiles } from "../../services/glob/list-files"
 import { checkCommandSafety } from "../../core/tools/helpers/commandSafety"
 import { filterSensitiveEnv } from "../../utils/env"
 import { getCommandDecision } from "../../core/auto-approval"
+import { detectCangjieHome } from "../cangjie-lsp/cangjieToolUtils"
 import type { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
+
+function extractFirstCommandToken(command: string): string {
+	const trimmed = command.trim()
+	if (trimmed.startsWith('"')) {
+		const endQuote = trimmed.indexOf('"', 1)
+		return endQuote > 0 ? trimmed.slice(1, endQuote) : trimmed
+	}
+	if (trimmed.startsWith("'")) {
+		const endQuote = trimmed.indexOf("'", 1)
+		return endQuote > 0 ? trimmed.slice(1, endQuote) : trimmed
+	}
+	const spaceIdx = trimmed.search(/\s/)
+	return spaceIdx > 0 ? trimmed.slice(0, spaceIdx) : trimmed
+}
+
+const COMMAND_CHAIN_RE = /(?:^|\s)(?:&&|\|\||[;&|])(?:\s|$)/
 
 /**
  * Resolves the real path of a file, handling non-existent files by
@@ -204,7 +221,21 @@ export async function execCommand(
 		}
 
 		if (decision === "ask_user") {
-			throw new Error(`Command requires explicit approval: ${params.command}`)
+			const cangjieHome = detectCangjieHome()
+			if (cangjieHome && !COMMAND_CHAIN_RE.test(params.command)) {
+				const firstToken = extractFirstCommandToken(params.command)
+				const normalizedHome = path.normalize(cangjieHome) + path.sep
+				const normalizedToken = path.normalize(firstToken)
+				const isSdkCommand =
+					process.platform === "win32"
+						? normalizedToken.toLowerCase().startsWith(normalizedHome.toLowerCase())
+						: normalizedToken.startsWith(normalizedHome)
+				if (!isSdkCommand) {
+					throw new Error(`Command requires explicit approval: ${params.command}`)
+				}
+			} else {
+				throw new Error(`Command requires explicit approval: ${params.command}`)
+			}
 		}
 	}
 

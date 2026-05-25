@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest"
+import * as path from "path"
 import * as vscode from "vscode"
 
 import { CloudAgentOrchestrator, type ICloudAgentHost } from "../CloudAgentOrchestrator"
@@ -12,6 +13,14 @@ vi.mock("vscode", () => ({
 		getConfiguration: vi.fn(),
 	},
 }))
+
+vi.mock("fs", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("fs")>()
+	return {
+		...actual,
+		existsSync: vi.fn((p: string) => p.endsWith("cjpm.toml") || actual.existsSync(p)),
+	}
+})
 
 // ── Mock factories ──────────────────────────────────────────────────────
 
@@ -999,7 +1008,7 @@ describe("CloudAgentOrchestrator", () => {
 			await orch.run("hello")
 
 			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译通过"))
-			expect(host.compileLocal).toHaveBeenCalledWith("/test/workspace")
+			expect(host.compileLocal).toHaveBeenCalledWith(path.resolve("/test/workspace"))
 		})
 
 		it("retries on local compile failure and submits fix", async () => {

@@ -54,7 +54,7 @@ import { CangjieCallHierarchyProvider } from "./services/cangjie-lsp/CangjieCall
 import { CangjieTypeHierarchyProvider } from "./services/cangjie-lsp/CangjieTypeHierarchyProvider"
 import { CangjieWorkspaceSymbolProvider } from "./services/cangjie-lsp/CangjieWorkspaceSymbolProvider"
 import { CangjieCompileGuard } from "./services/cangjie-lsp/CangjieCompileGuard"
-import { invalidateCangjieToolEnvCache } from "./services/cangjie-lsp/cangjieToolUtils"
+import { invalidateCangjieToolEnvCache, detectCangjieHome } from "./services/cangjie-lsp/cangjieToolUtils"
 import { bumpCangjieL3TtlConfigCache, invalidateCangjieL3ContextCache } from "./core/prompts/sections/cangjie-context"
 import { registerCangjieRulesHotReload } from "./services/cangjie-lsp/cangjieRulesHotReload"
 import { registerLatexCommands } from "./services/latex/latexCommands"
@@ -672,12 +672,17 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		const startMcpServer = (wsPath: string) => {
+			const cangjieHome = detectCangjieHome()
+			const mergedAllowed = [...defaultCommands]
+			if (cangjieHome) {
+				mergedAllowed.push(cangjieHome)
+			}
 			rooToolsMcpServer = new RooToolsMcpServer({
 				workspacePath: wsPath,
 				port,
 				bindAddress,
 				authToken,
-				allowedCommands: defaultCommands,
+				allowedCommands: mergedAllowed,
 				deniedCommands: mcpServerConfig.get<string[]>("deniedCommands", []),
 			})
 
