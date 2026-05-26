@@ -7,7 +7,7 @@ import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../../servi
 import { buildCloudWorkspaceOpToolMessage } from "../../services/cloud-agent/buildCloudWorkspaceOpToolMessage"
 import { CloudAgentClient } from "../../services/cloud-agent/CloudAgentClient"
 import { executeDeferredToolCall } from "../../services/cloud-agent/executeDeferredToolCall"
-import { CLOUD_AGENT_DEFERRED_MAX_ITERATIONS } from "../../services/cloud-agent/deferredConstants"
+import { CLOUD_AGENT_DEFERRED_MAX_ITERATIONS, CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX } from "../../services/cloud-agent/deferredConstants"
 import { parseWorkspaceOps } from "../../services/cloud-agent/parseWorkspaceOps"
 import { getDeviceToken } from "../../services/cloud-agent/deviceToken"
 import type {
@@ -234,6 +234,7 @@ export class CloudAgentOrchestrator {
 		let hadWorkspaceOpsForCompile = false
 		let lastNotifiedRunId: string | undefined
 		let lastServerRevision: string | undefined
+		let sessionRecoveries = 0
 
 		await this.host.say("api_req_started", JSON.stringify({ request: "Cloud Agent deferred/start" }))
 
@@ -406,17 +407,59 @@ export class CloudAgentOrchestrator {
 				)
 			} catch (error) {
 				if (this.host.abort) break
+				const status = (error as Error & { status?: number }).status
+				if (status === 404 && sessionRecoveries < CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX) {
+					sessionRecoveries++
+					await this.host.say(
+						"text",
+						`[Deferred] 会话已过期（run_id ${runIdForResume.slice(0, 8)}…），正在自动恢复 (${sessionRecoveries}/${CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX})…`,
+					)
+
+					const restartAbort = new AbortController()
+					this.host.setCurrentRequestAbortController(restartAbort)
+					try {
+						const restartClient = new CloudAgentClient(
+							cfg.serverUrl,
+							cfg.deviceToken,
+							makeCallbacks(this.host),
+							makeClientOptions(cfg, restartAbort.signal),
+						)
+						deferredResp = await restartClient.deferredStart(
+							this.host.taskId,
+							`[自动恢复] 之前的 deferred 会话已过期（run_id ${runIdForResume.slice(0, 8)}…），请继续之前的任务。`,
+							this.host.cwd,
+						)
+						lastNotifiedRunId = deferredResp.run_id
+						lastServerRevision = deferredResp.server_revision
+						await this.host.say(
+							"text",
+							`[Deferred] 会话已恢复，新的 run_id: ${(deferredResp.run_id ?? "").slice(0, 8)}…`,
+						)
+						continue
+					} catch (restartError) {
+						if (this.host.abort) break
+						const restartMsg = getErrorMessage(restartError)
+						await this.host.say("error", `[Deferred] 会话恢复失败: ${restartMsg}`)
+						await this.host.ask("api_req_failed", restartMsg)
+						return
+					} finally {
+						this.host.setCurrentRequestAbortController(undefined)
+					}
+				}
+
 				const msg = getErrorMessage(error)
 				await this.host.say("error", `Cloud Agent deferred/resume error: ${msg}`)
 				await this.host.ask("api_req_failed", msg)
-				await CloudAgentClient.sendDeferredAbort(
-					cfg.serverUrl,
-					cfg.deviceToken,
-					cfg.apiKey || undefined,
-					this.host.taskId,
-					runIdForResume,
-					cfg.requestTimeoutMs > 0 ? cfg.requestTimeoutMs : undefined,
-				)
+				if (status !== 404) {
+					await CloudAgentClient.sendDeferredAbort(
+						cfg.serverUrl,
+						cfg.deviceToken,
+						cfg.apiKey || undefined,
+						this.host.taskId,
+						runIdForResume,
+						cfg.requestTimeoutMs > 0 ? cfg.requestTimeoutMs : undefined,
+					)
+				}
 				return
 			} finally {
 				this.host.setCurrentRequestAbortController(undefined)

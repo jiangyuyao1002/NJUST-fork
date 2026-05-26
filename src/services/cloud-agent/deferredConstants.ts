@@ -1,6 +1,9 @@
 /** Hard cap on deferred start → resume tool rounds (server and client should stay aligned). */
 export const CLOUD_AGENT_DEFERRED_MAX_ITERATIONS = 50
 
+/** Maximum automatic recovery attempts when a deferred session expires (HTTP 404). */
+export const CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX = 3
+
 /** Minimum `deferred_protocol_version` from the server that this client accepts. */
 export const MIN_DEFERRED_PROTOCOL_VERSION = 1
 
