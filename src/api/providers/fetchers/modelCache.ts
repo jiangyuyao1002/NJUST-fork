@@ -27,10 +27,22 @@ import { getLMStudioModels } from "./lmstudio"
 import { getRooModels } from "./roo"
 import { TIMING } from "../../../shared/constants"
 
+import type { DynamicModelInfo, DynamicModelRecord, ListModelsOptions, FetcherKind } from "../modelTypes"
+import { providerFetcherMap } from "../providerFetcherMap"
+import { fallbackModels } from "../fallbackModels"
+import { fetchOpenAICompatibleModels } from "./openai-compatible"
+import { fetchAnthropicModels } from "./anthropic"
+import { fetchGeminiModels } from "./gemini"
+
 const memoryCache = new NodeCache({ stdTTL: TIMING.MODEL_CACHE_TTL_S, checkperiod: TIMING.MODEL_CACHE_TTL_S })
 
 // Zod schema for validating ModelRecord structure from disk cache
 const modelRecordSchema = z.record(z.string(), modelInfoSchema)
+
+const diskCacheEntrySchema = z.object({
+	timestamp: z.number(),
+	models: z.record(z.string(), modelInfoSchema),
+})
 
 // Track in-flight refresh requests to prevent concurrent API calls for the same provider
 // This prevents race conditions where multiple calls might overwrite each other's results
@@ -99,9 +111,7 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
 			break
 		}
 		default: {
-			// Ensures router is exhaustively checked if RouterName is a strict union.
-			const exhaustiveCheck: never = provider
-			throw new Error(`Unknown provider: ${exhaustiveCheck}`)
+			throw new Error(`fetchModelsFromProvider does not support provider: ${provider as string}`)
 		}
 	}
 
@@ -330,4 +340,161 @@ function getCacheDirectoryPathSync(): string | undefined {
 		logger.error("ModelCache", "Error getting cache directory path:", error)
 		return undefined
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Dynamic model fetching (Step 1-7: core module)
+// ---------------------------------------------------------------------------
+
+const DISK_CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+
+const dynamicMemoryCache = new NodeCache({
+	stdTTL: TIMING.MODEL_CACHE_TTL_S,
+	checkperiod: TIMING.MODEL_CACHE_TTL_S,
+})
+
+const dynamicInFlight = new Map<ProviderName, Promise<DynamicModelRecord>>()
+
+function getDynamicDiskCachePath(provider: ProviderName): string | undefined {
+	const cacheDir = getCacheDirectoryPathSync()
+	if (!cacheDir) return undefined
+	return path.join(cacheDir, `dynamic_${provider}_models.json`)
+}
+
+interface DiskCacheEntry {
+	timestamp: number
+	models: DynamicModelRecord
+}
+
+function readDynamicDiskCache(provider: ProviderName): DiskCacheEntry | undefined {
+	const filePath = getDynamicDiskCachePath(provider)
+	if (!filePath) return undefined
+	const exists = fsSync.existsSync(filePath)
+	if (!exists) return undefined
+
+	try {
+		const raw = fsSync.readFileSync(filePath, "utf8")
+		const parsed = JSON.parse(raw)
+		const validation = diskCacheEntrySchema.safeParse(parsed)
+		if (!validation.success) {
+			logger.error("ModelCache", `Invalid dynamic disk cache for ${provider}:`, validation.error.format())
+			return undefined
+		}
+		const entry: DiskCacheEntry = { timestamp: validation.data.timestamp, models: validation.data.models as DynamicModelRecord }
+		return entry
+	} catch (error) {
+		logger.error("ModelCache", `Error reading dynamic disk cache for ${provider}:`, error)
+		return undefined
+	}
+}
+
+async function writeDynamicDiskCache(provider: ProviderName, models: DynamicModelRecord): Promise<void> {
+	const cacheDir = getCacheDirectoryPathSync()
+	if (!cacheDir) return
+
+	const filePath = path.join(cacheDir, `dynamic_${provider}_models.json`)
+	const entry: DiskCacheEntry = { timestamp: Date.now(), models }
+
+	await safeWriteJson(filePath, entry).catch((err) =>
+		logger.error("ModelCache", `Error writing dynamic disk cache for ${provider}:`, err),
+	)
+}
+
+function isCacheFresh(timestamp: number): boolean {
+	return Date.now() - timestamp < DISK_CACHE_TTL_MS
+}
+
+function tagWithSource(models: DynamicModelRecord, source: DynamicModelInfo["source"]): DynamicModelRecord {
+	const tagged: DynamicModelRecord = {}
+	for (const [id, info] of Object.entries(models)) {
+		tagged[id] = { ...info, source }
+	}
+	return tagged
+}
+
+async function fetchDynamicModels(
+	provider: ProviderName,
+	options: ListModelsOptions,
+): Promise<DynamicModelRecord> {
+	const kind: FetcherKind | undefined = providerFetcherMap[provider]
+
+	switch (kind) {
+		case "openai-compatible":
+			return fetchOpenAICompatibleModels(provider, options)
+		case "anthropic":
+			return fetchAnthropicModels(options)
+		case "gemini":
+			return fetchGeminiModels(options)
+		default:
+			throw new Error(`No dynamic fetcher for provider: ${provider} (kind: ${kind})`)
+	}
+}
+
+export async function listProviderModels(
+	provider: ProviderName,
+	options: ListModelsOptions = {},
+): Promise<DynamicModelRecord> {
+	const kind: FetcherKind | undefined = providerFetcherMap[provider]
+
+	if (kind === "fallback-only" || !kind) {
+		return fallbackModels[provider] ?? {}
+	}
+
+	if (kind === "existing") {
+		return {}
+	}
+
+	if (!options.forceRefresh) {
+		const mem = dynamicMemoryCache.get<DynamicModelRecord>(provider)
+		if (mem) return mem
+
+		const disk = readDynamicDiskCache(provider)
+		if (disk && isCacheFresh(disk.timestamp)) {
+			const tagged = tagWithSource(disk.models, "disk-cache")
+			dynamicMemoryCache.set(provider, tagged)
+			return tagged
+		}
+	}
+
+	const existing = dynamicInFlight.get(provider)
+	if (existing) return existing
+
+	const promise = (async (): Promise<DynamicModelRecord> => {
+		try {
+			const fetched = await fetchDynamicModels(provider, options)
+			const count = Object.keys(fetched).length
+
+			if (count === 0) {
+				const disk = readDynamicDiskCache(provider)
+				if (disk) {
+					const source = isCacheFresh(disk.timestamp) ? "disk-cache" : "stale-disk-cache"
+					const tagged = tagWithSource(disk.models, source)
+					return tagged
+				}
+				return fallbackModels[provider] ?? {}
+			}
+
+			const tagged = tagWithSource(fetched, "api")
+			dynamicMemoryCache.set(provider, tagged)
+
+			await writeDynamicDiskCache(provider, tagged).catch(() => {})
+
+			return tagged
+		} catch (error) {
+			logger.error("ModelCache", `Dynamic fetch failed for ${provider}:`, error)
+
+			const disk = readDynamicDiskCache(provider)
+			if (disk) {
+				const tagged = tagWithSource(disk.models, "stale-disk-cache")
+				return tagged
+			}
+
+			return fallbackModels[provider] ?? {}
+		} finally {
+			dynamicInFlight.delete(provider)
+		}
+	})()
+
+	dynamicInFlight.set(provider, promise)
+	return promise
 }

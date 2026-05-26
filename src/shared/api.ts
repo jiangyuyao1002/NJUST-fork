@@ -1,12 +1,14 @@
 import {
 	type ModelInfo,
 	type ProviderSettings,
-	type DynamicProvider,
-	type LocalProvider,
-	isDynamicProvider,
-	isLocalProvider,
+	type RouterProvider,
+	routerModelProviders as _routerModelProviders,
+	isRouterModelProvider as _isRouterModelProvider,
 } from "@njust-ai-cj/types"
 import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
+
+// Re-export from @njust-ai-cj/types so consumers can import from either location.
+export { _routerModelProviders as routerModelProviders, _isRouterModelProvider as isRouterModelProvider }
 
 // ApiHandlerOptions
 // Extend ProviderSettings (minus apiProvider) with handler-specific toggles.
@@ -29,9 +31,9 @@ export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider"> & {
 
 // RouterName
 
-export type RouterName = DynamicProvider | LocalProvider
+export type RouterName = RouterProvider
 
-export const isRouterName = (value: string): value is RouterName => isDynamicProvider(value) || isLocalProvider(value)
+export const isRouterName = (value: string): value is RouterName => _isRouterModelProvider(value)
 
 export function toRouterName(value?: string): RouterName {
 	if (value && isRouterName(value)) {
@@ -179,6 +181,20 @@ const _dynamicProviderExtras = {
 	ollama: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	lmstudio: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	roo: {} as { apiKey?: string; baseUrl?: string },
+	deepseek: {} as { apiKey?: string; baseUrl?: string },
+	gemini: {} as { apiKey?: string; baseUrl?: string },
+	anthropic: {} as { apiKey?: string; baseUrl?: string },
+	"openai-native": {} as { apiKey?: string; baseUrl?: string },
+	mistral: {} as { apiKey?: string; baseUrl?: string },
+	xai: {} as { apiKey?: string; baseUrl?: string },
+	qwen: {} as { apiKey?: string; baseUrl?: string },
+	moonshot: {} as { apiKey?: string; baseUrl?: string },
+	glm: {} as { apiKey?: string; baseUrl?: string },
+	minimax: {} as { apiKey?: string; baseUrl?: string },
+	fireworks: {} as { apiKey?: string; baseUrl?: string },
+	sambanova: {} as { apiKey?: string; baseUrl?: string },
+	baseten: {} as { apiKey?: string; baseUrl?: string },
+	doubao: {} as { apiKey?: string; baseUrl?: string },
 } as const satisfies Record<RouterName, object>
 
 // Build the dynamic options union from the map, intersected with CommonFetchParams

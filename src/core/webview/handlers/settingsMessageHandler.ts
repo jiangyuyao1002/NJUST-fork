@@ -14,7 +14,7 @@ import { changeLanguage, t } from "../../../i18n"
 import { Terminal } from "../../../integrations/terminal/Terminal"
 import { getOpenAiModels } from "../../../api/providers/openai"
 import { getVsCodeLmModels } from "../../../api/providers/vscode-lm"
-import { getModels, flushModels } from "../../../api/providers/fetchers/modelCache"
+import { getModels, flushModels, listProviderModels } from "../../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../../shared/api"
 import { experimentDefault } from "../../../shared/experiments"
 import { importSettingsWithFeedback, exportSettings } from "../../config/importExport"
@@ -312,12 +312,25 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 	const providerFilter = requestedProvider ? toRouterName(requestedProvider) : undefined
 	const shouldRefresh = message?.values?.refresh === true
 
-	const routerModels: Record<RouterName, ModelRecord> = providerFilter
-		? ({} as Record<RouterName, ModelRecord>)
+	const routerModels: Partial<Record<RouterName, ModelRecord>> = providerFilter
+		? {}
 		: { openrouter: {}, "vercel-ai-gateway": {}, litellm: {}, requesty: {}, unbound: {}, ollama: {}, lmstudio: {}, roo: {} }
 
+	const getProviderModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
+		const oldProviders = ["openrouter", "requesty", "unbound", "vercel-ai-gateway", "litellm", "roo", "ollama", "lmstudio"]
+		if (oldProviders.includes(options.provider)) {
+			return getModels(options)
+		}
+
+		return listProviderModels(options.provider, {
+			apiKey: options.apiKey,
+			baseUrl: options.baseUrl,
+			forceRefresh: shouldRefresh,
+		})
+	}
+
 	const safeGetModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
-		try { return await getModels(options) } catch (error) {
+		try { return await getProviderModels(options) } catch (error) {
 			logger.error("SettingsMessageHandler", `Failed to fetch models for ${options.provider}:`, error)
 			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			throw error
@@ -330,6 +343,114 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 		{ key: "unbound", options: { provider: "unbound", apiKey: apiConfiguration.unboundApiKey } },
 		{ key: "vercel-ai-gateway", options: { provider: "vercel-ai-gateway" } },
 		{ key: "roo", options: { provider: "roo", baseUrl: process.env.NJUST_AI_CJ_PROVIDER_URL ?? "", apiKey: undefined } },
+		{
+			key: "deepseek",
+			options: {
+				provider: "deepseek",
+				apiKey: apiConfiguration.deepSeekApiKey,
+				baseUrl: apiConfiguration.deepSeekBaseUrl,
+			},
+		},
+		{
+			key: "gemini",
+			options: {
+				provider: "gemini",
+				apiKey: apiConfiguration.geminiApiKey,
+				baseUrl: apiConfiguration.googleGeminiBaseUrl,
+			},
+		},
+		{
+			key: "anthropic",
+			options: {
+				provider: "anthropic",
+				apiKey: apiConfiguration.apiKey,
+				baseUrl: apiConfiguration.anthropicBaseUrl,
+			},
+		},
+		{
+			key: "openai-native",
+			options: {
+				provider: "openai-native",
+				apiKey: apiConfiguration.openAiNativeApiKey,
+				baseUrl: apiConfiguration.openAiNativeBaseUrl,
+			},
+		},
+		{
+			key: "mistral",
+			options: {
+				provider: "mistral",
+				apiKey: apiConfiguration.mistralApiKey,
+				baseUrl: apiConfiguration.mistralCodestralUrl,
+			},
+		},
+		{
+			key: "xai",
+			options: {
+				provider: "xai",
+				apiKey: apiConfiguration.xaiApiKey,
+			},
+		},
+		{
+			key: "qwen",
+			options: {
+				provider: "qwen",
+				apiKey: apiConfiguration.qwenApiKey,
+				baseUrl: apiConfiguration.qwenBaseUrl,
+			},
+		},
+		{
+			key: "moonshot",
+			options: {
+				provider: "moonshot",
+				apiKey: apiConfiguration.moonshotApiKey,
+				baseUrl: apiConfiguration.moonshotBaseUrl,
+			},
+		},
+		{
+			key: "glm",
+			options: {
+				provider: "glm",
+				apiKey: apiConfiguration.glmApiKey,
+				baseUrl: apiConfiguration.glmBaseUrl,
+			},
+		},
+		{
+			key: "minimax",
+			options: {
+				provider: "minimax",
+				apiKey: apiConfiguration.minimaxApiKey,
+				baseUrl: apiConfiguration.minimaxBaseUrl,
+			},
+		},
+		{
+			key: "fireworks",
+			options: {
+				provider: "fireworks",
+				apiKey: apiConfiguration.fireworksApiKey,
+			},
+		},
+		{
+			key: "sambanova",
+			options: {
+				provider: "sambanova",
+				apiKey: apiConfiguration.sambaNovaApiKey,
+			},
+		},
+		{
+			key: "baseten",
+			options: {
+				provider: "baseten",
+				apiKey: apiConfiguration.basetenApiKey,
+			},
+		},
+		{
+			key: "doubao",
+			options: {
+				provider: "doubao",
+				apiKey: apiConfiguration.doubaoApiKey,
+				baseUrl: apiConfiguration.doubaoBaseUrl,
+			},
+		},
 	]
 
 	const litellmApiKey = apiConfiguration.litellmApiKey || message?.values?.litellmApiKey

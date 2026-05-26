@@ -158,8 +158,50 @@ export type RouterProvider =
 	| "unbound"
 	| "ollama"
 	| "lmstudio"
+	| "deepseek"
+	| "gemini"
+	| "anthropic"
+	| "openai-native"
+	| "mistral"
+	| "xai"
+	| "qwen"
+	| "moonshot"
+	| "glm"
+	| "minimax"
+	| "fireworks"
+	| "sambanova"
+	| "baseten"
+	| "doubao"
 
-export type RouterModels = Record<RouterProvider, ModelRecord>
+export type RouterModels = Partial<Record<RouterProvider, ModelRecord>>
+
+export const routerModelProviders: readonly RouterProvider[] = [
+	"openrouter",
+	"vercel-ai-gateway",
+	"litellm",
+	"requesty",
+	"roo",
+	"unbound",
+	"ollama",
+	"lmstudio",
+	"deepseek",
+	"gemini",
+	"anthropic",
+	"openai-native",
+	"mistral",
+	"xai",
+	"qwen",
+	"moonshot",
+	"glm",
+	"minimax",
+	"fireworks",
+	"sambanova",
+	"baseten",
+	"doubao",
+]
+
+export const isRouterModelProvider = (value: string): value is RouterProvider =>
+	routerModelProviders.includes(value as RouterProvider)
 
 /**
  * OpenAI-style usage metrics returned by most providers.

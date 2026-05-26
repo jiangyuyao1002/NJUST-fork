@@ -150,7 +150,7 @@ describe("getModels with new GetModelsOptions", () => {
 			getModels({
 				provider: unknownProvider,
 			}),
-		).rejects.toThrow("Unknown provider: unknown")
+		).rejects.toThrow("fetchModelsFromProvider does not support provider: unknown")
 	})
 })
 

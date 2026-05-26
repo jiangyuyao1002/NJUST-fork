@@ -42,7 +42,7 @@ import {
 import {
 	getProviderServiceConfig,
 	getDefaultModelIdForProvider,
-	getStaticModelsForProvider,
+	getModelsForPicker,
 	shouldUseGenericModelPicker,
 	handleModelChangeSideEffects,
 } from "./utils/providerModelConfig"
@@ -749,8 +749,9 @@ const ApiOptions = ({
 								apiConfiguration={apiConfiguration}
 								setApiConfigurationField={setApiConfigurationField}
 								defaultModelId={getDefaultModelIdForProvider(activeSelectedProvider, apiConfiguration)}
-								models={getStaticModelsForProvider(
+								models={getModelsForPicker(
 									activeSelectedProvider,
+									routerModels,
 									t("settings:labels.useCustomArn"),
 								)}
 								modelIdKey="apiModelId"

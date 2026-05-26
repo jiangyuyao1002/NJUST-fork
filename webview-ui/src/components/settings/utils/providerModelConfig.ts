@@ -1,4 +1,4 @@
-import type { ProviderName, ModelInfo, ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderName, ModelInfo, ProviderSettings, ModelRecord, RouterModels, RouterProvider } from "@njust-ai-cj/types"
 import {
 	anthropicDefaultModelId,
 	bedrockDefaultModelId,
@@ -144,8 +144,43 @@ export const PROVIDERS_WITH_CUSTOM_MODEL_UI: ProviderName[] = [
 /**
  * Checks if a provider should use the generic ModelPicker
  */
+export const hasModels = (models?: ModelRecord): models is ModelRecord =>
+	!!models && Object.keys(models).length > 0
+
+export const DYNAMIC_MODEL_PICKER_PROVIDERS: ProviderName[] = [
+	"deepseek",
+	"gemini",
+	"anthropic",
+	"openai-native",
+	"mistral",
+	"xai",
+	"qwen",
+	"moonshot",
+	"glm",
+	"minimax",
+	"fireworks",
+	"sambanova",
+	"baseten",
+	"doubao",
+]
+
 export const shouldUseGenericModelPicker = (provider: ProviderName): boolean => {
-	return isStaticModelProvider(provider) && !PROVIDERS_WITH_CUSTOM_MODEL_UI.includes(provider)
+	return (
+		(isStaticModelProvider(provider) || DYNAMIC_MODEL_PICKER_PROVIDERS.includes(provider)) &&
+		!PROVIDERS_WITH_CUSTOM_MODEL_UI.includes(provider)
+	)
+}
+
+export const getModelsForPicker = (
+	provider: ProviderName,
+	routerModels: RouterModels | undefined,
+	customArnLabel?: string,
+): Record<string, ModelInfo> => {
+	const dynamicModels = routerModels?.[provider as RouterProvider]
+	if (hasModels(dynamicModels)) {
+		return dynamicModels
+	}
+	return getStaticModelsForProvider(provider, customArnLabel)
 }
 
 /**

@@ -228,6 +228,7 @@ vi.mock("../../../api/providers/fetchers/modelCache", () => ({
 	getModels: vi.fn().mockResolvedValue({}),
 	flushModels: vi.fn(),
 	getModelsFromCache: vi.fn().mockReturnValue(undefined),
+	listProviderModels: vi.fn().mockResolvedValue({}),
 }))
 
 vi.mock("../../../shared/modes", () => ({
@@ -298,6 +299,7 @@ vi.mock("../../../api/providers/fetchers/modelCache", () => ({
 	getModels: vi.fn().mockResolvedValue({}),
 	flushModels: vi.fn(),
 	getModelsFromCache: vi.fn().mockReturnValue(undefined),
+	listProviderModels: vi.fn().mockResolvedValue({}),
 }))
 
 vi.mock("../diff/strategies/multi-search-replace", () => ({
@@ -2401,6 +2403,9 @@ describe("ClineProvider - Router Models", () => {
 			baseUrl: "http://localhost:4000",
 		})
 
+		const { listProviderModels } = await import("../../../api/providers/fetchers/modelCache")
+		vi.mocked(listProviderModels).mockResolvedValue({})
+
 		// Verify response was sent
 		expect(mockPostMessage).toHaveBeenCalledWith({
 			type: "routerModels",
@@ -2413,6 +2418,20 @@ describe("ClineProvider - Router Models", () => {
 				ollama: {},
 				lmstudio: {},
 				"vercel-ai-gateway": mockModels,
+				deepseek: {},
+				gemini: {},
+				anthropic: {},
+				"openai-native": {},
+				mistral: {},
+				xai: {},
+				qwen: {},
+				moonshot: {},
+				glm: {},
+				minimax: {},
+				fireworks: {},
+				sambanova: {},
+				baseten: {},
+				doubao: {},
 			},
 			values: undefined,
 		})
@@ -2447,6 +2466,9 @@ describe("ClineProvider - Router Models", () => {
 
 		await messageHandler({ type: "requestRouterModels" })
 
+		const { listProviderModels } = await import("../../../api/providers/fetchers/modelCache")
+		vi.mocked(listProviderModels).mockResolvedValue({})
+
 		// Verify main response includes successful providers and empty objects for failed ones
 		expect(mockPostMessage).toHaveBeenCalledWith({
 			type: "routerModels",
@@ -2459,6 +2481,20 @@ describe("ClineProvider - Router Models", () => {
 				lmstudio: {},
 				litellm: {},
 				"vercel-ai-gateway": mockModels,
+				deepseek: {},
+				gemini: {},
+				anthropic: {},
+				"openai-native": {},
+				mistral: {},
+				xai: {},
+				qwen: {},
+				moonshot: {},
+				glm: {},
+				minimax: {},
+				fireworks: {},
+				sambanova: {},
+				baseten: {},
+				doubao: {},
 			},
 			values: undefined,
 		})
@@ -2541,6 +2577,9 @@ describe("ClineProvider - Router Models", () => {
 			}),
 		)
 
+		const { listProviderModels } = await import("../../../api/providers/fetchers/modelCache")
+		vi.mocked(listProviderModels).mockResolvedValue({})
+
 		// Verify response includes empty object for LiteLLM
 		expect(mockPostMessage).toHaveBeenCalledWith({
 			type: "routerModels",
@@ -2553,6 +2592,20 @@ describe("ClineProvider - Router Models", () => {
 				ollama: {},
 				lmstudio: {},
 				"vercel-ai-gateway": mockModels,
+				deepseek: {},
+				gemini: {},
+				anthropic: {},
+				"openai-native": {},
+				mistral: {},
+				xai: {},
+				qwen: {},
+				moonshot: {},
+				glm: {},
+				minimax: {},
+				fireworks: {},
+				sambanova: {},
+				baseten: {},
+				doubao: {},
 			},
 			values: undefined,
 		})

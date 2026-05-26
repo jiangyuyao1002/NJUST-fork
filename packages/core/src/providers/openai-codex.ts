@@ -16,7 +16,7 @@ import type { ModelInfo } from "@njust-ai-cj/types"
 
 export type OpenAiCodexModelId = keyof typeof openAiCodexModels
 
-export const openAiCodexDefaultModelId: OpenAiCodexModelId = "gpt-5.3-codex"
+export const openAiCodexDefaultModelId: OpenAiCodexModelId = "gpt-5.5-codex"
 
 /**
  * Models available through the Codex OAuth flow.
@@ -24,6 +24,35 @@ export const openAiCodexDefaultModelId: OpenAiCodexModelId = "gpt-5.3-codex"
  * Costs are 0 as they are covered by the subscription.
  */
 export const openAiCodexModels = {
+	"gpt-5.5-codex": {
+		maxTokens: 128000,
+		contextWindow: 400000,
+		includedTools: ["apply_patch"],
+		excludedTools: ["apply_diff", "write_to_file"],
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningEffort: ["low", "medium", "high", "xhigh"],
+		reasoningEffort: "medium",
+		inputPrice: 0,
+		outputPrice: 0,
+		supportsTemperature: false,
+		description: "GPT-5.5 Codex: Latest flagship coding model via ChatGPT subscription",
+	},
+	"gpt-5.5": {
+		maxTokens: 128000,
+		contextWindow: 400000,
+		includedTools: ["apply_patch"],
+		excludedTools: ["apply_diff", "write_to_file"],
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningEffort: ["none", "low", "medium", "high", "xhigh"],
+		reasoningEffort: "medium",
+		inputPrice: 0,
+		outputPrice: 0,
+		supportsVerbosity: true,
+		supportsTemperature: false,
+		description: "GPT-5.5: General GPT-5.5 model via ChatGPT subscription",
+	},
 	"gpt-5.1-codex-max": {
 		maxTokens: 128000,
 		contextWindow: 400000,
@@ -171,6 +200,20 @@ export const openAiCodexModels = {
 		outputPrice: 0,
 		supportsTemperature: false,
 		description: "GPT-5.1 Codex Mini: Faster version for coding tasks via ChatGPT subscription",
+	},
+	"gpt-5.4-codex": {
+		maxTokens: 128000,
+		contextWindow: 400000,
+		includedTools: ["apply_patch"],
+		excludedTools: ["apply_diff", "write_to_file"],
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningEffort: ["low", "medium", "high", "xhigh"],
+		reasoningEffort: "medium",
+		inputPrice: 0,
+		outputPrice: 0,
+		supportsTemperature: false,
+		description: "GPT-5.4 Codex: Coding model with Computer Use support via ChatGPT subscription",
 	},
 	"gpt-5.4": {
 		maxTokens: 128000,

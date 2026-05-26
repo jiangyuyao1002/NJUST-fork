@@ -6,6 +6,7 @@ import {
 	type RouterModels,
 	isDynamicProvider,
 	isRetiredProvider,
+	isRouterModelProvider,
 } from "@njust-ai-cj/types"
 import {
 	anthropicModels,
@@ -55,18 +56,46 @@ function getValidatedModelId(
 	return configuredId && availableModels?.[configuredId] ? configuredId : defaultModelId
 }
 
+type StaticModelMap = Record<string, ModelInfo>
+
+function resolveDynamicFirst<T extends StaticModelMap>(
+	routerModels: RouterModels,
+	routerKey: keyof RouterModels,
+	staticModels: T,
+	configuredId: string | undefined,
+	defaultModelId: string,
+	fallbackInfo?: ModelInfo,
+): { id: string; info: ModelInfo | undefined } {
+	const dynamicModels = routerModels[routerKey]
+	const models =
+		dynamicModels && Object.keys(dynamicModels).length > 0 ? dynamicModels : staticModels
+
+	const id = getValidatedModelId(configuredId, models, defaultModelId)
+	const dynamicInfo = dynamicModels?.[id]
+	const staticInfo = staticModels[id as keyof T]
+
+	if (dynamicInfo) {
+		return { id, info: { ...(staticInfo ?? fallbackInfo ?? openAiModelInfoSaneDefaults), ...dynamicInfo } }
+	}
+	if (staticInfo) {
+		return { id, info: staticInfo }
+	}
+	return { id, info: fallbackInfo }
+}
+
 export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 	const provider = apiConfiguration?.apiProvider || "anthropic"
 	const activeProvider: ProviderName | undefined = isRetiredProvider(provider) ? undefined : provider
 	const dynamicProvider = activeProvider && isDynamicProvider(activeProvider) ? activeProvider : undefined
+	const routerProvider = activeProvider && isRouterModelProvider(activeProvider) ? activeProvider : undefined
+	const fetchProvider = dynamicProvider || routerProvider || undefined
 	const openRouterModelId = activeProvider === "openrouter" ? apiConfiguration?.openRouterModelId : undefined
 	const lmStudioModelId = activeProvider === "lmstudio" ? apiConfiguration?.lmStudioModelId : undefined
 	const ollamaModelId = activeProvider === "ollama" ? apiConfiguration?.ollamaModelId : undefined
 
-	// Only fetch router models for dynamic providers
-	const shouldFetchRouterModels = !!dynamicProvider
+	const shouldFetchRouterModels = Boolean(fetchProvider)
 	const routerModels = useRouterModels({
-		provider: dynamicProvider,
+		provider: fetchProvider,
 		enabled: shouldFetchRouterModels,
 	})
 
@@ -175,14 +204,10 @@ function getSelectedModel({
 			return { id, info: routerInfo ?? litellmDefaultModelInfo }
 		}
 		case "xai": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = xaiModels[id as keyof typeof xaiModels]
-			return info ? { id, info } : { id, info: undefined }
+			return resolveDynamicFirst(routerModels, "xai", xaiModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "baseten": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = basetenModels[id as keyof typeof basetenModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "baseten", basetenModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "bedrock": {
 			const id = apiConfiguration.apiModelId ?? defaultModelId
@@ -232,24 +257,16 @@ function getSelectedModel({
 			return { id, info: baseInfo }
 		}
 		case "gemini": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = geminiModels[id as keyof typeof geminiModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "gemini", geminiModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "deepseek": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = deepSeekModels[id as keyof typeof deepSeekModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "deepseek", deepSeekModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "moonshot": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = moonshotModels[id as keyof typeof moonshotModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "moonshot", moonshotModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "minimax": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = minimaxModels[id as keyof typeof minimaxModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "minimax", minimaxModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "zai": {
 			const isChina = apiConfiguration.zaiApiLine === "china_coding"
@@ -260,14 +277,10 @@ function getSelectedModel({
 			return { id, info }
 		}
 		case "openai-native": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = openAiNativeModels[id as keyof typeof openAiNativeModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "openai-native", openAiNativeModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "mistral": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = mistralModels[id as keyof typeof mistralModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "mistral", mistralModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "openai": {
 			const id = apiConfiguration.openAiModelId ?? ""
@@ -308,14 +321,10 @@ function getSelectedModel({
 			return { id, info: { ...openAiModelInfoSaneDefaults, ...info, supportsImages: false } } // VSCode LM API currently doesn't support images.
 		}
 		case "sambanova": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = sambaNovaModels[id as keyof typeof sambaNovaModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "sambanova", sambaNovaModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "fireworks": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = fireworksModels[id as keyof typeof fireworksModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "fireworks", fireworksModels, apiConfiguration.apiModelId, defaultModelId)
 		}
 		case "roo": {
 			const id = getValidatedModelId(apiConfiguration.apiModelId, routerModels.roo, defaultModelId)
@@ -328,52 +337,31 @@ function getSelectedModel({
 			return { id, info }
 		}
 		case "qwen": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const fromCatalog = qwenModels[id as keyof typeof qwenModels]
-			return {
-				id,
-				info:
-					fromCatalog ??
-					({
-						...openAiModelInfoSaneDefaults,
-						maxTokens: 8_192,
-						contextWindow: 131_072,
-						supportsImages: true,
-						description: "Custom Qwen model id",
-					} satisfies ModelInfo),
-			}
+			return resolveDynamicFirst(routerModels, "qwen", qwenModels, apiConfiguration.apiModelId, defaultModelId, {
+				...openAiModelInfoSaneDefaults,
+				maxTokens: 8_192,
+				contextWindow: 131_072,
+				supportsImages: true,
+				description: "Custom Qwen model id",
+			} satisfies ModelInfo)
 		}
 		case "doubao": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const fromCatalog = doubaoModels[id as keyof typeof doubaoModels]
-			return {
-				id,
-				info:
-					fromCatalog ??
-					({
-						...openAiModelInfoSaneDefaults,
-						maxTokens: 32_768,
-						contextWindow: 262_144,
-						supportsImages: true,
-						description: "Custom Volcengine Ark model id (console or ep-)",
-					} satisfies ModelInfo),
-			}
+			return resolveDynamicFirst(routerModels, "doubao", doubaoModels, apiConfiguration.apiModelId, defaultModelId, {
+				...openAiModelInfoSaneDefaults,
+				maxTokens: 32_768,
+				contextWindow: 262_144,
+				supportsImages: true,
+				description: "Custom Volcengine Ark model id (console or ep-)",
+			} satisfies ModelInfo)
 		}
 		case "glm": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const fromCatalog = glmModels[id as keyof typeof glmModels]
-			return {
-				id,
-				info:
-					fromCatalog ??
-					({
-						...openAiModelInfoSaneDefaults,
-						maxTokens: 16_384,
-						contextWindow: 131_072,
-						supportsImages: true,
-						description: "Custom GLM model id",
-					} satisfies ModelInfo),
-			}
+			return resolveDynamicFirst(routerModels, "glm", glmModels, apiConfiguration.apiModelId, defaultModelId, {
+				...openAiModelInfoSaneDefaults,
+				maxTokens: 16_384,
+				contextWindow: 131_072,
+				supportsImages: true,
+				description: "Custom GLM model id",
+			} satisfies ModelInfo)
 		}
 		case "openai-codex": {
 			const id = apiConfiguration.apiModelId ?? defaultModelId
@@ -389,25 +377,19 @@ function getSelectedModel({
 			const info = routerModels["vercel-ai-gateway"]?.[id]
 			return { id, info }
 		}
-		// case "anthropic":
-		// case "fake-ai":
-		default: {
-			provider satisfies "anthropic" | "gemini-cli" | "fake-ai"
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const baseInfo = anthropicModels[id as keyof typeof anthropicModels]
+		case "anthropic": {
+			const resolved = resolveDynamicFirst(routerModels, "anthropic", anthropicModels, apiConfiguration.apiModelId, defaultModelId)
+			let info = resolved.info
 
-			// Apply 1M context beta tier pricing for supported Claude 4 models
 			if (
-				provider === "anthropic" &&
-				(id === "claude-sonnet-4-20250514" ||
-					id === "claude-sonnet-4-5" ||
-					id === "claude-sonnet-4-6" ||
-					id === "claude-opus-4-6") &&
+				(resolved.id === "claude-sonnet-4-20250514" ||
+					resolved.id === "claude-sonnet-4-5" ||
+					resolved.id === "claude-sonnet-4-6" ||
+					resolved.id === "claude-opus-4-6") &&
 				apiConfiguration.anthropicBeta1MContext &&
-				baseInfo
+				info
 			) {
-				// Type assertion since supported Claude 4 models include 1M context pricing tiers.
-				const modelWithTiers = baseInfo as typeof baseInfo & {
+				const modelWithTiers = info as typeof info & {
 					tiers?: Array<{
 						contextWindow: number
 						inputPrice?: number
@@ -418,18 +400,25 @@ function getSelectedModel({
 				}
 				const tier = modelWithTiers.tiers?.[0]
 				if (tier) {
-					// Create a new ModelInfo object with updated values
-					const info: ModelInfo = {
-						...baseInfo,
+					info = {
+						...info,
 						contextWindow: tier.contextWindow,
-						inputPrice: tier.inputPrice ?? baseInfo.inputPrice,
-						outputPrice: tier.outputPrice ?? baseInfo.outputPrice,
-						cacheWritesPrice: tier.cacheWritesPrice ?? baseInfo.cacheWritesPrice,
-						cacheReadsPrice: tier.cacheReadsPrice ?? baseInfo.cacheReadsPrice,
+						inputPrice: tier.inputPrice ?? info.inputPrice,
+						outputPrice: tier.outputPrice ?? info.outputPrice,
+						cacheWritesPrice: tier.cacheWritesPrice ?? info.cacheWritesPrice,
+						cacheReadsPrice: tier.cacheReadsPrice ?? info.cacheReadsPrice,
 					}
-					return { id, info }
 				}
 			}
+
+			return { id: resolved.id, info }
+		}
+		// case "gemini-cli":
+		// case "fake-ai":
+		default: {
+			provider satisfies "gemini-cli" | "fake-ai"
+			const id = apiConfiguration.apiModelId ?? defaultModelId
+			const baseInfo = anthropicModels[id as keyof typeof anthropicModels]
 
 			return { id, info: baseInfo }
 		}

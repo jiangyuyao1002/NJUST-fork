@@ -6,6 +6,21 @@ export type VertexModelId = keyof typeof vertexModels
 export const vertexDefaultModelId: VertexModelId = "claude-sonnet-4-5@20250929"
 
 export const vertexModels = {
+	"gemini-3.5-flash": {
+		maxTokens: 65_536,
+		contextWindow: 1_048_576,
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningEffort: ["low", "medium", "high"],
+		reasoningEffort: "low",
+
+		supportsTemperature: true,
+		defaultTemperature: 1,
+		inputPrice: 0.5,
+		outputPrice: 3.0,
+		cacheReadsPrice: 0.05,
+		cacheWritesPrice: 0.5,
+	},
 	"gemini-3.1-pro-preview": {
 		maxTokens: 65_536,
 		contextWindow: 1_048_576,

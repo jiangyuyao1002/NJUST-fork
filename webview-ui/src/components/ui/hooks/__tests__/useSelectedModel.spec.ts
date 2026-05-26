@@ -8,6 +8,7 @@ import type { Mock } from "vitest"
 import { ProviderSettings, ModelInfo } from "@njust-ai-cj/types"
 import {
 	BEDROCK_1M_CONTEXT_MODEL_IDS,
+	deepSeekModels,
 	litellmDefaultModelInfo,
 	openAiModelInfoSaneDefaults,
 } from "@njust-ai-cj/core/providers"
@@ -317,7 +318,7 @@ describe("useSelectedModel", () => {
 	})
 
 	describe("loading and error states", () => {
-		it("should NOT set loading when router models are loading but provider is static (anthropic)", () => {
+		it("should set loading when router models are loading for anthropic (dynamic provider)", () => {
 			mockUseRouterModels.mockReturnValue({
 				data: undefined,
 				isLoading: true,
@@ -333,8 +334,7 @@ describe("useSelectedModel", () => {
 			const wrapper = createWrapper()
 			const { result } = renderHook(() => useSelectedModel(), { wrapper })
 
-			// With static provider default (anthropic), useSelectedModel gates router fetches, so loading should be false
-			expect(result.current.isLoading).toBe(false)
+			expect(result.current.isLoading).toBe(true)
 		})
 
 		it("should NOT set loading when openrouter provider metadata is loading but provider is static (anthropic)", () => {
@@ -357,7 +357,7 @@ describe("useSelectedModel", () => {
 			expect(result.current.isLoading).toBe(false)
 		})
 
-		it("should NOT set error when hooks error but provider is static (anthropic)", () => {
+		it("should set error when hooks error for anthropic (dynamic provider)", () => {
 			mockUseRouterModels.mockReturnValue({
 				data: undefined,
 				isLoading: false,
@@ -373,8 +373,7 @@ describe("useSelectedModel", () => {
 			const wrapper = createWrapper()
 			const { result } = renderHook(() => useSelectedModel(), { wrapper })
 
-			// Error from gated routerModels should not bubble for static provider default
-			expect(result.current.isError).toBe(false)
+			expect(result.current.isError).toBe(true)
 		})
 	})
 
@@ -641,6 +640,210 @@ describe("useSelectedModel", () => {
 			expect(result.current.provider).toBe("litellm")
 			expect(result.current.id).toBe("custom-model")
 			expect(result.current.info).toEqual(customModelInfo)
+		})
+	})
+
+	describe("deepseek provider (dynamic-first)", () => {
+		beforeEach(() => {
+			mockUseOpenRouterModelProviders.mockReturnValue({
+				data: {},
+				isLoading: false,
+				isError: false,
+			} as any)
+		})
+
+		it("should use dynamic models when routerModels.deepseek has entries", () => {
+			const dynamicModelInfo: ModelInfo = {
+				maxTokens: 8192,
+				contextWindow: 64000,
+				supportsImages: true,
+				supportsPromptCache: false,
+			}
+
+			mockUseRouterModels.mockReturnValue({
+				data: {
+					deepseek: {
+						"deepseek-v4-flash": dynamicModelInfo,
+					},
+					openrouter: {},
+					requesty: {},
+					litellm: {},
+				},
+				isLoading: false,
+				isError: false,
+			} as any)
+
+			const apiConfiguration: ProviderSettings = {
+				apiProvider: "deepseek",
+				apiModelId: "deepseek-v4-flash",
+			}
+
+			const wrapper = createWrapper()
+			const { result } = renderHook(() => useSelectedModel(apiConfiguration), { wrapper })
+
+			expect(result.current.provider).toBe("deepseek")
+			expect(result.current.id).toBe("deepseek-v4-flash")
+			expect(result.current.info).toEqual({
+				...(deepSeekModels["deepseek-v4-flash"] as ModelInfo),
+				...dynamicModelInfo,
+			})
+		})
+
+		it("should fall back to static models when dynamic models are empty", () => {
+			mockUseRouterModels.mockReturnValue({
+				data: {
+					deepseek: {},
+					openrouter: {},
+					requesty: {},
+					litellm: {},
+				},
+				isLoading: false,
+				isError: false,
+			} as any)
+
+			const apiConfiguration: ProviderSettings = {
+				apiProvider: "deepseek",
+				apiModelId: "deepseek-v4-flash",
+			}
+
+			const wrapper = createWrapper()
+			const { result } = renderHook(() => useSelectedModel(apiConfiguration), { wrapper })
+
+			expect(result.current.provider).toBe("deepseek")
+			expect(result.current.id).toBe("deepseek-v4-flash")
+			expect(result.current.info).toEqual(deepSeekModels["deepseek-v4-flash"] as ModelInfo)
+		})
+
+		it("should fall back to static models when routerModels.deepseek is undefined", () => {
+			mockUseRouterModels.mockReturnValue({
+				data: {
+					openrouter: {},
+					requesty: {},
+					litellm: {},
+				},
+				isLoading: false,
+				isError: false,
+			} as any)
+
+			const apiConfiguration: ProviderSettings = {
+				apiProvider: "deepseek",
+				apiModelId: "deepseek-v4-pro",
+			}
+
+			const wrapper = createWrapper()
+			const { result } = renderHook(() => useSelectedModel(apiConfiguration), { wrapper })
+
+			expect(result.current.provider).toBe("deepseek")
+			expect(result.current.id).toBe("deepseek-v4-pro")
+			expect(result.current.info).toEqual(deepSeekModels["deepseek-v4-pro"] as ModelInfo)
+		})
+
+		it("should use default model when configured id not found in dynamic or static models", () => {
+			const dynamicModelInfo: ModelInfo = {
+				maxTokens: 8192,
+				contextWindow: 64000,
+				supportsImages: false,
+				supportsPromptCache: false,
+			}
+
+			mockUseRouterModels.mockReturnValue({
+				data: {
+					deepseek: {
+						"deepseek-v4-flash": dynamicModelInfo,
+					},
+					openrouter: {},
+					requesty: {},
+					litellm: {},
+				},
+				isLoading: false,
+				isError: false,
+			} as any)
+
+			const apiConfiguration: ProviderSettings = {
+				apiProvider: "deepseek",
+				apiModelId: "non-existent-model",
+			}
+
+			const wrapper = createWrapper()
+			const { result } = renderHook(() => useSelectedModel(apiConfiguration), { wrapper })
+
+			expect(result.current.provider).toBe("deepseek")
+			expect(result.current.id).toBe("deepseek-v4-flash")
+		})
+
+		it("should merge dynamic info over static info when both exist", () => {
+			const dynamicModelInfo: ModelInfo = {
+				maxTokens: 16384,
+				contextWindow: 64000,
+				supportsImages: true,
+				supportsPromptCache: true,
+				inputPrice: 0.01,
+				outputPrice: 0.02,
+			}
+
+			mockUseRouterModels.mockReturnValue({
+				data: {
+					deepseek: {
+						"deepseek-v4-flash": dynamicModelInfo,
+					},
+					openrouter: {},
+					requesty: {},
+					litellm: {},
+				},
+				isLoading: false,
+				isError: false,
+			} as any)
+
+			const apiConfiguration: ProviderSettings = {
+				apiProvider: "deepseek",
+				apiModelId: "deepseek-v4-flash",
+			}
+
+			const wrapper = createWrapper()
+			const { result } = renderHook(() => useSelectedModel(apiConfiguration), { wrapper })
+
+			expect(result.current.info).toEqual({
+				...(deepSeekModels["deepseek-v4-flash"] as ModelInfo),
+				...dynamicModelInfo,
+			})
+			expect(result.current.info!.supportsImages).toBe(true)
+			expect(result.current.info!.inputPrice).toBe(0.01)
+		})
+
+		it("should show loading when fetching dynamic models for deepseek", () => {
+			mockUseRouterModels.mockReturnValue({
+				data: undefined,
+				isLoading: true,
+				isError: false,
+			} as any)
+
+			const apiConfiguration: ProviderSettings = {
+				apiProvider: "deepseek",
+				apiModelId: "deepseek-v4-flash",
+			}
+
+			const wrapper = createWrapper()
+			const { result } = renderHook(() => useSelectedModel(apiConfiguration), { wrapper })
+
+			expect(result.current.isLoading).toBe(true)
+		})
+
+		it("should show error when dynamic model fetch fails for deepseek", () => {
+			mockUseRouterModels.mockReturnValue({
+				data: undefined,
+				isLoading: false,
+				isError: true,
+			} as any)
+
+			const apiConfiguration: ProviderSettings = {
+				apiProvider: "deepseek",
+				apiModelId: "deepseek-v4-flash",
+			}
+
+			const wrapper = createWrapper()
+			const { result } = renderHook(() => useSelectedModel(apiConfiguration), { wrapper })
+
+			expect(result.current.isError).toBe(true)
 		})
 	})
 
