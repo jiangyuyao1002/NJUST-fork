@@ -160,7 +160,7 @@ export type CangjieToolkitId = "cjc" | "cjpm" | "cjfmt" | "cjlint"
 /** cjfmt / cjc / cjpm 各发行版 CLI 略有差异；探测时依次尝试。 */
 function probeTryArgsForTool(id: CangjieToolkitId): string[][] {
 	if (id === "cjlint") {
-		return [["--version"], ["-V"], ["--help"]]
+		return [["--version"], ["-V"], ["-h"]]
 	}
 	if (id === "cjfmt") {
 		// 多数 Cangjie SDK 中 cjfmt 不支持 `--version`，会误解析为 `--`；优先 -V / -h

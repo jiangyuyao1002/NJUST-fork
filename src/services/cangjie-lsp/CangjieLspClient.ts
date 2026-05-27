@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
+import * as os from "os"
 import {
 	LanguageClient,
 	LanguageClientOptions,
@@ -258,9 +259,9 @@ function buildServerArgs(config: CangjieLspConfig): string[] {
 	if (config.enableLog) {
 		args.push("--enable-log=true")
 		args.push("-V")
-	}
-	if (config.logPath) {
-		args.push(`--log-path=${config.logPath}`)
+		args.push(`--log-path=${config.logPath || path.join(os.tmpdir(), `cangjie-lsp-${Date.now()}.log`)}`)
+	} else {
+		args.push("--enable-log=false")
 	}
 	if (config.disableAutoImport) {
 		args.push("--disableAutoImport")
@@ -487,7 +488,8 @@ export class CangjieLspClient {
 		}
 
 		const cjpmRoot = this.findCjpmRoot()
-		const serverCwd = cjpmRoot || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+		const lspLogDir = path.join(os.tmpdir(), "cangjie-lsp")
+		fs.mkdirSync(lspLogDir, { recursive: true })
 
 		const serverOptions: ServerOptions = {
 			command: serverExecutable,
@@ -495,7 +497,7 @@ export class CangjieLspClient {
 			transport: TransportKind.stdio,
 			options: {
 				env: serverEnv as NodeJS.ProcessEnv,
-				cwd: serverCwd,
+				cwd: lspLogDir,
 			},
 		}
 
