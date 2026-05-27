@@ -172,6 +172,7 @@ export type RouterProvider =
 	| "sambanova"
 	| "baseten"
 	| "doubao"
+	| "mimo"
 
 export type RouterModels = Partial<Record<RouterProvider, ModelRecord>>
 
@@ -198,6 +199,7 @@ export const routerModelProviders: readonly RouterProvider[] = [
 	"sambanova",
 	"baseten",
 	"doubao",
+	"mimo",
 ]
 
 export const isRouterModelProvider = (value: string): value is RouterProvider =>

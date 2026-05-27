@@ -79,9 +79,13 @@ export const fallbackModels: Partial<Record<ProviderName, DynamicModelRecord>> =
 	mimo: {
 		"mimo-v2.5-pro": model("mimo-v2.5-pro", 1_000_000),
 		"mimo-v2.5": model("mimo-v2.5", 1_000_000),
+		"mimo-v2-pro": model("mimo-v2-pro", 1_000_000),
+		"mimo-v2-flash": model("mimo-v2-flash", 256_000),
 	},
 
 	"mimo-token-plan": {
+		"mimo-v2.5-pro": model("mimo-v2.5-pro", 1_000_000),
+		"mimo-v2.5": model("mimo-v2.5", 1_000_000),
 		"mimo-v2-pro": model("mimo-v2-pro", 1_000_000),
 		"mimo-v2-omni": model("mimo-v2-omni", 256_000),
 	},

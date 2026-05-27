@@ -87,6 +87,12 @@ const configs: Partial<Record<ProviderName, ProviderConfig>> = {
 		defaultBaseUrl: "https://ark.cn-beijing.volces.com/api/v3",
 		path: "/models",
 	},
+	mimo: {
+		apiKeyEnv: "MIMO_API_KEY",
+		baseUrlEnv: "MIMO_BASE_URL",
+		defaultBaseUrl: "https://api.xiaomimimo.com/v1",
+		path: "/models",
+	},
 }
 
 function joinUrl(baseUrl: string, path: string): string {

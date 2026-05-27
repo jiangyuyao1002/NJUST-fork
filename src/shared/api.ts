@@ -195,6 +195,7 @@ const _dynamicProviderExtras = {
 	sambanova: {} as { apiKey?: string; baseUrl?: string },
 	baseten: {} as { apiKey?: string; baseUrl?: string },
 	doubao: {} as { apiKey?: string; baseUrl?: string },
+	mimo: {} as { apiKey?: string; baseUrl?: string },
 } as const satisfies Record<RouterName, object>
 
 // Build the dynamic options union from the map, intersected with CommonFetchParams

@@ -168,6 +168,7 @@ export const DYNAMIC_MODEL_PICKER_PROVIDERS: ProviderName[] = [
 	"sambanova",
 	"baseten",
 	"doubao",
+	"mimo",
 ]
 
 export const shouldUseGenericModelPicker = (provider: ProviderName): boolean => {

@@ -54,6 +54,38 @@ export const mimoModels = {
 		description:
 			"MiMo-V2.5-Pro: Strongest model, tops open-source benchmarks for Agent and Coding tasks.",
 	},
+	"mimo-v2-omni": {
+		maxTokens: 128_000,
+		contextWindow: 256_000,
+		supportsImages: true,
+		supportsPromptCache: false,
+		inputPrice: 0.5,
+		outputPrice: 1.5,
+		supportsReasoningBudget: true,
+		description:
+			"MiMo-V2-Omni: Multimodal base model with vision, audio, and video support.",
+	},
+	"mimo-v2-tts": {
+		maxTokens: 8_192,
+		contextWindow: 8_192,
+		supportsImages: false,
+		supportsPromptCache: false,
+		description: "MiMo-V2-TTS: Text-to-speech model for high-quality voice synthesis.",
+	},
+	"mimo-v2.5-tts": {
+		maxTokens: 8_192,
+		contextWindow: 8_192,
+		supportsImages: false,
+		supportsPromptCache: false,
+		description: "MiMo-V2.5-TTS: Latest text-to-speech model with improved naturalness.",
+	},
+	"mimo-v2.5-asr": {
+		maxTokens: 8_192,
+		contextWindow: 8_192,
+		supportsImages: false,
+		supportsPromptCache: false,
+		description: "MiMo-V2.5-ASR: Automatic speech recognition model for high-precision transcription.",
+	},
 } as const satisfies Record<string, ModelInfo>
 
 export const MIMO_DEFAULT_TEMPERATURE = 0.7

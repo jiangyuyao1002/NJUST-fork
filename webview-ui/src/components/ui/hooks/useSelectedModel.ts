@@ -366,9 +366,13 @@ function getSelectedModel({
 			} satisfies ModelInfo)
 		}
 		case "mimo": {
-			const id = apiConfiguration.apiModelId ?? defaultModelId
-			const info = mimoModels[id as keyof typeof mimoModels]
-			return { id, info }
+			return resolveDynamicFirst(routerModels, "mimo", mimoModels, apiConfiguration.apiModelId, defaultModelId, {
+				...openAiModelInfoSaneDefaults,
+				maxTokens: 128_000,
+				contextWindow: 1_000_000,
+				supportsImages: false,
+				description: "Custom MiMo model id",
+			} satisfies ModelInfo)
 		}
 		case "mimo-token-plan": {
 			const id = apiConfiguration.apiModelId ?? defaultModelId
