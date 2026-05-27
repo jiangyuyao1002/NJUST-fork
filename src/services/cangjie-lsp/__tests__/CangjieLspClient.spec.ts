@@ -19,6 +19,7 @@ const {
 	mockCapturedServerOptions,
 	mockExistsSync,
 	mockReadFileSync,
+	mockMkdirSync,
 	mockAppendLine,
 	mockShowWarningMessage,
 	mockShowErrorMessage,
@@ -49,6 +50,7 @@ const {
 	mockCapturedServerOptions: [] as any[],
 	mockExistsSync: vi.fn(),
 	mockReadFileSync: vi.fn(),
+	mockMkdirSync: vi.fn(),
 	mockAppendLine: vi.fn(),
 	mockShowWarningMessage: vi.fn().mockResolvedValue(undefined),
 	mockShowErrorMessage: vi.fn().mockResolvedValue(undefined),
@@ -152,6 +154,7 @@ vi.mock("path", () => {
 vi.mock("fs", () => ({
 	existsSync: mockExistsSync,
 	readFileSync: mockReadFileSync,
+	mkdirSync: mockMkdirSync,
 }))
 
 vi.mock("@njust-ai-cj/telemetry", () => ({
