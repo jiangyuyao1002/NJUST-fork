@@ -32,6 +32,8 @@ import {
 	qwenModels,
 	doubaoModels,
 	glmModels,
+	mimoModels,
+	mimoTokenPlanModels,
 	litellmDefaultModelInfo,
 	lMStudioDefaultModelInfo,
 	BEDROCK_1M_CONTEXT_MODEL_IDS,
@@ -362,6 +364,16 @@ function getSelectedModel({
 				supportsImages: true,
 				description: "Custom GLM model id",
 			} satisfies ModelInfo)
+		}
+		case "mimo": {
+			const id = apiConfiguration.apiModelId ?? defaultModelId
+			const info = mimoModels[id as keyof typeof mimoModels]
+			return { id, info }
+		}
+		case "mimo-token-plan": {
+			const id = apiConfiguration.apiModelId ?? defaultModelId
+			const info = mimoTokenPlanModels[id as keyof typeof mimoTokenPlanModels]
+			return { id, info }
 		}
 		case "openai-codex": {
 			const id = apiConfiguration.apiModelId ?? defaultModelId

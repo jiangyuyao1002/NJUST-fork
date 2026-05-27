@@ -75,4 +75,14 @@ export const fallbackModels: Partial<Record<ProviderName, DynamicModelRecord>> =
 	doubao: {
 		"doubao-1-5-pro-256k": model("doubao-1-5-pro-256k", 256_000),
 	},
+
+	mimo: {
+		"mimo-v2.5-pro": model("mimo-v2.5-pro", 1_000_000),
+		"mimo-v2.5": model("mimo-v2.5", 1_000_000),
+	},
+
+	"mimo-token-plan": {
+		"mimo-v2-pro": model("mimo-v2-pro", 1_000_000),
+		"mimo-v2-omni": model("mimo-v2-omni", 256_000),
+	},
 }

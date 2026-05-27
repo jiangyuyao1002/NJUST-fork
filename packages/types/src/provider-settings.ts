@@ -103,6 +103,8 @@ export const providerNames = [
 	"vertex",
 	"xai",
 	"zai",
+	"mimo",
+	"mimo-token-plan",
 ] as const
 
 export const providerNamesSchema = z.enum(providerNames)
@@ -317,6 +319,15 @@ const glmSchema = apiModelIdProviderModelSchema.extend({
 	glmBaseUrl: z.string().optional(),
 })
 
+const mimoSchema = apiModelIdProviderModelSchema.extend({
+	mimoApiKey: z.string().optional(),
+	mimoBaseUrl: z.string().optional(),
+})
+
+const mimoTokenPlanSchema = apiModelIdProviderModelSchema.extend({
+	mimoTokenPlanApiKey: z.string().optional(),
+})
+
 const requestySchema = baseProviderSettingsSchema.extend({
 	requestyBaseUrl: z.string().optional(),
 	requestyApiKey: z.string().optional(),
@@ -402,6 +413,8 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	qwenSchema.merge(z.object({ apiProvider: z.literal("qwen") })),
 	doubaoSchema.merge(z.object({ apiProvider: z.literal("doubao") })),
 	glmSchema.merge(z.object({ apiProvider: z.literal("glm") })),
+	mimoSchema.merge(z.object({ apiProvider: z.literal("mimo") })),
+	mimoTokenPlanSchema.merge(z.object({ apiProvider: z.literal("mimo-token-plan") })),
 	requestySchema.merge(z.object({ apiProvider: z.literal("requesty") })),
 	unboundSchema.merge(z.object({ apiProvider: z.literal("unbound") })),
 	fakeAiSchema.merge(z.object({ apiProvider: z.literal("fake-ai") })),
@@ -438,6 +451,8 @@ export const providerSettingsSchema = z.object({
 	...qwenSchema.shape,
 	...doubaoSchema.shape,
 	...glmSchema.shape,
+	...mimoSchema.shape,
+	...mimoTokenPlanSchema.shape,
 	...requestySchema.shape,
 	...unboundSchema.shape,
 	...fakeAiSchema.shape,
@@ -529,6 +544,8 @@ export const modelIdKeysByProvider: Record<TypicalProvider, ModelIdKey> = {
 	fireworks: "apiModelId",
 	roo: "apiModelId",
 	"vercel-ai-gateway": "vercelAiGatewayModelId",
+	mimo: "apiModelId",
+	"mimo-token-plan": "apiModelId",
 }
 
 /**

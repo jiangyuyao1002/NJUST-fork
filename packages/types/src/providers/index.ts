@@ -27,6 +27,8 @@ export * from "./minimax.js"
 export * from "./qwen.js"
 export * from "./doubao.js"
 export * from "./glm.js"
+export * from "./mimo.js"
+export * from "./mimo-token-plan.js"
 
 import { anthropicDefaultModelId } from "./anthropic.js"
 import { basetenDefaultModelId } from "./baseten.js"
@@ -53,6 +55,8 @@ import { minimaxDefaultModelId } from "./minimax.js"
 import { qwenDefaultModelId } from "./qwen.js"
 import { doubaoDefaultModelId } from "./doubao.js"
 import { glmDefaultModelId } from "./glm.js"
+import { mimoDefaultModelId } from "./mimo.js"
+import { mimoTokenPlanDefaultModelId } from "./mimo-token-plan.js"
 
 // Import the ProviderName type from provider-settings to avoid duplication
 import type { ProviderName } from "../provider-settings.js"
@@ -95,6 +99,10 @@ export function getProviderDefaultModelId(
 			return doubaoDefaultModelId
 		case "glm":
 			return glmDefaultModelId
+		case "mimo":
+			return mimoDefaultModelId
+		case "mimo-token-plan":
+			return mimoTokenPlanDefaultModelId
 		case "zai":
 			return options?.isChina ? mainlandZAiDefaultModelId : internationalZAiDefaultModelId
 		case "openai-native":

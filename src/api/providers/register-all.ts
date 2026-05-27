@@ -35,6 +35,8 @@ import { QwenHandler } from "./qwen"
 import { DoubaoHandler } from "./doubao"
 import { GlmHandler } from "./glm"
 import { NativeOllamaHandler } from "./native-ollama"
+import { MimoHandler } from "./mimo"
+import { MimoTokenPlanHandler } from "./mimo-token-plan"
 
 // Register all providers
 providerRegistry.register("anthropic", (o: ApiHandlerOptions) => new AnthropicHandler(o), "native")
@@ -66,6 +68,8 @@ providerRegistry.register("baseten", (o: ApiHandlerOptions) => new BasetenHandle
 providerRegistry.register("qwen", (o: ApiHandlerOptions) => new QwenHandler(o))
 providerRegistry.register("doubao", (o: ApiHandlerOptions) => new DoubaoHandler(o))
 providerRegistry.register("glm", (o: ApiHandlerOptions) => new GlmHandler(o))
+providerRegistry.register("mimo", (o: ApiHandlerOptions) => new MimoHandler(o))
+providerRegistry.register("mimo-token-plan", (o: ApiHandlerOptions) => new MimoTokenPlanHandler(o))
 providerRegistry.register(
 	"vertex",
 	(o: ApiHandlerOptions) => (o.apiModelId?.startsWith("claude") ? new AnthropicVertexHandler(o) : new VertexHandler(o)),

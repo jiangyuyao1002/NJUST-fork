@@ -24,6 +24,8 @@ export const providerFetcherMap: Record<ProviderName, FetcherKind> = {
 	"sambanova": "openai-compatible",
 	"baseten": "openai-compatible",
 	"doubao": "openai-compatible",
+	"mimo": "openai-compatible",
+	"mimo-token-plan": "openai-compatible",
 	"roo": "existing",
 	"litellm": "existing",
 	"requesty": "existing",
