@@ -1085,7 +1085,7 @@
 				"njust-ai-cj.cloudAgent.serverUrl": {
 					"type": "string",
 					"default": "http://120.79.250.232:8765",
-					"description": "Cloud Agent REST base URL (GET /health, POST /v1/run). Override for a custom deployment or local mock (e.g. http://127.0.0.1:4000). Keep in sync with DEFAULT_CLOUD_AGENT_URL in packages/types/src/constants.ts."
+					"description": "[已废弃] 请使用 Cloud Agent Profile 管理连接配置。此设置仅在未配置 Profile 时作为后备。Cloud Agent REST base URL (GET /health, POST /v1/run)."
 				},
 				"njust-ai-cj.cloudAgent.deviceToken": {
 					"type": "string",
@@ -1095,7 +1095,7 @@
 				"njust-ai-cj.cloudAgent.apiKey": {
 					"type": "string",
 					"default": "",
-					"description": "X-API-Key for Cloud Agent (must match server CLOUD_AGENT_MOCK_API_KEY). Set this in your user settings before connecting to a Cloud Agent server."
+					"description": "[已废弃] 请使用 Cloud Agent Profile 管理 API Key。此设置仅在未配置 Profile 时作为后备。X-API-Key for Cloud Agent (must match server CLOUD_AGENT_MOCK_API_KEY)."
 				},
 				"njust-ai-cj.cloudAgent.requestTimeoutMs": {
 					"type": "number",

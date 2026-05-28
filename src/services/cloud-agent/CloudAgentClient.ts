@@ -1,20 +1,23 @@
 import { getErrorMessage } from "../../shared/error-utils"
-import { normalizeDeferredResponse } from "./normalizeDeferredResponse"
 import { parseWorkspaceOps } from "./parseWorkspaceOps"
 import { logger } from "../../shared/logger"
 import { ApiRetryExecutor, type ApiRetryOptions } from "../../api/retry/ApiRetryStrategy"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { TelemetryEventName } from "@njust-ai-cj/types"
 import { analyzeErrorForRetry } from "../../api/retry/ApiErrorClassifier"
-import type {	CloudAgentCallbacks,
+import type {
+	CloudAgentCallbacks,
 	CloudAgentClientOptions,
 	CloudCompileResponse,
 	CloudCompileResult,
-	CloudRunResponse,
 	CloudRunResult,
 	DeferredResponse,
 	DeferredToolResult,
 } from "./types"
+import type { CloudAgentProfile } from "./types/profile"
+import { AdapterFactory } from "./adapters/AdapterFactory"
+import type { IProtocolAdapter, UniversalTaskResponse } from "./adapters/types"
+import { normalizeServerUrl } from "./urlUtils"
 
 const CLOUD_AGENT_RETRY_OPTIONS: Partial<ApiRetryOptions> = {
 	maxAttempts: 3,
@@ -46,7 +49,7 @@ function enrichFetchError(error: UnsafeAny): Error {
 			parts.push(String(code))
 		}
 	}
-		return parts.length > 1 ? new Error(parts.join(": ")) : error
+	return parts.length > 1 ? new Error(parts.join(": ")) : error
 }
 
 function apiKeyHintFor401(status: number, bodySnippet: string): string {
@@ -66,26 +69,25 @@ export class CloudAgentClient {
 	 * POST `/v1/run/deferred/abort` with `{ session_id, run_id? }`. Missing servers may return 404 — logged only.
 	 */
 	static async sendDeferredAbort(
-		serverUrl: string,
-		deviceToken: string,
-		apiKey: string | undefined,
+		profile: CloudAgentProfile,
 		sessionId: string,
 		runId: string | undefined,
 		requestTimeoutMs?: number,
 	): Promise<void> {
-		const base = serverUrl.replace(/\/$/, "")
+		const base = normalizeServerUrl(profile.serverUrl)
 		const controller = new AbortController()
 		let timer: ReturnType<typeof setTimeout> | undefined
 		if (requestTimeoutMs && requestTimeoutMs > 0) {
 			timer = setTimeout(() => controller.abort(new DOMException("abort request timed out", "AbortError")), requestTimeoutMs)
 		}
+
+		// 从 Profile 构建临时适配器以生成认证头
+		const tempAdapter = AdapterFactory.create(profile)
 		const headers: Record<string, string> = {
 			"Content-Type": "application/json",
-			"X-Device-Token": deviceToken,
+			...tempAdapter.buildAuthHeaders(),
 		}
-		if (apiKey) {
-			headers["X-API-Key"] = apiKey
-		}
+
 		const body = JSON.stringify({
 			session_id: sessionId,
 			...(runId?.trim() ? { run_id: runId.trim() } : {}),
@@ -93,7 +95,7 @@ export class CloudAgentClient {
 		try {
 			let resp: Response
 			try {
-				resp = await fetch(`${base}/v1/run/deferred/abort`, {
+				resp = await fetch(`${base}${tempAdapter.getEndpoint("deferredAbort")}`, {
 					method: "POST",
 					headers,
 					body,
@@ -120,25 +122,34 @@ export class CloudAgentClient {
 	}
 
 	private serverUrl: string
-	private deviceToken: string
 	private callbacks: CloudAgentCallbacks
-	private readonly options: CloudAgentClientOptions | undefined
+	private readonly options: CloudAgentClientOptions
 	private readonly retryExecutor = new ApiRetryExecutor(CLOUD_AGENT_RETRY_OPTIONS)
+	private readonly adapter: IProtocolAdapter
 
-	constructor(
-		serverUrl: string,
-		deviceToken: string,
-		callbacks: CloudAgentCallbacks,
-		options?: CloudAgentClientOptions,
-	) {
-		this.serverUrl = serverUrl.replace(/\/$/, "")
-		const url = new URL(this.serverUrl)
-		if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
-			throw new Error("Cloud Agent requires HTTPS for non-localhost connections")
-		}
-		this.deviceToken = deviceToken
+	constructor(callbacks: CloudAgentCallbacks, options: CloudAgentClientOptions) {
 		this.callbacks = callbacks
 		this.options = options
+
+		const profile = options.profile
+		this.serverUrl = normalizeServerUrl(profile.serverUrl)
+
+		if (!this.serverUrl?.trim()) {
+			throw new Error("Cloud Agent Profile 的 serverUrl 不能为空。请在设置中配置。")
+		}
+
+		// HTTPS 校验
+		const url = new URL(this.serverUrl)
+		if (
+			url.protocol !== "https:" &&
+			url.hostname !== "localhost" &&
+			url.hostname !== "127.0.0.1"
+		) {
+			throw new Error("Cloud Agent requires HTTPS for non-localhost connections")
+		}
+
+		// 创建并初始化适配器
+		this.adapter = AdapterFactory.create(profile)
 	}
 
 	private mergeAbortAndTimeout(): { signal?: AbortSignal; cleanup: () => void } {
@@ -177,35 +188,39 @@ export class CloudAgentClient {
 	}
 
 	private buildHeaders(): Record<string, string> {
-		const headers: Record<string, string> = {
+		return {
 			"Content-Type": "application/json",
-			"X-Device-Token": this.deviceToken,
+			...this.adapter.buildAuthHeaders(),
 		}
-		if (this.options?.apiKey) {
-			headers["X-API-Key"] = this.options.apiKey
-		}
-		return headers
 	}
 
-	private async parseJsonResponse(resp: Response): Promise<CloudRunResponse> {
+	private async parseUniversalResponse(resp: Response): Promise<UniversalTaskResponse> {
 		const text = await resp.text()
+		let parsed: unknown
 		try {
-			return JSON.parse(text) as CloudRunResponse
+			parsed = JSON.parse(text)
 		} catch {
 			throw new Error(
 				`Cloud Agent: response is not valid JSON (HTTP ${resp.status}): ${text.slice(0, 400)}${text.length > 400 ? "…" : ""}`,
 			)
 		}
+		try {
+			return this.adapter.parseResponseBody(parsed as Record<string, unknown>)
+		} catch (e) {
+			const hint = getErrorMessage(e)
+			throw new Error(`Cloud Agent: invalid response payload (HTTP ${resp.status}): ${hint}`)
+		}
 	}
 
 	async connect(): Promise<void> {
+		const endpoint = this.adapter.getEndpoint("health")
 		await this.retryExecutor.execute(
 			async () => {
 				const { signal, cleanup } = this.mergeAbortAndTimeout()
 				try {
 					let resp: Response
 					try {
-						resp = await fetch(`${this.serverUrl}/health`, {
+						resp = await fetch(`${this.serverUrl}${endpoint}`, {
 							method: "GET",
 							...(signal ? { signal } : {}),
 							headers: this.buildHeaders(),
@@ -227,7 +242,11 @@ export class CloudAgentClient {
 				}
 			},
 			shouldRetryCloudAgent,
-			(info) => logger.warn("CloudAgentClient", `connect retry #${info.attempt + 1} after ${info.delayMs}ms`),
+			(info) =>
+				logger.warn(
+					"CloudAgentClient",
+					`connect retry #${info.attempt + 1} after ${info.delayMs}ms`,
+				),
 		)
 	}
 
@@ -237,22 +256,23 @@ export class CloudAgentClient {
 		workspacePath?: string,
 		images?: string[],
 	): Promise<CloudRunResult> {
-		const body: Record<string, UnsafeAny> = {
+		// 1. 适配器构建请求体
+		const body = this.adapter.buildRequestBody({
 			goal: message,
-			session_id: sessionId,
-			workspace_path: workspacePath,
-		}
-		if (images && images.length > 0) {
-			body.images = images
-		}
+			sessionId,
+			workspacePath,
+			images,
+		})
 
+		// 2. Client 处理 HTTP 层
+		const endpoint = this.adapter.getEndpoint("run")
 		const data = await this.retryExecutor.execute(
 			async () => {
 				const { signal, cleanup } = this.mergeAbortAndTimeout()
 				let resp: Response
 				try {
 					try {
-						resp = await fetch(`${this.serverUrl}/v1/run`, {
+						resp = await fetch(`${this.serverUrl}${endpoint}`, {
 							method: "POST",
 							headers: this.buildHeaders(),
 							body: JSON.stringify(body),
@@ -273,13 +293,14 @@ export class CloudAgentClient {
 					throw err
 				}
 
-				return this.parseJsonResponse(resp)
+				return this.parseUniversalResponse(resp)
 			},
 			shouldRetryCloudAgent,
 			(info) => logger.warn("CloudAgentClient", `submitTask retry #${info.attempt + 1} after ${info.delayMs}ms`),
 		)
 
-		const { operations: workspaceOps, error: workspaceOpsError } = parseWorkspaceOps(data)
+		// 从 raw 中解析 workspace_ops（适配器未处理此字段）
+		const { operations: workspaceOps, error: workspaceOpsError } = parseWorkspaceOps(data.raw)
 		if (workspaceOpsError !== undefined) {
 			logger.warn("CloudAgentClient", `Invalid workspace_ops in /v1/run response: ${workspaceOpsError}`)
 		}
@@ -288,16 +309,16 @@ export class CloudAgentClient {
 			await this.callbacks.onText(log)
 		}
 
-		if (data.memory_summary) {
-			await this.callbacks.onText(data.memory_summary)
+		if (data.memorySummary) {
+			await this.callbacks.onText(data.memorySummary)
 		}
 
 		await this.callbacks.onDone(data.ok ? "Task completed" : "Task failed")
 
 		return {
-			memorySummary: data.memory_summary || "",
-			tokensIn: data.tokens_in ?? 0,
-			tokensOut: data.tokens_out ?? 0,
+			memorySummary: data.memorySummary || "",
+			tokensIn: data.tokensIn ?? 0,
+			tokensOut: data.tokensOut ?? 0,
 			cost: data.cost ?? 0,
 			workspaceOps,
 			workspaceOpsParseError: workspaceOpsError,
@@ -309,18 +330,20 @@ export class CloudAgentClient {
 	 * Returns structured compile output (success flag + stdout/stderr).
 	 */
 	async compile(sessionId: string, workspacePath?: string): Promise<CloudCompileResult> {
-		const body: Record<string, UnsafeAny> = { session_id: sessionId }
-		if (workspacePath) {
-			body.workspace_path = workspacePath
-		}
+		const body = this.adapter.buildRequestBody({
+			goal: "",
+			sessionId,
+			workspacePath,
+		})
 
+		const endpoint = this.adapter.getEndpoint("compile")
 		return this.retryExecutor.execute(
 			async () => {
 				const { signal, cleanup } = this.mergeAbortAndTimeout()
 				let resp: Response
 				try {
 					try {
-						resp = await fetch(`${this.serverUrl}/v1/run/compile`, {
+						resp = await fetch(`${this.serverUrl}${endpoint}`, {
 							method: "POST",
 							headers: this.buildHeaders(),
 							body: JSON.stringify(body),
@@ -394,20 +417,25 @@ export class CloudAgentClient {
 					throw err
 				}
 
-				const text = await resp.text()
-				let parsed: UnsafeAny
-				try {
-					parsed = JSON.parse(text)
-				} catch {
-					throw new Error(
-						`Cloud Agent: deferred response is not valid JSON (HTTP ${resp.status}): ${text.slice(0, 400)}${text.length > 400 ? "…" : ""}`,
-					)
-				}
-				try {
-					return normalizeDeferredResponse(parsed)
-				} catch (e) {
-					const hint = getErrorMessage(e)
-					throw new Error(`Cloud Agent: invalid deferred response payload (HTTP ${resp.status}): ${hint}`)
+				const universal = await this.parseUniversalResponse(resp)
+				// 转换为 DeferredResponse（snake_case 字段名）
+				return {
+					run_id: universal.runId,
+					status: universal.status,
+					pending_tools: universal.pendingTools?.map((t) => ({
+						call_id: t.callId,
+						tool: t.tool,
+						arguments: t.arguments,
+					})),
+					workspace_ops: universal.raw?.workspace_ops as UnsafeAny,
+					text: universal.text,
+					reasoning: universal.reasoning,
+					ok: universal.ok,
+					memory_summary: universal.memorySummary,
+					logs: universal.logs,
+					tokens_in: universal.tokensIn,
+					tokens_out: universal.tokensOut,
+					cost: universal.cost,
 				}
 			},
 			shouldRetryCloudAgent,
@@ -421,15 +449,14 @@ export class CloudAgentClient {
 		workspacePath?: string,
 		images?: string[],
 	): Promise<DeferredResponse> {
-		const body: Record<string, UnsafeAny> = {
+		const body = this.adapter.buildRequestBody({
 			goal: message,
-			session_id: sessionId,
-			workspace_path: workspacePath,
-		}
-		if (images && images.length > 0) {
-			body.images = images
-		}
-		return this.fetchDeferred("/v1/run/deferred/start", body)
+			sessionId,
+			workspacePath,
+			images,
+		})
+		const endpoint = this.adapter.getEndpoint("deferredStart")
+		return this.fetchDeferred(endpoint, body)
 	}
 
 	async deferredResume(
@@ -437,22 +464,22 @@ export class CloudAgentClient {
 		sessionId: string,
 		toolResults: DeferredToolResult[],
 	): Promise<DeferredResponse> {
-		return this.fetchDeferred("/v1/run/deferred/resume", {
-			run_id: runId,
-			session_id: sessionId,
-			tool_results: toolResults,
+		const body = this.adapter.buildRequestBody({
+			runId,
+			sessionId,
+			toolResults,
 		})
+		const endpoint = this.adapter.getEndpoint("deferredResume")
+		return this.fetchDeferred(endpoint, body)
 	}
 
 	async disconnect(sessionId?: string, runId?: string): Promise<void> {
 		if (sessionId?.trim()) {
 			await CloudAgentClient.sendDeferredAbort(
-				this.serverUrl,
-				this.deviceToken,
-				this.options?.apiKey,
+				this.options.profile,
 				sessionId.trim(),
 				runId?.trim() || undefined,
-				this.options?.requestTimeoutMs,
+				this.options.requestTimeoutMs,
 			)
 		}
 	}

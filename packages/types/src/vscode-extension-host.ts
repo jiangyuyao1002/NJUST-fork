@@ -7,7 +7,7 @@ import type { ModeConfig, PromptComponent } from "./mode.js"
 import type { Experiments } from "./experiment.js"
 import type { ClineMessage, QueuedMessage } from "./message.js"
 import type { TodoItem } from "./todo.js"
-import type { CloudUserInfo, CloudOrganizationMembership, OrganizationAllowList, ShareVisibility } from "./cloud.js"
+import type { CloudUserInfo, CloudOrganizationMembership, OrganizationAllowList, ShareVisibility, CloudAgentProfile } from "./cloud.js"
 import type { SerializedCustomToolDefinition } from "./custom-tool.js"
 import type { GitCommit } from "./git.js"
 import type { McpServer } from "./mcp.js"
@@ -99,6 +99,7 @@ export interface ExtensionMessage {
 		| "modes"
 		| "taskWithAggregatedCosts"
 		| "openAiCodexRateLimits"
+		| "cloudAgentProfiles"
 		| "webSearchStatus"
 		| "skills"
 		| "fileContent"
@@ -144,6 +145,8 @@ export interface ExtensionMessage {
 	lmStudioModels?: ModelRecord
 	vsCodeLmModels?: { vendor?: string; family?: string; version?: string; id?: string }[]
 	mcpServers?: McpServer[]
+	profiles?: CloudAgentProfile[]
+	activeProfileId?: string
 	commits?: GitCommit[]
 	listApiConfig?: ProviderSettingsEntry[]
 	mode?: string
@@ -536,6 +539,11 @@ export interface WebviewMessage {
 		| "switchMode"
 		| "debugSetting"
 		| "transcribeAudio"
+		// Cloud Agent Profile messages
+		| "cloudAgentGetProfiles"
+		| "cloudAgentSaveProfile"
+		| "cloudAgentDeleteProfile"
+		| "cloudAgentSetActiveProfile"
 		// Skills messages
 		| "testWebSearch"
 		| "requestSkills"
@@ -668,6 +676,10 @@ export interface WebviewMessage {
 	confirmRemoteWorkspaceOps?: boolean
 	compileLoopEnabled?: boolean
 	compileLoopMaxRetries?: number
+	/** Cloud Agent Profile CRUD */
+	cloudAgentSaveProfile?: CloudAgentProfile
+	cloudAgentDeleteProfile?: string
+	cloudAgentSetActiveProfile?: string
 }
 
 export interface RequestOpenAiCodexRateLimitsMessage {

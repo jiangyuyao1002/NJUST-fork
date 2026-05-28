@@ -30,6 +30,7 @@ import { Terminal } from "../../integrations/terminal/Terminal"
 import { getWorkspaceGitInfo } from "../../utils/git"
 import { logger } from "../../shared/logger"
 import { getWorkspaceWebviewConfig, computePermissionMode } from "./ClineProviderState"
+import { getProfileStorageService } from "../../services/cloud-agent/ProfileStorageService"
 import type { ContextProxy } from "../config/ContextProxy"
 import type { CustomModesManager } from "../config/CustomModesManager"
 import type { TaskHistoryStore } from "../task-persistence/TaskHistoryStore"
@@ -247,6 +248,17 @@ export async function buildWebviewState(
 	const { allowedCommands, deniedCommands } = commandLists
 	const cloudOrganizations: ExtensionState["cloudOrganizations"] = []
 	const workspaceWebviewConfig = getWorkspaceWebviewConfig()
+
+	// 从活跃 Profile 覆盖 serverUrl（如果有）
+	try {
+		const activeProfile = getProfileStorageService().getActiveProfile()
+		if (activeProfile) {
+			workspaceWebviewConfig.cloudAgentServerUrl = activeProfile.serverUrl
+		}
+	} catch {
+		// ProfileStorageService 可能尚未初始化
+	}
+
 	const currentTask = host.getCurrentTask()
 
 	return {

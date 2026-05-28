@@ -148,6 +148,19 @@ vi.mock("../services/cangjie-lsp/cangjieDiagnosticModeSwitch", () => ({ cangjieD
 vi.mock("../services/cangjie-lsp/CangjieLintConfig", () => ({ CangjieLintConfig: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/CangjieMetricsCollector", () => ({ CangjieMetricsCollector: mockConstructor() }))
 vi.mock("../services/cloud-agent/deviceToken", () => ({ setDeviceToken: vi.fn() }))
+vi.mock("../services/cloud-agent/ProfileStorageService", () => ({
+	ProfileStorageService: vi.fn().mockImplementation(() => ({
+		getProfiles: vi.fn(() => []),
+		getProfile: vi.fn(() => undefined),
+		getActiveProfile: vi.fn(() => undefined),
+		saveProfile: vi.fn().mockResolvedValue(undefined),
+		deleteProfile: vi.fn().mockResolvedValue(undefined),
+		setActiveProfileId: vi.fn().mockResolvedValue(undefined),
+		migrateFromLegacyConfig: vi.fn().mockResolvedValue(null),
+	})),
+	setProfileStorageService: vi.fn(),
+	getProfileStorageService: vi.fn(),
+}))
 
 // Mock fs so the extension module can safely check for optional .env.
 vi.mock("fs", () => ({

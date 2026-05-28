@@ -25,6 +25,7 @@ import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { clearOpenAiCodexAuthCache } from "../WebviewStateBuilder"
+import { getProfileStorageService } from "../../../services/cloud-agent/ProfileStorageService"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -60,6 +61,10 @@ export function registerSettingsHandlers(router: MessageRouter): void {
 	router.register("openAiCodexSignIn", handleOpenAiCodexSignIn)
 	router.register("openAiCodexSignOut", handleOpenAiCodexSignOut)
 	router.register("requestOpenAiCodexRateLimits", handleRequestOpenAiCodexRateLimits)
+	router.register("cloudAgentGetProfiles", handleCloudAgentGetProfiles)
+	router.register("cloudAgentSaveProfile", handleCloudAgentSaveProfile)
+	router.register("cloudAgentDeleteProfile", handleCloudAgentDeleteProfile)
+	router.register("cloudAgentSetActiveProfile", handleCloudAgentSetActiveProfile)
 }
 
 async function handleUpdateSettings(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -675,5 +680,69 @@ async function handleRequestOpenAiCodexRateLimits(context: MessageHandlerContext
 		const errorMessage = getErrorMessage(error)
 		provider.log(`Error fetching OpenAI Codex rate limits: ${errorMessage}`)
 		void provider.postMessageToWebview({ type: "openAiCodexRateLimits", error: errorMessage })
+	}
+}
+
+// ─── Cloud Agent Profile 处理器 ──────────────────────────────────────
+
+async function handleCloudAgentGetProfiles(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+	const { provider } = context
+	try {
+		const storage = getProfileStorageService()
+		const profiles = storage.getProfiles()
+		const activeProfile = storage.getActiveProfile()
+		await provider.postMessageToWebview({
+			type: "cloudAgentProfiles",
+			profiles,
+			activeProfileId: activeProfile?.id,
+		})
+	} catch (error) {
+		logger.error("SettingsMessageHandler", "Failed to get profiles:", error)
+		await provider.postMessageToWebview({
+			type: "cloudAgentProfiles",
+			profiles: [],
+			activeProfileId: undefined,
+			error: getErrorMessage(error),
+		})
+	}
+}
+
+async function handleCloudAgentSaveProfile(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+	try {
+		const profile = message.cloudAgentSaveProfile
+		if (profile) {
+			await getProfileStorageService().saveProfile(profile)
+			await handleCloudAgentGetProfiles(context, message)
+		}
+	} catch (error) {
+		logger.error("SettingsMessageHandler", "Failed to save profile:", error)
+		vscode.window.showErrorMessage(`保存 Profile 失败: ${getErrorMessage(error)}`)
+	}
+}
+
+async function handleCloudAgentDeleteProfile(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+	try {
+		const id = message.cloudAgentDeleteProfile
+		if (id) {
+			await getProfileStorageService().deleteProfile(id)
+			await handleCloudAgentGetProfiles(context, message)
+		}
+	} catch (error) {
+		logger.error("SettingsMessageHandler", "Failed to delete profile:", error)
+		vscode.window.showErrorMessage(`删除 Profile 失败: ${getErrorMessage(error)}`)
+	}
+}
+
+async function handleCloudAgentSetActiveProfile(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+	const { provider } = context
+	try {
+		const id = message.cloudAgentSetActiveProfile
+		if (id) {
+			await getProfileStorageService().setActiveProfileId(id)
+			await provider.postStateToWebview()
+		}
+	} catch (error) {
+		logger.error("SettingsMessageHandler", "Failed to set active profile:", error)
+		vscode.window.showErrorMessage(`设置活跃 Profile 失败: ${getErrorMessage(error)}`)
 	}
 }

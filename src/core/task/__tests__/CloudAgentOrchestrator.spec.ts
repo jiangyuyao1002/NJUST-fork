@@ -3,7 +3,6 @@ import * as path from "path"
 import * as vscode from "vscode"
 
 import { CloudAgentOrchestrator, type ICloudAgentHost } from "../CloudAgentOrchestrator"
-import { getDeviceToken } from "../../../services/cloud-agent/deviceToken"
 import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../../../services/cloud-agent/applyCloudWorkspaceOps"
 import { executeDeferredToolCall } from "../../../services/cloud-agent/executeDeferredToolCall"
 import { parseWorkspaceOps } from "../../../services/cloud-agent/parseWorkspaceOps"
@@ -100,10 +99,6 @@ vi.mock("../../../services/cloud-agent/CloudAgentClient", () => ({
 	CloudAgentClient: CloudAgentClientMock,
 }))
 
-vi.mock("../../../services/cloud-agent/deviceToken", () => ({
-	getDeviceToken: vi.fn(() => "test-device-token"),
-}))
-
 vi.mock("../../../services/cloud-agent/applyCloudWorkspaceOps", () => ({
 	applyCloudWorkspaceOps: vi.fn().mockResolvedValue({ ok: true, results: [] }),
 	applySingleCloudWorkspaceOp: vi.fn().mockResolvedValue({ ok: true, message: "applied" }),
@@ -115,6 +110,20 @@ vi.mock("../../../services/cloud-agent/executeDeferredToolCall", () => ({
 		content: "ok",
 		is_error: false,
 	}),
+}))
+
+vi.mock("../../../services/cloud-agent/ProfileStorageService", () => ({
+	getProfileStorageService: vi.fn(() => ({
+		getActiveProfile: vi.fn(() => ({
+			id: "test-profile",
+			name: "Test Profile",
+			protocolType: "rest",
+			serverUrl: "http://127.0.0.1:4000",
+			auth: { type: "api-key", apiKey: "test-api-key", deviceTokenSource: "global" },
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+		})),
+	})),
 }))
 
 vi.mock("../../../services/cloud-agent/parseWorkspaceOps", () => ({
@@ -139,7 +148,6 @@ describe("CloudAgentOrchestrator", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		mockVscodeConfig()
-		vi.mocked(getDeviceToken).mockReturnValue("test-device-token")
 		vi.mocked(applyCloudWorkspaceOps).mockResolvedValue({ ok: true, results: [] })
 		vi.mocked(applySingleCloudWorkspaceOp).mockResolvedValue({ ok: true, message: "applied" })
 		vi.mocked(executeDeferredToolCall).mockResolvedValue({
@@ -148,7 +156,6 @@ describe("CloudAgentOrchestrator", () => {
 			is_error: false,
 		})
 		vi.mocked(parseWorkspaceOps).mockReturnValue({ operations: [], error: undefined })
-		vi.mocked(getDeviceToken).mockReturnValue("test-device-token")
 		mockClientInstance.connect.mockResolvedValue(undefined)
 		mockClientInstance.disconnect.mockResolvedValue(undefined)
 		mockClientInstance.submitTask.mockResolvedValue({
@@ -175,8 +182,11 @@ describe("CloudAgentOrchestrator", () => {
 	})
 
 	describe("run()", () => {
-		it("says error when serverUrl is not configured", async () => {
-			mockVscodeConfig({ "cloudAgent.serverUrl": "" })
+		it("says error when no active profile is configured", async () => {
+			const { getProfileStorageService } = await import("../../../services/cloud-agent/ProfileStorageService")
+			vi.mocked(getProfileStorageService).mockReturnValueOnce({
+				getActiveProfile: vi.fn(() => undefined),
+			} as any)
 			const host = createMockHost()
 			const orch = new CloudAgentOrchestrator(host)
 
@@ -184,22 +194,9 @@ describe("CloudAgentOrchestrator", () => {
 
 			expect(host.say).toHaveBeenCalledWith(
 				"error",
-				expect.stringContaining("server URL is not configured"),
+				expect.stringContaining("未配置 Cloud Agent Profile"),
 			)
 			expect(mockClientInstance.connect).not.toHaveBeenCalled()
-		})
-
-		it("says error when deviceToken is missing", async () => {
-			vi.mocked(getDeviceToken).mockReturnValue("")
-			const host = createMockHost()
-			const orch = new CloudAgentOrchestrator(host)
-
-			await orch.run("hello")
-
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("device token not found"),
-			)
 		})
 
 		it("emits TaskStarted event", async () => {

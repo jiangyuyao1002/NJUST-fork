@@ -94,6 +94,7 @@ devflow/
 # Local agent workspace artifacts
 .agents/
 .opencode/
+.reasonix/
 
 # Local analysis outputs and credentials
 .scannerwork/

@@ -17,6 +17,26 @@
 		"select": "選擇此模式要使用的 API 設定"
 	},
 	"cloudAgent": {
+		"profile": {
+			"title": "Cloud Agent Profile",
+			"description": "選擇或切換 Cloud Agent 連線設定",
+			"create": "新增",
+			"edit": "編輯",
+			"delete": "刪除",
+			"cancel": "取消",
+			"save": "儲存",
+			"name": "名稱",
+			"serverUrl": "Server URL",
+			"apiKey": "API Key",
+			"loading": "載入中...",
+			"selectPlaceholder": "選擇 Profile",
+			"builtIn": "內建",
+			"unnamed": "未命名",
+			"newProfile": "新增 Profile",
+			"editProfile": "編輯 Profile",
+			"namePlaceholder": "例如: 生產環境",
+			"apiKeyPlaceholder": "可選"
+		},
 		"serverUrl": {
 			"title": "伺服器地址",
 			"description": "輸入 Cloud Agent 伺服器的 REST 地址",

@@ -35,6 +35,7 @@ import { StandardTooltip } from "@src/components/ui"
 
 import Thumbnails from "../common/Thumbnails"
 import { ModeSelector } from "./ModeSelector"
+import { CloudAgentProfileSelector } from "./CloudAgentProfileSelector"
 import { ApiConfigSelector } from "./ApiConfigSelector"
 import { AutoApproveDropdown } from "./AutoApproveDropdown"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
@@ -1443,6 +1444,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							customModes={customModes}
 							customModePrompts={customModePrompts}
 						/>
+						<CloudAgentProfileSelector visible={mode === "cloud-agent"} />
 						<ApiConfigSelector
 							value={currentConfigId}
 							displayName={displayName}

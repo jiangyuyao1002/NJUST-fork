@@ -17,6 +17,26 @@
 		"select": "Select which API configuration to use for this mode"
 	},
 	"cloudAgent": {
+		"profile": {
+			"title": "Cloud Agent Profile",
+			"description": "Select or switch Cloud Agent connection configuration",
+			"create": "Create",
+			"edit": "Edit",
+			"delete": "Delete",
+			"cancel": "Cancel",
+			"save": "Save",
+			"name": "Name",
+			"serverUrl": "Server URL",
+			"apiKey": "API Key",
+			"loading": "Loading...",
+			"selectPlaceholder": "Select Profile",
+			"builtIn": "Built-in",
+			"unnamed": "Unnamed",
+			"newProfile": "New Profile",
+			"editProfile": "Edit Profile",
+			"namePlaceholder": "e.g. Production",
+			"apiKeyPlaceholder": "Optional"
+		},
 		"serverUrl": {
 			"title": "Server Address",
 			"description": "Enter the Cloud Agent server REST URL",

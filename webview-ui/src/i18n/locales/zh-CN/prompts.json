@@ -17,6 +17,26 @@
 		"select": "选择要用于此模式的API配置"
 	},
 	"cloudAgent": {
+		"profile": {
+			"title": "Cloud Agent Profile",
+			"description": "选择或切换 Cloud Agent 连接配置",
+			"create": "新建",
+			"edit": "编辑",
+			"delete": "删除",
+			"cancel": "取消",
+			"save": "保存",
+			"name": "名称",
+			"serverUrl": "Server URL",
+			"apiKey": "API Key",
+			"loading": "加载中...",
+			"selectPlaceholder": "选择 Profile",
+			"builtIn": "内置",
+			"unnamed": "未命名",
+			"newProfile": "新建 Profile",
+			"editProfile": "编辑 Profile",
+			"namePlaceholder": "例如: 生产环境",
+			"apiKeyPlaceholder": "可选"
+		},
 		"serverUrl": {
 			"title": "服务器地址",
 			"description": "输入Cloud Agent服务器的REST地址",

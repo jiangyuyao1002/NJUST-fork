@@ -39,9 +39,11 @@ export interface CloudAgentCallbacks {
 	onError: (message: string) => Promise<void>
 }
 
+import type { CloudAgentProfile } from "./types/profile"
+
 export interface CloudAgentClientOptions {
-	/** Sent as X-API-Key when set. Omit header when unset (some deployments use device token only). */
-	apiKey?: string
+	/** Profile containing server URL, auth, and protocol config. */
+	profile: CloudAgentProfile
 	/** Aborts in-flight fetch when signalled (e.g. user cancelled the task). */
 	signal?: AbortSignal
 	/** Per-request timeout in ms; 0 or unset means no timeout. */

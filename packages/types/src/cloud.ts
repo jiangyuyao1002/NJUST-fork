@@ -178,6 +178,78 @@ export const ORGANIZATION_DEFAULT: OrganizationSettings = {
 export type ShareVisibility = "organization" | "public"
 
 /**
+ * CloudAgentProfile
+ */
+
+export type CloudAgentProtocolType = "rest" | "mcp"
+
+export interface CloudAgentEndpointConfig {
+	health?: string
+	run: string
+	deferredStart?: string
+	deferredResume?: string
+	deferredAbort?: string
+	compile?: string
+}
+
+export interface CloudAgentRestFieldMapping {
+	request?: Partial<{
+		goal: string
+		sessionId: string
+		workspacePath: string
+		images: string
+		runId: string
+		toolResults: string
+	}>
+	response?: Partial<{
+		runId: string
+		status: string
+		pendingTools: string
+		toolCalls: string
+		workspaceOps: string
+		text: string
+		reasoning: string
+		logs: string
+		ok: string
+		memorySummary: string
+		tokensIn: string
+		tokensOut: string
+		cost: string
+	}>
+	statusValues?: Partial<{
+		pending: string
+		done: string
+	}>
+}
+
+export interface CloudAgentAuthConfig {
+	type: "api-key" | "bearer" | "basic" | "device-token" | "custom"
+	apiKeyHeader?: string
+	apiKey?: string
+	bearerToken?: string
+	basicUsername?: string
+	basicPassword?: string
+	deviceTokenSource?: "global" | "profile"
+	deviceToken?: string
+	customHeaders?: Record<string, string>
+}
+
+export interface CloudAgentProfile {
+	id: string
+	name: string
+	description?: string
+	icon?: string
+	protocolType: CloudAgentProtocolType
+	serverUrl: string
+	endpoints?: CloudAgentEndpointConfig
+	fieldMapping?: CloudAgentRestFieldMapping
+	auth: CloudAgentAuthConfig
+	createdAt: number
+	updatedAt: number
+	isBuiltIn?: boolean
+}
+
+/**
  * AuthState
  */
 

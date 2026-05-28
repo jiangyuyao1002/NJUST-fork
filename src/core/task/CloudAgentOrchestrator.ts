@@ -9,7 +9,7 @@ import { CloudAgentClient } from "../../services/cloud-agent/CloudAgentClient"
 import { executeDeferredToolCall } from "../../services/cloud-agent/executeDeferredToolCall"
 import { CLOUD_AGENT_DEFERRED_MAX_ITERATIONS, CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX } from "../../services/cloud-agent/deferredConstants"
 import { parseWorkspaceOps } from "../../services/cloud-agent/parseWorkspaceOps"
-import { getDeviceToken } from "../../services/cloud-agent/deviceToken"
+import { getProfileStorageService } from "../../services/cloud-agent/ProfileStorageService"
 import type {
 	CloudAgentCallbacks,
 	CloudRunResult,
@@ -18,6 +18,7 @@ import type {
 	DeferredToolResult,
 	WorkspaceOp,
 } from "../../services/cloud-agent/types"
+import type { CloudAgentProfile } from "../../services/cloud-agent/types/profile"
 import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { AskIgnoredError } from "./AskIgnoredError"
 import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
@@ -27,55 +28,28 @@ import { TaskAbortedError } from "./TaskErrors"
 
 export type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 
-interface CloudAgentConfig {
-	serverUrl: string
-	deviceToken: string
-	apiKey: string
-	requestTimeoutMs: number
+// ─── 行为配置（保留为全局 VS Code 设置）─────────────────────────────
+
+interface BehaviorConfig {
 	applyRemoteWorkspaceOps: boolean
 	confirmRemoteWorkspaceOps: boolean
 	useDeferredProtocol: boolean
 	compileLoopEnabled: boolean
 	compileMaxRetries: number
+	requestTimeoutMs: number
 	allowedCommands: string[]
 	deniedCommands: string[]
 }
 
-function readCloudAgentConfig(): CloudAgentConfig {
+function readBehaviorConfig(): BehaviorConfig {
 	const config = vscode.workspace.getConfiguration(Package.name)
-	const serverUrl = (config.get<string>("cloudAgent.serverUrl", "") ?? "").trim()
-	const deviceToken = getDeviceToken()
-	let apiKey = (config.get<string>("cloudAgent.apiKey", "") ?? "").trim()
-	if (!apiKey) {
-		apiKey = (process.env.CLOUD_AGENT_MOCK_API_KEY ?? process.env.NJUST_CLOUD_AGENT_API_KEY ?? "").trim()
-	}
-
-	if (serverUrl && !apiKey) {
-		vscode.window
-			.showWarningMessage(
-				"Cloud Agent server is configured but no API Key is set. Configure njust-ai-cj.cloudAgent.apiKey in settings.",
-				"Open Settings",
-			)
-			.then((choice) => {
-				if (choice === "Open Settings") {
-					void vscode.commands.executeCommand(
-						"workbench.action.openSettings",
-						"njust-ai-cj.cloudAgent.apiKey",
-					)
-				}
-			})
-	}
-
 	return {
-		serverUrl,
-		deviceToken,
-		apiKey,
-		requestTimeoutMs: config.get<number>("cloudAgent.requestTimeoutMs", 0) ?? 0,
 		applyRemoteWorkspaceOps: config.get<boolean>("cloudAgent.applyRemoteWorkspaceOps", true) ?? true,
 		confirmRemoteWorkspaceOps: config.get<boolean>("cloudAgent.confirmRemoteWorkspaceOps", true) ?? true,
 		useDeferredProtocol: config.get<boolean>("cloudAgent.deferredProtocol", true) ?? true,
 		compileLoopEnabled: config.get<boolean>("cloudAgent.compileLoop.enabled", true) ?? true,
 		compileMaxRetries: config.get<number>("cloudAgent.compileLoop.maxRetries", 3) ?? 3,
+		requestTimeoutMs: config.get<number>("cloudAgent.requestTimeoutMs", 0) ?? 0,
 		allowedCommands: config.get<string[]>("allowedCommands") ?? [],
 		deniedCommands: config.get<string[]>("deniedCommands") ?? [],
 	}
@@ -92,11 +66,11 @@ function makeCallbacks(host: ICloudAgentHost): CloudAgentCallbacks {
 	}
 }
 
-function makeClientOptions(cfg: CloudAgentConfig, signal: AbortSignal) {
+function makeClientOptions(profile: CloudAgentProfile, signal: AbortSignal, requestTimeoutMs: number) {
 	return {
-		apiKey: cfg.apiKey || undefined,
+		profile,
 		signal,
-		requestTimeoutMs: cfg.requestTimeoutMs > 0 ? cfg.requestTimeoutMs : undefined,
+		requestTimeoutMs: requestTimeoutMs > 0 ? requestTimeoutMs : undefined,
 	}
 }
 
@@ -109,33 +83,30 @@ export class CloudAgentOrchestrator {
 	constructor(private readonly host: ICloudAgentHost) {}
 
 	async run(userMessage: string, images?: string[]): Promise<void> {
-		const cfg = readCloudAgentConfig()
-
-		if (!cfg.serverUrl) {
+		// 1. 从 ProfileStorageService 获取活跃 Profile
+		const profile = getProfileStorageService().getActiveProfile()
+		if (!profile) {
 			await this.host.say(
 				"error",
-				"Cloud Agent server URL is not configured. Set njust-ai-cj.cloudAgent.serverUrl (e.g. http://127.0.0.1:4000 for the local mock).",
+				"未配置 Cloud Agent Profile。请在设置中创建或选择一个 Profile。",
 			)
 			return
 		}
-		if (!cfg.deviceToken) {
-			await this.host.say("error", "Cloud Agent device token not found. Please restart VS Code.")
-			return
-		}
+
+		// 2. 读取行为配置（全局设置）
+		const behavior = readBehaviorConfig()
 
 		const callbacks = makeCallbacks(this.host)
 		const requestAbort = new AbortController()
 		this.host.setCurrentRequestAbortController(requestAbort)
 
 		const client = new CloudAgentClient(
-			cfg.serverUrl,
-			cfg.deviceToken,
 			callbacks,
-			makeClientOptions(cfg, requestAbort.signal),
+			makeClientOptions(profile, requestAbort.signal, behavior.requestTimeoutMs),
 		)
 		this.host.emit(NJUST_AI_CJEventName.TaskStarted)
 
-		if (cfg.useDeferredProtocol) {
+		if (behavior.useDeferredProtocol) {
 			try {
 				await client.connect()
 			} catch (error) {
@@ -147,18 +118,19 @@ export class CloudAgentOrchestrator {
 			} finally {
 				this.host.setCurrentRequestAbortController(undefined)
 			}
-			await this.runDeferredLoop(client, cfg, callbacks, userMessage, images)
+			await this.runDeferredLoop(client, profile, behavior, callbacks, userMessage, images)
 			return
 		}
 
-		await this.runLegacy(client, cfg, callbacks, userMessage, images)
+		await this.runLegacy(client, profile, behavior, callbacks, userMessage, images)
 	}
 
 	// ── Legacy single-shot /v1/run ──────────────────────────────────────
 
 	private async runLegacy(
 		client: CloudAgentClient,
-		cfg: CloudAgentConfig,
+		profile: CloudAgentProfile,
+		behavior: BehaviorConfig,
 		callbacks: CloudAgentCallbacks,
 		userMessage: string,
 		images?: string[],
@@ -206,17 +178,17 @@ export class CloudAgentOrchestrator {
 		}
 
 		const ops = runResult.workspaceOps
-		if (!cfg.applyRemoteWorkspaceOps && ops.length > 0) {
+		if (!behavior.applyRemoteWorkspaceOps && ops.length > 0) {
 			await this.host.say(
 				"text",
 				`Cloud Agent 返回了 ${ops.length} 条可应用的 workspace_ops，但当前设置未开启「应用远程工作区操作」，因此不会在本地创建或修改文件。请在设置中启用 ${Package.name}.cloudAgent.applyRemoteWorkspaceOps（并可保留 ${Package.name}.cloudAgent.confirmRemoteWorkspaceOps 以在聊天界面中逐项确认）。`,
 			)
 		}
 
-		if (cfg.applyRemoteWorkspaceOps && ops.length > 0) {
-			const applied = await this.applyWorkspaceOps(ops, cfg.confirmRemoteWorkspaceOps)
-			if (cfg.compileLoopEnabled && applied && !this.host.abort) {
-				await this.runCompileFeedbackLoop(cfg, callbacks, cfg.compileMaxRetries, cfg.confirmRemoteWorkspaceOps)
+		if (behavior.applyRemoteWorkspaceOps && ops.length > 0) {
+			const applied = await this.applyWorkspaceOps(ops, behavior.confirmRemoteWorkspaceOps)
+			if (behavior.compileLoopEnabled && applied && !this.host.abort) {
+				await this.runCompileFeedbackLoop(profile, behavior, callbacks, behavior.compileMaxRetries, behavior.confirmRemoteWorkspaceOps)
 			}
 		}
 	}
@@ -225,7 +197,8 @@ export class CloudAgentOrchestrator {
 
 	private async runDeferredLoop(
 		client: CloudAgentClient,
-		cfg: CloudAgentConfig,
+		profile: CloudAgentProfile,
+		behavior: BehaviorConfig,
 		callbacks: CloudAgentCallbacks,
 		userMessage: string,
 		images?: string[],
@@ -244,10 +217,8 @@ export class CloudAgentOrchestrator {
 		let deferredResp: DeferredResponse
 		try {
 			const startClient = new CloudAgentClient(
-				cfg.serverUrl,
-				cfg.deviceToken,
 				makeCallbacks(this.host),
-				makeClientOptions(cfg, startAbort.signal),
+				makeClientOptions(profile, startAbort.signal, behavior.requestTimeoutMs),
 			)
 			deferredResp = await startClient.deferredStart(this.host.taskId, userMessage, this.host.cwd, images)
 			await this.host.say(
@@ -288,8 +259,8 @@ export class CloudAgentOrchestrator {
 					"text",
 					`Cloud Agent 响应中的 workspace_ops 无效，已跳过写盘。校验信息：${workspaceOpsParseError}`,
 				)
-			} else if (ops.length > 0 && cfg.applyRemoteWorkspaceOps) {
-				const applied = await this.applyWorkspaceOps(ops, cfg.confirmRemoteWorkspaceOps)
+			} else if (ops.length > 0 && behavior.applyRemoteWorkspaceOps) {
+				const applied = await this.applyWorkspaceOps(ops, behavior.confirmRemoteWorkspaceOps)
 				if (applied) {
 					hadWorkspaceOpsForCompile = true
 				}
@@ -319,8 +290,8 @@ export class CloudAgentOrchestrator {
 				const result = await executeDeferredToolCall(
 					this.host.cwd,
 					call,
-					cfg.allowedCommands,
-					cfg.deniedCommands,
+					behavior.allowedCommands,
+					behavior.deniedCommands,
 					this.host.rooIgnoreController,
 					this.host.rooProtectedController,
 				)
@@ -345,12 +316,10 @@ export class CloudAgentOrchestrator {
 				await this.host.say("error", msg)
 				await this.host.ask("api_req_failed", msg)
 				await CloudAgentClient.sendDeferredAbort(
-					cfg.serverUrl,
-					cfg.deviceToken,
-					cfg.apiKey || undefined,
+					profile,
 					this.host.taskId,
 					lastNotifiedRunId,
-					cfg.requestTimeoutMs > 0 ? cfg.requestTimeoutMs : undefined,
+					behavior.requestTimeoutMs > 0 ? behavior.requestTimeoutMs : undefined,
 				)
 				return
 			}
@@ -365,10 +334,8 @@ export class CloudAgentOrchestrator {
 
 			try {
 				const resumeClient = new CloudAgentClient(
-					cfg.serverUrl,
-					cfg.deviceToken,
 					makeCallbacks(this.host),
-					makeClientOptions(cfg, resumeAbort.signal),
+					makeClientOptions(profile, resumeAbort.signal, behavior.requestTimeoutMs),
 				)
 				deferredResp = await resumeClient.deferredResume(runIdForResume, this.host.taskId, toolResults)
 				const nextRev = deferredResp.server_revision
@@ -378,12 +345,10 @@ export class CloudAgentOrchestrator {
 						`[Deferred] 服务端 server_revision 已变更（${lastServerRevision} → ${nextRev}），为避免会话串线已中止。`,
 					)
 					await CloudAgentClient.sendDeferredAbort(
-						cfg.serverUrl,
-						cfg.deviceToken,
-						cfg.apiKey || undefined,
+						profile,
 						this.host.taskId,
 						deferredResp.run_id,
-						cfg.requestTimeoutMs > 0 ? cfg.requestTimeoutMs : undefined,
+						behavior.requestTimeoutMs > 0 ? behavior.requestTimeoutMs : undefined,
 					)
 					return
 				}
@@ -419,10 +384,8 @@ export class CloudAgentOrchestrator {
 					this.host.setCurrentRequestAbortController(restartAbort)
 					try {
 						const restartClient = new CloudAgentClient(
-							cfg.serverUrl,
-							cfg.deviceToken,
 							makeCallbacks(this.host),
-							makeClientOptions(cfg, restartAbort.signal),
+							makeClientOptions(profile, restartAbort.signal, behavior.requestTimeoutMs),
 						)
 						deferredResp = await restartClient.deferredStart(
 							this.host.taskId,
@@ -452,12 +415,10 @@ export class CloudAgentOrchestrator {
 				await this.host.ask("api_req_failed", msg)
 				if (status !== 404) {
 					await CloudAgentClient.sendDeferredAbort(
-						cfg.serverUrl,
-						cfg.deviceToken,
-						cfg.apiKey || undefined,
+						profile,
 						this.host.taskId,
 						runIdForResume,
-						cfg.requestTimeoutMs > 0 ? cfg.requestTimeoutMs : undefined,
+						behavior.requestTimeoutMs > 0 ? behavior.requestTimeoutMs : undefined,
 					)
 				}
 				return
@@ -469,12 +430,10 @@ export class CloudAgentOrchestrator {
 		if (iteration >= maxIterations && deferredResp.status === "pending") {
 			await this.host.say("error", `[Deferred] 达到最大迭代次数 (${maxIterations})，已中止 Cloud Agent 会话。`)
 			await CloudAgentClient.sendDeferredAbort(
-				cfg.serverUrl,
-				cfg.deviceToken,
-				cfg.apiKey || undefined,
+				profile,
 				this.host.taskId,
 				lastNotifiedRunId,
-				cfg.requestTimeoutMs > 0 ? cfg.requestTimeoutMs : undefined,
+				behavior.requestTimeoutMs > 0 ? behavior.requestTimeoutMs : undefined,
 			)
 		}
 
@@ -494,20 +453,20 @@ export class CloudAgentOrchestrator {
 					"text",
 					`Cloud Agent 最终响应中的 workspace_ops 无效，已跳过写盘。校验信息：${finalParsed.error}`,
 				)
-			} else if (finalParsed.operations.length > 0 && cfg.applyRemoteWorkspaceOps) {
-				const applied = await this.applyWorkspaceOps(finalParsed.operations, cfg.confirmRemoteWorkspaceOps)
+			} else if (finalParsed.operations.length > 0 && behavior.applyRemoteWorkspaceOps) {
+				const applied = await this.applyWorkspaceOps(finalParsed.operations, behavior.confirmRemoteWorkspaceOps)
 				if (applied) {
 					hadWorkspaceOpsForCompile = true
 				}
 			}
 
 			if (
-				cfg.compileLoopEnabled &&
-				cfg.applyRemoteWorkspaceOps &&
+				behavior.compileLoopEnabled &&
+				behavior.applyRemoteWorkspaceOps &&
 				hadWorkspaceOpsForCompile &&
 				!this.host.abort
 			) {
-				await this.runCompileFeedbackLoop(cfg, callbacks, cfg.compileMaxRetries, cfg.confirmRemoteWorkspaceOps)
+				await this.runCompileFeedbackLoop(profile, behavior, callbacks, behavior.compileMaxRetries, behavior.confirmRemoteWorkspaceOps)
 			}
 
 			await this.host.say(
@@ -599,7 +558,8 @@ export class CloudAgentOrchestrator {
 	// ── Compile feedback loop ───────────────────────────────────────────
 
 	private async runCompileFeedbackLoop(
-		cfg: CloudAgentConfig,
+		profile: CloudAgentProfile,
+		behavior: BehaviorConfig,
 		callbacks: CloudAgentCallbacks,
 		maxRetries: number,
 		confirmOps: boolean,
@@ -664,10 +624,8 @@ export class CloudAgentOrchestrator {
 			let fixResult: CloudRunResult
 			try {
 				const fixClient = new CloudAgentClient(
-					cfg.serverUrl,
-					cfg.deviceToken,
 					callbacks,
-					makeClientOptions(cfg, fixAbort.signal),
+					makeClientOptions(profile, fixAbort.signal, behavior.requestTimeoutMs),
 				)
 				fixResult = await fixClient.submitTask(this.host.taskId, fixGoal, this.host.cwd)
 				await this.host.say(

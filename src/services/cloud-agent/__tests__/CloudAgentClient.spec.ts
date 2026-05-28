@@ -1,6 +1,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { CloudAgentClient } from "../CloudAgentClient"
+import type { CloudAgentProfile } from "../types/profile"
+import { setDeviceToken } from "../deviceToken"
+
+function createMockProfile(overrides?: Partial<CloudAgentProfile>): CloudAgentProfile {
+	return {
+		id: "test-profile",
+		name: "Test Profile",
+		protocolType: "rest",
+		serverUrl: "http://localhost:8765",
+		auth: { type: "api-key", apiKey: "secret-key", deviceTokenSource: "global" },
+		createdAt: Date.now(),
+		updatedAt: Date.now(),
+		...overrides,
+	}
+}
+
+// 设置测试用的 device token
+setDeviceToken("device-token")
 
 describe("CloudAgentClient", () => {
 	const originalFetch = globalThis.fetch
@@ -41,8 +59,8 @@ describe("CloudAgentClient", () => {
 		)
 
 		const callbacks = createCallbacks()
-		const client = new CloudAgentClient("http://localhost:8765", "device-token", callbacks, {
-			apiKey: "secret-key",
+		const client = new CloudAgentClient(callbacks, {
+			profile: createMockProfile(),
 		})
 
 		await client.connect()
@@ -100,7 +118,9 @@ describe("CloudAgentClient", () => {
 			),
 		)
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+		})
 		await client.connect()
 		const result = await client.submitTask("s", "m")
 
@@ -125,7 +145,9 @@ describe("CloudAgentClient", () => {
 			),
 		)
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+		})
 		await client.connect()
 		const result = await client.submitTask("s", "m")
 
@@ -138,11 +160,32 @@ describe("CloudAgentClient", () => {
 		globalThis.fetch = fetchMock as unknown as typeof fetch
 		fetchMock.mockResolvedValue(new Response("", { status: 200 }))
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile({ auth: { type: "device-token", deviceTokenSource: "global" } }),
+		})
 		await client.connect()
 
 		const headers = new Headers((fetchMock.mock.calls[0][1] as RequestInit).headers as HeadersInit)
 		expect(headers.has("X-API-Key")).toBe(false)
+	})
+
+	it("omits X-Device-Token when deviceToken is empty", async () => {
+		const fetchMock = vi.fn()
+		globalThis.fetch = fetchMock as unknown as typeof fetch
+		fetchMock.mockResolvedValue(new Response("", { status: 200 }))
+
+		// 清空 device token
+		setDeviceToken("")
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile({ auth: { type: "device-token", deviceTokenSource: "global" } }),
+		})
+		await client.connect()
+
+		const headers = new Headers((fetchMock.mock.calls[0][1] as RequestInit).headers as HeadersInit)
+		expect(headers.has("X-Device-Token")).toBe(false)
+
+		// 恢复 device token
+		setDeviceToken("device-token")
 	})
 
 	it("enriches connect() error when fetch fails with a cause (e.g. ECONNREFUSED)", async () => {
@@ -153,7 +196,9 @@ describe("CloudAgentClient", () => {
 		)
 		globalThis.fetch = fetchMock as unknown as typeof fetch
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+		})
 		await expect(client.connect()).rejects.toThrow(/fetch failed.*ECONNREFUSED|connect ECONNREFUSED/)
 	}, 15_000)
 
@@ -163,7 +208,9 @@ describe("CloudAgentClient", () => {
 		fetchMock.mockResolvedValueOnce(new Response("", { status: 200 }))
 		fetchMock.mockImplementation(() => Promise.resolve(new Response("nope", { status: 502 })))
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+		})
 		await client.connect()
 		await expect(client.submitTask("s", "m")).rejects.toThrow("Cloud Agent error (HTTP 502)")
 	}, 15_000)
@@ -179,7 +226,9 @@ describe("CloudAgentClient", () => {
 			new Response(JSON.stringify({ ok: true, logs: [], memory_summary: "" }), { status: 200 }),
 		)
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+		})
 		const resultPromise = client.submitTask("s", "m")
 
 		await vi.advanceTimersByTimeAsync(2_000)
@@ -191,7 +240,9 @@ describe("CloudAgentClient", () => {
 		const fetchMock = vi.fn().mockResolvedValue(new Response("bad key", { status: 401 }))
 		globalThis.fetch = fetchMock as unknown as typeof fetch
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+		})
 
 		await expect(client.submitTask("s", "m")).rejects.toThrow("HTTP 401")
 		expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -203,7 +254,9 @@ describe("CloudAgentClient", () => {
 		fetchMock.mockResolvedValueOnce(new Response("", { status: 200 }))
 		fetchMock.mockImplementation(() => Promise.resolve(new Response("not-json", { status: 200 })))
 
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks())
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+		})
 		await client.connect()
 		await expect(client.submitTask("s", "m")).rejects.toThrow("not valid JSON")
 	}, 15_000)
@@ -219,7 +272,10 @@ describe("CloudAgentClient", () => {
 
 		const ac = new AbortController()
 		ac.abort()
-		const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks(), { signal: ac.signal })
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+			signal: ac.signal,
+		})
 
 		await expect(client.connect()).rejects.toMatchObject({ name: "AbortError" })
 		expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -237,7 +293,8 @@ describe("CloudAgentClient", () => {
 			})
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:8765", "tok", createCallbacks(), {
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile(),
 				requestTimeoutMs: 40,
 			})
 
@@ -248,19 +305,27 @@ describe("CloudAgentClient", () => {
 
 	describe("constructor HTTPS enforcement", () => {
 		it("rejects non-localhost HTTP", () => {
-			expect(() => new CloudAgentClient("http://evil.com", "tok", createCallbacks())).toThrow("requires HTTPS")
+			expect(() => new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://evil.com" }),
+			})).toThrow("requires HTTPS")
 		})
 
 		it("accepts localhost HTTP", () => {
-			expect(() => new CloudAgentClient("http://localhost:3000", "tok", createCallbacks())).not.toThrow()
+			expect(() => new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:3000" }),
+			})).not.toThrow()
 		})
 
 		it("accepts 127.0.0.1 HTTP", () => {
-			expect(() => new CloudAgentClient("http://127.0.0.1:4000", "tok", createCallbacks())).not.toThrow()
+			expect(() => new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://127.0.0.1:4000" }),
+			})).not.toThrow()
 		})
 
 		it("accepts HTTPS", () => {
-			expect(() => new CloudAgentClient("https://api.example.com", "tok", createCallbacks())).not.toThrow()
+			expect(() => new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "https://api.example.com" }),
+			})).not.toThrow()
 		})
 	})
 
@@ -271,7 +336,9 @@ describe("CloudAgentClient", () => {
 			)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks())
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
+			})
 			const result = await client.compile("sid-1", "/ws")
 
 			expect(result.success).toBe(true)
@@ -286,7 +353,9 @@ describe("CloudAgentClient", () => {
 			)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks())
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
+			})
 			const result = await client.compile("sid-1")
 
 			expect(result.success).toBe(false)
@@ -301,7 +370,9 @@ describe("CloudAgentClient", () => {
 			})
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks())
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
+			})
 			await expect(client.compile("sid-1")).rejects.toThrow("compile error")
 			expect(callCount).toBeGreaterThanOrEqual(1)
 		}, 15_000)
@@ -321,7 +392,9 @@ describe("CloudAgentClient", () => {
 			)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks())
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
+			})
 			const result = await client.deferredStart("sid-1", "goal", "/ws", ["img"])
 
 			expect(result.run_id).toBe("run-1")
@@ -343,7 +416,9 @@ describe("CloudAgentClient", () => {
 			)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks())
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
+			})
 			const result = await client.deferredStart("sid-1", "goal")
 
 			expect(result.status).toBe("done")
@@ -358,7 +433,9 @@ describe("CloudAgentClient", () => {
 			)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks())
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
+			})
 			const toolResults = [{ call_id: "c1", content: "file content", is_error: false }]
 			const result = await client.deferredResume("run-1", "sid-1", toolResults)
 
@@ -375,21 +452,21 @@ describe("CloudAgentClient", () => {
 			const fetchMock = vi.fn().mockResolvedValue(new Response("not found", { status: 404 }))
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			await CloudAgentClient.sendDeferredAbort("http://localhost:4000", "tok", undefined, "sid-1")
+			await CloudAgentClient.sendDeferredAbort(createMockProfile({ serverUrl: "http://localhost:4000" }), "sid-1")
 		})
 
 		it("sends correct body with runId", async () => {
 			const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 200 }))
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			await CloudAgentClient.sendDeferredAbort("http://localhost:4000", "tok", "key", "sid-1", "run-1")
+			await CloudAgentClient.sendDeferredAbort(createMockProfile({ serverUrl: "http://localhost:4000" }), "sid-1", "run-1")
 
 			const url = fetchMock.mock.calls[0][0] as string
 			expect(url).toContain("/v1/run/deferred/abort")
 			const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)
 			expect(body).toMatchObject({ session_id: "sid-1", run_id: "run-1" })
 			const headers = new Headers((fetchMock.mock.calls[0][1] as RequestInit).headers as HeadersInit)
-			expect(headers.get("X-API-Key")).toBe("key")
+			expect(headers.get("X-API-Key")).toBe("secret-key")
 		})
 	})
 
@@ -398,8 +475,8 @@ describe("CloudAgentClient", () => {
 			const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 200 }))
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks(), {
-				apiKey: "mykey",
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
 			})
 			await client.disconnect("sid-1", "run-1")
 
@@ -412,7 +489,9 @@ describe("CloudAgentClient", () => {
 			const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 200 }))
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient("http://localhost:4000", "tok", createCallbacks())
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ serverUrl: "http://localhost:4000" }),
+			})
 			await client.disconnect("", "run-1")
 
 			expect(fetchMock).not.toHaveBeenCalled()

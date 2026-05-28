@@ -24,6 +24,20 @@ vi.mock("delay", () => ({
 	default: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock("../../../services/cloud-agent/ProfileStorageService", () => ({
+	getProfileStorageService: vi.fn(() => ({
+		getActiveProfile: vi.fn(() => ({
+			id: "test-profile",
+			name: "Test Profile",
+			protocolType: "rest",
+			serverUrl: "http://127.0.0.1:4000",
+			auth: { type: "api-key", apiKey: "test-api-key", deviceTokenSource: "global" },
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+		})),
+	})),
+}))
+
 import delay from "delay"
 
 vi.mock("uuid", async (importOriginal) => {

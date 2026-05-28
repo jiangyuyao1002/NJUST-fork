@@ -17,6 +17,7 @@ import {
 	modeConfigSchema,
 	NJUST_AI_CONFIG_DIR,
 	DEFAULT_CLOUD_AGENT_URL,
+	CloudAgentProfile,
 } from "@njust-ai-cj/types"
 
 import {
@@ -104,6 +105,18 @@ const ModesView = () => {
 	const [importLevel, setImportLevel] = useState<"global" | "project">("project")
 	const [hasRulesToExport, setHasRulesToExport] = useState<Record<string, boolean>>({})
 
+	// Cloud Agent Profile state
+	const [cloudAgentProfiles, setCloudAgentProfiles] = useState<CloudAgentProfile[]>([])
+	const [activeProfileId, setActiveProfileId] = useState<string | undefined>()
+	const [isLoadingProfiles, setIsLoadingProfiles] = useState(false)
+
+	// Profile editor state
+	const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false)
+	const [profileFormName, setProfileFormName] = useState("")
+	const [profileFormServerUrl, setProfileFormServerUrl] = useState("")
+	const [profileFormApiKey, setProfileFormApiKey] = useState("")
+	const [profileFormId, setProfileFormId] = useState<string | undefined>(undefined)
+
 	const defaultCloudAgentServerUrl = DEFAULT_CLOUD_AGENT_URL
 	const [cloudAgentServerUrlDraft, setCloudAgentServerUrlDraft] = useState(
 		() => cloudAgentServerUrlFromState?.trim() || defaultCloudAgentServerUrl,
@@ -115,6 +128,38 @@ const ModesView = () => {
 			setCloudAgentServerUrlDraft(next)
 		}
 	}, [cloudAgentServerUrlFromState])
+
+	// Load Cloud Agent Profiles
+	useEffect(() => {
+		if (visualMode === "cloud-agent") {
+			setIsLoadingProfiles(true)
+			vscode.postMessage({ type: "cloudAgentGetProfiles" })
+		}
+	}, [visualMode])
+
+	// Listen for profile updates from extension
+	useEffect(() => {
+		const handleMessage = (event: MessageEvent) => {
+			const message = event.data
+			if (message.type === "cloudAgentProfiles") {
+				setCloudAgentProfiles(message.profiles || [])
+				setActiveProfileId(message.activeProfileId)
+				setIsLoadingProfiles(false)
+			}
+		}
+		window.addEventListener("message", handleMessage)
+		return () => window.removeEventListener("message", handleMessage)
+	}, [])
+
+	// Sync serverUrl draft when active profile changes
+	useEffect(() => {
+		if (activeProfileId && cloudAgentProfiles.length > 0) {
+			const activeProfile = cloudAgentProfiles.find((p) => p.id === activeProfileId)
+			if (activeProfile?.serverUrl) {
+				setCloudAgentServerUrlDraft(activeProfile.serverUrl)
+			}
+		}
+	}, [activeProfileId, cloudAgentProfiles])
 
 	// State for mode selection popover and search
 	const [open, setOpen] = useState(false)
@@ -763,27 +808,189 @@ const ModesView = () => {
 
 					{/* Cloud Agent Settings - Only show for cloud-agent mode */}
 					{visualMode === "cloud-agent" && (
-						<div className="mb-3">
-							<div className="font-bold mb-1">{t("prompts:cloudAgent.serverUrl.title")}</div>
-							<div className="text-sm text-vscode-descriptionForeground mb-2">
-								{t("prompts:cloudAgent.serverUrl.description")}
+						<div className="mb-3 space-y-3">
+							{/* Profile Selector */}
+							<div>
+								<div className="flex justify-between items-center mb-1">
+									<div className="font-bold">{t("prompts:cloudAgent.profile.title")}</div>
+										<Popover
+											open={isProfileEditorOpen}
+											onOpenChange={(open) => {
+												setIsProfileEditorOpen(open)
+												if (!open) {
+													setProfileFormId(undefined)
+													setProfileFormName("")
+													setProfileFormServerUrl("")
+													setProfileFormApiKey("")
+												}
+											}}>
+											<div className="flex gap-1">
+												<PopoverTrigger asChild>
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() => {
+															setProfileFormId(undefined)
+															setProfileFormName("")
+															setProfileFormServerUrl(defaultCloudAgentServerUrl)
+															setProfileFormApiKey("")
+															setIsProfileEditorOpen(true)
+														}}>
+														{t("prompts:cloudAgent.profile.create")}
+													</Button>
+												</PopoverTrigger>
+												<Button
+													variant="outline"
+													size="sm"
+													disabled={!activeProfileId}
+													onClick={() => {
+														const profile = cloudAgentProfiles.find((p) => p.id === activeProfileId)
+														if (profile) {
+															setProfileFormId(profile.id)
+															setProfileFormName(profile.name)
+															setProfileFormServerUrl(profile.serverUrl)
+															setProfileFormApiKey(profile.auth?.apiKey || "")
+															setIsProfileEditorOpen(true)
+														}
+													}}>
+													{t("prompts:cloudAgent.profile.edit")}
+												</Button>
+											</div>
+											<PopoverContent className="w-80 p-4 space-y-3">
+											<div className="font-bold">
+												{profileFormId ? t("prompts:cloudAgent.profile.editProfile") : t("prompts:cloudAgent.profile.newProfile")}
+											</div>
+											<div>
+												<div className="text-sm mb-1">{t("prompts:cloudAgent.profile.name")}</div>
+												<Input
+													value={profileFormName}
+													onChange={(e) => setProfileFormName(e.target.value)}
+													placeholder={t("prompts:cloudAgent.profile.namePlaceholder")}
+												/>
+											</div>
+											<div>
+												<div className="text-sm mb-1">{t("prompts:cloudAgent.profile.serverUrl")}</div>
+												<Input
+													value={profileFormServerUrl}
+													onChange={(e) => setProfileFormServerUrl(e.target.value)}
+													placeholder={defaultCloudAgentServerUrl}
+												/>
+											</div>
+											<div>
+												<div className="text-sm mb-1">{t("prompts:cloudAgent.profile.apiKey")}</div>
+												<Input
+													type="password"
+													value={profileFormApiKey}
+													onChange={(e) => setProfileFormApiKey(e.target.value)}
+													placeholder={t("prompts:cloudAgent.profile.apiKeyPlaceholder")}
+												/>
+											</div>
+												<div className="flex gap-2 justify-end">
+													{profileFormId && (
+														<Button
+															variant="destructive"
+															size="sm"
+															onClick={() => {
+																if (profileFormId) {
+																	vscode.postMessage({
+																		type: "cloudAgentDeleteProfile",
+																		cloudAgentDeleteProfile: profileFormId,
+																	})
+																	setIsProfileEditorOpen(false)
+																}
+															}}>
+															{t("prompts:cloudAgent.profile.delete")}
+														</Button>
+													)}
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() => setIsProfileEditorOpen(false)}>
+	{t("prompts:cloudAgent.profile.cancel")}
+													</Button>
+													<Button
+														size="sm"
+														onClick={() => {
+															const now = Date.now()
+															const profile: CloudAgentProfile = {
+																id: profileFormId || crypto.randomUUID(),
+																name: profileFormName || t("prompts:cloudAgent.profile.unnamed"),
+																protocolType: "rest",
+																serverUrl: profileFormServerUrl || defaultCloudAgentServerUrl,
+																auth: {
+																	type: profileFormApiKey ? "api-key" : "device-token",
+																	apiKey: profileFormApiKey || undefined,
+																},
+																createdAt: now,
+																updatedAt: now,
+																isBuiltIn: false,
+															}
+															vscode.postMessage({
+																	type: "cloudAgentSaveProfile",
+																	cloudAgentSaveProfile: profile,
+																})
+															setIsProfileEditorOpen(false)
+														}}>
+													{t("prompts:cloudAgent.profile.save")}
+												</Button>
+												</div>
+											</PopoverContent>
+										</Popover>
+								</div>
+									<div className="text-sm text-vscode-descriptionForeground mb-2">
+										{t("prompts:cloudAgent.profile.description")}
+									</div>
+								<Select
+									value={activeProfileId || ""}
+									onValueChange={(value) => {
+										if (value) {
+											vscode.postMessage({
+												type: "cloudAgentSetActiveProfile",
+												cloudAgentSetActiveProfile: value,
+											})
+											setActiveProfileId(value)
+										}
+									}}
+									disabled={isLoadingProfiles}>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder={isLoadingProfiles ? t("prompts:cloudAgent.profile.loading") : t("prompts:cloudAgent.profile.selectPlaceholder")} />
+									</SelectTrigger>
+									<SelectContent>
+										{cloudAgentProfiles.map((profile) => (
+											<SelectItem key={profile.id} value={profile.id}>
+												{profile.name}
+												{profile.isBuiltIn && (
+													<span className="ml-2 text-xs text-vscode-descriptionForeground">({t("prompts:cloudAgent.profile.builtIn")})</span>
+												)}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 							</div>
-							<VSCodeTextField
-								type="text"
-								value={cloudAgentServerUrlDraft}
-								onChange={(e) => {
-									const value = (e.target as HTMLInputElement).value
-									setCloudAgentServerUrlDraft(value)
-								}}
-								onBlur={() => {
-									vscode.postMessage({
-										type: "updateSettings",
-										updatedSettings: { cloudAgentServerUrl: cloudAgentServerUrlDraft },
-									})
-								}}
-								placeholder={t("prompts:cloudAgent.serverUrl.placeholder")}
-								className="w-full"
-							/>
+
+							{/* Server URL (read-only from profile) */}
+							<div>
+								<div className="font-bold mb-1">{t("prompts:cloudAgent.serverUrl.title")}</div>
+								<div className="text-sm text-vscode-descriptionForeground mb-2">
+									{t("prompts:cloudAgent.serverUrl.description")}
+								</div>
+								<VSCodeTextField
+									type="text"
+									value={cloudAgentServerUrlDraft}
+									onChange={(e) => {
+										const value = (e.target as HTMLInputElement).value
+										setCloudAgentServerUrlDraft(value)
+									}}
+									onBlur={() => {
+										vscode.postMessage({
+											type: "updateSettings",
+											updatedSettings: { cloudAgentServerUrl: cloudAgentServerUrlDraft },
+										})
+									}}
+									placeholder={t("prompts:cloudAgent.serverUrl.placeholder")}
+									className="w-full"
+								/>
+							</div>
 						</div>
 					)}
 				</div>

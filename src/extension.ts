@@ -261,6 +261,20 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 	setDeviceToken(deviceToken)
 
+	// Initialize Cloud Agent ProfileStorageService and migrate legacy config.
+	const { ProfileStorageService, setProfileStorageService } = await import("./services/cloud-agent/ProfileStorageService")
+	const profileStorage = new ProfileStorageService(context.globalState, context.workspaceState)
+	setProfileStorageService(profileStorage)
+	const migratedProfile = await profileStorage.migrateFromLegacyConfig()
+	if (migratedProfile) {
+		outputChannel.appendLine(
+			`[CloudAgent] Migrated legacy config to Profile: ${migratedProfile.name} (${migratedProfile.serverUrl})`,
+		)
+		void vscode.window.showInformationMessage(
+			`Cloud Agent 配置已迁移为 Profile「${migratedProfile.name}」。可在 Cloud Agent 设置中管理。`,
+		)
+	}
+
 	const contextProxy = await ContextProxy.getInstance(context)
 
 	// Initialize code index managers for all workspace folders.
