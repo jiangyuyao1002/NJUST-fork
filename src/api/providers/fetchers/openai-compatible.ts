@@ -114,7 +114,7 @@ export async function fetchOpenAICompatibleModels(
 	}
 
 	const baseUrl =
-		options.baseUrl ?? process.env[config.baseUrlEnv] ?? config.defaultBaseUrl
+		options.baseUrl || process.env[config.baseUrlEnv] || config.defaultBaseUrl
 
 	const res = await fetch(joinUrl(baseUrl, config.path), {
 		headers: {

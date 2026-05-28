@@ -8,7 +8,7 @@ export async function fetchAnthropicModels(
 		throw new Error("Missing Anthropic API key")
 	}
 
-	const baseUrl = options.baseUrl ?? "https://api.anthropic.com/v1"
+	const baseUrl = options.baseUrl || "https://api.anthropic.com/v1"
 
 	const res = await fetch(`${baseUrl.replace(/\/$/, "")}/models`, {
 		headers: {

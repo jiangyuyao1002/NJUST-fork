@@ -9,7 +9,7 @@ export async function fetchGeminiModels(
 	}
 
 	const baseUrl =
-		options.baseUrl ?? "https://generativelanguage.googleapis.com/v1beta"
+		options.baseUrl || "https://generativelanguage.googleapis.com/v1beta"
 
 	const url = new URL(`${baseUrl.replace(/\/$/, "")}/models`)
 	url.searchParams.set("key", apiKey)
