@@ -34,6 +34,16 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 		this.resolvedEndpoints = this.mergeEndpoints(profile.endpoints)
 	}
 
+	// ─── 连接管理（REST 无需预连接） ────────────────────────────────
+
+	async connect(): Promise<void> {
+		// REST 协议无需预连接
+	}
+
+	async disconnect(): Promise<void> {
+		// REST 协议无需断开连接
+	}
+
 	// ─── 请求构建 ──────────────────────────────────────────────────
 
 	buildRequestBody(request: UniversalTaskRequest): Record<string, unknown> {

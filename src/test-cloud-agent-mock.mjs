@@ -182,6 +182,27 @@ function createMockServer() {
 		},
 	)
 
+	server.tool(
+		"compile",
+		"Run compilation on the server side",
+		{
+			sessionId: z.string(),
+			workspacePath: z.string().optional(),
+		},
+		async (params) => {
+			log("COMPILE", `Compile request for session: ${params.sessionId}`)
+			return {
+				content: [{
+					type: "text",
+					text: JSON.stringify({
+						success: true,
+						output: "Mock compilation successful.",
+					}),
+				}],
+			}
+		},
+	)
+
 	return server
 }
 

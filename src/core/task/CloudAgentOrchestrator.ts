@@ -106,7 +106,8 @@ export class CloudAgentOrchestrator {
 		)
 		this.host.emit(NJUST_AI_CJEventName.TaskStarted)
 
-		if (behavior.useDeferredProtocol) {
+		// MCP 协议强制走 legacy 路径（submit_task 在服务器端内聚 deferred 逻辑）
+		if (behavior.useDeferredProtocol && profile.protocolType !== "mcp") {
 			try {
 				await client.connect()
 			} catch (error) {

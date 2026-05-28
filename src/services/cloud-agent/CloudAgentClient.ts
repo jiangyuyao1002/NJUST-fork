@@ -17,6 +17,7 @@ import type {
 import type { CloudAgentProfile } from "./types/profile"
 import { AdapterFactory } from "./adapters/AdapterFactory"
 import type { IProtocolAdapter, UniversalTaskResponse } from "./adapters/types"
+import { McpProtocolAdapter } from "./adapters/McpProtocolAdapter"
 import { normalizeServerUrl } from "./urlUtils"
 
 const CLOUD_AGENT_RETRY_OPTIONS: Partial<ApiRetryOptions> = {
@@ -213,6 +214,13 @@ export class CloudAgentClient {
 	}
 
 	async connect(): Promise<void> {
+		// MCP 适配器：建立 MCP 连接（等效于健康检查）
+		if (this.adapter.protocolType === "mcp") {
+			await this.adapter.connect()
+			return
+		}
+
+		// REST 健康检查（现有逻辑不变）
 		const endpoint = this.adapter.getEndpoint("health")
 		await this.retryExecutor.execute(
 			async () => {
@@ -264,42 +272,51 @@ export class CloudAgentClient {
 			images,
 		})
 
-		// 2. Client 处理 HTTP 层
-		const endpoint = this.adapter.getEndpoint("run")
-		const data = await this.retryExecutor.execute(
-			async () => {
-				const { signal, cleanup } = this.mergeAbortAndTimeout()
-				let resp: Response
-				try {
+		let data: UniversalTaskResponse
+
+		// 2. 根据协议类型选择调用方式
+		if (this.adapter.protocolType === "mcp") {
+			// MCP 路径：通过 adapter 调用 MCP 工具
+			const mcpAdapter = this.adapter as McpProtocolAdapter
+			data = await mcpAdapter.callTool("submit_task", body)
+		} else {
+			// REST 路径（现有逻辑不变）
+			const endpoint = this.adapter.getEndpoint("run")
+			data = await this.retryExecutor.execute(
+				async () => {
+					const { signal, cleanup } = this.mergeAbortAndTimeout()
+					let resp: Response
 					try {
-						resp = await fetch(`${this.serverUrl}${endpoint}`, {
-							method: "POST",
-							headers: this.buildHeaders(),
-							body: JSON.stringify(body),
-							...(signal ? { signal } : {}),
-						})
-					} catch (e) {
-						throw enrichFetchError(e)
+						try {
+							resp = await fetch(`${this.serverUrl}${endpoint}`, {
+								method: "POST",
+								headers: this.buildHeaders(),
+								body: JSON.stringify(body),
+								...(signal ? { signal } : {}),
+							})
+						} catch (e) {
+							throw enrichFetchError(e)
+						}
+					} finally {
+						cleanup()
 					}
-				} finally {
-					cleanup()
-				}
 
-				if (!resp.ok) {
-					const errText = await resp.text()
-					const slice = errText.slice(0, 500)
-					const err = new Error(`Cloud Agent error (HTTP ${resp.status}): ${slice}${apiKeyHintFor401(resp.status, slice)}`)
-					;(err as Error & { status?: number }).status = resp.status
-					throw err
-				}
+					if (!resp.ok) {
+						const errText = await resp.text()
+						const slice = errText.slice(0, 500)
+						const err = new Error(`Cloud Agent error (HTTP ${resp.status}): ${slice}${apiKeyHintFor401(resp.status, slice)}`)
+						;(err as Error & { status?: number }).status = resp.status
+						throw err
+					}
 
-				return this.parseUniversalResponse(resp)
-			},
-			shouldRetryCloudAgent,
-			(info) => logger.warn("CloudAgentClient", `submitTask retry #${info.attempt + 1} after ${info.delayMs}ms`),
-		)
+					return this.parseUniversalResponse(resp)
+				},
+				shouldRetryCloudAgent,
+				(info) => logger.warn("CloudAgentClient", `submitTask retry #${info.attempt + 1} after ${info.delayMs}ms`),
+			)
+		}
 
-		// 从 raw 中解析 workspace_ops（适配器未处理此字段）
+		// 3. 处理 workspace_ops（两种协议共用）
 		const { operations: workspaceOps, error: workspaceOpsError } = parseWorkspaceOps(data.raw)
 		if (workspaceOpsError !== undefined) {
 			logger.warn("CloudAgentClient", `Invalid workspace_ops in /v1/run response: ${workspaceOpsError}`)
@@ -330,6 +347,32 @@ export class CloudAgentClient {
 	 * Returns structured compile output (success flag + stdout/stderr).
 	 */
 	async compile(sessionId: string, workspacePath?: string): Promise<CloudCompileResult> {
+		// MCP 路径：直接解析 MCP 响应
+		if (this.adapter.protocolType === "mcp") {
+			const mcpAdapter = this.adapter as McpProtocolAdapter
+			const result = await mcpAdapter.callTool("compile", {
+				session_id: sessionId,
+				workspace_path: workspacePath,
+			})
+
+			// 直接从 MCP 响应中提取 compile 结果
+			const content = result.raw?.content as Array<{ type: string; text?: string }> | undefined
+			const textContent = content?.find((c) => c.type === "text")?.text
+
+			let parsed: Record<string, unknown> = {}
+			try {
+				parsed = textContent ? JSON.parse(textContent) : {}
+			} catch {
+				parsed = {}
+			}
+
+			return {
+				success: (parsed.success as boolean) ?? true,
+				output: (parsed.output as string) ?? "",
+			}
+		}
+
+		// REST 路径（现有逻辑不变）
 		const body = this.adapter.buildRequestBody({
 			goal: "",
 			sessionId,
@@ -474,6 +517,13 @@ export class CloudAgentClient {
 	}
 
 	async disconnect(sessionId?: string, runId?: string): Promise<void> {
+		// MCP 协议：断开连接后直接返回
+		if (this.adapter.protocolType === "mcp") {
+			await this.adapter.disconnect()
+			return
+		}
+
+		// REST 协议：发送 deferred/abort
 		if (sessionId?.trim()) {
 			await CloudAgentClient.sendDeferredAbort(
 				this.options.profile,

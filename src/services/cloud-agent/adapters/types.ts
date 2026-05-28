@@ -61,6 +61,12 @@ export interface IProtocolAdapter {
 	/** 用 Profile 初始化适配器 */
 	initialize(profile: CloudAgentProfile): void
 
+	/** 建立连接（MCP 需要，REST 为空实现） */
+	connect(): Promise<void>
+
+	/** 断开连接（MCP 需要，REST 为空实现） */
+	disconnect(): Promise<void>
+
 	/** 构建请求体（协议层） */
 	buildRequestBody(request: UniversalTaskRequest): Record<string, unknown>
 
