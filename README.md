@@ -184,6 +184,7 @@ flowchart TB
 | Skills | 保留 | 从工作区（`.njust_ai/skills` 等）与全局目录发现 `SKILL.md`，支持 frontmatter 元数据、模式路由（`skills-{mode}/`）、同名优先级覆盖 |
 | 代码索引 | 保留并增强 | 多工作区单例管理，tree-sitter 35+ 语言 AST 分块，嵌入管道 + Qdrant 向量存储，增量更新与缓存管理 |
 | Checkpoints | 保留 | 影子副本快照与回滚，支持 `.rooignore` 排除规则 |
+| MemRL 记忆系统 | 全新增加 | 四层记忆架构（STM / Episodic / LTM / 嵌入适配层），持久化存储于 `.njust_ai/memories/`，向量检索 + Q 值更新 + LLM 提炼仓颉语法规律卡片，跨任务累积经验 |
 
 ## 插件功能模块详解
 
@@ -399,6 +400,71 @@ flowchart TB
 - **路径约束**：Cloud Agent workspace_ops 路径被约束在当前工作区内。
 - **工具权限**：分层规则引擎，`bypass` 模式可跳过（需配合自动批准策略）。
 - **MCP 认证**：内置 MCP Tools Server 支持 Bearer token，远程绑定时强制要求认证。
+
+### 20. MemRL 记忆系统
+
+基于 [MemRL（arxiv:2601.03192）](https://arxiv.org/abs/2601.03192) 设计的四层跨任务记忆架构，持久化存储于 `.njust_ai/memories/`，让 Agent 在多次任务中积累仓颉编程经验。
+
+#### 架构概览
+
+```mermaid
+flowchart TB
+  subgraph Task["任务生命周期"]
+    BR["beforeRun(taskId, intent)"]
+    AR["afterRun(taskId, intent, experience, reward)"]
+  end
+  subgraph Layers["四层记忆"]
+    STM["ShortTermMemory\n（per-task 步骤窗口，最大 32K chars，内存）"]
+    EP["EpisodicMemoryService\n（(z, e, Q) 三元组，向量检索，episodic_memory.json）"]
+    LTM["LongTermMemoryService\n（RuleCard 语法规律卡片，LLM 提炼，ltm_rules.json）"]
+    EMB["MemoryEmbeddingAdapter\n（IEmbedder → MemRL 桥接）"]
+  end
+  subgraph Prompt["系统提示注入"]
+    HINT["episodicHints — 相关历史经验"]
+    RULE["ltmRules — 仓颉语法规律"]
+    SSTM["stmSummary — 当前任务步骤"]
+  end
+  BR --> EMB
+  EMB --> EP
+  EP --> HINT
+  LTM --> RULE
+  STM --> SSTM
+  HINT --> Prompt
+  RULE --> Prompt
+  SSTM --> Prompt
+  AR --> EP
+  AR --> LTM
+  AR --> STM
+```
+
+#### 四层说明
+
+- **ShortTermMemory**（`src/services/memory/ShortTermMemory.ts`）：任务内步骤滑动窗口，记录 `(label, content, ok, ts)` 步骤列表；超出 `maxChars`（默认 32 000）时从最旧步骤截断，当前任务结束后丢弃。
+- **EpisodicMemoryService**（`src/services/memory/EpisodicMemoryService.ts`）：基于 MemRL §4 的 `(z, e, Q)` 三元组持久化存储（`episodic_memory.json`）。检索分两阶段：Phase A 用余弦相似度筛出 TopK1 候选，Phase B 用 `(1−λ)·sim + λ·Q` 复合评分取 TopK2；Q 值采用 Monte Carlo 更新 `Q_new = Q_old + α(r − Q_old)`；条目超限时按 `updatedAt` LRU 淘汰。
+- **LongTermMemoryService**（`src/services/memory/LongTermMemoryService.ts`）：每隔 `distillInterval` 次写入，从高 Q 值 Episode 中调用 LLM（仓颉专家 system prompt）提炼 3–8 条 `RuleCard`（`{topic, rule, examples, confidence}`），按 `confidence × log(useCount+1)` 排序注入系统提示，持久化至 `ltm_rules.json`。
+- **MemoryEmbeddingAdapter**（`src/services/memory/MemoryEmbeddingAdapter.ts`）：将代码索引的 `IEmbedder` 接口适配为 MemRL 的向量化接口，提供 `embed(text)` 方法；无嵌入模型时降级为零向量。
+
+#### 生命周期接口（MemoryManager）
+
+```typescript
+// 任务开始前调用，返回注入系统提示的三段文本
+const { episodicHints, ltmRules, stmSummary } = await memoryManager.beforeRun(taskId, intentText)
+
+// 任务执行中记录步骤
+memoryManager.getTaskSTM(taskId).addStep(label, content, ok)
+
+// 任务结束后调用（reward: 1.0 = 编译/测试通过, 0.0 = 失败）
+await memoryManager.afterRun(taskId, intentText, experienceText, reward)
+```
+
+#### 存储路径
+
+| 文件 | 内容 |
+| --- | --- |
+| `.njust_ai/memories/episodic_memory.json` | 全部 EpisodicEntry，含 id / z（向量）/ e（经验文本）/ Q / useCount |
+| `.njust_ai/memories/ltm_rules.json` | RuleCard 列表，含 topic / rule / examples / confidence |
+
+> **提示词注入位置**：`src/core/prompts/sections/memrl-memory.ts` 负责将三段记忆文本格式化后插入系统提示；`MemoryManager` 由 `Task` 实例化，在 `TaskRequestBuilder` 组装 API 请求时触发 `beforeRun`。
 
 ## 本地开发
 
