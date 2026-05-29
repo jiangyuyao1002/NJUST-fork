@@ -3,6 +3,8 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 
 import type { CloudAgentProfile, AuthConfig as CloudAgentAuthConfig } from "../types/profile"
 import type { DeferredToolCall } from "../types"
+import { logger } from "../../../shared/logger"
+import { getErrorMessage } from "../../../shared/error-utils"
 import type {
 	IProtocolAdapter,
 	UniversalTaskRequest,
@@ -154,11 +156,23 @@ export class McpProtocolAdapter implements IProtocolAdapter {
 	 */
 	private parseMcpContent(data: Record<string, unknown>): Record<string, unknown> {
 		const content = data.content as Array<{ type: string; text?: string }> | undefined
-		const textContent = content?.find((c) => c.type === "text")?.text
+
+		if (!content || !Array.isArray(content)) {
+			logger.warn("McpProtocolAdapter", "MCP response missing or invalid content array")
+			return data
+		}
+
+		const textContent = content.find((c) => c.type === "text")?.text
+
+		if (!textContent) {
+			logger.warn("McpProtocolAdapter", "MCP response content array has no text entry")
+			return data
+		}
 
 		try {
-			return textContent ? JSON.parse(textContent) : data
-		} catch {
+			return JSON.parse(textContent)
+		} catch (e) {
+			logger.warn("McpProtocolAdapter", `Failed to parse MCP content as JSON: ${getErrorMessage(e)}`)
 			return data
 		}
 	}

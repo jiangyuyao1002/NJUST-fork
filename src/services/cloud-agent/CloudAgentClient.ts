@@ -359,10 +359,15 @@ export class CloudAgentClient {
 			const content = result.raw?.content as Array<{ type: string; text?: string }> | undefined
 			const textContent = content?.find((c) => c.type === "text")?.text
 
+			if (!textContent) {
+				logger.warn("CloudAgentClient", "MCP compile response missing text content")
+			}
+
 			let parsed: Record<string, unknown> = {}
 			try {
 				parsed = textContent ? JSON.parse(textContent) : {}
-			} catch {
+			} catch (e) {
+				logger.warn("CloudAgentClient", `Failed to parse MCP compile response: ${getErrorMessage(e)}`)
 				parsed = {}
 			}
 

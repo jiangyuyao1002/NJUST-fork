@@ -20,6 +20,19 @@ vi.mock("@modelcontextprotocol/sdk/client/streamableHttp.js", () => ({
 	})),
 }))
 
+vi.mock("../../../shared/logger", () => ({
+	logger: {
+		warn: vi.fn(),
+		info: vi.fn(),
+		error: vi.fn(),
+		debug: vi.fn(),
+	},
+}))
+
+vi.mock("../../../shared/error-utils", () => ({
+	getErrorMessage: vi.fn((e) => String(e)),
+}))
+
 function createMockProfile(overrides?: Partial<CloudAgentProfile>): CloudAgentProfile {
 	return {
 		id: "test-profile",
