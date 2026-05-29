@@ -35,7 +35,13 @@
 			"newProfile": "New Profile",
 			"editProfile": "Edit Profile",
 			"namePlaceholder": "e.g. Production",
-			"apiKeyPlaceholder": "Optional"
+			"apiKeyPlaceholder": "Optional",
+			"protocolType": "Protocol Type",
+			"protocolTypePlaceholder": "Select Protocol Type",
+			"protocol": {
+				"rest": "REST API",
+				"mcp": "MCP (Model Context Protocol)"
+			}
 		},
 		"serverUrl": {
 			"title": "Server Address",

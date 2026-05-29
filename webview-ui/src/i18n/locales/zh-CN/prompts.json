@@ -35,7 +35,13 @@
 			"newProfile": "新建 Profile",
 			"editProfile": "编辑 Profile",
 			"namePlaceholder": "例如: 生产环境",
-			"apiKeyPlaceholder": "可选"
+			"apiKeyPlaceholder": "可选",
+			"protocolType": "协议类型",
+			"protocolTypePlaceholder": "选择协议类型",
+			"protocol": {
+				"rest": "REST API",
+				"mcp": "MCP (Model Context Protocol)"
+			}
 		},
 		"serverUrl": {
 			"title": "服务器地址",

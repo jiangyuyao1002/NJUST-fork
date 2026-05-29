@@ -18,6 +18,7 @@ import {
 	NJUST_AI_CONFIG_DIR,
 	DEFAULT_CLOUD_AGENT_URL,
 	CloudAgentProfile,
+	CloudAgentProtocolType,
 } from "@njust-ai-cj/types"
 
 import {
@@ -115,6 +116,7 @@ const ModesView = () => {
 	const [profileFormName, setProfileFormName] = useState("")
 	const [profileFormServerUrl, setProfileFormServerUrl] = useState("")
 	const [profileFormApiKey, setProfileFormApiKey] = useState("")
+	const [profileFormProtocolType, setProfileFormProtocolType] = useState<CloudAgentProtocolType>("rest")
 	const [profileFormId, setProfileFormId] = useState<string | undefined>(undefined)
 
 	const defaultCloudAgentServerUrl = DEFAULT_CLOUD_AGENT_URL
@@ -831,10 +833,11 @@ const ModesView = () => {
 														size="sm"
 														onClick={() => {
 															setProfileFormId(undefined)
-															setProfileFormName("")
-															setProfileFormServerUrl(defaultCloudAgentServerUrl)
-															setProfileFormApiKey("")
-															setIsProfileEditorOpen(true)
+														setProfileFormName("")
+														setProfileFormServerUrl(defaultCloudAgentServerUrl)
+														setProfileFormApiKey("")
+														setProfileFormProtocolType("rest")
+														setIsProfileEditorOpen(true)
 														}}>
 														{t("prompts:cloudAgent.profile.create")}
 													</Button>
@@ -850,6 +853,7 @@ const ModesView = () => {
 															setProfileFormName(profile.name)
 															setProfileFormServerUrl(profile.serverUrl)
 															setProfileFormApiKey(profile.auth?.apiKey || "")
+															setProfileFormProtocolType(profile.protocolType || "rest")
 															setIsProfileEditorOpen(true)
 														}
 													}}>
@@ -884,8 +888,22 @@ const ModesView = () => {
 													onChange={(e) => setProfileFormApiKey(e.target.value)}
 													placeholder={t("prompts:cloudAgent.profile.apiKeyPlaceholder")}
 												/>
-											</div>
-												<div className="flex gap-2 justify-end">
+													</div>
+														<div>
+															<div className="text-sm mb-1">{t("prompts:cloudAgent.profile.protocolType")}</div>
+															<Select
+																value={profileFormProtocolType}
+																onValueChange={(value) => setProfileFormProtocolType(value as CloudAgentProtocolType)}>
+																<SelectTrigger>
+																	<SelectValue placeholder={t("prompts:cloudAgent.profile.protocolTypePlaceholder")} />
+																</SelectTrigger>
+																<SelectContent>
+																	<SelectItem value="rest">{t("prompts:cloudAgent.profile.protocol.rest")}</SelectItem>
+																	<SelectItem value="mcp">{t("prompts:cloudAgent.profile.protocol.mcp")}</SelectItem>
+																</SelectContent>
+															</Select>
+														</div>
+														<div className="flex gap-2 justify-end">
 													{profileFormId && (
 														<Button
 															variant="destructive"
@@ -915,7 +933,7 @@ const ModesView = () => {
 															const profile: CloudAgentProfile = {
 																id: profileFormId || crypto.randomUUID(),
 																name: profileFormName || t("prompts:cloudAgent.profile.unnamed"),
-																protocolType: "rest",
+																protocolType: profileFormProtocolType,
 																serverUrl: profileFormServerUrl || defaultCloudAgentServerUrl,
 																auth: {
 																	type: profileFormApiKey ? "api-key" : "device-token",
