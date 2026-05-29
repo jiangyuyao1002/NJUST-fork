@@ -96,6 +96,18 @@ vi.mock("../../../services/cloud-agent/ProfileStorageService", () => ({
 	})),
 }))
 
+vi.mock("../../services/mcp/McpServerManager", () => ({
+	McpServerManager: {
+		getInstance: vi.fn().mockResolvedValue(undefined),
+	},
+}))
+
+vi.mock("../CloudAgentOrchestrator", () => ({
+	CloudAgentOrchestrator: vi.fn().mockImplementation(() => ({
+		run: vi.fn().mockResolvedValue(undefined),
+	})),
+}))
+
 import delay from "delay"
 
 vi.mock("uuid", async (importOriginal) => {

@@ -87,6 +87,8 @@ jobs:
               uses: actions/checkout@v4
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
+            - name: Build types package
+              run: pnpm --filter @njust-ai-cj/types build
             - name: Run E2E tests
               run: xvfb-run -a pnpm --filter @njust-ai-cj/vscode-e2e test:ci
 

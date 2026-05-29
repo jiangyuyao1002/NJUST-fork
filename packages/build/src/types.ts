@@ -38,7 +38,7 @@ const commandsSchema = z.array(
 export type Commands = z.infer<typeof commandsSchema>
 
 const menuItemSchema = z.object({
-	group: z.string(),
+	group: z.string().optional(),
 	command: z.string().optional(),
 	submenu: z.string().optional(),
 	when: z.string().optional(),
@@ -88,7 +88,7 @@ const configurationPropertySchema = z.object({
 	properties: z.record(z.string(), z.any()).optional(),
 	enum: z.array(z.any()).optional(),
 	default: z.any().optional(),
-	description: z.string(),
+	description: z.string().optional(),
 })
 
 export type ConfigurationProperty = z.infer<typeof configurationPropertySchema>
