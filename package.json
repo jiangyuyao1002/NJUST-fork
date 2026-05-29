@@ -13,6 +13,7 @@
     "lint-staged": "lint-staged",
     "check-types": "turbo check-types --log-order grouped --output-logs new-only",
     "test": "turbo test --log-order grouped --output-logs new-only",
+    "pretest:coverage": "pnpm --filter @njust-ai-cj/types build",
     "test:coverage": "pnpm exec vitest run --coverage --config src/vitest.config.ts",
     "format": "turbo format --log-order grouped --output-logs new-only",
     "build": "turbo build --log-order grouped --output-logs new-only",
