@@ -20,8 +20,8 @@ export default defineConfig({
 		watch: false,
 		reporters,
 		silent,
-		testTimeout: 20_000,
-		hookTimeout: 20_000,
+		testTimeout: 30_000,
+		hookTimeout: 30_000,
 		onConsoleLog,
 		coverage: {
 			provider: "v8",

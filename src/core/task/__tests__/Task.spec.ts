@@ -24,6 +24,46 @@ vi.mock("@njust-ai-cj/telemetry", () => ({
 		},
 	},
 }))
+
+vi.mock("../../ignore/RooIgnoreController", () => ({
+	RooIgnoreController: vi.fn().mockImplementation(() => ({
+		initialize: vi.fn().mockResolvedValue(undefined),
+		dispose: vi.fn(),
+	})),
+}))
+
+vi.mock("../../context-tracking/FileContextTracker", () => ({
+	FileContextTracker: vi.fn().mockImplementation(() => ({
+		dispose: vi.fn(),
+	})),
+}))
+
+vi.mock("../CangjieRuntimePolicy", () => ({
+	CangjieRuntimePolicy: vi.fn().mockImplementation(() => ({
+		dispose: vi.fn(),
+		getContextIntensity: vi.fn().mockReturnValue("compact"),
+		getRecentBuildRootCauses: vi.fn().mockReturnValue([]),
+		getRepairDirective: vi.fn().mockReturnValue(undefined),
+		getRecentBuildFailureOutput: vi.fn().mockReturnValue(undefined),
+		getRecentBuildCommand: vi.fn().mockReturnValue(undefined),
+		getCompileFailureRounds: vi.fn().mockReturnValue(0),
+		getStagnantFailureRounds: vi.fn().mockReturnValue(0),
+		getAttemptCompletionBlockReason: vi.fn().mockReturnValue(null),
+		hasCjpmProject: vi.fn().mockResolvedValue(false),
+		ensureProjectInitializedForWrite: vi.fn().mockResolvedValue(null),
+		validateCommandSurface: vi.fn().mockReturnValue(null),
+		validateProjectStructureForWrite: vi.fn().mockResolvedValue(null),
+		noteCorpusSearch: vi.fn(),
+		noteCorpusReadPath: vi.fn(),
+		noteLspEvidence: vi.fn(),
+		hasEvidenceForStdModule: vi.fn().mockReturnValue(false),
+		getMissingImportEvidence: vi.fn().mockReturnValue([]),
+		noteWriteApplied: vi.fn(),
+		notePathDeleted: vi.fn(),
+		noteBuildResult: vi.fn(),
+	})),
+}))
+
 import { createTestProvider } from "./testProviderFactory"
 import { ApiStreamChunk } from "../../../api/transform/stream"
 import { processUserContentMentions } from "../../mentions/processUserContentMentions"
