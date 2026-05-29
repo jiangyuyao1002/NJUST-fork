@@ -9,7 +9,6 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"useUnknownInCatchVariables": false,
-		"rootDir": "src",
 		"outDir": "out"
 	},
 	"include": ["src"],

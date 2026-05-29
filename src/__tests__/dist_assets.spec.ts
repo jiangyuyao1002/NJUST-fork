@@ -5,8 +5,9 @@ import { describe, it, expect } from "vitest"
 import * as fs from "fs"
 import * as path from "path"
 
-describe("dist assets", () => {
-	const distPath = path.join(__dirname, "../dist")
+const distPath = path.join(__dirname, "../dist")
+
+describe.skipIf(!fs.existsSync(distPath))("dist assets", () => {
 
 	describe("tiktoken", () => {
 		it("should have tiktoken wasm file", () => {

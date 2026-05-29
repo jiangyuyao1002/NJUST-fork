@@ -26,9 +26,15 @@ vi.mock("@njust-ai-cj/telemetry", () => ({
 }))
 
 vi.mock("../../ignore/RooIgnoreController", () => ({
+	LOCK_TEXT_SYMBOL: "\u{1F512}",
 	RooIgnoreController: vi.fn().mockImplementation(() => ({
+		rooIgnoreContent: undefined,
 		initialize: vi.fn().mockResolvedValue(undefined),
+		validateAccess: vi.fn().mockReturnValue(true),
+		validateCommand: vi.fn().mockReturnValue(undefined),
+		filterPaths: vi.fn().mockImplementation((paths: string[]) => paths),
 		dispose: vi.fn(),
+		getInstructions: vi.fn().mockReturnValue(undefined),
 	})),
 }))
 
@@ -221,8 +227,6 @@ vi.mock("../../../integrations/misc/extract-text", () => ({
 vi.mock("../../environment/getEnvironmentDetails", () => ({
 	getEnvironmentDetails: vi.fn().mockResolvedValue(""),
 }))
-
-vi.mock("../../ignore/RooIgnoreController")
 
 vi.mock("../../condense", async (importOriginal) => {
 	const actual = (await importOriginal()) as any
@@ -1477,8 +1481,18 @@ describe("Cline", () => {
 				mockProvider = {
 					context: {
 						globalStorageUri: { fsPath: "/test/storage" },
+						globalState: {
+							get: vi.fn().mockReturnValue(undefined),
+							update: vi.fn().mockResolvedValue(undefined),
+							keys: vi.fn().mockReturnValue([]),
+						},
 					},
 					getState: vi.fn(),
+					getMcpHub: vi.fn().mockReturnValue(undefined),
+					getSkillsManager: vi.fn().mockReturnValue(undefined),
+					postStateToWebview: vi.fn().mockResolvedValue(undefined),
+					postStateToWebviewWithoutTaskHistory: vi.fn().mockResolvedValue(undefined),
+					postMessageToWebview: vi.fn().mockResolvedValue(undefined),
 				}
 			})
 
@@ -2071,13 +2085,11 @@ describe("Queued message processing after condense", () => {
 		// Queue a message during condensing
 		task.messageQueueService.addMessage("queued text", ["img1.png"])
 
-		// Use fake timers to capture setTimeout(0) in processQueuedMessages
-		vi.useFakeTimers()
 		await task.condenseContext()
 
-		// Flush the microtask that submits the queued message
-		vi.runAllTimers()
-		vi.useRealTimers()
+		// processQueuedMessages schedules submitUserMessage via setTimeout(0);
+		// wait briefly to let it fire and the mocked promise resolve.
+		await new Promise((r) => setTimeout(r, 50))
 
 		expect(submitSpy).toHaveBeenCalledWith("queued text", ["img1.png"])
 		expect(task.messageQueueService.isEmpty()).toBe(true)
@@ -2109,21 +2121,18 @@ describe("Queued message processing after condense", () => {
 		taskA.messageQueueService.addMessage("A message")
 		taskB.messageQueueService.addMessage("B message")
 
-		// Condense in task A should only drain A's queue
-		vi.useFakeTimers()
+		// Condense in task A should only drain A's queue.
+		// processQueuedMessages uses setTimeout(0); wait briefly to let it fire.
 		await taskA.condenseContext()
-		vi.runAllTimers()
-		vi.useRealTimers()
+		await new Promise((r) => setTimeout(r, 50))
 
 		expect(spyA).toHaveBeenCalledWith("A message", undefined)
 		expect(spyB).not.toHaveBeenCalled()
 		expect(taskB.messageQueueService.isEmpty()).toBe(false)
 
 		// Now condense in task B should drain B's queue
-		vi.useFakeTimers()
 		await taskB.condenseContext()
-		vi.runAllTimers()
-		vi.useRealTimers()
+		await new Promise((r) => setTimeout(r, 50))
 
 		expect(spyB).toHaveBeenCalledWith("B message", undefined)
 		expect(taskB.messageQueueService.isEmpty()).toBe(true)
