@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { CloudAgentClient } from "../CloudAgentClient"
 import type { CloudAgentProfile } from "../types/profile"
 import { setDeviceToken } from "../deviceToken"
+import { AdapterFactory } from "../adapters/AdapterFactory"
 
 function createMockProfile(overrides?: Partial<CloudAgentProfile>): CloudAgentProfile {
 	return {
@@ -495,6 +496,119 @@ describe("CloudAgentClient", () => {
 			await client.disconnect("", "run-1")
 
 			expect(fetchMock).not.toHaveBeenCalled()
+		})
+	})
+
+	describe("MCP protocol path", () => {
+		function createMcpMockAdapter() {
+			return {
+				protocolType: "mcp" as const,
+				setCallbackHandler: vi.fn(),
+				initialize: vi.fn(),
+				connect: vi.fn().mockResolvedValue(undefined),
+				disconnect: vi.fn().mockResolvedValue(undefined),
+				buildRequestBody: vi.fn().mockReturnValue({ goal: "test", session_id: "sid" }),
+				parseResponseBody: vi.fn().mockReturnValue({
+					runId: "run-123",
+					status: "done" as const,
+					ok: true,
+					text: "result",
+					logs: [],
+					memorySummary: "summary",
+					tokensIn: 10,
+					tokensOut: 20,
+					cost: 0,
+					raw: {},
+				}),
+				getEndpoint: vi.fn().mockReturnValue(""),
+				buildAuthHeaders: vi.fn().mockReturnValue({}),
+				callTool: vi.fn().mockResolvedValue({
+					runId: "run-123",
+					status: "done" as const,
+					ok: true,
+					text: "result",
+					memorySummary: "summary",
+					logs: [],
+					tokensIn: 10,
+					tokensOut: 20,
+					cost: 0,
+					raw: {},
+				}),
+				parseCompileResponse: vi.fn().mockReturnValue({ success: true, output: "OK" }),
+			}
+		}
+
+		it("should call adapter.connect() for MCP protocol", async () => {
+			const mockAdapter = createMcpMockAdapter()
+			vi.spyOn(AdapterFactory, "create").mockReturnValue(mockAdapter as UnsafeAny)
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ protocolType: "mcp" }),
+			})
+			await client.connect()
+			expect(mockAdapter.connect).toHaveBeenCalled()
+		})
+
+		it("should call adapter.disconnect() for MCP protocol", async () => {
+			const mockAdapter = createMcpMockAdapter()
+			vi.spyOn(AdapterFactory, "create").mockReturnValue(mockAdapter as UnsafeAny)
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ protocolType: "mcp" }),
+			})
+			await client.disconnect("session-123")
+			expect(mockAdapter.disconnect).toHaveBeenCalled()
+		})
+
+		it("should call callTool for submitTask MCP path", async () => {
+			const mockAdapter = createMcpMockAdapter()
+			vi.spyOn(AdapterFactory, "create").mockReturnValue(mockAdapter as UnsafeAny)
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ protocolType: "mcp" }),
+			})
+			const result = await client.submitTask("session-123", "test message")
+			expect(mockAdapter.callTool).toHaveBeenCalledWith("submit_task", expect.any(Object))
+			expect(result.memorySummary).toBe("summary")
+		})
+
+		it("should call callTool and parseCompileResponse for compile MCP path", async () => {
+			const mockAdapter = createMcpMockAdapter()
+			vi.spyOn(AdapterFactory, "create").mockReturnValue(mockAdapter as UnsafeAny)
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ protocolType: "mcp" }),
+			})
+			const result = await client.compile("session-123")
+			expect(mockAdapter.callTool).toHaveBeenCalledWith("compile", expect.any(Object))
+			expect(mockAdapter.parseCompileResponse).toHaveBeenCalled()
+			expect(result.success).toBe(true)
+			expect(result.output).toBe("OK")
+		})
+
+		it("should abort MCP connect when signal is already aborted", async () => {
+			const mockAdapter = createMcpMockAdapter()
+			mockAdapter.connect.mockImplementation(
+				() => new Promise(() => {}),
+			)
+			vi.spyOn(AdapterFactory, "create").mockReturnValue(mockAdapter as UnsafeAny)
+
+			const abortController = new AbortController()
+			abortController.abort()
+
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ protocolType: "mcp" }),
+				signal: abortController.signal,
+			})
+
+			await expect(client.connect()).rejects.toThrow()
+		})
+
+		it("should handle MCP callTool failure in withMcpAdapter", async () => {
+			const mockAdapter = createMcpMockAdapter()
+			mockAdapter.callTool.mockRejectedValue(new Error("MCP call failed"))
+			vi.spyOn(AdapterFactory, "create").mockReturnValue(mockAdapter as UnsafeAny)
+			const client = new CloudAgentClient(createCallbacks(), {
+				profile: createMockProfile({ protocolType: "mcp" }),
+			})
+			await expect(client.submitTask("session-123", "test")).rejects.toThrow("MCP call failed")
+			expect(mockAdapter.disconnect).toHaveBeenCalled()
 		})
 	})
 })

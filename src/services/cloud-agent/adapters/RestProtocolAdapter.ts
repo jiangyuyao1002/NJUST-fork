@@ -196,6 +196,12 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 
 	private mergeEndpoints(endpoints?: EndpointConfig): Required<EndpointConfig> {
 		if (!endpoints) return DEFAULT_ENDPOINTS as Required<EndpointConfig>
-		return { ...DEFAULT_ENDPOINTS, ...endpoints } as Required<EndpointConfig>
+		const merged = { ...DEFAULT_ENDPOINTS, ...endpoints } as Required<EndpointConfig>
+		for (const key of Object.keys(merged) as (keyof Required<EndpointConfig>)[]) {
+			if (!merged[key]?.trim()) {
+				merged[key] = DEFAULT_ENDPOINTS[key] !
+			}
+		}
+		return merged
 	}
 }

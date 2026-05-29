@@ -17,7 +17,8 @@ import type {
 import type { CloudAgentProfile } from "./types/profile"
 import { AdapterFactory } from "./adapters/AdapterFactory"
 import type { IProtocolAdapter, UniversalTaskResponse } from "./adapters/types"
-import { McpProtocolAdapter } from "./adapters/McpProtocolAdapter"
+import { McpProtocolAdapter, MCP_TOOLS } from "./adapters/McpProtocolAdapter"
+import type { McpCallbackHandler } from "./adapters/McpProtocolAdapter"
 import { normalizeServerUrl } from "./urlUtils"
 
 const CLOUD_AGENT_RETRY_OPTIONS: Partial<ApiRetryOptions> = {
@@ -151,6 +152,23 @@ export class CloudAgentClient {
 
 		// 创建并初始化适配器
 		this.adapter = AdapterFactory.create(profile)
+
+		if (this.adapter.protocolType === "mcp") {
+			(this.adapter as McpProtocolAdapter).setCallbackHandler(this.createMcpCallbackHandler())
+		}
+	}
+
+	private createMcpCallbackHandler(): McpCallbackHandler {
+		return {
+			onText: async (content) => this.callbacks.onText(content),
+			onReasoning: async (content) => this.callbacks.onReasoning(content),
+			onDone: async (summary) => this.callbacks.onDone(summary),
+			onError: async (message) => this.callbacks.onError(message),
+			onToolExecute: (name, _args) => {
+				logger.info("CloudAgentClient", `MCP tool execution request: ${name}`)
+				return Promise.resolve({ content: `Tool ${name} execution not implemented in MCP legacy mode`, isError: true })
+			},
+		}
 	}
 
 	private mergeAbortAndTimeout(): { signal?: AbortSignal; cleanup: () => void } {
@@ -214,9 +232,29 @@ export class CloudAgentClient {
 	}
 
 	async connect(): Promise<void> {
-		// MCP 适配器：建立 MCP 连接（等效于健康检查）
 		if (this.adapter.protocolType === "mcp") {
-			await this.adapter.connect()
+			const { signal, cleanup } = this.mergeAbortAndTimeout()
+			try {
+				const connectPromise = this.adapter.connect()
+				if (signal) {
+					connectPromise.catch(() => {})
+					await Promise.race([
+						connectPromise,
+						new Promise<never>((_, reject) => {
+							const onAbort = () => reject(new DOMException("MCP connect timed out", "AbortError"))
+							if (signal.aborted) {
+								onAbort()
+							} else {
+								signal.addEventListener("abort", onAbort, { once: true })
+							}
+						}),
+					])
+				} else {
+					await connectPromise
+				}
+			} finally {
+				cleanup()
+			}
 			return
 		}
 
@@ -258,6 +296,20 @@ export class CloudAgentClient {
 		)
 	}
 
+	/**
+	 * 在 MCP adapter 上执行操作。异常时自动释放连接。
+	 * 成功路径的连接释放由调用者（CloudAgentOrchestrator.runLegacy 的 finally 块）负责。
+	 */
+	private async withMcpAdapter<T>(fn: (adapter: McpProtocolAdapter) => Promise<T>): Promise<T> {
+		const mcpAdapter = this.adapter as McpProtocolAdapter
+		try {
+			return await fn(mcpAdapter)
+		} catch (err) {
+			await mcpAdapter.disconnect().catch(() => {})
+			throw err
+		}
+	}
+
 	async submitTask(
 		sessionId: string,
 		message: string,
@@ -276,9 +328,9 @@ export class CloudAgentClient {
 
 		// 2. 根据协议类型选择调用方式
 		if (this.adapter.protocolType === "mcp") {
-			// MCP 路径：通过 adapter 调用 MCP 工具
-			const mcpAdapter = this.adapter as McpProtocolAdapter
-			data = await mcpAdapter.callTool("submit_task", body)
+			data = await this.withMcpAdapter((mcpAdapter) =>
+				mcpAdapter.callTool(MCP_TOOLS.SUBMIT_TASK, body),
+			)
 		} else {
 			// REST 路径（现有逻辑不变）
 			const endpoint = this.adapter.getEndpoint("run")
@@ -347,34 +399,14 @@ export class CloudAgentClient {
 	 * Returns structured compile output (success flag + stdout/stderr).
 	 */
 	async compile(sessionId: string, workspacePath?: string): Promise<CloudCompileResult> {
-		// MCP 路径：直接解析 MCP 响应
 		if (this.adapter.protocolType === "mcp") {
-			const mcpAdapter = this.adapter as McpProtocolAdapter
-			const result = await mcpAdapter.callTool("compile", {
-				session_id: sessionId,
-				workspace_path: workspacePath,
+			return this.withMcpAdapter(async (mcpAdapter) => {
+				const result = await mcpAdapter.callTool(MCP_TOOLS.COMPILE, {
+					session_id: sessionId,
+					workspace_path: workspacePath,
+				})
+				return mcpAdapter.parseCompileResponse(result.raw ?? {})
 			})
-
-			// 直接从 MCP 响应中提取 compile 结果
-			const content = result.raw?.content as Array<{ type: string; text?: string }> | undefined
-			const textContent = content?.find((c) => c.type === "text")?.text
-
-			if (!textContent) {
-				logger.warn("CloudAgentClient", "MCP compile response missing text content")
-			}
-
-			let parsed: Record<string, unknown> = {}
-			try {
-				parsed = textContent ? JSON.parse(textContent) : {}
-			} catch (e) {
-				logger.warn("CloudAgentClient", `Failed to parse MCP compile response: ${getErrorMessage(e)}`)
-				parsed = {}
-			}
-
-			return {
-				success: (parsed.success as boolean) ?? true,
-				output: (parsed.output as string) ?? "",
-			}
 		}
 
 		// REST 路径（现有逻辑不变）

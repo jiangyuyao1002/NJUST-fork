@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, it, expect } from "vitest"
 import crypto from "crypto"
+import http from "http"
 import nock from "nock"
 import { RooToolsMcpServer } from "../RooToolsMcpServer"
 
@@ -44,16 +45,24 @@ describe("RooToolsMcpServer CORS origin", () => {
 		return { server, port: address.port }
 	}
 
+	/** OPTIONS 请求，使用 Node http 模块绕过 nock 的 fetch 拦截器。 */
+	function optionsRequest(host: string, port: number, origin: string): Promise<http.IncomingMessage> {
+		return new Promise((resolve, reject) => {
+			const req = http.request(
+				{ hostname: host, port, path: "/mcp", method: "OPTIONS", headers: { Origin: origin } },
+				(res) => resolve(res),
+			)
+			req.on("error", reject)
+			req.end()
+		})
+	}
+
 	it("allows browser origin only when server is exposed beyond localhost", async () => {
 		const { server, port } = await startServer("0.0.0.0", "secret-token")
 
 		try {
-			const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
-				method: "OPTIONS",
-				headers: { Origin: "https://agent.example" },
-			})
-
-			expect(response.headers.get("access-control-allow-origin")).toBe("https://agent.example")
+			const res = await optionsRequest("127.0.0.1", port, "https://agent.example")
+			expect(res.headers["access-control-allow-origin"]).toBe("https://agent.example")
 		} finally {
 			await server.stop()
 		}
@@ -63,12 +72,8 @@ describe("RooToolsMcpServer CORS origin", () => {
 		const { server, port } = await startServer("127.0.0.1")
 
 		try {
-			const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
-				method: "OPTIONS",
-				headers: { Origin: "https://agent.example" },
-			})
-
-			expect(response.headers.get("access-control-allow-origin")).toBe("null")
+			const res = await optionsRequest("127.0.0.1", port, "https://agent.example")
+			expect(res.headers["access-control-allow-origin"]).toBe("null")
 		} finally {
 			await server.stop()
 		}

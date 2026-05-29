@@ -2,7 +2,13 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { McpProtocolAdapter } from "../adapters/McpProtocolAdapter"
 import type { CloudAgentProfile } from "../types/profile"
 
-// Mock MCP SDK
+const { notificationHandlers, requestHandlers } = vi.hoisted(() => ({
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	notificationHandlers: {} as Record<string, (...args: any[]) => any>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	requestHandlers: {} as Record<string, (...args: any[]) => any>,
+}))
+
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
 	Client: vi.fn().mockImplementation(() => ({
 		connect: vi.fn().mockResolvedValue(undefined),
@@ -10,6 +16,14 @@ vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
 		getServerCapabilities: vi.fn().mockReturnValue({ tools: {} }),
 		callTool: vi.fn().mockResolvedValue({
 			content: [{ type: "text", text: JSON.stringify({ ok: true, text: "test result" }) }],
+		}),
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		setNotificationHandler: vi.fn((method: { method: string }, handler: (...args: any[]) => any) => {
+			notificationHandlers[method.method] = handler
+		}),
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		setRequestHandler: vi.fn((method: { method: string }, handler: (...args: any[]) => any) => {
+			requestHandlers[method.method] = handler
 		}),
 	})),
 }))
@@ -52,6 +66,8 @@ describe("McpProtocolAdapter", () => {
 	beforeEach(() => {
 		adapter = new McpProtocolAdapter()
 		vi.clearAllMocks()
+		Object.keys(notificationHandlers).forEach((key) => delete notificationHandlers[key])
+		Object.keys(requestHandlers).forEach((key) => delete requestHandlers[key])
 	})
 
 	afterEach(() => {
@@ -243,5 +259,163 @@ describe("McpProtocolAdapter", () => {
 		const result = adapter.parseResponseBody(mcpResult)
 		expect(result.pendingTools).toHaveLength(1)
 		expect(result.pendingTools?.[0]?.callId).toBe("call-2")
+	})
+
+	it("should handle non-array pending_tools gracefully", () => {
+		const profile = createMockProfile()
+		adapter.initialize(profile)
+
+		const mcpResult = {
+			content: [{
+				type: "text",
+				text: JSON.stringify({
+					pending_tools: "not-an-array",
+				}),
+			}],
+		}
+
+		const result = adapter.parseResponseBody(mcpResult)
+		expect(result.pendingTools).toEqual([])
+	})
+
+	it("should throw if connect() called before initialize()", async () => {
+		const freshAdapter = new McpProtocolAdapter()
+		await expect(freshAdapter.connect()).rejects.toThrow("initialize() must be called before connect()")
+	})
+
+	it("should parse compile response", () => {
+		const profile = createMockProfile()
+		adapter.initialize(profile)
+
+		const mcpResult = {
+			content: [{
+				type: "text",
+				text: JSON.stringify({ success: true, output: "Build succeeded" }),
+			}],
+		}
+
+		const result = adapter.parseCompileResponse(mcpResult)
+		expect(result.success).toBe(true)
+		expect(result.output).toBe("Build succeeded")
+	})
+
+	it("should register callback handlers on connect", async () => {
+		const profile = createMockProfile()
+		adapter.initialize(profile)
+
+		const handler = {
+			onText: vi.fn(),
+			onReasoning: vi.fn(),
+			onDone: vi.fn(),
+			onError: vi.fn(),
+			onToolExecute: vi.fn(),
+		}
+		adapter.setCallbackHandler(handler)
+
+		await adapter.connect()
+
+		const { Client } = await import("@modelcontextprotocol/sdk/client/index.js")
+		const mockClient = vi.mocked(Client).mock.results[0]?.value
+
+		expect(mockClient?.setNotificationHandler).toHaveBeenCalledTimes(3)
+		expect(mockClient?.setRequestHandler).toHaveBeenCalledTimes(1)
+
+		expect(mockClient?.setNotificationHandler).toHaveBeenCalledWith(
+			expect.objectContaining({ method: "notifications/cloudagent/text" }),
+			expect.any(Function),
+		)
+		expect(mockClient?.setNotificationHandler).toHaveBeenCalledWith(
+			expect.objectContaining({ method: "notifications/cloudagent/reasoning" }),
+			expect.any(Function),
+		)
+		expect(mockClient?.setNotificationHandler).toHaveBeenCalledWith(
+			expect.objectContaining({ method: "notifications/cloudagent/done" }),
+			expect.any(Function),
+		)
+		expect(mockClient?.setRequestHandler).toHaveBeenCalledWith(
+			expect.objectContaining({ method: "cloudagent/executeTool" }),
+			expect.any(Function),
+		)
+	})
+
+	it("should not register handlers when no callback handler set", async () => {
+		const profile = createMockProfile()
+		adapter.initialize(profile)
+
+		await adapter.connect()
+
+		const { Client } = await import("@modelcontextprotocol/sdk/client/index.js")
+		const mockClient = vi.mocked(Client).mock.results[0]?.value
+
+		expect(mockClient?.setNotificationHandler).not.toHaveBeenCalled()
+		expect(mockClient?.setRequestHandler).not.toHaveBeenCalled()
+	})
+
+	it("should parse compile response with defaults for missing fields", () => {
+		const profile = createMockProfile()
+		adapter.initialize(profile)
+
+		const mcpResult = {
+			content: [{
+				type: "text",
+				text: JSON.stringify({}),
+			}],
+		}
+
+		const result = adapter.parseCompileResponse(mcpResult)
+		expect(result.success).toBe(false)
+		expect(result.output).toBe("")
+	})
+
+	it("should expose parseMcpContent as public", () => {
+		const profile = createMockProfile()
+		adapter.initialize(profile)
+
+		const data = {
+			content: [{
+				type: "text",
+				text: JSON.stringify({ ok: true }),
+			}],
+		}
+
+		const result = adapter.parseMcpContent(data)
+		expect(result.ok).toBe(true)
+	})
+
+	it("should handle notification handler errors gracefully", async () => {
+		const profile = createMockProfile()
+		adapter.initialize(profile)
+
+		const handler = {
+			onText: vi.fn().mockRejectedValue(new Error("boom")),
+			onReasoning: vi.fn().mockRejectedValue(new Error("boom")),
+			onDone: vi.fn().mockRejectedValue(new Error("boom")),
+			onToolExecute: vi.fn().mockRejectedValue(new Error("boom")),
+		}
+		adapter.setCallbackHandler(handler)
+		await adapter.connect()
+
+		const textHandler = notificationHandlers["notifications/cloudagent/text"]
+		const reasoningHandler = notificationHandlers["notifications/cloudagent/reasoning"]
+		const doneHandler = notificationHandlers["notifications/cloudagent/done"]
+		const executeHandler = requestHandlers["cloudagent/executeTool"]
+
+		expect(textHandler).toBeDefined()
+		expect(reasoningHandler).toBeDefined()
+		expect(doneHandler).toBeDefined()
+		expect(executeHandler).toBeDefined()
+
+		await expect(textHandler({ params: { content: "hello" } })).resolves.toBeUndefined()
+		await expect(reasoningHandler({ params: { content: "reasoning" } })).resolves.toBeUndefined()
+		await expect(doneHandler({ params: { summary: "done" } })).resolves.toBeUndefined()
+
+		const executeResult = await executeHandler({ params: { name: "read_file", arguments: {} } })
+		expect(executeResult).toBeDefined()
+		expect(executeResult.isError).toBe(true)
+
+		expect(handler.onText).toHaveBeenCalledWith("hello")
+		expect(handler.onReasoning).toHaveBeenCalledWith("reasoning")
+		expect(handler.onDone).toHaveBeenCalledWith("done")
+		expect(handler.onToolExecute).toHaveBeenCalledWith("read_file", {})
 	})
 })
