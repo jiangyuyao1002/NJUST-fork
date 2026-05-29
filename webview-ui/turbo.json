@@ -3,9 +3,11 @@
 	"extends": ["//"],
 	"tasks": {
 		"build": {
+			"dependsOn": ["@njust-ai-cj/types#build"],
 			"outputs": ["build/**"]
 		},
 		"build:nightly": {
+			"dependsOn": ["@njust-ai-cj/types#build"],
 			"outputs": ["../apps/vscode-nightly/build/webview-ui/**"]
 		}
 	}
