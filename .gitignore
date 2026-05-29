@@ -24,8 +24,10 @@ AGENTS.local.md
 .test_env
 .vscode-test/
 
-# Docs
-docs/_site/
+# Docs - ignore all except examples
+docs/*
+!docs/examples/
+!docs/examples/**
 
 # Dotenv
 .env
