@@ -32,10 +32,10 @@ suite("NJUST_AI_CJ Extension", function () {
 			"terminalExplainCommand",
 		]
 
-		const commands = new Set((await vscode.commands.getCommands(true)).filter((cmd) => cmd.startsWith("njust-ai-cj")))
+		const commands = new Set((await vscode.commands.getCommands(true)).filter((cmd) => cmd.startsWith("njust-ai")))
 
 		for (const command of expectedCommands) {
-			assert.ok(commands.has(`njust-ai-cj.${command}`), `Command ${command} should be registered`)
+			assert.ok(commands.has(`njust-ai.${command}`), `Command ${command} should be registered`)
 		}
 	})
 })

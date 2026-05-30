@@ -32,7 +32,7 @@ const approveMockAskWithRetry = async (api: NJUST_AI_CJAPI) => {
 }
 
 export async function run() {
-	const extension = vscode.extensions.getExtension<NJUST_AI_CJAPI>("JunjieChen-YuyaoJiang.njust-ai-cj")
+	const extension = vscode.extensions.getExtension<NJUST_AI_CJAPI>("JunjieChen-YuyaoJiang.njust-ai")
 
 	if (!extension) {
 		throw new Error("Extension not found")
@@ -58,7 +58,7 @@ export async function run() {
 		})
 	}
 
-	await vscode.commands.executeCommand("njust-ai-cj.SidebarProvider.focus")
+	await vscode.commands.executeCommand("njust-ai.SidebarProvider.focus")
 	await waitFor(() => api.isReady())
 
 	globalThis.api = api

@@ -12,5 +12,5 @@ export default defineConfig({
 		ui: "tdd",
 		timeout: 60000,
 	},
-	launchArgs: ["--enable-proposed-api=RooVeterinaryInc.njust-ai-cj", "--disable-extensions"],
+	launchArgs: ["--enable-proposed-api=JunjieChen-YuyaoJiang.njust-ai", "--disable-extensions"],
 })
