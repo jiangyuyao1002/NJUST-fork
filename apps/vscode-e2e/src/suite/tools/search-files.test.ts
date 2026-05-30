@@ -356,7 +356,7 @@ The search should find matches across different file types and provide context f
 	test("Should search for function definitions in JavaScript files", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let searchResults: string | null = null
 
@@ -375,9 +375,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -398,7 +397,7 @@ The search should find matches across different file types and provide context f
 			console.log("Task ID:", taskId)
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed
 			assert.ok(toolExecuted, "The search_files tool should have been executed")
@@ -453,7 +452,7 @@ The search should find matches across different file types and provide context f
 	test("Should search for TODO comments across multiple file types", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -469,9 +468,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -489,7 +487,7 @@ The search should find matches across different file types and provide context f
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed
 			assert.ok(toolExecuted, "The search_files tool should have been executed")
@@ -516,7 +514,7 @@ The search should find matches across different file types and provide context f
 	test("Should search with file pattern filter for TypeScript files", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -532,9 +530,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -553,7 +550,7 @@ The search should find matches across different file types and provide context f
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed with file pattern
 			assert.ok(toolExecuted, "The search_files tool should have been executed with *.ts pattern")
@@ -578,7 +575,7 @@ The search should find matches across different file types and provide context f
 	test("Should search for configuration keys in JSON files", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -594,9 +591,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -614,7 +610,7 @@ The search should find matches across different file types and provide context f
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed
 			assert.ok(toolExecuted, "The search_files tool should have been executed with JSON filter")
@@ -642,7 +638,7 @@ The search should find matches across different file types and provide context f
 	test("Should search in nested directories", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -658,9 +654,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -678,7 +673,7 @@ The search should find matches across different file types and provide context f
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed
 			assert.ok(toolExecuted, "The search_files tool should have been executed")
@@ -703,7 +698,7 @@ The search should find matches across different file types and provide context f
 	test("Should handle complex regex patterns", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -719,9 +714,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -739,7 +733,7 @@ The search should find matches across different file types and provide context f
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed
 			assert.ok(toolExecuted, "The search_files tool should have been executed with complex regex")
@@ -764,7 +758,7 @@ The search should find matches across different file types and provide context f
 	test("Should handle search with no matches", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let searchResults: string | null = null
 
@@ -788,9 +782,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -808,7 +801,7 @@ The search should find matches across different file types and provide context f
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed
 			assert.ok(toolExecuted, "The search_files tool should have been executed")
@@ -876,7 +869,7 @@ The search should find matches across different file types and provide context f
 	test("Should search for class definitions and methods", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -892,9 +885,8 @@ The search should find matches across different file types and provide context f
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -912,7 +904,7 @@ The search should find matches across different file types and provide context f
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the search_files tool was executed
 			assert.ok(toolExecuted, "The search_files tool should have been executed")

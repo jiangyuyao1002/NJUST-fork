@@ -174,8 +174,8 @@ suite("NJUST_AI read_file Tool", function () {
 	test("Should read a simple text file", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorOccurred: string | null = null
 		let toolExecuted = false
 		let toolResult: string | null = null
@@ -206,18 +206,14 @@ suite("NJUST_AI read_file Tool", function () {
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -241,7 +237,7 @@ suite("NJUST_AI read_file Tool", function () {
 			console.log("Expected file path:", testFiles.simple)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 60_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 60_000 })
 
 			// Check for early errors
 			if (errorOccurred) {
@@ -249,7 +245,7 @@ suite("NJUST_AI read_file Tool", function () {
 			}
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the read_file tool was executed
 			assert.ok(toolExecuted, "The read_file tool should have been executed")
@@ -290,7 +286,7 @@ suite("NJUST_AI read_file Tool", function () {
 	test("Should read a multiline file", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let toolResult: string | null = null
 
@@ -314,9 +310,8 @@ suite("NJUST_AI read_file Tool", function () {
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -335,7 +330,7 @@ suite("NJUST_AI read_file Tool", function () {
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the read_file tool was executed
 			assert.ok(toolExecuted, "The read_file tool should have been executed")
@@ -371,7 +366,7 @@ suite("NJUST_AI read_file Tool", function () {
 	test("Should read file with slice offset/limit", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let toolResult: string | null = null
 
@@ -395,9 +390,8 @@ suite("NJUST_AI read_file Tool", function () {
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -416,7 +410,7 @@ suite("NJUST_AI read_file Tool", function () {
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify tool was executed
 			assert.ok(toolExecuted, "The read_file tool should have been executed")
@@ -457,7 +451,7 @@ suite("NJUST_AI read_file Tool", function () {
 	test("Should handle reading non-existent file", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let _errorHandled = false
 
@@ -477,9 +471,8 @@ suite("NJUST_AI read_file Tool", function () {
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -498,7 +491,7 @@ suite("NJUST_AI read_file Tool", function () {
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the read_file tool was executed
 			assert.ok(toolExecuted, "The read_file tool should have been executed")
@@ -525,7 +518,7 @@ suite("NJUST_AI read_file Tool", function () {
 	test("Should read XML content file", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -547,9 +540,8 @@ suite("NJUST_AI read_file Tool", function () {
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -568,7 +560,7 @@ suite("NJUST_AI read_file Tool", function () {
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the read_file tool was executed
 			assert.ok(toolExecuted, "The read_file tool should have been executed")
@@ -593,7 +585,7 @@ suite("NJUST_AI read_file Tool", function () {
 	test("Should read multiple files in sequence", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let readFileCount = 0
 
 		// Listen for messages
@@ -609,9 +601,8 @@ suite("NJUST_AI read_file Tool", function () {
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -634,7 +625,7 @@ Assume both files exist and you can read them directly. Read each file and tell 
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify multiple read_file executions - AI might read them together
 			assert.ok(
@@ -662,7 +653,7 @@ Assume both files exist and you can read them directly. Read each file and tell 
 	test("Should read large file efficiently", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -684,9 +675,8 @@ Assume both files exist and you can read them directly. Read each file and tell 
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -705,7 +695,7 @@ Assume both files exist and you can read them directly. Read each file and tell 
 			})
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the read_file tool was executed
 			assert.ok(toolExecuted, "The read_file tool should have been executed")

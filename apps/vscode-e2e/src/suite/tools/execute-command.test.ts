@@ -125,8 +125,8 @@ suite("NJUST_AI execute_command Tool", function () {
 	test("Should execute simple echo command", async function () {
 		const api = globalThis.api
 		const testFile = testFiles.simpleEcho
-		let taskStarted = false
-		let _taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorOccurred: string | null = null
 		let executeCommandToolCalled = false
 		let commandExecuted = ""
@@ -159,18 +159,14 @@ suite("NJUST_AI execute_command Tool", function () {
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				_taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -196,7 +192,7 @@ Then use the attempt_completion tool to complete the task. Do not suggest any co
 			console.log("Test file:", testFile.name)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 45_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 45_000 })
 
 			// Wait for task completion
 			await waitUntilCompleted({ api, taskId, timeout: 60_000 })
@@ -226,8 +222,8 @@ Then use the attempt_completion tool to complete the task. Do not suggest any co
 
 	test("Should execute command with custom working directory", async function () {
 		const api = globalThis.api
-		let taskStarted = false
-		let _taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorOccurred: string | null = null
 		let executeCommandToolCalled = false
 		let cwdUsed = ""
@@ -265,18 +261,14 @@ Then use the attempt_completion tool to complete the task. Do not suggest any co
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				_taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -304,7 +296,7 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 			console.log("Subdirectory:", subDir)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 45_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 45_000 })
 
 			// Wait for task completion
 			await waitUntilCompleted({ api, taskId, timeout: 60_000 })
@@ -346,8 +338,8 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 	test("Should execute multiple commands sequentially", async function () {
 		const api = globalThis.api
 		const testFile = testFiles.multiCommand
-		let taskStarted = false
-		let _taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorOccurred: string | null = null
 		let executeCommandCallCount = 0
 		const commandsExecuted: string[] = []
@@ -379,18 +371,14 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				_taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -420,7 +408,7 @@ After both commands are executed, use the attempt_completion tool to complete th
 			console.log("Test file:", testFile.name)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 90_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 90_000 })
 
 			// Wait for task completion with increased timeout
 			await waitUntilCompleted({ api, taskId, timeout: 90_000 })
@@ -458,8 +446,8 @@ After both commands are executed, use the attempt_completion tool to complete th
 
 	test("Should handle long-running commands", async function () {
 		const api = globalThis.api
-		let taskStarted = false
-		let _taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let _commandCompleted = false
 		let errorOccurred: string | null = null
 		let executeCommandToolCalled = false
@@ -498,18 +486,14 @@ After both commands are executed, use the attempt_completion tool to complete th
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				_taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -537,7 +521,7 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 			console.log("Task ID:", taskId)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 45_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 45_000 })
 
 			// Wait for task completion (the command output check will verify execution)
 			await waitUntilCompleted({ api, taskId, timeout: 45_000 })

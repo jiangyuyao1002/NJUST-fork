@@ -41,6 +41,7 @@ vi.mock("../../ignore/RooIgnoreController", () => ({
 vi.mock("../../context-tracking/FileContextTracker", () => ({
 	FileContextTracker: vi.fn().mockImplementation(() => ({
 		dispose: vi.fn(),
+		getFilesReadByRoo: vi.fn().mockResolvedValue([]),
 	})),
 }))
 
@@ -160,6 +161,7 @@ vi.mock("fs/promises", async (importOriginal) => {
 		rmdir: vi.fn().mockResolvedValue(undefined),
 		stat: vi.fn().mockRejectedValue({ code: "ENOENT" }),
 		readdir: vi.fn().mockResolvedValue([]),
+		appendFile: vi.fn().mockResolvedValue(undefined),
 	}
 
 	return {
@@ -285,19 +287,7 @@ const mockMessages = [
 ]
 
 describe("Cline", () => {
-let originalSetTimeout: any;
-beforeEach(() => {
-originalSetTimeout = global.setTimeout;
-(global as any).setTimeout = (cb: any, ms?: number, ...args: any[]) => {
-if (ms && ms > 50) {
-return originalSetTimeout(cb, 0, ...args);
-}
-return originalSetTimeout(cb, ms, ...args);
-};
-})
-afterEach(() => {
-global.setTimeout = originalSetTimeout;
-})
+
 	let mockProvider: any
 	let mockApiConfig: ProviderSettings
 	let mockOutputChannel: any

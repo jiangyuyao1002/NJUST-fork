@@ -75,8 +75,8 @@ suite("NJUST_AI write_to_file Tool", function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
 		const fileContent = "Hello, this is a test file!"
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorOccurred: string | null = null
 		let writeToFileToolExecuted = false
 		let toolExecutionDetails = ""
@@ -126,20 +126,15 @@ suite("NJUST_AI write_to_file Tool", function () {
 		}
 		api.on(NJUST_AIEventName.Message, messageHandler)
 
-		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -163,7 +158,7 @@ suite("NJUST_AI write_to_file Tool", function () {
 			console.log("Expecting file at:", testFilePath)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 45_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 45_000 })
 
 			// Check for early errors
 			if (errorOccurred) {
@@ -171,7 +166,7 @@ suite("NJUST_AI write_to_file Tool", function () {
 			}
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 45_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 45_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)
@@ -263,8 +258,8 @@ suite("NJUST_AI write_to_file Tool", function () {
 		const content = "File in nested directory"
 		const fileName = `file-${Date.now()}.txt`
 		const nestedPath = path.join(workspaceDir, "nested", "deep", "directory", fileName)
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let writeToFileToolExecuted = false
 		let toolExecutionDetails = ""
 
@@ -307,18 +302,14 @@ suite("NJUST_AI write_to_file Tool", function () {
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -340,10 +331,10 @@ suite("NJUST_AI write_to_file Tool", function () {
 			console.log("Expected nested path:", nestedPath)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 45_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 45_000 })
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 45_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 45_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)

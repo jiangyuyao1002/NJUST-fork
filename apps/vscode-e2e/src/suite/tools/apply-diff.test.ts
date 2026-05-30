@@ -179,8 +179,8 @@ function validateInput(input) {
 		const messages: ClineMessage[] = []
 		const testFile = testFiles.simpleModify
 		const expectedContent = "Hello Universe\nThis is a test file\nWith multiple lines"
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorOccurred: string | null = null
 		let applyDiffExecuted = false
 
@@ -213,18 +213,14 @@ function validateInput(input) {
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -247,7 +243,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			console.log("Test filename:", testFile.name)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 60_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 60_000 })
 
 			// Check for early errors
 			if (errorOccurred) {
@@ -255,7 +251,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			}
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 120_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 120_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)
@@ -294,8 +290,8 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 	const result = a * b
 	return { total: total, result: result }
 }`
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let applyDiffExecuted = false
 
 		// Listen for messages
@@ -321,18 +317,14 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -362,10 +354,10 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			console.log("Test filename:", testFile.name)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 60_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 60_000 })
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 120_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 120_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)
@@ -411,8 +403,8 @@ function keepThis() {
 
 // Footer comment`
 
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let applyDiffExecuted = false
 
 		// Listen for messages
@@ -435,16 +427,14 @@ function keepThis() {
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -469,10 +459,10 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			console.log("Test filename:", testFile.name)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 60_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 60_000 })
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 120_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 120_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)
@@ -504,8 +494,8 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
 		const testFile = testFiles.errorHandling
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorDetected = false
 		let applyDiffAttempted = false
 
@@ -538,16 +528,14 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -575,10 +563,10 @@ Assume the file exists and you can modify it directly.`,
 			console.log("Task ID:", taskId)
 			console.log("Test filename:", testFile.name)
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 90_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 90_000 })
 
 			// Wait for task completion or error
-			await waitFor(() => taskCompleted || errorDetected, { timeout: 90_000 })
+			await waitFor(() => completedIds.has(taskId) || errorDetected, { timeout: 90_000 })
 
 			// Give time for any final operations
 			await sleep(2000)
@@ -628,8 +616,8 @@ function checkInput(input) {
 	}
 	return true
 }`
-		let taskStarted = false
-		let taskCompleted = false
+		const startedIds = new Set<string>()
+		const completedIds = new Set<string>()
 		let errorOccurred: string | null = null
 		let applyDiffExecuted = false
 		let applyDiffCount = 0
@@ -664,18 +652,14 @@ function checkInput(input) {
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
-			if (id === taskId) {
-				taskStarted = true
-				console.log("Task started:", id)
-			}
+			startedIds.add(id)
+			console.log("Task started:", id)
 		}
 		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-				console.log("Task completed:", id)
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -708,7 +692,7 @@ Assume the file exists and you can modify it directly.`,
 			console.log("Test filename:", testFile.name)
 
 			// Wait for task to start
-			await waitFor(() => taskStarted, { timeout: 60_000 })
+			await waitFor(() => startedIds.has(taskId), { timeout: 60_000 })
 
 			// Check for early errors
 			if (errorOccurred) {
@@ -716,7 +700,7 @@ Assume the file exists and you can modify it directly.`,
 			}
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Give extra time for file system operations
 			await sleep(2000)

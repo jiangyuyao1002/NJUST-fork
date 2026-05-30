@@ -211,7 +211,7 @@ This directory contains various files and subdirectories for testing the list_fi
 	test("Should list files in a directory (non-recursive)", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let listResults: string | null = null
 
@@ -230,9 +230,8 @@ This directory contains various files and subdirectories for testing the list_fi
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -253,7 +252,7 @@ This directory contains various files and subdirectories for testing the list_fi
 			console.log("Task ID:", taskId)
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the list_files tool was executed
 			assert.ok(toolExecuted, "The list_files tool should have been executed")
@@ -298,7 +297,7 @@ This directory contains various files and subdirectories for testing the list_fi
 	test("Should list files in a directory (recursive)", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let listResults: string | null = null
 
@@ -317,9 +316,8 @@ This directory contains various files and subdirectories for testing the list_fi
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -340,7 +338,7 @@ This directory contains various files and subdirectories for testing the list_fi
 			console.log("Task ID:", taskId)
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the list_files tool was executed
 			assert.ok(toolExecuted, "The list_files tool should have been executed")
@@ -392,7 +390,7 @@ This directory contains various files and subdirectories for testing the list_fi
 	test("Should list symlinked files and directories", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 		let listResults: string | null = null
 
@@ -411,9 +409,8 @@ This directory contains various files and subdirectories for testing the list_fi
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -459,7 +456,7 @@ This directory contains various files and subdirectories for testing the list_fi
 			console.log("Symlink test Task ID:", taskId)
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the list_files tool was executed
 			assert.ok(toolExecuted, "The list_files tool should have been executed")
@@ -494,7 +491,7 @@ This directory contains various files and subdirectories for testing the list_fi
 	test("Should list files in workspace root directory", async function () {
 		const api = globalThis.api
 		const messages: ClineMessage[] = []
-		let taskCompleted = false
+		const completedIds = new Set<string>()
 		let toolExecuted = false
 
 		// Listen for messages
@@ -511,9 +508,8 @@ This directory contains various files and subdirectories for testing the list_fi
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
-			if (id === taskId) {
-				taskCompleted = true
-			}
+			completedIds.add(id)
+			console.log("Task completed:", id)
 		}
 		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
@@ -533,7 +529,7 @@ This directory contains various files and subdirectories for testing the list_fi
 			console.log("Task ID:", taskId)
 
 			// Wait for task completion
-			await waitFor(() => taskCompleted, { timeout: 60_000 })
+			await waitFor(() => completedIds.has(taskId), { timeout: 60_000 })
 
 			// Verify the list_files tool was executed
 			assert.ok(toolExecuted, "The list_files tool should have been executed")
