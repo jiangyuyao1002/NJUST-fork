@@ -1,6 +1,6 @@
 "use server"
 
-import { client, getProductionClient, copyRun } from "@njust-ai-cj/evals"
+import { client, getProductionClient, copyRun } from "@njust-ai/evals"
 
 export async function copyRunToProduction(runId: number) {
 	try {

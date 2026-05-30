@@ -2,9 +2,9 @@ import React from "react"
 import { useTranslation, Trans } from "react-i18next"
 import { VSCodeBadge } from "@vscode/webview-ui-toolkit/react"
 
-import type { ClineMessage, ClineSayTool } from "@njust-ai-cj/types"
+import type { ClineMessage, ClineSayTool } from "@njust-ai/types"
 
-import { safeJsonParse } from "@roo/core"
+import { safeJsonParse } from "@njust-ai/core/browser"
 
 import { vscode } from "@src/utils/vscode"
 import { formatPathTooltip } from "@src/utils/formatPathTooltip"

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 const mockCaptureException = vi.fn()
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		hasInstance: () => true,
@@ -49,8 +49,8 @@ vi.mock("@aws-sdk/client-bedrock-runtime", () => {
 
 import { AwsBedrockHandler } from "../bedrock"
 import { ConverseStreamCommand, BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime"
-import { ApiProviderError } from "@njust-ai-cj/types"
-import { BEDROCK_1M_CONTEXT_MODEL_IDS, BEDROCK_SERVICE_TIER_MODEL_IDS, bedrockModels } from "@njust-ai-cj/core/providers"
+import { ApiProviderError } from "@njust-ai/types"
+import { BEDROCK_1M_CONTEXT_MODEL_IDS, BEDROCK_SERVICE_TIER_MODEL_IDS, bedrockModels } from "@njust-ai/core/providers"
 
 import type { Anthropic } from "@anthropic-ai/sdk"
 

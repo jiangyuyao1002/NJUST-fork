@@ -1,5 +1,5 @@
 {
-	"extends": "@njust-ai-cj/config-typescript/nextjs.json",
+	"extends": "@njust-ai/config-typescript/nextjs.json",
 	"compilerOptions": {
 		"types": ["vitest/globals"],
 		"plugins": [{ "name": "next" }],

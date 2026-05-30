@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://openrouter.ai/models?order=newest&supported_parameters=tools
 export const openRouterDefaultModelId = "anthropic/claude-sonnet-4.5"

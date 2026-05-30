@@ -9,8 +9,8 @@
 - [apps/web-evals/src/app/runs/new/settings-diff.tsx](file://apps/web-evals/src/app/runs/new/settings-diff.tsx)
 - [apps/web-evals/src/lib/schemas.ts](file://apps/web-evals/src/lib/schemas.ts)
 - [apps/web-evals/src/actions/runs.ts](file://apps/web-evals/src/actions/runs.ts)
-- [apps/web-roo-code/src/app/evals/evals.tsx](file://apps/web-roo-code/src/app/evals/evals.tsx)
-- [apps/web-roo-code/src/app/evals/plot.tsx](file://apps/web-roo-code/src/app/evals/plot.tsx)
+- [apps/web-Njust-AI/src/app/evals/evals.tsx](file://apps/web-Njust-AI/src/app/evals/evals.tsx)
+- [apps/web-Njust-AI/src/app/evals/plot.tsx](file://apps/web-Njust-AI/src/app/evals/plot.tsx)
 </cite>
 
 ## 目录
@@ -157,7 +157,7 @@ F->>U : 更新页面状态
 表单支持三种不同的模型提供商：
 
 - **导入配置**：支持从外部 JSON 文件导入 API 配置
-- **NJUST_AI_CJ Cloud**：支持直接使用云服务令牌
+- **NJUST_AI Cloud**：支持直接使用云服务令牌
 - **OpenRouter**：支持第三方模型平台集成
 
 **章节来源**
@@ -342,7 +342,7 @@ G --> H[创建评估运行]
 表单支持三种不同的模型提供商，每种都有特定的配置要求：
 
 - **导入配置模式**：支持从 JSON 文件导入完整的 API 配置
-- **NJUST_AI_CJ Cloud 模式**：需要有效的访问令牌
+- **NJUST_AI Cloud 模式**：需要有效的访问令牌
 - **OpenRouter 模式**：支持第三方模型平台的直接集成
 
 #### 语言和练习选择
@@ -402,7 +402,7 @@ note right of 未开始 : 无开始时间戳<br/>和使用量数据
 
 ### 结果展示组件深度分析
 
-web-roo-code 应用中的评估结果展示组件提供了专业的数据可视化功能。
+web-Njust-AI 应用中的评估结果展示组件提供了专业的数据可视化功能。
 
 #### 数据可视化设计
 
@@ -419,8 +419,8 @@ I[语言得分] --> D
 ```
 
 **图表来源**
-- [apps/web-roo-code/src/app/evals/evals.tsx:12-150](file://apps/web-roo-code/src/app/evals/evals.tsx#L12-L150)
-- [apps/web-roo-code/src/app/evals/plot.tsx:1-42](file://apps/web-roo-code/src/app/evals/plot.tsx#L1-L42)
+- [apps/web-Njust-AI/src/app/evals/evals.tsx:12-150](file://apps/web-Njust-AI/src/app/evals/evals.tsx#L12-L150)
+- [apps/web-Njust-AI/src/app/evals/plot.tsx:1-42](file://apps/web-Njust-AI/src/app/evals/plot.tsx#L1-L42)
 
 #### 可视化组件实现
 
@@ -431,8 +431,8 @@ I[语言得分] --> D
 - **响应式设计**：适配不同屏幕尺寸的显示需求
 
 **章节来源**
-- [apps/web-roo-code/src/app/evals/evals.tsx:12-150](file://apps/web-roo-code/src/app/evals/evals.tsx#L12-L150)
-- [apps/web-roo-code/src/app/evals/plot.tsx:1-42](file://apps/web-roo-code/src/app/evals/plot.tsx#L1-L42)
+- [apps/web-Njust-AI/src/app/evals/evals.tsx:12-150](file://apps/web-Njust-AI/src/app/evals/evals.tsx#L12-L150)
+- [apps/web-Njust-AI/src/app/evals/plot.tsx:1-42](file://apps/web-Njust-AI/src/app/evals/plot.tsx#L1-L42)
 
 ## 依赖关系分析
 

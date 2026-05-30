@@ -11,7 +11,7 @@ import {
 	IpcMessageType,
 	TaskCommandName,
 	ipcMessageSchema,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 export class IpcClient extends EventEmitter<IpcClientEvents> {
 	private readonly _socketPath: string
@@ -24,7 +24,7 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 		super()
 
 		this._socketPath = socketPath
-		this._id = `roo-code-evals-${crypto.randomBytes(6).toString("hex")}`
+		this._id = `Njust-AI-evals-${crypto.randomBytes(6).toString("hex")}`
 		this._log = log
 
 		ipc.config.silent = true

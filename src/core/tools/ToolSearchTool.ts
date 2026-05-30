@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { BaseTool, type ToolCallbacks } from "./BaseTool"
 import type { Task } from "../task/Task"
-import type { ToolName } from "@njust-ai-cj/types"
+import type { ToolName } from "@njust-ai/types"
 
 /**
  * Registry of tool instances that ToolSearchTool can search through.

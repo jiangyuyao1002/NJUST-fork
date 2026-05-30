@@ -1,4 +1,4 @@
-import type { WebviewMessage } from "@njust-ai-cj/types"
+import type { WebviewMessage } from "@njust-ai/types"
 import { CodeIndexManager } from "../../../services/code-index/manager"
 import { t } from "../../../i18n"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"

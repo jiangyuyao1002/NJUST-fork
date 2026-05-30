@@ -8,9 +8,9 @@ import {
 	type ClineAskUseMcpServer,
 	type McpExecutionStatus,
 	mcpExecutionStatusSchema,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
-import { safeJsonParse } from "@roo/core"
+import { safeJsonParse } from "@njust-ai/core/browser"
 
 import { cn } from "@src/lib/utils"
 import { Button } from "@src/components/ui"

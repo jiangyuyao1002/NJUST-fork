@@ -2,13 +2,13 @@
 
 <cite>
 **本文档引用的文件**
-- [apps/web-roo-code/package.json](file://apps/web-roo-code/package.json)
+- [apps/web-Njust-AI/package.json](file://apps/web-Njust-AI/package.json)
 - [apps/web-evals/package.json](file://apps/web-evals/package.json)
-- [apps/web-roo-code/next.config.ts](file://apps/web-roo-code/next.config.ts)
+- [apps/web-Njust-AI/next.config.ts](file://apps/web-Njust-AI/next.config.ts)
 - [apps/web-evals/next.config.ts](file://apps/web-evals/next.config.ts)
-- [apps/web-roo-code/src/app/layout.tsx](file://apps/web-roo-code/src/app/layout.tsx)
+- [apps/web-Njust-AI/src/app/layout.tsx](file://apps/web-Njust-AI/src/app/layout.tsx)
 - [apps/web-evals/src/app/layout.tsx](file://apps/web-evals/src/app/layout.tsx)
-- [apps/web-roo-code/src/components/providers/index.ts](file://apps/web-roo-code/src/components/providers/index.ts)
+- [apps/web-Njust-AI/src/components/providers/index.ts](file://apps/web-Njust-AI/src/components/providers/index.ts)
 - [apps/web-evals/src/components/providers/index.ts](file://apps/web-evals/src/components/providers/index.ts)
 </cite>
 
@@ -25,11 +25,11 @@
 
 ## 简介
 
-本文件为 NJUST_AI_CJ 项目的 Web 应用集成开发文档，重点阐述主 Web 应用（web-roo-code）与评估 Web 应用（web-evals）的架构设计、组件集成模式和 API 端点设计。文档涵盖 Next.js 应用的路由配置、状态管理方案、服务器端渲染优化和客户端水合策略，并提供具体的集成示例、性能优化技巧和安全考虑。同时，解释两个 Web 应用之间的数据共享机制和统一认证系统的实现方式。
+本文件为 NJUST_AI 项目的 Web 应用集成开发文档，重点阐述主 Web 应用（web-Njust-AI）与评估 Web 应用（web-evals）的架构设计、组件集成模式和 API 端点设计。文档涵盖 Next.js 应用的路由配置、状态管理方案、服务器端渲染优化和客户端水合策略，并提供具体的集成示例、性能优化技巧和安全考虑。同时，解释两个 Web 应用之间的数据共享机制和统一认证系统的实现方式。
 
 ## 项目结构
 
-两个 Web 应用均采用 Next.js 16 架构，分别位于 `apps/web-roo-code` 和 `apps/web-evals` 目录下。它们通过 Monorepo 工作区进行管理，共享类型定义和通用包。
+两个 Web 应用均采用 Next.js 16 架构，分别位于 `apps/web-Njust-AI` 和 `apps/web-evals` 目录下。它们通过 Monorepo 工作区进行管理，共享类型定义和通用包。
 
 ```mermaid
 graph TB
@@ -38,28 +38,28 @@ Root[根配置文件]
 Workspaces[工作区配置]
 end
 subgraph "Web 应用"
-WebRooCode[web-roo-code<br/>主应用]
+WebNjustAi[web-Njust-AI<br/>主应用]
 WebEvals[web-evals<br/>评估应用]
 end
 subgraph "共享包"
-Types[@njust-ai-cj/types]
-EvalsPkg[@njust-ai-cj/evals]
+Types[@njust-ai/types]
+EvalsPkg[@njust-ai/evals]
 end
 Root --> Workspaces
-Workspaces --> WebRooCode
+Workspaces --> WebNjustAi
 Workspaces --> WebEvals
-WebRooCode --> Types
-WebRooCode --> EvalsPkg
+WebNjustAi --> Types
+WebNjustAi --> EvalsPkg
 WebEvals --> Types
 WebEvals --> EvalsPkg
 ```
 
 **图表来源**
-- [apps/web-roo-code/package.json:1-62](file://apps/web-roo-code/package.json#L1-L62)
+- [apps/web-Njust-AI/package.json:1-62](file://apps/web-Njust-AI/package.json#L1-L62)
 - [apps/web-evals/package.json:1-64](file://apps/web-evals/package.json#L1-L64)
 
 **章节来源**
-- [apps/web-roo-code/package.json:1-62](file://apps/web-roo-code/package.json#L1-L62)
+- [apps/web-Njust-AI/package.json:1-62](file://apps/web-Njust-AI/package.json#L1-L62)
 - [apps/web-evals/package.json:1-64](file://apps/web-evals/package.json#L1-L64)
 
 ## 核心组件
@@ -68,7 +68,7 @@ WebEvals --> EvalsPkg
 
 两个应用在配置层面存在显著差异：
 
-| 特性 | web-roo-code | web-evals |
+| 特性 | web-Njust-AI | web-evals |
 |------|-------------|-----------|
 | **构建工具** | Next.js 16.1.6 | Next.js 16.1.6 |
 | **开发端口** | 默认端口 | 3446 |
@@ -107,11 +107,11 @@ Providers --> ReactQueryProvider : "提供状态管理"
 ```
 
 **图表来源**
-- [apps/web-roo-code/src/app/layout.tsx:89-112](file://apps/web-roo-code/src/app/layout.tsx#L89-L112)
+- [apps/web-Njust-AI/src/app/layout.tsx:89-112](file://apps/web-Njust-AI/src/app/layout.tsx#L89-L112)
 - [apps/web-evals/src/app/layout.tsx:17-35](file://apps/web-evals/src/app/layout.tsx#L17-L35)
 
 **章节来源**
-- [apps/web-roo-code/src/app/layout.tsx:1-112](file://apps/web-roo-code/src/app/layout.tsx#L1-L112)
+- [apps/web-Njust-AI/src/app/layout.tsx:1-112](file://apps/web-Njust-AI/src/app/layout.tsx#L1-L112)
 - [apps/web-evals/src/app/layout.tsx:1-36](file://apps/web-evals/src/app/layout.tsx#L1-L36)
 
 ## 架构概览
@@ -121,7 +121,7 @@ Providers --> ReactQueryProvider : "提供状态管理"
 ```mermaid
 graph TB
 subgraph "用户界面层"
-UI_Roo[web-roo-code UI]
+UI_Roo[web-Njust-AI UI]
 UI_Evals[web-evals UI]
 end
 subgraph "应用逻辑层"
@@ -152,21 +152,21 @@ SharedAuth --> Analytics
 ```
 
 **图表来源**
-- [apps/web-roo-code/package.json:16-47](file://apps/web-roo-code/package.json#L16-L47)
+- [apps/web-Njust-AI/package.json:16-47](file://apps/web-Njust-AI/package.json#L16-L47)
 - [apps/web-evals/package.json:14-51](file://apps/web-evals/package.json#L14-L51)
 
 ## 详细组件分析
 
 ### 路由配置与重定向
 
-#### web-roo-code 路由配置
+#### web-Njust-AI 路由配置
 
 主应用实现了多层重定向和安全策略：
 
 ```mermaid
 flowchart TD
 Start([请求进入]) --> CheckHost{检查主机头}
-CheckHost --> |www.njust-ai-cj.local| RedirectWWW[重定向到非www]
+CheckHost --> |www.njust-ai.local| RedirectWWW[重定向到非www]
 CheckHost --> |其他| CheckProto{检查协议头}
 CheckHost --> |无主机头| CheckProto
 CheckProto --> |HTTP| RedirectHTTPS[重定向到HTTPS]
@@ -183,21 +183,21 @@ PassThrough --> End
 ```
 
 **图表来源**
-- [apps/web-roo-code/next.config.ts:8-36](file://apps/web-roo-code/next.config.ts#L8-L36)
+- [apps/web-Njust-AI/next.config.ts:8-36](file://apps/web-Njust-AI/next.config.ts#L8-L36)
 
 #### web-evals 路由配置
 
 评估应用采用简化的路由配置，专注于功能路由：
 
 **章节来源**
-- [apps/web-roo-code/next.config.ts:1-40](file://apps/web-roo-code/next.config.ts#L1-L40)
+- [apps/web-Njust-AI/next.config.ts:1-40](file://apps/web-Njust-AI/next.config.ts#L1-L40)
 - [apps/web-evals/next.config.ts:1-8](file://apps/web-evals/next.config.ts#L1-L8)
 
 ### 状态管理方案
 
 两个应用都采用了 React Query 进行状态管理：
 
-#### web-roo-code 状态管理
+#### web-Njust-AI 状态管理
 
 ```mermaid
 sequenceDiagram
@@ -218,19 +218,19 @@ QueryClient->>Client : 提供状态数据
 ```
 
 **图表来源**
-- [apps/web-roo-code/src/components/providers/index.ts:1-2](file://apps/web-roo-code/src/components/providers/index.ts#L1-L2)
+- [apps/web-Njust-AI/src/components/providers/index.ts:1-2](file://apps/web-Njust-AI/src/components/providers/index.ts#L1-L2)
 
 #### web-evals 状态管理
 
 评估应用的状态管理配置更加简洁，专注于核心功能：
 
 **章节来源**
-- [apps/web-roo-code/src/components/providers/index.ts:1-2](file://apps/web-roo-code/src/components/providers/index.ts#L1-L2)
+- [apps/web-Njust-AI/src/components/providers/index.ts:1-2](file://apps/web-Njust-AI/src/components/providers/index.ts#L1-L2)
 - [apps/web-evals/src/components/providers/index.ts:1-3](file://apps/web-evals/src/components/providers/index.ts#L1-L3)
 
 ### 服务器端渲染优化
 
-#### web-roo-code SSR 优化
+#### web-Njust-AI SSR 优化
 
 主应用实现了全面的 SEO 和 SSR 优化：
 
@@ -250,14 +250,14 @@ Analytics --> End[完成]
 ```
 
 **图表来源**
-- [apps/web-roo-code/src/app/layout.tsx:19-87](file://apps/web-roo-code/src/app/layout.tsx#L19-L87)
+- [apps/web-Njust-AI/src/app/layout.tsx:19-87](file://apps/web-Njust-AI/src/app/layout.tsx#L19-L87)
 
 #### web-evals SSR 优化
 
 评估应用采用轻量级的 SSR 策略，专注于核心功能：
 
 **章节来源**
-- [apps/web-roo-code/src/app/layout.tsx:1-112](file://apps/web-roo-code/src/app/layout.tsx#L1-L112)
+- [apps/web-Njust-AI/src/app/layout.tsx:1-112](file://apps/web-Njust-AI/src/app/layout.tsx#L1-L112)
 - [apps/web-evals/src/app/layout.tsx:1-36](file://apps/web-evals/src/app/layout.tsx#L1-L36)
 
 ### 客户端水合策略
@@ -279,7 +279,7 @@ Ready --> [*]
 ```
 
 **图表来源**
-- [apps/web-roo-code/src/app/layout.tsx:91-92](file://apps/web-roo-code/src/app/layout.tsx#L91-L92)
+- [apps/web-Njust-AI/src/app/layout.tsx:91-92](file://apps/web-Njust-AI/src/app/layout.tsx#L91-L92)
 
 ## 依赖关系分析
 
@@ -289,25 +289,25 @@ Ready --> [*]
 
 ```mermaid
 graph TB
-subgraph "web-roo-code 依赖"
+subgraph "web-Njust-AI 依赖"
 RR1[@radix-ui/react-dialog]
 RR2[@radix-ui/react-navigation-menu]
-RR3[@njust-ai-cj/evals]
-RR4[@njust-ai-cj/types]
+RR3[@njust-ai/evals]
+RR4[@njust-ai/types]
 RR5[@tanstack/react-query]
 RR6[next-themes]
 end
 subgraph "web-evals 依赖"
 RE1[@radix-ui/react-alert-dialog]
 RE2[@radix-ui/react-checkbox]
-RE3[@njust-ai-cj/evals]
-RE4[@njust-ai-cj/types]
+RE3[@njust-ai/evals]
+RE4[@njust-ai/types]
 RE5[@tanstack/react-query]
 RE6[react-hook-form]
 end
 subgraph "共享包"
-SharedEvals[@njust-ai-cj/evals]
-SharedTypes[@njust-ai-cj/types]
+SharedEvals[@njust-ai/evals]
+SharedTypes[@njust-ai/types]
 end
 RR3 --> SharedEvals
 RR4 --> SharedTypes
@@ -316,7 +316,7 @@ RE4 --> SharedTypes
 ```
 
 **图表来源**
-- [apps/web-roo-code/package.json:16-47](file://apps/web-roo-code/package.json#L16-L47)
+- [apps/web-Njust-AI/package.json:16-47](file://apps/web-Njust-AI/package.json#L16-L47)
 - [apps/web-evals/package.json:14-51](file://apps/web-evals/package.json#L14-L51)
 
 ### 组件集成模式
@@ -324,7 +324,7 @@ RE4 --> SharedTypes
 两个应用都采用了模块化的组件集成模式：
 
 **章节来源**
-- [apps/web-roo-code/package.json:1-62](file://apps/web-roo-code/package.json#L1-L62)
+- [apps/web-Njust-AI/package.json:1-62](file://apps/web-Njust-AI/package.json#L1-L62)
 - [apps/web-evals/package.json:1-64](file://apps/web-evals/package.json#L1-L64)
 
 ## 性能考虑
@@ -333,7 +333,7 @@ RE4 --> SharedTypes
 
 两个应用都针对性能进行了优化配置：
 
-1. **Turbopack 配置**：web-roo-code 配置了根路径优化
+1. **Turbopack 配置**：web-Njust-AI 配置了根路径优化
 2. **缓存策略**：React Query 实现智能缓存管理
 3. **资源优化**：自动优化静态资源和图片处理
 
@@ -388,12 +388,12 @@ Prefetch --> Request
 - React DevTools Profiler
 
 **章节来源**
-- [apps/web-roo-code/next.config.ts:8-36](file://apps/web-roo-code/next.config.ts#L8-L36)
+- [apps/web-Njust-AI/next.config.ts:8-36](file://apps/web-Njust-AI/next.config.ts#L8-L36)
 - [apps/web-evals/next.config.ts:1-8](file://apps/web-evals/next.config.ts#L1-L8)
 
 ## 结论
 
-本集成文档展示了 NJUST_AI_CJ 项目中两个 Web 应用的完整架构设计和实现细节。通过共享包机制、统一的状态管理和优化的路由配置，两个应用实现了高效的数据共享和一致的用户体验。
+本集成文档展示了 NJUST_AI 项目中两个 Web 应用的完整架构设计和实现细节。通过共享包机制、统一的状态管理和优化的路由配置，两个应用实现了高效的数据共享和一致的用户体验。
 
 关键成功因素包括：
 - 清晰的分层架构设计

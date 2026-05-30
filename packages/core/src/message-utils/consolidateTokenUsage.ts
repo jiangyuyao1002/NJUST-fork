@@ -1,4 +1,4 @@
-import type { TokenUsage, ToolUsage, ToolName, ClineMessage } from "@njust-ai-cj/types"
+import type { TokenUsage, ToolUsage, ToolName, ClineMessage } from "@njust-ai/types"
 
 import { logger } from "../shared/logger.js"
 

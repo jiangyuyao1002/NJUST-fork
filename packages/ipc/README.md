@@ -1,6 +1,6 @@
 # IPC (Inter-Process Communication)
 
-This package provides IPC functionality for NJUST_AI_CJ, allowing external applications to communicate with the extension through a socket-based interface.
+This package provides IPC functionality for NJUST_AI, allowing external applications to communicate with the extension through a socket-based interface.
 
 ## Available Commands
 
@@ -12,7 +12,7 @@ Starts a new task with optional configuration and initial message.
 
 **Parameters:**
 
-- `configuration`: NJUST_AI_CJ settings object
+- `configuration`: NJUST_AI settings object
 - `text`: Initial task message (string)
 - `images`: Array of image data URIs (optional)
 - `newTab`: Whether to open in a new tab (boolean, optional)
@@ -49,7 +49,7 @@ Resumes a task from history.
 ## Usage Example
 
 ```typescript
-import { IpcClient } from "@njust-ai-cj/ipc"
+import { IpcClient } from "@njust-ai/ipc"
 
 const client = new IpcClient("/path/to/socket")
 
@@ -64,7 +64,7 @@ client.sendCommand({
 	commandName: "StartNewTask",
 	data: {
 		configuration: {
-			/* NJUST_AI_CJ settings */
+			/* NJUST_AI settings */
 		},
 		text: "Hello, world!",
 		images: [],
@@ -86,5 +86,5 @@ The IPC interface also emits task events that clients can listen to:
 
 The socket path is typically located in the system's temporary directory and follows the pattern:
 
-- Unix/Linux/macOS: `/tmp/roo-code-{id}.sock`
-- Windows: `\\.\pipe\roo-code-{id}`
+- Unix/Linux/macOS: `/tmp/Njust-AI-{id}.sock`
+- Windows: `\\.\pipe\Njust-AI-{id}`

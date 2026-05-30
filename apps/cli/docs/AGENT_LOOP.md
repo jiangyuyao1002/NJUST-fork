@@ -1,6 +1,6 @@
 # CLI Agent Loop
 
-This document explains how the NJUST_AI_CJ CLI detects and tracks the agent loop state.
+This document explains how the NJUST_AI CLI detects and tracks the agent loop state.
 
 ## Overview
 
@@ -299,10 +299,10 @@ client.sendMessage({
 
 ## Type Guards
 
-The CLI uses type guards from `@njust-ai-cj/types` for categorization:
+The CLI uses type guards from `@njust-ai/types` for categorization:
 
 ```typescript
-import { isIdleAsk, isInteractiveAsk, isResumableAsk, isNonBlockingAsk } from "@njust-ai-cj/types"
+import { isIdleAsk, isInteractiveAsk, isResumableAsk, isNonBlockingAsk } from "@njust-ai/types"
 
 const ask = message.ask
 if (isInteractiveAsk(ask)) {
@@ -321,7 +321,7 @@ if (isInteractiveAsk(ask)) {
 Enable with `-d` flag. Logs go to `~/.njust_ai/cli-debug.log`:
 
 ```bash
-roo -d -P "Build something" --no-tui
+njust-ai -d -P "Build something" --no-tui
 ```
 
 View logs:

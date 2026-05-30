@@ -2,7 +2,7 @@
 
 import { render, screen, fireEvent } from "@/utils/test-utils"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import { ThinkingBudget } from "../ThinkingBudget"
 

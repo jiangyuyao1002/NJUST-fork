@@ -9,10 +9,10 @@ import {
 } from "@google/genai"
 import type { JWTInput } from "google-auth-library"
 
-import { type ModelInfo, ApiProviderError } from "@njust-ai-cj/types"
-import { type GeminiModelId, geminiDefaultModelId, geminiModels } from "@njust-ai-cj/core/providers"
-import { safeJsonParse } from "@njust-ai-cj/core"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { type ModelInfo, ApiProviderError } from "@njust-ai/types"
+import { type GeminiModelId, geminiDefaultModelId, geminiModels } from "@njust-ai/core/providers"
+import { safeJsonParse } from "@njust-ai/core"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

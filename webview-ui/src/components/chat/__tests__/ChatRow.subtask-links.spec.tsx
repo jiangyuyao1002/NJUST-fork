@@ -2,7 +2,7 @@ import React from "react"
 import { render, screen, fireEvent } from "@/utils/test-utils"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ChatRowContent } from "../ChatRow"
-import type { HistoryItem, ClineMessage } from "@njust-ai-cj/types"
+import type { HistoryItem, ClineMessage } from "@njust-ai/types"
 
 // Mock vscode API
 const mockPostMessage = vi.fn()
@@ -17,7 +17,7 @@ vi.mock("react-i18next", () => ({
 	useTranslation: () => ({
 		t: (key: string) => {
 			const map: Record<string, string> = {
-				"chat:subtasks.wantsToCreate": "Roo wants to create a new subtask",
+				"chat:subtasks.wantsToCreate": "Njust-AI wants to create a new subtask",
 				"chat:subtasks.resultContent": "Task result",
 				"chat:subtasks.goToSubtask": "Go to subtask",
 			}

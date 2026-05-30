@@ -1,4 +1,4 @@
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 
 /**
  * Prefer enabling parallel native tool calls only when the user explicitly turns

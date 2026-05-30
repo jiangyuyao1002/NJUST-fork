@@ -2,16 +2,16 @@
 	"title": "MCP Servers",
 	"done": "Done",
 	"marketplace": "MCP Marketplace",
-	"description": "The Model Context Protocol enables communication with locally running MCP servers that provide additional tools and resources to extend Roo's capabilities. You can use community-made servers or ask Roo to create new tools specific to your workflow (e.g., \"add a tool that gets the latest npm docs\").",
+	"description": "The Model Context Protocol enables communication with locally running MCP servers that provide additional tools and resources to extend Njust-AI's capabilities. You can use community-made servers or ask Njust-AI to create new tools specific to your workflow (e.g., \"add a tool that gets the latest npm docs\").",
 	"instructions": "Instructions",
 	"enableToggle": {
 		"title": "Enable MCP Servers",
-		"description": "Turn this ON to let Roo use tools from connected MCP servers. This gives Roo more capabilities. If you don't plan to use these extra tools, turn it OFF to help reduce API token costs."
+		"description": "Turn this ON to let Njust-AI use tools from connected MCP servers. This gives Njust-AI more capabilities. If you don't plan to use these extra tools, turn it OFF to help reduce API token costs."
 	},
 	"enableServerCreation": {
 		"title": "Enable MCP Server Creation",
-		"description": "Enable this to have Roo help you build <1>new</1> custom MCP servers. <0>Learn about server creation</0>",
-		"hint": "Hint: To reduce API token costs, disable this setting when you are not actively asking Roo to create a new MCP server."
+		"description": "Enable this to have Njust-AI help you build <1>new</1> custom MCP servers. <0>Learn about server creation</0>",
+		"hint": "Hint: To reduce API token costs, disable this setting when you are not actively asking Njust-AI to create a new MCP server."
 	},
 	"editGlobalMCP": "Edit Global MCP",
 	"editProjectMCP": "Edit Project MCP",

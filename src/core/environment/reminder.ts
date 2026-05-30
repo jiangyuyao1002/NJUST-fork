@@ -1,4 +1,4 @@
-import { TodoItem, TodoStatus } from "@njust-ai-cj/types"
+import { TodoItem, TodoStatus } from "@njust-ai/types"
 
 /**
  * Format the reminders section as a markdown block in English, with basic instructions.

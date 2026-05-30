@@ -1,7 +1,7 @@
 import axios from "axios"
 import { z } from "zod"
 
-import type { ModelRecord } from "@njust-ai-cj/types"
+import type { ModelRecord } from "@njust-ai/types"
 
 import { logger } from "../../../shared/logger"
 import { DEFAULT_HEADERS } from "../constants"

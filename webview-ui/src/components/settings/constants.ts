@@ -1,4 +1,4 @@
-import { type ProviderName, type ModelInfo } from "@njust-ai-cj/types"
+import { type ProviderName, type ModelInfo } from "@njust-ai/types"
 import {
 	anthropicModels,
 	bedrockModels,
@@ -21,7 +21,7 @@ import {
 	basetenModels,
 	mimoModels,
 	mimoTokenPlanModels,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 export const MODELS_BY_PROVIDER: Partial<Record<ProviderName, Record<string, ModelInfo>>> = {
 	anthropic: anthropicModels,

@@ -80,7 +80,7 @@ interface ImagesApiOptions {
 }
 
 /**
- * Shared image generation implementation for OpenRouter and NJUST_AI_CJ Cloud providers
+ * Shared image generation implementation for OpenRouter and NJUST_AI Cloud providers
  */
 export async function generateImageWithProvider(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
 	const { baseURL, authToken, model, prompt, inputImage } = options
@@ -91,8 +91,8 @@ export async function generateImageWithProvider(options: ImageGenerationOptions)
 			headers: {
 				Authorization: `Bearer ${authToken}`,
 				"Content-Type": "application/json",
-				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI_CJ",
-				"X-Title": "NJUST_AI_CJ",
+				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI",
+				"X-Title": "NJUST_AI",
 			},
 			body: JSON.stringify({
 				model,
@@ -244,8 +244,8 @@ export async function generateImageWithImagesApi(options: ImagesApiOptions): Pro
 			headers: {
 				Authorization: `Bearer ${authToken}`,
 				"Content-Type": "application/json",
-				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI_CJ",
-				"X-Title": "NJUST_AI_CJ",
+				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI",
+				"X-Title": "NJUST_AI",
 			},
 			body: JSON.stringify(requestBody),
 		}

@@ -1,4 +1,4 @@
-import { NJUST_AI_CJSettings } from "@njust-ai-cj/types"
+import { NJUST_AISettings } from "@njust-ai/types"
 
 import type { SupportedProvider } from "@/types/index.js"
 
@@ -8,7 +8,7 @@ const envVarMap: Record<SupportedProvider, string> = {
 	gemini: "GOOGLE_API_KEY",
 	openrouter: "OPENROUTER_API_KEY",
 	"vercel-ai-gateway": "VERCEL_AI_GATEWAY_API_KEY",
-	roo: "ROO_API_KEY",
+	"njust-ai": "NJUST_AI_API_KEY",
 }
 
 export function getEnvVarName(provider: SupportedProvider): string {
@@ -24,8 +24,8 @@ export function getProviderSettings(
 	provider: SupportedProvider,
 	apiKey: string | undefined,
 	model: string | undefined,
-): NJUST_AI_CJSettings {
-	const config: NJUST_AI_CJSettings = { apiProvider: provider }
+): NJUST_AISettings {
+	const config: NJUST_AISettings = { apiProvider: provider }
 
 	switch (provider) {
 		case "anthropic":
@@ -48,7 +48,7 @@ export function getProviderSettings(
 			if (apiKey) config.vercelAiGatewayApiKey = apiKey
 			if (model) config.vercelAiGatewayModelId = model
 			break
-		case "roo":
+		case "njust-ai":
 			if (apiKey) config.rooApiKey = apiKey
 			if (model) config.apiModelId = model
 			break

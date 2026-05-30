@@ -2,9 +2,9 @@ import * as os from "os"
 import { Anthropic } from "@anthropic-ai/sdk"
 
 import { Package } from "../../../shared/package"
-import { ApiProviderError, type VerbosityLevel, type ReasoningEffortExtended, type ServiceTier } from "@njust-ai-cj/types"
-import { OPENAI_NATIVE_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { ApiProviderError, type VerbosityLevel, type ReasoningEffortExtended, type ServiceTier } from "@njust-ai/types"
+import { OPENAI_NATIVE_DEFAULT_TEMPERATURE } from "@njust-ai/core/providers"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { sanitizeOpenAiCallId } from "../../../utils/tool-id"
 import { getErrorMessage } from "../../../shared/error-utils"
@@ -122,9 +122,9 @@ export function ResponsesApiMixin<T extends abstract new (...args: any[]) => any
 		): ApiStream {
 			this.abortController = new AbortController()
 			const taskId = metadata?.taskId
-			const userAgent = `roo-code/${Package.version} (${os.platform()} ${os.release()}; ${os.arch()}) node/${process.version.slice(1)}`
+			const userAgent = `Njust-AI/${Package.version} (${os.platform()} ${os.release()}; ${os.arch()}) node/${process.version.slice(1)}`
 			const requestHeaders: Record<string, string> = {
-				originator: "roo-code",
+				originator: "Njust-AI",
 				session_id: taskId || this.sessionId,
 				"User-Agent": userAgent,
 			}
@@ -269,7 +269,7 @@ export function ResponsesApiMixin<T extends abstract new (...args: any[]) => any
 
 			this.abortController = new AbortController()
 			const taskId = metadata?.taskId
-			const userAgent = `roo-code/${Package.version} (${os.platform()} ${os.release()}; ${os.arch()}) node/${process.version.slice(1)}`
+			const userAgent = `Njust-AI/${Package.version} (${os.platform()} ${os.release()}; ${os.arch()}) node/${process.version.slice(1)}`
 
 			try {
 				const response = await fetch(url, {
@@ -277,7 +277,7 @@ export function ResponsesApiMixin<T extends abstract new (...args: any[]) => any
 					headers: {
 						"Content-Type": "application/json",
 						Authorization: `Bearer ${apiKey}`,
-						originator: "roo-code",
+						originator: "Njust-AI",
 						session_id: taskId || this.sessionId,
 						"User-Agent": userAgent,
 					},

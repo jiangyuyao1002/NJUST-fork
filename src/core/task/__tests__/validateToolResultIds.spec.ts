@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import { Anthropic } from "@anthropic-ai/sdk"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import {
 	validateAndFixToolResultIds,
 	ToolResultIdMismatchError,
@@ -9,7 +9,7 @@ import {
 } from "../validateToolResultIds"
 
 // Mock TelemetryService
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		hasInstance: vi.fn(() => true),

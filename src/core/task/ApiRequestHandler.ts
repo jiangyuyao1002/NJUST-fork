@@ -12,7 +12,7 @@
  */
 
 import type { ApiMessage } from "../task-persistence/apiMessages"
-import type { TokenUsage } from "@njust-ai-cj/types"
+import type { TokenUsage } from "@njust-ai/types"
 
 // ─── Request Metadata ────────────────────────────────────────────────────────
 

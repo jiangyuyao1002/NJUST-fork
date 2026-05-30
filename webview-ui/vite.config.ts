@@ -63,11 +63,11 @@ export default defineConfig(({ mode }) => {
 		"process.env.VSCODE_TEXTMATE_DEBUG": JSON.stringify(process.env.VSCODE_TEXTMATE_DEBUG),
 		"process.env.PKG_NAME": JSON.stringify(pkg.name),
 		"process.env.PKG_VERSION": JSON.stringify(pkg.version),
-		"process.env.PKG_OUTPUT_CHANNEL": JSON.stringify("NJUST_AI_CJ"),
+		"process.env.PKG_OUTPUT_CHANNEL": JSON.stringify("NJUST_AI"),
 		...(gitSha ? { "process.env.PKG_SHA": JSON.stringify(gitSha) } : {}),
 	}
 
-	// TODO: We can use `@njust-ai-cj/build` to generate `define` once the
+	// TODO: We can use `@njust-ai/build` to generate `define` once the
 	// monorepo is deployed.
 	if (mode === "nightly") {
 		outDir = "../apps/vscode-nightly/build/webview-ui/build"
@@ -78,7 +78,7 @@ export default defineConfig(({ mode }) => {
 
 		define["process.env.PKG_NAME"] = JSON.stringify(nightlyPkg.name)
 		define["process.env.PKG_VERSION"] = JSON.stringify(nightlyPkg.version)
-		define["process.env.PKG_OUTPUT_CHANNEL"] = JSON.stringify("NJUST_AI_CJ-Nightly")
+		define["process.env.PKG_OUTPUT_CHANNEL"] = JSON.stringify("NJUST_AI-Nightly")
 	}
 
 	const plugins: PluginOption[] = [
@@ -99,7 +99,7 @@ export default defineConfig(({ mode }) => {
 			alias: {
 				"@": resolve(__dirname, "./src"),
 				"@src": resolve(__dirname, "./src"),
-				"@roo": resolve(__dirname, "../src/shared"),
+				"@shared": resolve(__dirname, "../src/shared"),
 			},
 		},
 		build: {
@@ -114,7 +114,7 @@ export default defineConfig(({ mode }) => {
 			cssCodeSplit: false,
 			rollupOptions: {
 				// Externalize vscode module - it's imported by file-search.ts which is
-				// dynamically imported by roo-config/index.ts, but should never be bundled
+				// dynamically imported by njust-ai-config/index.ts, but should never be bundled
 				// in the webview since it's not available in the browser context
 				external: ["vscode"],
 				input: {

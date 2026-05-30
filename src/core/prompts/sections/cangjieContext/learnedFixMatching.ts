@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import * as path from "path"
-import { NJUST_AI_CONFIG_DIR } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
 import { CangjieSymbolIndex, type SymbolEntry } from "../../../../services/cangjie-lsp/CangjieSymbolIndex"
 import { CJC_ERROR_PATTERNS } from "../../../../services/cangjie-lsp/CangjieErrorAnalyzer"

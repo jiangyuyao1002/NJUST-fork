@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type OpenAiUsageMetrics, type ModelInfo } from "@njust-ai-cj/types"
+import { type OpenAiUsageMetrics, type ModelInfo } from "@njust-ai/types"
 import {
 	doubaoCodingPlanBaseUrl,
 	doubaoDefaultBaseUrl,
@@ -10,7 +10,7 @@ import {
 	doubaoSeedCodeCodingPlanModelId,
 	openAiModelInfoSaneDefaults,
 	resolveDoubaoInferenceModelId,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

@@ -1,7 +1,7 @@
 // Mocks must come first, before imports
 
 // Mock TelemetryService
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {
@@ -189,7 +189,7 @@ describe("getModelsFromCache disk fallback", () => {
 
 		mockCache.get.mockReturnValue(memoryModels)
 
-		const result = getModelsFromCache("roo")
+		const result = getModelsFromCache("njust-ai")
 
 		expect(result).toEqual(memoryModels)
 		// Disk should not be checked when memory cache hits
@@ -227,7 +227,7 @@ describe("getModelsFromCache disk fallback", () => {
 
 		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-		const result = getModelsFromCache("roo")
+		const result = getModelsFromCache("njust-ai")
 
 		expect(result).toBeUndefined()
 		expect(consoleErrorSpy).toHaveBeenCalled()

@@ -3,7 +3,7 @@
  */
 
 import { logger } from "./logger.js"
-import type { EmbedderProvider, EmbeddingModelProfiles } from "@njust-ai-cj/types"
+import type { EmbedderProvider, EmbeddingModelProfiles } from "@njust-ai/types"
 
 // Example profiles - expand this list as needed
 export const EMBEDDING_MODEL_PROFILES: EmbeddingModelProfiles = {

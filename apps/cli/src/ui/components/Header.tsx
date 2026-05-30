@@ -1,7 +1,7 @@
 import { memo } from "react"
 import { Text, Box } from "ink"
 
-import type { TokenUsage } from "@njust-ai-cj/types"
+import type { TokenUsage } from "@njust-ai/types"
 
 import { ASCII_ROO } from "@/types/constants.js"
 
@@ -32,7 +32,7 @@ function Header({
 	const { columns } = useTerminalSize()
 
 	const homeDir = process.env.HOME || process.env.USERPROFILE || ""
-	const title = `NJUST_AI_CJ CLI v${version}`
+	const title = `NJUST_AI CLI v${version}`
 	const remainingDashes = Math.max(0, columns - `── ${title} `.length)
 
 	return (

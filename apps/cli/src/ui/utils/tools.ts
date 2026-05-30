@@ -1,4 +1,4 @@
-import type { TodoItem } from "@njust-ai-cj/types"
+import type { TodoItem } from "@njust-ai/types"
 
 import type { ToolData } from "../types.js"
 

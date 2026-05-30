@@ -1,4 +1,4 @@
-import type { CustomModePrompts, ModeConfig } from "@njust-ai-cj/types"
+import type { CustomModePrompts, ModeConfig } from "@njust-ai/types"
 
 import { addCustomInstructions } from "./sections/custom-instructions"
 import { getModeBySlug, modes } from "../../shared/modes"

@@ -1,7 +1,7 @@
 /**
  * Built-in Agent Definitions
  *
- * Defines the standard agent types that ship with Roo-Code.
+ * Defines the standard agent types that ship with Njust-AI.
  * These are the foundation for the Agent system and map to the
  * existing SubAgentType enum during migration.
  */

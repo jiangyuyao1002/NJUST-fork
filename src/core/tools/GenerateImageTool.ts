@@ -7,7 +7,7 @@ import {
 	IMAGE_GENERATION_MODEL_IDS,
 	IMAGE_GENERATION_MODELS,
 	getImageGenerationProvider,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
@@ -16,7 +16,7 @@ import { getReadablePath } from "../../utils/path"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { OpenRouterHandler } from "../../api/providers/openrouter"
-import { RooHandler } from "../../api/providers/roo"
+import { RooHandler } from "../../api/providers/njust-ai"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
 import { t } from "../../i18n"
@@ -190,8 +190,8 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 			}
 
 			let result
-			if (modelProvider === "roo") {
-				// Use NJUST_AI_CJ Cloud provider (supports both chat completions and images API)
+			if (modelProvider === "njust-ai") {
+				// Use NJUST_AI Cloud provider (supports both chat completions and images API)
 				const rooHandler = new RooHandler({} as UnsafeAny)
 				result = await rooHandler.generateImage(prompt, selectedModel!, inputImageData, apiMethod)
 			} else {
@@ -241,7 +241,7 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 			await fs.writeFile(absolutePath, imageBuffer)
 
 			if (finalPath) {
-				await task.fileContextTracker.trackFileContext(finalPath, "roo_edited")
+				await task.fileContextTracker.trackFileContext(finalPath, "njust_ai_edited")
 			}
 
 			task.didEditFile = true

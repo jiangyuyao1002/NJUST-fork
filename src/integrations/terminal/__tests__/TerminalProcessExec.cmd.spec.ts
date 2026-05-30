@@ -85,7 +85,7 @@ async function testCmdCommand(
 			executeCommand: vi.fn(),
 			cwd: vscode.Uri.file("C:\\test\\path"),
 		},
-		name: "NJUST_AI_CJ",
+		name: "NJUST_AI",
 		processId: Promise.resolve(123),
 		creationOptions: {},
 		exitStatus: undefined,

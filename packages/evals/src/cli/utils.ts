@@ -5,7 +5,7 @@ import * as path from "path"
 
 import { execa, type ResultPromise } from "execa"
 
-import type { ToolUsage } from "@njust-ai-cj/types"
+import type { ToolUsage } from "@njust-ai/types"
 
 import type { Run, Task } from "../db/index"
 
@@ -25,8 +25,8 @@ export const isDockerContainer = () => {
 }
 
 export const resetEvalsRepo = async ({ run, cwd }: { run: Run; cwd: string }) => {
-	await execa({ cwd })`git config user.name "NJUST_AI_CJ"`
-	await execa({ cwd })`git config user.email "support@njust-ai-cj.local"`
+	await execa({ cwd })`git config user.name "NJUST_AI"`
+	await execa({ cwd })`git config user.email "support@njust-ai.local"`
 	await execa({ cwd })`git checkout -f`
 	await execa({ cwd })`git clean -fd`
 	await execa({ cwd })`git checkout -b runs/${run.id}-${crypto.randomUUID().slice(0, 8)} main`
@@ -158,7 +158,7 @@ export async function copyConversationHistory({
 	logger: Logger
 }): Promise<void> {
 	// VS Code extension global storage path within the container
-	const extensionStoragePath = "/roo/.vscode/User/globalStorage/rooveterinaryinc.njust-ai-cj"
+	const extensionStoragePath = "/njust-ai/.vscode/User/globalStorage/JunjieChen-YuyaoJiang.njust-ai"
 	const taskStoragePath = path.join(extensionStoragePath, "tasks", rooTaskId)
 
 	const filesToCopy = ["api_conversation_history.json", "ui_messages.json"]

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { TelemetryEventName, type ClineAskUseMcpServer, type McpExecutionStatus } from "@njust-ai-cj/types"
+import { TelemetryEventName, type ClineAskUseMcpServer, type McpExecutionStatus } from "@njust-ai/types"
 
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
@@ -10,7 +10,7 @@ import { toolNamesMatch } from "../../utils/mcp-name"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { getErrorMessage } from "../../shared/error-utils"
 
 interface UseMcpToolParams {

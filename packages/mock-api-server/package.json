@@ -1,5 +1,5 @@
 {
-	"name": "@njust-ai-cj/mock-api-server",
+	"name": "@njust-ai/mock-api-server",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
@@ -13,8 +13,8 @@
 		"start": "tsx src/index.ts"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@types/node": "20.x",
 		"tsx": "^4.19.3",
 		"typescript": "^5.8.3",

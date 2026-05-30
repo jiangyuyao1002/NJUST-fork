@@ -1,6 +1,6 @@
 {
-	"name": "@njust-ai-cj/build",
-	"description": "ESBuild utilities for NJUST_AI_CJ.",
+	"name": "@njust-ai/build",
+	"description": "ESBuild utilities for NJUST_AI.",
 	"private": true,
 	"type": "module",
 	"main": "./dist/index.js",
@@ -16,8 +16,8 @@
 		"zod": "3.25.76"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@types/node": "20.x",
 		"vitest": "^3.2.3"
 	}

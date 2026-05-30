@@ -7,8 +7,8 @@ import * as vscode from "vscode"
 import { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
 import { fileExistsAtPath } from "../../utils/fs"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 /*
 This file provides functionality to perform regex searches on files using ripgrep.
 Inspired by: https://github.com/DiscreteTom/vscode-ripgrep-utils

@@ -1,4 +1,4 @@
-import { NJUST_AI_CJEventName, type NJUST_AI_CJAPI } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type NJUST_AIAPI } from "@njust-ai/types"
 
 type WaitForOptions = {
 	timeout?: number
@@ -40,24 +40,24 @@ export const waitFor = (
 }
 
 type WaitUntilAbortedOptions = WaitForOptions & {
-	api: NJUST_AI_CJAPI
+	api: NJUST_AIAPI
 	taskId: string
 }
 
 export const waitUntilAborted = async ({ api, taskId, ...options }: WaitUntilAbortedOptions) => {
 	const set = new Set<string>()
-	api.on(NJUST_AI_CJEventName.TaskAborted, (taskId) => set.add(taskId))
+	api.on(NJUST_AIEventName.TaskAborted, (taskId) => set.add(taskId))
 	await waitFor(() => set.has(taskId), options)
 }
 
 type WaitUntilCompletedOptions = WaitForOptions & {
-	api: NJUST_AI_CJAPI
+	api: NJUST_AIAPI
 	taskId: string
 }
 
 export const waitUntilCompleted = async ({ api, taskId, ...options }: WaitUntilCompletedOptions) => {
 	const set = new Set<string>()
-	api.on(NJUST_AI_CJEventName.TaskCompleted, (taskId) => set.add(taskId))
+	api.on(NJUST_AIEventName.TaskCompleted, (taskId) => set.add(taskId))
 	await waitFor(() => set.has(taskId), options)
 }
 

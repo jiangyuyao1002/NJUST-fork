@@ -3,10 +3,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import * as vscode from "vscode"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { ClineProvider } from "../ClineProvider"
 import { ContextProxy } from "../../config/ContextProxy"
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 
 vi.mock("vscode", () => ({
 	ExtensionContext: vi.fn(),
@@ -171,7 +171,7 @@ vi.mock("../../../utils/storage", async (importOriginal) => {
 	}
 })
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		hasInstance: vi.fn().mockReturnValue(true),
 		createInstance: vi.fn(),
@@ -198,8 +198,8 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 	beforeEach(async () => {
 		vi.clearAllMocks()
 		taskIdCounter = 0
-		originalRooCliRuntimeEnv = process.env.ROO_CLI_RUNTIME
-		delete process.env.ROO_CLI_RUNTIME
+		originalRooCliRuntimeEnv = process.env.NJUST_AI_CLI_RUNTIME
+		delete process.env.NJUST_AI_CLI_RUNTIME
 
 		if (!TelemetryService.hasInstance()) {
 			TelemetryService.createInstance()
@@ -290,9 +290,9 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 
 	afterEach(() => {
 		if (originalRooCliRuntimeEnv === undefined) {
-			delete process.env.ROO_CLI_RUNTIME
+			delete process.env.NJUST_AI_CLI_RUNTIME
 		} else {
-			process.env.ROO_CLI_RUNTIME = originalRooCliRuntimeEnv
+			process.env.NJUST_AI_CLI_RUNTIME = originalRooCliRuntimeEnv
 		}
 	})
 
@@ -500,7 +500,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 
 		it("should skip restoring task apiConfigName from history in CLI runtime", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
-			process.env.ROO_CLI_RUNTIME = "1"
+			process.env.NJUST_AI_CLI_RUNTIME = "1"
 
 			const historyItem: HistoryItem = {
 				id: "test-task-id",
@@ -534,7 +534,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 
 		it("should skip restoring mode-based provider config from history in CLI runtime", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
-			process.env.ROO_CLI_RUNTIME = "1"
+			process.env.NJUST_AI_CLI_RUNTIME = "1"
 
 			const historyItem: HistoryItem = {
 				id: "test-task-id",

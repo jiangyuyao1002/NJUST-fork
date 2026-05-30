@@ -1,0 +1,2461 @@
+File: src/core/prompts/sections/cangjie-context.ts
+860 | 		const root = parseToml(content) as Record<string, unknown>
+861 | 		const pkg = root.package
+862 | 		if (pkg && typeof pkg === "object" && !Array.isArray(pkg)) {
+863 | 			const memberDeps = tomDepsFromObject(root.dependencies)
+864 | 			return {
+865 | 				name: tomStr(pkg, "name") || path.basename(pathRel),
+866 | 				path: pathRel,
+867 | 				outputType: tomStr(pkg, "output-type") || "static",
+868 | 				dependencies: memberDeps,
+869 | 				dependencyDisplay: buildDependencyDisplay(memberDeps),
+870 | 			}
+871 | 		}
+872 | 	} catch {
+873 | 		/* member smol-toml failed */
+874 | 	}
+875 | 	try {
+876 | 		const ms = splitTomlSections(content)
+877 | 		const pkg = ms.get("package")
+878 | 		if (!pkg) return null
+879 | 		let memberDeps: WorkspaceMember["dependencies"]
+880 | 		const depSec = ms.get("dependencies")
+881 | 		if (depSec) {
+882 | 			const tables = extractTomlInlineTables(depSec)
+883 | 			if (Object.keys(tables).length > 0) {
+884 | 				memberDeps = {}
+885 | 				for (const [depName, t] of Object.entries(tables)) {
+886 | 					memberDeps[depName] = { path: t["path"], git: t["git"], tag: t["tag"], branch: t["branch"] }
+887 | 				}
+888 | 			}
+889 | 		}
+890 | 		return {
+891 | 			name: extractTomlString(pkg, "name") || path.basename(pathRel),
+892 | 			path: pathRel,
+893 | 			outputType: extractTomlString(pkg, "output-type") || "static",
+894 | 			dependencies: memberDeps,
+895 | 			dependencyDisplay: buildDependencyDisplay(memberDeps),
+896 | 		}
+897 | 	} catch {
+898 | 		return null
+899 | 	}
+900 | }
+901 | 
+902 | async function projectInfoFromParsedTomlRoot(root: Record<string, unknown>, cwd: string): Promise<CjpmProjectInfo | null> {
+903 | 	const ws = root.workspace
+904 | 	if (ws && typeof ws === "object" && !Array.isArray(ws)) {
+905 | 		const membersRaw = (ws as Record<string, unknown>).members
+906 | 		const memberPaths = Array.isArray(membersRaw)
+907 | 			? membersRaw.filter((x): x is string => typeof x === "string")
+908 | 			: []
+909 | 		const slice = memberPaths.slice(0, MAX_WORKSPACE_MEMBERS)
+910 | 		const resolved = await Promise.all(slice.map((mp) => parseMemberCjpmIntoWorkspaceMember(path.join(cwd, mp), mp)))
+911 | 		const members = resolved.filter((m): m is WorkspaceMember => m != null)
+912 | 		const dependencies = tomDepsFromObject(root.dependencies)
+913 | 		return { name: "", version: "", outputType: "", isWorkspace: true, members, dependencies, srcDir: "src" }
+914 | 	}
+915 | 	const pkg = root.package
+916 | 	if (pkg && typeof pkg === "object" && !Array.isArray(pkg)) {
+917 | 		const name = tomStr(pkg, "name") || ""
+918 | 		const version = tomStr(pkg, "version") || ""
+919 | 		const outputType = tomStr(pkg, "output-type") || "executable"
+
+920 | 		const srcDir = tomStr(pkg, "src-dir") || "src"
+921 | 		const dependencies = tomDepsFromObject(root.dependencies)
+922 | 		return { name, version, outputType, isWorkspace: false, srcDir, dependencies }
+923 | 	}
+924 | 	return null
+925 | }
+926 | 
+927 | async function parseWorkspaceProjectRegexAsync(sections: Map<string, string>, cwd: string): Promise<CjpmProjectInfo | null> {
+928 | 	const ws = sections.get("workspace")
+929 | 	if (!ws) return null
+930 | 	const memberPaths = extractTomlArray(ws, "members")
+931 | 	const slice = memberPaths.slice(0, MAX_WORKSPACE_MEMBERS)
+932 | 	const resolved = await Promise.all(slice.map((mp) => parseMemberCjpmIntoWorkspaceMember(path.join(cwd, mp), mp)))
+933 | 	const members = resolved.filter((m): m is WorkspaceMember => m != null)
+934 | 	let dependencies: CjpmProjectInfo["dependencies"]
+935 | 	const deps = sections.get("dependencies")
+936 | 	if (deps) {
+937 | 		const tables = extractTomlInlineTables(deps)
+938 | 		if (Object.keys(tables).length > 0) {
+939 | 			dependencies = {}
+940 | 			for (const [depName, t] of Object.entries(tables)) {
+941 | 				dependencies[depName] = { path: t["path"], git: t["git"] }
+942 | 			}
+943 | 		}
+944 | 	}
+945 | 	return { name: "", version: "", outputType: "", isWorkspace: true, members, dependencies, srcDir: "src" }
+946 | }
+947 | 
+948 | async function parseCjpmTomlContent(content: string, cwd: string): Promise<CjpmProjectInfo | null> {
+949 | 	try {
+950 | 		const root = parseToml(content) as Record<string, unknown>
+951 | 		const fromSmol = await projectInfoFromParsedTomlRoot(root, cwd)
+952 | 		if (fromSmol) return fromSmol
+953 | 	} catch (e) {
+954 | 		console.warn("[cangjie-context] smol-toml parse failed, using regex fallback:", e)
+955 | 	}
+956 | 	try {
+957 | 		const sections = splitTomlSections(content)
+958 | 		if (sections.has("workspace")) {
+959 | 			return await parseWorkspaceProjectRegexAsync(sections, cwd)
+960 | 		}
+961 | 		if (sections.has("package")) {
+962 | 			return parseSingleModuleProject(sections)
+963 | 		}
+964 | 	} catch {
+965 | 		/* ignore parse errors */
+966 | 	}
+967 | 	return null
+968 | }
+969 | 
+970 | async function parseCjpmTomlWithMeta(cwd: string): Promise<{ info: CjpmProjectInfo | null; cjpmRawHash: string }> {
+971 | 	const tomlPath = path.join(cwd, "cjpm.toml")
+972 | 	const now = Date.now()
+973 | 	try {
+974 | 		const st = await fs.promises.stat(tomlPath)
+975 | 		const cached = cjpmTomlMetaCache.get(cwd)
+976 | 		if (cached && cached.mtimeMs === st.mtimeMs && now - cached.time < L1_CONTEXT_CACHE_TTL_MS) {
+977 | 			return cached.value
+978 | 		}
+979 | 		const content = await fs.promises.readFile(tomlPath, "utf-8")
+
+ 980 | 		const info = await parseCjpmTomlContent(content, cwd)
+ 981 | 		const value = { info, cjpmRawHash: String(simpleHash(content)) }
+ 982 | 		cjpmTomlMetaCache.set(cwd, { mtimeMs: st.mtimeMs, value, time: now })
+ 983 | 		if (cjpmTomlMetaCache.size > 64) {
+ 984 | 			const first = cjpmTomlMetaCache.keys().next().value as string | undefined
+ 985 | 			if (first !== undefined) cjpmTomlMetaCache.delete(first)
+ 986 | 		}
+ 987 | 		return value
+ 988 | 	} catch {
+ 989 | 		return { info: null, cjpmRawHash: "no-cjpm" }
+ 990 | 	}
+ 991 | }
+ 992 | 
+ 993 | async function parseCjpmToml(cwd: string): Promise<CjpmProjectInfo | null> {
+ 994 | 	const { info } = await parseCjpmTomlWithMeta(cwd)
+ 995 | 	return info
+ 996 | }
+ 997 | 
+ 998 | // ---------------------------------------------------------------------------
+ 999 | // Package hierarchy scanning
+1000 | // ---------------------------------------------------------------------------
+1001 | 
+1002 | const PACKAGE_TREE_CACHE_TTL_MS = 60_000
+1003 | let packageTreeCache = new Map<string, { value: PackageNode | null; time: number }>()
+1004 | 
+1005 | function getPackageTreeCacheKey(cwd: string, srcDir: string, rootPackageName?: string): string {
+1006 | 	return `${cwd}|${srcDir}|${rootPackageName ?? "default"}`
+1007 | }
+1008 | 
+1009 | function getCachedPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): PackageNode | null {
+1010 | 	const key = getPackageTreeCacheKey(cwd, srcDir, rootPackageName)
+1011 | 	const now = Date.now()
+1012 | 	const hit = packageTreeCache.get(key)
+1013 | 	if (hit && now - hit.time < PACKAGE_TREE_CACHE_TTL_MS) return hit.value
+1014 | 	const value = scanPackageHierarchy(cwd, srcDir, rootPackageName)
+1015 | 	packageTreeCache.set(key, { value, time: now })
+1016 | 	if (packageTreeCache.size > 128) {
+1017 | 		const first = packageTreeCache.keys().next().value as string | undefined
+1018 | 		if (first !== undefined) packageTreeCache.delete(first)
+1019 | 	}
+1020 | 	return value
+1021 | }
+1022 | 
+1023 | function scanPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): PackageNode | null {
+1024 | 	const srcPath = path.join(cwd, srcDir)
+1025 | 	if (!fs.existsSync(srcPath)) return null
+1026 | 
+1027 | 	let fileCount = 0
+1028 | 	const rootPkg = rootPackageName || "default"
+1029 | 
+1030 | 	function scan(dir: string, depth: number, pkgName: string): PackageNode | null {
+1031 | 		if (depth > MAX_SCAN_DEPTH || fileCount > MAX_SCAN_FILES) return null
+1032 | 
+1033 | 		let entries: fs.Dirent[]
+1034 | 		try {
+1035 | 			entries = fs.readdirSync(dir, { withFileTypes: true })
+1036 | 		} catch {
+1037 | 			return null
+1038 | 		}
+1039 | 
+
+1040 | 		const sourceFiles: string[] = []
+1041 | 		const testFiles: string[] = []
+1042 | 		let hasMain = false
+1043 | 		const childDirs: fs.Dirent[] = []
+1044 | 
+1045 | 		for (const entry of entries) {
+1046 | 			if (entry.isFile() && entry.name.endsWith(".cj")) {
+1047 | 				fileCount++
+1048 | 				if (entry.name.endsWith("_test.cj")) {
+1049 | 					testFiles.push(entry.name)
+1050 | 				} else {
+1051 | 					sourceFiles.push(entry.name)
+1052 | 					if (entry.name === "main.cj") hasMain = true
+1053 | 				}
+1054 | 			} else if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "target") {
+1055 | 				childDirs.push(entry)
+1056 | 			}
+1057 | 		}
+1058 | 
+1059 | 		const children: PackageNode[] = []
+1060 | 		for (const cd of childDirs) {
+1061 | 			const childNode = scan(path.join(dir, cd.name), depth + 1, `${pkgName}.${cd.name}`)
+1062 | 			if (childNode) children.push(childNode)
+1063 | 		}
+1064 | 
+1065 | 		if (sourceFiles.length === 0 && testFiles.length === 0 && children.length === 0) return null
+1066 | 
+1067 | 		return {
+1068 | 			packageName: pkgName,
+1069 | 			dirPath: path.relative(cwd, dir).replace(/\\/g, "/"),
+1070 | 			sourceFiles,
+1071 | 			testFiles,
+1072 | 			hasMain,
+1073 | 			children,
+1074 | 		}
+1075 | 	}
+1076 | 
+1077 | 	return scan(srcPath, 0, rootPkg)
+1078 | }
+1079 | 
+1080 | function countTreeFiles(node: PackageNode, testOnly: boolean): number {
+1081 | 	const count = testOnly ? node.testFiles.length : node.sourceFiles.length
+1082 | 	return count + node.children.reduce((sum, child) => sum + countTreeFiles(child, testOnly), 0)
+1083 | }
+1084 | 
+1085 | // ---------------------------------------------------------------------------
+1086 | // System prompt section formatters
+1087 | // ---------------------------------------------------------------------------
+1088 | 
+1089 | function readWorkspaceMemberDependencies(
+1090 | 	cwd: string,
+1091 | 	member: WorkspaceMember,
+1092 | ): string[] {
+1093 | 	if (member.dependencyDisplay && member.dependencyDisplay.length > 0) {
+1094 | 		return member.dependencyDisplay.slice(0, 5)
+1095 | 	}
+1096 | 	let tables: Record<string, Record<string, string>> | undefined
+1097 | 	if (member.dependencies && Object.keys(member.dependencies).length > 0) {
+1098 | 		tables = {}
+1099 | 		for (const [d, meta] of Object.entries(member.dependencies)) {
+
+1100 | 			tables[d] = { path: meta.path ?? "", git: meta.git ?? "", tag: meta.tag ?? "", branch: meta.branch ?? "" }
+1101 | 		}
+1102 | 	} else {
+1103 | 		const memberToml = path.join(cwd, member.path, "cjpm.toml")
+1104 | 		if (!fs.existsSync(memberToml)) return []
+1105 | 		try {
+1106 | 			const content = fs.readFileSync(memberToml, "utf-8")
+1107 | 			const memberSections = splitTomlSections(content)
+1108 | 			const deps = memberSections.get("dependencies")
+1109 | 			if (!deps) return []
+1110 | 			tables = extractTomlInlineTables(deps)
+1111 | 		} catch {
+1112 | 			return []
+1113 | 		}
+1114 | 	}
+1115 | 	if (!tables) return []
+1116 | 	return Object.keys(tables)
+1117 | 		.map((d) => {
+1118 | 			const t = tables![d]
+1119 | 			if (t["path"]) return `${d}(path:${t["path"]})`
+1120 | 			if (t["git"]) return `${d}(git)`
+1121 | 			if (t["tag"]) return `${d}(tag:${t["tag"]})`
+1122 | 			if (t["branch"]) return `${d}(branch:${t["branch"]})`
+1123 | 			return d
+1124 | 		})
+1125 | 		.slice(0, 5)
+1126 | }
+1127 | 
+1128 | function buildCompactProjectOverviewSection(
+1129 | 	cwd: string,
+1130 | 	info: CjpmProjectInfo,
+1131 | 	activePkg: string | null,
+1132 | 	activeFilePath: string | null,
+1133 | ): string {
+1134 | 	const lines: string[] = ["## 当前项目概览（紧凑）\n"]
+1135 | 
+1136 | 	if (!info.isWorkspace) {
+1137 | 		const rootPkgName = info.name || undefined
+1138 | 		const pkgTree = getCachedPackageHierarchy(cwd, info.srcDir, rootPkgName)
+1139 | 		const srcCount = pkgTree ? countTreeFiles(pkgTree, false) : 0
+1140 | 		const testCount = pkgTree ? countTreeFiles(pkgTree, true) : 0
+1141 | 		lines.push(`项目: ${info.name} (${info.outputType}) v${info.version}`)
+1142 | 		lines.push(`目录: ${info.srcDir}/, 源文件: ${srcCount}, 测试文件: ${testCount}`)
+1143 | 		if (activePkg) lines.push(`当前编辑包: ${activePkg}`)
+1144 | 		if (pkgTree) {
+1145 | 			const pkgSummary = [pkgTree.packageName, ...pkgTree.children.map((c) => c.packageName)].slice(0, 6).join(", ")
+1146 | 			lines.push(`包概览: ${pkgSummary}${pkgTree.children.length > 5 ? " ..." : ""}`)
+1147 | 		}
+1148 | 		lines.push(`包声明规则: package 与 ${info.srcDir}/ 目录层级一致`)
+1149 | 		return lines.join("\n")
+1150 | 	}
+1151 | 
+1152 | 	const members = info.members ?? []
+1153 | 	const resolvedMembers = members.slice(0, MAX_WORKSPACE_MEMBERS)
+1154 | 	lines.push(`项目: workspace (${resolvedMembers.length} 个模块)`)
+1155 | 
+1156 | 	let activeMemberName: string | null = null
+1157 | 	if (activeFilePath) {
+1158 | 		const normalizedActivePath = activeFilePath.replace(/\\/g, "/")
+1159 | 		for (const m of resolvedMembers) {
+
+1160 | 			const memberRoot = path.join(cwd, m.path).replace(/\\/g, "/")
+1161 | 			if (normalizedActivePath.startsWith(memberRoot)) {
+1162 | 				activeMemberName = m.name
+1163 | 				break
+1164 | 			}
+1165 | 		}
+1166 | 	}
+1167 | 
+1168 | 	for (const member of resolvedMembers) {
+1169 | 		const memberCwd = path.join(cwd, member.path)
+1170 | 		const pkgTree = getCachedPackageHierarchy(memberCwd, "src", member.name)
+1171 | 		const srcCount = pkgTree ? countTreeFiles(pkgTree, false) : 0
+1172 | 		const testCount = pkgTree ? countTreeFiles(pkgTree, true) : 0
+1173 | 		const deps = readWorkspaceMemberDependencies(cwd, member)
+1174 | 		const activeTag = member.name === activeMemberName ? " ← 当前编辑模块" : ""
+1175 | 		const depSuffix = deps.length > 0 ? `, 依赖: ${deps.join(", ")}` : ""
+1176 | 		lines.push(`- ${member.name} (${member.outputType}): ${srcCount} 源/${testCount} 测${activeTag}${depSuffix}`)
+1177 | 	}
+1178 | 
+1179 | 	if (activePkg) lines.push(`当前编辑包: ${activePkg}`)
+1180 | 	lines.push("包声明规则: package 与 src/ 目录层级一致；模块依赖变更后运行 `cjpm check`")
+1181 | 	return lines.join("\n")
+1182 | }
+1183 | 
+1184 | function normalizeForSimilarity(text: string): string {
+1185 | 	let s = text.replace(/\r\n/g, "\n").toLowerCase().replace(/^\[[^\]]*\]\s*/, "")
+1186 | 	s = s.replace(/[a-z]:[\\/][^:\s)]+/gi, "FILE")
+1187 | 	s = s.replace(/(?:\/[\w.-]+)+\.(?:cj|toml)/gi, "FILE")
+1188 | 	s = s.replace(/(?:[\w.-]+\\)+[\w.-]+\.(?:cj|toml)/gi, "FILE")
+1189 | 	s = s.replace(/:\d+:\d+/g, ":L:L")
+1190 | 	s = s.replace(/\bline\s+\d+\b/gi, "line L")
+1191 | 	s = s.replace(/(?<!\d):\d{1,6}(?!\d)/g, ":L")
+1192 | 	s = s.replace(/\s+/g, " ").trim()
+1193 | 	return s
+1194 | }
+1195 | 
+1196 | function countLearnedFixLexiconOverlap(normalizedErrorPattern: string, normalizedMessage: string): number {
+1197 | 	const epTok = new Set(normalizedErrorPattern.split(" ").filter((t) => t.length > 1))
+1198 | 	const msgTok = new Set(normalizedMessage.split(" ").filter((t) => t.length > 1))
+1199 | 	let n = 0
+1200 | 	for (const t of epTok) {
+1201 | 		if (LEARNED_FIX_CATEGORY_LEXICON.has(t) && msgTok.has(t)) n++
+1202 | 	}
+1203 | 	return n
+1204 | }
+1205 | 
+1206 | function levenshteinDistance(a: string, b: string): number {
+1207 | 	if (a === b) return 0
+1208 | 	if (a.length === 0) return b.length
+1209 | 	if (b.length === 0) return a.length
+1210 | 	const row = new Array(b.length + 1)
+1211 | 	for (let j = 0; j <= b.length; j++) row[j] = j
+1212 | 	for (let i = 1; i <= a.length; i++) {
+1213 | 		let prev = i - 1
+1214 | 		row[0] = i
+1215 | 		for (let j = 1; j <= b.length; j++) {
+1216 | 			const tmp = row[j]
+1217 | 			const cost = a[i - 1] === b[j - 1] ? 0 : 1
+1218 | 			row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + cost)
+1219 | 			prev = tmp
+
+1220 | 		}
+1221 | 	}
+1222 | 	return row[b.length]
+1223 | }
+1224 | 
+1225 | function stringSimilarity(a: string, b: string): number {
+1226 | 	const maxLen = Math.max(a.length, b.length)
+1227 | 	if (maxLen === 0) return 1
+1228 | 	const lenDiff = Math.abs(a.length - b.length)
+1229 | 	if (lenDiff / maxLen > 0.4) return 0
+1230 | 	const dist = levenshteinDistance(a, b)
+1231 | 	return Math.max(0, 1 - dist / maxLen)
+1232 | }
+1233 | 
+1234 | function primitiveTypeTokens(s: string): string[] {
+1235 | 	const m = s.match(/\b(Int\d+|UInt\d+|Float\d+|Bool|String)\b/gi)
+1236 | 	if (!m) return []
+1237 | 	return [...new Set(m.map((x) => x.toLowerCase()))]
+1238 | }
+1239 | 
+1240 | function extractOrderedPrimitiveTypePair(s: string): [string, string] | null {
+1241 | 	const m = s.match(/\b(Int\d+|UInt\d+|Float\d+|Bool|String)\b/gi)
+1242 | 	if (!m || m.length < 2) return null
+1243 | 	return [m[0].toLowerCase(), m[1].toLowerCase()]
+1244 | }
+1245 | 
+1246 | function primitiveTypeSetsEqual(a: string[], b: string[]): boolean {
+1247 | 	if (a.length !== b.length) return false
+1248 | 	const sb = new Set(b)
+1249 | 	return a.every((t) => sb.has(t))
+1250 | }
+1251 | 
+1252 | function learnedPatternMatchesDiagnostics(p: LearnedFixPattern, diagnostics: vscode.Diagnostic[]): boolean {
+1253 | 	const ep = normalizeForSimilarity(p.errorPattern)
+1254 | 	if (!ep || diagnostics.length === 0) return false
+1255 | 	const epTypes = primitiveTypeTokens(p.errorPattern)
+1256 | 	const epPair = extractOrderedPrimitiveTypePair(p.errorPattern)
+1257 | 	const hasExplicitCode = Boolean(p.diagnosticCode?.trim())
+1258 | 	return diagnostics.some((d) => {
+1259 | 		const msg = normalizeForSimilarity(d.message).slice(0, 220)
+1260 | 		if (!msg) return false
+1261 | 		const code = normalizeDiagnosticCode(d)?.toLowerCase()
+1262 | 		const pCode = p.diagnosticCode?.trim().toLowerCase()
+1263 | 		if (pCode) {
+1264 | 			if (code && code !== pCode) return false
+1265 | 			if (code === pCode) return true
+1266 | 		}
+1267 | 		const tagged = p.errorPattern.match(/^\[([^\]]+)\]/)?.[1]?.toLowerCase()
+1268 | 		if (code && tagged && code !== tagged) return false
+1269 | 		if (code && (tagged === code || ep.includes(`[${code}]`) || msg.includes(`[${code}]`))) return true
+1270 | 		// Stricter substring match when pattern does not pin a diagnostic code
+1271 | 		if (!hasExplicitCode && !code) {
+1272 | 			if (ep.length >= 14 && (msg.includes(ep) || (ep.length <= 80 && ep.includes(msg)))) return true
+1273 | 		} else if (ep.length >= 14 && (msg.includes(ep) || ep.includes(msg))) {
+1274 | 			return true
+1275 | 		}
+1276 | 		const msgTypes = primitiveTypeTokens(d.message)
+1277 | 		const msgPair = extractOrderedPrimitiveTypePair(d.message)
+1278 | 		const typeCtx = /mismatch|不匹配|expected|需要|found|得到|类型|type/.test(ep + msg)
+1279 | 		if (epPair && msgPair && epPair[0] === msgPair[0] && epPair[1] === msgPair[1] && typeCtx) {
+
+1280 | 			return true
+1281 | 		}
+1282 | 		if (epTypes.length >= 2 && msgTypes.length >= 2 && primitiveTypeSetsEqual(epTypes, msgTypes) && typeCtx) {
+1283 | 			return true
+1284 | 		}
+1285 | 		const kw = countLearnedFixLexiconOverlap(ep, msg)
+1286 | 		const epHead = ep.slice(0, 14)
+1287 | 		const msgHead = msg.slice(0, 14)
+1288 | 		const roughSub =
+1289 | 			ep.length < 12 ||
+1290 | 			msg.includes(epHead) ||
+1291 | 			ep.includes(msgHead) ||
+1292 | 			kw > 0 ||
+1293 | 			[...LEARNED_FIX_CATEGORY_LEXICON].some((w) => w.length >= 2 && ep.includes(w) && msg.includes(w))
+1294 | 		if (!roughSub) return false
+1295 | 		let threshold = hasExplicitCode ? 0.75 : 0.82
+1296 | 		threshold -= Math.min(4, kw) * 0.05
+1297 | 		threshold = Math.max(hasExplicitCode ? 0.6 : 0.68, threshold)
+1298 | 		return stringSimilarity(ep, msg) >= threshold
+1299 | 	})
+1300 | }
+1301 | 
+1302 | function learnedPatternSuccessRate(p: LearnedFixPattern): number {
+1303 | 	const s = p.successCount ?? 0
+1304 | 	const f = p.failCount ?? 0
+1305 | 	const t = s + f
+1306 | 	if (t === 0) return (p.occurrences ?? 0) > 0 ? 0.5 : 0
+1307 | 	return s / t
+1308 | }
+1309 | 
+1310 | function learnedPatternTimeWeight(p: LearnedFixPattern): number {
+1311 | 	if (!p.lastSeenAt) return 1
+1312 | 	const t = Date.parse(p.lastSeenAt)
+1313 | 	if (Number.isNaN(t)) return 1
+1314 | 	const ageDays = (Date.now() - t) / (1000 * 60 * 60 * 24)
+1315 | 	if (ageDays > 90) return 0.5
+1316 | 	if (ageDays > 30) return 0.75
+1317 | 	return 1
+1318 | }
+1319 | 
+1320 | /**
+1321 |  * Built-in seed fixes to address cold-start when no project-specific learned-fixes.json exists.
+1322 |  * These cover the most frequently encountered Cangjie compilation errors.
+1323 |  */
+1324 | const BUILTIN_SEED_FIXES: LearnedFixPattern[] = [
+1325 | 	{
+1326 | 		errorPattern: "undeclared identifier|未找到符号",
+1327 | 		fix: "检查是否缺少 import 语句。常见遗漏: import std.collection.* (ArrayList/HashMap), import std.console.* (println), import std.io.* (文件IO)。检查拼写和包可见性(public)。",
+1328 | 		successCount: 5, failCount: 0,
+1329 | 	},
+1330 | 	{
+1331 | 		errorPattern: "type mismatch|类型不匹配",
+1332 | 		fix: "检查赋值/传参的类型是否一致。常见: String vs Int64 需显式转换 Int64.parse(str); ?T 需用 ?? 解包; Array<T> 与 ArrayList<T> 不直接兼容需构造。",
+1333 | 		successCount: 4, failCount: 0,
+1334 | 	},
+1335 | 	{
+1336 | 		errorPattern: "cannot call mut func on.*let|let.*调用.*mut",
+1337 | 		fix: "将 let 绑定改为 var 绑定。mut 方法只能在 var 绑定的 struct 实例上调用。示例: var counter = Counter() 然后 counter.inc()。",
+1338 | 		successCount: 5, failCount: 0,
+1339 | 	},
+
+1340 | 	{
+1341 | 		errorPattern: "recursive struct|struct.*自引用|infinite.*size",
+1342 | 		fix: "struct 是值类型不能自引用。改用 class（引用类型）或将自引用字段声明为 ?StructName（Option 包装）。",
+1343 | 		successCount: 3, failCount: 0,
+1344 | 	},
+1345 | 	{
+1346 | 		errorPattern: "non-exhaustive|match.*不穷尽|missing.*case",
+1347 | 		fix: "match 表达式必须覆盖所有可能分支。添加遗漏的 case 或使用 case _ => 作为兜底。对 enum 类型需要列出所有变体。",
+1348 | 		successCount: 4, failCount: 0,
+1349 | 	},
+1350 | 	{
+1351 | 		errorPattern: "main.*返回.*void|main.*return type",
+1352 | 		fix: "main 函数返回类型必须为 Int64，不能省略或使用其他类型。正确签名: main(): Int64 { ... return 0 }",
+1353 | 		successCount: 3, failCount: 0,
+1354 | 	},
+1355 | 	{
+1356 | 		errorPattern: "package.*不一致|package.*mismatch|package.*directory",
+1357 | 		fix: "package 声明必须与 src/ 下的目录结构严格对应。例如 src/foo/bar/baz.cj 中应为 package foo.bar。",
+1358 | 		successCount: 3, failCount: 0,
+1359 | 	},
+1360 | 	{
+1361 | 		errorPattern: "cannot find.*import|import.*not found",
+1362 | 		fix: "检查 import 路径是否正确。std 标准库用 import std.模块名.* 格式。项目内部包用 import 包名.* 且需在 cjpm.toml 中配置依赖。",
+1363 | 		successCount: 3, failCount: 0,
+1364 | 	},
+1365 | 	{
+1366 | 		errorPattern: "override.*not open|redef.*override",
+1367 | 		fix: "override 只能用于 open 修饰的父类方法；非 open 方法需用 redef 而非 override。检查父类方法声明是否有 open 修饰符。",
+1368 | 		successCount: 2, failCount: 0,
+1369 | 	},
+1370 | 	{
+1371 | 		errorPattern: "interface.*not implement|未实现.*接口",
+1372 | 		fix: "实现 interface 需要覆盖所有方法。用 class MyClass <: InterfaceName { public func methodName(...): ReturnType { ... } } 语法。",
+1373 | 		successCount: 2, failCount: 0,
+1374 | 	},
+1375 | 	{
+1376 | 		errorPattern: "HashMap.*Hashable|HashSet.*Hashable",
+1377 | 		fix: "HashMap 的 Key 类型须实现 Hashable & Equatable<K>。自定义类型用作 Key 需要 extend 实现这两个接口或使用已内置实现的类型(String, Int64 等)。",
+1378 | 		successCount: 3, failCount: 0,
+1379 | 	},
+1380 | 	{
+1381 | 		errorPattern: "spawn.*capture.*var|并发.*捕获.*可变",
+1382 | 		fix: "spawn 块内不能直接捕获外部 var 变量。使用 Mutex<T> 包装共享状态，或将值在 spawn 前拷贝到 let 绑定。",
+1383 | 		successCount: 2, failCount: 0,
+1384 | 	},
+1385 | ]
+1386 | 
+1387 | /**
+1388 |  * Load project-specific error→fix hints from .njust_ai/learned-fixes.json (manual curation).
+1389 |  * Falls back to BUILTIN_SEED_FIXES when no project file exists.
+1390 |  * Prioritizes patterns matching current diagnostics and sorts by empirical success rate.
+1391 |  */
+1392 | function loadLearnedFixesSection(cwd: string, diagnostics: vscode.Diagnostic[]): string | null {
+1393 | 	const rawData = loadLearnedFixes(cwd)
+1394 | 	const parsed: LearnedFixPattern[] = []
+1395 | 	for (const entry of rawData.patterns) {
+1396 | 		if (!entry || typeof entry !== "object") continue
+1397 | 		const p = entry as LearnedFixPattern
+1398 | 		if (typeof p.errorPattern !== "string" || typeof p.fix !== "string") continue
+1399 | 		parsed.push(p)
+
+1400 | 	}
+1401 | 
+1402 | 	const useSeedFixes = parsed.length === 0
+1403 | 	const effective = useSeedFixes ? BUILTIN_SEED_FIXES : parsed
+1404 | 	if (effective.length === 0) return null
+1405 | 
+1406 | 	try {
+1407 | 		const displayable = effective.filter((p) => {
+1408 | 			const s = p.successCount ?? 0
+1409 | 			const f = p.failCount ?? 0
+1410 | 			if (f >= 3 && f > s) return false
+1411 | 			const rate = learnedPatternSuccessRate(p)
+1412 | 			return rate >= 0.4 || s + f < 3
+1413 | 		})
+1414 | 		if (displayable.length === 0) return null
+1415 | 
+1416 | 		const matched =
+1417 | 			diagnostics.length > 0 ? displayable.filter((p) => learnedPatternMatchesDiagnostics(p, diagnostics)) : []
+1418 | 		const matchedSet = new Set(matched)
+1419 | 		const unmatched = displayable.filter((p) => !matchedSet.has(p))
+1420 | 		const rateSort = (a: LearnedFixPattern, b: LearnedFixPattern) =>
+1421 | 			learnedPatternSuccessRate(b) * learnedPatternTimeWeight(b) -
+1422 | 				learnedPatternSuccessRate(a) * learnedPatternTimeWeight(a) ||
+1423 | 			(b.failCount ?? 0) - (a.failCount ?? 0)
+1424 | 		matched.sort(rateSort)
+1425 | 		unmatched.sort(rateSort)
+1426 | 		const ordered = [...matched, ...unmatched]
+1427 | 
+1428 | 		const sourceLabel = useSeedFixes
+1429 | 			? "内置常见修复提示"
+1430 | 			: `本项目常见修复提示（${NJUST_AI_CONFIG_DIR}/${LEARNED_FIXES_FILE}）`
+1431 | 		const header = `## ${sourceLabel}\n\n`
+1432 | 		const lines: string[] = []
+1433 | 		let used = header.length
+1434 | 
+1435 | 		for (const p of ordered) {
+1436 | 			const epDisplay = p.errorPattern.replace(/`/g, "'").slice(0, 200)
+1437 | 			const fixDisplay = p.fix ? p.fix.replace(/`/g, "'").slice(0, 500) : "（尚未学到修复方式）"
+1438 | 			const s = p.successCount ?? 0
+1439 | 			const f = p.failCount ?? 0
+1440 | 			const occ =
+1441 | 				typeof p.occurrences === "number" && p.occurrences > 0 ? `（约 ${p.occurrences} 次）` : ""
+1442 | 			const stats =
+1443 | 				s + f > 0 ? ` [验证 ${s} 成功 / ${f} 失败${f > s ? " · 低置信" : ""}]` : ""
+1444 | 			const relevant = diagnostics.length > 0 && matchedSet.has(p) ? "「当前诊断相关」" : ""
+1445 | 			const line = `- ${relevant}匹配 \`${epDisplay}\`：${fixDisplay}${stats}${occ}`
+1446 | 			if (used + line.length + 1 > LEARNED_FIXES_MAX_SECTION_CHARS) {
+1447 | 				lines.push(
+1448 | 					`\n…（其余条目已省略以保持上下文长度；可打开 ${NJUST_AI_CONFIG_DIR}/${LEARNED_FIXES_FILE} 查看全部）`,
+1449 | 				)
+1450 | 				break
+1451 | 			}
+1452 | 			lines.push(line)
+1453 | 			used += line.length + 1
+1454 | 		}
+1455 | 
+1456 | 		if (lines.length === 0) return null
+1457 | 		return `${header}${lines.join("\n")}`
+1458 | 	} catch {
+1459 | 		return null
+
+1460 | 	}
+1461 | }
+1462 | 
+1463 | /**
+1464 |  * Auto-record a resolved error→fix pattern to the learned-fixes JSON.
+1465 |  * Called by the compile-fix loop when an error is successfully resolved.
+1466 |  * Deduplicates by errorPattern (bumps occurrences), caps at LEARNED_FIXES_MAX_PATTERNS.
+1467 |  */
+1468 | export function recordLearnedFix(
+1469 | 	cwd: string,
+1470 | 	errorPattern: string,
+1471 | 	fix: string,
+1472 | 	projectSpecific = true,
+1473 | ): void {
+1474 | 	const data = loadLearnedFixes(cwd)
+1475 | 
+1476 | 	// Normalize for dedup
+1477 | 	const normalizedPattern = errorPattern.trim().toLowerCase().slice(0, 300)
+1478 | 
+1479 | 	// Check for existing match (dedup by error pattern similarity)
+1480 | 	const existing = data.patterns.find((p) => {
+1481 | 		const existingNorm = p.errorPattern.trim().toLowerCase().slice(0, 300)
+1482 | 		return existingNorm === normalizedPattern || existingNorm.includes(normalizedPattern) || normalizedPattern.includes(existingNorm)
+1483 | 	})
+1484 | 
+1485 | 	if (existing) {
+1486 | 		existing.occurrences = (existing.occurrences || 1) + 1
+1487 | 		existing.successCount = (existing.successCount || 0) + 1
+1488 | 		existing.lastSeenAt = new Date().toISOString()
+1489 | 		if (fix.length > existing.fix.length) {
+1490 | 			existing.fix = fix.slice(0, 1000)
+1491 | 		}
+1492 | 	} else {
+1493 | 		if (data.patterns.length >= LEARNED_FIXES_MAX_PATTERNS) {
+1494 | 			// Evict least-seen entry
+1495 | 			data.patterns.sort((a, b) => (a.occurrences || 0) - (b.occurrences || 0))
+1496 | 			data.patterns.shift()
+1497 | 		}
+1498 | 		data.patterns.push({
+1499 | 			errorPattern: errorPattern.slice(0, 500),
+1500 | 			fix: fix.slice(0, 1000),
+1501 | 			projectSpecific,
+1502 | 			occurrences: 1,
+1503 | 			successCount: 1,
+1504 | 			failCount: 0,
+1505 | 			lastSeenAt: new Date().toISOString(),
+1506 | 		})
+1507 | 	}
+1508 | 
+1509 | 	try {
+1510 | 		saveLearnedFixes(cwd, data)
+1511 | 	} catch {
+1512 | 		// Non-critical: ignore write failures
+1513 | 	}
+1514 | }
+1515 | 
+1516 | /**
+1517 |  * Increment failCount for a learned pattern matching this error snippet.
+1518 |  * If no existing entry matches, creates a shell entry (empty fix, failCount=1)
+1519 |  * so that recurring failures are tracked even before a fix is discovered.
+
+1520 |  */
+1521 | export function recordLearnedFailure(cwd: string, errorSnippet: string): void {
+1522 | 	const data = loadLearnedFixes(cwd)
+1523 | 
+1524 | 	const normalizedPattern = errorSnippet.trim().toLowerCase().slice(0, 300)
+1525 | 	if (!normalizedPattern) return
+1526 | 
+1527 | 	const existing = data.patterns.find((p) => {
+1528 | 		const existingNorm = p.errorPattern.trim().toLowerCase().slice(0, 300)
+1529 | 		return existingNorm === normalizedPattern || existingNorm.includes(normalizedPattern) || normalizedPattern.includes(existingNorm)
+1530 | 	})
+1531 | 
+1532 | 	if (existing) {
+1533 | 		existing.failCount = (existing.failCount || 0) + 1
+1534 | 		existing.lastSeenAt = new Date().toISOString()
+1535 | 	} else {
+1536 | 		if (data.patterns.length >= LEARNED_FIXES_MAX_PATTERNS) {
+1537 | 			data.patterns.sort((a, b) => (a.occurrences || 0) - (b.occurrences || 0))
+1538 | 			data.patterns.shift()
+1539 | 		}
+1540 | 		data.patterns.push({
+1541 | 			errorPattern: errorSnippet.slice(0, 500),
+1542 | 			fix: "",
+1543 | 			projectSpecific: true,
+1544 | 			occurrences: 1,
+1545 | 			successCount: 0,
+1546 | 			failCount: 1,
+1547 | 			lastSeenAt: new Date().toISOString(),
+1548 | 		})
+1549 | 	}
+1550 | 
+1551 | 	try {
+1552 | 		saveLearnedFixes(cwd, data)
+1553 | 	} catch {
+1554 | 		// ignore
+1555 | 	}
+1556 | }
+1557 | 
+1558 | // ---------------------------------------------------------------------------
+1559 | // cjpm tree integration (Phase 2.3) — precise dependency tree
+1560 | // ---------------------------------------------------------------------------
+1561 | 
+1562 | /**
+1563 |  * Run `cjpm tree` via CangjieCompileGuard and return formatted context section.
+1564 |  * Uses lazy require to avoid circular dependency.
+1565 |  * Returns null if cjpm is unavailable or no tree output.
+1566 |  */
+1567 | const CJPM_TREE_CACHE_TTL_MS = 60_000
+1568 | let cachedCjpmTree: {
+1569 | 	result: string | null
+1570 | 	cwd: string
+1571 | 	tomlMtime: number
+1572 | 	lockMtime: number
+1573 | 	fetchedAt: number
+1574 | } | null = null
+1575 | 
+1576 | async function getCjpmTreeSection(cwd: string): Promise<string | null> {
+1577 | 	try {
+1578 | 		const tomlPath = path.join(cwd, "cjpm.toml")
+1579 | 		if (!fs.existsSync(tomlPath)) return null
+
+1580 | 		const tomlMtime = fs.statSync(tomlPath).mtimeMs
+1581 | 		const lockPath = path.join(cwd, "cjpm.lock")
+1582 | 		const lockMtime = fs.existsSync(lockPath) ? fs.statSync(lockPath).mtimeMs : 0
+1583 | 		const now = Date.now()
+1584 | 		if (
+1585 | 			cachedCjpmTree &&
+1586 | 			cachedCjpmTree.cwd === cwd &&
+1587 | 			cachedCjpmTree.tomlMtime === tomlMtime &&
+1588 | 			cachedCjpmTree.lockMtime === lockMtime &&
+1589 | 			now - cachedCjpmTree.fetchedAt < CJPM_TREE_CACHE_TTL_MS
+1590 | 		) {
+1591 | 			return cachedCjpmTree.result
+1592 | 		}
+1593 | 
+1594 | 		const summary = await getCjpmTreeSummaryForPrompt(cwd)
+1595 | 		const result = summary || null
+1596 | 		cachedCjpmTree = { result, cwd, tomlMtime, lockMtime, fetchedAt: now }
+1597 | 		return result
+1598 | 	} catch {
+1599 | 		return null
+1600 | 	}
+1601 | }
+1602 | 
+1603 | // ---------------------------------------------------------------------------
+1604 | // Dynamic coding rules injection (context-aware)
+1605 | // ---------------------------------------------------------------------------
+1606 | 
+1607 | const CODING_RULES_MAX_CHARS = 3000
+1608 | 
+1609 | /**
+1610 |  * Selectively inject coding rules based on the current editing context.
+1611 |  * Instead of blindly inlining the full CANGJIE_CODING_RULES (~870 lines)
+1612 |  * into every prompt, we inject only the relevant sections based on:
+1613 |  *   - What files are currently open (test file → test templates)
+1614 |  *   - What imports are present (std.sync → concurrency rules)
+1615 |  *   - Whether there are compilation errors (→ error table)
+1616 |  *   - Whether it's a workspace project (→ workspace workflow)
+1617 |  */
+1618 | /** Last segment + parent module for better corpus recall, e.g. std.collection.HashMap → "collection HashMap". */
+1619 | function importPathToCorpusQuery(imp: string): string | null {
+1620 | 	const parts = imp.split(".").filter((p) => p && p !== "*")
+1621 | 	if (parts.length === 0) return null
+1622 | 	if (parts.length === 1) return parts[0]
+1623 | 	return `${parts[parts.length - 2]} ${parts[parts.length - 1]}`
+1624 | }
+1625 | 
+1626 | /** Short query from diagnostic: prefer CJC pattern category + trimmed message; else keyword heuristic. */
+1627 | function diagnosticToCorpusQuery(d: vscode.Diagnostic): string | null {
+1628 | 	const raw = d.message.replace(/[`'"]/g, " ").replace(/\s+/g, " ").trim()
+1629 | 	if (!raw) return null
+1630 | 	const resolved = resolveCjcPatternForDiagnostic(d)
+1631 | 	if (resolved) {
+1632 | 		const head = raw.split(/[:：，,。]/)[0]?.trim() ?? raw
+1633 | 		return `${resolved.category} ${head}`.slice(0, 120)
+1634 | 	}
+1635 | 	const cleaned = raw.replace(/^(error|warning)\s*[:\d\[\]]*\s*/i, "")
+1636 | 	const words = cleaned
+1637 | 		.split(/\s+/)
+1638 | 		.filter((w) => w.length > 2 && !/^\d+$/.test(w) && !/^[|:=]+$/.test(w))
+1639 | 	const fromWords = words.slice(0, 5).join(" ")
+
+1640 | 	return (fromWords || cleaned).slice(0, 90) || null
+1641 | }
+1642 | 
+1643 | /**
+1644 |  * Derive corpus search queries from current imports and diagnostics.
+1645 |  * Merges std imports and diagnostics into fewer BM25 queries (typically 1–3) to cut scan cost.
+1646 |  */
+1647 | /** At most 5 BM25 queries: merged imports, merged diagnostics (reduces index scans). */
+1648 | const AUTO_CORPUS_QUERY_MAX = 5
+1649 | const AUTO_CORPUS_QUERY_MAX_LEN = 280
+1650 | 
+1651 | /** Group `std.a.b...` by top module family `std.a` for separate BM25 queries. */
+1652 | function stdImportFamily(imp: string): string {
+1653 | 	const parts = imp.split(".").filter(Boolean)
+1654 | 	if (parts.length < 2 || parts[0] !== "std") return imp
+1655 | 	return `${parts[0]}.${parts[1]}`
+1656 | }
+1657 | 
+1658 | function buildAutoCorpusQueries(imports: string[], diagnostics: vscode.Diagnostic[]): string[] {
+1659 | 	const stdImports: string[] = []
+1660 | 	const localImports: string[] = []
+1661 | 	for (const i of imports) {
+1662 | 		if (i.startsWith("std.")) stdImports.push(i)
+1663 | 		else localImports.push(i)
+1664 | 	}
+1665 | 	const byFamily = new Map<string, string[]>()
+1666 | 	for (const i of stdImports) {
+1667 | 		const fam = stdImportFamily(i)
+1668 | 		const g = byFamily.get(fam) ?? []
+1669 | 		g.push(i)
+1670 | 		byFamily.set(fam, g)
+1671 | 	}
+1672 | 	const stdQueries: string[] = []
+1673 | 	for (const [, group] of byFamily) {
+1674 | 		const q = group
+1675 | 			.map((i) => importPathToCorpusQuery(i))
+1676 | 			.filter((x): x is string => Boolean(x))
+1677 | 			.join(" ")
+1678 | 			.trim()
+1679 | 		if (q) stdQueries.push(q.slice(0, AUTO_CORPUS_QUERY_MAX_LEN))
+1680 | 	}
+1681 | 	stdQueries.sort((a, b) => b.length - a.length)
+1682 | 
+1683 | 	const localPart = localImports
+1684 | 		.slice(0, 8)
+1685 | 		.map((i) => importPathToCorpusQuery(i))
+1686 | 		.filter((q): q is string => Boolean(q))
+1687 | 		.join(" ")
+1688 | 		.trim()
+1689 | 
+1690 | 	const diagQuery = diagnostics
+1691 | 		.map((d) => diagnosticToCorpusQuery(d))
+1692 | 		.filter((q): q is string => Boolean(q))
+1693 | 		.join(" ")
+1694 | 		.trim()
+1695 | 
+1696 | 	const out: string[] = []
+1697 | 	for (const q of stdQueries.slice(0, 3)) {
+1698 | 		if (out.length >= AUTO_CORPUS_QUERY_MAX) break
+1699 | 		out.push(q)
+
+1700 | 	}
+1701 | 	if (localPart && out.length < AUTO_CORPUS_QUERY_MAX) {
+1702 | 		out.push(localPart.slice(0, AUTO_CORPUS_QUERY_MAX_LEN))
+1703 | 	}
+1704 | 	if (diagQuery && out.length < AUTO_CORPUS_QUERY_MAX) {
+1705 | 		out.push(diagQuery.slice(0, AUTO_CORPUS_QUERY_MAX_LEN))
+1706 | 	}
+1707 | 	return out.slice(0, AUTO_CORPUS_QUERY_MAX)
+1708 | }
+1709 | 
+1710 | /** Pre-baked one-line API hints for std roots — avoids extra corpus hits for common imports. */
+1711 | const STDLIB_API_SIGNATURE_HINTS: Record<string, string> = {
+1712 | 	"std.collection":
+1713 | 		"ArrayList<T>, HashMap<K,V>, HashSet<T>, TreeMap<K,V>; HashMap 常要求 K <: Hashable & Equatable<K>，TreeMap 常要求 K <: Comparable<K>",
+1714 | 	"std.io": "InputStream, OutputStream, 读写与缓冲",
+1715 | 	"std.fs": "路径与文件系统遍历",
+1716 | 	"std.net": "TCP/UDP、HTTP、Socket",
+1717 | 	"std.sync": "Mutex, ReentrantMutex, Atomic*, synchronized",
+1718 | 	"std.time": "日期时间与 Duration",
+1719 | 	"std.math": "常用数学函数与常量",
+1720 | 	"std.regex": "Regex 构造与匹配",
+1721 | 	"std.console": "println, readLine",
+1722 | 	"std.convert": "ToString 与各类型解析",
+1723 | 	"std.unittest": "@Test, @TestCase, @Assert",
+1724 | 	"std.objectpool": "对象池借还与复用策略",
+1725 | 	"std.unicode": "Unicode 字符分类、规范化与编码处理",
+1726 | 	"std.log": "日志记录器、级别与格式化输出",
+1727 | 	"std.ffi": "foreign/@C 声明、跨语言类型映射",
+1728 | 	"std.format": "字符串与数值格式化输出",
+1729 | 	"std.random": "随机数与采样",
+1730 | 	"std.process": "子进程与参数",
+1731 | 	"std.env": "环境变量读写",
+1732 | 	"std.reflect": "反射与 Annotation",
+1733 | 	"std.sort": "排序算法",
+1734 | 	"std.binary": "字节与Endian",
+1735 | 	"std.ast": "宏与 AST 构造",
+1736 | 	"std.crypto": "摘要与对称算法入口",
+1737 | 	"std.database": "SQL 访问抽象",
+1738 | 	"std.core": "自动导入核心类型",
+1739 | 	"std.deriving": "派生宏（如 Equatable）",
+1740 | 	"std.overflow": "防溢出算术",
+1741 | }
+1742 | 
+1743 | /**
+1744 |  * Parameter-level API signatures for the top-20 highest-misuse stdlib APIs.
+1745 |  * These are injected when the corresponding import is detected.
+1746 |  * Modules covered here are also exempt from search gate warnings.
+1747 |  */
+1748 | export const STDLIB_CRITICAL_SIGNATURES: Record<string, string> = {
+1749 | 	"std.collection": [
+1750 | 		"class ArrayList<T> { init(); init(capacity: Int64); func append(T): Unit; func get(Int64): T; func set(Int64, T): Unit; prop size: Int64; func remove(Int64): T; func iterator(): Iterator<T> }",
+1751 | 		"class HashMap<K, V> where K <: Hashable & Equatable<K> { init(); func put(K, V): Unit; func get(K): ?V; func contains(K): Bool; func remove(K): ?V; prop size: Int64 }",
+1752 | 		"class HashSet<T> where T <: Hashable & Equatable<T> { init(); func put(T): Bool; func contains(T): Bool; func remove(T): Bool; prop size: Int64 }",
+1753 | 		"class TreeMap<K, V> where K <: Comparable<K> { init(); func put(K, V): Unit; func get(K): ?V; prop size: Int64 }",
+1754 | 	].join("\n"),
+1755 | 	"std.io": [
+1756 | 		"class InputStream { func read(Array<Byte>): Int64; func close(): Unit }",
+1757 | 		"class OutputStream { func write(Array<Byte>): Unit; func flush(): Unit; func close(): Unit }",
+1758 | 		"class BufferedReader { init(InputStream); func readLine(): ?String; func close(): Unit }",
+1759 | 		"class StringReader <: InputStream { init(String) }",
+
+1760 | 		"class StringWriter <: OutputStream { init(); func toString(): String }",
+1761 | 	].join("\n"),
+1762 | 	"std.fs": [
+1763 | 		"class File { static func readString(String): String; static func writeString(String, String): Unit; static func exists(String): Bool; static func delete(String): Unit }",
+1764 | 		"class Path { init(String); func resolve(String): Path; func parent(): ?Path; prop fileName: String; func toString(): String }",
+1765 | 		"class Directory { static func create(String): Unit; static func listEntries(String): Array<String> }",
+1766 | 	].join("\n"),
+1767 | 	"std.sync": [
+1768 | 		"class Mutex<T> { init(T); func lock(): MutexGuard<T>; func tryLock(): ?MutexGuard<T> }",
+1769 | 		"class ReentrantMutex { init(); func lock(): Unit; func unlock(): Unit; func tryLock(): Bool }",
+1770 | 		"class AtomicInt64 { init(Int64); func load(): Int64; func store(Int64): Unit; func fetchAdd(Int64): Int64 }",
+1771 | 		"class AtomicBool { init(Bool); func load(): Bool; func store(Bool): Unit }",
+1772 | 		"func synchronized<T>(lock: ReentrantMutex, body: () -> T): T",
+1773 | 	].join("\n"),
+1774 | 	"std.regex": [
+1775 | 		"class Regex { init(String); func matches(String): Bool; func find(String): ?MatchResult; func findAll(String): Array<MatchResult>; func replace(String, String): String }",
+1776 | 		"class MatchResult { prop value: String; prop start: Int64; prop end: Int64; func group(Int64): ?String }",
+1777 | 	].join("\n"),
+1778 | 	"std.console": "func println(String): Unit\nfunc print(String): Unit\nfunc readLine(): String",
+1779 | 	"std.convert": [
+1780 | 		"interface ToString { func toString(): String }",
+1781 | 		"func Int64.parse(String): ?Int64",
+1782 | 		"func Float64.parse(String): ?Float64",
+1783 | 		"func Bool.parse(String): ?Bool",
+1784 | 	].join("\n"),
+1785 | 	"std.unittest": [
+1786 | 		"@Test — 标记测试类",
+1787 | 		"@TestCase — 标记测试方法",
+1788 | 		"@Assert(condition) — 断言宏",
+1789 | 		"@Expect(condition) — 非致命断言",
+1790 | 		"@Timeout(ms: Int64) — 超时限制",
+1791 | 	].join("\n"),
+1792 | 	"std.format": [
+1793 | 		"func format(fmt: String, args: Array<ToString>): String",
+1794 | 		"字符串插值: \"value = ${expr}\" — expr 须实现 ToString",
+1795 | 	].join("\n"),
+1796 | 	"std.random": [
+1797 | 		"class Random { init(); init(seed: Int64); func nextInt64(): Int64; func nextInt64(bound: Int64): Int64; func nextFloat64(): Float64; func nextBool(): Bool }",
+1798 | 	].join("\n"),
+1799 | 	"std.math": [
+1800 | 		"func abs(Int64): Int64; func abs(Float64): Float64",
+1801 | 		"func min<T>(T, T): T where T <: Comparable<T>; func max<T>(T, T): T where T <: Comparable<T>",
+1802 | 		"func sqrt(Float64): Float64; func pow(Float64, Float64): Float64",
+1803 | 		"const PI: Float64; const E: Float64",
+1804 | 	].join("\n"),
+1805 | 	"std.time": [
+1806 | 		"class DateTime { static func now(): DateTime; func toString(): String; func toTimestamp(): Int64 }",
+1807 | 		"class Duration { static func fromSeconds(Int64): Duration; static func fromMillis(Int64): Duration; prop totalMillis: Int64 }",
+1808 | 	].join("\n"),
+1809 | 	"std.process": [
+1810 | 		"class Process { static func run(command: String, args: Array<String>): ProcessResult }",
+1811 | 		"class ProcessResult { prop exitCode: Int64; prop stdout: String; prop stderr: String }",
+1812 | 	].join("\n"),
+1813 | 	"std.env": [
+1814 | 		"func getEnv(String): ?String",
+1815 | 		"func setEnv(String, String): Unit",
+1816 | 		"func currentDir(): String",
+1817 | 	].join("\n"),
+1818 | 	"std.log": [
+1819 | 		"class Logger { static func getLogger(name: String): Logger; func info(String): Unit; func warn(String): Unit; func error(String): Unit; func debug(String): Unit }",
+
+1820 | 		"enum LogLevel { case DEBUG | INFO | WARN | ERROR }",
+1821 | 	].join("\n"),
+1822 | }
+1823 | 
+1824 | function buildStdlibSignatureHintsSection(
+1825 | 	imports: string[],
+1826 | 	docsBase: string | null | undefined,
+1827 | 	globalStoragePath?: string,
+1828 | ): string | null {
+1829 | 	let hints: Record<string, string> = STDLIB_API_SIGNATURE_HINTS
+1830 | 	if (docsBase && fs.existsSync(docsBase) && globalStoragePath) {
+1831 | 		hints = mergeStdlibConstraintHintsFromCorpus({ ...STDLIB_API_SIGNATURE_HINTS }, docsBase, globalStoragePath)
+1832 | 	}
+1833 | 	const keys = Object.keys(hints).sort((a, b) => b.length - a.length)
+1834 | 	const lines: string[] = []
+1835 | 	const matchedKeys = new Set<string>()
+1836 | 	for (const imp of imports) {
+1837 | 		if (!imp.startsWith("std.")) continue
+1838 | 		for (const key of keys) {
+1839 | 			if (imp.startsWith(key) && !matchedKeys.has(key)) {
+1840 | 				matchedKeys.add(key)
+1841 | 				lines.push(`- \`${key}\`: ${hints[key]}`)
+1842 | 				break
+1843 | 			}
+1844 | 		}
+1845 | 	}
+1846 | 	if (lines.length === 0) return null
+1847 | 
+1848 | 	// Append detailed critical signatures for matched imports
+1849 | 	const criticalLines: string[] = []
+1850 | 	for (const key of matchedKeys) {
+1851 | 		const sig = STDLIB_CRITICAL_SIGNATURES[key]
+1852 | 		if (sig) {
+1853 | 			criticalLines.push(`### ${key} 关键签名\n\`\`\`\n${sig}\n\`\`\``)
+1854 | 		}
+1855 | 	}
+1856 | 	const criticalBlock = criticalLines.length > 0
+1857 | 		? `\n\n## 标准库关键 API 签名（参数级精度）\n\n${criticalLines.join("\n\n")}`
+1858 | 		: ""
+1859 | 
+1860 | 	return `## 标准库 API 摘要（预置速查）\n\n${lines.join("\n")}\n\n详细签名仍以语料库 libs/ 与 manual/ 为准。${criticalBlock}`
+1861 | }
+1862 | 
+1863 | /** Bundled corpus `extra/*.md` — keyword → file for intent-based few-shot (see CangjieCorpus-1.0.0/extra/). */
+1864 | const CORPUS_EXTRA_SNIPPETS: { rel: string; keys: string[] }[] = [
+1865 | 	{ rel: "extra/HashMap.md", keys: ["hashmap"] },
+1866 | 	{ rel: "extra/HashSet.md", keys: ["hashset"] },
+1867 | 	{ rel: "extra/Collection.md", keys: ["arraylist", "collection"] },
+1868 | 	{ rel: "extra/Option.md", keys: ["option", "optional", "none", "some"] },
+1869 | 	{ rel: "extra/Sorting.md", keys: ["sorting", " sort", "排序"] },
+1870 | 	{ rel: "extra/String.md", keys: ["string", "substring", "runestring"] },
+1871 | 	{ rel: "extra/Array.md", keys: ["varray", "array"] },
+1872 | 	{ rel: "extra/Numbers.md", keys: ["int64", "uint", "integer", "浮点"] },
+1873 | 	{ rel: "extra/Tuple.md", keys: ["tuple"] },
+1874 | 	{ rel: "extra/Function.md", keys: ["closure", "lambda"] },
+1875 | 	{ rel: "extra/Rune.md", keys: ["rune", "unicode"] },
+1876 | 	{ rel: "extra/Operator.md", keys: ["operator", "operator func", "运算符重载"] },
+1877 | 	{ rel: "extra/Generic.md", keys: ["generic", "constraint", "where", "泛型约束"] },
+1878 | 	{ rel: "extra/Concurrency.md", keys: ["concurrent", "spawn", "mutex", "并发"] },
+1879 | ]
+
+1880 | 
+1881 | const CORPUS_EXTRA_MAX_FILES = 2
+1882 | const CORPUS_EXTRA_MAX_CHARS_PER_FILE = 1600
+1883 | 
+1884 | let corpusExtraLatinKeyRegex: Map<string, RegExp> | null = null
+1885 | 
+1886 | function getCorpusExtraLatinKeyRegexMap(): Map<string, RegExp> {
+1887 | 	if (corpusExtraLatinKeyRegex) return corpusExtraLatinKeyRegex
+1888 | 	const m = new Map<string, RegExp>()
+1889 | 	for (const { keys } of CORPUS_EXTRA_SNIPPETS) {
+1890 | 		for (const key of keys) {
+1891 | 			const k = key.toLowerCase()
+1892 | 			if (!k || /[\u4e00-\u9fff]/.test(k)) continue
+1893 | 			if (m.has(k)) continue
+1894 | 			try {
+1895 | 				const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+1896 | 				m.set(k, new RegExp(`(?<![\\w.])${escaped}(?![\\w])`, "i"))
+1897 | 			} catch {
+1898 | 				/* skip malformed key */
+1899 | 			}
+1900 | 		}
+1901 | 	}
+1902 | 	corpusExtraLatinKeyRegex = m
+1903 | 	return m
+1904 | }
+1905 | 
+1906 | function corpusExtraHaystackMatchesKey(hay: string, key: string, latinMap: Map<string, RegExp>): boolean {
+1907 | 	const k = key.toLowerCase()
+1908 | 	if (!k) return false
+1909 | 	if (/[\u4e00-\u9fff]/.test(k)) return hay.includes(k)
+1910 | 	const re = latinMap.get(k)
+1911 | 	return re ? re.test(hay) : hay.includes(k)
+1912 | }
+1913 | 
+1914 | function buildCorpusExtraFewShotSection(
+1915 | 	corpusRoot: string,
+1916 | 	imports: string[],
+1917 | 	diagnostics: vscode.Diagnostic[],
+1918 | ): string | null {
+1919 | 	if (!fs.existsSync(corpusRoot)) return null
+1920 | 
+1921 | 	const textChunks: string[] = []
+1922 | 	for (const ed of vscode.window.visibleTextEditors) {
+1923 | 		if (ed.document.languageId === "cangjie" || ed.document.fileName.endsWith(".cj")) {
+1924 | 			textChunks.push(ed.document.getText().slice(0, 2800))
+1925 | 		}
+1926 | 	}
+1927 | 	const hay = (
+1928 | 		imports.join(" ") +
+1929 | 		" " +
+1930 | 		diagnostics.map((d) => d.message).join(" ") +
+1931 | 		" " +
+1932 | 		textChunks.join(" ")
+1933 | 	).toLowerCase()
+1934 | 
+1935 | 	const latinMap = getCorpusExtraLatinKeyRegexMap()
+1936 | 	const picked: string[] = []
+1937 | 	const usedRel = new Set<string>()
+1938 | 	for (const { rel, keys } of CORPUS_EXTRA_SNIPPETS) {
+1939 | 		if (picked.length >= CORPUS_EXTRA_MAX_FILES) break
+
+1940 | 		if (usedRel.has(rel)) continue
+1941 | 		if (!keys.some((k) => corpusExtraHaystackMatchesKey(hay, k, latinMap))) continue
+1942 | 		const fp = path.join(corpusRoot, rel)
+1943 | 		if (!fs.existsSync(fp)) continue
+1944 | 		try {
+1945 | 			const raw = readFileUtf8Lru(fp)
+1946 | 			if (!raw) continue
+1947 | 			let body = raw.trim().replace(/\r\n/g, "\n")
+1948 | 			if (body.length > CORPUS_EXTRA_MAX_CHARS_PER_FILE) {
+1949 | 				body = body.slice(0, CORPUS_EXTRA_MAX_CHARS_PER_FILE) + "\n…"
+1950 | 			}
+1951 | 			usedRel.add(rel)
+1952 | 			const title = path.basename(rel, ".md")
+1953 | 			picked.push(`### 语料示例: ${title}\n来源: \`${rel}\`\n\n${body}`)
+1954 | 		} catch {
+1955 | 			/* skip */
+1956 | 		}
+1957 | 	}
+1958 | 
+1959 | 	if (picked.length === 0) return null
+1960 | 	return (
+1961 | 		`## 语料库 extra/ 参考片段（意图匹配）\n\n` +
+1962 | 		`编写特性前可对齐以下官方示例风格；完整内容请用 read_file 打开对应路径。\n\n` +
+1963 | 		picked.join("\n\n---\n\n")
+1964 | 	)
+1965 | }
+1966 | 
+1967 | function buildContextualCodingRules(
+1968 | 	imports: string[],
+1969 | 	projectInfo: CjpmProjectInfo | null,
+1970 | 	diagnostics: vscode.Diagnostic[],
+1971 | 	hasSpecificDiagnosticGuidance = false,
+1972 | ): string | null {
+1973 | 	const parts: string[] = []
+1974 | 	let budget = CODING_RULES_MAX_CHARS
+1975 | 
+1976 | 	const hasActiveCangjieFile = vscode.window.visibleTextEditors.some(
+1977 | 		(e) => e.document.languageId === "cangjie" || e.document.fileName.endsWith(".cj"),
+1978 | 	)
+1979 | 
+1980 | 	if (!hasActiveCangjieFile && !projectInfo) return null
+1981 | 
+1982 | 	const hasTestFile = vscode.window.visibleTextEditors.some(
+1983 | 		(e) => e.document.fileName.endsWith("_test.cj"),
+1984 | 	)
+1985 | 	const hasMainFile = vscode.window.visibleTextEditors.some(
+1986 | 		(e) => e.document.fileName.endsWith("main.cj"),
+1987 | 	)
+1988 | 	const hasSyncImport = imports.some((i) => i.startsWith("std.sync"))
+1989 | 	const diags = diagnostics
+1990 | 	const hasErrors = diags.some(
+1991 | 		(d) => d.severity === vscode.DiagnosticSeverity.Error,
+1992 | 	)
+1993 | 	const isWorkspace = projectInfo?.isWorkspace ?? false
+1994 | 
+1995 | 	// Always inject the core project templates (compact)
+1996 | 	const coreTemplates =
+1997 | 		"## 仓颉代码模板\n\n" +
+1998 | 		"### 可执行项目入口\n```cangjie\npackage my_app\nimport std.console.*\nmain(): Int64 {\n    println(\"Hello, Cangjie!\")\n    return 0\n}\n```\n"
+1999 | 
+
+2000 | 	if (budget >= coreTemplates.length) {
+2001 | 		parts.push(coreTemplates)
+2002 | 		budget -= coreTemplates.length
+2003 | 	}
+2004 | 
+2005 | 	// Test templates when editing test files
+2006 | 	if (hasTestFile) {
+2007 | 		const testTemplate =
+2008 | 			"### 测试文件模板\n```cangjie\npackage my_app\nimport std.unittest.*\nimport std.unittest.testmacro.*\n@Test\nclass MyTest {\n    @TestCase\n    func testBasic() {\n        @Assert(1 + 1 == 2)\n    }\n}\n```\n"
+2009 | 		if (budget >= testTemplate.length) {
+2010 | 			parts.push(testTemplate)
+2011 | 			budget -= testTemplate.length
+2012 | 		}
+2013 | 	}
+2014 | 
+2015 | 	// Error handling patterns when there are active errors.
+2016 | 	// If diagnostics/doc mappings are already injected in detail, keep this table compact.
+2017 | 	if (hasErrors && !hasSpecificDiagnosticGuidance) {
+2018 | 		const errorTable =
+2019 | 			"### 常见编译错误速查\n" +
+2020 | 			"| 错误类型 | 解决方案 |\n" +
+2021 | 			"|----------|----------|\n" +
+2022 | 			"| 未找到符号 | 检查 import 语句和 cjpm.toml 依赖 |\n" +
+2023 | 			"| 类型不匹配 | 检查类型声明和转换 |\n" +
+2024 | 			"| let 变量赋值 | 改用 `var` 声明 |\n" +
+2025 | 			"| mut 函数限制 | let 变量调用 mut 函数 → 改用 `var` |\n" +
+2026 | 			"| 递归结构体 | struct 不能自引用 → 改用 class 或 Option |\n" +
+2027 | 			"| match 不穷尽 | 补全 case 或添加 `case _ =>` |\n" +
+2028 | 			"| 参数数量错误 | 检查命名参数需用 `name:` 语法 |\n" +
+2029 | 			"| redef/override 混淆 | 检查父方法是否 open；open 用 override，非 open 用 redef |\n" +
+2030 | 			"| sealed 类限制 | 仅在定义模块内继承 sealed class |\n" +
+2031 | 			"| init 顺序错误 | 子类 init 首行调用 super() |\n"
+2032 | 		if (budget >= errorTable.length) {
+2033 | 			parts.push(errorTable)
+2034 | 			budget -= errorTable.length
+2035 | 		}
+2036 | 	}
+2037 | 
+2038 | 	// Diagnostic-driven targeted code templates based on actual error categories
+2039 | 	if (hasErrors && diags.length > 0) {
+2040 | 		const errorMessages = diags
+2041 | 			.filter((d) => d.severity === vscode.DiagnosticSeverity.Error)
+2042 | 			.map((d) => (typeof d.message === "string" ? d.message : ""))
+2043 | 			.filter(Boolean)
+2044 | 		const categoriesPresent = new Set<string>()
+2045 | 		for (const msg of errorMessages) {
+2046 | 			const pattern = matchCjcErrorPattern(msg)
+2047 | 			if (pattern) categoriesPresent.add(pattern.category)
+2048 | 		}
+2049 | 
+2050 | 		const diagnosticTemplates: Array<{ categories: string[]; template: string }> = [
+2051 | 			{
+2052 | 				categories: ["类型不匹配", "类型转换失败"],
+2053 | 				template:
+2054 | 					"### 类型转换速查\n" +
+2055 | 					"- `Int64 → String`: `\"${value}\"` 或 `value.toString()`\n" +
+2056 | 					"- `String → Int64`: `Int64.parse(str)` 返回 `?Int64`\n" +
+2057 | 					"- `Float64 → Int64`: `Int64(floatVal)` (截断)\n" +
+2058 | 					"- `Array<T> → ArrayList<T>`: `ArrayList<T>(arr)`\n" +
+2059 | 					"- `?T → T`: `opt ?? defaultVal` 或 `match(opt) { case Some(v) => v; case None => ... }`\n",
+
+2060 | 			},
+2061 | 			{
+2062 | 				categories: ["未找到符号", "缺少 import"],
+2063 | 				template:
+2064 | 					"### 常用 import 路径速查\n" +
+2065 | 					"- 集合: `import std.collection.*`\n" +
+2066 | 					"- IO: `import std.io.*` + `import std.fs.*`\n" +
+2067 | 					"- 控制台: `import std.console.*`\n" +
+2068 | 					"- 测试: `import std.unittest.*` + `import std.unittest.testmacro.*`\n" +
+2069 | 					"- 并发: `import std.sync.*`\n" +
+2070 | 					"- 网络: `import std.net.*`\n" +
+2071 | 					"- 正则: `import std.regex.*`\n" +
+2072 | 					"- 格式化: `import std.format.*`\n",
+2073 | 			},
+2074 | 			{
+2075 | 				categories: ["mut 函数限制", "不可变变量赋值"],
+2076 | 				template:
+2077 | 					"### let / var / mut 对照\n" +
+2078 | 					"- `let x = value` — 不可变绑定，不能重新赋值，不能调用 mut 方法\n" +
+2079 | 					"- `var x = value` — 可变绑定，可重新赋值，可调用 mut 方法\n" +
+2080 | 					"- `mut func foo()` — 修改 struct 自身字段的方法，调用者必须是 var 绑定\n" +
+2081 | 					"- **修复**: 将 `let obj = Struct()` 改为 `var obj = Struct()` 后再调用 `obj.mutMethod()`\n",
+2082 | 			},
+2083 | 			{
+2084 | 				categories: ["接口未实现", "接口未实现（精确）"],
+2085 | 				template:
+2086 | 					"### interface 实现模板\n" +
+2087 | 					"```cangjie\ninterface Printable {\n    func display(): String\n}\n" +
+2088 | 					"class MyClass <: Printable {\n    public func display(): String {\n        return \"MyClass\"\n    }\n}\n```\n",
+2089 | 			},
+2090 | 		]
+2091 | 
+2092 | 		for (const dt of diagnosticTemplates) {
+2093 | 			if (dt.categories.some((c) => categoriesPresent.has(c))) {
+2094 | 				if (budget >= dt.template.length) {
+2095 | 					parts.push(dt.template)
+2096 | 					budget -= dt.template.length
+2097 | 				}
+2098 | 			}
+2099 | 		}
+2100 | 	}
+2101 | 
+2102 | 	// Anti-patterns for let/var/mut when editing struct code
+2103 | 	if (hasActiveCangjieFile) {
+2104 | 		const antiPatterns =
+2105 | 			"### 常见反例\n" +
+2106 | 			"- ❌ `let c = Counter(); c.inc()` — let 绑定的 struct 不能调用 mut 方法 → ✅ `var c = Counter()`\n" +
+2107 | 			"- ❌ `struct Node { let next: Node }` — struct 不能自引用 → ✅ `class Node { let next: ?Node = None }`\n" +
+2108 | 			"- ❌ Option 直接 unwrap → ✅ 用 `??` 默认值或 match/if-let 安全解包\n"
+2109 | 		if (budget >= antiPatterns.length) {
+2110 | 			parts.push(antiPatterns)
+2111 | 			budget -= antiPatterns.length
+2112 | 		}
+2113 | 	}
+2114 | 
+2115 | 	// Concurrency rules when using std.sync
+2116 | 	if (hasSyncImport) {
+2117 | 		const concurrencyRules =
+2118 | 			"### 并发注意事项\n" +
+2119 | 			"- spawn 块内不能直接捕获 `var` 变量\n" +
+
+2120 | 			"- 共享可变状态必须使用 Mutex/AtomicInt 保护\n" +
+2121 | 			"- 使用 `synchronized` 块或 `mutex.lock()/unlock()` 确保互斥\n"
+2122 | 		if (budget >= concurrencyRules.length) {
+2123 | 			parts.push(concurrencyRules)
+2124 | 			budget -= concurrencyRules.length
+2125 | 		}
+2126 | 	}
+2127 | 
+2128 | 	// Workspace workflow when it's a multi-module project
+2129 | 	if (isWorkspace) {
+2130 | 		const wsWorkflow =
+2131 | 			"### Workspace 项目规则\n" +
+2132 | 			"- `[workspace]` 和 `[package]` 不能在同一 cjpm.toml\n" +
+2133 | 			"- 模块间依赖: `{ path = \"../module_name\" }` 写在子模块的 `[dependencies]`\n" +
+2134 | 			"- `cjpm run --name <模块>` 运行指定模块\n" +
+2135 | 			"- 每个模块需独立的 cjpm.toml 和 src/ 目录\n"
+2136 | 		if (budget >= wsWorkflow.length) {
+2137 | 			parts.push(wsWorkflow)
+2138 | 			budget -= wsWorkflow.length
+2139 | 		}
+2140 | 	}
+2141 | 
+2142 | 	if (parts.length === 0) return null
+2143 | 	return parts.join("\n")
+2144 | }
+2145 | 
+2146 | let l1ContextCache: { key: string; value: string | null; time: number } | null = null
+2147 | type L2ContextBundle = {
+2148 | 	symbols: string | null
+2149 | 	importedSymbols: string | null
+2150 | 	stdlibHints: string | null
+2151 | 	workspaceSummary: string | null
+2152 | 	fewShot: string | null
+2153 | }
+2154 | 
+2155 | let l2ContextCache: { key: string; value: L2ContextBundle; time: number } | null = null
+2156 | let l3ContextCache: { key: string; value: string; time: number } | null = null
+2157 | /** Concurrent builds for the same L3 key share one async computation. */
+2158 | const l3InFlightByKey = new Map<string, Promise<string>>()
+2159 | const L1_CONTEXT_CACHE_TTL_MS = 60_000
+2160 | const L2_CONTEXT_CACHE_TTL_MS = 30_000
+2161 | 
+2162 | let l3TtlConfigCache: { value: number; fetchedAt: number } | null = null
+2163 | const L3_TTL_CONFIG_CACHE_MS = 30_000
+2164 | 
+2165 | /** Call when workspace configuration may have changed (e.g. from extension `onDidChangeConfiguration`). */
+2166 | export function bumpCangjieL3TtlConfigCache(): void {
+2167 | 	l3TtlConfigCache = null
+2168 | }
+2169 | 
+2170 | function getL3ContextCacheTtlMs(): number {
+2171 | 	const now = Date.now()
+2172 | 	if (l3TtlConfigCache && now - l3TtlConfigCache.fetchedAt < L3_TTL_CONFIG_CACHE_MS) {
+2173 | 		return l3TtlConfigCache.value
+2174 | 	}
+2175 | 	const v = vscode.workspace.getConfiguration(Package.name).get<number>("cangjieContext.l3CacheTtlMs")
+2176 | 	const value = typeof v === "number" && v >= 1000 && v <= 120_000 ? Math.floor(v) : 12_000
+2177 | 	l3TtlConfigCache = { value, fetchedAt: now }
+2178 | 	return value
+2179 | }
+
+2180 | 
+2181 | /** Call when workspace `.njust_ai/rules-cangjie/` (or equivalent) changes so the next prompt rebuild picks up edits. */
+2182 | export function invalidateCangjieContextSectionCache(): void {
+2183 | 	l1ContextCache = null
+2184 | 	l2ContextCache = null
+2185 | 	l3ContextCache = null
+2186 | 	l3InFlightByKey.clear()
+2187 | 	styleFewShotCache = null
+2188 | 	hoverMemo = null
+2189 | 	contextFileLru.clear()
+2190 | 	packageTreeCache.clear()
+2191 | 	cjpmTomlMetaCache.clear()
+2192 | }
+2193 | 
+2194 | /** Invalidate only the L3 full-context cache (e.g. on save) — lighter than {@link invalidateCangjieContextSectionCache}. */
+2195 | export function invalidateCangjieL3ContextCache(): void {
+2196 | 	l3ContextCache = null
+2197 | }
+2198 | 
+2199 | /**
+2200 |  * Default max tokens (~chars/4) for the dynamic Cangjie context block.
+2201 |  *
+2202 |  * Effective budget is resolved by `resolveCangjieContextTokenBudget` in system.ts:
+2203 |  * VS Code config (override) > model-scaled value from
+2204 |  * `deriveCangjieContextTokenBudgetFromContextWindow` > this default.
+2205 |  *
+2206 |  * Small-context models (e.g. 16k window) may receive as low as 2400 tokens;
+2207 |  * large-context models (>= 200k) get up to 6000.
+2208 |  */
+2209 | export const DEFAULT_CANGJIE_CONTEXT_TOKEN_BUDGET = 4800
+2210 | 
+2211 | /** BM25: at most this many chunks per source file per query (diversifies hits). */
+2212 | const CORPUS_BM25_MAX_CHUNKS_PER_PATH = 2
+2213 | 
+2214 | function isWordCodePoint(cp: number): boolean {
+2215 | 	return (cp >= 48 && cp <= 57) || (cp >= 65 && cp <= 90) || (cp >= 97 && cp <= 122) || cp === 95
+2216 | }
+2217 | 
+2218 | function isCjkCodePoint(cp: number): boolean {
+2219 | 	return (cp >= 0x4e00 && cp <= 0x9fff) || (cp >= 0x3400 && cp <= 0x4dbf)
+2220 | }
+2221 | 
+2222 | /** Punctuation counted as +1 token (aligned with previous RegExp bracket set). */
+2223 | function isCountedPunctCodePoint(cp: number): boolean {
+2224 | 	return (
+2225 | 		cp === 60 ||
+2226 | 		cp === 62 ||
+2227 | 		cp === 123 ||
+2228 | 		cp === 125 ||
+2229 | 		cp === 40 ||
+2230 | 		cp === 41 ||
+2231 | 		cp === 91 ||
+2232 | 		cp === 93 ||
+2233 | 		cp === 46 ||
+2234 | 		cp === 44 ||
+2235 | 		cp === 58 ||
+2236 | 		cp === 59 ||
+2237 | 		cp === 61 ||
+2238 | 		cp === 43 ||
+2239 | 		cp === 45 ||
+
+2240 | 		cp === 42 ||
+2241 | 		cp === 47 ||
+2242 | 		cp === 33 ||
+2243 | 		cp === 63 ||
+2244 | 		cp === 124 ||
+2245 | 		cp === 38
+2246 | 	)
+2247 | }
+2248 | 
+2249 | function isWhitespaceCodePoint(cp: number): boolean {
+2250 | 	return cp === 32 || cp === 9 || cp === 10 || cp === 11 || cp === 12 || cp === 13 || cp === 0xa0
+2251 | }
+2252 | 
+2253 | function estimateContextTokens(text: string): number {
+2254 | 	if (!text) return 0
+2255 | 	let estimate = 0
+2256 | 	let wordRun = 0
+2257 | 	for (let i = 0; i < text.length; ) {
+2258 | 		const cp = text.codePointAt(i)!
+2259 | 		const adv = cp > 0xffff ? 2 : 1
+2260 | 		if (isCjkCodePoint(cp)) {
+2261 | 			if (wordRun > 0) {
+2262 | 				estimate += Math.ceil(wordRun * 1.3)
+2263 | 				wordRun = 0
+2264 | 			}
+2265 | 			estimate += 1.5
+2266 | 			i += adv
+2267 | 			continue
+2268 | 		}
+2269 | 		if (isWordCodePoint(cp)) {
+2270 | 			wordRun++
+2271 | 			i += adv
+2272 | 			continue
+2273 | 		}
+2274 | 		if (wordRun > 0) {
+2275 | 			estimate += Math.ceil(wordRun * 1.3)
+2276 | 			wordRun = 0
+2277 | 		}
+2278 | 		if (isCountedPunctCodePoint(cp)) {
+2279 | 			estimate += 1
+2280 | 		} else if (!isWhitespaceCodePoint(cp)) {
+2281 | 			estimate += 0.4
+2282 | 		}
+2283 | 		i += adv
+2284 | 	}
+2285 | 	if (wordRun > 0) estimate += Math.ceil(wordRun * 1.3)
+2286 | 	return Math.max(0, Math.ceil(estimate))
+2287 | }
+2288 | 
+2289 | export function estimateCangjieContextTokensForTest(text: string): number {
+2290 | 	return estimateContextTokens(text)
+2291 | }
+2292 | 
+2293 | /** Exported for unit tests (learned-fix similarity normalization). */
+2294 | export function testNormalizeLearnedFixText(text: string): string {
+2295 | 	return normalizeForSimilarity(text)
+2296 | }
+2297 | 
+2298 | /** Exported for unit tests — single synthetic diagnostic. */
+2299 | export function testLearnedFixPatternMatchesMessage(
+
+2300 | 	p: LearnedFixPattern,
+2301 | 	diagnosticMessage: string,
+2302 | 	diagnosticCode?: string,
+2303 | ): boolean {
+2304 | 	const d = {
+2305 | 		message: diagnosticMessage,
+2306 | 		severity: vscode.DiagnosticSeverity.Error,
+2307 | 		range: new vscode.Range(0, 0, 0, 0),
+2308 | 		...(diagnosticCode !== undefined ? { code: diagnosticCode } : {}),
+2309 | 	} as vscode.Diagnostic
+2310 | 	return learnedPatternMatchesDiagnostics(p, [d])
+2311 | }
+2312 | 
+2313 | interface PrioritizedCangjieSection {
+2314 | 	priority: number
+2315 | 	content: string
+2316 | }
+2317 | 
+2318 | interface CangjiePackBudgetOptions {
+2319 | 	rawErrorCount?: number
+2320 | 	totalDiagnosticCount?: number
+2321 | 	diagnosticSectionMinTokens?: number
+2322 | }
+2323 | 
+2324 | /**
+2325 |  * Section merge order under token budget (lower priority number is packed first).
+2326 |  * Spaced by hundreds so new sections can slot between without renumbering everything.
+2327 |  *
+2328 |  * | Band | Role |
+2329 |  * |------|------|
+2330 |  * | 100 | Current diagnostics → doc/fix hints |
+2331 |  * | 105 | Recent compile history (cjpm build evolution) |
+2332 |  * | 200 | Structured editing context (cursor file) |
+2333 |  * | 300 | Project learned-fixes.json |
+2334 |  * | 400–415 | Symbols, import resolution, stdlib API hints |
+2335 |  * | 500–530 | cjpm project, package tree, workspace modules, deps, cjpm tree, cross-module symbols |
+2336 |  * | 600 | Import → corpus doc mapping |
+2337 |  * | 700 | Dynamic contextual coding rules |
+2338 |  * | 800 | BM25 corpus auto-injection |
+2339 |  * | 850 | Corpus extra/ few-shot |
+2340 |  * | 900 | Workspace style few-shot |
+2341 |  *
+2342 |  * Mandatory corpus footer is appended after packing (not in this list).
+2343 |  */
+2344 | function addPrioritized(
+2345 | 	bucket: PrioritizedCangjieSection[],
+2346 | 	priority: number,
+2347 | 	content: string | null | undefined,
+2348 | ): void {
+2349 | 	if (content) bucket.push({ priority, content })
+2350 | }
+2351 | 
+2352 | function buildMandatoryCorpusFooter(docsBase: string | null | undefined, docsExist: boolean): string {
+2353 | 	if (!docsBase || !docsExist) return ""
+2354 | 	const corpusRootPosix = docsBase.replace(/\\/g, "/")
+2355 | 	return (
+2356 | 		`## 语料检索（强制）\n` +
+2357 | 			`内置语料根（**read_file** / **search_files** 须使用此绝对路径或其子路径）：\`${corpusRootPosix}\`。\n` +
+2358 | 			`动笔前检索 \`${corpusRootPosix}/manual/source_zh_cn/\` 与 \`${corpusRootPosix}/libs/\`；完整流程见模式说明「主动式语料检索」。`
+2359 | 	)
+
+2360 | }
+2361 | 
+2362 | /** Greedy pack by ascending priority; reserve space for mandatory footer. */
+2363 | function packSectionsWithTokenBudget(
+2364 | 	items: PrioritizedCangjieSection[],
+2365 | 	mandatoryFooter: string,
+2366 | 	budgetTokens: number,
+2367 | 	packOpts?: CangjiePackBudgetOptions,
+2368 | ): string[] {
+2369 | 	const footer = mandatoryFooter.trim()
+2370 | 	const reserve = footer ? estimateContextTokens(footer) : 0
+2371 | 	const pool = Math.max(0, budgetTokens - reserve)
+2372 | 	const errN = packOpts?.rawErrorCount ?? 0
+2373 | 	const totalD = packOpts?.totalDiagnosticCount ?? 0
+2374 | 	const density =
+2375 | 		totalD > 0 ? Math.min(1, errN / Math.max(10, totalD * 0.4)) : Math.min(1, errN / 6)
+2376 | 	const highFrac = Math.min(0.3, Math.max(0.15, 0.15 + 0.15 * density))
+2377 | 	let highPriorityReserve = Math.floor(pool * highFrac)
+2378 | 	const diagFloor = packOpts?.diagnosticSectionMinTokens ?? 0
+2379 | 	if (diagFloor > 0 && errN > 0) {
+2380 | 		highPriorityReserve = Math.max(highPriorityReserve, Math.min(diagFloor, Math.floor(pool * 0.42)))
+2381 | 	}
+2382 | 	let remaining = pool
+2383 | 	const sorted = [...items].sort((a, b) => a.priority - b.priority)
+2384 | 	// Pre-compute token estimates once per section to avoid redundant calculation in multi-pass packing
+2385 | 	const tokenEstimates = new Map<PrioritizedCangjieSection, number>()
+2386 | 	for (const s of sorted) tokenEstimates.set(s, estimateContextTokens(s.content))
+2387 | 	let splitIdx = sorted.length
+2388 | 	for (let i = 0; i < sorted.length; i++) {
+2389 | 		if (sorted[i].priority >= 300) {
+2390 | 			splitIdx = i
+2391 | 			break
+2392 | 		}
+2393 | 	}
+2394 | 	const highPriority = splitIdx === sorted.length ? sorted : sorted.slice(0, splitIdx)
+2395 | 	const normalPriority = splitIdx === sorted.length ? [] : sorted.slice(splitIdx)
+2396 | 	const out: string[] = []
+2397 | 	const usedSections = new Set<PrioritizedCangjieSection>()
+2398 | 	let highBudget = Math.min(highPriorityReserve, remaining)
+2399 | 	for (const s of highPriority) {
+2400 | 		const need = tokenEstimates.get(s)!
+2401 | 		if (need <= highBudget) {
+2402 | 			out.push(s.content)
+2403 | 			usedSections.add(s)
+2404 | 			remaining -= need
+2405 | 			highBudget -= need
+2406 | 		}
+2407 | 	}
+2408 | 	for (const s of normalPriority) {
+2409 | 		const need = tokenEstimates.get(s)!
+2410 | 		if (need <= remaining) {
+2411 | 			out.push(s.content)
+2412 | 			usedSections.add(s)
+2413 | 			remaining -= need
+2414 | 		}
+2415 | 	}
+2416 | 	for (const s of highPriority) {
+2417 | 		if (usedSections.has(s)) continue
+2418 | 		const need = tokenEstimates.get(s)!
+2419 | 		if (need <= remaining) {
+
+2420 | 			out.push(s.content)
+2421 | 			usedSections.add(s)
+2422 | 			remaining -= need
+2423 | 		}
+2424 | 	}
+2425 | 	if (footer) out.push(footer)
+2426 | 	return out
+2427 | }
+2428 | 
+2429 | function simpleHash(str: string): number {
+2430 | 	let h = 0
+2431 | 	for (let i = 0; i < str.length; i++) {
+2432 | 		h = ((h << 5) - h + str.charCodeAt(i)) | 0
+2433 | 	}
+2434 | 	return h >>> 0
+2435 | }
+2436 | 
+2437 | function computeContextCacheKey(cwd: string, diagSummaryHash: number): string {
+2438 | 	const openFiles = vscode.window.visibleTextEditors
+2439 | 		.filter((e) => e.document.languageId === "cangjie" || e.document.fileName.endsWith(".cj"))
+2440 | 		.map((e) => editorDocumentCacheKey(e.document.uri))
+2441 | 		.sort()
+2442 | 		.join("|")
+2443 | 	return `${cwd}|${openFiles}|${diagSummaryHash}|ch:${getCompileHistoryRevision(cwd)}`
+2444 | }
+2445 | 
+2446 | function findCjpmTomlAncestor(startDir: string, maxHops = 10): string | null {
+2447 | 	let dir = path.resolve(startDir)
+2448 | 	for (let i = 0; i < maxHops; i++) {
+2449 | 		const toml = path.join(dir, "cjpm.toml")
+2450 | 		if (fs.existsSync(toml)) return toml
+2451 | 		const parent = path.dirname(dir)
+2452 | 		if (parent === dir) break
+2453 | 		dir = parent
+2454 | 	}
+2455 | 	return null
+2456 | }
+2457 | 
+2458 | function workspaceHasOpenCangjieFile(): boolean {
+2459 | 	const docs = vscode.workspace.textDocuments ?? []
+2460 | 	for (const doc of docs) {
+2461 | 		if (doc.uri.scheme !== "file") continue
+2462 | 		if (doc.languageId === "cangjie" || doc.fileName.endsWith(".cj")) {
+2463 | 			return true
+2464 | 		}
+2465 | 	}
+2466 | 	return false
+2467 | }
+2468 | 
+2469 | function openCangjieDocumentsSignature(): string {
+2470 | 	const docs = vscode.workspace.textDocuments ?? []
+2471 | 	const keys: string[] = []
+2472 | 	for (const doc of docs) {
+2473 | 		if (doc.uri.scheme !== "file") continue
+2474 | 		if (doc.languageId === "cangjie" || doc.fileName.endsWith(".cj")) {
+2475 | 			keys.push(editorDocumentCacheKey(doc.uri))
+2476 | 		}
+2477 | 	}
+2478 | 	return keys.sort().join("|")
+2479 | }
+
+2480 | 
+2481 | /** 用户消息中是否出现仓颉工具链 / 语言相关关键词（Ask/Architect 注入语料时用）。 */
+2482 | const USER_MESSAGE_CANGJIE_HINT = /\b(cjpm|cjc|cjfmt|cjlint|cjdb|cjprof|cjcov)\b|仓颉|\.cj\b|cangjie/i
+2483 | 
+2484 | export function userMessageSuggestsCangjie(text: string | undefined): boolean {
+2485 | 	if (!text) return false
+2486 | 	if (text.length > 400_000) return false
+2487 | 	return USER_MESSAGE_CANGJIE_HINT.test(text)
+2488 | }
+2489 | 
+2490 | /**
+2491 |  * Ask / Architect 下是否应附加与 Cangjie Dev 相同的动态语料（含语料库检索与工程上下文）。
+2492 |  */
+2493 | export function detectCangjieRelevanceForAuxiliaryModes(cwd: string, lastUserText?: string): boolean {
+2494 | 	if (workspaceHasOpenCangjieFile()) return true
+2495 | 	if (findCjpmTomlAncestor(cwd) != null) return true
+2496 | 	if (userMessageSuggestsCangjie(lastUserText)) return true
+2497 | 	return false
+2498 | }
+2499 | 
+2500 | /**
+2501 |  * 系统提示缓存键片段：Cangjie Dev 恒为 `cj`；Ask/Architect 在命中相关性时为 `on|...`，否则 `off`。
+2502 |  */
+2503 | export function getCangjieSystemPromptCacheKeySuffix(cwd: string, mode: string, lastUserHint?: string): string {
+2504 | 	if (mode === "cangjie") return "cj"
+2505 | 	if (mode !== "ask" && mode !== "architect") return "na"
+2506 | 	if (!detectCangjieRelevanceForAuxiliaryModes(cwd, lastUserHint)) return "off"
+2507 | 	const fp = `${openCangjieDocumentsSignature()}|${findCjpmTomlAncestor(cwd) ?? "-"}|${simpleHash(lastUserHint ?? "")}`
+2508 | 	return `on|${fp}`
+2509 | }
+2510 | 
+2511 | // StructuredEditingContextPreparse is now imported from ./CangjieSymbolExtractor
+2512 | export type { StructuredEditingContextPreparse } from "./CangjieSymbolExtractor"
+2513 | 
+2514 | /**
+2515 |  * Generate the Cangjie context section for the system prompt.
+2516 |  * Included for mode `cangjie`, and for `ask` / `architect` when
+2517 |  * {@link detectCangjieRelevanceForAuxiliaryModes} is true (same corpus pipeline as Cangjie Dev).
+2518 |  */
+2519 | export async function getCangjieContextSection(
+2520 | 	cwd: string,
+2521 | 	mode: string,
+2522 | 	extensionPath?: string,
+2523 | 	tokenBudget: number = DEFAULT_CANGJIE_CONTEXT_TOKEN_BUDGET,
+2524 | 	globalStoragePath?: string,
+2525 | 	lastUserHintForRelevance?: string,
+2526 | 	detailLevel: CangjieContextDetailLevel = "l2",
+2527 | 	recentBuildRootCauses: string[] = [],
+2528 | ): Promise<string> {
+2529 | 	const runCangjieContext =
+2530 | 		mode === "cangjie" ||
+2531 | 		((mode === "ask" || mode === "architect") &&
+2532 | 			detectCangjieRelevanceForAuxiliaryModes(cwd, lastUserHintForRelevance))
+2533 | 	if (!runCangjieContext) return ""
+2534 | 
+2535 | 	const diagSnapshot = collectDiagnosticSnapshot()
+2536 | 	const l3Key = `${computeContextCacheKey(cwd, diagSnapshot.diagSummaryHash)}|tb:${tokenBudget}|m:${mode}|detail:${detailLevel}|rc:${simpleHash(recentBuildRootCauses.join("|"))}`
+2537 | 	const now = Date.now()
+2538 | 	const l3Ttl = getL3ContextCacheTtlMs()
+2539 | 	if (l3ContextCache && l3ContextCache.key === l3Key && now - l3ContextCache.time < l3Ttl) {
+
+2540 | 		return l3ContextCache.value
+2541 | 	}
+2542 | 
+2543 | 	const inflight = l3InFlightByKey.get(l3Key)
+2544 | 	if (inflight) return inflight
+2545 | 
+2546 | 	const p = (async (): Promise<string> => {
+2547 | 	const docsBase = resolveCangjieDocsBasePath(extensionPath)
+2548 | 	const docsExist = docsBase != null && fs.existsSync(docsBase)
+2549 | 	const includeLevel1 = detailLevel === "l1" || detailLevel === "l2"
+2550 | 	const includeLevel2 = detailLevel === "l2"
+2551 | 
+2552 | 	const prioritized: PrioritizedCangjieSection[] = []
+2553 | 	let treeSectionPromise: Promise<string | null> = Promise.resolve(null)
+2554 | 
+2555 | 	const activeFileInfo = getActiveCangjieFileInfo()
+2556 | 
+2557 | 		// 0a. Project structure context (cjpm.toml) - L1 cache
+2558 | 	const { info: projectInfo, cjpmRawHash } = await parseCjpmTomlWithMeta(cwd)
+2559 | 		if (projectInfo) {
+2560 | 		const l1Key = `${cwd}|${cjpmRawHash}|active:${activeFileInfo?.packageName ?? "-"}`
+2561 | 		let overview = l1ContextCache && l1ContextCache.key === l1Key && now - l1ContextCache.time < L1_CONTEXT_CACHE_TTL_MS
+2562 | 			? l1ContextCache.value
+2563 | 			: null
+2564 | 		if (overview === null) {
+2565 | 			overview = buildCompactProjectOverviewSection(
+2566 | 				cwd,
+2567 | 				projectInfo,
+2568 | 				activeFileInfo?.packageName ?? null,
+2569 | 				activeFileInfo?.filePath ?? null,
+2570 | 			)
+2571 | 			l1ContextCache = { key: l1Key, value: overview, time: now }
+2572 | 		}
+2573 | 		addPrioritized(prioritized, 490, overview)
+2574 | 	}
+2575 | 
+2576 | 	// 0b. package declaration verification + cjpm tree
+2577 | 	if (projectInfo && includeLevel1) {
+2578 | 		if (!projectInfo.isWorkspace) {
+2579 | 			const rootPkgName = projectInfo.name || undefined
+2580 | 			const pkgTree = getCachedPackageHierarchy(cwd, projectInfo.srcDir, rootPkgName)
+2581 | 			if (pkgTree) {
+2582 | 				const pkgMismatches = verifyPackageDeclarations(pkgTree, cwd, projectInfo.srcDir)
+2583 | 				addPrioritized(prioritized, 515, pkgMismatches || undefined)
+2584 | 			}
+2585 | 		} else {
+2586 | 			for (const member of projectInfo.members || []) {
+2587 | 				const memberCwd = path.join(cwd, member.path)
+2588 | 				const memberTree = getCachedPackageHierarchy(memberCwd, "src", member.name)
+2589 | 				if (memberTree) {
+2590 | 					const pkgMismatches = verifyPackageDeclarations(memberTree, memberCwd, "src")
+2591 | 					addPrioritized(prioritized, 515, pkgMismatches || undefined)
+2592 | 				}
+2593 | 			}
+2594 | 		}
+2595 | 
+2596 | 		// cjpm tree — started in parallel; awaited below
+2597 | 		treeSectionPromise = getCjpmTreeSection(cwd)
+2598 | 	}
+2599 | 
+
+2600 | 	// Collect imports + symbols from visible editors (single pass)
+2601 | 	const { imports, symbols: editorSymbolsSnapshot, activePreparse } = collectActiveCangjieEditorSnapshot()
+2602 | 	const rawDiagnostics = diagSnapshot.allCjDiags
+2603 | 	const rawErrorCount = rawDiagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Error).length
+2604 | 
+2605 | 	// Symbol scanning, import analysis, and doc mapping are only performed
+2606 | 	// when a cjpm.toml project exists, to keep context lightweight otherwise.
+2607 | 	if (projectInfo && includeLevel1) {
+2608 | 		const idx = CangjieSymbolIndex.getInstance()
+2609 | 		const importsHash = simpleHash([...imports].sort().join("|"))
+2610 | 		const learnedFixesMtime = getLearnedFixesFileMtime(cwd)
+2611 | 		const l2Key = [
+2612 | 			cwd,
+2613 | 			`idx:${idx?.fileCount ?? 0}:${idx?.symbolCount ?? 0}`,
+2614 | 			`imports:${imports.length}:${importsHash}`,
+2615 | 			`lf:${learnedFixesMtime}`,
+2616 | 			`ws:${projectInfo.isWorkspace ? 1 : 0}`,
+2617 | 		].join("::")
+2618 | 		let l2Bundle: L2ContextBundle | null = null
+2619 | 		if (l2ContextCache && l2ContextCache.key === l2Key && now - l2ContextCache.time < L2_CONTEXT_CACHE_TTL_MS) {
+2620 | 			l2Bundle = l2ContextCache.value
+2621 | 		} else {
+2622 | 			l2Bundle = {
+2623 | 				symbols: editorSymbolsSnapshot,
+2624 | 				importedSymbols: resolveImportedSymbols(imports, cwd, projectInfo),
+2625 | 				stdlibHints: buildStdlibSignatureHintsSection(imports, docsBase, globalStoragePath),
+2626 | 				workspaceSummary: projectInfo.isWorkspace ? buildWorkspaceSymbolSummary(projectInfo, cwd) : null,
+2627 | 				fewShot: buildCangjieStyleFewShotSection(cwd, imports, rawDiagnostics, cjpmRawHash),
+2628 | 			}
+2629 | 			l2ContextCache = { key: l2Key, value: l2Bundle, time: now }
+2630 | 		}
+2631 | 		addPrioritized(prioritized, 380, l2Bundle.symbols || undefined)
+2632 | 		addPrioritized(prioritized, 390, l2Bundle.importedSymbols || undefined)
+2633 | 		addPrioritized(prioritized, 395, l2Bundle.stdlibHints || undefined)
+2634 | 		if (includeLevel2) {
+2635 | 			addPrioritized(prioritized, 528, l2Bundle.workspaceSummary || undefined)
+2636 | 		}
+2637 | 
+2638 | 		// 1. Import-based documentation context
+2639 | 		if (includeLevel2 && imports.length > 0 && docsBase && docsExist) {
+2640 | 			const docMappings = mapImportsToDocPaths(imports)
+2641 | 			if (docMappings.length > 0) {
+2642 | 				const importContext = docMappings
+2643 | 					.map((m) => {
+2644 | 						const paths = m.docPaths.map((p) => p.replace(/\\/g, "/")).join(", ")
+2645 | 						return `- \`${m.prefix}\`: ${m.summary} (请视需检索: ${paths})`
+2646 | 					})
+2647 | 					.join("\n")
+2648 | 
+2649 | 				addPrioritized(
+2650 | 					prioritized,
+2651 | 					350,
+2652 | 					`## 当前代码涉及的重要模块映射\n\n当前代码中已引入以下高级模块。若后续编写代码缺乏十足把握，强烈建议立刻使用 \`search_files\`（regex 搜索）检索这些官方库示例：\n\n${importContext}`,
+2653 | 				)
+2654 | 			}
+2655 | 		}
+2656 | 	}
+2657 | 
+2658 | 	const diagSample = sampleCangjieDiagnostics(rawDiagnostics)
+2659 | 	const diagnostics = diagSample.sampled
+
+2660 | 	const conversionByMessage = buildConversionHintByMessage(diagnostics)
+2661 | 	const errorSections =
+2662 | 		diagnostics.length > 0 && docsBase && docsExist
+2663 | 			? mapDiagnosticsToDocContext(diagnostics, docsBase, conversionByMessage)
+2664 | 			: []
+2665 | 
+2666 | 	if (includeLevel2) {
+2667 | 		addPrioritized(prioritized, 95, formatCompileHistoryPromptSection(cwd))
+2668 | 	}
+2669 | 
+2670 | 	if (recentBuildRootCauses.length > 0) {
+2671 | 		addPrioritized(
+2672 | 			prioritized,
+2673 | 			92,
+2674 | 			`## Recent Cangjie Build Root Causes\n- ${recentBuildRootCauses.slice(0, 4).join("\n- ")}`,
+2675 | 		)
+2676 | 	}
+2677 | 
+2678 | 	// 1b. Dynamic coding rules injection (context-aware).
+2679 | 	addPrioritized(
+2680 | 		prioritized,
+2681 | 		650,
+2682 | 		buildContextualCodingRules(imports, projectInfo, rawDiagnostics, errorSections.length > 0) ||
+2683 | 			undefined,
+2684 | 	)
+2685 | 	if (includeLevel2) {
+2686 | 		addPrioritized(prioritized, 850, l2ContextCache?.value.fewShot || undefined)
+2687 | 	}
+2688 | 
+2689 | 	// 2. Error/diagnostic context (sampled + merged messages for prompt), kept late in final order.
+2690 | 	let diagnosticSection: string | null = null
+2691 | 	if (errorSections.length > 0) {
+2692 | 		const omitNote =
+2693 | 			diagSample.omitted > 0
+2694 | 				? `\n\n_共 ${diagSample.total} 条诊断，以上展示经重要性筛选与消息合并；另有 ${diagSample.omitted} 条未列出。_`
+2695 | 				: ""
+2696 | 		diagnosticSection = `## 当前诊断错误与修复建议\n\n检测到以下编译/检查错误，建议参考对应文档修复：\n\n${errorSections.join("\n")}${omitNote}`
+2697 | 		const aug = buildDiagnosticAugmentationLines(diagnostics, cwd, conversionByMessage, diagSnapshot.byFile)
+2698 | 		if (aug.length > 0) {
+2699 | 			diagnosticSection += `\n\n### 辅助定位（根因/类型转换）\n${aug.join("\n")}`
+2700 | 		}
+2701 | 		addPrioritized(prioritized, 90, diagnosticSection)
+2702 | 	}
+2703 | 
+2704 | 	// 2a. Intent-matched few-shot from bundled corpus extra/
+2705 | 	if (includeLevel2 && docsBase && docsExist) {
+2706 | 		addPrioritized(
+2707 | 			prioritized,
+2708 | 			750,
+2709 | 			buildCorpusExtraFewShotSection(docsBase, imports, rawDiagnostics) || undefined,
+2710 | 		)
+2711 | 	}
+2712 | 
+2713 | 	// 2b. Auto-inject corpus search results based on imports and diagnostics
+2714 | 	if (includeLevel2 && docsBase && docsExist) {
+2715 | 		try {
+2716 | 			const corpusIndex = getCorpusSingleton(docsBase)
+2717 | 			if (corpusIndex.isAvailable) {
+2718 | 				const queries = buildAutoCorpusQueries(imports, diagnostics)
+2719 | 				const unique = new Map<string, { hit: import("../../../services/cangjie-corpus/CangjieCorpusSemanticIndex").SemanticSearchResult; score: number }>()
+
+2720 | 				const searchOpts = { maxChunksPerPath: CORPUS_BM25_MAX_CHUNKS_PER_PATH }
+2721 | 				const hitLists =
+2722 | 					queries.length > 0
+2723 | 						? corpusIndex.searchBatch(queries, 12, undefined, searchOpts)
+2724 | 						: []
+2725 | 				for (let qi = 0; qi < hitLists.length; qi++) {
+2726 | 					const hits = hitLists[qi]!
+2727 | 					const maxS = hits.reduce((m, h) => Math.max(m, h.score), 0)
+2728 | 					for (const h of hits) {
+2729 | 						const norm = maxS > 0 ? h.score / maxS : 0
+2730 | 						const key = `${h.relPath}:${h.startLine}`
+2731 | 						const prev = unique.get(key)
+2732 | 						if (!prev || prev.score < norm) {
+2733 | 							unique.set(key, { hit: h, score: norm })
+2734 | 						}
+2735 | 					}
+2736 | 				}
+2737 | 				const top = [...unique.values()].sort((a, b) => b.score - a.score).slice(0, 7).map((x) => x.hit)
+2738 | 				if (top.length > 0) {
+2739 | 					const hints = top.map((h) =>
+2740 | 						`### ${h.heading}\n来源: \`${h.relPath}\` (L${h.startLine})\n\`\`\`\n${h.snippet.slice(0, 800)}\n\`\`\``
+2741 | 					).join("\n\n")
+2742 | 					addPrioritized(
+2743 | 						prioritized,
+2744 | 						550,
+2745 | 						`## 语料库自动检索结果（基于当前 import 与诊断）\n\n${hints}`,
+2746 | 					)
+2747 | 				}
+2748 | 			}
+2749 | 		} catch {
+2750 | 			// corpus unavailable — no injection
+2751 | 		}
+2752 | 	}
+2753 | 
+2754 | 	const mandatoryFooter = buildMandatoryCorpusFooter(docsBase, docsExist)
+2755 | 
+2756 | 	// 4. Structured editing context + awaiting parallel promises
+2757 | 	const activeEd = vscode.window.activeTextEditor
+2758 | 	let structuredPre: StructuredEditingContextPreparse | undefined
+2759 | 	if (activeEd && (activeEd.document.languageId === "cangjie" || activeEd.document.fileName.endsWith(".cj"))) {
+2760 | 		structuredPre = activePreparse
+2761 | 			? { ...activePreparse, diagnosticsByFile: diagSnapshot.byFile }
+2762 | 			: (() => {
+2763 | 				const c = activeEd.document.getText()
+2764 | 				return {
+2765 | 					content: c,
+2766 | 					lines: c.split("\n"),
+2767 | 					imports: extractImports(c),
+2768 | 					defs: parseCangjieDefinitions(c),
+2769 | 					diagnosticsByFile: diagSnapshot.byFile,
+2770 | 				}
+2771 | 			})()
+2772 | 	}
+2773 | 	const [editingCtx, treeSection] = await Promise.all([
+2774 | 		buildStructuredEditingContext(structuredPre),
+2775 | 		treeSectionPromise,
+2776 | 	])
+2777 | 	addPrioritized(prioritized, 525, treeSection || undefined)
+2778 | 	addPrioritized(prioritized, 150, editingCtx || undefined)
+2779 | 
+
+2780 | 	// 5. Project-curated learned fixes (optional JSON in .njust_ai/)
+2781 | 	addPrioritized(prioritized, 250, loadLearnedFixesSection(cwd, rawDiagnostics) || undefined)
+2782 | 
+2783 | 	const diagTokensEstimate = diagnosticSection ? estimateContextTokens(diagnosticSection) : 0
+2784 | 	const packed = packSectionsWithTokenBudget(prioritized, mandatoryFooter, Math.max(500, tokenBudget), {
+2785 | 		rawErrorCount,
+2786 | 		totalDiagnosticCount: rawDiagnostics.length,
+2787 | 		diagnosticSectionMinTokens:
+2788 | 			rawErrorCount > 0 ? Math.min(Math.max(diagTokensEstimate, 480), 1200) : 0,
+2789 | 	})
+2790 | 	if (diagnosticSection) {
+2791 | 		const idx = packed.indexOf(diagnosticSection)
+2792 | 		if (idx >= 0) {
+2793 | 			packed.splice(idx, 1)
+2794 | 			packed.push(diagnosticSection)
+2795 | 		}
+2796 | 	}
+2797 | 	if (packed.length === 0) return ""
+2798 | 
+2799 | 	const auxiliaryNote =
+2800 | 		mode === "ask" || mode === "architect"
+2801 | 			? "\n（以下仓颉语料与工程上下文仅供查阅；请保持当前 Ask/Architect 模式的角色与职责。）"
+2802 | 			: ""
+2803 | 
+2804 | 	const result = `====
+2805 | 
+2806 | CANGJIE DEVELOPMENT CONTEXT${auxiliaryNote}
+2807 | 
+2808 | ${packed.join("\n\n")}
+2809 | `
+2810 | 	l3ContextCache = { value: result, key: l3Key, time: Date.now() }
+2811 | 	return result
+2812 | 	})()
+2813 | 	l3InFlightByKey.set(l3Key, p)
+2814 | 	void p.finally(() => l3InFlightByKey.delete(l3Key))
+2815 | 	return p
+2816 | }
+2817 | 
+2818 | /**
+2819 |  * Extract file:line:col references from cjc error output and read surrounding
+2820 |  * source lines to provide richer context for AI-assisted fixes.
+2821 |  */
+2822 | const ERROR_CONTEXT_RADIUS = 15
+2823 | const ERROR_CONTEXT_MAX_LOCATIONS = 8
+2824 | 
+2825 | function formatSingleErrorLocationBlock(cwd: string, filePart: string, lineStr: string): string | null {
+2826 | 	const lineNum = parseInt(lineStr, 10) - 1
+2827 | 	if (Number.isNaN(lineNum) || lineNum < 0) return null
+2828 | 	const filePath = path.isAbsolute(filePart) ? filePart : path.resolve(cwd, filePart)
+2829 | 	try {
+2830 | 		if (!fs.existsSync(filePath)) return null
+2831 | 		const content = fs.readFileSync(filePath, "utf-8")
+2832 | 		const lines = content.split("\n")
+2833 | 		const start = Math.max(0, lineNum - ERROR_CONTEXT_RADIUS)
+2834 | 		const end = Math.min(lines.length, lineNum + ERROR_CONTEXT_RADIUS + 1)
+2835 | 
+2836 | 		const snippet = lines
+2837 | 			.slice(start, end)
+2838 | 			.map((l, i) => {
+2839 | 				const num = start + i + 1
+
+2840 | 				const marker = num === lineNum + 1 ? " >>>" : "    "
+2841 | 				return `${marker} ${num}: ${l}`
+2842 | 			})
+2843 | 			.join("\n")
+2844 | 
+2845 | 		const relPath = path.relative(cwd, filePath).replace(/\\/g, "/")
+2846 | 		let block = `文件: ${relPath} (第 ${lineNum + 1} 行)\n${snippet}`
+2847 | 
+2848 | 		// Include file's import list for context
+2849 | 		if (filePath.endsWith(".cj")) {
+2850 | 			const fileImports = extractImports(content)
+2851 | 			if (fileImports.length > 0) {
+2852 | 				block += `\n  文件 import: ${fileImports.slice(0, 12).join(", ")}${fileImports.length > 12 ? " …" : ""}`
+2853 | 			}
+2854 | 		}
+2855 | 
+2856 | 		const symbolIndex = CangjieSymbolIndex.getInstance()
+2857 | 		if (symbolIndex && filePath.endsWith(".cj")) {
+2858 | 			const enclosing = symbolIndex.findEnclosingSymbol(filePath, lineNum)
+2859 | 			if (enclosing?.signature) {
+2860 | 				block += `\n  所在符号: ${enclosing.kind} ${enclosing.name}\n  签名: ${enclosing.signature}`
+2861 | 			}
+2862 | 		}
+2863 | 
+2864 | 		return block
+2865 | 	} catch {
+2866 | 		return null
+2867 | 	}
+2868 | }
+2869 | 
+2870 | function extractErrorSourceContext(errorOutput: string, cwd: string): string[] {
+2871 | 	const locationRe = /==>\s+(.+?):(\d+):(\d+):/g
+2872 | 	const contextLines: string[] = []
+2873 | 	const seen = new Set<string>()
+2874 | 	let match: RegExpExecArray | null
+2875 | 
+2876 | 	while ((match = locationRe.exec(errorOutput)) !== null) {
+2877 | 		const [, filePart, lineStr] = match
+2878 | 		const lineNum = parseInt(lineStr, 10) - 1
+2879 | 		const filePath = path.isAbsolute(filePart!) ? filePart! : path.resolve(cwd, filePart!)
+2880 | 		const key = `${filePath}:${lineNum}`
+2881 | 		if (seen.has(key)) continue
+2882 | 		seen.add(key)
+2883 | 
+2884 | 		const block = formatSingleErrorLocationBlock(cwd, filePart!, lineStr!)
+2885 | 		if (block) contextLines.push(block)
+2886 | 
+2887 | 		if (contextLines.length >= ERROR_CONTEXT_MAX_LOCATIONS) break
+2888 | 	}
+2889 | 
+2890 | 	if (contextLines.length >= ERROR_CONTEXT_MAX_LOCATIONS) {
+2891 | 		contextLines.push("（已达单段上下文展示上限；其余错误位置请查看完整编译输出。）")
+2892 | 	}
+2893 | 
+2894 | 	return contextLines
+2895 | }
+2896 | 
+2897 | /**
+2898 |  * Enhance a cjc/cjlint error message with documentation references and fix suggestions.
+2899 |  * Called when terminal output contains compilation errors.
+
+2900 |  */
+2901 | export function enhanceCjcErrorOutput(errorOutput: string, cwd: string, extensionPath?: string): string {
+2902 | 	const docsBase = resolveCangjieDocsBasePath(extensionPath)
+2903 | 	const docsExist = docsBase != null && fs.existsSync(docsBase)
+2904 | 
+2905 | 	const matchedSuggestions: string[] = []
+2906 | 
+2907 | 	for (const pattern of getMatchingCjcPatternsByCategory(errorOutput)) {
+2908 | 		const docPaths =
+2909 | 			docsBase && docsExist ? pattern.docPaths.map((p) => path.join(docsBase, p).replace(/\\/g, "/")).join(", ") : ""
+2910 | 		const ref = docPaths ? ` (参考: ${docPaths})` : ""
+2911 | 		const directive = pattern.fixDirective ?? pattern.suggestion
+2912 | 		matchedSuggestions.push(`[${pattern.category}] ${pattern.suggestion}${ref}\n  AI 修复指令: ${directive}`)
+2913 | 	}
+2914 | 
+2915 | 	const sourceContexts = extractErrorSourceContext(errorOutput, cwd)
+2916 | 
+2917 | 	if (matchedSuggestions.length === 0 && sourceContexts.length === 0) return ""
+2918 | 
+2919 | 	const parts: string[] = []
+2920 | 	if (sourceContexts.length > 0) {
+2921 | 		parts.push(`出错位置源码:\n${sourceContexts.join("\n\n")}`)
+2922 | 	}
+2923 | 	if (matchedSuggestions.length > 0) {
+2924 | 		parts.push(matchedSuggestions.join("\n"))
+2925 | 	}
+2926 | 
+2927 | 	return `\n\n<cangjie_error_hints>\n${parts.join("\n\n")}\n</cangjie_error_hints>`
+2928 | }
+2929 | 
+2930 | const EXEC_CMD_ERROR_MAX_PATTERNS_PER_BLOCK = 5
+2931 | 
+2932 | /**
+2933 |  * Single appendix for **execute_command** on cjpm/cjc failure: either per-`==>` blocks with
+2934 |  * nearby source + pattern hints (no duplicate tail blob), or {@link enhanceCjcErrorOutput} when
+2935 |  * the output has no `==>` headers.
+2936 |  */
+2937 | export function buildCangjieExecuteCommandErrorAppendix(
+2938 | 	output: string,
+2939 | 	cwd: string,
+2940 | 	extensionPath?: string,
+2941 | ): string {
+2942 | 	const normalized = output.replace(/\r\n/g, "\n")
+2943 | 	if (!/==>\s+/.test(normalized)) {
+2944 | 		return enhanceCjcErrorOutput(output, cwd, extensionPath)
+2945 | 	}
+2946 | 
+2947 | 	const docsBase = resolveCangjieDocsBasePath(extensionPath)
+2948 | 	const docsExist = docsBase != null && fs.existsSync(docsBase)
+2949 | 	const lines = normalized.split("\n")
+2950 | 	const isLocationLine = (line: string) => /^==>\s+.+:\d+:\d+:/.test(line.trim())
+2951 | 
+2952 | 	const blocks: string[][] = []
+2953 | 	let cur: string[] = []
+2954 | 	for (const line of lines) {
+2955 | 		if (isLocationLine(line) && cur.length > 0) {
+2956 | 			blocks.push(cur)
+2957 | 			cur = [line]
+2958 | 		} else {
+2959 | 			cur.push(line)
+
+2960 | 		}
+2961 | 	}
+2962 | 	if (cur.length) blocks.push(cur)
+2963 | 
+2964 | 	const sections: string[] = []
+2965 | 	for (const block of blocks) {
+2966 | 		const text = block.join("\n").trimEnd()
+2967 | 		if (!text) continue
+2968 | 
+2969 | 		const firstNonEmpty = block.map((l) => l.trim()).find(Boolean) ?? ""
+2970 | 		const locMatch = firstNonEmpty.match(/^==>\s+(.+?):(\d+):(\d+):/)
+2971 | 		const header = locMatch
+2972 | 			? `[${locMatch[1]} 第 ${locMatch[2]} 行 col ${locMatch[3]}]`
+2973 | 			: "[输出片段]"
+2974 | 
+2975 | 		const snippet =
+2976 | 			locMatch != null ? formatSingleErrorLocationBlock(cwd, locMatch[1], locMatch[2]) : null
+2977 | 
+2978 | 		const patterns = getMatchingCjcPatternsByCategory(text)
+2979 | 		let patternBlock: string
+2980 | 		if (patterns.length > 0) {
+2981 | 			patternBlock = patterns
+2982 | 				.slice(0, EXEC_CMD_ERROR_MAX_PATTERNS_PER_BLOCK)
+2983 | 				.map((pattern) => {
+2984 | 					const docPathsStr =
+2985 | 						docsBase && docsExist
+2986 | 							? pattern.docPaths.map((p) => path.join(docsBase, p).replace(/\\/g, "/")).join(", ")
+2987 | 							: ""
+2988 | 					const ref = docPathsStr ? ` (参考: ${docPathsStr})` : ""
+2989 | 					const directive = pattern.fixDirective ?? pattern.suggestion
+2990 | 					return `[${pattern.category}] ${pattern.suggestion}${ref}\n  AI 修复指令: ${directive}`
+2991 | 				})
+2992 | 				.join("\n\n")
+2993 | 		} else {
+2994 | 			patternBlock = `（未匹配已知错误模式）\n→ 启发式建议: ${_getErrorFixDirective(text)}`
+2995 | 		}
+2996 | 
+2997 | 		const pieces = [`### ${header}`, "```", text, "```"]
+2998 | 		if (snippet) {
+2999 | 			pieces.push("出错位置源码:", snippet)
+3000 | 		}
+3001 | 		pieces.push("修复建议（本段输出）:", patternBlock)
+3002 | 		sections.push(pieces.join("\n"))
+3003 | 	}
+3004 | 
+3005 | 	if (sections.length === 0) {
+3006 | 		return enhanceCjcErrorOutput(output, cwd, extensionPath)
+3007 | 	}
+3008 | 
+3009 | 	// Repair priority footer: guide the LLM to fix errors in the optimal order
+3010 | 	const repairPriority =
+3011 | 		"\n\n**修复优先级建议**: " +
+3012 | 		"1. import/符号错误（级联根因，修复后其他错误可能消失） → " +
+3013 | 		"2. 类型不匹配/泛型约束 → " +
+3014 | 		"3. mut/let 限制 → " +
+3015 | 		"4. 语法/格式错误"
+3016 | 
+3017 | 	// Failure accumulation hint for repeated compile failures
+3018 | 	const errorCount = blocks.length
+3019 | 	const failureHint = errorCount > 5
+
+3020 | 		? `\n\n⚠ 检测到 ${errorCount} 处错误。建议集中修复最可能是根因的 import/符号问题，而非逐个修复所有错误。修复根因后重新编译，观察剩余错误是否减少。`
+3021 | 		: ""
+3022 | 
+3023 | 	return `\n\n<cangjie_error_hints>\n按错误位置就近整理（每段含编译原文、源码上下文与建议）:\n\n${sections.join("\n\n---\n\n")}${repairPriority}${failureHint}\n</cangjie_error_hints>`
+3024 | }
+3025 | 
+3026 | // Error fix directives are now defined in CangjieErrorAnalyzer.ts; re-export here.
+3027 | export const getErrorFixDirective = _getErrorFixDirective
+3028 | 
+3029 | // ---------------------------------------------------------------------------
+3030 | // Structured AI editing context
+3031 | // ---------------------------------------------------------------------------
+3032 | 
+3033 | /** Align with Cangjie Dev plan: 1000ms cap (typical hover <500ms). */
+3034 | const HOVER_PROVIDER_TIMEOUT_MS = 1000
+3035 | const HOVER_TEXT_MAX_CHARS = 4000
+3036 | const HOVER_POSITION_MEMO_TTL_MS = 1000
+3037 | let hoverMemo: { key: string; value: string | null; time: number } | null = null
+3038 | 
+3039 | function hoversToPlainText(hovers: vscode.Hover[]): string {
+3040 | 	const chunks: string[] = []
+3041 | 	for (const h of hovers) {
+3042 | 		for (const c of h.contents) {
+3043 | 			if (typeof c === "string") {
+3044 | 				chunks.push(c)
+3045 | 			} else {
+3046 | 				chunks.push((c as vscode.MarkdownString).value)
+3047 | 			}
+3048 | 		}
+3049 | 	}
+3050 | 	return chunks.join("\n\n").replace(/\r\n/g, "\n").trim()
+3051 | }
+3052 | 
+3053 | /**
+3054 |  * Best-effort LSP hover at cursor via VS Code command API (no direct LanguageClient).
+3055 |  */
+3056 | async function fetchHoverAtPosition(
+3057 | 	document: vscode.TextDocument,
+3058 | 	position: vscode.Position,
+3059 | ): Promise<string | null> {
+3060 | 	const hoverEnabled = vscode.workspace.getConfiguration("njust-ai").get<boolean>("cangjieLsp.enabled", true)
+3061 | 	if (!hoverEnabled) return null
+3062 | 	const key = `${document.uri.toString()}:${position.line}:${position.character}`
+3063 | 	const now = Date.now()
+3064 | 	if (hoverMemo && hoverMemo.key === key && now - hoverMemo.time < HOVER_POSITION_MEMO_TTL_MS) {
+3065 | 		return hoverMemo.value
+3066 | 	}
+3067 | 	try {
+3068 | 		const task = vscode.commands.executeCommand(
+3069 | 			"vscode.executeHoverProvider",
+3070 | 			document.uri,
+3071 | 			position,
+3072 | 		) as Thenable<vscode.Hover[] | undefined>
+3073 | 
+3074 | 		const hovers = await Promise.race([
+3075 | 			task,
+3076 | 			new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), HOVER_PROVIDER_TIMEOUT_MS)),
+3077 | 		])
+3078 | 		if (!hovers?.length) {
+3079 | 			hoverMemo = { key, value: null, time: now }
+
+3080 | 			return null
+3081 | 		}
+3082 | 		const text = hoversToPlainText(hovers)
+3083 | 		if (!text) {
+3084 | 			hoverMemo = { key, value: null, time: now }
+3085 | 			return null
+3086 | 		}
+3087 | 		const value = text.length > HOVER_TEXT_MAX_CHARS ? `${text.slice(0, HOVER_TEXT_MAX_CHARS)}…` : text
+3088 | 		hoverMemo = { key, value, time: now }
+3089 | 		return value
+3090 | 	} catch {
+3091 | 		hoverMemo = { key, value: null, time: now }
+3092 | 		return null
+3093 | 	}
+3094 | }
+3095 | 
+3096 | /**
+3097 |  * Build a structured editing context for the AI when the user is actively
+3098 |  * editing a Cangjie file. Includes file info, current function, imports,
+3099 |  * LSP hover at cursor, nearby code, and recent diagnostics.
+3100 |  */
+3101 | export async function buildStructuredEditingContext(pre?: StructuredEditingContextPreparse): Promise<string | null> {
+3102 | 	const editor = vscode.window.activeTextEditor
+3103 | 	if (!editor || (editor.document.languageId !== "cangjie" && !editor.document.fileName.endsWith(".cj"))) {
+3104 | 		return null
+3105 | 	}
+3106 | 
+3107 | 	const doc = editor.document
+3108 | 	const position = editor.selection.active
+3109 | 	const cursorLine = position.line
+3110 | 	const content = doc.getText()
+3111 | 	const usePre = pre !== undefined && pre.content === content
+3112 | 	const defs = usePre ? pre.defs : parseCangjieDefinitions(content)
+3113 | 	const imports = usePre ? pre.imports : extractImports(content)
+3114 | 	const lines = usePre ? pre.lines : content.split("\n")
+3115 | 
+3116 | 	const parts: string[] = []
+3117 | 
+3118 | 	// File info
+3119 | 	const fileName = path.basename(doc.fileName)
+3120 | 	parts.push(`当前文件: ${fileName}`)
+3121 | 
+3122 | 	// Imports
+3123 | 	if (imports.length > 0) {
+3124 | 		parts.push(`已导入: ${imports.slice(0, 10).join(", ")}${imports.length > 10 ? " …" : ""}`)
+3125 | 	}
+3126 | 
+3127 | 	// Current function/class context
+3128 | 	const enclosing = defs
+3129 | 		.filter((d: CangjieDef) => d.startLine <= cursorLine && d.endLine >= cursorLine && d.kind !== "import" && d.kind !== "package")
+3130 | 		.sort((a: CangjieDef, b: CangjieDef) => (b.startLine - a.startLine))
+3131 | 
+3132 | 	if (enclosing.length > 0) {
+3133 | 		const innermost = enclosing[0]
+3134 | 		const sig = computeCangjieSignature(lines, innermost)
+3135 | 		if (enclosing.length > 1) {
+3136 | 			const outermost = enclosing[enclosing.length - 1]
+3137 | 			parts.push(
+3138 | 				`外层作用域: ${outermost.kind} ${outermost.name} (第 ${outermost.startLine + 1}–${outermost.endLine + 1} 行)`,
+3139 | 			)
+
+3140 | 			// Inject type member summaries for enclosing type (up to 8 members)
+3141 | 			if (["class", "struct", "interface", "enum"].includes(outermost.kind)) {
+3142 | 				const memberDefs = defs.filter(
+3143 | 					(d: CangjieDef) =>
+3144 | 						d.startLine >= outermost.startLine &&
+3145 | 						d.endLine <= outermost.endLine &&
+3146 | 						d !== outermost &&
+3147 | 						(d.kind === "func" || d.kind === "prop" || d.kind === "var" || d.kind === "let"),
+3148 | 				)
+3149 | 				if (memberDefs.length > 0) {
+3150 | 					const memberSummaries = memberDefs.slice(0, 8).map((m: CangjieDef) => {
+3151 | 						const memberSig = computeCangjieSignature(lines, m)
+3152 | 						return `  - ${m.kind} ${m.name}: ${memberSig}`
+3153 | 					})
+3154 | 					parts.push(`${outermost.kind} ${outermost.name} 的成员:\n${memberSummaries.join("\n")}`)
+3155 | 				}
+3156 | 			}
+3157 | 		}
+3158 | 		parts.push(`正在编辑: ${innermost.kind} ${innermost.name} (第 ${innermost.startLine + 1} 行)`)
+3159 | 		parts.push(`签名: ${sig}`)
+3160 | 	}
+3161 | 
+3162 | 	const hover = await fetchHoverAtPosition(doc, position)
+3163 | 	if (hover) {
+3164 | 		parts.push(`光标处 LSP 提示:\n${hover}`)
+3165 | 	}
+3166 | 
+3167 | 	// Nearby code (±8 lines around cursor)
+3168 | 	const startLine = Math.max(0, cursorLine - 8)
+3169 | 	const endLine = Math.min(doc.lineCount - 1, cursorLine + 8)
+3170 | 	const nearbyLines: string[] = []
+3171 | 	for (let i = startLine; i <= endLine; i++) {
+3172 | 		const marker = i === cursorLine ? " >>>" : "    "
+3173 | 		nearbyLines.push(`${marker} ${i + 1}: ${doc.lineAt(i).text}`)
+3174 | 	}
+3175 | 	parts.push(`附近代码:\n${nearbyLines.join("\n")}`)
+3176 | 
+3177 | 	// Active diagnostics for this file
+3178 | 	const fileDiags = pre?.diagnosticsByFile?.get(path.normalize(doc.fileName))
+3179 | 	const diags = fileDiags ?? vscode.languages.getDiagnostics(doc.uri)
+3180 | 	const errors = diags.filter((d) => d.severity === vscode.DiagnosticSeverity.Error)
+3181 | 	if (errors.length > 0) {
+3182 | 		const errorSummary = errors.slice(0, 5).map((d) => {
+3183 | 			const directive = getErrorFixDirectiveForDiagnostic(d)
+3184 | 			return `  - 第 ${d.range.start.line + 1} 行: ${d.message}\n    建议: ${directive}`
+3185 | 		}).join("\n")
+3186 | 		parts.push(`当前文件错误:\n${errorSummary}`)
+3187 | 	}
+3188 | 
+3189 | 	return `## 当前编辑上下文\n\n${parts.join("\n")}`
+3190 | }
+3191 | 
+3192 | /**
+3193 |  * After a cjpm/cjc compile failure, automatically search the bundled corpus
+3194 |  * for documentation relevant to the error categories detected in the output.
+3195 |  * Returns a formatted block to append to the tool_result, or null.
+3196 |  */
+3197 | export function buildCompileErrorCorpusSearch(
+3198 | 	compileOutput: string,
+3199 | 	cwd: string,
+
+3200 | 	extensionPath?: string,
+3201 | ): string | null {
+3202 | 	const docsBase = resolveCangjieDocsBasePath(extensionPath)
+3203 | 	if (!docsBase || !fs.existsSync(docsBase)) return null
+3204 | 
+3205 | 	try {
+3206 | 		const corpusIndex = getCorpusSingleton(docsBase)
+3207 | 		if (!corpusIndex.isAvailable) return null
+3208 | 
+3209 | 		const matchedPatterns = getMatchingCjcPatternsByCategory(compileOutput)
+3210 | 		if (matchedPatterns.length === 0) return null
+3211 | 
+3212 | 		const queries = matchedPatterns
+3213 | 			.slice(0, 4)
+3214 | 			.map((p) => `${p.category} 修复 示例`)
+3215 | 
+3216 | 		const searchOpts = { maxChunksPerPath: 2 }
+3217 | 		const hitLists = corpusIndex.searchBatch(queries, 8, undefined, searchOpts)
+3218 | 
+3219 | 		const unique = new Map<string, { hit: import("../../../services/cangjie-corpus/CangjieCorpusSemanticIndex").SemanticSearchResult; score: number }>()
+3220 | 		for (let qi = 0; qi < hitLists.length; qi++) {
+3221 | 			const hits = hitLists[qi]!
+3222 | 			const maxS = hits.reduce((m, h) => Math.max(m, h.score), 0)
+3223 | 			for (const h of hits) {
+3224 | 				const norm = maxS > 0 ? h.score / maxS : 0
+3225 | 				const key = `${h.relPath}:${h.startLine}`
+3226 | 				const prev = unique.get(key)
+3227 | 				if (!prev || prev.score < norm) {
+3228 | 					unique.set(key, { hit: h, score: norm })
+3229 | 				}
+3230 | 			}
+3231 | 		}
+3232 | 
+3233 | 		const top = [...unique.values()]
+3234 | 			.sort((a, b) => b.score - a.score)
+3235 | 			.slice(0, 3)
+3236 | 			.map((x) => x.hit)
+3237 | 
+3238 | 		if (top.length === 0) return null
+3239 | 
+3240 | 		const COMPILE_CORPUS_MAX_CHARS = 1200
+3241 | 		let used = 0
+3242 | 		const snippets: string[] = []
+3243 | 		for (const h of top) {
+3244 | 			const snippet = `### ${h.heading}\n来源: \`${h.relPath}\`\n\`\`\`\n${h.snippet.slice(0, 400)}\n\`\`\``
+3245 | 			if (used + snippet.length > COMPILE_CORPUS_MAX_CHARS) break
+3246 | 			snippets.push(snippet)
+3247 | 			used += snippet.length
+3248 | 		}
+3249 | 
+3250 | 		if (snippets.length === 0) return null
+3251 | 
+3252 | 		return (
+3253 | 			`\n\n<cangjie_corpus_for_error>\n` +
+3254 | 			`## 编译错误相关语料参考（自动检索）\n\n` +
+3255 | 			`以下文档片段与当前编译错误相关，可参考修复：\n\n` +
+3256 | 			snippets.join("\n\n") +
+3257 | 			`\n</cangjie_corpus_for_error>`
+3258 | 		)
+3259 | 	} catch {
+
+3260 | 		return null
+3261 | 	}
+3262 | }
+3263 | 
+3264 | // Re-export for testing and backward compatibility
+3265 | export {
+3266 | 	extractImports,
+3267 | 	mapImportsToDocPaths,
+3268 | 	CJC_ERROR_PATTERNS,
+3269 | 	STDLIB_DOC_MAP,
+3270 | 	matchCjcErrorPattern,
+3271 | 	getMatchingCjcPatternsByCategory,
+3272 | 	parseCjpmToml,
+3273 | 	scanPackageHierarchy,
+3274 | 	resolveImportedSymbols,
+3275 | 	verifyPackageDeclarations,
+3276 | 	buildWorkspaceSymbolSummary,
+3277 | }
+3278 | export type { CjcErrorPattern, DocMapping }
+3279 | 

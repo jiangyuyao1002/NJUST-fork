@@ -1,7 +1,7 @@
 import { memo } from "react"
 import { Box, Text } from "ink"
 
-import type { TodoItem } from "@njust-ai-cj/types"
+import type { TodoItem } from "@njust-ai/types"
 
 import * as theme from "../theme.js"
 import ProgressBar from "./ProgressBar.js"

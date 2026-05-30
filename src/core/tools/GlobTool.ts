@@ -1,6 +1,6 @@
 import * as path from "path"
 
-import { type ClineSayTool } from "@njust-ai-cj/types"
+import { type ClineSayTool } from "@njust-ai/types"
 import { glob } from "glob"
 import { z } from "zod"
 

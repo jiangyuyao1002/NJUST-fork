@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import type { SkillMetadata, WebviewMessage } from "@njust-ai-cj/types"
+import type { SkillMetadata, WebviewMessage } from "@njust-ai/types"
 
 import type { ClineProvider } from "./ClineProvider"
 import { openFile } from "../../integrations/misc/open-file"

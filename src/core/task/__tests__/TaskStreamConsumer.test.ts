@@ -117,8 +117,8 @@ vi.mock("../../../shared/array", () => ({
 	findLastIndex: vi.fn().mockReturnValue(-1),
 }))
 
-vi.mock("@njust-ai-cj/types", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@njust-ai-cj/types")>()
+vi.mock("@njust-ai/types", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@njust-ai/types")>()
 	return {
 		...actual,
 		clineApiReqInfoSchema: { parse: vi.fn().mockReturnValue({}) },

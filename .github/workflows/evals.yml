@@ -64,10 +64,10 @@ jobs:
                   docker compose run --rm runner docker ps
 
             - name: Run database migrations
-              run: docker compose run --rm runner pnpm --filter @njust-ai-cj/evals db:migrate
+              run: docker compose run --rm runner pnpm --filter @njust-ai/evals db:migrate
 
             - name: Run evals
-              run: docker compose run --rm runner pnpm --filter @njust-ai-cj/evals cli --ci
+              run: docker compose run --rm runner pnpm --filter @njust-ai/evals cli --ci
 
             - name: Cleanup
               if: always()

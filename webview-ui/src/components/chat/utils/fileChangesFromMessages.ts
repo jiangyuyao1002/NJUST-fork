@@ -1,5 +1,5 @@
-import type { ClineMessage, ClineSayTool } from "@njust-ai-cj/types"
-import { safeJsonParse } from "@roo/core"
+import type { ClineMessage, ClineSayTool } from "@njust-ai/types"
+import { safeJsonParse } from "@njust-ai/core/browser"
 
 /** File-edit tool names from ClineSayTool["tool"] (packages/types). */
 const FILE_EDIT_TOOLS = new Set<string>(["editedExistingFile", "appliedDiff", "newFileCreated"])

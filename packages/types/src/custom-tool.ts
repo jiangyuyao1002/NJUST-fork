@@ -82,7 +82,7 @@ export interface TypedCustomToolDefinition<T extends CustomToolParametersSchema>
  *
  * @example
  * ```ts
- * import { parametersSchema as z, defineCustomTool } from "@njust-ai-cj/types"
+ * import { parametersSchema as z, defineCustomTool } from "@njust-ai/types"
  *
  * export default defineCustomTool({
  *   name: "add_numbers",

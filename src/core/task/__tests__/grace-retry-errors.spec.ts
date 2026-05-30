@@ -6,14 +6,14 @@ import * as os from "os"
 import * as path from "path"
 import * as vscode from "vscode"
 
-import type { GlobalState, ProviderSettings } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { GlobalState, ProviderSettings } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Task } from "../Task"
 import { createTestProvider } from "./testProviderFactory"
 
-// Mock @njust-ai-cj/core
-vi.mock("@njust-ai-cj/core", () => ({
+// Mock @njust-ai/core
+vi.mock("@njust-ai/core", () => ({
 	customToolRegistry: {
 		getTools: vi.fn().mockReturnValue([]),
 		hasTool: vi.fn().mockReturnValue(false),

@@ -1,6 +1,6 @@
-import type { Language } from "@njust-ai-cj/types"
+import type { Language } from "@njust-ai/types"
 
-import { LANGUAGES } from "@roo/language"
+import { LANGUAGES } from "@shared/language"
 
 import { cn } from "@src/lib/utils"
 import { useAppTranslation } from "@src/i18n/TranslationContext"

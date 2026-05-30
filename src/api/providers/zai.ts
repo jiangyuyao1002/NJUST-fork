@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai/types"
 import {
 	internationalZAiModels,
 	mainlandZAiModels,
@@ -9,7 +9,7 @@ import {
 	mainlandZAiDefaultModelId,
 	ZAI_DEFAULT_TEMPERATURE,
 	zaiApiLineConfigs,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { type ApiHandlerOptions, getModelMaxOutputTokens, shouldUseReasoningEffort } from "../../shared/api"
 import { convertToZAiFormat } from "../transform/zai-format"

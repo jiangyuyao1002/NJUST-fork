@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 
 import { checkExistKey } from "../checkExistApiConfig"
 
@@ -82,9 +82,9 @@ describe("checkExistKey", () => {
 		expect(checkExistKey(config)).toBe(true)
 	})
 
-	it("should return true for roo provider without API key", () => {
+	it("should return true for njust-ai provider without API key", () => {
 		const config: ProviderSettings = {
-			apiProvider: "roo",
+			apiProvider: "njust-ai",
 		}
 		expect(checkExistKey(config)).toBe(true)
 	})

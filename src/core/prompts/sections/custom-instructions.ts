@@ -1,4 +1,4 @@
-import { isLanguage } from "@njust-ai-cj/types"
+import { isLanguage } from "@njust-ai/types"
 
 import type { SystemPromptSettings } from "../types"
 

@@ -3,7 +3,7 @@
 	"extends": ["//"],
 	"tasks": {
 		"bundle:nightly": {
-			"dependsOn": ["^build", "@njust-ai-cj/vscode-webview#build:nightly"],
+			"dependsOn": ["^build", "@njust-ai/vscode-webview#build:nightly"],
 			"outputs": ["build/**"]
 		},
 		"vsix:nightly": {

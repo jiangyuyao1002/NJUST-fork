@@ -61,7 +61,7 @@ vi.mock("../../../../integrations/terminal/Terminal", () => ({
 	},
 }))
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		captureEvent: vi.fn(),

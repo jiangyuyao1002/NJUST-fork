@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { logger } from "../shared/logger.js"
 
 type SecurityMetricName =

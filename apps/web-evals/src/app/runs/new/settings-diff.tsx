@@ -1,14 +1,14 @@
-import { type Keys, type NJUST_AI_CJSettings, GLOBAL_SETTINGS_KEYS, PROVIDER_SETTINGS_KEYS } from "@njust-ai-cj/types"
+import { type Keys, type NJUST_AISettings, GLOBAL_SETTINGS_KEYS, PROVIDER_SETTINGS_KEYS } from "@njust-ai/types"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui"
 
-export const NJUST_AI_CJ_SETTINGS_KEYS = [
+export const NJUST_AI_SETTINGS_KEYS = [
 	...new Set([...GLOBAL_SETTINGS_KEYS, ...PROVIDER_SETTINGS_KEYS]),
-] as Keys<NJUST_AI_CJSettings>[]
+] as Keys<NJUST_AISettings>[]
 
 type SettingsDiffProps = {
-	defaultSettings: NJUST_AI_CJSettings
-	customSettings: NJUST_AI_CJSettings
+	defaultSettings: NJUST_AISettings
+	customSettings: NJUST_AISettings
 }
 
 export function SettingsDiff({
@@ -29,7 +29,7 @@ export function SettingsDiff({
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{NJUST_AI_CJ_SETTINGS_KEYS.map((key) => {
+					{NJUST_AI_SETTINGS_KEYS.map((key) => {
 						const defaultValue = JSON.stringify(defaults[key as keyof typeof defaults], null, 2)
 						const customValue = JSON.stringify(custom[key as keyof typeof custom], null, 2)
 

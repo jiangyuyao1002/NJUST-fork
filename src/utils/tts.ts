@@ -1,7 +1,7 @@
 import { logger } from "../shared/logger"
 import { getErrorMessage } from "../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 interface Say {
 	speak: (text: string, voice?: string, speed?: number, callback?: (err?: string) => void) => void

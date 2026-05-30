@@ -1,4 +1,4 @@
-import type { McpServer } from "@njust-ai-cj/types"
+import type { McpServer } from "@njust-ai/types"
 
 /**
  * MCP hub → UI status updates. Implemented by ClineProvider (or tests).

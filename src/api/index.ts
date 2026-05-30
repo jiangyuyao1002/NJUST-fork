@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import { type ProviderSettings, type ModelInfo } from "@njust-ai-cj/types"
+import { type ProviderSettings, type ModelInfo } from "@njust-ai/types"
 
 import { ApiStream } from "./transform/stream"
 import { ModelFallbackManager, type FallbackConfig } from "../core/task/ModelFallback"

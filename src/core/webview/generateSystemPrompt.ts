@@ -8,8 +8,8 @@ import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-
 import { Package } from "../../shared/package"
 
 import { logger } from "../../shared/logger"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 export interface ISystemPromptHost {
 	getState(): Promise<{

@@ -1,1 +1,1 @@
-export * from "@njust-ai-cj/core/auto-approval"
+export * from "@njust-ai/core/auto-approval"

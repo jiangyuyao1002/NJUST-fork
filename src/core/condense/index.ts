@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk"
 import crypto from "crypto"
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 import { t } from "../../i18n"
 import { ApiHandler, ApiHandlerCreateMessageMetadata } from "../../api"

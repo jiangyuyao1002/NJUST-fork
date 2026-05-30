@@ -10,7 +10,7 @@ import {
 import * as ProgressPrimitive from "@radix-ui/react-progress"
 import { AlertTriangle } from "lucide-react"
 
-import { type IndexingStatus, type EmbedderProvider, CODEBASE_INDEX_DEFAULTS } from "@njust-ai-cj/types"
+import { type IndexingStatus, type EmbedderProvider, CODEBASE_INDEX_DEFAULTS } from "@njust-ai/types"
 
 import { vscode } from "@src/utils/vscode"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
@@ -591,7 +591,7 @@ export const CodeIndexPopover: React.FC<CodeIndexPopoverProps> = ({
 		},
 	)
 
-	const portalContainer = useRooPortal("roo-portal")
+	const portalContainer = useRooPortal("njust-ai-portal")
 
 	return (
 		<>

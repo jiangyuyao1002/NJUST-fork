@@ -8,12 +8,12 @@ import * as path from "path"
 import * as vscode from "vscode"
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import type { GlobalState, ProviderSettings, ModelInfo } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { GlobalState, ProviderSettings, ModelInfo } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Task } from "../Task"
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		hasInstance: vi.fn().mockReturnValue(false),

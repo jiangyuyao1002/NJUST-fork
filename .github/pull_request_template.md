@@ -1,5 +1,5 @@
 <!--
-Thank you for contributing to NJUST_AI_CJ!
+Thank you for contributing to NJUST_AI!
 
 Before submitting your PR, please ensure:
 - It's linked to an approved GitHub Issue.
@@ -12,10 +12,10 @@ Before submitting your PR, please ensure:
 
 Closes: # <!-- Replace with the issue number, e.g., Closes: #123 -->
 
-### NJUST_AI_CJ Task Context (Optional)
+### NJUST_AI Task Context (Optional)
 
 <!--
-If you used NJUST_AI_CJ to help create this PR, you can share public task links here.
+If you used NJUST_AI to help create this PR, you can share public task links here.
 This helps reviewers understand your development process and provides additional context.
 Example: (task link)
 -->

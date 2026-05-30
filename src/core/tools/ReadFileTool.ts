@@ -13,8 +13,8 @@ import * as fs from "fs/promises"
 import { isBinaryFile } from "isbinaryfile"
 import { z } from "zod"
 
-import type { ReadFileParams, ReadFileMode, ReadFileToolParams, FileEntry, LineRange } from "@njust-ai-cj/types"
-import { isLegacyReadFileParams, type ClineSayTool } from "@njust-ai-cj/types"
+import type { ReadFileParams, ReadFileMode, ReadFileToolParams, FileEntry, LineRange } from "@njust-ai/types"
+import { isLegacyReadFileParams, type ClineSayTool } from "@njust-ai/types"
 
 import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { Task } from "../task/Task"

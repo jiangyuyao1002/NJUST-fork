@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import { NJUST_AI_CJEventName, TodoItem } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, TodoItem } from "@njust-ai/types"
 
 import { AttemptCompletionToolUse } from "../../../shared/tools"
 
@@ -16,7 +16,7 @@ vi.mock("../../prompts/responses", () => ({
 const { mockCaptureTaskCompleted } = vi.hoisted(() => ({
 	mockCaptureTaskCompleted: vi.fn(),
 }))
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {
@@ -520,7 +520,7 @@ describe("attemptCompletionTool", () => {
 				expect(mockHandleError).not.toHaveBeenCalled()
 				expect(mockCaptureTaskCompleted).toHaveBeenCalledWith("task_1")
 				expect(mockTask.emit).toHaveBeenCalledWith(
-					NJUST_AI_CJEventName.TaskCompleted,
+					NJUST_AIEventName.TaskCompleted,
 					"task_1",
 					expect.anything(),
 					expect.anything(),
@@ -556,7 +556,7 @@ describe("attemptCompletionTool", () => {
 				expect(mockHandleError).not.toHaveBeenCalled()
 				expect(mockCaptureTaskCompleted).not.toHaveBeenCalled()
 				expect(mockTask.emit).not.toHaveBeenCalledWith(
-					NJUST_AI_CJEventName.TaskCompleted,
+					NJUST_AIEventName.TaskCompleted,
 					expect.anything(),
 					expect.anything(),
 					expect.anything(),

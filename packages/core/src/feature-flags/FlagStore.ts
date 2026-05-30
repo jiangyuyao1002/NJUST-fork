@@ -1,10 +1,10 @@
-import type { UnsafeAny } from "@njust-ai-cj/types"
+import type { UnsafeAny } from "@njust-ai/types"
 /**
- * FlagStore â€?Lightweight feature flag evaluation.
+ * FlagStore ï¿½?Lightweight feature flag evaluation.
  *
  * Supports three tiers (highest priority wins):
  *   1. Kill switch (force-on / force-off via settings.json)
- *   2. Percentage-based gradual rollout (0â€?00)
+ *   2. Percentage-based gradual rollout (0ï¿½?00)
  *   3. Default value (hard-coded fallback)
  *
  * Usage:
@@ -15,7 +15,7 @@ import type { UnsafeAny } from "@njust-ai-cj/types"
 export interface FlagDefinition {
 	defaultValue: boolean
 	description?: string
-	rolloutPercent?: number // 0â€?00
+	rolloutPercent?: number // 0ï¿½?00
 }
 
 export interface FlagContext {
@@ -79,7 +79,7 @@ export class FlagStore {
 
 	/**
 	 * Deterministic hash of flag name + user ID for consistent rollout assignment.
-	 * Returns 0.0â€?.0.
+	 * Returns 0.0ï¿½?.0.
 	 */
 	private hashFlag(flagName: string): number {
 		const seed = this.context.userId ?? flagName
@@ -91,7 +91,7 @@ export class FlagStore {
 	}
 
 	private loadLocalOverride(flagName: string): boolean | undefined {
-		// Intentionally synchronous â€?called frequently, must be fast.
+		// Intentionally synchronous ï¿½?called frequently, must be fast.
 		// Checks environment variable: FLAG_<NAME> = "1" | "0" | "true" | "false"
 		const envKey = `FLAG_${flagName.replace(/([A-Z])/g, "_$1").toUpperCase()}`
 		const envVal = typeof process !== "undefined" ? process.env?.[envKey] : undefined

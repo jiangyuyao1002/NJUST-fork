@@ -1,4 +1,4 @@
-import type { McpServerUse, McpServer, McpTool } from "@njust-ai-cj/types"
+import type { McpServerUse, McpServer, McpTool } from "@njust-ai/types"
 
 export function isMcpToolAlwaysAllowed(mcpServerUse: McpServerUse, mcpServers: McpServer[] | undefined): boolean {
 	if (mcpServerUse.type === "use_mcp_tool" && mcpServerUse.toolName) {

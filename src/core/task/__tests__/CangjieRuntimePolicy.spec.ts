@@ -54,7 +54,7 @@ describe("CangjieRuntimePolicy", () => {
 	let tempDir: string
 
 	beforeEach(async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "roo-cangjie-policy-"))
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "njust-ai-cangjie-policy-"))
 	})
 
 	afterEach(async () => {

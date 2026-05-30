@@ -1,6 +1,6 @@
 import type * as vscode from "vscode"
 
-import type { ExtensionMessage, ExtensionState } from "@njust-ai-cj/types"
+import type { ExtensionMessage, ExtensionState } from "@njust-ai/types"
 
 import { logger } from "../../shared/logger"
 

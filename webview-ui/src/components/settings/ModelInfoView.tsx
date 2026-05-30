@@ -1,6 +1,6 @@
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import { formatPrice } from "@src/utils/formatPrice"
 import { cn } from "@src/lib/utils"

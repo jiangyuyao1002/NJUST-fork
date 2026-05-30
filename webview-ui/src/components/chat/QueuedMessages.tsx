@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { QueuedMessage } from "@njust-ai-cj/types"
+import { QueuedMessage } from "@njust-ai/types"
 
 import { Button } from "@src/components/ui"
 

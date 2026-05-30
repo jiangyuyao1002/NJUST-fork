@@ -7,7 +7,7 @@
  * Not the same as `core/webview/TaskCenter.ts` (extracted stack module draft, not wired to `TaskStackManager` yet).
  */
 
-import type { TaskLike } from "@njust-ai-cj/types"
+import type { TaskLike } from "@njust-ai/types"
 
 // ── Stack types ──────────────────────────────────────────────────────
 

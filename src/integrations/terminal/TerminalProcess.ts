@@ -7,8 +7,8 @@ import type { ExitCodeDetails } from "./types"
 import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { Terminal } from "./Terminal"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export class TerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<Terminal>
@@ -113,7 +113,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 
 			// Only add the PowerShell counter workaround if enabled
 			if (Terminal.getPowershellCounter()) {
-				commandToExecute += ` ; "(Roo/PS Workaround: ${this.terminal.cmdCounter++})" > $null`
+				commandToExecute += ` ; "(Njust-AI/PS Workaround: ${this.terminal.cmdCounter++})" > $null`
 			}
 
 			// Only add the sleep command if the command delay is greater than 0

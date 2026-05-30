@@ -1,8 +1,8 @@
 import { HTMLAttributes } from "react"
 
-import type { Experiments, ImageGenerationProvider } from "@njust-ai-cj/types"
+import type { Experiments, ImageGenerationProvider } from "@njust-ai/types"
 
-import { EXPERIMENT_IDS, experimentConfigsMap } from "@roo/experiments"
+import { EXPERIMENT_IDS, experimentConfigsMap } from "@shared/experiments"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { cn } from "@src/lib/utils"

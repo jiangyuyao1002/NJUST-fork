@@ -1,6 +1,6 @@
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 
-import type { McpTool } from "@njust-ai-cj/types"
+import type { McpTool } from "@njust-ai/types"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { vscode } from "@src/utils/vscode"

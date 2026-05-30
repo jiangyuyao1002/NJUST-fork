@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 export type QwenCodeModelId = "qwen3.7-max" | "qwen3-coder-plus" | "qwen3-coder-flash"
 

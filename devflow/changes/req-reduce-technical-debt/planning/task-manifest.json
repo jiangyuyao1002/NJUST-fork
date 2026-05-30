@@ -164,7 +164,7 @@
     "expectedDelta": [
       "Fix async constructor in ProviderSettingsManager",
       "Fix silent error swallowing in ProviderSettingsManager",
-      "Improve type safety in CLI UI and web-roo-code",
+      "Improve type safety in CLI UI and web-Njust-AI",
       "Complete incomplete implementations in ripgrep and cangjie-lsp",
       "Resolve architecture concerns in TerminalRegistry and importExport",
       "Address TODO comments in priority order"
@@ -396,8 +396,8 @@
       },
       "dependsOn": ["T008"],
       "parallel": false,
-      "touches": ["apps/web-roo-code/src/lib/stats.ts"],
-      "files": ["apps/web-roo-code/src/lib/stats.ts"],
+      "touches": ["apps/web-Njust-AI/src/lib/stats.ts"],
+      "files": ["apps/web-Njust-AI/src/lib/stats.ts"],
       "verification": ["npx tsc --noEmit"],
       "evidence": ["No more any types without explicit disable"],
       "context": {

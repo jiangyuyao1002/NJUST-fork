@@ -5,7 +5,7 @@ import NodeCache from "node-cache"
 import sanitize from "sanitize-filename"
 import { z } from "zod"
 
-import { modelInfoSchema, type ModelRecord } from "@njust-ai-cj/types"
+import { modelInfoSchema, type ModelRecord } from "@njust-ai/types"
 
 import { ContextProxy } from "../../../core/config/ContextProxy"
 import { RouterName } from "../../../shared/api"

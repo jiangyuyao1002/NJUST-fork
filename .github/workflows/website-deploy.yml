@@ -1,15 +1,15 @@
-name: Deploy njust-ai-cj.local
+name: Deploy njust-ai.local
 
 on:
     push:
         branches:
             - main
         paths:
-            - 'apps/web-roo-code/**'
+            - 'apps/web-Njust-AI/**'
     workflow_dispatch:
 
 concurrency:
-    group: deploy-roocode-com
+    group: deploy-NjustAi-com
     cancel-in-progress: true
 
 env:
@@ -42,13 +42,13 @@ jobs:
               uses: ./.github/actions/setup-node-pnpm
             - name: Run lint
               run: pnpm lint
-              working-directory: apps/web-roo-code
+              working-directory: apps/web-Njust-AI
             - name: Run type check
               run: pnpm check-types
-              working-directory: apps/web-roo-code
+              working-directory: apps/web-Njust-AI
             - name: Run build
               run: pnpm build
-              working-directory: apps/web-roo-code
+              working-directory: apps/web-Njust-AI
             - name: Install Vercel CLI
               run: npm install --global vercel@latest
             - name: Pull Vercel Environment Information

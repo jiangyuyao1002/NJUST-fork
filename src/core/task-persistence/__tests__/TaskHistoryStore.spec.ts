@@ -1,4 +1,4 @@
-// pnpm --filter njust-ai-cj test core/task-persistence/__tests__/TaskHistoryStore.spec.ts
+// pnpm --filter njust-ai test core/task-persistence/__tests__/TaskHistoryStore.spec.ts
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
@@ -6,7 +6,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import * as os from "os"
 
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 
 import { TaskHistoryStore } from "../TaskHistoryStore"
 import { GlobalFileNames } from "../../../shared/globalFileNames"

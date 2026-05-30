@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import { DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
+import { DEFAULT_WRITE_DELAY_MS } from "@njust-ai/types"
 
 import { DiffViewProvider, DIFF_VIEW_URI_SCHEME, DIFF_VIEW_LABEL_CHANGES } from "../DiffViewProvider"
 import * as vscode from "vscode"

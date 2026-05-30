@@ -9,7 +9,7 @@ import fs from "fs/promises"
 import type { Anthropic } from "@anthropic-ai/sdk"
 import type * as vscode from "vscode"
 
-import type { HistoryItem, ExtensionMessage } from "@njust-ai-cj/types"
+import type { HistoryItem, ExtensionMessage } from "@njust-ai/types"
 
 import type { Task } from "../task/Task"
 import type { TaskHistoryStore } from "../task-persistence"
@@ -23,8 +23,8 @@ import { pruneStaleRegistrations, NO_TASK_KEY } from "../../services/cangjie-lsp
 import { aggregateTaskCostsRecursive, type AggregatedCosts } from "./aggregateTaskCosts"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 export interface TaskHistoryHost {
 	readonly context: vscode.ExtensionContext

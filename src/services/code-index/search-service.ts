@@ -5,8 +5,8 @@ import { IVectorStore } from "./interfaces/vector-store"
 import { CodeIndexConfigManager } from "./config-manager"
 import { CodeIndexStateManager } from "./state-manager"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Service responsible for searching the code index.

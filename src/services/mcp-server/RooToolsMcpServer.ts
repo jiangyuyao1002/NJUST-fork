@@ -73,7 +73,7 @@ export class RooToolsMcpServer {
 
 	private createMcpServer(): McpServer {
 		const server = new McpServer(
-			{ name: "roo-tools", version: "1.0.0" },
+			{ name: "njust-ai-tools", version: "1.0.0" },
 			{ capabilities: { tools: {} } },
 		)
 

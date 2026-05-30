@@ -3,7 +3,7 @@ import * as os from "os"
 import * as fs from "fs/promises"
 import * as vscode from "vscode"
 
-import type { WebviewMessage, ProviderSettings } from "@njust-ai-cj/types"
+import type { WebviewMessage, ProviderSettings } from "@njust-ai/types"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../../utils/export"
 import { openFile } from "../../../integrations/misc/open-file"
 import { openImage, saveImage } from "../../../integrations/misc/image-handler"
@@ -491,7 +491,7 @@ async function handleOpenMarkdownPreview(context: MessageHandlerContext, message
 		try {
 			const tmpDir = os.tmpdir()
 			const timestamp = Date.now()
-			const tempFileName = `roo-preview-${timestamp}.md`
+			const tempFileName = `njust-ai-preview-${timestamp}.md`
 			const tempFilePath = path.join(tmpDir, tempFileName)
 
 			await fs.writeFile(tempFilePath, message.text, "utf8")

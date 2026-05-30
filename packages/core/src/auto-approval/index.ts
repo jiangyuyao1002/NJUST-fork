@@ -1,4 +1,4 @@
-import type { UnsafeAny } from "@njust-ai-cj/types"
+import type { UnsafeAny } from "@njust-ai/types"
 import {
 	type ClineAsk,
 	type ClineSayTool,
@@ -6,7 +6,7 @@ import {
 	type FollowUpData,
 	type ExtensionState,
 	isNonBlockingAsk,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { ClineAskResponse } from "../shared/WebviewMessage.js"
 import { logger } from "../shared/logger.js"

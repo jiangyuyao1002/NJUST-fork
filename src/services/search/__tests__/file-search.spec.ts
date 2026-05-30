@@ -5,9 +5,9 @@ import * as vscode from "vscode"
 vi.mock("../../../shared/package", () => ({
 	Package: {
 		name: "njust-ai",
-		publisher: "RooVeterinaryInc",
+		publisher: "JunjieChen-YuyaoJiang",
 		version: "1.0.0",
-		outputChannel: "NJUST_AI_CJ",
+		outputChannel: "NJUST_AI",
 	},
 }))
 

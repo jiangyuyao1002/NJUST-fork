@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 
 import { Task } from "../Task"
 import { TaskEventBus } from "../../events/TaskEventBus"
@@ -64,7 +64,7 @@ describe("Task Node isolation", () => {
 		}
 
 		const task = new Task({
-			host: createHost("D:/tmp/roo-node-isolation"),
+			host: createHost("D:/tmp/njust-ai-node-isolation"),
 			apiConfiguration,
 			eventBus,
 			startTask: false,

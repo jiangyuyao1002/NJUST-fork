@@ -8,7 +8,7 @@ vi.mock("../../tools/validateToolUse", () => ({
 	validateToolUse: vi.fn(),
 	isValidToolName: vi.fn(() => false),
 }))
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {
@@ -54,7 +54,7 @@ function makeMockTask(overrides: Record<string, unknown> = {}) {
 	return task
 }
 
-describe("presentAssistantMessage â€?dispatch loop", () => {
+describe("presentAssistantMessage ï¿½?dispatch loop", () => {
 	it("processes multiple consecutive text blocks in a single call without recursion", async () => {
 		const task = makeMockTask({
 			assistantMessageContent: [
@@ -83,7 +83,7 @@ describe("presentAssistantMessage â€?dispatch loop", () => {
 
 		await presentAssistantMessage(task)
 
-		// First block processed, second is partial â†?loop stops
+		// First block processed, second is partial ï¿½?loop stops
 		expect(task.currentStreamingContentIndex).toBe(1)
 		expect(task.userMessageContentReady).toBe(false)
 		expect(task.presentAssistantMessageLocked).toBe(false)

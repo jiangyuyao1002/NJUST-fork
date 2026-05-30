@@ -7,7 +7,7 @@ import { OpenAICompatibleEmbedder } from "../openai-compatible"
 vi.mock("openai")
 
 // Mock TelemetryService
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {

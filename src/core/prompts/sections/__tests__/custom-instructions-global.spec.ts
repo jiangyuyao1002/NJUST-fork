@@ -43,8 +43,8 @@ vi.mock("fs/promises", () => ({
 	},
 }))
 
-// Mock the roo-config service
-vi.mock("../../../../services/roo-config", () => ({
+// Mock the njust-ai-config service
+vi.mock("../../../../services/njust-ai-config", () => ({
 	getRooDirectoriesForCwd: mockGetRooDirectoriesForCwd,
 	getAllRooDirectoriesForCwd: mockGetAllRooDirectoriesForCwd,
 	getAgentsDirectoriesForCwd: mockGetAgentsDirectoriesForCwd,

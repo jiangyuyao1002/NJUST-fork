@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 /**
  * Apply tool preferences for models accessed through dynamic routers (OpenRouter, Requesty).

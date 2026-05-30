@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react"
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 import type { DisplayHistoryItem, SubtaskTreeNode, TaskGroup, GroupedTasksResult } from "./types"
 import { type HistorySortOption, compareHistoryTasksForSort } from "./historyTaskSort"
 

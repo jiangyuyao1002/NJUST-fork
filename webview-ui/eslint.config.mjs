@@ -1,4 +1,4 @@
-import { reactStrictConfig } from "@njust-ai-cj/config-eslint/react-strict"
+import { reactStrictConfig } from "@njust-ai/config-eslint/react-strict"
 
 /** @type {import("eslint").Linter.Config} */
 export default [

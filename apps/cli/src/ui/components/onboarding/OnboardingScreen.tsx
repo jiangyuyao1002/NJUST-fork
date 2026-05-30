@@ -16,7 +16,7 @@ export function OnboardingScreen({ onSelect }: OnboardingScreenProps) {
 			<Text dimColor>Welcome! How would you like to connect to an LLM provider?</Text>
 			<Select
 				options={[
-					{ label: "Connect to NJUST_AI_CJ Cloud", value: OnboardingProviderChoice.Roo },
+					{ label: "Connect to NJUST_AI Cloud", value: OnboardingProviderChoice.NjustAI },
 					{ label: "Bring your own API key", value: OnboardingProviderChoice.Byok },
 				]}
 				onChange={(value: string) => {

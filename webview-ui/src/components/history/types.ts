@@ -1,4 +1,4 @@
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 
 /**
  * Extended HistoryItem with display-related fields for search highlighting and subtask indication

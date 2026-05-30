@@ -3,8 +3,8 @@ import { McpHub } from "./McpHub"
 import type { IMcpHubClient } from "./interfaces/IMcpHubClient"
 import type { IMcpHubService } from "./interfaces/IMcpHubService"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Singleton manager for MCP server instances.

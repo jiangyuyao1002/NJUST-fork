@@ -6,7 +6,7 @@ import {
 	type RooCliCommandName,
 	type RooCliInputCommand,
 	type RooCliStartCommand,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { isRecord } from "@/lib/utils/guards.js"
 import { isValidSessionId } from "@/lib/utils/session-id.js"

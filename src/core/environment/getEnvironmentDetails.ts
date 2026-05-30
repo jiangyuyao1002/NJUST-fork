@@ -5,7 +5,7 @@ import * as vscode from "vscode"
 import pWaitFor from "p-wait-for"
 import delay from "delay"
 
-import { type ExperimentId, DEFAULT_MAX_OPEN_TABS_CONTEXT } from "@njust-ai-cj/types"
+import { type ExperimentId, DEFAULT_MAX_OPEN_TABS_CONTEXT } from "@njust-ai/types"
 
 import { defaultModeSlug } from "../../shared/modes"
 import { getFullModeDetails } from "../prompts/getFullModeDetails"

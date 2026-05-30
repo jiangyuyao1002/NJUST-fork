@@ -1,7 +1,7 @@
 // npx vitest run __tests__/nested-delegation-resume.spec.ts
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 
 // Mock safe-stable-stringify to avoid runtime error
 vi.mock("safe-stable-stringify", () => ({
@@ -9,7 +9,7 @@ vi.mock("safe-stable-stringify", () => ({
 }))
 
 // Mock TelemetryService
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {
@@ -62,12 +62,12 @@ import type { Task } from "../core/task/Task"
 import { readTaskMessages } from "../core/task-persistence/taskMessages"
 import { readApiMessages } from "../core/task-persistence"
 
-describe("Nested delegation resume (A â†?B â†?C)", () => {
+describe("Nested delegation resume (A ï¿½?B ï¿½?C)", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks()
 	})
 
-	it("C completes â†?reopens B; then B completes â†?reopens A; emits correct events; no resume_task asks", async () => {
+	it("C completes ï¿½?reopens B; then B completes ï¿½?reopens A; emits correct events; no resume_task asks", async () => {
 		// Track which task is "current" to satisfy provider.reopenParentFromDelegation() child-close logic
 		let currentActiveId: string | undefined = "C"
 
@@ -225,8 +225,8 @@ describe("Nested delegation resume (A â†?B â†?C)", () => {
 
 		// Events emitted: C -> B hop
 		const eventNamesAfterC = emitSpy.mock.calls.map((c: any[]) => c[0])
-		expect(eventNamesAfterC).toContain(NJUST_AI_CJEventName.TaskDelegationCompleted)
-		expect(eventNamesAfterC).toContain(NJUST_AI_CJEventName.TaskDelegationResumed)
+		expect(eventNamesAfterC).toContain(NJUST_AIEventName.TaskDelegationCompleted)
+		expect(eventNamesAfterC).toContain(NJUST_AIEventName.TaskDelegationResumed)
 
 		// Step 2: B completes -> should reopen A automatically (parent reference missing, must use parentTaskId path)
 		const clineB = {
@@ -278,9 +278,9 @@ describe("Nested delegation resume (A â†?B â†?C)", () => {
 
 		// Provider emitted TaskDelegationCompleted/Resumed twice across both hops
 		const completedEvents = emitSpy.mock.calls.filter(
-			(c: any[]) => c[0] === NJUST_AI_CJEventName.TaskDelegationCompleted,
+			(c: any[]) => c[0] === NJUST_AIEventName.TaskDelegationCompleted,
 		)
-		const resumedEvents = emitSpy.mock.calls.filter((c: any[]) => c[0] === NJUST_AI_CJEventName.TaskDelegationResumed)
+		const resumedEvents = emitSpy.mock.calls.filter((c: any[]) => c[0] === NJUST_AIEventName.TaskDelegationResumed)
 		expect(completedEvents.length).toBeGreaterThanOrEqual(2)
 		expect(resumedEvents.length).toBeGreaterThanOrEqual(2)
 

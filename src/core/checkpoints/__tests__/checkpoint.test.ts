@@ -20,7 +20,7 @@ vi.mock("vscode", () => ({
 }))
 
 // Mock other dependencies
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {

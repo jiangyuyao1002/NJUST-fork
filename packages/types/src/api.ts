@@ -1,14 +1,14 @@
 import type { EventEmitter } from "events"
 import type { Socket } from "net"
 
-import type { NJUST_AI_CJEvents } from "./events.js"
-import type { NJUST_AI_CJSettings } from "./global-settings.js"
+import type { NJUST_AIEvents } from "./events.js"
+import type { NJUST_AISettings } from "./global-settings.js"
 import type { ProviderSettingsEntry, ProviderSettings } from "./provider-settings.js"
 import type { IpcMessage, IpcServerEvents } from "./ipc.js"
 
-export type NJUST_AI_CJAPIEvents = NJUST_AI_CJEvents
+export type NJUST_AIAPIEvents = NJUST_AIEvents
 
-export interface NJUST_AI_CJAPI extends EventEmitter<NJUST_AI_CJAPIEvents> {
+export interface NJUST_AIAPI extends EventEmitter<NJUST_AIAPIEvents> {
 	/**
 	 * Starts a new task with an optional initial message and images.
 	 * @param task Optional initial task message.
@@ -21,7 +21,7 @@ export interface NJUST_AI_CJAPI extends EventEmitter<NJUST_AI_CJAPIEvents> {
 		images,
 		newTab,
 	}: {
-		configuration?: NJUST_AI_CJSettings
+		configuration?: NJUST_AISettings
 		text?: string
 		images?: string[]
 		newTab?: boolean
@@ -73,12 +73,12 @@ export interface NJUST_AI_CJAPI extends EventEmitter<NJUST_AI_CJAPIEvents> {
 	 * Returns the current configuration.
 	 * @returns The current configuration.
 	 */
-	getConfiguration(): NJUST_AI_CJSettings
+	getConfiguration(): NJUST_AISettings
 	/**
 	 * Sets the configuration for the current task.
 	 * @param values An object containing key-value pairs to set.
 	 */
-	setConfiguration(values: NJUST_AI_CJSettings): Promise<void>
+	setConfiguration(values: NJUST_AISettings): Promise<void>
 	/**
 	 * Returns a list of all configured profile names
 	 * @returns Array of profile names
@@ -135,7 +135,7 @@ export interface NJUST_AI_CJAPI extends EventEmitter<NJUST_AI_CJAPIEvents> {
 	setActiveProfile(name: string): Promise<string | undefined>
 }
 
-export interface NJUST_AI_CJIpcServer extends EventEmitter<IpcServerEvents> {
+export interface NJUST_AIIpcServer extends EventEmitter<IpcServerEvents> {
 	listen(): void
 	broadcast(message: IpcMessage): void
 	send(client: string | Socket, message: IpcMessage): void

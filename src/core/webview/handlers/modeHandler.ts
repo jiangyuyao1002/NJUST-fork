@@ -3,10 +3,10 @@ import * as os from "os"
 import * as fs from "fs/promises"
 import * as vscode from "vscode"
 
-import { NJUST_AI_CONFIG_DIR, type Command, type WebviewMessage } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR, type Command, type WebviewMessage } from "@njust-ai/types"
 import { type Mode, defaultModeSlug } from "../../../shared/modes"
-import { customToolRegistry } from "@njust-ai-cj/core"
-import { getRooDirectoriesForCwd } from "../../../services/roo-config/index.js"
+import { customToolRegistry } from "@njust-ai/core"
+import { getRooDirectoriesForCwd } from "../../../services/njust-ai-config/index.js"
 import { openFile } from "../../../integrations/misc/open-file"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { getWorkspacePath } from "../../../utils/path"
@@ -512,7 +512,7 @@ async function handleOpenDebugHistory(context: MessageHandlerContext, message: W
 		const tmpDir = os.tmpdir()
 		const timestamp = Date.now()
 		const suffix = message.type === "openDebugApiHistory" ? "api" : "ui"
-		const tempFileName = `roo-debug-${suffix}-${currentTask.taskId.slice(0, 8)}-${timestamp}.json`
+		const tempFileName = `njust-ai-debug-${suffix}-${currentTask.taskId.slice(0, 8)}-${timestamp}.json`
 		const tempFilePath = path.join(tmpDir, tempFileName)
 
 		await fs.writeFile(tempFilePath, prettifiedContent, "utf8")

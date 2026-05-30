@@ -80,11 +80,11 @@ describe("ProfileStorageService", () => {
 				"cloudAgent.activeProfileId": "user-test",
 			})
 			workspaceState = createMockMemento({
-				"cloudAgent.activeProfileId": "njust-ai-cj-standard",
+				"cloudAgent.activeProfileId": "njust-ai-standard",
 			})
 			service = new ProfileStorageService(globalState, workspaceState)
 			const active = service.getActiveProfile()
-			expect(active?.id).toBe("njust-ai-cj-standard")
+			expect(active?.id).toBe("njust-ai-standard")
 		})
 
 		it("falls back to globalState when workspaceState is not set", () => {

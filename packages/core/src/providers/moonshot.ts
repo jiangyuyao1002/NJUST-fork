@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://platform.moonshot.ai/
 // Pricing: https://platform.moonshot.ai/docs/pricing

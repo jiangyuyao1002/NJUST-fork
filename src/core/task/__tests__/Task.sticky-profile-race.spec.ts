@@ -4,11 +4,11 @@ import { describe, it, expect, vi } from "vitest"
 
 import * as _vscode from "vscode"
 
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 import { Task } from "../Task"
 import type { ITaskHost } from "../interfaces/ITaskHost"
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		hasInstance: vi.fn().mockReturnValue(true),

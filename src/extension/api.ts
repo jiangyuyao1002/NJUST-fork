@@ -7,20 +7,20 @@ import * as vscode from "vscode"
 import pWaitFor from "p-wait-for"
 
 import {
-	type NJUST_AI_CJAPI,
-	type NJUST_AI_CJSettings,
-	type NJUST_AI_CJEvents,
+	type NJUST_AIAPI,
+	type NJUST_AISettings,
+	type NJUST_AIEvents,
 	type ProviderSettings,
 	type ProviderSettingsEntry,
 	type TaskEvent,
 	type CreateTaskOptions,
-	NJUST_AI_CJEventName,
+	NJUST_AIEventName,
 	TaskCommandName,
 	isSecretStateKey,
 	IpcOrigin,
 	IpcMessageType,
-} from "@njust-ai-cj/types"
-import { IpcServer } from "@njust-ai-cj/ipc"
+} from "@njust-ai/types"
+import { IpcServer } from "@njust-ai/ipc"
 
 import { Package } from "../shared/package"
 import { logger } from "../shared/logger"
@@ -30,7 +30,7 @@ import { getModels } from "../api/providers/fetchers/modelCache"
 import { getErrorMessage } from "../shared/error-utils"
 import type { IProviderHost } from "./IProviderHost"
 
-export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJAPI {
+export class API extends EventEmitter<NJUST_AIEvents> implements NJUST_AIAPI {
 	private readonly outputChannel: vscode.OutputChannel
 	private readonly sidebarProvider: IProviderHost
 	private readonly context: vscode.ExtensionContext
@@ -56,7 +56,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				logger.info("API", args.map(String).join(" "))
 			}
 
-			this.logfile = path.join(os.tmpdir(), "roo-code-messages.log")
+			this.logfile = path.join(os.tmpdir(), "Njust-AI-messages.log")
 		} else {
 			this.log = () => {}
 		}
@@ -70,7 +70,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 			this.log(`[API] ipc server started: socketPath=${socketPath}, pid=${process.pid}, ppid=${process.ppid}`)
 
 			ipc.on(IpcMessageType.TaskCommand, async (clientId, command) => {
-				const sendResponse = (eventName: NJUST_AI_CJEventName, payload: UnsafeAny[]) => {
+				const sendResponse = (eventName: NJUST_AIEventName, payload: UnsafeAny[]) => {
 					ipc.send(clientId, {
 						type: IpcMessageType.TaskEvent,
 						origin: IpcOrigin.Server,
@@ -111,7 +111,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 						try {
 							const commands = await getCommands(this.sidebarProvider.cwd)
 
-							sendResponse(NJUST_AI_CJEventName.CommandsResponse, [
+							sendResponse(NJUST_AIEventName.CommandsResponse, [
 								commands.map((cmd) => ({
 									name: cmd.name,
 									source: cmd.source,
@@ -122,32 +122,32 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 							])
 						} catch (e) {
 							logger.warn("ExtensionAPI", `CommandsRequest failed: ${e}`)
-							sendResponse(NJUST_AI_CJEventName.CommandsResponse, [[]])
+							sendResponse(NJUST_AIEventName.CommandsResponse, [[]])
 						}
 
 						break
 					case TaskCommandName.GetModes:
 						try {
 							const modes = await this.sidebarProvider.getModes()
-							sendResponse(NJUST_AI_CJEventName.ModesResponse, [modes])
+							sendResponse(NJUST_AIEventName.ModesResponse, [modes])
 						} catch (e) {
 							logger.warn("ExtensionAPI", `ModesRequest failed: ${e}`)
-							sendResponse(NJUST_AI_CJEventName.ModesResponse, [[]])
+							sendResponse(NJUST_AIEventName.ModesResponse, [[]])
 						}
 
 						break
 					case TaskCommandName.GetModels:
 						try {
 							const models = await getModels({
-								provider: "roo" as const,
-								baseUrl: process.env.NJUST_AI_CJ_PROVIDER_URL ?? "",
+								provider: "njust-ai" as const,
+								baseUrl: process.env.NJUST_AI_PROVIDER_URL ?? "",
 								apiKey: undefined,
 							})
 
-							sendResponse(NJUST_AI_CJEventName.ModelsResponse, [models])
+							sendResponse(NJUST_AIEventName.ModelsResponse, [models])
 						} catch (e) {
 							logger.warn("ExtensionAPI", `ModelsRequest failed: ${e}`)
-							sendResponse(NJUST_AI_CJEventName.ModelsResponse, [{}])
+							sendResponse(NJUST_AIEventName.ModelsResponse, [{}])
 						}
 
 						break
@@ -165,11 +165,11 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 		}
 	}
 
-	public override emit<K extends keyof NJUST_AI_CJEvents>(
+	public override emit<K extends keyof NJUST_AIEvents>(
 		eventName: K,
-		...args: K extends keyof NJUST_AI_CJEvents ? NJUST_AI_CJEvents[K] : never
+		...args: K extends keyof NJUST_AIEvents ? NJUST_AIEvents[K] : never
 	) {
-		const data = { eventName: eventName as NJUST_AI_CJEventName, payload: args } as TaskEvent
+		const data = { eventName: eventName as NJUST_AIEventName, payload: args } as TaskEvent
 		this.ipc?.broadcast({ type: IpcMessageType.TaskEvent, origin: IpcOrigin.Server, data })
 		return super.emit(eventName, ...args)
 	}
@@ -180,7 +180,7 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 		images,
 		newTab,
 	}: {
-		configuration: NJUST_AI_CJSettings
+		configuration: NJUST_AISettings
 		text?: string
 		images?: string[]
 		newTab?: boolean
@@ -309,15 +309,15 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 	}
 
 	private registerListeners(provider: IProviderHost) {
-		provider.on(NJUST_AI_CJEventName.TaskCreated, (task) => {
-			task.on(NJUST_AI_CJEventName.TaskStarted, async () => {
-				this.emit(NJUST_AI_CJEventName.TaskStarted, task.taskId)
+		provider.on(NJUST_AIEventName.TaskCreated, (task) => {
+			task.on(NJUST_AIEventName.TaskStarted, async () => {
+				this.emit(NJUST_AIEventName.TaskStarted, task.taskId)
 				await this.fileLog(`[${new Date().toISOString()}] taskStarted -> ${task.taskId}\n`)
 			})
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			task.on(NJUST_AI_CJEventName.TaskCompleted, async (_: unknown, tokenUsage: any, toolUsage: any) => {
-				this.emit(NJUST_AI_CJEventName.TaskCompleted, task.taskId, tokenUsage, toolUsage, {
+			task.on(NJUST_AIEventName.TaskCompleted, async (_: unknown, tokenUsage: any, toolUsage: any) => {
+				this.emit(NJUST_AIEventName.TaskCompleted, task.taskId, tokenUsage, toolUsage, {
 					isSubtask: !!task.parentTaskId,
 				})
 
@@ -326,87 +326,87 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 				)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskAborted, () => {
-				this.emit(NJUST_AI_CJEventName.TaskAborted, task.taskId)
+			task.on(NJUST_AIEventName.TaskAborted, () => {
+				this.emit(NJUST_AIEventName.TaskAborted, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskFocused, () => {
-				this.emit(NJUST_AI_CJEventName.TaskFocused, task.taskId)
+			task.on(NJUST_AIEventName.TaskFocused, () => {
+				this.emit(NJUST_AIEventName.TaskFocused, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskUnfocused, () => {
-				this.emit(NJUST_AI_CJEventName.TaskUnfocused, task.taskId)
+			task.on(NJUST_AIEventName.TaskUnfocused, () => {
+				this.emit(NJUST_AIEventName.TaskUnfocused, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskActive, () => {
-				this.emit(NJUST_AI_CJEventName.TaskActive, task.taskId)
+			task.on(NJUST_AIEventName.TaskActive, () => {
+				this.emit(NJUST_AIEventName.TaskActive, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskInteractive, () => {
-				this.emit(NJUST_AI_CJEventName.TaskInteractive, task.taskId)
+			task.on(NJUST_AIEventName.TaskInteractive, () => {
+				this.emit(NJUST_AIEventName.TaskInteractive, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskResumable, () => {
-				this.emit(NJUST_AI_CJEventName.TaskResumable, task.taskId)
+			task.on(NJUST_AIEventName.TaskResumable, () => {
+				this.emit(NJUST_AIEventName.TaskResumable, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskIdle, () => {
-				this.emit(NJUST_AI_CJEventName.TaskIdle, task.taskId)
+			task.on(NJUST_AIEventName.TaskIdle, () => {
+				this.emit(NJUST_AIEventName.TaskIdle, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskPaused, () => {
-				this.emit(NJUST_AI_CJEventName.TaskPaused, task.taskId)
+			task.on(NJUST_AIEventName.TaskPaused, () => {
+				this.emit(NJUST_AIEventName.TaskPaused, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskUnpaused, () => {
-				this.emit(NJUST_AI_CJEventName.TaskUnpaused, task.taskId)
+			task.on(NJUST_AIEventName.TaskUnpaused, () => {
+				this.emit(NJUST_AIEventName.TaskUnpaused, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskSpawned, (childTaskId: UnsafeAny) => {
-				this.emit(NJUST_AI_CJEventName.TaskSpawned, task.taskId, childTaskId)
+			task.on(NJUST_AIEventName.TaskSpawned, (childTaskId: UnsafeAny) => {
+				this.emit(NJUST_AIEventName.TaskSpawned, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegated as UnsafeAny, (childTaskId: UnsafeAny) => {
-				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegated, task.taskId, childTaskId)
+			task.on(NJUST_AIEventName.TaskDelegated as UnsafeAny, (childTaskId: UnsafeAny) => {
+				;(this.emit as UnsafeAny)(NJUST_AIEventName.TaskDelegated, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegationCompleted as UnsafeAny, (childTaskId: UnsafeAny, summary: UnsafeAny) => {
-				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegationCompleted, task.taskId, childTaskId, summary)
+			task.on(NJUST_AIEventName.TaskDelegationCompleted as UnsafeAny, (childTaskId: UnsafeAny, summary: UnsafeAny) => {
+				;(this.emit as UnsafeAny)(NJUST_AIEventName.TaskDelegationCompleted, task.taskId, childTaskId, summary)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskDelegationResumed as UnsafeAny, (childTaskId: UnsafeAny) => {
-				;(this.emit as UnsafeAny)(NJUST_AI_CJEventName.TaskDelegationResumed, task.taskId, childTaskId)
+			task.on(NJUST_AIEventName.TaskDelegationResumed as UnsafeAny, (childTaskId: UnsafeAny) => {
+				;(this.emit as UnsafeAny)(NJUST_AIEventName.TaskDelegationResumed, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.Message, async (message: UnsafeAny) => {
-				this.emit(NJUST_AI_CJEventName.Message, { taskId: task.taskId, ...message })
+			task.on(NJUST_AIEventName.Message, async (message: UnsafeAny) => {
+				this.emit(NJUST_AIEventName.Message, { taskId: task.taskId, ...message })
 
 				if (message.message.partial !== true) {
 					await this.fileLog(`[${new Date().toISOString()}] ${JSON.stringify(message.message, null, 2)}\n`)
 				}
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskModeSwitched, (taskId: UnsafeAny, mode: UnsafeAny) => {
-				this.emit(NJUST_AI_CJEventName.TaskModeSwitched, taskId, mode)
+			task.on(NJUST_AIEventName.TaskModeSwitched, (taskId: UnsafeAny, mode: UnsafeAny) => {
+				this.emit(NJUST_AIEventName.TaskModeSwitched, taskId, mode)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskAskResponded, () => {
-				this.emit(NJUST_AI_CJEventName.TaskAskResponded, task.taskId)
+			task.on(NJUST_AIEventName.TaskAskResponded, () => {
+				this.emit(NJUST_AIEventName.TaskAskResponded, task.taskId)
 			})
 
-			task.on(NJUST_AI_CJEventName.QueuedMessagesUpdated, (taskId: UnsafeAny, messages: UnsafeAny) => {
-				this.emit(NJUST_AI_CJEventName.QueuedMessagesUpdated, taskId, messages)
+			task.on(NJUST_AIEventName.QueuedMessagesUpdated, (taskId: UnsafeAny, messages: UnsafeAny) => {
+				this.emit(NJUST_AIEventName.QueuedMessagesUpdated, taskId, messages)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskToolFailed, (taskId: UnsafeAny, tool: UnsafeAny, error: UnsafeAny) => {
-				this.emit(NJUST_AI_CJEventName.TaskToolFailed, taskId, tool, error)
+			task.on(NJUST_AIEventName.TaskToolFailed, (taskId: UnsafeAny, tool: UnsafeAny, error: UnsafeAny) => {
+				this.emit(NJUST_AIEventName.TaskToolFailed, taskId, tool, error)
 			})
 
-			task.on(NJUST_AI_CJEventName.TaskTokenUsageUpdated, (_: UnsafeAny, tokenUsage: UnsafeAny, toolUsage: UnsafeAny) => {
-				this.emit(NJUST_AI_CJEventName.TaskTokenUsageUpdated, task.taskId, tokenUsage, toolUsage)
+			task.on(NJUST_AIEventName.TaskTokenUsageUpdated, (_: UnsafeAny, tokenUsage: UnsafeAny, toolUsage: UnsafeAny) => {
+				this.emit(NJUST_AIEventName.TaskTokenUsageUpdated, task.taskId, tokenUsage, toolUsage)
 			})
 
-			this.emit(NJUST_AI_CJEventName.TaskCreated, task.taskId)
+			this.emit(NJUST_AIEventName.TaskCreated, task.taskId)
 		})
 	}
 
@@ -457,13 +457,13 @@ export class API extends EventEmitter<NJUST_AI_CJEvents> implements NJUST_AI_CJA
 
 	// Global Settings Management
 
-	public getConfiguration(): NJUST_AI_CJSettings {
+	public getConfiguration(): NJUST_AISettings {
 		return Object.fromEntries(
 			Object.entries(this.sidebarProvider.getValues()).filter(([key]) => !isSecretStateKey(key)),
 		)
 	}
 
-	public async setConfiguration(values: NJUST_AI_CJSettings) {
+	public async setConfiguration(values: NJUST_AISettings) {
 		await this.sidebarProvider.contextProxy.setValues(values)
 		await this.sidebarProvider.providerSettingsManager.saveConfig(values.currentApiConfigName || "default", values)
 		await this.sidebarProvider.postStateToWebview()

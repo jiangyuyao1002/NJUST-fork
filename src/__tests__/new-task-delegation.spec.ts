@@ -1,7 +1,7 @@
 // npx vitest run __tests__/new-task-delegation.spec.ts
 
 import { describe, it, expect, vi } from "vitest"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 import { Task } from "../core/task/Task"
 
 describe("Task.startSubtask() metadata-driven delegation", () => {
@@ -37,8 +37,8 @@ describe("Task.startSubtask() metadata-driven delegation", () => {
 		expect((parent as any).isPaused).not.toBe(true)
 		expect((parent as any).childTaskId).toBeUndefined()
 		const emittedEvents = (parent.emit as any).mock.calls.map((c: any[]) => c[0])
-		expect(emittedEvents).not.toContain(NJUST_AI_CJEventName.TaskPaused)
-		expect(emittedEvents).not.toContain(NJUST_AI_CJEventName.TaskUnpaused)
+		expect(emittedEvents).not.toContain(NJUST_AIEventName.TaskPaused)
+		expect(emittedEvents).not.toContain(NJUST_AIEventName.TaskUnpaused)
 
 		// Legacy path not used
 		expect(provider.createTask).not.toHaveBeenCalled()

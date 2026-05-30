@@ -12,9 +12,9 @@ import * as path from "path"
 import { promises as fs } from "fs"
 import type { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ClineAsk, ClineApiReqInfo, ClineMessage, ClineSay, ToolProgressStatus } from "@njust-ai-cj/types"
-import { NJUST_AI_CJEventName, MAX_MCP_TOOLS_THRESHOLD, TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { ClineAsk, ClineApiReqInfo, ClineMessage, ClineSay, ToolProgressStatus } from "@njust-ai/types"
+import { NJUST_AIEventName, MAX_MCP_TOOLS_THRESHOLD, TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { findLastIndex } from "../../shared/array"
 import { DEFAULT_MODE_SLUG } from "../../shared/mode-constants"
@@ -30,7 +30,7 @@ import { safeDispose } from "./TaskLifecycle"
 import { logger } from "../../shared/logger"
 import { isToolUseBlock } from "../assistant-message/types"
 import type { ITaskDiffViewProvider } from "./interfaces/ITaskDiffViewProvider"
-import { clineApiReqInfoSchema } from "@njust-ai-cj/types"
+import { clineApiReqInfoSchema } from "@njust-ai/types"
 
 // ── Host type ────────────────────────────────────────────────────────────
 // Structural contract: Task implements this shape at runtime.
@@ -424,7 +424,7 @@ export class TaskLifecycleHandler {
 
 		t.emitFinalTokenUsageUpdate()
 
-		t.emit(NJUST_AI_CJEventName.TaskAborted)
+		t.emit(NJUST_AIEventName.TaskAborted)
 
 		try {
 			await t.saveClineMessages()
@@ -480,7 +480,7 @@ export class TaskLifecycleHandler {
 			if (t.providerProfileChangeListener) {
 				const provider = t.hostRef.deref()
 				if (provider) {
-					provider.off(NJUST_AI_CJEventName.ProviderProfileChanged, t.providerProfileChangeListener)
+					provider.off(NJUST_AIEventName.ProviderProfileChanged, t.providerProfileChangeListener)
 				}
 				t.providerProfileChangeListener = undefined
 			}

@@ -1,8 +1,8 @@
 import * as path from "path"
 import * as vscode from "vscode"
 
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import { getErrorMessage } from "../shared/error-utils"
@@ -18,8 +18,8 @@ interface ToolDefinition {
 
 const TOOL_DEFINITIONS: ToolDefinition[] = [
 	{
-		name: "roo_readFile",
-		displayName: "Roo: Read File",
+		name: "njust_ai_readFile",
+		displayName: "Njust-AI: Read File",
 		description: "Read the contents of a file in the workspace. Returns the full text content of the specified file.",
 		inputSchema: {
 			type: "object",
@@ -31,11 +31,11 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 			},
 			required: ["path"],
 		},
-		tags: ["roo-agent", "file-operations"],
+		tags: ["njust-ai-agent", "file-operations"],
 	},
 	{
-		name: "roo_editFile",
-		displayName: "Roo: Edit File",
+		name: "njust_ai_editFile",
+		displayName: "Njust-AI: Edit File",
 		description:
 			"Edit a file by applying a search-and-replace patch. Specify the file path and a unified diff-style patch to apply.",
 		inputSchema: {
@@ -52,11 +52,11 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 			},
 			required: ["path", "diff"],
 		},
-		tags: ["roo-agent", "file-operations"],
+		tags: ["njust-ai-agent", "file-operations"],
 	},
 	{
-		name: "roo_executeCommand",
-		displayName: "Roo: Execute Command",
+		name: "njust_ai_executeCommand",
+		displayName: "Njust-AI: Execute Command",
 		description:
 			"Execute a shell command in the workspace terminal. Returns the command output. Use with caution as commands have side effects.",
 		inputSchema: {
@@ -69,11 +69,11 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 			},
 			required: ["command"],
 		},
-		tags: ["roo-agent", "terminal"],
+		tags: ["njust-ai-agent", "terminal"],
 	},
 	{
-		name: "roo_searchFiles",
-		displayName: "Roo: Search Files",
+		name: "njust_ai_searchFiles",
+		displayName: "Njust-AI: Search Files",
 		description:
 			"Search for files in the workspace using a regex pattern. Returns matching lines with file paths and line numbers.",
 		inputSchema: {
@@ -90,11 +90,11 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 			},
 			required: ["pattern"],
 		},
-		tags: ["roo-agent", "search"],
+		tags: ["njust-ai-agent", "search"],
 	},
 	{
-		name: "roo_listFiles",
-		displayName: "Roo: List Files",
+		name: "njust_ai_listFiles",
+		displayName: "Njust-AI: List Files",
 		description: "List files and directories in the specified path. Returns a tree-like listing of the directory contents.",
 		inputSchema: {
 			type: "object",
@@ -110,11 +110,11 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 			},
 			required: ["path"],
 		},
-		tags: ["roo-agent", "file-operations"],
+		tags: ["njust-ai-agent", "file-operations"],
 	},
 	{
-		name: "roo_codebaseSearch",
-		displayName: "Roo: Codebase Search",
+		name: "njust_ai_codebaseSearch",
+		displayName: "Njust-AI: Codebase Search",
 		description:
 			"Perform a semantic search across the codebase using natural language queries. Requires code indexing to be enabled.",
 		inputSchema: {
@@ -127,14 +127,14 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 			},
 			required: ["query"],
 		},
-		tags: ["roo-agent", "search"],
+		tags: ["njust-ai-agent", "search"],
 	},
 ]
 
 /**
- * Registers Roo's native tools as VSCode Language Model Tools.
+ * Registers Njust-AI's native tools as VSCode Language Model Tools.
  * This allows VSCode's built-in Agent Mode (e.g., Copilot) to invoke
- * Roo's file editing, terminal execution, and code search capabilities.
+ * Njust-AI's file editing, terminal execution, and code search capabilities.
  */
 export function registerLMTools(
 	context: vscode.ExtensionContext,
@@ -209,29 +209,29 @@ async function executeTool(
 	const cwd = workspaceFolders?.[0]?.uri.fsPath || ""
 
 	switch (toolName) {
-		case "roo_readFile": {
+		case "njust_ai_readFile": {
 			const filePath = resolveFilePath(cwd, input.path as string)
 			const uri = vscode.Uri.file(filePath)
 			const content = await vscode.workspace.fs.readFile(uri)
 			return new TextDecoder().decode(content)
 		}
 
-		case "roo_editFile": {
+		case "njust_ai_editFile": {
 			const filePath = resolveFilePath(cwd, input.path as string)
 			const diff = input.diff as string
 			const prompt = `Apply the following diff to the file ${filePath}:\n\n${diff}`
 			await provider.createTask(prompt)
-			return `Edit task created for ${filePath}. The Roo Agent is processing the change.`
+			return `Edit task created for ${filePath}. The Njust-AI Agent is processing the change.`
 		}
 
-		case "roo_executeCommand": {
+		case "njust_ai_executeCommand": {
 			const command = input.command as string
 			const prompt = `Execute the following command: ${command}`
 			await provider.createTask(prompt)
-			return `Command execution task created: ${command}. The Roo Agent is processing.`
+			return `Command execution task created: ${command}. The Njust-AI Agent is processing.`
 		}
 
-		case "roo_searchFiles": {
+		case "njust_ai_searchFiles": {
 			const pattern = input.pattern as string
 			const searchPath = (input.path as string) || ""
 			const fullPath = searchPath ? resolveFilePath(cwd, searchPath) : cwd
@@ -273,7 +273,7 @@ async function executeTool(
 				: `No matches found for pattern: ${pattern}`
 		}
 
-		case "roo_listFiles": {
+		case "njust_ai_listFiles": {
 			const listPath = resolveFilePath(cwd, (input.path as string) || ".")
 			const recursive = (input.recursive as boolean) || false
 			const pattern = recursive ? "**/*" : "*"
@@ -289,11 +289,11 @@ async function executeTool(
 				.join("\n") || "No files found"
 		}
 
-		case "roo_codebaseSearch": {
+		case "njust_ai_codebaseSearch": {
 			const query = input.query as string
 			const prompt = `Search the codebase for: ${query}`
 			await provider.createTask(prompt)
-			return `Codebase search task created for: ${query}. The Roo Agent is processing.`
+			return `Codebase search task created for: ${query}. The Njust-AI Agent is processing.`
 		}
 
 		default:

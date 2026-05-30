@@ -1,1 +1,1 @@
-export * from "@njust-ai-cj/core/browser"
+export * from "@njust-ai/core/browser"

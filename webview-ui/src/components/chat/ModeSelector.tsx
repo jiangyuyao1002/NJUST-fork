@@ -2,9 +2,9 @@ import React from "react"
 import { Fzf } from "fzf"
 import { Check, X } from "lucide-react"
 
-import { type ModeConfig, type CustomModePrompts } from "@njust-ai-cj/types"
+import { type ModeConfig, type CustomModePrompts } from "@njust-ai/types"
 
-import { type Mode, getAllModes, defaultModeSlug } from "@roo/modes"
+import { type Mode, getAllModes, defaultModeSlug } from "@shared/modes"
 
 import { vscode } from "@/utils/vscode"
 import { cn } from "@/lib/utils"
@@ -46,7 +46,7 @@ export const ModeSelector = ({
 	const selectedItemRef = React.useRef<HTMLDivElement>(null)
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null)
 	const lastNotifiedInvalidModeRef = React.useRef<string | null>(null)
-	const portalContainer = useRooPortal("roo-portal")
+	const portalContainer = useRooPortal("njust-ai-portal")
 	const { hasOpenedModeSelector, setHasOpenedModeSelector } = useExtensionState()
 	const { t } = useAppTranslation()
 

@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type XAIModelId, xaiDefaultModelId, xaiModels } from "@njust-ai-cj/core/providers"
+import { type XAIModelId, xaiDefaultModelId, xaiModels } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import type { ExperimentId } from "@njust-ai-cj/types"
+import type { ExperimentId } from "@njust-ai/types"
 
 import { EXPERIMENT_IDS, experimentConfigsMap, experiments as Experiments } from "../experiments"
 

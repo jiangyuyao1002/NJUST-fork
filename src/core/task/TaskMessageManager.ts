@@ -9,9 +9,9 @@
  * is reduced via further decoupling.
  */
 import type { Anthropic } from "@anthropic-ai/sdk"
-import type { ClineMessage, ProviderSettings } from "@njust-ai-cj/types"
-import { NJUST_AI_CJEventName, TelemetryEventName, getApiProtocol, getModelId, isRetiredProvider } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { ClineMessage, ProviderSettings } from "@njust-ai/types"
+import { NJUST_AIEventName, TelemetryEventName, getApiProtocol, getModelId, isRetiredProvider } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { defaultModeSlug } from "../../shared/modes"
 import {
 	type ApiMessage,
@@ -342,7 +342,7 @@ export class TaskMessageManager {
 	async addToClineMessages(message: ClineMessage): Promise<void> {
 		this.ctx.clineMessages.push(message)
 		await this.ctx.notifier?.postStateToWebviewWithoutTaskHistory()
-		this.ctx.emit(NJUST_AI_CJEventName.Message, { action: "created", message })
+		this.ctx.emit(NJUST_AIEventName.Message, { action: "created", message })
 		await this.saveClineMessages()
 	}
 
@@ -354,7 +354,7 @@ export class TaskMessageManager {
 
 	async updateClineMessage(message: ClineMessage): Promise<void> {
 		await this.ctx.notifier?.postMessageToWebview({ type: "messageUpdated", clineMessage: message })
-		this.ctx.emit(NJUST_AI_CJEventName.Message, { action: "updated", message })
+		this.ctx.emit(NJUST_AIEventName.Message, { action: "updated", message })
 	}
 
 	async saveClineMessages(): Promise<boolean> {
@@ -386,7 +386,7 @@ export class TaskMessageManager {
 			await this.ctx.notifier?.updateTaskHistory(historyItem)
 			return true
 		} catch (error) {
-			logger.error("TaskMessageManager", "Failed to save Roo messages:", error)
+			logger.error("TaskMessageManager", "Failed to save Njust-AI messages:", error)
 			TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			return false
 		}

@@ -1,4 +1,4 @@
-import { ClineMessage, HistoryItem } from "@njust-ai-cj/types"
+import { ClineMessage, HistoryItem } from "@njust-ai/types"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 interface UsePromptHistoryProps {

@@ -1,8 +1,8 @@
 import { useCallback } from "react"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
-import { type ProviderSettings, type OrganizationAllowList, type RouterModels } from "@njust-ai-cj/types"
-import { unboundDefaultModelId } from "@njust-ai-cj/core/providers"
+import { type ProviderSettings, type OrganizationAllowList, type RouterModels } from "@njust-ai/types"
+import { unboundDefaultModelId } from "@njust-ai/core/providers"
 
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"

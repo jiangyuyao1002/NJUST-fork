@@ -2,12 +2,12 @@ import * as fs from "fs/promises"
 
 import { ListResourcesResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js"
 
-import type { McpResource, McpTool } from "@njust-ai-cj/types"
+import type { McpResource, McpTool } from "@njust-ai/types"
 
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 type McpHubInternal = UnsafeAny
 

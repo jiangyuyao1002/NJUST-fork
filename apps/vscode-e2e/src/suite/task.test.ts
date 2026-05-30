@@ -1,11 +1,11 @@
 import * as assert from "assert"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitUntilCompleted } from "./utils"
 import { setDefaultSuiteTimeout } from "./test-utils"
 
-suite("NJUST_AI_CJ Task", function () {
+suite("NJUST_AI Task", function () {
 	setDefaultSuiteTimeout(this)
 
 	test("Should handle prompt and response correctly", async () => {
@@ -13,7 +13,7 @@ suite("NJUST_AI_CJ Task", function () {
 
 		const messages: ClineMessage[] = []
 
-		api.on(NJUST_AI_CJEventName.Message, ({ message }) => {
+		api.on(NJUST_AIEventName.Message, ({ message }) => {
 			if (message.type === "say" && message.partial === false) {
 				messages.push(message)
 			}
@@ -28,9 +28,9 @@ suite("NJUST_AI_CJ Task", function () {
 
 		assert.ok(
 			!!messages.find(
-				({ say, text }) => (say === "completion_result" || say === "text") && text?.includes("My name is Roo"),
+				({ say, text }) => (say === "completion_result" || say === "text") && text?.includes("My name is Njust-AI"),
 			),
-			`Completion should include "My name is Roo"`,
+			`Completion should include "My name is Njust-AI"`,
 		)
 	})
 })

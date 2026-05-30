@@ -1,7 +1,7 @@
 import OpenAI from "openai"
 import { Anthropic } from "@anthropic-ai/sdk" // Keep for type usage only
 
-import { litellmDefaultModelId, litellmDefaultModelInfo } from "@njust-ai-cj/core/providers"
+import { litellmDefaultModelId, litellmDefaultModelInfo } from "@njust-ai/core/providers"
 
 import { calculateApiCostOpenAI } from "../../shared/cost"
 

@@ -2,8 +2,8 @@ import fs from "fs/promises"
 import path from "path"
 import { z } from "zod"
 
-import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS, TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS, TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -319,7 +319,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 		}
 
 		// Track file edit operation
-		await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+		await task.fileContextTracker.trackFileContext(relPath, "njust_ai_edited" as RecordSource)
 		task.didEditFile = true
 		task.cangjieRuntimePolicy.noteWriteApplied(relPath, undefined, newContent)
 
@@ -607,7 +607,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			}
 
-			await task.fileContextTracker.trackFileContext(change.movePath, "roo_edited" as RecordSource)
+			await task.fileContextTracker.trackFileContext(change.movePath, "njust_ai_edited" as RecordSource)
 		} else {
 			// Save changes to the same file
 			if (isPreventFocusDisruptionEnabled) {
@@ -616,7 +616,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				await task.diffViewProvider.saveChanges(diagnosticsEnabled, writeDelayMs)
 			}
 
-			await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+			await task.fileContextTracker.trackFileContext(relPath, "njust_ai_edited" as RecordSource)
 		}
 
 		task.didEditFile = true

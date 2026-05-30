@@ -1,4 +1,4 @@
-import { NJUST_AI_CJSettings } from "@njust-ai-cj/types"
+import { NJUST_AISettings } from "@njust-ai/types"
 
 import { useCLIStore } from "../store.js"
 
@@ -168,7 +168,7 @@ describe("useCLIStore", () => {
 		})
 
 		it("should PRESERVE apiConfiguration", () => {
-			const config: NJUST_AI_CJSettings = { apiProvider: "openai", apiModelId: "gpt-4" }
+			const config: NJUST_AISettings = { apiProvider: "openai", apiModelId: "gpt-4" }
 
 			useCLIStore
 				.getState()

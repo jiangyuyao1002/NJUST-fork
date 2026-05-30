@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest"
 
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import { BaseProvider } from "../base-provider"
 import type { ApiStream } from "../../transform/stream"

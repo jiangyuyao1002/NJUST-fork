@@ -1,7 +1,7 @@
 import os from "os"
 import path from "path"
 
-import { readTaskSessionsFromStoragePath, type TaskSessionEntry } from "@njust-ai-cj/core/cli"
+import { readTaskSessionsFromStoragePath, type TaskSessionEntry } from "@njust-ai/core/cli"
 
 import { arePathsEqual } from "@/lib/utils/path.js"
 

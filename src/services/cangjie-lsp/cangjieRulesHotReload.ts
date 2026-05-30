@@ -2,13 +2,13 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 
-import { NJUST_AI_CONFIG_DIR } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
-import { getGlobalRooDirectory } from "../roo-config"
+import { getGlobalRooDirectory } from "../njust-ai-config"
 import { invalidateCangjieContextSectionCache } from "../../core/prompts/sections/cangjie-context"
 
 /**
- * Watch `.njust_ai/rules-cangjie/**` and legacy `.roo/rules-cangjie/**` so edits apply without
+ * Watch `.njust_ai/rules-cangjie/**` and legacy `.njust-ai/rules-cangjie/**` so edits apply without
  * reloading the window (system prompt re-reads rules on each request; we only invalidate the
  * separate Cangjie context cache here).
  */
@@ -19,7 +19,7 @@ export function registerCangjieRulesHotReload(
 	const notify = () => {
 		invalidateCangjieContextSectionCache()
 		outputChannel.appendLine(
-			`[Cangjie rules] ${NJUST_AI_CONFIG_DIR}/rules-cangjie/ (or .roo/rules-cangjie/) changed — rules reload on the next model request; dynamic Cangjie context cache cleared.`,
+			`[Cangjie rules] ${NJUST_AI_CONFIG_DIR}/rules-cangjie/ (or .njust-ai/rules-cangjie/) changed — rules reload on the next model request; dynamic Cangjie context cache cleared.`,
 		)
 	}
 
@@ -36,7 +36,7 @@ export function registerCangjieRulesHotReload(
 
 	for (const wf of vscode.workspace.workspaceFolders ?? []) {
 		watchPattern(wf, `${NJUST_AI_CONFIG_DIR}/rules-cangjie/**`)
-		watchPattern(wf, `.roo/rules-cangjie/**`)
+		watchPattern(wf, `.njust-ai/rules-cangjie/**`)
 	}
 
 	const globalRulesDir = path.join(getGlobalRooDirectory(), "rules-cangjie")

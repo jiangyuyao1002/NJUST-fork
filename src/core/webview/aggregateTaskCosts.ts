@@ -1,4 +1,4 @@
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 import { logger } from "../../shared/logger"
 
 export interface AggregatedCosts {

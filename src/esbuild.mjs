@@ -5,7 +5,7 @@ import { fileURLToPath } from "url"
 import process from "node:process"
 import * as console from "node:console"
 
-import { copyPaths, copyWasms, copyLocales, setupLocaleWatcher } from "@njust-ai-cj/build"
+import { copyPaths, copyWasms, copyLocales, setupLocaleWatcher } from "@njust-ai/build"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

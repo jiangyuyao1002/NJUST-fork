@@ -9,8 +9,8 @@ import { ICodeParser, CodeBlock } from "../interfaces"
 import { scannerExtensions, shouldUseFallbackChunking } from "../shared/supported-extensions"
 import { MAX_BLOCK_CHARS, MIN_BLOCK_CHARS, MIN_CHUNK_REMAINDER_CHARS, MAX_CHARS_TOLERANCE_FACTOR } from "../constants"
 import { logger } from "../../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Implementation of the code parser interface

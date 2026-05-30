@@ -23,8 +23,8 @@ import {
 	isInteractiveAsk,
 	isResumableAsk,
 	isNonBlockingAsk,
-} from "@njust-ai-cj/types"
-import { debugLog } from "@njust-ai-cj/core/cli"
+} from "@njust-ai/types"
+import { debugLog } from "@njust-ai/core/cli"
 
 import { FOLLOWUP_TIMEOUT_SECONDS } from "@/types/index.js"
 

@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { CodeActionId, CodeActionName } from "@njust-ai-cj/types"
+import { CodeActionId, CodeActionName } from "@njust-ai/types"
 
 import { getCodeActionCommand } from "../utils/commands"
 import { EditorUtils } from "../integrations/editor/EditorUtils"

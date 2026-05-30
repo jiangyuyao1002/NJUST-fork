@@ -1,4 +1,4 @@
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 import { fileChangesFromMessages } from "../components/chat/utils/fileChangesFromMessages"
 
 function msg(overrides: Partial<ClineMessage> & { text: string }): ClineMessage {

@@ -95,7 +95,7 @@ export class TelemetryService {
 			const dynamicImporter = new Function("m", "return import(m)") as (m: string) => Promise<any>
 			const otelApi = await dynamicImporter("@opentelemetry/api")
 			this.otelApi = otelApi
-			this.tracer = otelApi.trace.getTracer(options?.serviceName || "roo-code")
+			this.tracer = otelApi.trace.getTracer(options?.serviceName || "Njust-AI")
 			this.otelEnabled = true
 		} catch {
 			this.otelEnabled = false

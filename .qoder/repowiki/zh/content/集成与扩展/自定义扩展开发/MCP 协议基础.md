@@ -313,10 +313,10 @@ Transport->>Server : "关闭会话"
 ```mermaid
 graph LR
 Client["@modelcontextprotocol/sdk/client"] --> Hub["McpHub"]
-Server["@modelcontextprotocol/sdk/server"] --> Roo["RooToolsMcpServer"]
-Roo --> Exec["tool-executors"]
+Server["@modelcontextprotocol/sdk/server"] --> Njust-AI["RooToolsMcpServer"]
+Njust-AI --> Exec["tool-executors"]
 Hub --> Types["mcp.ts 类型"]
-Roo --> Types
+Njust-AI --> Types
 ```
 
 **图表来源**

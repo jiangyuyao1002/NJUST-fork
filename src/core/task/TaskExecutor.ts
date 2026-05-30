@@ -19,15 +19,15 @@ import type {
 	ClineApiReqInfo,
 	ContextCondense,
 	ContextTruncation,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import {
 	DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
 	getApiProtocol,
 	getModelId,
 	isRetiredProvider,
 	TelemetryEventName,
-} from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import type { ApiHandlerCreateMessageMetadata } from "../../api"
 import { resolveParallelNativeToolCalls } from "../../shared/parallelToolCalls"

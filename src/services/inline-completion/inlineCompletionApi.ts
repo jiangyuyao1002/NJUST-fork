@@ -21,7 +21,7 @@ export async function resolveInlineCompletionApiHandler(
 			if (log && !loggedMissingApiProfile) {
 				loggedMissingApiProfile = true
 				log(
-					"[InlineCompletion] No API profile yet — configure a provider in NJUST_AI_CJ settings, or start a chat task (inline completion reuses the same API as the sidebar).",
+					"[InlineCompletion] No API profile yet — configure a provider in NJUST_AI settings, or start a chat task (inline completion reuses the same API as the sidebar).",
 				)
 			}
 			return undefined

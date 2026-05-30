@@ -2,8 +2,8 @@ import path from "path"
 import fs from "fs/promises"
 import { z } from "zod"
 
-import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -267,7 +267,7 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 
 			// Track file edit operation
 			if (relPath) {
-				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+				await task.fileContextTracker.trackFileContext(relPath, "njust_ai_edited" as RecordSource)
 			}
 
 			// Used to determine if we should wait for busy terminal to update before sending api request

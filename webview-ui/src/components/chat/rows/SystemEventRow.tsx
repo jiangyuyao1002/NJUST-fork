@@ -1,8 +1,8 @@
 import React from "react"
 import { useTranslation } from "react-i18next"
 
-import type { ClineMessage } from "@njust-ai-cj/types"
-import { safeJsonParse } from "@roo/core"
+import type { ClineMessage } from "@njust-ai/types"
+import { safeJsonParse } from "@njust-ai/core/browser"
 
 import ErrorRow from "../ErrorRow"
 import WarningRow from "../WarningRow"

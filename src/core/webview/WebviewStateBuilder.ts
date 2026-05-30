@@ -10,7 +10,7 @@ import type {
 	TelemetryProperties,
 	HistoryItem,
 	CodebaseIndexConfig,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import {
 	DEFAULT_WRITE_DELAY_MS,
 	DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE,
@@ -20,7 +20,7 @@ import {
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	isRetiredProvider,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import { Package } from "../../shared/package"
 import { formatLanguage } from "../../shared/language"
 import { Mode, defaultModeSlug } from "../../shared/modes"

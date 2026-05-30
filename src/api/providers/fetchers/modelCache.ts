@@ -5,8 +5,8 @@ import * as fsSync from "fs"
 import NodeCache from "node-cache"
 import { z } from "zod"
 
-import type { ProviderName, ModelRecord } from "@njust-ai-cj/types"
-import { modelInfoSchema } from "@njust-ai-cj/types"
+import type { ProviderName, ModelRecord } from "@njust-ai/types"
+import { modelInfoSchema } from "@njust-ai/types"
 
 import { logger } from "../../../shared/logger"
 import { safeWriteJson } from "../../../utils/safeWriteJson"
@@ -24,7 +24,7 @@ import { getLiteLLMModels } from "./litellm"
 import { GetModelsOptions } from "../../../shared/api"
 import { getOllamaModels } from "./ollama"
 import { getLMStudioModels } from "./lmstudio"
-import { getRooModels } from "./roo"
+import { getRooModels } from "./njust-ai"
 import { TIMING } from "../../../shared/constants"
 
 import type { DynamicModelInfo, DynamicModelRecord, ListModelsOptions, FetcherKind } from "../modelTypes"
@@ -102,8 +102,8 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
 		case "vercel-ai-gateway":
 			models = await getVercelAiGatewayModels()
 			break
-		case "roo": {
-			const rooBaseUrl = options.baseUrl ?? process.env.NJUST_AI_CJ_PROVIDER_URL ?? ""
+		case "njust-ai": {
+			const rooBaseUrl = options.baseUrl ?? process.env.NJUST_AI_PROVIDER_URL ?? ""
 			if (!rooBaseUrl) {
 				return {}
 			}

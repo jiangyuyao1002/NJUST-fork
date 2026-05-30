@@ -1,4 +1,4 @@
-import { type FireworksModelId, fireworksDefaultModelId, fireworksModels } from "@njust-ai-cj/core/providers"
+import { type FireworksModelId, fireworksDefaultModelId, fireworksModels } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

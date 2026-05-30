@@ -1,7 +1,7 @@
 import React, { memo, useState } from "react"
 import { Trans } from "react-i18next"
 
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 import { vscode } from "@src/utils/vscode"
 import { Button } from "@src/components/ui"

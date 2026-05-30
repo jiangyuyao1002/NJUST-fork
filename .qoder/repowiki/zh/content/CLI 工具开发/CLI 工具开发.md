@@ -24,7 +24,7 @@
 10. [附录](#附录)
 
 ## 简介
-本文件面向 CLI 工具开发，围绕 NJUST_AI_CJ CLI 的命令行接口设计进行系统化说明。内容涵盖命令系统架构、参数解析、输出格式化、配置管理、错误处理、认证流程、与 VS Code 扩展的集成方式以及数据同步机制，并提供使用示例、最佳实践、性能优化与用户体验改进建议。
+本文件面向 CLI 工具开发，围绕 NJUST_AI CLI 的命令行接口设计进行系统化说明。内容涵盖命令系统架构、参数解析、输出格式化、配置管理、错误处理、认证流程、与 VS Code 扩展的集成方式以及数据同步机制，并提供使用示例、最佳实践、性能优化与用户体验改进建议。
 
 ## 项目结构
 CLI 应用位于 monorepo 的 apps/cli 目录中，采用模块化组织：
@@ -80,7 +80,7 @@ participant CLI as "CLI 入口(index.ts)"
 participant CMD as "具体命令处理器"
 participant VER as "版本发现(version.ts)"
 participant CTX as "常量(constants.ts)"
-U->>CLI : 执行 roo [选项] [提示词]
+U->>CLI : 执行 njust-ai [选项] [提示词]
 CLI->>CLI : 解析参数与选项
 CLI->>VER : 获取版本号
 VER-->>CLI : 返回版本字符串
@@ -144,19 +144,19 @@ Result --> |否| PrintErr["打印错误信息"] --> Exit1["process.exit(1)"]
 ```mermaid
 sequenceDiagram
 participant U as "用户"
-participant CLI as "roo auth"
+participant CLI as "njust-ai auth"
 participant Login as "login"
 participant Logout as "logout"
 participant Status as "status"
-U->>CLI : roo auth login [--verbose]
+U->>CLI : njust-ai auth login [--verbose]
 CLI->>Login : 调用登录处理器
 Login-->>CLI : {success : boolean}
 CLI->>CLI : 成功则退出码 0，否则非零
-U->>CLI : roo auth logout [--verbose]
+U->>CLI : njust-ai auth logout [--verbose]
 CLI->>Logout : 调用登出处理器
 Logout-->>CLI : {success : boolean}
 CLI->>CLI : 成功则退出码 0，否则非零
-U->>CLI : roo auth status [--verbose]
+U->>CLI : njust-ai auth status [--verbose]
 CLI->>Status : 调用状态处理器
 Status-->>CLI : {authenticated : boolean}
 CLI->>CLI : 已认证则退出码 0，否则非零
@@ -193,7 +193,7 @@ CLI->>CLI : 已认证则退出码 0，否则非零
 - [apps/cli/src/types/constants.ts:1-28](file://apps/cli/src/types/constants.ts#L1-L28)
 
 ### 与 VS Code 扩展的集成与数据同步
-- CLI 使用 @njust-ai-cj/vscode-shim 提供 VSCode API 兼容层，使扩展在 Node.js 环境中运行。
+- CLI 使用 @njust-ai/vscode-shim 提供 VSCode API 兼容层，使扩展在 Node.js 环境中运行。
 - 消息流：CLI → 扩展通过事件 "webviewMessage" 发送消息；扩展 → CLI 通过事件 "extensionWebviewMessage" 返回消息。
 - 该机制支撑交互式 TUI、工具执行、命令调用与状态同步。
 
@@ -201,7 +201,7 @@ CLI->>CLI : 已认证则退出码 0，否则非零
 - [apps/cli/README.md:228-266](file://apps/cli/README.md#L228-L266)
 
 ## 依赖关系分析
-- CLI 入口依赖 commander 进行命令解析，依赖 @njust-ai-cj/vscode-shim 提供 VSCode API 兼容层。
+- CLI 入口依赖 commander 进行命令解析，依赖 @njust-ai/vscode-shim 提供 VSCode API 兼容层。
 - 命令导出通过聚合文件统一暴露，便于入口按需导入。
 - 版本与常量通过独立模块提供，降低耦合度。
 
@@ -260,7 +260,7 @@ IDX --> README["README.md"]
 - 交互式模式：直接传入提示词或留空进入 TUI 输入
 - 批处理模式：使用 --print 输出机器可读结果
 - 流式输入：通过 --stdin-prompt-stream 与 --print 配合，发送 NDJSON 控制命令
-- 认证：使用 roo auth login 登录，状态检查与登出同理
+- 认证：使用 njust-ai auth login 登录，状态检查与登出同理
 - 最佳实践
   - 在 CI/CD 中使用 --print 与明确的输出格式
   - 使用 --ephemeral 进行临时测试，避免污染持久状态
@@ -274,8 +274,8 @@ IDX --> README["README.md"]
   - 认证凭据存储于用户配置目录下的 credentials.json（由认证命令管理）
 - 环境变量
   - API 密钥：根据提供商映射到相应环境变量
-  - 认证与 SDK 基础地址：可通过 ROO_AUTH_BASE_URL 与 ROO_SDK_BASE_URL 覆盖
-  - 开发代理：NJUST_AI_CJ_PROVIDER_URL 可指向本地代理服务
+  - 认证与 SDK 基础地址：可通过 NJUST_AI_AUTH_BASE_URL 与 NJUST_AI_SDK_BASE_URL 覆盖
+  - 开发代理：NJUST_AI_PROVIDER_URL 可指向本地代理服务
 
 章节来源
 - [apps/cli/README.md:209-227](file://apps/cli/README.md#L209-L227)

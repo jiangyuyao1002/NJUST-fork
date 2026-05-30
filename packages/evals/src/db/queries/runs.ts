@@ -1,6 +1,6 @@
 import { desc, eq, inArray, sql, sum } from "drizzle-orm"
 
-import type { ToolUsage } from "@njust-ai-cj/types"
+import type { ToolUsage } from "@njust-ai/types"
 
 import { RecordNotFoundError, RecordNotCreatedError } from "./errors"
 import type { InsertRun, UpdateRun } from "../schema"

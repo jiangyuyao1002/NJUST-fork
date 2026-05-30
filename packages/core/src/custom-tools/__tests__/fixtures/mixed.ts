@@ -1,4 +1,4 @@
-import { parametersSchema, defineCustomTool } from "@njust-ai-cj/types"
+import { parametersSchema, defineCustomTool } from "@njust-ai/types"
 
 // This is a valid tool.
 export const validTool = defineCustomTool({

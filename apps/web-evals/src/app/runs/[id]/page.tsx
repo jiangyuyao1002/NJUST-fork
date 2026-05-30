@@ -1,4 +1,4 @@
-import { findRun } from "@njust-ai-cj/evals"
+import { findRun } from "@njust-ai/evals"
 
 import { Run } from "./run"
 

@@ -6,7 +6,7 @@
 
 ## Requirement Summary
 
-Systematic identification and resolution of code quality issues (technical debt) across the Roo-Code repository.
+Systematic identification and resolution of code quality issues (technical debt) across the Njust-AI repository.
 
 ## What Was Done
 
@@ -59,7 +59,7 @@ Systematic identification and resolution of code quality issues (technical debt)
 
 ```bash
 # Verify changes compile
-cd D:/NJUST_AI/Roo-Code
+cd D:/NJUST_AI/Njust-AI
 npx tsc --noEmit
 
 # View what changed

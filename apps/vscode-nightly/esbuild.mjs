@@ -3,7 +3,7 @@ import * as fs from "fs"
 import * as path from "path"
 import { fileURLToPath } from "url"
 
-import { getGitSha, copyPaths, copyLocales, copyWasms, generatePackageJson } from "@njust-ai-cj/build"
+import { getGitSha, copyPaths, copyLocales, copyWasms, generatePackageJson } from "@njust-ai/build"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -33,9 +33,9 @@ async function main() {
 		sourcesContent: false,
 		platform: "node",
 		define: {
-			"process.env.PKG_NAME": '"njust-ai-cj-nightly"',
+			"process.env.PKG_NAME": '"njust-ai-nightly"',
 			"process.env.PKG_VERSION": `"${overrideJson.version}"`,
-			"process.env.PKG_OUTPUT_CHANNEL": '"NJUST_AI_CJ-Nightly"',
+			"process.env.PKG_OUTPUT_CHANNEL": '"NJUST_AI-Nightly"',
 			...(gitSha ? { "process.env.PKG_SHA": `"${gitSha}"` } : {}),
 		},
 		...(production ? { drop: ["console"] } : {}),
@@ -89,7 +89,7 @@ async function main() {
 					const generatedPackageJson = generatePackageJson({
 						packageJson,
 						overrideJson,
-						substitution: ["njust-ai-cj", "njust-ai-cj-nightly"],
+						substitution: ["njust-ai", "njust-ai-nightly"],
 					})
 
 					fs.writeFileSync(path.join(buildDir, "package.json"), JSON.stringify(generatedPackageJson, null, 2))

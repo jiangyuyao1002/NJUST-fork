@@ -391,16 +391,16 @@ Cangjie 语言支持系统是一个功能完整、性能优异的开发环境解
 
 系统提供了丰富的命令来支持各种开发任务：
 
-- `njust-ai-cj.cangjieBuild` - 构建项目
-- `njust-ai-cj.cangjieRun` - 运行程序
-- `njust-ai-cj.cangjieTest` - 运行测试
-- `njust-ai-cj.cangjieCheck` - 检查代码
-- `njust-ai-cj.cangjieClean` - 清理项目
-- `njust-ai-cj.cangjieRestartLsp` - 重启语言服务器
-- `njust-ai-cj.cangjieInsertTemplate` - 插入模板
-- `njust-ai-cj.cangjieProfile` - 性能分析
-- `njust-ai-cj.cangjieExtractFunction` - 提取函数
-- `njust-ai-cj.cangjieMoveFile` - 移动文件
+- `njust-ai.cangjieBuild` - 构建项目
+- `njust-ai.cangjieRun` - 运行程序
+- `njust-ai.cangjieTest` - 运行测试
+- `njust-ai.cangjieCheck` - 检查代码
+- `njust-ai.cangjieClean` - 清理项目
+- `njust-ai.cangjieRestartLsp` - 重启语言服务器
+- `njust-ai.cangjieInsertTemplate` - 插入模板
+- `njust-ai.cangjieProfile` - 性能分析
+- `njust-ai.cangjieExtractFunction` - 提取函数
+- `njust-ai.cangjieMoveFile` - 移动文件
 
 ### 最佳实践
 

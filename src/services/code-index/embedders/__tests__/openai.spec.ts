@@ -8,7 +8,7 @@ import { MAX_ITEM_TOKENS, INITIAL_RETRY_DELAY_MS } from "../../constants"
 vitest.mock("openai")
 
 // Mock TelemetryService
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vitest.fn(),
 		instance: {

@@ -56,7 +56,7 @@ logs
 .idea/
 .qodo/
 .vercel
-.roo/mcp.json
+.njust-ai/mcp.json
 
 # Claude Code local skills and settings
 .claude/skills/
@@ -78,7 +78,7 @@ plans/
 # Spec Kit - track templates and config, ignore generated specs
 .specify/specs/
 
-roo-cli-*.tar.gz*
+njust-ai-cli-*.tar.gz*
 cangjie_lsp_*.txt
 log.txt
 .aider*

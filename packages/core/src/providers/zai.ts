@@ -1,5 +1,5 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
-import type { ZaiApiLine } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
+import type { ZaiApiLine } from "@njust-ai/types"
 
 // Z AI
 // https://docs.z.ai/guides/llm/glm-4-32b-0414-128k

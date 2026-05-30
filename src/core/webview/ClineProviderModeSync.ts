@@ -1,12 +1,12 @@
 import * as vscode from "vscode"
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import {
-	NJUST_AI_CJEventName,
+	NJUST_AIEventName,
 	type HistoryItem,
 	type ProviderSettings,
 	type ProviderSettingsEntry,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { t } from "../../i18n"
 import { defaultModeSlug, getModeBySlug, type Mode } from "../../shared/modes"
@@ -97,7 +97,7 @@ export async function handleModeSwitchWithProvider(provider: ClineProvider, newM
 		await persistTaskModeSwitch(provider, newMode)
 		await provider.settingsManager.setGlobalValue("mode", newMode)
 
-		provider.emit(NJUST_AI_CJEventName.ModeChanged, newMode)
+		provider.emit(NJUST_AIEventName.ModeChanged, newMode)
 
 		const lockApiConfigAcrossModes = provider.context.workspaceState.get("lockApiConfigAcrossModes", false)
 		if (lockApiConfigAcrossModes) {
@@ -123,7 +123,7 @@ async function persistTaskModeSwitch(provider: ClineProvider, newMode: Mode): Pr
 		}
 
 		TelemetryService.instance.captureModeSwitch(task.taskId, newMode)
-		task.emit(NJUST_AI_CJEventName.TaskModeSwitched, task.taskId, newMode)
+		task.emit(NJUST_AIEventName.TaskModeSwitched, task.taskId, newMode)
 
 		try {
 			const taskHistoryItem =
@@ -353,7 +353,7 @@ export async function activateProviderProfileWithProvider(
 		await provider.postStateToWebview()
 
 		if (providerSettings.apiProvider) {
-			provider.emit(NJUST_AI_CJEventName.ProviderProfileChanged, { name, provider: providerSettings.apiProvider })
+			provider.emit(NJUST_AIEventName.ProviderProfileChanged, { name, provider: providerSettings.apiProvider })
 		}
 	}
 

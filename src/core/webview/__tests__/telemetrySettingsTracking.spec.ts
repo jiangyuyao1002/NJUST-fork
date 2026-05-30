@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { type TelemetrySetting } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { type TelemetrySetting } from "@njust-ai/types"
 
 describe("Telemetry Settings Tracking", () => {
 	let mockTelemetryService: {

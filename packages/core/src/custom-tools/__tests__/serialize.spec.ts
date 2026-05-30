@@ -1,6 +1,6 @@
-// pnpm --filter @njust-ai-cj/core test src/custom-tools/__tests__/serialize.spec.ts
+// pnpm --filter @njust-ai/core test src/custom-tools/__tests__/serialize.spec.ts
 
-import { parametersSchema as z, defineCustomTool } from "@njust-ai-cj/types"
+import { parametersSchema as z, defineCustomTool } from "@njust-ai/types"
 
 import { serializeCustomTool, serializeCustomTools } from "../serialize.js"
 

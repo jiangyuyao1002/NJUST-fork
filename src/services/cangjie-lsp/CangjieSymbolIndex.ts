@@ -13,8 +13,8 @@ import {
 import { Package } from "../../shared/package"
 import { extractCangjieImportPackagePrefixes, posixPathMatchesImportPackage } from "./cangjieImportPaths"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 const INDEX_DIR = ".cangjie-index"
 const INDEX_FILE = "symbols.json"

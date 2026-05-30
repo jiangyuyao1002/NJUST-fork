@@ -1,1 +1,1 @@
-export { recordSecurityMetric, startTraceSpan } from "@njust-ai-cj/core/security"
+export { recordSecurityMetric, startTraceSpan } from "@njust-ai/core/security"

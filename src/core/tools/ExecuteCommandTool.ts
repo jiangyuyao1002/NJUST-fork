@@ -5,8 +5,8 @@ import { z } from "zod"
 
 import delay from "delay"
 
-import { CommandExecutionStatus, DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE, PersistedCommandOutput, TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { CommandExecutionStatus, DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE, PersistedCommandOutput, TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Task } from "../task/Task"
 
@@ -52,7 +52,7 @@ export function resolveAgentTimeoutMs(timeoutSeconds: number | null | undefined)
 	// In CLI runtime, apply a minimum timeout to prevent permanent blocking
 	// from malicious or malformed commands. User settings can extend but not
 	// reduce below the floor.
-	if (process.env.ROO_CLI_RUNTIME === "1") {
+	if (process.env.NJUST_AI_CLI_RUNTIME === "1") {
 		return requestedAgentTimeout > 0
 			? Math.max(requestedAgentTimeout, MIN_CLI_TIMEOUT_MS)
 			: MIN_CLI_TIMEOUT_MS

@@ -2,13 +2,13 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { Stream as AnthropicStream } from "@anthropic-ai/sdk/streaming"
 import { CacheControlEphemeral } from "@anthropic-ai/sdk/resources"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai/types"
 import {
 	type AnthropicModelId,
 	anthropicDefaultModelId,
 	anthropicModels,
 	ANTHROPIC_DEFAULT_MAX_TOKENS,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { logger } from "../../shared/logger"

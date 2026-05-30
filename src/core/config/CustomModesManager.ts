@@ -12,11 +12,11 @@ import {
 	customModesSettingsSchema,
 	modeConfigSchema,
 	NJUST_AI_CONFIG_DIR,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { fileExistsAtPath } from "../../utils/fs"
 import { getWorkspacePath } from "../../utils/path"
-import { getGlobalRooDirectory } from "../../services/roo-config"
+import { getGlobalRooDirectory } from "../../services/njust-ai-config"
 import { logger } from "../../shared/logger"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { ensureSettingsDirectoryExists } from "../../utils/globalContext"
@@ -679,11 +679,11 @@ export class CustomModesManager {
 			const isGlobalMode = mode?.source === "global"
 
 			if (isGlobalMode) {
-				// For global modes, check in global .roo directory
+				// For global modes, check in global .njust-ai directory
 				const globalRooDir = getGlobalRooDirectory()
 				modeRulesDir = path.join(globalRooDir, `rules-${slug}`)
 			} else {
-				// For project modes, check in workspace .roo directory
+				// For project modes, check in workspace .njust-ai directory
 				const workspacePath = getWorkspacePath()
 				if (!workspacePath) {
 					return false
@@ -777,7 +777,7 @@ export class CustomModesManager {
 			const isGlobalMode = mode.source === "global"
 			let baseDir: string
 			if (isGlobalMode) {
-				// For global modes, use the global .roo directory
+				// For global modes, use the global .njust-ai directory
 				baseDir = getGlobalRooDirectory()
 			} else {
 				// For project modes, use the workspace directory

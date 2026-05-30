@@ -4,7 +4,7 @@
  * Defines the minimal surface TaskSubtaskHandler needs from its owning Task.
  * Extracted from Task.ts as part of Phase 1 decomposition.
  */
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 import type { ApiMessage } from "../../task-persistence"
 import type { IsolationLevel } from "../SubTaskOptions"
 import type { ForkedContextConfig, CacheSafeParams } from "../SubTaskOptions"

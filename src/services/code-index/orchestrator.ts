@@ -8,8 +8,8 @@ import { CacheManager } from "./cache-manager"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Manages the code indexing workflow, coordinating between different services and managers.

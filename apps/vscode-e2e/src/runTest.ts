@@ -21,7 +21,7 @@ async function main() {
 		const extensionTestsPath = path.resolve(__dirname, "./suite/index")
 
 		// Create a temporary workspace folder for tests
-		testWorkspace = await fs.mkdtemp(path.join(os.tmpdir(), "roo-test-workspace-"))
+		testWorkspace = await fs.mkdtemp(path.join(os.tmpdir(), "njust-ai-test-workspace-"))
 
 		// Get test filter from command line arguments or environment variable
 		// Usage examples:

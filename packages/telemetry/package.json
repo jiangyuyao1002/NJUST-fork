@@ -1,7 +1,7 @@
 {
-	"name": "@njust-ai-cj/telemetry",
+	"name": "@njust-ai/telemetry",
 	"version": "1.0.0",
-	"description": "Telemetry service stub for NJUST_AI_CJ",
+	"description": "Telemetry service stub for NJUST_AI",
 	"type": "module",
 	"exports": "./src/index.ts",
 	"scripts": {
@@ -10,11 +10,11 @@
 		"watch": "tsc --watch"
 	},
 	"dependencies": {
-		"@njust-ai-cj/types": "workspace:^",
+		"@njust-ai/types": "workspace:^",
 		"@opentelemetry/api": "^1.9.0"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
 		"typescript": "5.8.3"
 	}
 }

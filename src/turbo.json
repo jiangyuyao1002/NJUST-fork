@@ -3,7 +3,7 @@
 	"extends": ["//"],
 	"tasks": {
 		"bundle": {
-			"dependsOn": ["^build", "@njust-ai-cj/vscode-webview#build"],
+			"dependsOn": ["^build", "@njust-ai/vscode-webview#build"],
 			"outputs": ["dist/**"]
 		},
 		"vsix": {
@@ -12,7 +12,7 @@
 			"outputs": ["../bin/**"]
 		},
 		"watch:bundle": {
-			"dependsOn": ["@njust-ai-cj/build#build", "@njust-ai-cj/types#build"],
+			"dependsOn": ["@njust-ai/build#build", "@njust-ai/types#build"],
 			"cache": false
 		}
 	}

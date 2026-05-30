@@ -273,14 +273,14 @@ Remove --> Output
 
 | 命令 ID | 功能描述 | 工具类型 |
 |---------|----------|----------|
-| `njust-ai-cj.cangjieBuild` | 构建项目 | cjpm 命令 |
-| `njust-ai-cj.cangjieRun` | 运行程序 | cjpm 命令 |
-| `njust-ai-cj.cangjieTest` | 运行测试 | cjpm 命令 |
-| `njust-ai-cj.cangjieCheck` | 检查代码 | cjpm 命令 |
-| `njust-ai-cj.cangjieClean` | 清理构建 | cjpm 命令 |
-| `njust-ai-cj.cangjieRestartLsp` | 重启 LSP 服务器 | 服务器控制 |
-| `njust-ai-cj.cangjieInsertTemplate` | 插入代码模板 | 模板系统 |
-| `njust-ai-cj.cangjieProfile` | 性能分析 | 分析工具 |
+| `njust-ai.cangjieBuild` | 构建项目 | cjpm 命令 |
+| `njust-ai.cangjieRun` | 运行程序 | cjpm 命令 |
+| `njust-ai.cangjieTest` | 运行测试 | cjpm 命令 |
+| `njust-ai.cangjieCheck` | 检查代码 | cjpm 命令 |
+| `njust-ai.cangjieClean` | 清理构建 | cjpm 命令 |
+| `njust-ai.cangjieRestartLsp` | 重启 LSP 服务器 | 服务器控制 |
+| `njust-ai.cangjieInsertTemplate` | 插入代码模板 | 模板系统 |
+| `njust-ai.cangjieProfile` | 性能分析 | 分析工具 |
 
 **章节来源**
 - [cangjieCommands.ts:64-141](file://src/services/cangjie-lsp/cangjieCommands.ts#L64-L141)

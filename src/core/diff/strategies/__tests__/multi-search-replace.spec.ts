@@ -902,12 +902,12 @@ function sum(a, b) {
 
 		it("should match content with smart quotes", async () => {
 			const originalContent =
-				"**Enjoy NJUST_AI_CJ!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI_CJ/) or [Discord](https://discord.gg/njust-ai-cj). Happy coding!"
+				"**Enjoy NJUST_AI!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI/) or [Discord](https://discord.gg/njust-ai). Happy coding!"
 			const diffContent = `test.ts
 <<<<<<< SEARCH
-**Enjoy NJUST_AI_CJ!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI_CJ/) or [Discord](https://discord.gg/njust-ai-cj). Happy coding!
+**Enjoy NJUST_AI!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI/) or [Discord](https://discord.gg/njust-ai). Happy coding!
 =======
-**Enjoy NJUST_AI_CJ!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI_CJ/) or [Discord](https://discord.gg/njust-ai-cj). Happy coding!
+**Enjoy NJUST_AI!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI/) or [Discord](https://discord.gg/njust-ai). Happy coding!
 
 You're still here?
 >>>>>>> REPLACE`
@@ -916,7 +916,7 @@ You're still here?
 			expect(result.success).toBe(true)
 			if (result.success) {
 				expect(result.content).toBe(
-					"**Enjoy NJUST_AI_CJ!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI_CJ/) or [Discord](https://discord.gg/njust-ai-cj). Happy coding!\n\nYou're still here?",
+					"**Enjoy NJUST_AI!** Whether you keep it on a short leash or let it roam autonomously, we can't wait to see what you build. If you have questions or feature ideas, drop by our [Reddit community](https://www.reddit.com/r/NJUST_AI/) or [Discord](https://discord.gg/njust-ai). Happy coding!\n\nYou're still here?",
 				)
 			}
 		})

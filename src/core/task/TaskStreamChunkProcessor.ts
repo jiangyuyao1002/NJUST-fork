@@ -2,12 +2,12 @@ import type { GroundingSource } from "../../api/transform/stream"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
 import type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 import type { ToolUse, McpToolUse } from "../../shared/tools"
-import type { ToolName } from "@njust-ai-cj/types"
+import type { ToolName } from "@njust-ai/types"
 
 import { globalQueryProfiler } from "../../utils/queryProfiler"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 type FinalizeToolUse = (
 	task: TaskExecutorHost,

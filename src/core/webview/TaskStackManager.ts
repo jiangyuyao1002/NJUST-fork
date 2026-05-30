@@ -7,7 +7,7 @@
 
 import type * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type HistoryItem, type TokenUsage, type ToolUsage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type HistoryItem, type TokenUsage, type ToolUsage } from "@njust-ai/types"
 
 import type { Task } from "../task/Task"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -68,13 +68,13 @@ export class TaskStackManager {
 	 * All forwarded events are emitted on the provider's event bus.
 	 */
 	bindEventForwarders(instance: Task): void {
-		const onTaskStarted = () => this.host.emit(NJUST_AI_CJEventName.TaskStarted, instance.taskId)
+		const onTaskStarted = () => this.host.emit(NJUST_AIEventName.TaskStarted, instance.taskId)
 		const onTaskCompleted = (taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage) =>
-			this.host.emit(NJUST_AI_CJEventName.TaskCompleted, taskId, tokenUsage, toolUsage, {
+			this.host.emit(NJUST_AIEventName.TaskCompleted, taskId, tokenUsage, toolUsage, {
 				isSubtask: false,
 			})
 		const onTaskAborted = async () => {
-			this.host.emit(NJUST_AI_CJEventName.TaskAborted, instance.taskId)
+			this.host.emit(NJUST_AIEventName.TaskAborted, instance.taskId)
 			try {
 				if (instance.abortReason === "streaming_failed") {
 					const current = this.current
@@ -99,51 +99,51 @@ export class TaskStackManager {
 				)
 			}
 		}
-		const onTaskFocused = () => this.host.emit(NJUST_AI_CJEventName.TaskFocused, instance.taskId)
-		const onTaskUnfocused = () => this.host.emit(NJUST_AI_CJEventName.TaskUnfocused, instance.taskId)
-		const onTaskActive = (taskId: string) => this.host.emit(NJUST_AI_CJEventName.TaskActive, taskId)
+		const onTaskFocused = () => this.host.emit(NJUST_AIEventName.TaskFocused, instance.taskId)
+		const onTaskUnfocused = () => this.host.emit(NJUST_AIEventName.TaskUnfocused, instance.taskId)
+		const onTaskActive = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskActive, taskId)
 		const onTaskInteractive = (taskId: string) =>
-			this.host.emit(NJUST_AI_CJEventName.TaskInteractive, taskId)
-		const onTaskResumable = (taskId: string) => this.host.emit(NJUST_AI_CJEventName.TaskResumable, taskId)
-		const onTaskIdle = (taskId: string) => this.host.emit(NJUST_AI_CJEventName.TaskIdle, taskId)
-		const onTaskPaused = (taskId: string) => this.host.emit(NJUST_AI_CJEventName.TaskPaused, taskId)
-		const onTaskUnpaused = (taskId: string) => this.host.emit(NJUST_AI_CJEventName.TaskUnpaused, taskId)
-		const onTaskSpawned = (taskId: string) => this.host.emit(NJUST_AI_CJEventName.TaskSpawned, taskId)
+			this.host.emit(NJUST_AIEventName.TaskInteractive, taskId)
+		const onTaskResumable = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskResumable, taskId)
+		const onTaskIdle = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskIdle, taskId)
+		const onTaskPaused = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskPaused, taskId)
+		const onTaskUnpaused = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskUnpaused, taskId)
+		const onTaskSpawned = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskSpawned, taskId)
 		const onTaskUserMessage = (taskId: string) =>
-			this.host.emit(NJUST_AI_CJEventName.TaskUserMessage, taskId)
+			this.host.emit(NJUST_AIEventName.TaskUserMessage, taskId)
 		const onTaskTokenUsageUpdated = (taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage) =>
-			this.host.emit(NJUST_AI_CJEventName.TaskTokenUsageUpdated, taskId, tokenUsage, toolUsage)
+			this.host.emit(NJUST_AIEventName.TaskTokenUsageUpdated, taskId, tokenUsage, toolUsage)
 
-		instance.on(NJUST_AI_CJEventName.TaskStarted, onTaskStarted)
-		instance.on(NJUST_AI_CJEventName.TaskCompleted, onTaskCompleted)
-		instance.on(NJUST_AI_CJEventName.TaskAborted, onTaskAborted)
-		instance.on(NJUST_AI_CJEventName.TaskFocused, onTaskFocused)
-		instance.on(NJUST_AI_CJEventName.TaskUnfocused, onTaskUnfocused)
-		instance.on(NJUST_AI_CJEventName.TaskActive, onTaskActive)
-		instance.on(NJUST_AI_CJEventName.TaskInteractive, onTaskInteractive)
-		instance.on(NJUST_AI_CJEventName.TaskResumable, onTaskResumable)
-		instance.on(NJUST_AI_CJEventName.TaskIdle, onTaskIdle)
-		instance.on(NJUST_AI_CJEventName.TaskPaused, onTaskPaused)
-		instance.on(NJUST_AI_CJEventName.TaskUnpaused, onTaskUnpaused)
-		instance.on(NJUST_AI_CJEventName.TaskSpawned, onTaskSpawned)
-		instance.on(NJUST_AI_CJEventName.TaskUserMessage, onTaskUserMessage)
-		instance.on(NJUST_AI_CJEventName.TaskTokenUsageUpdated, onTaskTokenUsageUpdated)
+		instance.on(NJUST_AIEventName.TaskStarted, onTaskStarted)
+		instance.on(NJUST_AIEventName.TaskCompleted, onTaskCompleted)
+		instance.on(NJUST_AIEventName.TaskAborted, onTaskAborted)
+		instance.on(NJUST_AIEventName.TaskFocused, onTaskFocused)
+		instance.on(NJUST_AIEventName.TaskUnfocused, onTaskUnfocused)
+		instance.on(NJUST_AIEventName.TaskActive, onTaskActive)
+		instance.on(NJUST_AIEventName.TaskInteractive, onTaskInteractive)
+		instance.on(NJUST_AIEventName.TaskResumable, onTaskResumable)
+		instance.on(NJUST_AIEventName.TaskIdle, onTaskIdle)
+		instance.on(NJUST_AIEventName.TaskPaused, onTaskPaused)
+		instance.on(NJUST_AIEventName.TaskUnpaused, onTaskUnpaused)
+		instance.on(NJUST_AIEventName.TaskSpawned, onTaskSpawned)
+		instance.on(NJUST_AIEventName.TaskUserMessage, onTaskUserMessage)
+		instance.on(NJUST_AIEventName.TaskTokenUsageUpdated, onTaskTokenUsageUpdated)
 
 		this.taskEventListeners.set(instance, [
-			() => instance.off(NJUST_AI_CJEventName.TaskStarted, onTaskStarted),
-			() => instance.off(NJUST_AI_CJEventName.TaskCompleted, onTaskCompleted),
-			() => instance.off(NJUST_AI_CJEventName.TaskAborted, onTaskAborted),
-			() => instance.off(NJUST_AI_CJEventName.TaskFocused, onTaskFocused),
-			() => instance.off(NJUST_AI_CJEventName.TaskUnfocused, onTaskUnfocused),
-			() => instance.off(NJUST_AI_CJEventName.TaskActive, onTaskActive),
-			() => instance.off(NJUST_AI_CJEventName.TaskInteractive, onTaskInteractive),
-			() => instance.off(NJUST_AI_CJEventName.TaskResumable, onTaskResumable),
-			() => instance.off(NJUST_AI_CJEventName.TaskIdle, onTaskIdle),
-			() => instance.off(NJUST_AI_CJEventName.TaskUserMessage, onTaskUserMessage),
-			() => instance.off(NJUST_AI_CJEventName.TaskPaused, onTaskPaused),
-			() => instance.off(NJUST_AI_CJEventName.TaskUnpaused, onTaskUnpaused),
-			() => instance.off(NJUST_AI_CJEventName.TaskSpawned, onTaskSpawned),
-			() => instance.off(NJUST_AI_CJEventName.TaskTokenUsageUpdated, onTaskTokenUsageUpdated),
+			() => instance.off(NJUST_AIEventName.TaskStarted, onTaskStarted),
+			() => instance.off(NJUST_AIEventName.TaskCompleted, onTaskCompleted),
+			() => instance.off(NJUST_AIEventName.TaskAborted, onTaskAborted),
+			() => instance.off(NJUST_AIEventName.TaskFocused, onTaskFocused),
+			() => instance.off(NJUST_AIEventName.TaskUnfocused, onTaskUnfocused),
+			() => instance.off(NJUST_AIEventName.TaskActive, onTaskActive),
+			() => instance.off(NJUST_AIEventName.TaskInteractive, onTaskInteractive),
+			() => instance.off(NJUST_AIEventName.TaskResumable, onTaskResumable),
+			() => instance.off(NJUST_AIEventName.TaskIdle, onTaskIdle),
+			() => instance.off(NJUST_AIEventName.TaskUserMessage, onTaskUserMessage),
+			() => instance.off(NJUST_AIEventName.TaskPaused, onTaskPaused),
+			() => instance.off(NJUST_AIEventName.TaskUnpaused, onTaskUnpaused),
+			() => instance.off(NJUST_AIEventName.TaskSpawned, onTaskSpawned),
+			() => instance.off(NJUST_AIEventName.TaskTokenUsageUpdated, onTaskTokenUsageUpdated),
 		])
 	}
 
@@ -155,7 +155,7 @@ export class TaskStackManager {
 	 */
 	async push(task: Task): Promise<void> {
 		this.stack.push(task)
-		task.emit(NJUST_AI_CJEventName.TaskFocused)
+		task.emit(NJUST_AIEventName.TaskFocused)
 
 		await this.host.performPreparationTasks?.(task)
 
@@ -180,7 +180,7 @@ export class TaskStackManager {
 			const childTaskId = task.taskId
 			const parentTaskId = task.parentTaskId
 
-			task.emit(NJUST_AI_CJEventName.TaskUnfocused)
+			task.emit(NJUST_AIEventName.TaskUnfocused)
 
 			try {
 				await task.abortTask(true)
@@ -243,7 +243,7 @@ export class TaskStackManager {
 			this.taskEventListeners.delete(oldTask)
 		}
 		this.stack[stackIndex] = task
-		task.emit(NJUST_AI_CJEventName.TaskFocused)
+		task.emit(NJUST_AIEventName.TaskFocused)
 		await this.host.performPreparationTasks?.(task)
 		this.log(`[rehydrate] rehydrated task ${task.taskId}.${task.instanceId} in-place (flicker-free)`)
 	}

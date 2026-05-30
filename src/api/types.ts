@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import type { ApiStream } from "./transform/stream"
 
@@ -12,7 +12,7 @@ export interface SingleCompletionHandler {
 export interface ApiHandlerCreateMessageMetadata {
 	/**
 	 * Task ID used for tracking and provider-specific features:
-	 * - Roo: Sent as X-Roo-Task-ID header
+	 * - Njust-AI: Sent as X-Njust-AI-Task-ID header
 	 * - Requesty: Sent as trace_id
 	 */
 	taskId: string

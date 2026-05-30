@@ -512,7 +512,7 @@ describe("getGitRepositoryInfo", () => {
  ignorecase = true
  precomposeunicode = true
 [remote "origin"]
- url = https://github.com/NJUST-AI/NJUST_AI_CJ.git
+ url = https://github.com/NJUST-AI/NJUST_AI.git
  fetch = +refs/heads/*:refs/remotes/origin/*
 [branch "main"]
  remote = origin
@@ -534,8 +534,8 @@ describe("getGitRepositoryInfo", () => {
 		const result = await getGitRepositoryInfo(workspaceRoot)
 
 		expect(result).toEqual({
-			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI_CJ.git",
-			repositoryName: "NJUST-AI/NJUST_AI_CJ",
+			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI.git",
+			repositoryName: "NJUST-AI/NJUST_AI",
 			defaultBranch: "main",
 		})
 
@@ -625,7 +625,7 @@ describe("getGitRepositoryInfo", () => {
 			if (path === configPath) {
 				return Promise.resolve(`
 [remote "origin"]
- url = https://github.com/NJUST-AI/NJUST_AI_CJ.git
+ url = https://github.com/NJUST-AI/NJUST_AI.git
 `)
 			} else if (path === headPath) {
 				return Promise.reject(new Error("Failed to read HEAD"))
@@ -636,8 +636,8 @@ describe("getGitRepositoryInfo", () => {
 		const result = await getGitRepositoryInfo(workspaceRoot)
 
 		expect(result).toEqual({
-			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI_CJ.git",
-			repositoryName: "NJUST-AI/NJUST_AI_CJ",
+			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI.git",
+			repositoryName: "NJUST-AI/NJUST_AI",
 		})
 	})
 
@@ -658,7 +658,7 @@ describe("getGitRepositoryInfo", () => {
 	filemode = true
 	bare = false
 [remote "origin"]
-	url = git@github.com:NJUST-AI/NJUST_AI_CJ.git
+	url = git@github.com:NJUST-AI/NJUST_AI.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [branch "main"]
 	remote = origin
@@ -681,8 +681,8 @@ describe("getGitRepositoryInfo", () => {
 
 		// Verify that the SSH URL was converted to HTTPS
 		expect(result).toEqual({
-			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI_CJ.git",
-			repositoryName: "NJUST-AI/NJUST_AI_CJ",
+			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI.git",
+			repositoryName: "NJUST-AI/NJUST_AI",
 			defaultBranch: "main",
 		})
 	})
@@ -690,31 +690,31 @@ describe("getGitRepositoryInfo", () => {
 
 describe("convertGitUrlToHttps", () => {
 	it("should leave HTTPS URLs unchanged", () => {
-		const url = "https://github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "https://github.com/NJUST-AI/NJUST_AI.git"
 		const converted = convertGitUrlToHttps(url)
 
-		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI_CJ.git")
+		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should convert SSH URLs to HTTPS format", () => {
-		const url = "git@github.com:NJUST-AI/NJUST_AI_CJ.git"
+		const url = "git@github.com:NJUST-AI/NJUST_AI.git"
 		const converted = convertGitUrlToHttps(url)
 
-		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI_CJ.git")
+		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should convert SSH URLs with ssh:// prefix to HTTPS format", () => {
-		const url = "ssh://git@github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "ssh://git@github.com/NJUST-AI/NJUST_AI.git"
 		const converted = convertGitUrlToHttps(url)
 
-		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI_CJ.git")
+		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should handle URLs without git@ prefix", () => {
-		const url = "ssh://github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "ssh://github.com/NJUST-AI/NJUST_AI.git"
 		const converted = convertGitUrlToHttps(url)
 
-		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI_CJ.git")
+		expect(converted).toBe("https://github.com/NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should handle invalid URLs gracefully", () => {
@@ -727,31 +727,31 @@ describe("convertGitUrlToHttps", () => {
 
 describe("sanitizeGitUrl", () => {
 	it("should sanitize HTTPS URLs with credentials", () => {
-		const url = "https://username:password@github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "https://username:password@github.com/NJUST-AI/NJUST_AI.git"
 		const sanitized = sanitizeGitUrl(url)
 
-		expect(sanitized).toBe("https://github.com/NJUST-AI/NJUST_AI_CJ.git")
+		expect(sanitized).toBe("https://github.com/NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should leave SSH URLs unchanged", () => {
-		const url = "git@github.com:NJUST-AI/NJUST_AI_CJ.git"
+		const url = "git@github.com:NJUST-AI/NJUST_AI.git"
 		const sanitized = sanitizeGitUrl(url)
 
-		expect(sanitized).toBe("git@github.com:NJUST-AI/NJUST_AI_CJ.git")
+		expect(sanitized).toBe("git@github.com:NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should leave SSH URLs with ssh:// prefix unchanged", () => {
-		const url = "ssh://git@github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "ssh://git@github.com/NJUST-AI/NJUST_AI.git"
 		const sanitized = sanitizeGitUrl(url)
 
-		expect(sanitized).toBe("ssh://git@github.com/NJUST-AI/NJUST_AI_CJ.git")
+		expect(sanitized).toBe("ssh://git@github.com/NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should remove tokens from other URL formats", () => {
-		const url = "https://oauth2:ghp_abcdef1234567890abcdef1234567890abcdef@github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "https://oauth2:ghp_abcdef1234567890abcdef1234567890abcdef@github.com/NJUST-AI/NJUST_AI.git"
 		const sanitized = sanitizeGitUrl(url)
 
-		expect(sanitized).toBe("https://github.com/NJUST-AI/NJUST_AI_CJ.git")
+		expect(sanitized).toBe("https://github.com/NJUST-AI/NJUST_AI.git")
 	})
 
 	it("should handle invalid URLs gracefully", () => {
@@ -764,31 +764,31 @@ describe("sanitizeGitUrl", () => {
 
 describe("extractRepositoryName", () => {
 	it("should extract repository name from HTTPS URL", () => {
-		const url = "https://github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "https://github.com/NJUST-AI/NJUST_AI.git"
 		const repoName = extractRepositoryName(url)
 
-		expect(repoName).toBe("NJUST-AI/NJUST_AI_CJ")
+		expect(repoName).toBe("NJUST-AI/NJUST_AI")
 	})
 
 	it("should extract repository name from HTTPS URL without .git suffix", () => {
-		const url = "https://github.com/NJUST-AI/NJUST_AI_CJ"
+		const url = "https://github.com/NJUST-AI/NJUST_AI"
 		const repoName = extractRepositoryName(url)
 
-		expect(repoName).toBe("NJUST-AI/NJUST_AI_CJ")
+		expect(repoName).toBe("NJUST-AI/NJUST_AI")
 	})
 
 	it("should extract repository name from SSH URL", () => {
-		const url = "git@github.com:NJUST-AI/NJUST_AI_CJ.git"
+		const url = "git@github.com:NJUST-AI/NJUST_AI.git"
 		const repoName = extractRepositoryName(url)
 
-		expect(repoName).toBe("NJUST-AI/NJUST_AI_CJ")
+		expect(repoName).toBe("NJUST-AI/NJUST_AI")
 	})
 
 	it("should extract repository name from SSH URL with ssh:// prefix", () => {
-		const url = "ssh://git@github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "ssh://git@github.com/NJUST-AI/NJUST_AI.git"
 		const repoName = extractRepositoryName(url)
 
-		expect(repoName).toBe("NJUST-AI/NJUST_AI_CJ")
+		expect(repoName).toBe("NJUST-AI/NJUST_AI")
 	})
 
 	it("should return empty string for unrecognized URL formats", () => {
@@ -799,10 +799,10 @@ describe("extractRepositoryName", () => {
 	})
 
 	it("should handle URLs with credentials", () => {
-		const url = "https://username:password@github.com/NJUST-AI/NJUST_AI_CJ.git"
+		const url = "https://username:password@github.com/NJUST-AI/NJUST_AI.git"
 		const repoName = extractRepositoryName(url)
 
-		expect(repoName).toBe("NJUST-AI/NJUST_AI_CJ")
+		expect(repoName).toBe("NJUST-AI/NJUST_AI")
 	})
 })
 
@@ -839,7 +839,7 @@ describe("getWorkspaceGitInfo", () => {
 		// Mock git config file content
 		const mockConfig = `
 [remote "origin"]
- url = https://github.com/NJUST-AI/NJUST_AI_CJ.git
+ url = https://github.com/NJUST-AI/NJUST_AI.git
 [branch "main"]
  remote = origin
  merge = refs/heads/main
@@ -856,8 +856,8 @@ describe("getWorkspaceGitInfo", () => {
 		const result = await getWorkspaceGitInfo()
 
 		expect(result).toEqual({
-			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI_CJ.git",
-			repositoryName: "NJUST-AI/NJUST_AI_CJ",
+			repositoryUrl: "https://github.com/NJUST-AI/NJUST_AI.git",
+			repositoryName: "NJUST-AI/NJUST_AI",
 			defaultBranch: "main",
 		})
 

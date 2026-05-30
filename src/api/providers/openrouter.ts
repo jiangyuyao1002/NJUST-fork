@@ -2,14 +2,14 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import { z } from "zod"
 
-import { type ModelRecord, TelemetryEventName } from "@njust-ai-cj/types"
+import { type ModelRecord, TelemetryEventName } from "@njust-ai/types"
 import {
 	openRouterDefaultModelId,
 	openRouterDefaultModelInfo,
 	OPENROUTER_DEFAULT_PROVIDER_NAME,
 	OPEN_ROUTER_PROMPT_CACHING_MODELS,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
@@ -36,7 +36,7 @@ import { handleOpenAIError } from "./utils/openai-error-handler"
 import { generateImageWithProvider, ImageGenerationResult } from "./utils/image-generation"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { globalCostTracker } from "../../utils/costTracker"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { logger } from "../../shared/logger"
 import { requireApiKey } from "../interfaces/api-key-validator"
 import { getErrorMessage } from "../../shared/error-utils"

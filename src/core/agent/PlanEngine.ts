@@ -1,7 +1,7 @@
 import { getErrorMessage } from "../../shared/error-utils"
 import { v7 as uuidv7 } from "uuid"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import type {
 	Plan,

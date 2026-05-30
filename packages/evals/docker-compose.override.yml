@@ -12,16 +12,16 @@ services:
             # Mount log files so web can access task logs
             - /tmp/evals:/tmp/evals:ro
             # Mount source code for hot reload in development
-            - ../../apps/web-evals:/roo/repo/apps/web-evals:delegated
-            - ../../packages/evals:/roo/repo/packages/evals:delegated
-            - ../../packages/types:/roo/repo/packages/types:delegated
-            - ../../packages/ipc:/roo/repo/packages/ipc:delegated
+            - ../../apps/web-evals:/njust-ai/repo/apps/web-evals:delegated
+            - ../../packages/evals:/njust-ai/repo/packages/evals:delegated
+            - ../../packages/types:/njust-ai/repo/packages/types:delegated
+            - ../../packages/ipc:/njust-ai/repo/packages/ipc:delegated
             # Exclude node_modules from being overwritten
-            - /roo/repo/node_modules
-            - /roo/repo/apps/web-evals/node_modules
-            - /roo/repo/packages/evals/node_modules
-            - /roo/repo/packages/types/node_modules
-            - /roo/repo/packages/ipc/node_modules
+            - /njust-ai/repo/node_modules
+            - /njust-ai/repo/apps/web-evals/node_modules
+            - /njust-ai/repo/packages/evals/node_modules
+            - /njust-ai/repo/packages/types/node_modules
+            - /njust-ai/repo/packages/ipc/node_modules
         entrypoint: []
         command:
             - sh
@@ -38,6 +38,6 @@ services:
                 }
                 wait_for_db
                 echo '🔄 Running database migrations...'
-                pnpm --filter @njust-ai-cj/evals db:migrate
+                pnpm --filter @njust-ai/evals db:migrate
                 echo '🌐 Starting Next.js dev server...'
-                cd /roo/repo/apps/web-evals && npx next dev -p 3446
+                cd /njust-ai/repo/apps/web-evals && npx next dev -p 3446

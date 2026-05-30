@@ -1,8 +1,8 @@
 import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 
-import { type ClineApiReqInfo, TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { type ClineApiReqInfo, TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { logger } from "../../shared/logger"
 
 import type { Task } from "../task/Task"

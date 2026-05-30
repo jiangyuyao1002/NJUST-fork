@@ -2,9 +2,9 @@ import React, { type Dispatch, type SetStateAction } from "react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
-import type { ClineMessage, ClineSayTool } from "@njust-ai-cj/types"
-import type { ModelInfo } from "@njust-ai-cj/types"
-import { Mode } from "@roo/modes"
+import type { ClineMessage, ClineSayTool } from "@njust-ai/types"
+import type { ModelInfo } from "@njust-ai/types"
+import { Mode } from "@shared/modes"
 
 import { vscode } from "@src/utils/vscode"
 

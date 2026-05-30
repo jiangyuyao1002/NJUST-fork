@@ -46,8 +46,8 @@ import {
 import type { LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import type { Run, TaskMetrics } from "@njust-ai-cj/evals"
-import type { ToolName } from "@njust-ai-cj/types"
+import type { Run, TaskMetrics } from "@njust-ai/evals"
+import type { ToolName } from "@njust-ai/types"
 
 import { deleteIncompleteRuns, deleteOldRuns } from "@/actions/runs"
 import {

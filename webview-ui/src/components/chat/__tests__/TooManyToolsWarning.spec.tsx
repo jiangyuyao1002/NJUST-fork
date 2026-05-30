@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@/utils/test-utils"
-import { MAX_MCP_TOOLS_THRESHOLD } from "@njust-ai-cj/types"
+import { MAX_MCP_TOOLS_THRESHOLD } from "@njust-ai/types"
 
 import { TooManyToolsWarning } from "../TooManyToolsWarning"
 

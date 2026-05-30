@@ -9,7 +9,7 @@ Mirrors the behavior of scripts/bash/update-agent-context.sh:
  2. Plan Data Extraction
  3. Agent File Management (create from template or update existing)
  4. Content Generation (technology stack, recent changes, timestamp)
- 5. Multi-Agent Support (claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, roo, codebuddy, amp, shai, tabnine, kiro-cli, agy, bob, vibe, qodercli, kimi, trae, pi, iflow, generic)
+ 5. Multi-Agent Support (claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, njust-ai, codebuddy, amp, shai, tabnine, kiro-cli, agy, bob, vibe, qodercli, kimi, trae, pi, iflow, generic)
 
 .PARAMETER AgentType
 Optional agent key to update a single agent. If omitted, updates all existing agent files (creating a default Claude file if none exist).
@@ -25,7 +25,7 @@ Relies on common helper functions in common.ps1
 #>
 param(
     [Parameter(Position=0)]
-    [ValidateSet('claude','gemini','copilot','cursor-agent','qwen','opencode','codex','windsurf','kilocode','auggie','roo','codebuddy','amp','shai','tabnine','kiro-cli','agy','bob','qodercli','vibe','kimi','trae','pi','iflow','generic')]
+    [ValidateSet('claude','gemini','copilot','cursor-agent','qwen','opencode','codex','windsurf','kilocode','auggie','njust-ai','codebuddy','amp','shai','tabnine','kiro-cli','agy','bob','qodercli','vibe','kimi','trae','pi','iflow','generic')]
     [string]$AgentType
 )
 
@@ -53,7 +53,7 @@ $AGENTS_FILE   = Join-Path $REPO_ROOT 'AGENTS.md'
 $WINDSURF_FILE = Join-Path $REPO_ROOT '.windsurf/rules/specify-rules.md'
 $KILOCODE_FILE = Join-Path $REPO_ROOT '.kilocode/rules/specify-rules.md'
 $AUGGIE_FILE   = Join-Path $REPO_ROOT '.augment/rules/specify-rules.md'
-$ROO_FILE      = Join-Path $REPO_ROOT '.roo/rules/specify-rules.md'
+$NJUST_AI_FILE      = Join-Path $REPO_ROOT '.njust-ai/rules/specify-rules.md'
 $CODEBUDDY_FILE = Join-Path $REPO_ROOT 'CODEBUDDY.md'
 $QODER_FILE    = Join-Path $REPO_ROOT 'QODER.md'
 $AMP_FILE      = Join-Path $REPO_ROOT 'AGENTS.md'
@@ -399,7 +399,7 @@ function Update-SpecificAgent {
         'windsurf' { Update-AgentFile -TargetFile $WINDSURF_FILE -AgentName 'Windsurf' }
         'kilocode' { Update-AgentFile -TargetFile $KILOCODE_FILE -AgentName 'Kilo Code' }
         'auggie'   { Update-AgentFile -TargetFile $AUGGIE_FILE   -AgentName 'Auggie CLI' }
-        'roo'      { Update-AgentFile -TargetFile $ROO_FILE      -AgentName 'Roo Code' }
+        'njust-ai'      { Update-AgentFile -TargetFile $NJUST_AI_FILE      -AgentName 'Njust-AI Code' }
         'codebuddy' { Update-AgentFile -TargetFile $CODEBUDDY_FILE -AgentName 'CodeBuddy CLI' }
         'qodercli' { Update-AgentFile -TargetFile $QODER_FILE    -AgentName 'Qoder CLI' }
         'amp'      { Update-AgentFile -TargetFile $AMP_FILE      -AgentName 'Amp' }
@@ -414,7 +414,7 @@ function Update-SpecificAgent {
         'pi'       { Update-AgentFile -TargetFile $AGENTS_FILE   -AgentName 'Pi Coding Agent' }
         'iflow'    { Update-AgentFile -TargetFile $IFLOW_FILE    -AgentName 'iFlow CLI' }
         'generic'  { Write-Info 'Generic agent: no predefined context file. Use the agent-specific update script for your agent.' }
-        default { Write-Err "Unknown agent type '$Type'"; Write-Err 'Expected: claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|roo|codebuddy|amp|shai|tabnine|kiro-cli|agy|bob|vibe|qodercli|kimi|trae|pi|iflow|generic'; return $false }
+        default { Write-Err "Unknown agent type '$Type'"; Write-Err 'Expected: claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|njust-ai|codebuddy|amp|shai|tabnine|kiro-cli|agy|bob|vibe|qodercli|kimi|trae|pi|iflow|generic'; return $false }
     }
 }
 
@@ -430,7 +430,7 @@ function Update-AllExistingAgents {
     if (Test-Path $WINDSURF_FILE) { if (-not (Update-AgentFile -TargetFile $WINDSURF_FILE -AgentName 'Windsurf')) { $ok = $false }; $found = $true }
     if (Test-Path $KILOCODE_FILE) { if (-not (Update-AgentFile -TargetFile $KILOCODE_FILE -AgentName 'Kilo Code')) { $ok = $false }; $found = $true }
     if (Test-Path $AUGGIE_FILE)   { if (-not (Update-AgentFile -TargetFile $AUGGIE_FILE   -AgentName 'Auggie CLI')) { $ok = $false }; $found = $true }
-    if (Test-Path $ROO_FILE)      { if (-not (Update-AgentFile -TargetFile $ROO_FILE      -AgentName 'Roo Code')) { $ok = $false }; $found = $true }
+    if (Test-Path $NJUST_AI_FILE)      { if (-not (Update-AgentFile -TargetFile $NJUST_AI_FILE      -AgentName 'Njust-AI Code')) { $ok = $false }; $found = $true }
     if (Test-Path $CODEBUDDY_FILE) { if (-not (Update-AgentFile -TargetFile $CODEBUDDY_FILE -AgentName 'CodeBuddy CLI')) { $ok = $false }; $found = $true }
     if (Test-Path $QODER_FILE)    { if (-not (Update-AgentFile -TargetFile $QODER_FILE    -AgentName 'Qoder CLI')) { $ok = $false }; $found = $true }
     if (Test-Path $SHAI_FILE)     { if (-not (Update-AgentFile -TargetFile $SHAI_FILE     -AgentName 'SHAI')) { $ok = $false }; $found = $true }
@@ -456,7 +456,7 @@ function Print-Summary {
     if ($NEW_FRAMEWORK) { Write-Host "  - Added framework: $NEW_FRAMEWORK" }
     if ($NEW_DB -and $NEW_DB -ne 'N/A') { Write-Host "  - Added database: $NEW_DB" }
     Write-Host ''
-    Write-Info 'Usage: ./update-agent-context.ps1 [-AgentType claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|roo|codebuddy|amp|shai|tabnine|kiro-cli|agy|bob|vibe|qodercli|kimi|trae|pi|iflow|generic]'
+    Write-Info 'Usage: ./update-agent-context.ps1 [-AgentType claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|njust-ai|codebuddy|amp|shai|tabnine|kiro-cli|agy|bob|vibe|qodercli|kimi|trae|pi|iflow|generic]'
 }
 
 function Main {

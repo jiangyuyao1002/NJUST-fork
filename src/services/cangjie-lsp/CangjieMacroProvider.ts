@@ -8,8 +8,8 @@ import { resolveCangjieToolPath, buildCangjieToolEnv, CJC_CONFIG_KEY } from "./c
 import type { CangjieSymbolIndex } from "./CangjieSymbolIndex"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 const execFileAsync = promisify(execFile)
 

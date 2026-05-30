@@ -2,7 +2,7 @@ import type { Anthropic } from "@anthropic-ai/sdk"
 import type {
 	ClineApiReqCancelReason,
 	ClineMessage,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import {
 	clineApiReqInfoSchema,
 	DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
@@ -10,7 +10,7 @@ import {
 	getModelId,
 	isRetiredProvider,
 	TelemetryEventName,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import pWaitFor from "p-wait-for"
 
 import type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
@@ -41,7 +41,7 @@ import { globalCacheMetrics } from "../../utils/cacheMetrics"
 import { globalPromptCacheBreakDetector } from "../prompts/promptCacheBreakDetection"
 import { sanitizeToolUseId } from "../../utils/tool-id"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { getErrorMessage } from "../../shared/error-utils"
 import { debugLog } from "../../utils/debugLog"
 import { t as i18nT } from "../../i18n"
@@ -150,7 +150,7 @@ export async function consumeApiStream(config: ConsumeStreamConfig): Promise<Str
 			cost: totalCost ?? costResult.totalCost,
 			cancelReason,
 			streamingFailedMessage,
-		} satisfies import("@njust-ai-cj/types").ClineApiReqInfo)
+		} satisfies import("@njust-ai/types").ClineApiReqInfo)
 	}
 
 	const abortStream = async (cancelReason: ClineApiReqCancelReason, streamingFailedMessage?: string) => {

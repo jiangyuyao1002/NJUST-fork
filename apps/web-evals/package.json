@@ -1,5 +1,5 @@
 {
-	"name": "@njust-ai-cj/web-evals",
+	"name": "@njust-ai/web-evals",
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
@@ -26,8 +26,8 @@
 		"@radix-ui/react-slot": "^1.1.2",
 		"@radix-ui/react-tabs": "^1.1.3",
 		"@radix-ui/react-tooltip": "^1.2.8",
-		"@njust-ai-cj/evals": "workspace:^",
-		"@njust-ai-cj/types": "workspace:^",
+		"@njust-ai/evals": "workspace:^",
+		"@njust-ai/types": "workspace:^",
 		"@tanstack/react-query": "^5.69.0",
 		"archiver": "^7.0.1",
 		"class-variance-authority": "^0.7.1",
@@ -50,8 +50,8 @@
 		"zod": "3.25.76"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@tailwindcss/postcss": "^4",
 		"@types/archiver": "^7.0.0",
 		"@types/ps-tree": "^1.1.6",

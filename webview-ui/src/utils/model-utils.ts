@@ -1,4 +1,4 @@
-import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
+import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai/core/providers"
 
 /**
  * Result of token distribution calculation

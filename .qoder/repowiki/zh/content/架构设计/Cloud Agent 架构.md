@@ -300,7 +300,7 @@ Cloud Agent 架构采用了多种网络优化技术：
 ### 常见问题诊断
 
 **连接问题**：
-- 检查 `njust-ai-cj.cloudAgent.serverUrl` 配置
+- 检查 `njust-ai.cloudAgent.serverUrl` 配置
 - 验证网络连通性和防火墙设置
 - 确认 API 密钥配置正确
 

@@ -182,7 +182,7 @@ main().catch((err) => {
 	console.error("Test failed:", err.message)
 	if (err.cause?.code === "ECONNREFUSED") {
 		console.error("\nMCP Server is not running. Check:")
-		console.error('  1. njust-ai-cj.mcpServer.enabled = true in VS Code settings')
+		console.error('  1. njust-ai.mcpServer.enabled = true in VS Code settings')
 		console.error("  2. Reload the VS Code window after enabling")
 		console.error(`  3. Port ${PORT} is not occupied by another process`)
 	}

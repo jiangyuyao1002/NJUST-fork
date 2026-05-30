@@ -1,7 +1,7 @@
 import React from "react"
 import { fireEvent, render, screen } from "@/utils/test-utils"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 import { ExtensionStateContextProvider } from "@src/context/ExtensionStateContext"
 import { ChatRowContent } from "../ChatRow"
 
@@ -18,10 +18,10 @@ vi.mock("react-i18next", () => ({
 	useTranslation: () => ({
 		t: (key: string) => {
 			const map: Record<string, string> = {
-				"chat:fileOperations.wantsToEdit": "Roo wants to edit this file",
-				"chat:fileOperations.wantsToEditProtected": "Roo wants to edit a protected file",
-				"chat:fileOperations.wantsToEditOutsideWorkspace": "Roo wants to edit outside workspace",
-				"chat:fileOperations.wantsToApplyBatchChanges": "Roo wants to apply batch changes",
+				"chat:fileOperations.wantsToEdit": "Njust-AI wants to edit this file",
+				"chat:fileOperations.wantsToEditProtected": "Njust-AI wants to edit a protected file",
+				"chat:fileOperations.wantsToEditOutsideWorkspace": "Njust-AI wants to edit outside workspace",
+				"chat:fileOperations.wantsToApplyBatchChanges": "Njust-AI wants to apply batch changes",
 			}
 			return map[key] || key
 		},
@@ -85,7 +85,7 @@ describe("ChatRow - inline diff stats and actions", () => {
 
 		const { container } = renderChatRow(message, false)
 
-		expect(screen.getByText("Roo wants to edit this file")).toBeInTheDocument()
+		expect(screen.getByText("Njust-AI wants to edit this file")).toBeInTheDocument()
 		expect(container.querySelector(".codicon-diff")).toBeInTheDocument()
 		expect(screen.getByText("+1")).toBeInTheDocument()
 		expect(screen.getByText("-1")).toBeInTheDocument()
@@ -102,7 +102,7 @@ describe("ChatRow - inline diff stats and actions", () => {
 
 		const { container } = renderChatRow(message)
 
-		expect(screen.getByText("Roo wants to edit this file")).toBeInTheDocument()
+		expect(screen.getByText("Njust-AI wants to edit this file")).toBeInTheDocument()
 		expect(container.querySelector(".codicon-diff")).toBeInTheDocument()
 		expect(screen.getByText("+1")).toBeInTheDocument()
 		expect(screen.getByText("-1")).toBeInTheDocument()
@@ -119,7 +119,7 @@ describe("ChatRow - inline diff stats and actions", () => {
 
 		const { container } = renderChatRow(message)
 
-		expect(screen.getByText("Roo wants to edit this file")).toBeInTheDocument()
+		expect(screen.getByText("Njust-AI wants to edit this file")).toBeInTheDocument()
 		expect(container.querySelector(".codicon-diff")).toBeInTheDocument()
 		expect(screen.getByText("+1")).toBeInTheDocument()
 		expect(screen.getByText("-2")).toBeInTheDocument()
@@ -136,7 +136,7 @@ describe("ChatRow - inline diff stats and actions", () => {
 
 		const { container } = renderChatRow(message)
 
-		expect(screen.getByText("Roo wants to edit this file")).toBeInTheDocument()
+		expect(screen.getByText("Njust-AI wants to edit this file")).toBeInTheDocument()
 		expect(container.querySelector(".codicon-diff")).toBeInTheDocument()
 		expect(screen.getByText("+3")).toBeInTheDocument()
 		expect(screen.getByText("-0")).toBeInTheDocument()
@@ -175,7 +175,7 @@ describe("ChatRow - inline diff stats and actions", () => {
 			diffStats: { added: 1, removed: 1 },
 		})
 		renderChatRow(outsideWorkspaceMessage)
-		expect(screen.getByText("Roo wants to edit outside workspace")).toBeInTheDocument()
+		expect(screen.getByText("Njust-AI wants to edit outside workspace")).toBeInTheDocument()
 
 		const protectedMessage = createToolAskMessage({
 			tool: "appliedDiff",
@@ -185,7 +185,7 @@ describe("ChatRow - inline diff stats and actions", () => {
 			diffStats: { added: 1, removed: 1 },
 		})
 		const { container } = renderChatRow(protectedMessage)
-		expect(screen.getByText("Roo wants to edit a protected file")).toBeInTheDocument()
+		expect(screen.getByText("Njust-AI wants to edit a protected file")).toBeInTheDocument()
 		expect(container.querySelector(".codicon-lock")).toBeInTheDocument()
 	})
 
@@ -205,7 +205,7 @@ describe("ChatRow - inline diff stats and actions", () => {
 
 		renderChatRow(message)
 
-		expect(screen.getByText("Roo wants to apply batch changes")).toBeInTheDocument()
+		expect(screen.getByText("Njust-AI wants to apply batch changes")).toBeInTheDocument()
 		expect(screen.getByText((text) => text.includes("src/a.ts"))).toBeInTheDocument()
 	})
 })

@@ -1,4 +1,4 @@
-import type { AssertEqual, Equals, Keys, Values, ExperimentId, Experiments } from "@njust-ai-cj/types"
+import type { AssertEqual, Equals, Keys, Values, ExperimentId, Experiments } from "@njust-ai/types"
 
 export const EXPERIMENT_IDS = {
 	PREVENT_FOCUS_DISRUPTION: "preventFocusDisruption",

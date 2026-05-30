@@ -4,11 +4,11 @@ import { createHash } from "crypto"
 import type OpenAI from "openai"
 import { z } from "zod"
 
-import type { ProviderSettings, ModeConfig, ModelInfo } from "@njust-ai-cj/types"
-import { customToolRegistry, formatNative } from "@njust-ai-cj/core"
+import type { ProviderSettings, ModeConfig, ModelInfo } from "@njust-ai/types"
+import { customToolRegistry, formatNative } from "@njust-ai/core"
 
 import type { ITaskHost } from "./interfaces/ITaskHost"
-import { getRooDirectoriesForCwd } from "../../services/roo-config/index.js"
+import { getRooDirectoriesForCwd } from "../../services/njust-ai-config/index.js"
 
 import { getNativeTools, getMcpServerTools } from "../prompts/tools/native-tools"
 import {

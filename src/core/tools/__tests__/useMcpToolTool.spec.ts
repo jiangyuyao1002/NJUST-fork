@@ -6,7 +6,7 @@ import { useMcpToolTool } from "../UseMcpToolTool"
 import { Task } from "../../task/Task"
 import { ToolUse } from "../../../shared/tools"
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {
@@ -56,7 +56,7 @@ vi.mock("../../prompts/responses", () => ({
 vi.mock("../../../i18n", () => ({
 	t: vi.fn((key: string, params?: any) => {
 		if (key === "mcp:errors.invalidJsonArgument" && params?.toolName) {
-			return `Roo tried to use ${params.toolName} with an invalid JSON argument. Retrying...`
+			return `Njust-AI tried to use ${params.toolName} with an invalid JSON argument. Retrying...`
 		}
 		if (key === "mcp:errors.toolNotFound" && params) {
 			return `Tool '${params.toolName}' does not exist on server '${params.serverName}'. Available tools: ${params.availableTools}`

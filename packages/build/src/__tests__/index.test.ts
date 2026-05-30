@@ -6,39 +6,39 @@ describe("generatePackageJson", () => {
 	it("should be a test", () => {
 		const generatedPackageJson = generatePackageJson({
 			packageJson: {
-				name: "njust-ai-cj",
+				name: "njust-ai",
 				displayName: "%extension.displayName%",
 				description: "%extension.description%",
-				publisher: "RooVeterinaryInc",
+				publisher: "JunjieChen-YuyaoJiang",
 				version: "3.17.2",
 				icon: "assets/icons/icon.png",
 				contributes: {
 					viewsContainers: {
 						activitybar: [
 							{
-								id: "njust-ai-cj-ActivityBar",
+								id: "njust-ai-ActivityBar",
 								title: "%views.activitybar.title%",
 								icon: "assets/icons/icon.svg",
 							},
 						],
 					},
 					views: {
-						"njust-ai-cj-ActivityBar": [
+						"njust-ai-ActivityBar": [
 							{
 								type: "webview",
-								id: "njust-ai-cj.SidebarProvider",
+								id: "njust-ai.SidebarProvider",
 								name: "",
 							},
 						],
 					},
 					commands: [
 						{
-							command: "njust-ai-cj.plusButtonClicked",
+							command: "njust-ai.plusButtonClicked",
 							title: "%command.newTask.title%",
 							icon: "$(edit)",
 						},
 						{
-							command: "njust-ai-cj.openInNewTab",
+							command: "njust-ai.openInNewTab",
 							title: "%command.openInNewTab.title%",
 							category: "%configuration.title%",
 						},
@@ -46,48 +46,48 @@ describe("generatePackageJson", () => {
 					menus: {
 						"editor/context": [
 							{
-								submenu: "njust-ai-cj.contextMenu",
+								submenu: "njust-ai.contextMenu",
 								group: "navigation",
 							},
 						],
-						"njust-ai-cj.contextMenu": [
+						"njust-ai.contextMenu": [
 							{
-								command: "njust-ai-cj.addToContext",
+								command: "njust-ai.addToContext",
 								group: "1_actions@1",
 							},
 						],
 						"editor/title": [
 							{
-								command: "njust-ai-cj.plusButtonClicked",
+								command: "njust-ai.plusButtonClicked",
 								group: "navigation@1",
-								when: "activeWebviewPanelId == njust-ai-cj.TabPanelProvider",
+								when: "activeWebviewPanelId == njust-ai.TabPanelProvider",
 							},
 							{
-								command: "njust-ai-cj.settingsButtonClicked",
+								command: "njust-ai.settingsButtonClicked",
 								group: "navigation@6",
-								when: "activeWebviewPanelId == njust-ai-cj.TabPanelProvider",
+								when: "activeWebviewPanelId == njust-ai.TabPanelProvider",
 							},
 							{
-								command: "njust-ai-cj.accountButtonClicked",
+								command: "njust-ai.accountButtonClicked",
 								group: "navigation@6",
-								when: "activeWebviewPanelId == njust-ai-cj.TabPanelProvider",
+								when: "activeWebviewPanelId == njust-ai.TabPanelProvider",
 							},
 						],
 					},
 					submenus: [
 						{
-							id: "njust-ai-cj.contextMenu",
+							id: "njust-ai.contextMenu",
 							label: "%views.contextMenu.label%",
 						},
 						{
-							id: "njust-ai-cj.terminalMenu",
+							id: "njust-ai.terminalMenu",
 							label: "%views.terminalMenu.label%",
 						},
 					],
 					configuration: {
 						title: "%configuration.title%",
 						properties: {
-							"njust-ai-cj.allowedCommands": {
+							"njust-ai.allowedCommands": {
 								type: "array",
 								items: {
 									type: "string",
@@ -95,7 +95,7 @@ describe("generatePackageJson", () => {
 								default: ["npm test", "npm install", "tsc", "git log", "git diff", "git show"],
 								description: "%commands.allowedCommands.description%",
 							},
-							"njust-ai-cj.customStoragePath": {
+							"njust-ai.customStoragePath": {
 								type: "string",
 								default: "",
 								description: "%settings.customStoragePath.description%",
@@ -108,50 +108,50 @@ describe("generatePackageJson", () => {
 				},
 			},
 			overrideJson: {
-				name: "njust-ai-cj-nightly",
-				displayName: "NJUST_AI_CJ Nightly",
-				publisher: "RooVeterinaryInc",
+				name: "njust-ai-nightly",
+				displayName: "NJUST_AI Nightly",
+				publisher: "JunjieChen-YuyaoJiang",
 				version: "0.0.1",
 				icon: "assets/icons/icon-nightly.png",
 				scripts: {},
 			},
-			substitution: ["njust-ai-cj", "njust-ai-cj-nightly"],
+			substitution: ["njust-ai", "njust-ai-nightly"],
 		})
 
 		expect(generatedPackageJson).toStrictEqual({
-			name: "njust-ai-cj-nightly",
-			displayName: "NJUST_AI_CJ Nightly",
+			name: "njust-ai-nightly",
+			displayName: "NJUST_AI Nightly",
 			description: "%extension.description%",
-			publisher: "RooVeterinaryInc",
+			publisher: "JunjieChen-YuyaoJiang",
 			version: "0.0.1",
 			icon: "assets/icons/icon-nightly.png",
 			contributes: {
 				viewsContainers: {
 					activitybar: [
 						{
-							id: "njust-ai-cj-nightly-ActivityBar",
+							id: "njust-ai-nightly-ActivityBar",
 							title: "%views.activitybar.title%",
 							icon: "assets/icons/icon.svg",
 						},
 					],
 				},
 				views: {
-					"njust-ai-cj-nightly-ActivityBar": [
+					"njust-ai-nightly-ActivityBar": [
 						{
 							type: "webview",
-							id: "njust-ai-cj-nightly.SidebarProvider",
+							id: "njust-ai-nightly.SidebarProvider",
 							name: "",
 						},
 					],
 				},
 				commands: [
 					{
-						command: "njust-ai-cj-nightly.plusButtonClicked",
+						command: "njust-ai-nightly.plusButtonClicked",
 						title: "%command.newTask.title%",
 						icon: "$(edit)",
 					},
 					{
-						command: "njust-ai-cj-nightly.openInNewTab",
+						command: "njust-ai-nightly.openInNewTab",
 						title: "%command.openInNewTab.title%",
 						category: "%configuration.title%",
 					},
@@ -159,48 +159,48 @@ describe("generatePackageJson", () => {
 				menus: {
 					"editor/context": [
 						{
-							submenu: "njust-ai-cj-nightly.contextMenu",
+							submenu: "njust-ai-nightly.contextMenu",
 							group: "navigation",
 						},
 					],
-					"njust-ai-cj-nightly.contextMenu": [
+					"njust-ai-nightly.contextMenu": [
 						{
-							command: "njust-ai-cj-nightly.addToContext",
+							command: "njust-ai-nightly.addToContext",
 							group: "1_actions@1",
 						},
 					],
 					"editor/title": [
 						{
-							command: "njust-ai-cj-nightly.plusButtonClicked",
+							command: "njust-ai-nightly.plusButtonClicked",
 							group: "navigation@1",
-							when: "activeWebviewPanelId == njust-ai-cj-nightly.TabPanelProvider",
+							when: "activeWebviewPanelId == njust-ai-nightly.TabPanelProvider",
 						},
 						{
-							command: "njust-ai-cj-nightly.settingsButtonClicked",
+							command: "njust-ai-nightly.settingsButtonClicked",
 							group: "navigation@6",
-							when: "activeWebviewPanelId == njust-ai-cj-nightly.TabPanelProvider",
+							when: "activeWebviewPanelId == njust-ai-nightly.TabPanelProvider",
 						},
 						{
-							command: "njust-ai-cj-nightly.accountButtonClicked",
+							command: "njust-ai-nightly.accountButtonClicked",
 							group: "navigation@6",
-							when: "activeWebviewPanelId == njust-ai-cj-nightly.TabPanelProvider",
+							when: "activeWebviewPanelId == njust-ai-nightly.TabPanelProvider",
 						},
 					],
 				},
 				submenus: [
 					{
-						id: "njust-ai-cj-nightly.contextMenu",
+						id: "njust-ai-nightly.contextMenu",
 						label: "%views.contextMenu.label%",
 					},
 					{
-						id: "njust-ai-cj-nightly.terminalMenu",
+						id: "njust-ai-nightly.terminalMenu",
 						label: "%views.terminalMenu.label%",
 					},
 				],
 				configuration: {
 					title: "%configuration.title%",
 					properties: {
-						"njust-ai-cj-nightly.allowedCommands": {
+						"njust-ai-nightly.allowedCommands": {
 							type: "array",
 							items: {
 								type: "string",
@@ -208,7 +208,7 @@ describe("generatePackageJson", () => {
 							default: ["npm test", "npm install", "tsc", "git log", "git diff", "git show"],
 							description: "%commands.allowedCommands.description%",
 						},
-						"njust-ai-cj-nightly.customStoragePath": {
+						"njust-ai-nightly.customStoragePath": {
 							type: "string",
 							default: "",
 							description: "%settings.customStoragePath.description%",

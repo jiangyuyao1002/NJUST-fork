@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@/utils/test-utils"
 
-import { MarketplaceItem } from "@njust-ai-cj/types"
+import { MarketplaceItem } from "@njust-ai/types"
 
 import { MarketplaceInstallModal } from "../MarketplaceInstallModal"
 

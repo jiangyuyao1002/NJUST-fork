@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://docs.sambanova.ai/cloud/docs/get-started/supported-models
 export type SambaNovaModelId =

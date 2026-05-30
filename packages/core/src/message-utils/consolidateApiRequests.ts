@@ -1,4 +1,4 @@
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 /**
  * Consolidates API request start and finish messages in an array of ClineMessages.

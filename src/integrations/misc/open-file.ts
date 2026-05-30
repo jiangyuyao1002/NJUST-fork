@@ -5,8 +5,8 @@ import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { t } from "../../i18n"
 
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 interface OpenFileOptions {
 	create?: boolean

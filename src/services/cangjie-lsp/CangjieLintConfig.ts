@@ -1,8 +1,8 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 // ---------------------------------------------------------------------------
 // .cjlintrc configuration file support

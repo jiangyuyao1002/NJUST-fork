@@ -3,8 +3,8 @@
  */
 
 import { logger } from "../../shared/logger"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 /**
  * Normalizes a command list by filtering invalid entries and trimming whitespace.

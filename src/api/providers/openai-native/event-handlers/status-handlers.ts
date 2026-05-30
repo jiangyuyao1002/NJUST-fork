@@ -1,4 +1,4 @@
-import { ApiProviderError } from "@njust-ai-cj/types"
+import { ApiProviderError } from "@njust-ai/types"
 import type { ApiStream } from "../../../transform/stream"
 import type { OpenAiNativeModel, ResponsesStreamEvent } from "../base"
 import type { EventHandlerContext } from "./types"

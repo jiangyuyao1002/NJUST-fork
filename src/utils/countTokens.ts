@@ -4,8 +4,8 @@ import workerpool from "workerpool"
 import { logger } from "../shared/logger"
 import { countTokensResultSchema } from "../workers/types"
 import { tiktoken } from "./tiktoken"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 let pool: workerpool.Pool | null | undefined = undefined
 

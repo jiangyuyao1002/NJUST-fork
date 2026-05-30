@@ -8,7 +8,7 @@ import {
 	type RooCliStreamEvent,
 	type RooCliToolResult,
 	type RooCliToolUse,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 /**
  * JSON Event Types for Structured CLI Output

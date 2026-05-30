@@ -10,8 +10,8 @@ import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { normalizeDotSlashCommandForWindowsShell } from "../../utils/hostShellCommand"
 import { filterSensitiveEnv } from "../../utils/env"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export class ExecaTerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<RooTerminal>

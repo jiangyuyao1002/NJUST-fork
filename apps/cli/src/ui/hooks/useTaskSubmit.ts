@@ -1,6 +1,6 @@
 import { useCallback } from "react"
 import { randomUUID } from "crypto"
-import type { WebviewMessage } from "@njust-ai-cj/types"
+import type { WebviewMessage } from "@njust-ai/types"
 
 import { getGlobalCommand } from "../../lib/utils/commands.js"
 

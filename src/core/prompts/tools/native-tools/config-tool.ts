@@ -1,6 +1,6 @@
 import type OpenAI from "openai"
 
-const CONFIG_TOOL_DESCRIPTION = `Read or write VS Code workspace configuration settings under the "roo-code" namespace. Use this tool to inspect or modify extension settings at runtime.
+const CONFIG_TOOL_DESCRIPTION = `Read or write VS Code workspace configuration settings under the "Njust-AI" namespace. Use this tool to inspect or modify extension settings at runtime.
 
 Actions:
 - "get": Retrieve the value of a specific configuration key.

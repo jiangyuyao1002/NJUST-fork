@@ -116,7 +116,7 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 				},
 				responseType: format === "json" ? "json" : "text",
 				headers: {
-					"User-Agent": "Mozilla/5.0 (compatible; RooCode/1.0; +https://github.com/RooVetGit/Roo-Code)",
+					"User-Agent": "Mozilla/5.0 (compatible; NjustAi/1.0; +https://github.com/JunjieChen0/Njust-AI)",
 					Accept: format === "json" ? "application/json" : "text/html,application/xhtml+xml,*/*",
 				},
 				validateStatus: (status) => status < 400,

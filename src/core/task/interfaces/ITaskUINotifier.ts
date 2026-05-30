@@ -1,4 +1,4 @@
-import type { ExtensionMessage, HistoryItem } from "@njust-ai-cj/types"
+import type { ExtensionMessage, HistoryItem } from "@njust-ai/types"
 
 /**
  * Task → UI notifications (webview / history). Implemented by ClineProvider.

@@ -9,8 +9,8 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export type ApiMessage = Anthropic.MessageParam & {
 	ts?: number
@@ -79,7 +79,7 @@ export async function readApiMessages({
 			}
 			if (parsedData.length === 0) {
 				logger.error("ApiMessages", 
-					`[Roo-Debug] readApiMessages: Found API conversation history file, but it's empty (parsed as []). TaskId: ${taskId}, Path: ${filePath}`,
+					`[Njust-AI-Debug] readApiMessages: Found API conversation history file, but it's empty (parsed as []). TaskId: ${taskId}, Path: ${filePath}`,
 				)
 			}
 			return parsedData
@@ -105,7 +105,7 @@ export async function readApiMessages({
 				}
 				if (parsedData.length === 0) {
 					logger.error("ApiMessages", 
-						`[Roo-Debug] readApiMessages: Found OLD API conversation history file (claude_messages.json), but it's empty (parsed as []). TaskId: ${taskId}, Path: ${oldPath}`,
+						`[Njust-AI-Debug] readApiMessages: Found OLD API conversation history file (claude_messages.json), but it's empty (parsed as []). TaskId: ${taskId}, Path: ${oldPath}`,
 					)
 				}
 				await fs.unlink(oldPath)
@@ -123,7 +123,7 @@ export async function readApiMessages({
 
 	// If we reach here, neither the new nor the old history file was found.
 	logger.error("ApiMessages", 
-		`[Roo-Debug] readApiMessages: API conversation history file not found for taskId: ${taskId}. Expected at: ${filePath}`,
+		`[Njust-AI-Debug] readApiMessages: API conversation history file not found for taskId: ${taskId}. Expected at: ${filePath}`,
 	)
 	return []
 }

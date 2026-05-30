@@ -1,6 +1,6 @@
 import React from "react"
 
-import type { ClineMessage, FollowUpData, SuggestionItem } from "@njust-ai-cj/types"
+import type { ClineMessage, FollowUpData, SuggestionItem } from "@njust-ai/types"
 
 import { Markdown } from "../Markdown"
 import { FollowUpSuggest } from "../FollowUpSuggest"

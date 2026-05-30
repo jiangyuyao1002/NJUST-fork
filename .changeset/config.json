@@ -2,10 +2,10 @@
 	"$schema": "https://unpkg.com/@changesets/config@3.0.4/schema.json",
 	"changelog": "./changelog-config.js",
 	"commit": false,
-	"fixed": [["njust-ai-cj"]],
+	"fixed": [["njust-ai"]],
 	"linked": [],
 	"access": "restricted",
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
-	"ignore": ["@njust-ai-cj/cli"]
+	"ignore": ["@njust-ai/cli"]
 }

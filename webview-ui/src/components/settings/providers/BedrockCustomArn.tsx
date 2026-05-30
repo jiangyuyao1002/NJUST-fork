@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 
 import { validateBedrockArn } from "@src/utils/validate"
 import { useAppTranslation } from "@src/i18n/TranslationContext"

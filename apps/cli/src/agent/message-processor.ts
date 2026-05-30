@@ -17,8 +17,8 @@
  * - "invoke": Command invocations
  */
 
-import { ExtensionMessage, ClineMessage } from "@njust-ai-cj/types"
-import { debugLog } from "@njust-ai-cj/core/cli"
+import { ExtensionMessage, ClineMessage } from "@njust-ai/types"
+import { debugLog } from "@njust-ai/core/cli"
 
 import type { StateStore } from "./state-store.js"
 import type { TypedEventEmitter, AgentStateChangeEvent, WaitingForInputEvent, TaskCompletedEvent } from "./events.js"

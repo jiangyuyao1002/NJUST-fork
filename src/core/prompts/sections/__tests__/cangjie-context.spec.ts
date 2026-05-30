@@ -270,7 +270,7 @@ describe("corpus query building", () => {
 
 describe("parseCjpmToml (smol-toml + fallback)", () => {
 	it("reads package fields from valid TOML", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "roo-cjpm-"))
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "njust-ai-cjpm-"))
 		try {
 			fs.writeFileSync(
 				path.join(dir, "cjpm.toml"),
@@ -296,7 +296,7 @@ src-dir = "src2"
 	})
 
 	it("parses multiline string in workspace member dependency (smol path)", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "roo-ws-"))
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "njust-ai-ws-"))
 		try {
 			const mod = path.join(root, "core")
 			fs.mkdirSync(mod, { recursive: true })
@@ -485,7 +485,7 @@ tagged = { git = "https://example.test/repo.git", tag = "v1" }
 	})
 
 	it("scans package hierarchy with source, test, main, and child packages", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "roo-cjpm-scan-"))
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "njust-ai-cjpm-scan-"))
 		const leaf = path.join(root, "src", "network", "http")
 		fs.mkdirSync(leaf, { recursive: true })
 		fs.writeFileSync(path.join(root, "src", "main.cj"), "main() {}", "utf-8")
@@ -509,7 +509,7 @@ tagged = { git = "https://example.test/repo.git", tag = "v1" }
 	})
 
 	it("builds a compact overview for single-module projects", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "roo-cjpm-overview-"))
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "njust-ai-cjpm-overview-"))
 		fs.mkdirSync(path.join(root, "src", "sub"), { recursive: true })
 		fs.writeFileSync(path.join(root, "src", "main.cj"), "main() {}", "utf-8")
 		fs.writeFileSync(path.join(root, "src", "sub", "helper.cj"), "package demo.sub", "utf-8")

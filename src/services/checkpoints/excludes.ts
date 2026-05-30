@@ -4,8 +4,8 @@ import { join } from "path"
 import { fileExistsAtPath } from "../../utils/fs"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 const getBuildArtifactPatterns = () => [
 	".gradle/",

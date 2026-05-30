@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 import type { ITaskHost } from "../interfaces/ITaskHost"
 
 // All vi.mock() calls are hoisted to the top of the file by Vitest
@@ -63,7 +63,7 @@ vi.mock("../../../integrations/terminal/TerminalRegistry", () => ({
 	},
 }))
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {

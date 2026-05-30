@@ -1,19 +1,19 @@
-# @njust-ai-cj/cli
+# @njust-ai/cli
 
-Command Line Interface for NJUST_AI_CJ - Run the NJUST_AI_CJ agent from the terminal without VSCode.
+Command Line Interface for NJUST_AI - Run the NJUST_AI agent from the terminal without VSCode.
 
 ## Overview
 
-This CLI uses the `@njust-ai-cj/vscode-shim` package to provide a VSCode API compatibility layer, allowing the main NJUST_AI_CJ extension to run in a Node.js environment.
+This CLI uses the `@njust-ai/vscode-shim` package to provide a VSCode API compatibility layer, allowing the main NJUST_AI extension to run in a Node.js environment.
 
 ## Installation
 
 ### Quick Install (Recommended)
 
-Install the NJUST_AI_CJ CLI with a single command:
+Install the NJUST_AI CLI with a single command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI_CJ/main/apps/cli/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI/main/apps/cli/install.sh | sh
 ```
 
 **Requirements:**
@@ -24,13 +24,13 @@ curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI_CJ/main/apps/cli/
 **Custom installation directory:**
 
 ```bash
-ROO_INSTALL_DIR=/opt/roo-code ROO_BIN_DIR=/usr/local/bin curl -fsSL ... | sh
+NJUST_AI_INSTALL_DIR=/opt/Njust-AI NJUST_AI_BIN_DIR=/usr/local/bin curl -fsSL ... | sh
 ```
 
 **Install a specific version:**
 
 ```bash
-ROO_VERSION=0.1.0 curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI_CJ/main/apps/cli/install.sh | sh
+NJUST_AI_VERSION=0.1.0 curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI/main/apps/cli/install.sh | sh
 ```
 
 ### Updating
@@ -38,19 +38,19 @@ ROO_VERSION=0.1.0 curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI
 Re-run the install script to update to the latest version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI_CJ/main/apps/cli/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/NJUST-AI/NJUST_AI/main/apps/cli/install.sh | sh
 ```
 
 Or run:
 
 ```bash
-roo upgrade
+njust-ai upgrade
 ```
 
 ### Uninstalling
 
 ```bash
-rm -rf ~/.njust_ai/cli ~/.local/bin/roo
+rm -rf ~/.njust_ai/cli ~/.local/bin/njust-ai
 ```
 
 ### Development Installation
@@ -62,10 +62,10 @@ For contributing or development:
 pnpm install
 
 # Build the main extension first.
-pnpm --filter njust-ai-cj bundle
+pnpm --filter njust-ai bundle
 
 # Build the CLI.
-pnpm --filter @njust-ai-cj/cli build
+pnpm --filter @njust-ai/cli build
 ```
 
 ## Usage
@@ -77,13 +77,13 @@ By default, the CLI auto-approves actions and runs in interactive TUI mode:
 ```bash
 export OPENROUTER_API_KEY=sk-or-v1-...
 
-roo "What is this project?" -w ~/Documents/my-project
+njust-ai "What is this project?" -w ~/Documents/my-project
 ```
 
 You can also run without a prompt and enter it interactively in TUI mode:
 
 ```bash
-roo -w ~/Documents/my-project
+njust-ai -w ~/Documents/my-project
 ```
 
 In interactive mode:
@@ -98,7 +98,7 @@ In interactive mode:
 If you want manual approval prompts, enable approval-required mode:
 
 ```bash
-roo "Refactor the utils.ts file" --require-approval -w ~/Documents/my-project
+njust-ai "Refactor the utils.ts file" --require-approval -w ~/Documents/my-project
 ```
 
 In approval-required mode:
@@ -112,10 +112,10 @@ Use `--print` for non-interactive execution and machine-readable output:
 
 ```bash
 # Prompt is required
-roo --print "Summarize this repository"
+njust-ai --print "Summarize this repository"
 
 # Create a new task with a specific session ID (UUID)
-roo --print --create-with-session-id 018f7fc8-7c96-7f7c-98aa-2ec4ff7f6d87 "Summarize this repository"
+njust-ai --print --create-with-session-id 018f7fc8-7c96-7f7c-98aa-2ec4ff7f6d87 "Summarize this repository"
 ```
 
 ### Stdin Stream Mode (`--stdin-prompt-stream`)
@@ -124,32 +124,32 @@ For programmatic control (one process, multiple prompts), use `--stdin-prompt-st
 Send NDJSON commands via stdin:
 
 ```bash
-printf '{"command":"start","requestId":"1","prompt":"1+1=?"}\n' | roo --print --stdin-prompt-stream --output-format stream-json
+printf '{"command":"start","requestId":"1","prompt":"1+1=?"}\n' | njust-ai --print --stdin-prompt-stream --output-format stream-json
 
 # Optional: provide taskId per start command
-printf '{"command":"start","requestId":"1","taskId":"018f7fc8-7c96-7f7c-98aa-2ec4ff7f6d87","prompt":"1+1=?"}\n' | roo --print --stdin-prompt-stream --output-format stream-json
+printf '{"command":"start","requestId":"1","taskId":"018f7fc8-7c96-7f7c-98aa-2ec4ff7f6d87","prompt":"1+1=?"}\n' | njust-ai --print --stdin-prompt-stream --output-format stream-json
 ```
 
-### NJUST_AI_CJ Cloud Authentication
+### NJUST_AI Cloud Authentication
 
-To use NJUST_AI_CJ Cloud features (like the provider proxy), you need to authenticate:
+To use NJUST_AI Cloud features (like the provider proxy), you need to authenticate:
 
 ```bash
-# Log in to NJUST_AI_CJ Cloud (opens browser)
-roo auth login
+# Log in to NJUST_AI Cloud (opens browser)
+njust-ai auth login
 
 # Check authentication status
-roo auth status
+njust-ai auth status
 
 # Log out
-roo auth logout
+njust-ai auth logout
 ```
 
 The `auth login` command:
 
-1. Opens your browser to authenticate with NJUST_AI_CJ Cloud
+1. Opens your browser to authenticate with NJUST_AI Cloud
 2. Receives a secure token via localhost callback
-3. Stores the token in `~/.config/roo/credentials.json`
+3. Stores the token in `~/.config/njust-ai/credentials.json`
 
 Tokens are valid for 90 days. The CLI will prompt you to re-authenticate when your token expires.
 
@@ -157,7 +157,7 @@ Tokens are valid for 90 days. The CLI will prompt you to re-authenticate when yo
 
 ```
 ┌──────┐         ┌─────────┐         ┌───────────────┐
-│  CLI │         │ Browser │         │ NJUST_AI_CJ Cloud│
+│  CLI │         │ Browser │         │ NJUST_AI Cloud│
 └──┬───┘         └────┬────┘         └───────┬───────┘
    │                  │                      │
    │ Open auth URL    │                      │
@@ -188,7 +188,7 @@ Tokens are valid for 90 days. The CLI will prompt you to re-authenticate when yo
 | `-d, --debug`                           | Enable debug output (includes detailed debug information, prompts, paths, etc)          | `false`                                  |
 | `-a, --require-approval`                | Require manual approval before actions execute                                          | `false`                                  |
 | `-k, --api-key <key>`                   | API key for the LLM provider                                                            | From env var                             |
-| `--provider <provider>`                 | API provider (roo, anthropic, openai, openrouter, etc.)                                 | `openrouter` (or `roo` if authenticated) |
+| `--provider <provider>`                 | API provider (njust-ai, anthropic, openai, openrouter, etc.)                                 | `openrouter` (or `njust-ai` if authenticated) |
 | `-m, --model <model>`                   | Model to use                                                                            | `anthropic/claude-opus-4.6`              |
 | `--mode <mode>`                         | Mode to start in (code, architect, ask, debug, etc.)                                    | `code`                                   |
 | `--terminal-shell <path>`               | Absolute shell path for inline terminal command execution                               | Auto-detected shell                      |
@@ -202,9 +202,9 @@ Tokens are valid for 90 days. The CLI will prompt you to re-authenticate when yo
 
 | Command           | Description                        |
 | ----------------- | ---------------------------------- |
-| `roo auth login`  | Authenticate with NJUST_AI_CJ Cloud   |
-| `roo auth logout` | Clear stored authentication token  |
-| `roo auth status` | Show current authentication status |
+| `njust-ai auth login`  | Authenticate with NJUST_AI Cloud   |
+| `njust-ai auth logout` | Clear stored authentication token  |
+| `njust-ai auth status` | Show current authentication status |
 
 ## Environment Variables
 
@@ -212,7 +212,7 @@ The CLI will look for API keys in environment variables if not provided via `--a
 
 | Provider          | Environment Variable        |
 | ----------------- | --------------------------- |
-| roo               | `ROO_API_KEY`               |
+| njust-ai               | `NJUST_AI_API_KEY`               |
 | anthropic         | `ANTHROPIC_API_KEY`         |
 | openai-native     | `OPENAI_API_KEY`            |
 | openrouter        | `OPENROUTER_API_KEY`        |
@@ -223,7 +223,7 @@ The CLI will look for API keys in environment variables if not provided via `--a
 
 | Variable          | Description                                                          |
 | ----------------- | -------------------------------------------------------------------- |
-| `ROO_WEB_APP_URL` | Override the NJUST_AI_CJ Cloud URL |
+| `NJUST_AI_WEB_APP_URL` | Override the NJUST_AI Cloud URL |
 
 ## Architecture
 
@@ -255,7 +255,7 @@ The CLI will look for API keys in environment variables if not provided via `--a
 
 2. **ExtensionHost** (`extension-host.ts`):
 
-    - Creates a VSCode API mock using `@njust-ai-cj/vscode-shim`
+    - Creates a VSCode API mock using `@njust-ai/vscode-shim`
     - Intercepts `require('vscode')` to return the mock
     - Loads and activates the extension bundle
     - Manages bidirectional message flow
@@ -268,7 +268,7 @@ The CLI will look for API keys in environment variables if not provided via `--a
 
 ```bash
 # Run directly from source (no build required)
-pnpm dev --provider roo --api-key $ROO_API_KEY --print "Hello"
+pnpm dev --provider njust-ai --api-key $NJUST_AI_API_KEY --print "Hello"
 
 # Run tests
 pnpm test
@@ -280,10 +280,10 @@ pnpm check-types
 pnpm lint
 ```
 
-By default the `start` script points `NJUST_AI_CJ_PROVIDER_URL` at `http://localhost:8080/proxy` for local development. To point at the production API instead, override the environment variable:
+By default the `start` script points `NJUST_AI_PROVIDER_URL` at `http://localhost:8080/proxy` for local development. To point at the production API instead, override the environment variable:
 
 ```bash
-pnpm dev --provider roo --api-key $ROO_API_KEY --print "Hello"
+pnpm dev --provider njust-ai --api-key $NJUST_AI_API_KEY --print "Hello"
 ```
 
 ## Releasing

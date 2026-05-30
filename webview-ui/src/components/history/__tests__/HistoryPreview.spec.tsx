@@ -1,6 +1,6 @@
 import { render, screen } from "@/utils/test-utils"
 
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 
 import HistoryPreview from "../HistoryPreview"
 import type { TaskGroup } from "../types"

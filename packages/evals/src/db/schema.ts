@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, integer, real, boolean, jsonb, uniqueIndex } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
-import type { NJUST_AI_CJSettings, ToolName, ToolUsage } from "@njust-ai-cj/types"
+import type { NJUST_AISettings, ToolName, ToolUsage } from "@njust-ai/types"
 
 import type { ExerciseLanguage } from "../exercises/index"
 
@@ -26,7 +26,7 @@ export const runs = pgTable("runs", {
 	outputPrice: real(),
 	cacheWritesPrice: real(),
 	cacheReadsPrice: real(),
-	settings: jsonb().$type<NJUST_AI_CJSettings>(),
+	settings: jsonb().$type<NJUST_AISettings>(),
 	jobToken: text(),
 	pid: integer(),
 	socketPath: text("socket_path").notNull(),

@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { formatRelative } from "date-fns"
 
-import type { McpErrorEntry } from "@njust-ai-cj/types"
+import type { McpErrorEntry } from "@njust-ai/types"
 
 type McpErrorRowProps = {
 	error: McpErrorEntry

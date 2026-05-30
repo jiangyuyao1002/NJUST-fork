@@ -6,12 +6,12 @@ import { promisify } from "util"
 import { Package } from "../../shared/package"
 import { resolveLatexmkExecutable, resolvePdflatexExecutable } from "./latexResolve"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 const execFileAsync = promisify(execFile)
 
-const LATEX_OUTPUT_CHANNEL = "LaTeX (NJUST_AI_CJ)"
+const LATEX_OUTPUT_CHANNEL = "LaTeX (NJUST_AI)"
 
 function isLatexDocument(doc: vscode.TextDocument): boolean {
 	if (doc.languageId === "latex" || doc.languageId === "tex") return true

@@ -38,7 +38,7 @@ import {
 	type ExperimentId,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	ImageGenerationProvider,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { vscode } from "@src/utils/vscode"
 import { cn } from "@src/lib/utils"

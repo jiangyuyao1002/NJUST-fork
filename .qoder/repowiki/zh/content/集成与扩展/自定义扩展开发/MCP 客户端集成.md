@@ -28,7 +28,7 @@
 
 ## 简介
 
-本文档提供了 NJUST_AI_CJ 扩展中 MCP（Model Context Protocol）客户端的全面集成指南。MCP 是一个开放协议，允许 AI 模型与外部工具和服务进行交互。该客户端实现了对 MCP 协议的支持，使扩展能够连接到各种 MCP 服务器（本地进程、SSE 流或 HTTP 流），并动态发现和调用可用工具。
+本文档提供了 NJUST_AI 扩展中 MCP（Model Context Protocol）客户端的全面集成指南。MCP 是一个开放协议，允许 AI 模型与外部工具和服务进行交互。该客户端实现了对 MCP 协议的支持，使扩展能够连接到各种 MCP 服务器（本地进程、SSE 流或 HTTP 流），并动态发现和调用可用工具。
 
 该集成支持多种传输协议，包括标准输入输出（stdio）、服务器发送事件（SSE）和可流式 HTTP 传输，并提供了完整的配置管理、状态监控和错误处理机制。
 
@@ -435,7 +435,7 @@ E --> J
 
 ## 结论
 
-NJUST_AI_CJ 的 MCP 客户端集成了完整的 Model Context Protocol 支持，提供了：
+NJUST_AI 的 MCP 客户端集成了完整的 Model Context Protocol 支持，提供了：
 
 1. **多协议支持**：同时支持 stdio、SSE 和 HTTP 传输
 2. **智能配置管理**：自动验证、热重载和优先级管理

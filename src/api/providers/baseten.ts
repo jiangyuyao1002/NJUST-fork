@@ -1,4 +1,4 @@
-import { type BasetenModelId, basetenDefaultModelId, basetenModels } from "@njust-ai-cj/core/providers"
+import { type BasetenModelId, basetenDefaultModelId, basetenModels } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { BaseOpenAiCompatibleProvider } from "./base-openai-compatible-provider"

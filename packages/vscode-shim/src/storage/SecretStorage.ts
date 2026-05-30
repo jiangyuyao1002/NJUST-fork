@@ -10,7 +10,7 @@ const ENCRYPTION_ALGORITHM = "aes-256-gcm"
 const KEY_LENGTH = 32
 const IV_LENGTH = 16
 const AUTH_TAG_LENGTH = 16
-const SALT = "njust-ai-cj-secret-storage-v1"
+const SALT = "njust-ai-secret-storage-v1"
 
 /**
  * File-based implementation of VSCode's SecretStorage interface

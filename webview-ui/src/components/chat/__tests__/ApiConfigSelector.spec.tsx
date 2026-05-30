@@ -30,8 +30,8 @@ vi.mock("@/context/ExtensionStateContext", () => ({
 	}),
 }))
 
-// Mock the getModelId function from @njust-ai-cj/types
-vi.mock("@njust-ai-cj/types", () => ({
+// Mock the getModelId function from @njust-ai/types
+vi.mock("@njust-ai/types", () => ({
 	getModelId: (config: any) => config?.apiModelId || undefined,
 }))
 

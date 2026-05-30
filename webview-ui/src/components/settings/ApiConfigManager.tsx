@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from "react"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { AlertTriangle } from "lucide-react"
 
-import type { ProviderSettingsEntry, OrganizationAllowList } from "@njust-ai-cj/types"
+import type { ProviderSettingsEntry, OrganizationAllowList } from "@njust-ai/types"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import {

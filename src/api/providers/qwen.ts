@@ -1,4 +1,4 @@
-import { qwenModels, qwenDefaultModelId } from "@njust-ai-cj/core/providers"
+import { qwenModels, qwenDefaultModelId } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

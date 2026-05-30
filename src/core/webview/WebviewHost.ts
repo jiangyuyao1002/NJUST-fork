@@ -7,7 +7,7 @@
  */
 
 import * as vscode from "vscode"
-import type { ExtensionMessage } from "@njust-ai-cj/types"
+import type { ExtensionMessage } from "@njust-ai/types"
 
 /**
  * Contract for hosting a webview panel / sidebar view.

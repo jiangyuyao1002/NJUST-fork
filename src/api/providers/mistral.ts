@@ -8,7 +8,7 @@ import {
 	mistralDefaultModelId,
 	mistralModels,
 	MISTRAL_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { ApiHandlerOptions } from "../../shared/api"
 

@@ -5,8 +5,8 @@ import { detectCangjieHome } from "./cangjieToolUtils"
 import type { CangjieCompileGuard } from "./CangjieCompileGuard"
 import { Package } from "../../shared/package"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Provides a DebugAdapterDescriptor for the "cangjie" debug type.

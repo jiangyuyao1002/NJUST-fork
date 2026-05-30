@@ -1,4 +1,4 @@
-import { getRuns } from "@njust-ai-cj/evals"
+import { getRuns } from "@njust-ai/evals"
 
 import { Runs } from "@/components/home/runs"
 

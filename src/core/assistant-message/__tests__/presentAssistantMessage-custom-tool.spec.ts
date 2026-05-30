@@ -17,14 +17,14 @@ vi.mock("../../tools/validateToolUse", () => ({
 }))
 
 // Mock custom tool registry - must be done inline without external variable references
-vi.mock("@njust-ai-cj/core", () => ({
+vi.mock("@njust-ai/core", () => ({
 	customToolRegistry: {
 		has: vi.fn(),
 		get: vi.fn(),
 	},
 }))
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {
@@ -34,8 +34,8 @@ vi.mock("@njust-ai-cj/telemetry", () => ({
 	},
 }))
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { customToolRegistry } from "@njust-ai-cj/core"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { customToolRegistry } from "@njust-ai/core"
 
 describe("presentAssistantMessage - Custom Tool Recording", () => {
 	let mockTask: any

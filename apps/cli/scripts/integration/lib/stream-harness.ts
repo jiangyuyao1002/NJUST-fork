@@ -64,12 +64,12 @@ function parseEvent(line: string): StreamEvent | null {
 }
 
 export async function runStreamCase(options: RunStreamCaseOptions): Promise<void> {
-	const cliRoot = process.env.ROO_CLI_ROOT ? path.resolve(process.env.ROO_CLI_ROOT) : defaultCliRoot
+	const cliRoot = process.env.NJUST_AI_CLI_ROOT ? path.resolve(process.env.NJUST_AI_CLI_ROOT) : defaultCliRoot
 	const timeoutMs = options.timeoutMs ?? 120_000
 
 	const child = execa(
 		"pnpm",
-		["dev", "--print", "--stdin-prompt-stream", "--provider", "roo", "--output-format", "stream-json"],
+		["dev", "--print", "--stdin-prompt-stream", "--provider", "njust-ai", "--output-format", "stream-json"],
 		{
 			cwd: cliRoot,
 			stdin: "pipe",

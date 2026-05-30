@@ -11,17 +11,17 @@ import { appendImages } from "@src/utils/imageUtils"
 import { getCostBreakdownIfNeeded } from "@src/utils/costFormatting"
 import { batchConsecutive } from "@src/utils/batchConsecutive"
 
-import type { ClineAsk, ClineSayTool, ClineMessage, ExtensionMessage, AudioType } from "@njust-ai-cj/types"
-import { isRetiredProvider } from "@njust-ai-cj/types"
+import type { ClineAsk, ClineSayTool, ClineMessage, ExtensionMessage, AudioType } from "@njust-ai/types"
+import { isRetiredProvider } from "@njust-ai/types"
 
-import { findLast } from "@roo/array"
-import { SuggestionItem } from "@njust-ai-cj/types"
-import { combineApiRequests } from "@roo/combineApiRequests"
-import { combineCommandSequences } from "@roo/combineCommandSequences"
-import { getApiMetrics } from "@roo/getApiMetrics"
-import { getAllModes } from "@roo/modes"
-import { ProfileValidator } from "@roo/ProfileValidator"
-import { getLatestTodo } from "@roo/todo"
+import { findLast } from "@shared/array"
+import { SuggestionItem } from "@njust-ai/types"
+import { combineApiRequests } from "@shared/combineApiRequests"
+import { combineCommandSequences } from "@shared/combineCommandSequences"
+import { getApiMetrics } from "@shared/getApiMetrics"
+import { getAllModes } from "@shared/modes"
+import { ProfileValidator } from "@shared/ProfileValidator"
+import { getLatestTodo } from "@shared/todo"
 
 import { cn } from "@/lib/utils"
 import { vscode } from "@src/utils/vscode"
@@ -1818,7 +1818,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				</div>
 			)}
 
-			<div id="roo-portal" />
+			<div id="njust-ai-portal" />
 		</div>
 	)
 }

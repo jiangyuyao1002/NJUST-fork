@@ -1,4 +1,4 @@
-import { mimoModels, mimoDefaultModelId, MIMO_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
+import { mimoModels, mimoDefaultModelId, MIMO_DEFAULT_TEMPERATURE } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

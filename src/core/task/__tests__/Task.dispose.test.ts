@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
 
-import { ProviderSettings } from "@njust-ai-cj/types"
+import { ProviderSettings } from "@njust-ai/types"
 
 import { Task } from "../Task"
 import type { ITaskHost } from "../interfaces/ITaskHost"
@@ -21,7 +21,7 @@ vi.mock("../../../api", () => ({
 		getModel: () => ({ info: {}, id: "test-model" }),
 	})),
 }))
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {

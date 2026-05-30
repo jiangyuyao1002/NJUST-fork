@@ -6,7 +6,7 @@ import axios from "axios"
 import {
 	VERCEL_AI_GATEWAY_VISION_ONLY_MODELS,
 	VERCEL_AI_GATEWAY_VISION_AND_TOOLS_MODELS,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { getVercelAiGatewayModels, parseVercelAiGatewayModel } from "../vercel-ai-gateway"
 

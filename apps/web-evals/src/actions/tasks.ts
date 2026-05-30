@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-import { getTasks as _getTasks } from "@njust-ai-cj/evals"
+import { getTasks as _getTasks } from "@njust-ai/evals"
 
 export async function getTasks(runId: number) {
 	const tasks = await _getTasks(runId)

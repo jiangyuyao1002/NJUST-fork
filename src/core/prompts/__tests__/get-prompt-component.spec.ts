@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import type { CustomModePrompts } from "@njust-ai-cj/types"
+import type { CustomModePrompts } from "@njust-ai/types"
 
 import { getPromptComponent } from "../system"
 

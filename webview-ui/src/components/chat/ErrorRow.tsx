@@ -94,8 +94,8 @@ export const ErrorRow = memo(
 			if (!docsURL) return undefined
 			try {
 				const url = new URL(docsURL)
-				// Only allow http, https, and roocode protocols
-				if (url.protocol === "https:" || url.protocol === "http:" || url.protocol === "roocode:") {
+				// Only allow http, https, and NjustAi protocols
+				if (url.protocol === "https:" || url.protocol === "http:" || url.protocol === "NjustAi:") {
 					return docsURL
 				}
 			} catch {
@@ -284,7 +284,7 @@ export const ErrorRow = memo(
 										className="text-sm flex items-center gap-1 transition-opacity opacity-0 group-hover:opacity-100"
 										onClick={(e) => {
 											e.preventDefault()
-											if (safeDocsURL.startsWith("roocode://settings")) {
+											if (safeDocsURL.startsWith("NjustAi://settings")) {
 												vscode.postMessage({
 													type: "switchTab",
 													tab: "settings",
@@ -295,7 +295,7 @@ export const ErrorRow = memo(
 											}
 										}}>
 										<BookOpenText className="size-3 mt-[3px]" />
-										{safeDocsURL.startsWith("roocode://settings")
+										{safeDocsURL.startsWith("NjustAi://settings")
 											? t("chat:apiRequest.errorMessage.goToSettings", {
 													defaultValue: "Settings",
 												})

@@ -5,8 +5,8 @@ const path = require("path")
 const { execSync } = require("child_process")
 const readline = require("readline")
 
-const PACKAGE_NAME = "@njust-ai-cj/types"
-const BRANCH_NAME = "roo-code-types-v"
+const PACKAGE_NAME = "@njust-ai/types"
+const BRANCH_NAME = "Njust-AI-types-v"
 
 const rootDir = path.join(__dirname, "..")
 const npmDir = path.join(rootDir, "npm")

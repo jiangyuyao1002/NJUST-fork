@@ -1,4 +1,4 @@
-// pnpm --filter njust-ai-cj test api/providers/__tests__/openrouter.spec.ts
+// pnpm --filter njust-ai test api/providers/__tests__/openrouter.spec.ts
 
 import { describe, it, expect, beforeEach } from "vitest"
 
@@ -14,7 +14,7 @@ import { Package } from "../../../shared/package"
 vitest.mock("openai")
 vitest.mock("delay", () => ({ default: vitest.fn(() => Promise.resolve()) }))
 
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureException: vitest.fn(),
@@ -100,9 +100,9 @@ describe("OpenRouterHandler", () => {
 			baseURL: "https://openrouter.ai/api/v1",
 			apiKey: mockOptions.openRouterApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI_CJ",
-				"X-Title": "NJUST_AI_CJ",
-				"User-Agent": `NJUST_AI_CJ/${Package.version}`,
+				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI",
+				"X-Title": "NJUST_AI",
+				"User-Agent": `NJUST_AI/${Package.version}`,
 			},
 		})
 	})

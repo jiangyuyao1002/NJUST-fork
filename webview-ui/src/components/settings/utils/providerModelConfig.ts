@@ -1,4 +1,4 @@
-import type { ProviderName, ModelInfo, ProviderSettings, ModelRecord, RouterModels, RouterProvider } from "@njust-ai-cj/types"
+import type { ProviderName, ModelInfo, ProviderSettings, ModelRecord, RouterModels, RouterProvider } from "@njust-ai/types"
 import {
 	anthropicDefaultModelId,
 	bedrockDefaultModelId,
@@ -21,7 +21,7 @@ import {
 	glmDefaultModelId,
 	mimoDefaultModelId,
 	mimoTokenPlanDefaultModelId,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { MODELS_BY_PROVIDER } from "../constants"
 
@@ -141,7 +141,7 @@ export const PROVIDERS_WITH_CUSTOM_MODEL_UI: ProviderName[] = [
 	"openai-codex", // OpenAI Codex has custom UI with auth and rate limits
 	"litellm",
 	"vercel-ai-gateway",
-	"roo",
+	"njust-ai",
 	"ollama",
 	"lmstudio",
 	"vscode-lm",

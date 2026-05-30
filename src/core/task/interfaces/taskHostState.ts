@@ -1,4 +1,4 @@
-import type { ExtensionState } from "@njust-ai-cj/types"
+import type { ExtensionState } from "@njust-ai/types"
 
 /** Same shape as ClineProvider.getState() return type. */
 export type TaskHostState = Omit<

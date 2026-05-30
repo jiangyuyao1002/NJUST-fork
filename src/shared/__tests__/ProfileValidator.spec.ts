@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import type { ProviderSettings, OrganizationAllowList } from "@njust-ai-cj/types"
+import type { ProviderSettings, OrganizationAllowList } from "@njust-ai/types"
 
 import { ProfileValidator } from "../ProfileValidator"
 

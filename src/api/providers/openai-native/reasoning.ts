@@ -1,4 +1,4 @@
-import { type ModelInfo, type ReasoningEffortExtended, type ServiceTier } from "@njust-ai-cj/types"
+import { type ModelInfo, type ReasoningEffortExtended, type ServiceTier } from "@njust-ai/types"
 import { type OpenAiNativeModel } from "./base"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

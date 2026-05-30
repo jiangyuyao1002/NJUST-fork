@@ -11,8 +11,8 @@ import {
 } from "vscode-languageclient/node"
 import { Package } from "../../shared/package"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 const CANGJIE_LANGUAGE_ID = "cangjie"
 const LSP_SERVER_NAME = "Cangjie Language Server"

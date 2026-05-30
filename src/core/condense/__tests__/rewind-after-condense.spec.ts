@@ -4,14 +4,14 @@ import { describe, it, expect, beforeEach } from "vitest"
 
 /**
  * Regression tests for the issue: "Rewind after Condense is broken"
- * https://github.com/NJUST-AI/NJUST_AI_CJ/issues/8295
+ * https://github.com/NJUST-AI/NJUST_AI/issues/8295
  *
  * These tests verify that when a user rewinds (deletes/truncates) their conversation
  * after a condense operation, the orphaned condensed messages are properly reactivated
  * so they can be sent to the API again.
  */
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { getEffectiveApiHistory, cleanupAfterTruncation } from "../index"
 import { ApiMessage } from "../../task-persistence/apiMessages"

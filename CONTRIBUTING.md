@@ -6,9 +6,9 @@
 </sub>
 </div>
 
-# Contributing to NJUST_AI_CJ
+# Contributing to NJUST_AI
 
-NJUST_AI_CJ is a community-driven project, and we deeply value every contribution. To streamline collaboration, we operate on an [Issue-First](#issue-first-approach) basis, meaning all [Pull Requests (PRs)](#submitting-a-pull-request) must first be linked to a GitHub Issue. Please review this guide carefully.
+NJUST_AI is a community-driven project, and we deeply value every contribution. To streamline collaboration, we operate on an [Issue-First](#issue-first-approach) basis, meaning all [Pull Requests (PRs)](#submitting-a-pull-request) must first be linked to a GitHub Issue. Please review this guide carefully.
 
 ## Table of Contents
 
@@ -47,10 +47,10 @@ Our roadmap guides the project's direction. Align your contributions with these 
 
 Mention alignment with these areas in your PRs.
 
-### 3. Join the NJUST_AI_CJ Community
+### 3. Join the NJUST_AI Community
 
-- **Primary:** Join our [Discord](https://discord.gg/njust-ai-cj) and DM **Hannes Rudolph (`hrudolph`)**.
-- **Alternative:** Experienced contributors can engage directly via [GitHub Projects](https://github.com/orgs/RooCodeInc/projects/1).
+- **Primary:** Join our [Discord](https://discord.gg/njust-ai) and DM **Hannes Rudolph (`hrudolph`)**.
+- **Alternative:** Experienced contributors can engage directly via [GitHub Projects](https://github.com/orgs/NjustAiInc/projects/1).
 
 ## Finding & Planning Your Contribution
 
@@ -64,26 +64,26 @@ Mention alignment with these areas in your PRs.
 
 All contributions start with a GitHub Issue using our skinny templates.
 
-- **Check existing issues**: Search [GitHub Issues](https://github.com/NJUST-AI/NJUST_AI_CJ/issues).
+- **Check existing issues**: Search [GitHub Issues](https://github.com/NJUST-AI/NJUST_AI/issues).
 - **Create an issue** using:
     - **Enhancements:** "Enhancement Request" template (plain language focused on user benefit).
     - **Bugs:** "Bug Report" template (minimal repro + expected vs actual + version).
-- **Want to work on it?** Comment "Claiming" on the issue and DM **Hannes Rudolph (`hrudolph`)** on [Discord](https://discord.gg/njust-ai-cj) to get assigned. Assignment will be confirmed in the thread.
+- **Want to work on it?** Comment "Claiming" on the issue and DM **Hannes Rudolph (`hrudolph`)** on [Discord](https://discord.gg/njust-ai) to get assigned. Assignment will be confirmed in the thread.
 - **PRs must link to the issue.** Unlinked PRs may be closed.
 
 ### Deciding What to Work On
 
-- Check the [GitHub Project](https://github.com/orgs/RooCodeInc/projects/1) for "Issue [Unassigned]" issues.
-- For docs, visit [NJUST_AI_CJ Docs](https://github.com/NJUST-AI/NJUST_AI_CJ-Docs).
+- Check the [GitHub Project](https://github.com/orgs/NjustAiInc/projects/1) for "Issue [Unassigned]" issues.
+- For docs, visit [NJUST_AI Docs](https://github.com/NJUST-AI/NJUST_AI-Docs).
 
 ### Reporting Bugs
 
 - Check for existing reports first.
-- Create a new bug using the ["Bug Report" template](https://github.com/NJUST-AI/NJUST_AI_CJ/issues/new/choose) with:
+- Create a new bug using the ["Bug Report" template](https://github.com/NJUST-AI/NJUST_AI/issues/new/choose) with:
     - Clear, numbered reproduction steps
     - Expected vs actual result
-    - NJUST_AI_CJ version (required); API provider/model if relevant
-- **Security issues**: Report privately via [security advisories](https://github.com/NJUST-AI/NJUST_AI_CJ/security/advisories/new).
+    - NJUST_AI version (required); API provider/model if relevant
+- **Security issues**: Report privately via [security advisories](https://github.com/NJUST-AI/NJUST_AI/security/advisories/new).
 
 ## Development & Submission Process
 
@@ -92,7 +92,7 @@ All contributions start with a GitHub Issue using our skinny templates.
 1. **Fork & Clone:**
 
 ```
-git clone https://github.com/YOUR_USERNAME/NJUST_AI_CJ.git
+git clone https://github.com/YOUR_USERNAME/NJUST_AI.git
 ```
 
 2. **Install Dependencies:**
@@ -121,7 +121,7 @@ pnpm install
 
 ### Pull Request Policy
 
-- Must reference an assigned GitHub Issue. To get assigned: comment "Claiming" on the issue and DM **Hannes Rudolph (`hrudolph`)** on [Discord](https://discord.gg/njust-ai-cj). Assignment will be confirmed in the thread.
+- Must reference an assigned GitHub Issue. To get assigned: comment "Claiming" on the issue and DM **Hannes Rudolph (`hrudolph`)** on [Discord](https://discord.gg/njust-ai). Assignment will be confirmed in the thread.
 - Unlinked PRs may be closed.
 - PRs should pass CI tests, align with the roadmap, and have clear documentation.
 
@@ -133,4 +133,4 @@ pnpm install
 
 ## Legal
 
-By contributing, you agree your contributions will be licensed under the Apache 2.0 License, consistent with NJUST_AI_CJ's licensing.
+By contributing, you agree your contributions will be licensed under the Apache 2.0 License, consistent with NJUST_AI's licensing.

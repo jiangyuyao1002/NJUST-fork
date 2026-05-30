@@ -6,8 +6,8 @@ import { t } from "../../../i18n"
 import { withValidationErrorHandling } from "../shared/validation-helpers"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 // Timeout constants for Ollama API requests
 const OLLAMA_EMBEDDING_TIMEOUT_MS = 60000 // 60 seconds for embedding requests

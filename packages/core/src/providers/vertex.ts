@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude
 export type VertexModelId = keyof typeof vertexModels

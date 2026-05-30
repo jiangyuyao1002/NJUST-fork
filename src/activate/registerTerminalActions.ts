@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { TerminalActionId, TerminalActionPromptType } from "@njust-ai-cj/types"
+import { TerminalActionId, TerminalActionPromptType } from "@njust-ai/types"
 
 import { getTerminalCommand } from "../utils/commands"
 import { handleTerminalAction } from "./providerActionDispatcher"

@@ -21,7 +21,7 @@ import type {
 import type { CloudAgentProfile } from "../../services/cloud-agent/types/profile"
 import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { AskIgnoredError } from "./AskIgnoredError"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 import { getErrorMessage } from "../../shared/error-utils"
 import type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 import { TaskAbortedError } from "./TaskErrors"
@@ -104,7 +104,7 @@ export class CloudAgentOrchestrator {
 			callbacks,
 			makeClientOptions(profile, requestAbort.signal, behavior.requestTimeoutMs),
 		)
-		this.host.emit(NJUST_AI_CJEventName.TaskStarted)
+		this.host.emit(NJUST_AIEventName.TaskStarted)
 
 		// MCP 协议强制走 legacy 路径（submit_task 在服务器端内聚 deferred 逻辑）
 		if (behavior.useDeferredProtocol && profile.protocolType !== "mcp") {

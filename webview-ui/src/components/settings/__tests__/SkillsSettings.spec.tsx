@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@/utils/test-utils"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
-import type { SkillMetadata } from "@njust-ai-cj/types"
+import type { SkillMetadata } from "@njust-ai/types"
 
 import { ExtensionStateContextProvider } from "@/context/ExtensionStateContext"
 import { vscode } from "@/utils/vscode"
@@ -28,7 +28,7 @@ vi.mock("@/i18n/TranslationContext", () => ({
 }))
 
 // Mock modes
-vi.mock("@roo/modes", () => ({
+vi.mock("@shared/modes", () => ({
 	getAllModes: () => [
 		{ slug: "code", name: "Code" },
 		{ slug: "architect", name: "Architect" },

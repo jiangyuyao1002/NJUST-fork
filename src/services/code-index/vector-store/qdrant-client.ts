@@ -8,8 +8,8 @@ import { DEFAULT_MAX_SEARCH_RESULTS, DEFAULT_SEARCH_MIN_SCORE, QDRANT_CODE_BLOCK
 import { t } from "../../../i18n"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Qdrant implementation of the vector store interface
@@ -66,7 +66,7 @@ export class QdrantVectorStore implements IVectorStore {
 				prefix: urlObj.pathname === "/" ? undefined : urlObj.pathname.replace(/\/+$/, ""),
 				apiKey,
 				headers: {
-					"User-Agent": "NJUST_AI_CJ",
+					"User-Agent": "NJUST_AI",
 				},
 			})
 		} catch {
@@ -76,7 +76,7 @@ export class QdrantVectorStore implements IVectorStore {
 				url: parsedUrl,
 				apiKey,
 				headers: {
-					"User-Agent": "NJUST_AI_CJ",
+					"User-Agent": "NJUST_AI",
 				},
 			})
 		}

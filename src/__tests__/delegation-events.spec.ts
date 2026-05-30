@@ -2,30 +2,30 @@
 
 import { describe, test, expect } from "vitest"
 
-import { NJUST_AI_CJEventName, rooCodeEventsSchema, taskEventSchema } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, NjustAiEventsSchema, taskEventSchema } from "@njust-ai/types"
 
 describe("delegation event schemas", () => {
-	test("rooCodeEventsSchema validates tuples", () => {
-		expect(() => (rooCodeEventsSchema.shape as any)[NJUST_AI_CJEventName.TaskDelegated].parse(["p", "c"])).not.toThrow()
+	test("NjustAiEventsSchema validates tuples", () => {
+		expect(() => (NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegated].parse(["p", "c"])).not.toThrow()
 		expect(() =>
-			(rooCodeEventsSchema.shape as any)[NJUST_AI_CJEventName.TaskDelegationCompleted].parse(["p", "c", "s"]),
+			(NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegationCompleted].parse(["p", "c", "s"]),
 		).not.toThrow()
 		expect(() =>
-			(rooCodeEventsSchema.shape as any)[NJUST_AI_CJEventName.TaskDelegationResumed].parse(["p", "c"]),
+			(NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegationResumed].parse(["p", "c"]),
 		).not.toThrow()
 
 		// invalid shapes
-		expect(() => (rooCodeEventsSchema.shape as any)[NJUST_AI_CJEventName.TaskDelegated].parse(["p"])).toThrow()
+		expect(() => (NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegated].parse(["p"])).toThrow()
 		expect(() =>
-			(rooCodeEventsSchema.shape as any)[NJUST_AI_CJEventName.TaskDelegationCompleted].parse(["p", "c"]),
+			(NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegationCompleted].parse(["p", "c"]),
 		).toThrow()
-		expect(() => (rooCodeEventsSchema.shape as any)[NJUST_AI_CJEventName.TaskDelegationResumed].parse(["p"])).toThrow()
+		expect(() => (NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegationResumed].parse(["p"])).toThrow()
 	})
 
 	test("taskEventSchema discriminated union includes delegation events", () => {
 		expect(() =>
 			taskEventSchema.parse({
-				eventName: NJUST_AI_CJEventName.TaskDelegated,
+				eventName: NJUST_AIEventName.TaskDelegated,
 				payload: ["p", "c"],
 				taskId: 1,
 			}),
@@ -33,7 +33,7 @@ describe("delegation event schemas", () => {
 
 		expect(() =>
 			taskEventSchema.parse({
-				eventName: NJUST_AI_CJEventName.TaskDelegationCompleted,
+				eventName: NJUST_AIEventName.TaskDelegationCompleted,
 				payload: ["p", "c", "s"],
 				taskId: 1,
 			}),
@@ -41,7 +41,7 @@ describe("delegation event schemas", () => {
 
 		expect(() =>
 			taskEventSchema.parse({
-				eventName: NJUST_AI_CJEventName.TaskDelegationResumed,
+				eventName: NJUST_AIEventName.TaskDelegationResumed,
 				payload: ["p", "c"],
 				taskId: 1,
 			}),

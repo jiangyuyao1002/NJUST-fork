@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest"
-import type { WebviewMessage } from "@njust-ai-cj/types"
+import type { WebviewMessage } from "@njust-ai/types"
 
 vi.mock("vscode", () => ({
 	window: { showErrorMessage: vi.fn(), showInformationMessage: vi.fn() },
@@ -14,7 +14,7 @@ vi.mock("../../../i18n", () => ({ t: (key: string) => key }))
 vi.mock("../../../shared/modes", () => ({ defaultModeSlug: "code" }))
 vi.mock("../../../utils/path", () => ({ getWorkspacePath: () => "/mock/workspace" }))
 vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
-vi.mock("../../../services/roo-config/index.js", () => ({ getRooDirectoriesForCwd: () => [] }))
+vi.mock("../../../services/njust-ai-config/index.js", () => ({ getRooDirectoriesForCwd: () => [] }))
 vi.mock("../../../utils/export", () => ({
 	resolveDefaultSaveUri: vi.fn().mockResolvedValue(undefined),
 	saveLastExportPath: vi.fn(),

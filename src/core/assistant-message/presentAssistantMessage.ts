@@ -1,9 +1,9 @@
 import { serializeError } from "serialize-error"
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ToolName, ClineAsk, ToolProgressStatus } from "@njust-ai-cj/types"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { customToolRegistry } from "@njust-ai-cj/core"
+import type { ToolName, ClineAsk, ToolProgressStatus } from "@njust-ai/types"
+import { TelemetryEventName } from "@njust-ai/types"
+import { customToolRegistry } from "@njust-ai/core"
 
 import { t } from "../../i18n"
 
@@ -12,7 +12,7 @@ import type { ToolResponse, ToolUse, McpToolUse, PushToolResultOptions } from ".
 import { getErrorMessage, wrapAsError } from "../../shared/error-utils"
 
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import { Task } from "../task/Task"
 import { TaskState } from "../task/TaskStateMachine"
@@ -53,7 +53,7 @@ function isConcurrencySafeToolUseBlock(block: ToolUse): boolean {
 }
 
 const streamingToolExecutor = new StreamingToolExecutor(
-	Math.max(1, Number(process.env.ROO_MAX_TOOL_CONCURRENCY ?? 10) || 10),
+	Math.max(1, Number(process.env.NJUST_AI_MAX_TOOL_CONCURRENCY ?? 10) || 10),
 )
 
 /**

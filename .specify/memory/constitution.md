@@ -1,4 +1,4 @@
-# NJUST_AI_CJ Constitution
+# NJUST_AI Constitution
 
 ## Core Principles
 

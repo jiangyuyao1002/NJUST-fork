@@ -5,8 +5,8 @@ import * as vscode from "vscode"
 import { t } from "../../i18n"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 import type { McpHubInternal } from "./McpHub"
 
 export async function toggleServerDisabledWithHub(

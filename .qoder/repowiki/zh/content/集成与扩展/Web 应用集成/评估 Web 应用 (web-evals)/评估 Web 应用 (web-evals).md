@@ -25,7 +25,7 @@
 本文件为评估 Web 应用（web-evals）的集成开发文档，聚焦于该应用的专用架构设计、服务器端操作处理与评估流程管理。文档从系统架构、组件关系、数据流与处理逻辑、集成点与状态同步方案入手，结合与主应用的数据共享机制与统一认证系统，提供评估任务的创建、执行与结果展示机制说明，并给出具体流程示例与性能优化策略。
 
 ## 项目结构
-评估 Web 应用基于 Next.js 16 构建，采用工作区（workspace）组织方式，核心依赖 @njust-ai-cj/evals 与 @njust-ai-cj/types 提供评估能力与类型定义。应用通过自定义主题与 React Query 提供器进行全局状态与主题管理，并在根布局中注入全局样式与通知组件。
+评估 Web 应用基于 Next.js 16 构建，采用工作区（workspace）组织方式，核心依赖 @njust-ai/evals 与 @njust-ai/types 提供评估能力与类型定义。应用通过自定义主题与 React Query 提供器进行全局状态与主题管理，并在根布局中注入全局样式与通知组件。
 
 ```mermaid
 graph TB
@@ -35,8 +35,8 @@ LAYOUT["根布局<br/>src/app/layout.tsx"]
 PROVIDERS["全局提供器<br/>src/components/providers/index.ts"]
 end
 subgraph "包层"
-EVALS["@njust-ai-cj/evals<br/>packages/evals"]
-TYPES["@njust-ai-cj/types<br/>workspace 包"]
+EVALS["@njust-ai/evals<br/>packages/evals"]
+TYPES["@njust-ai/types<br/>workspace 包"]
 end
 subgraph "配置层"
 NEXTCONF["Next 配置<br/>next.config.ts"]
@@ -71,7 +71,7 @@ WEB --> PKG
 ## 核心组件
 - 全局布局与主题：根布局负责注入字体、主题提供器、全局样式与通知组件，确保一致的视觉与交互体验。
 - 全局提供器：集中导出 React Query 与主题提供器，为页面与组件提供状态管理与主题切换能力。
-- 评估包依赖：通过 @njust-ai-cj/evals 获取评估相关能力，结合 @njust-ai-cj/types 提供类型支持。
+- 评估包依赖：通过 @njust-ai/evals 获取评估相关能力，结合 @njust-ai/types 提供类型支持。
 - Next 配置与 TypeScript 配置：Next 配置启用 turbopack；TypeScript 配置扩展工作区 TS 规则并设置路径别名。
 
 **章节来源**
@@ -85,9 +85,9 @@ WEB --> PKG
 ## 架构总览
 评估 Web 应用采用“前端渲染 + 工作区包”的架构模式：
 - 前端渲染：Next.js 负责页面路由、SSR/CSR 渲染与静态资源服务。
-- 评估能力：通过 @njust-ai-cj/evals 暴露的接口与工具，实现评估任务的创建、执行与结果聚合。
+- 评估能力：通过 @njust-ai/evals 暴露的接口与工具，实现评估任务的创建、执行与结果聚合。
 - 数据与状态：React Query 负责远端数据缓存与同步；主题提供器统一管理暗色主题与过渡控制。
-- 类型与工具：@njust-ai-cj/types 提供跨应用一致的类型定义，确保数据契约稳定。
+- 类型与工具：@njust-ai/types 提供跨应用一致的类型定义，确保数据契约稳定。
 
 ```mermaid
 graph TB
@@ -95,8 +95,8 @@ CLIENT["浏览器客户端"]
 NEXT["Next.js 应用"]
 QUERY["React Query 缓存层"]
 THEME["主题提供器"]
-EVALS_PKG["@njust-ai-cj/evals"]
-TYPES_PKG["@njust-ai-cj/types"]
+EVALS_PKG["@njust-ai/evals"]
+TYPES_PKG["@njust-ai/types"]
 CLIENT --> NEXT
 NEXT --> QUERY
 NEXT --> THEME
@@ -159,15 +159,15 @@ Render --> End(["结束"])
 [此图为概念性流程图，无需图表来源]
 
 ## 依赖关系分析
-- 应用依赖：@njust-ai-cj/evals 与 @njust-ai-cj/types 作为核心评估与类型依赖，确保功能与类型一致性。
+- 应用依赖：@njust-ai/evals 与 @njust-ai/types 作为核心评估与类型依赖，确保功能与类型一致性。
 - 运行时依赖：Next.js、React Query、Radix UI 组件库、Tailwind CSS 等，支撑页面渲染与交互。
 - 开发与构建：TypeScript 配置继承工作区规则，Next 配置启用 turbopack 以提升开发体验。
 
 ```mermaid
 graph LR
 APP["apps/web-evals"]
-EVALS["@njust-ai-cj/evals"]
-TYPES["@njust-ai-cj/types"]
+EVALS["@njust-ai/evals"]
+TYPES["@njust-ai/types"]
 NEXT["next"]
 QUERY["@tanstack/react-query"]
 RADIX["@radix-ui/*"]
@@ -199,7 +199,7 @@ APP --> TW
 - [apps/web-evals/src/app/layout.tsx:25-31](file://apps/web-evals/src/app/layout.tsx#L25-L31)
 
 ## 故障排除指南
-- 服务启动问题：确认本地服务脚本与环境变量配置正确，必要时参考 @njust-ai-cj/evals 的数据库与 Redis 服务管理脚本。
+- 服务启动问题：确认本地服务脚本与环境变量配置正确，必要时参考 @njust-ai/evals 的数据库与 Redis 服务管理脚本。
 - 类型检查失败：检查 TypeScript 配置是否正确继承工作区规则，确保路径别名与插件配置生效。
 - 构建错误：清理 Next.js 构建缓存与类型声明后重新构建，确保依赖版本兼容。
 
@@ -208,4 +208,4 @@ APP --> TW
 - [apps/web-evals/tsconfig.json:2-6](file://apps/web-evals/tsconfig.json#L2-L6)
 
 ## 结论
-评估 Web 应用（web-evals）通过 Next.js 与工作区包体系，实现了清晰的前端渲染架构与可扩展的评估能力集成。根布局与全局提供器确保主题与状态的一致性，而 @njust-ai-cj/evals 与 @njust-ai-cj/types 则提供了稳定的评估与类型基础。结合 React Query 的缓存策略与 turbopack 的开发体验，应用具备良好的可维护性与性能表现。建议在后续迭代中进一步完善评估流程的可视化与可观测性，以及统一认证与数据共享机制的文档化与测试覆盖。
+评估 Web 应用（web-evals）通过 Next.js 与工作区包体系，实现了清晰的前端渲染架构与可扩展的评估能力集成。根布局与全局提供器确保主题与状态的一致性，而 @njust-ai/evals 与 @njust-ai/types 则提供了稳定的评估与类型基础。结合 React Query 的缓存策略与 turbopack 的开发体验，应用具备良好的可维护性与性能表现。建议在后续迭代中进一步完善评估流程的可视化与可观测性，以及统一认证与数据共享机制的文档化与测试覆盖。

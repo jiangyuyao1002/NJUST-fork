@@ -1,4 +1,4 @@
-import type { ProviderName } from "@njust-ai-cj/types"
+import type { ProviderName } from "@njust-ai/types"
 import type { FetcherKind } from "./modelTypes"
 
 export const providerFetcherMap: Record<ProviderName, FetcherKind> = {
@@ -26,7 +26,7 @@ export const providerFetcherMap: Record<ProviderName, FetcherKind> = {
 	"doubao": "openai-compatible",
 	"mimo": "openai-compatible",
 	"mimo-token-plan": "openai-compatible",
-	"roo": "existing",
+	"njust-ai": "existing",
 	"litellm": "existing",
 	"requesty": "existing",
 	"unbound": "existing",

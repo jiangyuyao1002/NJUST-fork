@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react"
 import { useQuery, keepPreviousData } from "@tanstack/react-query"
 
-import { type TokenUsage, type ToolUsage, NJUST_AI_CJEventName, taskEventSchema } from "@njust-ai-cj/types"
-import type { Run, Task, TaskMetrics } from "@njust-ai-cj/evals"
+import { type TokenUsage, type ToolUsage, NJUST_AIEventName, taskEventSchema } from "@njust-ai/types"
+import type { Run, Task, TaskMetrics } from "@njust-ai/evals"
 
 import { getHeartbeat } from "@/actions/heartbeat"
 import { getRunners } from "@/actions/runners"
@@ -73,10 +73,10 @@ export const useRunStatus = (run: Run): RunStatus => {
 		}
 
 		switch (eventName) {
-			case NJUST_AI_CJEventName.TaskStarted:
+			case NJUST_AIEventName.TaskStarted:
 				startTimes.current.set(taskId, Date.now())
 				break
-			case NJUST_AI_CJEventName.TaskTokenUsageUpdated: {
+			case NJUST_AIEventName.TaskTokenUsageUpdated: {
 				const startTime = startTimes.current.get(taskId)
 				const duration = startTime ? Date.now() - startTime : undefined
 				tokenUsage.current.set(taskId, { ...payload[1], duration })
@@ -89,8 +89,8 @@ export const useRunStatus = (run: Run): RunStatus => {
 				setUsageUpdatedAt(Date.now())
 				break
 			}
-			case NJUST_AI_CJEventName.EvalPass:
-			case NJUST_AI_CJEventName.EvalFail:
+			case NJUST_AIEventName.EvalPass:
+			case NJUST_AIEventName.EvalFail:
 				setTasksUpdatedAt(Date.now())
 				break
 		}

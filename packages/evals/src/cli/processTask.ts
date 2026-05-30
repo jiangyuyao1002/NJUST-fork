@@ -4,7 +4,7 @@ import * as os from "node:os"
 import * as path from "node:path"
 import { promisify } from "node:util"
 
-import { type TaskEvent, NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { type TaskEvent, NJUST_AIEventName } from "@njust-ai/types"
 
 const execFileAsync = promisify(execFile)
 
@@ -62,7 +62,7 @@ export const processTask = async ({
 		await updateTask(task.id, { passed })
 
 		await publish({
-			eventName: passed ? NJUST_AI_CJEventName.EvalPass : NJUST_AI_CJEventName.EvalFail,
+			eventName: passed ? NJUST_AIEventName.EvalPass : NJUST_AIEventName.EvalFail,
 			taskId: task.id,
 		})
 	} finally {
@@ -86,7 +86,7 @@ export const processTaskInContainer = async ({
 	const envFileLines = ["HOST_EXECUTION_METHOD=docker"]
 
 	if (jobToken) {
-		envFileLines.push(`NJUST_AI_CJ_CLOUD_TOKEN=${jobToken}`)
+		envFileLines.push(`NJUST_AI_CLOUD_TOKEN=${jobToken}`)
 	}
 
 	const apiKeyEnvVars = [
@@ -114,7 +114,7 @@ export const processTaskInContainer = async ({
 		"--env-file", envFilePath,
 	]
 
-	const shellCommand = `pnpm --filter @njust-ai-cj/evals cli --taskId ${taskId}`
+	const shellCommand = `pnpm --filter @njust-ai/evals cli --taskId ${taskId}`
 	logger.info(shellCommand)
 
 	try {

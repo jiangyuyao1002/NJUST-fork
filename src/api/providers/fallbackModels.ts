@@ -1,5 +1,5 @@
 import type { DynamicModelInfo, DynamicModelRecord } from "./modelTypes"
-import type { ProviderName } from "@njust-ai-cj/types"
+import type { ProviderName } from "@njust-ai/types"
 
 function model(id: string, contextWindow: number = 128_000): DynamicModelInfo {
 	return {

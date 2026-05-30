@@ -2,7 +2,7 @@
 	// See http://go.microsoft.com/fwlink/?LinkId=827846
 	// for the documentation about the extensions.json format
 	"recommendations": [
-		"JunjieChen-YuyaoJiang.njust-ai-cj",
+		"JunjieChen-YuyaoJiang.njust-ai",
 		"dbaeumer.vscode-eslint",
 		"esbenp.prettier-vscode",
 		"csstools.postcss",

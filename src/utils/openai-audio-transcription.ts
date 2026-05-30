@@ -1,4 +1,4 @@
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 
 const MAX_AUDIO_BYTES = 24 * 1024 * 1024 // ~24MB raw
 

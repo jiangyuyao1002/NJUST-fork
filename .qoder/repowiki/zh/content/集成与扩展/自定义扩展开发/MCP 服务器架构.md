@@ -25,7 +25,7 @@
 
 ## 简介
 
-本文档深入解析 Roo-Code 项目中的 MCP（Model Context Protocol）服务器架构，重点涵盖三个核心组件：
+本文档深入解析 Njust-AI 项目中的 MCP（Model Context Protocol）服务器架构，重点涵盖三个核心组件：
 
 - **RooToolsMcpServer**：内置的 MCP 服务器实现，提供文件操作、命令执行、代码搜索等工具
 - **McpHub**：MCP 服务器管理器，负责配置加载、连接状态监控和故障恢复
@@ -410,7 +410,7 @@ Services --> Core
 
 ## 结论
 
-Roo-Code 的 MCP 服务器架构展现了现代 AI 辅助开发工具的设计理念：
+Njust-AI 的 MCP 服务器架构展现了现代 AI 辅助开发工具的设计理念：
 
 ### 架构优势
 - **模块化设计**：清晰的职责分离和接口定义

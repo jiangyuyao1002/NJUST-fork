@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest"
 
-import { type ModelInfo, type ProviderSettings } from "@njust-ai-cj/types"
-import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
+import { type ModelInfo, type ProviderSettings } from "@njust-ai/types"
+import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai/core/providers"
 
 import { getModelMaxOutputTokens, shouldUseReasoningBudget, shouldUseReasoningEffort } from "../api"
 

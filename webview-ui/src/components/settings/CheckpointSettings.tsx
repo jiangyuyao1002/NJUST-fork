@@ -11,7 +11,7 @@ import {
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	MAX_CHECKPOINT_TIMEOUT_SECONDS,
 	MIN_CHECKPOINT_TIMEOUT_SECONDS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 type CheckpointSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	enableCheckpoints?: boolean

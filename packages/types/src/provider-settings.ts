@@ -14,7 +14,7 @@ export const DEFAULT_CONSECUTIVE_MISTAKE_LIMIT = 3
  * Dynamic provider requires external API calls in order to get the model list.
  */
 
-export const dynamicProviders = ["openrouter", "vercel-ai-gateway", "litellm", "requesty", "roo", "unbound"] as const
+export const dynamicProviders = ["openrouter", "vercel-ai-gateway", "litellm", "requesty", "njust-ai", "unbound"] as const
 
 export type DynamicProvider = (typeof dynamicProviders)[number]
 
@@ -50,7 +50,7 @@ export const isInternalProvider = (key: string): key is InternalProvider =>
 /**
  * CustomProvider
  *
- * Custom providers are completely configurable within NJUST_AI_CJ settings.
+ * Custom providers are completely configurable within NJUST_AI settings.
  */
 
 export const customProviders = ["openai"] as const
@@ -98,7 +98,7 @@ export const providerNames = [
 	"openai-codex",
 	"openai-native",
 	"qwen-code",
-	"roo",
+	"njust-ai",
 	"sambanova",
 	"vertex",
 	"xai",
@@ -425,7 +425,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	zaiSchema.merge(z.object({ apiProvider: z.literal("zai") })),
 	fireworksSchema.merge(z.object({ apiProvider: z.literal("fireworks") })),
 	qwenCodeSchema.merge(z.object({ apiProvider: z.literal("qwen-code") })),
-	rooSchema.merge(z.object({ apiProvider: z.literal("roo") })),
+	rooSchema.merge(z.object({ apiProvider: z.literal("njust-ai") })),
 	vercelAiGatewaySchema.merge(z.object({ apiProvider: z.literal("vercel-ai-gateway") })),
 	defaultSchema,
 ])
@@ -542,7 +542,7 @@ export const modelIdKeysByProvider: Record<TypicalProvider, ModelIdKey> = {
 	sambanova: "apiModelId",
 	zai: "apiModelId",
 	fireworks: "apiModelId",
-	roo: "apiModelId",
+	"njust-ai": "apiModelId",
 	"vercel-ai-gateway": "vercelAiGatewayModelId",
 	mimo: "apiModelId",
 	"mimo-token-plan": "apiModelId",
@@ -567,7 +567,7 @@ export const getApiProtocol = (provider: ProviderName | undefined, modelId?: str
 	// Vercel AI Gateway uses anthropic protocol for anthropic models.
 	if (
 		provider &&
-		["vercel-ai-gateway", "roo"].includes(provider) &&
+		["vercel-ai-gateway", "njust-ai"].includes(provider) &&
 		modelId &&
 		modelId.toLowerCase().startsWith("anthropic/")
 	) {

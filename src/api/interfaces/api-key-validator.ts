@@ -19,7 +19,7 @@ export function requireApiKey(key: string | undefined, providerName: string): st
 	if (!key || key === "not-provided") {
 		throw new Error(
 			`${providerName} API key is required. Please configure it in settings. ` +
-				`You can set it via the VS Code settings under "Roo-Code.${providerName.toLowerCase()}ApiKey" ` +
+				`You can set it via the VS Code settings under "Njust-AI.${providerName.toLowerCase()}ApiKey" ` +
 				`or via the environment variable.`,
 		)
 	}

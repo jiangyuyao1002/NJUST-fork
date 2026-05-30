@@ -4,7 +4,7 @@ import { screen, fireEvent, render } from "@/utils/test-utils"
 import { act } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
-import { ModelInfo } from "@njust-ai-cj/types"
+import { ModelInfo } from "@njust-ai/types"
 
 import { ModelPicker } from "../ModelPicker"
 

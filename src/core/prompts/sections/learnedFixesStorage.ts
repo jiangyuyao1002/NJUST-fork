@@ -1,6 +1,6 @@
 import * as path from "path"
 import * as fs from "fs"
-import { NJUST_AI_CONFIG_DIR } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
 export const LEARNED_FIXES_FILE = "learned-fixes.json"
 

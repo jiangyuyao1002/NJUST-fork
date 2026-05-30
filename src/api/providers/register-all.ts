@@ -27,7 +27,7 @@ import { QwenCodeHandler } from "./qwen-code"
 import { SambaNovaHandler } from "./sambanova"
 import { ZAiHandler } from "./zai"
 import { FireworksHandler } from "./fireworks"
-import { RooHandler } from "./roo"
+import { RooHandler } from "./njust-ai"
 import { VercelAiGatewayHandler } from "./vercel-ai-gateway"
 import { MiniMaxHandler } from "./minimax"
 import { BasetenHandler } from "./baseten"
@@ -61,7 +61,7 @@ providerRegistry.register("litellm", (o: ApiHandlerOptions) => new LiteLLMHandle
 providerRegistry.register("sambanova", (o: ApiHandlerOptions) => new SambaNovaHandler(o))
 providerRegistry.register("zai", (o: ApiHandlerOptions) => new ZAiHandler(o))
 providerRegistry.register("fireworks", (o: ApiHandlerOptions) => new FireworksHandler(o))
-providerRegistry.register("roo", (o: ApiHandlerOptions) => new RooHandler(o))
+providerRegistry.register("njust-ai", (o: ApiHandlerOptions) => new RooHandler(o))
 providerRegistry.register("vercel-ai-gateway", (o: ApiHandlerOptions) => new VercelAiGatewayHandler(o))
 providerRegistry.register("minimax", (o: ApiHandlerOptions) => new MiniMaxHandler(o))
 providerRegistry.register("baseten", (o: ApiHandlerOptions) => new BasetenHandler(o))

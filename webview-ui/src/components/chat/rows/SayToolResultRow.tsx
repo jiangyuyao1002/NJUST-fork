@@ -2,7 +2,7 @@ import React from "react"
 import { useTranslation } from "react-i18next"
 import { VSCodeBadge } from "@vscode/webview-ui-toolkit/react"
 
-import type { ClineMessage, ClineSayTool } from "@njust-ai-cj/types"
+import type { ClineMessage, ClineSayTool } from "@njust-ai/types"
 
 import { vscode } from "@src/utils/vscode"
 

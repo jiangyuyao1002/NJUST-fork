@@ -12,7 +12,7 @@ export default defineConfig({
 		js: "#!/usr/bin/env node",
 	},
 	// Bundle workspace packages that export TypeScript
-	noExternal: ["@njust-ai-cj/core", "@njust-ai-cj/core/cli", "@njust-ai-cj/types", "@njust-ai-cj/vscode-shim"],
+	noExternal: ["@njust-ai/core", "@njust-ai/core/cli", "@njust-ai/types", "@njust-ai/vscode-shim"],
 	external: [
 		// Keep native modules external
 		"@anthropic-ai/sdk",

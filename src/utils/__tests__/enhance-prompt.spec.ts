@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 
 import { singleCompletionHandler } from "../single-completion-handler"
 import { buildApiHandler, SingleCompletionHandler } from "../../api"

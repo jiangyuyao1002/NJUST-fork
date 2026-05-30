@@ -1,4 +1,4 @@
-import type { ClineSayTool } from "@njust-ai-cj/types"
+import type { ClineSayTool } from "@njust-ai/types"
 
 export function isWriteToolAction(tool: ClineSayTool): boolean {
 	return ["editedExistingFile", "appliedDiff", "newFileCreated", "generateImage"].includes(tool.tool)

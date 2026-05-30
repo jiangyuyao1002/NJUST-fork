@@ -3,7 +3,7 @@ import * as vscode from "vscode"
 
 import { setDefaultSuiteTimeout } from "./test-utils"
 
-suite("NJUST_AI_CJ Extension", function () {
+suite("NJUST_AI Extension", function () {
 	setDefaultSuiteTimeout(this)
 
 	test("Commands should be registered", async () => {

@@ -6,8 +6,8 @@ import * as vscode from "vscode"
 
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export class ShellIntegrationManager {
 	public static terminalTmpDirs: Map<number, string> = new Map()
@@ -19,12 +19,12 @@ export class ShellIntegrationManager {
 	 */
 	public static zshInitTmpDir(env: Record<string, string>): string {
 		// Create a temporary directory with the sticky bit set for security
-		const tmpDir = path.join(os.tmpdir(), `roo-zdotdir-${Math.random().toString(36).substring(2, 15)}`)
+		const tmpDir = path.join(os.tmpdir(), `njust-ai-zdotdir-${Math.random().toString(36).substring(2, 15)}`)
 		logger.info("ShellIntegrationManager", `Creating temporary directory for ZDOTDIR: ${tmpDir}`)
 
-		// Save original ZDOTDIR as ROO_ZDOTDIR
+		// Save original ZDOTDIR as NJUST_AI_ZDOTDIR
 		if (process.env.ZDOTDIR) {
-			env.ROO_ZDOTDIR = process.env.ZDOTDIR
+			env.NJUST_AI_ZDOTDIR = process.env.ZDOTDIR
 		}
 
 		// Create the temporary directory
@@ -41,8 +41,8 @@ export class ShellIntegrationManager {
 
 				const zshrcContent = `
 	source "${shellIntegrationPath}"
-	ZDOTDIR=\${ROO_ZDOTDIR:-$HOME}
-	unset ROO_ZDOTDIR
+	ZDOTDIR=\${NJUST_AI_ZDOTDIR:-$HOME}
+	unset NJUST_AI_ZDOTDIR
 	[ -f "$ZDOTDIR/.zshenv" ] && source "$ZDOTDIR/.zshenv"
 	[ -f "$ZDOTDIR/.zprofile" ] && source "$ZDOTDIR/.zprofile"
 	[ -f "$ZDOTDIR/.zshrc" ] && source "$ZDOTDIR/.zshrc"

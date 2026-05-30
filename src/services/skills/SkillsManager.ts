@@ -3,8 +3,8 @@ import * as path from "path"
 import * as vscode from "vscode"
 import matter from "gray-matter"
 
-import { getGlobalRooDirectory, getGlobalAgentsDirectory, getProjectAgentsDirectoryForCwd } from "../roo-config"
-import { directoryExists, fileExists } from "../roo-config"
+import { getGlobalRooDirectory, getGlobalAgentsDirectory, getProjectAgentsDirectoryForCwd } from "../njust-ai-config"
+import { directoryExists, fileExists } from "../njust-ai-config"
 import { SkillMetadata, SkillContent } from "../../shared/skills"
 import { modes, getAllModes } from "../../shared/modes"
 import {
@@ -13,9 +13,9 @@ import {
 	SkillNameValidationError,
 	SKILL_NAME_MAX_LENGTH,
 	NJUST_AI_CONFIG_DIR,
-} from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+} from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
 

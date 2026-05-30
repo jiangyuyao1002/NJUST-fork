@@ -395,7 +395,7 @@ CangjieLspClient --> ToolUtils
 ### 配置错误
 
 **诊断方法**：
-1. 检查 VS Code 设置中的 `njust-ai-cj.cangjieLsp` 配置
+1. 检查 VS Code 设置中的 `njust-ai.cangjieLsp` 配置
 2. 验证 CANGJIE_HOME 环境变量设置
 3. 确认服务器路径的可访问性
 

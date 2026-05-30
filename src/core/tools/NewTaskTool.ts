@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { z } from "zod"
 
-import { TodoItem } from "@njust-ai-cj/types"
+import { TodoItem } from "@njust-ai/types"
 
 import { Task } from "../task/Task"
 import { ignoreAbortError } from "../../utils/errorHandling"

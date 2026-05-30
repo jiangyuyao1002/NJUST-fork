@@ -12,7 +12,7 @@
 
 ## Requirement
 
-Systematic identification and resolution of code quality issues (technical debt) across the Roo-Code repository.
+Systematic identification and resolution of code quality issues (technical debt) across the Njust-AI repository.
 
 ## Ship Mode
 

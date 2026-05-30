@@ -4,7 +4,7 @@ import { describe, it, test, expect } from "vitest"
 
 import { ZodError } from "zod"
 
-import { type ModeConfig, modeConfigSchema } from "@njust-ai-cj/types"
+import { type ModeConfig, modeConfigSchema } from "@njust-ai/types"
 
 function validateCustomMode(mode: unknown): asserts mode is ModeConfig {
 	modeConfigSchema.parse(mode)

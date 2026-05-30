@@ -2,8 +2,8 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as os from "os"
 
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Package } from "../../shared/package"
 import { fileExistsAtPath } from "../../utils/fs"
@@ -14,7 +14,7 @@ import { getErrorMessage } from "../../shared/error-utils"
 import { logger } from "../../shared/logger"
 
 /**
- * Automatically imports NJUST_AI_CJ settings from a specified path if it exists.
+ * Automatically imports NJUST_AI settings from a specified path if it exists.
  * This function is called during extension activation to allow users to pre-configure
  * their settings by placing a settings file at a predefined location.
  */

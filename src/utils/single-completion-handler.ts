@@ -1,4 +1,4 @@
-import type { ProviderSettings } from "@njust-ai-cj/types"
+import type { ProviderSettings } from "@njust-ai/types"
 
 import { buildApiHandler, SingleCompletionHandler } from "../api"
 

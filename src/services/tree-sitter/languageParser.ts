@@ -1,8 +1,8 @@
 import * as path from "path"
 import { Parser as ParserT, Language as LanguageT, Query as QueryT } from "web-tree-sitter"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 import {
 	javascriptQuery,
 	typescriptQuery,

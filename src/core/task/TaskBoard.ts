@@ -50,7 +50,7 @@ const persistedTaskBoardSchema = z.array(z.unknown())
 /**
  * Lightweight task board with JSON file persistence.
  *
- * Storage location: `{cwd}/.roo/tasks/{sessionId}.json`
+ * Storage location: `{cwd}/.njust-ai/tasks/{sessionId}.json`
  *
  * - Every write operation triggers an automatic save.
  * - Uses an in-process write lock to serialize mutations (no external lockfile).
@@ -63,7 +63,7 @@ export class TaskBoard {
 	private loaded = false
 
 	constructor(cwd: string, sessionId: string) {
-		this.filePath = path.join(cwd, ".roo", "tasks", `${sessionId}.json`)
+		this.filePath = path.join(cwd, ".njust-ai", "tasks", `${sessionId}.json`)
 	}
 
 	// ────────────────────────────── CRUD ──────────────────────────────

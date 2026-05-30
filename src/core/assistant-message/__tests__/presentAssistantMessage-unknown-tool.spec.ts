@@ -10,7 +10,7 @@ vi.mock("../../tools/validateToolUse", () => ({
 	isValidToolName: vi.fn(() => false),
 	mergeToolParamsForValidation: vi.fn(),
 }))
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {

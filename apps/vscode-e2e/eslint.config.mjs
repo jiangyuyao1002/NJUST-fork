@@ -1,4 +1,4 @@
-import { config } from "@njust-ai-cj/config-eslint/base"
+import { config } from "@njust-ai/config-eslint/base"
 
 /** @type {import("eslint").Linter.Config} */
 export default [...config]

@@ -6,7 +6,7 @@ import { fileURLToPath } from "url"
 import { randomUUID } from "crypto"
 
 import { execa } from "execa"
-import type { TaskSessionEntry } from "@njust-ai-cj/core/cli"
+import type { TaskSessionEntry } from "@njust-ai/core/cli"
 
 type StreamEvent = {
 	type?: string
@@ -88,7 +88,7 @@ async function createSessionWithCustomId(
 			"dev",
 			"--print",
 			"--provider",
-			"roo",
+			"njust-ai",
 			"--output-format",
 			"stream-json",
 			"--workspace",
@@ -148,7 +148,7 @@ async function resumeSessionAndSendMarker(
 			"--print",
 			"--stdin-prompt-stream",
 			"--provider",
-			"roo",
+			"njust-ai",
 			"--output-format",
 			"stream-json",
 			"--workspace",
@@ -314,10 +314,10 @@ async function resumeSessionAndSendMarker(
 }
 
 async function main() {
-	const cliRoot = process.env.ROO_CLI_ROOT
-		? path.resolve(process.env.ROO_CLI_ROOT)
+	const cliRoot = process.env.NJUST_AI_CLI_ROOT
+		? path.resolve(process.env.NJUST_AI_CLI_ROOT)
 		: path.resolve(__dirname, "../../..")
-	const workspacePath = await fs.mkdtemp(path.join(os.tmpdir(), "roo-cli-create-session-id-"))
+	const workspacePath = await fs.mkdtemp(path.join(os.tmpdir(), "njust-ai-cli-create-session-id-"))
 
 	const firstSessionId = randomUUID()
 	const secondSessionId = randomUUID()

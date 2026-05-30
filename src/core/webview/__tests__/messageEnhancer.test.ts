@@ -1,7 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { ProviderSettings, ClineMessage } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { ProviderSettings, ClineMessage } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { MessageEnhancer } from "../messageEnhancer"
 import * as singleCompletionHandlerModule from "../../../utils/single-completion-handler"
@@ -19,7 +19,7 @@ vi.mock("../../../shared/logger", () => ({
 
 // Mock dependencies
 vi.mock("../../../utils/single-completion-handler")
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 	},

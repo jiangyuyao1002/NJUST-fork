@@ -38,7 +38,7 @@ vi.mock("../diagnosticsHandler", () => ({
 	generateErrorDiagnostics: vi.fn().mockResolvedValue({ success: true, filePath: "/tmp/diagnostics.json" }),
 }))
 
-import type { ModelRecord, ExtensionMessage, Command } from "@njust-ai-cj/types"
+import type { ModelRecord, ExtensionMessage, Command } from "@njust-ai/types"
 
 import { webviewMessageHandler } from "../webviewMessageHandler"
 import type { ClineProvider } from "../ClineProvider"
@@ -149,7 +149,7 @@ import * as fsUtils from "../../../utils/fs"
 import { getWorkspacePath } from "../../../utils/path"
 import { ensureSettingsDirectoryExists } from "../../../utils/globalContext"
 import { generateErrorDiagnostics } from "../diagnosticsHandler"
-import type { ModeConfig } from "@njust-ai-cj/types"
+import type { ModeConfig } from "@njust-ai/types"
 
 vi.mock("../../../utils/fs")
 vi.mock("../../../utils/path")
@@ -325,7 +325,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		expect(mockGetModels).toHaveBeenCalledWith({ provider: "vercel-ai-gateway" })
 		expect(mockGetModels).toHaveBeenCalledWith(
 			expect.objectContaining({
-				provider: "roo",
+				provider: "njust-ai",
 				baseUrl: expect.any(String),
 			}),
 		)
@@ -343,7 +343,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 				requesty: mockModels,
 				unbound: mockModels,
 				litellm: mockModels,
-				roo: mockModels,
+				"njust-ai": mockModels,
 				ollama: {},
 				lmstudio: {},
 				"vercel-ai-gateway": mockModels,
@@ -427,7 +427,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 				openrouter: mockModels,
 				requesty: mockModels,
 				unbound: mockModels,
-				roo: mockModels,
+				"njust-ai": mockModels,
 				litellm: {},
 				ollama: {},
 				lmstudio: {},
@@ -453,7 +453,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 			.mockRejectedValueOnce(new Error("Requesty API error")) // requesty
 			.mockResolvedValueOnce(mockModels) // unbound
 			.mockResolvedValueOnce(mockModels) // vercel-ai-gateway
-			.mockResolvedValueOnce(mockModels) // roo
+			.mockResolvedValueOnce(mockModels) // njust-ai
 			.mockRejectedValueOnce(new Error("LiteLLM connection failed")) // litellm
 
 		await webviewMessageHandler(mockClineProvider, {
@@ -482,7 +482,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 				openrouter: mockModels,
 				requesty: {},
 				unbound: mockModels,
-				roo: mockModels,
+				"njust-ai": mockModels,
 				litellm: {},
 				ollama: {},
 				lmstudio: {},
@@ -499,7 +499,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 			.mockRejectedValueOnce(new Error("Requesty API error")) // requesty
 			.mockRejectedValueOnce(new Error("Unbound error")) // unbound
 			.mockRejectedValueOnce(new Error("Vercel AI Gateway error")) // vercel-ai-gateway
-			.mockRejectedValueOnce(new Error("Roo API error")) // roo
+			.mockRejectedValueOnce(new Error("Njust-AI API error")) // njust-ai
 			.mockRejectedValueOnce(new Error("LiteLLM connection failed")) // litellm
 
 		await webviewMessageHandler(mockClineProvider, {
@@ -538,8 +538,8 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
 			type: "singleRouterModelFetchResponse",
 			success: false,
-			error: "Roo API error",
-			values: { provider: "roo" },
+			error: "Njust-AI API error",
+			values: { provider: "njust-ai" },
 		})
 
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({

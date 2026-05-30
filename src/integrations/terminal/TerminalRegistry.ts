@@ -2,8 +2,8 @@ import * as vscode from "vscode"
 
 import { logger } from "../../shared/logger"
 import { arePathsEqual } from "../../utils/path"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 import { RooTerminal, RooTerminalProvider } from "./types"
 import { TerminalProcess } from "./TerminalProcess"
@@ -65,7 +65,7 @@ export class TerminalRegistry {
 						terminal.setActiveStream(stream)
 						terminal.busy = true // Mark terminal as busy when shell execution starts
 					} else {
-						logger.error("TerminalRegistry", "onDidStartTerminalShellExecution - Shell execution started, but not from a Roo-registered terminal:", e)
+						logger.error("TerminalRegistry", "onDidStartTerminalShellExecution - Shell execution started, but not from a Njust-AI-registered terminal:", e)
 					}
 				},
 			)
@@ -87,7 +87,7 @@ export class TerminalRegistry {
 					})
 
 					if (!terminal) {
-						logger.error("TerminalRegistry", "onDidEndTerminalShellExecution - Shell execution ended, but not from a Roo-registered terminal:", e)
+						logger.error("TerminalRegistry", "onDidEndTerminalShellExecution - Shell execution ended, but not from a Njust-AI-registered terminal:", e)
 
 						return
 					}

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest"
 import { OpenAiNativeHandler } from "../openai-native"
-import { openAiNativeModels } from "@njust-ai-cj/core/providers"
+import { openAiNativeModels } from "@njust-ai/core/providers"
 
 describe("OpenAiNativeHandler - normalizeUsage", () => {
 	let handler: OpenAiNativeHandler

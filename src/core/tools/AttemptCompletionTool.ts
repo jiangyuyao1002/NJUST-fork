@@ -1,8 +1,8 @@
 import * as vscode from "vscode"
 import { z } from "zod"
 
-import { NJUST_AI_CJEventName, type HistoryItem, TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { NJUST_AIEventName, type HistoryItem, TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Task } from "../task/Task"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -227,7 +227,7 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 		task.emitFinalTokenUsageUpdate()
 
 		TelemetryService.instance.captureTaskCompleted(task.taskId)
-		task.emit(NJUST_AI_CJEventName.TaskCompleted, task.taskId, task.getTokenUsage(), task.toolUsage, { isSubtask: !!task.parentTaskId })
+		task.emit(NJUST_AIEventName.TaskCompleted, task.taskId, task.getTokenUsage(), task.toolUsage, { isSubtask: !!task.parentTaskId })
 
 		// Signal the outer loop to stop re-prompting the model with
 		// noToolsUsed() after the user accepts this completion.

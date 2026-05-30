@@ -1,7 +1,7 @@
-﻿import fs from "fs/promises"
+import fs from "fs/promises"
 import path from "path"
 
-import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
+import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai/types"
 
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -237,7 +237,7 @@ export class SearchReplaceTool extends BaseTool<"search_replace"> {
 
 			// Track file edit operation
 			if (relPath) {
-				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+				await task.fileContextTracker.trackFileContext(relPath, "njust_ai_edited" as RecordSource)
 			}
 
 			task.didEditFile = true

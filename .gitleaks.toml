@@ -1,11 +1,11 @@
-title = "NJUST_AI_CJ Gitleaks Config"
+title = "NJUST_AI Gitleaks Config"
 
 [extend]
 # Use default gitleaks rules as base
 useDefault = true
 
 [[rules]]
-id = "njust-ai-cj-test-keys"
+id = "njust-ai-test-keys"
 description = "Test API keys used in tests"
 regex = '''sk-test-[a-zA-Z0-9]{20,}'''
 tags = ["test", "api-key"]
@@ -17,7 +17,7 @@ paths = [
 	'''\.spec\.(ts|tsx|js|jsx)$''',
 	'''\.test\.(ts|tsx|js|jsx)$''',
 	'''src/test-cloud-agent-mock\.mjs$''',
-	'''^\.roo/skills/cangjie-full-docs/libs_stdx/logger/logger_samples/logger_sample\.md$''',
+	'''^\.njust-ai/skills/cangjie-full-docs/libs_stdx/logger/logger_samples/logger_sample\.md$''',
 	'''^CangjieCorpus-1\.0\.0/libs/stdx/logger/logger_samples/logger_sample\.md$''',
 	'''^webview-ui/src/i18n/locales/(en|zh-CN|zh-TW)/settings\.json$''',
 ]

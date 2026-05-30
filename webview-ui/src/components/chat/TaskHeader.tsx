@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next"
 import { ChevronUp, ChevronDown, HardDriveDownload, HardDriveUpload, FoldVertical, ArrowLeft } from "lucide-react"
 import prettyBytes from "pretty-bytes"
 
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
-import { getModelMaxOutputTokens } from "@roo/api"
+import { getModelMaxOutputTokens } from "@shared/api"
 
 import { formatLargeNumber } from "@src/utils/format"
 import { cn } from "@src/lib/utils"

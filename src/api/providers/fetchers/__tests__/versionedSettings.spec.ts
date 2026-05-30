@@ -124,7 +124,7 @@ describe("versionedSettings", () => {
 			}
 
 			const originalName = Package.name
-			;(Package as { name: string }).name = "njust-ai-cj-nightly"
+			;(Package as { name: string }).name = "njust-ai-nightly"
 
 			try {
 				const result = findHighestMatchingVersion(versionedSettings, "1.0.0")

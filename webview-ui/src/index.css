@@ -152,7 +152,7 @@
 
 @layer base {
 	:root {
-		--roo-font-serif:
+		--njust-ai-font-serif:
 			serif,
 		    "Source Han Serif SC",
 			"Noto Serif SC",
@@ -218,7 +218,7 @@
 		@apply underline;
 	}
 
-	/* Custom smooth bounce animation for Roo hero */
+	/* Custom smooth bounce animation for Njust-AI hero */
 	@keyframes smooth-bounce {
 		0% {
 			transform: translateY(0);
@@ -266,13 +266,13 @@ html {
 body {
 	margin: 0;
 	line-height: 1.25;
-	font-family: var(--roo-font-body), var(--vscode-font-family), serif;
+	font-family: var(--njust-ai-font-body), var(--vscode-font-family), serif;
 	letter-spacing: 0.01em;
-	--roo-font-body: var(--roo-font-serif);
+	--njust-ai-font-body: var(--njust-ai-font-serif);
 }
 
 body[data-font="sans-serif"] {
-	--roo-font-body:
+	--njust-ai-font-body:
 		"Microsoft YaHei",
 		"PingFang SC",
 		"Noto Sans SC",
@@ -285,7 +285,7 @@ body[data-font="sans-serif"] {
 }
 
 body[data-font="default"] {
-	--roo-font-body: var(--vscode-font-family);
+	--njust-ai-font-body: var(--vscode-font-family);
 	letter-spacing: 0;
 }
 
@@ -295,7 +295,7 @@ h3,
 h4,
 h5,
 h6 {
-	font-family: var(--roo-font-body), var(--vscode-font-family), serif;
+	font-family: var(--njust-ai-font-body), var(--vscode-font-family), serif;
 	font-weight: 600;
 	letter-spacing: 0.015em;
 }

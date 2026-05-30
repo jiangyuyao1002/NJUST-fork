@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://docs.x.ai/docs/api-reference
 export type XAIModelId = keyof typeof xaiModels

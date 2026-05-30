@@ -489,7 +489,7 @@ export function convertToOpenAiMessages(
 				const messageWithDetails = anthropicMessage as AnthropicMessageWithReasoning
 
 				// Build message with reasoning_details BEFORE tool_calls to preserve
-				// the order expected by providers like Roo. Property order matters
+				// the order expected by providers like Njust-AI. Property order matters
 				// when sending messages back to some APIs.
 				const baseMessage: OpenAI.Chat.ChatCompletionAssistantMessageParam & {
 					reasoning_details?: UnsafeAny[]

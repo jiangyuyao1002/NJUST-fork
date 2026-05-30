@@ -6,15 +6,15 @@ import ipc from "node-ipc"
 
 import {
 	type IpcServerEvents,
-	type NJUST_AI_CJIpcServer,
+	type NJUST_AIIpcServer,
 	IpcOrigin,
 	IpcMessageType,
 	IPC_PROTOCOL_VERSION,
 	type IpcMessage,
 	ipcMessageSchema,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
-export class IpcServer extends EventEmitter<IpcServerEvents> implements NJUST_AI_CJIpcServer {
+export class IpcServer extends EventEmitter<IpcServerEvents> implements NJUST_AIIpcServer {
 	private readonly _socketPath: string
 	private readonly _log: (...args: unknown[]) => void
 	private readonly _clients: Map<string, Socket>

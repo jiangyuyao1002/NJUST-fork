@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { providerFetcherMap } from "../providerFetcherMap"
-import { providerNames } from "@njust-ai-cj/types"
+import { providerNames } from "@njust-ai/types"
 
 describe("providerFetcherMap", () => {
 	it("has an entry for every ProviderName", () => {

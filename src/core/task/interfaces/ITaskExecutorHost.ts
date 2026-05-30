@@ -16,7 +16,7 @@ import type {
 	ProviderSettings,
 	ToolProgressStatus,
 	TokenUsage,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import type { ApiHandler } from "../../../api"
 import type { ApiStream } from "../../../api/transform/stream"

@@ -2,7 +2,7 @@ import React from "react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 import { ProgressIndicator } from "../ProgressIndicator"
 import ErrorRow from "../ErrorRow"

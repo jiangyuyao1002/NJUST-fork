@@ -6,9 +6,9 @@ import { promisify } from "util"
 
 import { logger } from "../shared/logger"
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import type { GitRepositoryInfo, GitCommit } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import type { GitRepositoryInfo, GitCommit } from "@njust-ai/types"
 
 import { truncateOutput } from "../integrations/misc/extract-text"
 import { getErrorMessage } from "../shared/error-utils"

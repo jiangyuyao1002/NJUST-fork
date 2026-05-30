@@ -6,8 +6,8 @@ import { getTaskDirectoryPath } from "../../utils/storage"
 
 import { debugLog } from "../../utils/debugLog"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 export interface RewindOptions {
 	/** Whether to include the target message in deletion (edit=true, delete=false) */
 	includeTargetMessage?: boolean

@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://docs.bigmodel.cn/cn/guide/start/model-overview
 // Pricing: https://open.bigmodel.cn/pricing (international: https://docs.z.ai/guides/overview/pricing)

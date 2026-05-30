@@ -1,6 +1,6 @@
 import { distance } from "fastest-levenshtein"
 
-import { ToolProgressStatus } from "@njust-ai-cj/types"
+import { ToolProgressStatus } from "@njust-ai/types"
 
 import { addLineNumbers, everyLineHasLineNumbers, stripLineNumbers } from "../../../integrations/misc/extract-text"
 import { ToolUse, DiffStrategy, DiffResult } from "../../../shared/tools"

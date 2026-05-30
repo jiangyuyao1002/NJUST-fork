@@ -4,7 +4,7 @@ import { Task } from "../../task/Task"
 import { formatResponse } from "../../prompts/responses"
 import type { ToolUse } from "../../../shared/tools"
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {

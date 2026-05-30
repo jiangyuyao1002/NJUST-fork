@@ -1,6 +1,6 @@
-// pnpm --filter @njust-ai-cj/core test src/custom-tools/__tests__/format-native.spec.ts
+// pnpm --filter @njust-ai/core test src/custom-tools/__tests__/format-native.spec.ts
 
-import { type SerializedCustomToolDefinition, parametersSchema as z, defineCustomTool } from "@njust-ai-cj/types"
+import { type SerializedCustomToolDefinition, parametersSchema as z, defineCustomTool } from "@njust-ai/types"
 
 import { serializeCustomTool, serializeCustomTools } from "../serialize.js"
 import { formatNative } from "../format-native.js"

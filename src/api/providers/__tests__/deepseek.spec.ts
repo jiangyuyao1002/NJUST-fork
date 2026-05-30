@@ -125,8 +125,8 @@ vi.mock("openai", () => {
 import OpenAI from "openai"
 import type { Anthropic } from "@anthropic-ai/sdk"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
-import { deepSeekDefaultModelId, deepSeekModels, DEEP_SEEK_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
+import { type ModelInfo } from "@njust-ai/types"
+import { deepSeekDefaultModelId, deepSeekModels, DEEP_SEEK_DEFAULT_TEMPERATURE } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
 

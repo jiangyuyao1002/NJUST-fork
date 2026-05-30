@@ -1,4 +1,4 @@
-import type { Command } from "@njust-ai-cj/types"
+import type { Command } from "@njust-ai/types"
 
 import { render, screen, fireEvent } from "@/utils/test-utils"
 

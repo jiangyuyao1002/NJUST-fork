@@ -6,8 +6,8 @@ import * as os from "os"
 import * as path from "path"
 import * as vscode from "vscode"
 
-import type { GlobalState, ProviderSettings } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { GlobalState, ProviderSettings } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Task } from "../Task"
 import { createTestProvider } from "./testProviderFactory"

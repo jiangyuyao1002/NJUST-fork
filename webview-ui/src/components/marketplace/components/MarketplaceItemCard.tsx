@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react"
-import { MarketplaceItem } from "@njust-ai-cj/types"
+import { MarketplaceItem } from "@njust-ai/types"
 import { vscode } from "@/utils/vscode"
 import { ViewState } from "../MarketplaceViewStateManager"
 import { useAppTranslation } from "@/i18n/TranslationContext"

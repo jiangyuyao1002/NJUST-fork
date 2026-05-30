@@ -1,4 +1,4 @@
-import { type SambaNovaModelId, sambaNovaDefaultModelId, sambaNovaModels } from "@njust-ai-cj/core/providers"
+import { type SambaNovaModelId, sambaNovaDefaultModelId, sambaNovaModels } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

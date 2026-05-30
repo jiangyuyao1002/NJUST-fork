@@ -27,7 +27,7 @@ import {
 	providerSettingsSchema,
 	getModelId,
 	EVALS_SETTINGS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { createRun } from "@/actions/runs"
 import { getExercises } from "@/actions/exercises"
@@ -48,11 +48,11 @@ import {
 } from "@/lib/schemas"
 import { cn } from "@/lib/utils"
 
-import { loadRooLastModelSelection, saveRooLastModelSelection } from "@/lib/roo-last-model-selection"
+import { loadRooLastModelSelection, saveRooLastModelSelection } from "@/lib/njust-ai-last-model-selection"
 import { normalizeCreateRunForSubmit } from "@/lib/normalize-create-run"
 
 import { useOpenRouterModels } from "@/hooks/use-open-router-models"
-import { useNJUST_AI_CJCloudModels } from "@/hooks/use-roo-code-cloud-models"
+import { useNJUST_AICloudModels } from "@/hooks/use-njust-ai-cloud-models"
 
 import {
 	Button,
@@ -108,7 +108,7 @@ export function NewRun() {
 	const modelSelectionsByProviderRef = useRef<Record<string, ModelSelection[]>>({})
 	const modelValueByProviderRef = useRef<Record<string, string>>({})
 
-	const [provider, setModelSource] = useState<"roo" | "openrouter" | "other">("other")
+	const [provider, setModelSource] = useState<"njust-ai" | "openrouter" | "other">("other")
 	const [executionMethod, setExecutionMethod] = useState<ExecutionMethod>("vscode")
 	const [commandExecutionTimeout, setCommandExecutionTimeout] = useState(20)
 	const [terminalShellIntegrationTimeout, setTerminalShellIntegrationTimeout] = useState(30) // seconds
@@ -123,11 +123,11 @@ export function NewRun() {
 	])
 
 	const openRouter = useOpenRouterModels()
-	const rooCodeCloud = useNJUST_AI_CJCloudModels()
-	const models = provider === "openrouter" ? openRouter.data : rooCodeCloud.data
-	const searchValue = provider === "openrouter" ? openRouter.searchValue : rooCodeCloud.searchValue
-	const setSearchValue = provider === "openrouter" ? openRouter.setSearchValue : rooCodeCloud.setSearchValue
-	const onFilter = provider === "openrouter" ? openRouter.onFilter : rooCodeCloud.onFilter
+	const NjustAiCloud = useNJUST_AICloudModels()
+	const models = provider === "openrouter" ? openRouter.data : NjustAiCloud.data
+	const searchValue = provider === "openrouter" ? openRouter.searchValue : NjustAiCloud.searchValue
+	const setSearchValue = provider === "openrouter" ? openRouter.setSearchValue : NjustAiCloud.setSearchValue
+	const onFilter = provider === "openrouter" ? openRouter.onFilter : NjustAiCloud.onFilter
 
 	const exercises = useQuery({ queryKey: ["getExercises"], queryFn: () => getExercises() })
 
@@ -274,9 +274,9 @@ export function NewRun() {
 		setPrevProvider(provider)
 	}, [provider, prevProvider, modelSelections, setValue, getValues, importedSettings, configSelections])
 
-	// When switching to Roo provider, restore last-used selection if current selection is empty
+	// When switching to Njust-AI provider, restore last-used selection if current selection is empty
 	useEffect(() => {
-		if (provider !== "roo") return
+		if (provider !== "njust-ai") return
 		if (selectedModelIds.length > 0) return
 
 		const last = loadRooLastModelSelection()
@@ -285,9 +285,9 @@ export function NewRun() {
 		}
 	}, [applyModelIds, provider, selectedModelIds.length])
 
-	// Persist last-used Roo provider model selection
+	// Persist last-used Njust-AI provider model selection
 	useEffect(() => {
-		if (provider !== "roo") return
+		if (provider !== "njust-ai") return
 		saveRooLastModelSelection(selectedModelIds)
 	}, [provider, selectedModelIds])
 
@@ -415,9 +415,9 @@ export function NewRun() {
 			try {
 				const baseValues = normalizeCreateRunForSubmit(values, selectedExercises, suite)
 
-				// Validate jobToken for NJUST_AI_CJ Cloud provider
-				if (provider === "roo" && !baseValues.jobToken?.trim()) {
-					toast.error("NJUST_AI_CJ Cloud Token is required")
+				// Validate jobToken for NJUST_AI Cloud provider
+				if (provider === "njust-ai" && !baseValues.jobToken?.trim()) {
+					toast.error("NJUST_AI Cloud Token is required")
 					return
 				}
 
@@ -464,11 +464,11 @@ export function NewRun() {
 							commandExecutionTimeout,
 							terminalShellIntegrationTimeout: terminalShellIntegrationTimeout * 1000,
 						}
-					} else if (provider === "roo") {
+					} else if (provider === "njust-ai") {
 						runValues.model = selection.model
 						runValues.settings = {
 							...(runValues.settings || {}),
-							apiProvider: "roo",
+							apiProvider: "njust-ai",
 							apiModelId: selection.model,
 							commandExecutionTimeout,
 							terminalShellIntegrationTimeout: terminalShellIntegrationTimeout * 1000,
@@ -567,10 +567,10 @@ export function NewRun() {
 							<FormItem>
 								<Tabs
 									value={provider}
-									onValueChange={(value) => setModelSource(value as "roo" | "openrouter" | "other")}>
+									onValueChange={(value) => setModelSource(value as "njust-ai" | "openrouter" | "other")}>
 									<TabsList className="mb-2">
 										<TabsTrigger value="other">Import</TabsTrigger>
-										<TabsTrigger value="roo">NJUST_AI_CJ Cloud</TabsTrigger>
+										<TabsTrigger value="njust-ai">NJUST_AI Cloud</TabsTrigger>
 										<TabsTrigger value="openrouter">OpenRouter</TabsTrigger>
 									</TabsList>
 								</Tabs>
@@ -773,25 +773,25 @@ export function NewRun() {
 						)}
 					/>
 
-					{provider === "roo" && (
+					{provider === "njust-ai" && (
 						<FormField
 							control={form.control}
 							name="jobToken"
 							render={({ field }) => (
 								<FormItem>
 									<div className="flex items-center gap-1">
-										<FormLabel>NJUST_AI_CJ Cloud Token</FormLabel>
+										<FormLabel>NJUST_AI Cloud Token</FormLabel>
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<Info className="size-4 text-muted-foreground cursor-help" />
 											</TooltipTrigger>
 											<TooltipContent side="right" className="max-w-xs">
 												<p>
-													If you have access to the NJUST_AI_CJ Cloud repository and the
+													If you have access to the NJUST_AI Cloud repository and the
 													decryption key for the .env.* files, generate a token with:
 												</p>
 												<code className="text-xs block mt-1">
-													pnpm --filter @roo-code-cloud/auth production:create-auth-token
+													pnpm --filter @Njust-AI-cloud/auth production:create-auth-token
 													[email] [org] [ttl]
 												</code>
 											</TooltipContent>

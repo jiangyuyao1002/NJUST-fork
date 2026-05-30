@@ -1,1 +1,1 @@
-export * from "@njust-ai-cj/core/feature-flags"
+export * from "@njust-ai/core/feature-flags"

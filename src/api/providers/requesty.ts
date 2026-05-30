@@ -1,8 +1,8 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics } from "@njust-ai-cj/types"
-import { requestyDefaultModelId, requestyDefaultModelInfo } from "@njust-ai-cj/core/providers"
+import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics } from "@njust-ai/types"
+import { requestyDefaultModelId, requestyDefaultModelInfo } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { calculateApiCostOpenAI } from "../../shared/cost"

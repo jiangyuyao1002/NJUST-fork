@@ -6,7 +6,7 @@ import { CodeIndexOllamaEmbedder } from "../ollama"
 global.fetch = vitest.fn() as MockedFunction<typeof fetch>
 
 // Mock TelemetryService
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureEvent: vitest.fn(),

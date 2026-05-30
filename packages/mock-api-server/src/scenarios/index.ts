@@ -292,7 +292,7 @@ const extractUseMcpToolArgs = (text: string): Record<string, unknown> => {
 
 const textOnlyResult = (text: string): string => {
 	if (/square root of 9/i.test(text)) return "3"
-	if (/what is your name/i.test(text)) return "My name is Roo"
+	if (/what is your name/i.test(text)) return "My name is Njust-AI"
 	if (/unordered list/i.test(text)) return "- Apple\n- Banana\n- Orange"
 	if (/numbered list|three steps/i.test(text)) return "1. First step\n2. Second step\n3. Third step"
 	if (/nested list/i.test(text)) return "- Main item\n  - Sub-item A\n  - Sub-item B"
@@ -381,7 +381,7 @@ export function autoResolveScenario(body: Record<string, unknown>): MockScenario
 	if (bodyText.includes("what is your name")) {
 		return {
 			name: "auto-complete",
-			resolve: () => completionResponse("My name is Roo"),
+			resolve: () => completionResponse("My name is Njust-AI"),
 		}
 	}
 	if (bodyText.includes("unordered list")) {

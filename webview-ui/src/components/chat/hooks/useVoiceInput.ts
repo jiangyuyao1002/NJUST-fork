@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import type { ExtensionMessage } from "@njust-ai-cj/types"
+import type { ExtensionMessage } from "@njust-ai/types"
 
 import { vscode } from "@src/utils/vscode"
 

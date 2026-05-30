@@ -10,12 +10,12 @@ import type {
 	ClineApiReqInfo,
 	ClineAskUseMcpServer,
 	ClineSayTool,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
-import { Mode } from "@roo/modes"
+import { Mode } from "@shared/modes"
 
-import { COMMAND_OUTPUT_STRING } from "@roo/combineCommandSequences"
-import { safeJsonParse } from "@roo/core"
+import { COMMAND_OUTPUT_STRING } from "@shared/combineCommandSequences"
+import { safeJsonParse } from "@njust-ai/core/browser"
 
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { vscode } from "@src/utils/vscode"

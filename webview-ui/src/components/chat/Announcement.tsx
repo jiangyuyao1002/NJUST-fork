@@ -1,6 +1,6 @@
 import { memo, useState } from "react"
 
-import { Package } from "@roo/package"
+import { Package } from "@shared/package"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@src/components/ui"
 

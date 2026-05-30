@@ -1,6 +1,6 @@
 {
 	"name": "njust-ai",
-	"displayName": "NJUST_AI_CJ",
+	"displayName": "NJUST_AI",
 	"description": "AI-powered coding assistant for NJUST",
 	"publisher": "JunjieChen-YuyaoJiang",
 	"version": "2026.5.25",
@@ -14,7 +14,7 @@
 		"node": "20.19.2"
 	},
 	"author": {
-		"name": "NJUST_AI_CJ"
+		"name": "NJUST_AI"
 	},
 	"repository": {
 		"type": "git",
@@ -43,7 +43,7 @@
 		"ai",
 		"llama",
 		"njust",
-		"njust_ai_cj"
+		"NJUST_AI"
 	],
 	"activationEvents": [
 		"onStartupFinished"
@@ -409,12 +409,12 @@
 			{
 				"command": "njust-ai.triggerInlineCompletion",
 				"title": "%command.triggerInlineCompletion.title%",
-				"category": "NJUST_AI_CJ"
+				"category": "NJUST_AI"
 			},
 			{
 				"command": "njust-ai.inlineCompletionDiagnostics",
 				"title": "%command.inlineCompletionDiagnostics.title%",
-				"category": "NJUST_AI_CJ"
+				"category": "NJUST_AI"
 			}
 		],
 		"menus": {
@@ -648,8 +648,8 @@
 		],
 		"languageModelTools": [
 			{
-				"name": "roo_readFile",
-				"displayName": "Roo: Read File",
+				"name": "njust_ai_readFile",
+				"displayName": "Njust-AI: Read File",
 				"modelDescription": "Read the contents of a file in the workspace. Returns the full text content of the specified file.",
 				"inputSchema": {
 					"type": "object",
@@ -664,13 +664,13 @@
 					]
 				},
 				"tags": [
-					"roo-agent",
+					"njust-ai-agent",
 					"file-operations"
 				]
 			},
 			{
-				"name": "roo_editFile",
-				"displayName": "Roo: Edit File",
+				"name": "njust_ai_editFile",
+				"displayName": "Njust-AI: Edit File",
 				"modelDescription": "Edit a file by applying a search-and-replace diff patch. Specify the file path and a unified diff.",
 				"inputSchema": {
 					"type": "object",
@@ -690,13 +690,13 @@
 					]
 				},
 				"tags": [
-					"roo-agent",
+					"njust-ai-agent",
 					"file-operations"
 				]
 			},
 			{
-				"name": "roo_executeCommand",
-				"displayName": "Roo: Execute Command",
+				"name": "njust_ai_executeCommand",
+				"displayName": "Njust-AI: Execute Command",
 				"modelDescription": "Execute a shell command in the workspace terminal. Returns the command output.",
 				"inputSchema": {
 					"type": "object",
@@ -711,13 +711,13 @@
 					]
 				},
 				"tags": [
-					"roo-agent",
+					"njust-ai-agent",
 					"terminal"
 				]
 			},
 			{
-				"name": "roo_searchFiles",
-				"displayName": "Roo: Search Files",
+				"name": "njust_ai_searchFiles",
+				"displayName": "Njust-AI: Search Files",
 				"modelDescription": "Search for files in the workspace using a regex pattern. Returns matching lines with file paths and line numbers.",
 				"inputSchema": {
 					"type": "object",
@@ -736,13 +736,13 @@
 					]
 				},
 				"tags": [
-					"roo-agent",
+					"njust-ai-agent",
 					"search"
 				]
 			},
 			{
-				"name": "roo_listFiles",
-				"displayName": "Roo: List Files",
+				"name": "njust_ai_listFiles",
+				"displayName": "Njust-AI: List Files",
 				"modelDescription": "List files and directories in the specified path. Returns a tree-like listing.",
 				"inputSchema": {
 					"type": "object",
@@ -761,13 +761,13 @@
 					]
 				},
 				"tags": [
-					"roo-agent",
+					"njust-ai-agent",
 					"file-operations"
 				]
 			},
 			{
-				"name": "roo_codebaseSearch",
-				"displayName": "Roo: Codebase Search",
+				"name": "njust_ai_codebaseSearch",
+				"displayName": "Njust-AI: Codebase Search",
 				"modelDescription": "Perform a semantic search across the codebase using natural language queries.",
 				"inputSchema": {
 					"type": "object",
@@ -782,7 +782,7 @@
 					]
 				},
 				"tags": [
-					"roo-agent",
+					"njust-ai-agent",
 					"search"
 				]
 			}
@@ -790,8 +790,8 @@
 		"chatParticipants": [
 			{
 				"id": "njust-ai.agent",
-				"name": "roo",
-				"fullName": "Roo Agent",
+				"name": "njust-ai",
+				"fullName": "Njust-AI Agent",
 				"description": "AI-powered coding agent - read, write, execute, debug",
 				"isSticky": true,
 				"commands": [
@@ -818,7 +818,7 @@
 				],
 				"disambiguation": [
 					{
-						"category": "roo_coding",
+						"category": "njust_ai_coding",
 						"description": "The user wants help with coding tasks like writing, editing, debugging, or understanding code in their workspace.",
 						"examples": [
 							"Help me refactor this function",
@@ -1260,13 +1260,13 @@
 		"@qdrant/js-client-rest": "^1.14.0",
 		"@vscode/codicons": "^0.0.36",
 		"async-mutex": "^0.5.0",
-		"axios": "^1.15.2",
+		"axios": ">=1.15.2",
 		"cheerio": "^1.0.0",
 		"chokidar": "^4.0.1",
 		"clone-deep": "^4.0.1",
 		"default-shell": "^2.2.0",
 		"delay": "^6.0.0",
-		"diff": "^5.2.2",
+		"diff": ">=5.2.2",
 		"exceljs": "^4.4.0",
 		"fast-deep-equal": "^3.1.3",
 		"fastest-levenshtein": "^1.0.16",
@@ -1310,8 +1310,8 @@
 		"tiktoken": "^1.0.21",
 		"tree-sitter-wasms": "^0.1.12",
 		"turndown": "^7.2.0",
-		"undici": "^7.0.0",
-		"uuid": "^11.1.1",
+		"undici": "7.24.0",
+		"uuid": "11.1.1",
 		"vscode-languageclient": "^9.0.1",
 		"vscode-material-icons": "^0.1.1",
 		"web-tree-sitter": "^0.25.6",
@@ -1347,7 +1347,7 @@
 		"ai": "^6.0.75",
 		"esbuild-wasm": "^0.25.0",
 		"execa": "^9.5.2",
-		"glob": "^11.1.0",
+		"glob": ">=11.1.0",
 		"mkdirp": "^3.0.1",
 		"nock": "^14.0.4",
 		"npm-run-all2": "^8.0.1",

@@ -1,9 +1,9 @@
 import * as vscode from "vscode"
 
 import type { ClineProvider } from "../core/webview/ClineProvider"
-import type { ClineMessage } from "@njust-ai-cj/types"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { ClineMessage } from "@njust-ai/types"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { getErrorMessage } from "../shared/error-utils"
 
 const PARTICIPANT_ID = "njust-ai.agent"
@@ -26,7 +26,7 @@ interface RooChatResult extends vscode.ChatResult {
 
 /**
  * Bridges VSCode's Chat Participant API with the existing ClineProvider/Task system.
- * Users can invoke @roo in the native VSCode chat panel to leverage the full
+ * Users can invoke @njust-ai in the native VSCode chat panel to leverage the full
  * Agent capabilities (file editing, terminal execution, code search, etc.).
  */
 export class ChatParticipantHandler {
@@ -63,7 +63,7 @@ export class ChatParticipantHandler {
 		const command = request.command || "code"
 		const modeSlug = COMMAND_MODE_MAP[command] || "code"
 
-		stream.progress(`Starting Roo Agent in ${modeSlug} mode...`)
+		stream.progress(`Starting Njust-AI Agent in ${modeSlug} mode...`)
 
 		try {
 			const previousMessages = this.buildContextFromHistory(chatContext)
@@ -210,10 +210,10 @@ export class ChatParticipantHandler {
 						try {
 							const toolData = JSON.parse(msg.text)
 							stream.markdown(
-								`\n> **Tool approval needed:** ${toolData.tool || "UnsafeAny"}\n> Use the Roo sidebar to approve or reject.\n`,
+								`\n> **Tool approval needed:** ${toolData.tool || "UnsafeAny"}\n> Use the Njust-AI sidebar to approve or reject.\n`,
 							)
 						} catch {
-							stream.markdown("\n> **Tool approval needed.** Use the Roo sidebar to approve or reject.\n")
+							stream.markdown("\n> **Tool approval needed.** Use the Njust-AI sidebar to approve or reject.\n")
 						}
 					}
 					break

@@ -2,7 +2,7 @@ import path from "path"
 import delay from "delay"
 import fs from "fs/promises"
 
-import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
+import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai/types"
 
 import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { Task } from "../task/Task"
@@ -293,7 +293,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			}
 
 			if (relPath) {
-				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+				await task.fileContextTracker.trackFileContext(relPath, "njust_ai_edited" as RecordSource)
 			}
 
 			task.didEditFile = true

@@ -2,7 +2,7 @@ import fs from "fs/promises"
 import os from "os"
 import path from "path"
 
-import { NJUST_AI_CONFIG_DIR } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
 const CONFIG_DIR = path.join(os.homedir(), NJUST_AI_CONFIG_DIR)
 

@@ -1,11 +1,11 @@
-import { ProviderSettings, ClineMessage, TelemetryEventName } from "@njust-ai-cj/types"
+import { ProviderSettings, ClineMessage, TelemetryEventName } from "@njust-ai/types"
 import { supportPrompt } from "../../shared/support-prompt"
 import { singleCompletionHandler } from "../../utils/single-completion-handler"
 import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 export interface MessageEnhancerOptions {
 	text: string

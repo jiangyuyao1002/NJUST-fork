@@ -1,4 +1,4 @@
-import type { ProviderSettings, OrganizationAllowList, RouterModels } from "@njust-ai-cj/types"
+import type { ProviderSettings, OrganizationAllowList, RouterModels } from "@njust-ai/types"
 
 // Mock i18next to return translation keys with interpolated values
 vi.mock("i18next", () => ({
@@ -44,7 +44,7 @@ describe("Model Validation Functions", () => {
 		ollama: {},
 		lmstudio: {},
 		"vercel-ai-gateway": {},
-		roo: {},
+		"njust-ai": {},
 	}
 
 	const allowAllOrganization: OrganizationAllowList = {

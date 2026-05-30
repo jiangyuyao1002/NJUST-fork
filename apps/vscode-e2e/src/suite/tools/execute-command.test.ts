@@ -4,12 +4,12 @@ import * as path from "path"
 import * as vscode from "vscode"
 import { execFileSync } from "child_process"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitFor, sleep, waitUntilCompleted } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite("NJUST_AI_CJ execute_command Tool", function () {
+suite("NJUST_AI execute_command Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -155,7 +155,7 @@ suite("NJUST_AI_CJ execute_command Tool", function () {
 				}
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -164,7 +164,7 @@ suite("NJUST_AI_CJ execute_command Tool", function () {
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -172,7 +172,7 @@ suite("NJUST_AI_CJ execute_command Tool", function () {
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -218,9 +218,9 @@ Then use the attempt_completion tool to complete the task. Do not suggest any co
 			console.log("Test passed! Command executed successfully")
 		} finally {
 			// Clean up event listeners
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -261,7 +261,7 @@ Then use the attempt_completion tool to complete the task. Do not suggest any co
 				}
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -270,7 +270,7 @@ Then use the attempt_completion tool to complete the task. Do not suggest any co
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -278,7 +278,7 @@ Then use the attempt_completion tool to complete the task. Do not suggest any co
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -330,9 +330,9 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 			console.log("Test passed! Command executed in custom directory")
 		} finally {
 			// Clean up event listeners
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 			// Clean up subdirectory
 			try {
@@ -375,7 +375,7 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 				}
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -384,7 +384,7 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -392,7 +392,7 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -450,9 +450,9 @@ After both commands are executed, use the attempt_completion tool to complete th
 			console.log("Test passed! Multiple commands executed successfully")
 		} finally {
 			// Clean up event listeners
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -494,7 +494,7 @@ After both commands are executed, use the attempt_completion tool to complete th
 				}
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -503,7 +503,7 @@ After both commands are executed, use the attempt_completion tool to complete th
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -511,7 +511,7 @@ After both commands are executed, use the attempt_completion tool to complete th
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -560,9 +560,9 @@ Avoid at all costs suggesting a command when using the attempt_completion tool`,
 			console.log("Test passed! Long-running command handled successfully")
 		} finally {
 			// Clean up event listeners
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 })

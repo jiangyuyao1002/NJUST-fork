@@ -1,4 +1,4 @@
-import type { CreateTaskOptions, HistoryItem, NJUST_AI_CJSettings } from "@njust-ai-cj/types"
+import type { CreateTaskOptions, HistoryItem, NJUST_AISettings } from "@njust-ai/types"
 
 import type { Task } from "../task/Task"
 
@@ -12,7 +12,7 @@ export interface ITaskCoordinatorHost {
 		images?: string[],
 		parentTask?: Task,
 		options?: CreateTaskOptions,
-		configuration?: NJUST_AI_CJSettings,
+		configuration?: NJUST_AISettings,
 	): Promise<Task>
 	cancelTask(): Promise<void>
 	clearTask(): Promise<void>
@@ -47,7 +47,7 @@ export class TaskCoordinator {
 		images?: string[],
 		parentTask?: Task,
 		options: CreateTaskOptions = {},
-		configuration: NJUST_AI_CJSettings = {},
+		configuration: NJUST_AISettings = {},
 	): Promise<Task> {
 		return this.host.createTask(text, images, parentTask, options, configuration)
 	}

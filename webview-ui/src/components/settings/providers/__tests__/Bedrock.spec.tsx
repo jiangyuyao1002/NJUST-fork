@@ -1,7 +1,7 @@
 import React from "react"
 import { render, screen, fireEvent } from "@/utils/test-utils"
 import { Bedrock } from "../Bedrock"
-import { ProviderSettings } from "@njust-ai-cj/types"
+import { ProviderSettings } from "@njust-ai/types"
 
 // Mock the vscrui Checkbox component
 vi.mock("vscrui", () => ({

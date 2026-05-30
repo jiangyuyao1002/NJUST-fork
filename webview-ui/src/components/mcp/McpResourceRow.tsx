@@ -1,4 +1,4 @@
-import type { McpResource, McpResourceTemplate } from "@njust-ai-cj/types"
+import type { McpResource, McpResourceTemplate } from "@njust-ai/types"
 
 type McpResourceRowProps = {
 	item: McpResource | McpResourceTemplate

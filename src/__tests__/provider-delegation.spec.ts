@@ -1,7 +1,7 @@
 // npx vitest run __tests__/provider-delegation.spec.ts
 
 import { describe, it, expect, vi } from "vitest"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 import { delegateParentAndOpenChildWithProvider, type IDelegationHost } from "../core/webview/ClineProviderDelegation"
 
 /** Minimal parent task surface used by delegateParentAndOpenChild (flush + lineage). */
@@ -103,7 +103,7 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 		expect(childStart).toHaveBeenCalledTimes(1)
 
 		// Event emission (provider-level)
-		expect(providerEmit).toHaveBeenCalledWith(NJUST_AI_CJEventName.TaskDelegated, "parent-1", "child-1")
+		expect(providerEmit).toHaveBeenCalledWith(NJUST_AIEventName.TaskDelegated, "parent-1", "child-1")
 
 		// Mode switch
 		expect(handleModeSwitch).toHaveBeenCalledWith("code")

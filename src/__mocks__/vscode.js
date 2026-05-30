@@ -71,7 +71,7 @@ export const window = {
 	}),
 	createTerminal: () => ({
 		exitStatus: undefined,
-		name: "NJUST_AI_CJ",
+		name: "NJUST_AI",
 		processId: Promise.resolve(123),
 		creationOptions: {},
 		state: { isInteractedWith: true },

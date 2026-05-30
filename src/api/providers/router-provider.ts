@@ -1,6 +1,6 @@
 import OpenAI from "openai"
 
-import { type ModelInfo, type ModelRecord } from "@njust-ai-cj/types"
+import { type ModelInfo, type ModelRecord } from "@njust-ai/types"
 
 import { ApiHandlerOptions, RouterName } from "../../shared/api"
 

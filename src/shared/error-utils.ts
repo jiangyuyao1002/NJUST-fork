@@ -1,1 +1,1 @@
-export * from "@njust-ai-cj/core/shared"
+export * from "@njust-ai/core/shared"

@@ -1,7 +1,7 @@
 import path from "path"
 import fs from "fs/promises"
 
-import type { ClineSayTool } from "@njust-ai-cj/types"
+import type { ClineSayTool } from "@njust-ai/types"
 
 import { formatResponse } from "../../core/prompts/responses"
 import { computeDiffStats, convertNewFileToUnifiedDiff, sanitizeUnifiedDiff } from "../../core/diff/stats"

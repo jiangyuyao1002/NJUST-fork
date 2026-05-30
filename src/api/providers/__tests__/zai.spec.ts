@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach } from "vitest"
 import OpenAI from "openai"
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import { type InternationalZAiModelId } from "@njust-ai-cj/types"
+import { type InternationalZAiModelId } from "@njust-ai/types"
 import {
 	type MainlandZAiModelId,
 	internationalZAiDefaultModelId,
@@ -13,7 +13,7 @@ import {
 	internationalZAiModels,
 	mainlandZAiModels,
 	ZAI_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { ZAiHandler } from "../zai"
 

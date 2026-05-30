@@ -1,7 +1,7 @@
 /**
  * Cloud Agent Profile 类型定义
  *
- * 从 @njust-ai-cj/types 重新导出，避免重复定义。
+ * 从 @njust-ai/types 重新导出，避免重复定义。
  * 本地补充默认值常量。
  */
 
@@ -11,13 +11,13 @@ export type {
 	CloudAgentEndpointConfig as EndpointConfig,
 	CloudAgentRestFieldMapping as RestFieldMapping,
 	CloudAgentAuthConfig as AuthConfig,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import type {
 	CloudAgentEndpointConfig,
 	CloudAgentRestFieldMapping,
 	CloudAgentAuthConfig,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 /** 端点默认值 */
 export const DEFAULT_ENDPOINTS: Readonly<CloudAgentEndpointConfig> = {

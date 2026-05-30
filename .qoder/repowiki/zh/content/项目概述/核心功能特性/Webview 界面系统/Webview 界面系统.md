@@ -36,7 +36,7 @@
 
 ## 简介
 
-Webview 界面系统是 Roo-Code 扩展程序的核心前端架构，基于 React 构建，为用户提供现代化的 AI 对话界面。该系统通过 ClineProvider 作为界面与扩展宿主之间的桥梁，实现了双向的消息通信机制，支持聊天界面、工具调用审批、代码展示、历史管理、**内联代码补全设置**等多种功能。
+Webview 界面系统是 Njust-AI 扩展程序的核心前端架构，基于 React 构建，为用户提供现代化的 AI 对话界面。该系统通过 ClineProvider 作为界面与扩展宿主之间的桥梁，实现了双向的消息通信机制，支持聊天界面、工具调用审批、代码展示、历史管理、**内联代码补全设置**等多种功能。
 
 系统采用模块化设计，具有清晰的组件层次结构和状态管理模式，能够高效处理复杂的 AI 交互场景，包括实时对话、工具调用、文件操作、**内联代码补全配置**等。
 
@@ -433,7 +433,7 @@ J[Services Layer]
 K[Settings Components]
 end
 subgraph "类型定义"
-L[@njust-ai-cj/types]
+L[@njust-ai/types]
 M[VSCode Types]
 N[Extension State Types]
 end

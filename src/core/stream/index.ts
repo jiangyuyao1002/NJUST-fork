@@ -1,1 +1,1 @@
-export * from "@njust-ai-cj/core/stream"
+export * from "@njust-ai/core/stream"

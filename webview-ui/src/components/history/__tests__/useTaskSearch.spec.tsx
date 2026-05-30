@@ -1,6 +1,6 @@
 import { renderHook, act } from "@/utils/test-utils"
 
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 
 import { useTaskSearch } from "../useTaskSearch"
 

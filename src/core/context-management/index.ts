@@ -1,14 +1,14 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import crypto from "crypto"
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 import { logger } from "../../shared/logger"
 
 import { ApiHandler, ApiHandlerCreateMessageMetadata } from "../../api"
 import { MAX_CONDENSE_THRESHOLD, MIN_CONDENSE_THRESHOLD, summarizeConversation, SummarizeResponse } from "../condense"
 import { ApiMessage } from "../task-persistence/apiMessages"
-import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
+import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai/core/providers"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { preprocessMessages } from "./preprocess"
 import { postCompactRestore } from "./postCompactRestore"
@@ -455,7 +455,7 @@ export type ContextManagementOptions = {
 	metadata?: ApiHandlerCreateMessageMetadata
 	/** Optional environment details string to include in the condensed summary */
 	environmentDetails?: string
-	/** Optional array of file paths read by Roo during the task (will be folded via tree-sitter) */
+	/** Optional array of file paths read by Njust-AI during the task (will be folded via tree-sitter) */
 	filesReadByRoo?: string[]
 	/** Optional current working directory for resolving file paths (required if filesReadByRoo is provided) */
 	cwd?: string

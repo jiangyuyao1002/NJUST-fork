@@ -1,6 +1,6 @@
 import axios from "axios"
-import { ModelInfo } from "@njust-ai-cj/types"
-import { ollamaDefaultModelInfo } from "@njust-ai-cj/core/providers"
+import { ModelInfo } from "@njust-ai/types"
+import { ollamaDefaultModelInfo } from "@njust-ai/core/providers"
 import { z } from "zod"
 
 import { logger } from "../../../shared/logger"

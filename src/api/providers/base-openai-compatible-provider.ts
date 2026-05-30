@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import type { ModelInfo, OpenAiUsageMetrics } from "@njust-ai-cj/types"
+import type { ModelInfo, OpenAiUsageMetrics } from "@njust-ai/types"
 
 import { type ApiHandlerOptions, getModelMaxOutputTokens } from "../../shared/api"
 import { TagMatcher } from "../../utils/tag-matcher"

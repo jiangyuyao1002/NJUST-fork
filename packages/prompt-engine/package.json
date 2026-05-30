@@ -1,6 +1,6 @@
 {
-	"name": "@njust-ai-cj/prompt-engine",
-	"description": "Pure prompt rendering engine for NJUST_AI_CJ.",
+	"name": "@njust-ai/prompt-engine",
+	"description": "Pure prompt rendering engine for NJUST_AI.",
 	"version": "0.0.0",
 	"type": "module",
 	"exports": {
@@ -14,8 +14,8 @@
 		"clean": "rimraf dist .turbo"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@types/node": "20.x",
 		"@vitest/coverage-v8": "^3.2.3",
 		"vitest": "^3.2.3"

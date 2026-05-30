@@ -7,7 +7,7 @@ import { appendRetryEvent, clearRetryEvents, readRetryEvents } from "../retryPer
 
 describe("retryPersistence", () => {
 	it("appends and reads retry events", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "roo-retry-"))
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "njust-ai-retry-"))
 		const taskId = "task-1"
 
 		await appendRetryEvent(root, {

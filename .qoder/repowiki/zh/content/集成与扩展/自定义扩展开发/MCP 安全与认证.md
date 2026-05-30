@@ -309,7 +309,7 @@ E --> L
 #### 认证失败排查
 
 1. **检查认证令牌配置**
-   - 确认 `njust-ai-cj.mcpServer.authToken` 设置正确
+   - 确认 `njust-ai.mcpServer.authToken` 设置正确
    - 验证令牌格式为 Bearer Token
    - 检查令牌有效期和权限范围
 

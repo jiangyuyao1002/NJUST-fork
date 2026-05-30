@@ -17,9 +17,9 @@ vi.mock("vscode", () => ({
 vi.mock("../../../shared/package", () => ({
 	Package: {
 		name: "njust-ai",
-		publisher: "RooVeterinaryInc",
+		publisher: "JunjieChen-YuyaoJiang",
 		version: "1.0.0",
-		outputChannel: "NJUST_AI_CJ",
+		outputChannel: "NJUST_AI",
 	},
 }))
 
@@ -523,7 +523,7 @@ describe("newTaskTool", () => {
 			expect(mockGet).toHaveBeenCalledWith("newTaskRequireTodos", false)
 		})
 
-		it("should use current Package.name value (njust-ai-cj-nightly) when accessing VSCode configuration", async () => {
+		it("should use current Package.name value (njust-ai-nightly) when accessing VSCode configuration", async () => {
 			// Arrange: capture calls to VSCode configuration and ensure we can assert the namespace
 			const mockGet = vi.fn().mockReturnValue(false)
 			const mockGetConfiguration = vi.fn().mockReturnValue({
@@ -533,7 +533,7 @@ describe("newTaskTool", () => {
 
 			// Mutate the mocked Package.name dynamically to simulate a different build variant
 			const pkg = await import("../../../shared/package")
-			;(pkg.Package as any).name = "njust-ai-cj-nightly"
+			;(pkg.Package as any).name = "njust-ai-nightly"
 
 			const block: ToolUse<"new_task"> = {
 				type: "tool_use",
@@ -552,7 +552,7 @@ describe("newTaskTool", () => {
 			})
 
 			// Assert: configuration was read using the dynamic nightly namespace
-			expect(mockGetConfiguration).toHaveBeenCalledWith("njust-ai-cj-nightly")
+			expect(mockGetConfiguration).toHaveBeenCalledWith("njust-ai-nightly")
 			expect(mockGet).toHaveBeenCalledWith("newTaskRequireTodos", false)
 		})
 	})

@@ -1,4 +1,4 @@
-import { parametersSchema, defineCustomTool } from "@njust-ai-cj/types"
+import { parametersSchema, defineCustomTool } from "@njust-ai/types"
 
 // This tool has the same name as the one in fixtures/ to test override behavior.
 export default defineCustomTool({

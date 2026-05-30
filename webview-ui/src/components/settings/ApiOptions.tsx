@@ -9,7 +9,7 @@ import {
 	type ProviderSettings,
 	isRetiredProvider,
 	DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import {
 	openRouterDefaultModelId,
 	requestyDefaultModelId,
@@ -39,7 +39,7 @@ import {
 	glmDefaultModelId,
 	mimoDefaultModelId,
 	mimoTokenPlanDefaultModelId,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import {
 	getProviderServiceConfig,
@@ -371,7 +371,7 @@ const ApiOptions = ({
 							: internationalZAiDefaultModelId,
 				},
 				fireworks: { field: "apiModelId", default: fireworksDefaultModelId },
-				roo: { field: "apiModelId", default: rooDefaultModelId },
+				"njust-ai": { field: "apiModelId", default: rooDefaultModelId },
 				"vercel-ai-gateway": { field: "vercelAiGatewayModelId", default: vercelAiGatewayDefaultModelId },
 				openai: { field: "openAiModelId" },
 				ollama: { field: "ollamaModelId" },

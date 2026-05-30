@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import type { ClineProvider } from "../core/webview/ClineProvider"
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 interface SyncedTask {
 	taskId: string

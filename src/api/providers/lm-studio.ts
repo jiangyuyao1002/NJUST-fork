@@ -3,8 +3,8 @@ import OpenAI from "openai"
 import axios from "axios"
 import { z } from "zod"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
-import { openAiModelInfoSaneDefaults, LMSTUDIO_DEFAULT_TEMPERATURE } from "@njust-ai-cj/core/providers"
+import { type ModelInfo } from "@njust-ai/types"
+import { openAiModelInfoSaneDefaults, LMSTUDIO_DEFAULT_TEMPERATURE } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
@@ -190,7 +190,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 		} catch (err) {
 			logger.error("LmStudioProvider", "Stream creation failed:", err)
 			throw new Error(
-				"Please check the LM Studio developer logs to debug what went wrong. You may need to load the model with a larger context length to work with NJUST_AI_CJ's prompts.",
+				"Please check the LM Studio developer logs to debug what went wrong. You may need to load the model with a larger context length to work with NJUST_AI's prompts.",
 			)
 		}
 	}
@@ -235,7 +235,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 		} catch (err) {
 			logger.error("LmStudioProvider", "Completion failed:", err)
 			throw new Error(
-				"Please check the LM Studio developer logs to debug what went wrong. You may need to load the model with a larger context length to work with NJUST_AI_CJ's prompts.",
+				"Please check the LM Studio developer logs to debug what went wrong. You may need to load the model with a larger context length to work with NJUST_AI's prompts.",
 			)
 		}
 	}

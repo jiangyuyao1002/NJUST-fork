@@ -4,8 +4,8 @@ import * as os from "node:os"
 import pWaitFor from "p-wait-for"
 import { execa } from "execa"
 
-import { type ToolUsage, TaskCommandName, NJUST_AI_CJEventName, IpcMessageType } from "@njust-ai-cj/types"
-import { IpcClient } from "@njust-ai-cj/ipc"
+import { type ToolUsage, TaskCommandName, NJUST_AIEventName, IpcMessageType } from "@njust-ai/types"
+import { IpcClient } from "@njust-ai/ipc"
 
 import { updateTask, createTaskMetrics, updateTaskMetrics, createToolError } from "../db/index"
 import { EVALS_REPO_PATH } from "../exercises/index"
@@ -14,7 +14,7 @@ import { type RunTaskOptions } from "./types"
 import { mergeToolUsage, waitForSubprocessWithTimeout } from "./utils"
 
 /**
- * Run a task using the NJUST_AI_CJ CLI (headless mode).
+ * Run a task using the NJUST_AI CLI (headless mode).
  * Uses the same IPC protocol as VSCode since the CLI loads the same extension bundle.
  */
 export const runTaskWithCli = async ({ run, task, publish, logger, jobToken }: RunTaskOptions) => {
@@ -25,11 +25,11 @@ export const runTaskWithCli = async ({ run, task, publish, logger, jobToken }: R
 
 	const env: Record<string, string> = {
 		...(process.env as Record<string, string>),
-		NJUST_AI_CJ_IPC_SOCKET_PATH: ipcSocketPath,
+		NJUST_AI_IPC_SOCKET_PATH: ipcSocketPath,
 	}
 
 	if (jobToken) {
-		env.NJUST_AI_CJ_CLOUD_TOKEN = jobToken
+		env.NJUST_AI_CLOUD_TOKEN = jobToken
 	}
 
 	const controller = new AbortController()
@@ -37,7 +37,7 @@ export const runTaskWithCli = async ({ run, task, publish, logger, jobToken }: R
 
 	const cliArgs = [
 		"--filter",
-		"@njust-ai-cj/cli",
+		"@njust-ai/cli",
 		"start",
 		"--prompt-file",
 		promptSourcePath,
@@ -173,7 +173,7 @@ export const runTaskWithCli = async ({ run, task, publish, logger, jobToken }: R
 
 	// For CLI mode, we don't need verbose IPC message logging since we're logging stdout instead.
 	// We only track what's needed for metrics and task state management.
-	const ignoreEventsForBroadcast = [NJUST_AI_CJEventName.Message]
+	const ignoreEventsForBroadcast = [NJUST_AIEventName.Message]
 	let isApiUnstable = false
 
 	client.on(IpcMessageType.TaskEvent, async (taskEvent) => {
@@ -181,7 +181,7 @@ export const runTaskWithCli = async ({ run, task, publish, logger, jobToken }: R
 
 		// Track API instability for retry logic.
 		if (
-			eventName === NJUST_AI_CJEventName.Message &&
+			eventName === NJUST_AIEventName.Message &&
 			payload[0].message.say &&
 			["api_req_retry_delayed", "api_req_retried"].includes(payload[0].message.say)
 		) {
@@ -196,18 +196,18 @@ export const runTaskWithCli = async ({ run, task, publish, logger, jobToken }: R
 		// Handle task lifecycle events.
 		// For CLI mode, we already created taskMetrics before connecting to IPC,
 		// but we still want to capture the rooTaskId from TaskStarted if we receive it.
-		if (eventName === NJUST_AI_CJEventName.TaskStarted) {
+		if (eventName === NJUST_AIEventName.TaskStarted) {
 			taskStartedAt = Date.now()
 			rooTaskId = payload[0]
 			logger.info(`received TaskStarted event, rooTaskId: ${rooTaskId}`)
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskToolFailed) {
+		if (eventName === NJUST_AIEventName.TaskToolFailed) {
 			const [_taskId, toolName, error] = payload
 			await createToolError({ taskId: task.id, toolName, error })
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskTokenUsageUpdated || eventName === NJUST_AI_CJEventName.TaskCompleted) {
+		if (eventName === NJUST_AIEventName.TaskTokenUsageUpdated || eventName === NJUST_AIEventName.TaskCompleted) {
 			// In CLI mode, taskMetricsId is always set before we register event handlers.
 			const duration = Date.now() - taskStartedAt
 
@@ -229,11 +229,11 @@ export const runTaskWithCli = async ({ run, task, publish, logger, jobToken }: R
 			})
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskAborted) {
+		if (eventName === NJUST_AIEventName.TaskAborted) {
 			taskAbortedAt = Date.now()
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskCompleted) {
+		if (eventName === NJUST_AIEventName.TaskCompleted) {
 			taskFinishedAt = Date.now()
 		}
 	})

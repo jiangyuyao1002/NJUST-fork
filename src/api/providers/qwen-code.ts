@@ -5,15 +5,15 @@ import * as os from "os"
 import * as path from "path"
 import { z } from "zod"
 
-import { type ModelInfo, TelemetryEventName } from "@njust-ai-cj/types"
-import { qwenCodeModels, qwenCodeDefaultModelId } from "@njust-ai-cj/core/providers"
+import { type ModelInfo, TelemetryEventName } from "@njust-ai/types"
+import { qwenCodeModels, qwenCodeDefaultModelId } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { ApiStream } from "../transform/stream"
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"

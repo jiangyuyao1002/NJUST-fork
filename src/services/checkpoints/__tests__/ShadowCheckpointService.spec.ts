@@ -54,8 +54,8 @@ const withoutGitEnv = () => {
 
 const initWorkspaceRepo = async ({
 	workspaceDir,
-	userName = "NJUST_AI_CJ",
-	userEmail = "support@njust-ai-cj.local",
+	userName = "NJUST_AI",
+	userEmail = "support@njust-ai.local",
 	testFileName = "test.txt",
 	textFileContent = "Hello, world!",
 }: {
@@ -440,16 +440,16 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 				await fs.mkdir(workspaceDir, { recursive: true })
 				const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 				await mainGit.init()
-				await mainGit.addConfig("user.name", "NJUST_AI_CJ")
-				await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
+				await mainGit.addConfig("user.name", "NJUST_AI")
+				await mainGit.addConfig("user.email", "support@njust-ai.local")
 
 				// Create a nested repo inside the workspace.
 				const nestedRepoPath = path.join(workspaceDir, "nested-project")
 				await fs.mkdir(nestedRepoPath, { recursive: true })
 				const nestedGit = createGit(nestedRepoPath).env(withoutGitEnv())
 				await nestedGit.init()
-				await nestedGit.addConfig("user.name", "NJUST_AI_CJ")
-				await nestedGit.addConfig("user.email", "support@njust-ai-cj.local")
+				await nestedGit.addConfig("user.name", "NJUST_AI")
+				await nestedGit.addConfig("user.email", "support@njust-ai.local")
 
 				// Add a file to the nested repo.
 				const nestedFile = path.join(nestedRepoPath, "nested-file.txt")
@@ -510,8 +510,8 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 				await fs.mkdir(workspaceDir, { recursive: true })
 				const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 				await mainGit.init()
-				await mainGit.addConfig("user.name", "NJUST_AI_CJ")
-				await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
+				await mainGit.addConfig("user.name", "NJUST_AI")
+				await mainGit.addConfig("user.email", "support@njust-ai.local")
 
 				// Create a test file in the main workspace.
 				const mainFile = path.join(workspaceDir, "main-file.txt")
@@ -928,7 +928,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 			it("isolates checkpoint operations from GIT_DIR environment variable", async () => {
 				// This test verifies the fix for the issue where GIT_DIR environment variable
 				// causes checkpoint commits to go to the wrong repository.
-				// In the real-world Dev Container scenario, GIT_DIR is set BEFORE Roo starts,
+				// In the real-world Dev Container scenario, GIT_DIR is set BEFORE Njust-AI starts,
 				// so we need to set it BEFORE creating the checkpoint service.
 
 				// Create a separate git directory to simulate GIT_DIR pointing elsewhere
@@ -1026,8 +1026,8 @@ describe("worktree path comparison", () => {
 			await fs.mkdir(workspaceDir, { recursive: true })
 			const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 			await mainGit.init()
-			await mainGit.addConfig("user.name", "NJUST_AI_CJ")
-			await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
+			await mainGit.addConfig("user.name", "NJUST_AI")
+			await mainGit.addConfig("user.email", "support@njust-ai.local")
 
 			await fs.writeFile(path.join(workspaceDir, "main.txt"), "main content")
 			await mainGit.add("main.txt")
@@ -1061,8 +1061,8 @@ describe("worktree path comparison", () => {
 			await fs.mkdir(workspaceDir, { recursive: true })
 			const mainGit = createGit(workspaceDir).env(withoutGitEnv())
 			await mainGit.init()
-			await mainGit.addConfig("user.name", "NJUST_AI_CJ")
-			await mainGit.addConfig("user.email", "support@njust-ai-cj.local")
+			await mainGit.addConfig("user.name", "NJUST_AI")
+			await mainGit.addConfig("user.email", "support@njust-ai.local")
 
 			await fs.writeFile(path.join(workspaceDir, "main.txt"), "main content")
 			await mainGit.add("main.txt")

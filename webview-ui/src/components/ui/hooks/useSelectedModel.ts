@@ -7,7 +7,7 @@ import {
 	isDynamicProvider,
 	isRetiredProvider,
 	isRouterModelProvider,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import {
 	anthropicModels,
 	bedrockModels,
@@ -39,7 +39,7 @@ import {
 	BEDROCK_1M_CONTEXT_MODEL_IDS,
 	VERTEX_1M_CONTEXT_MODEL_IDS,
 	getProviderDefaultModelId,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { useRouterModels } from "./useRouterModels"
 import { useOpenRouterModelProviders } from "./useOpenRouterModelProviders"
@@ -328,9 +328,9 @@ function getSelectedModel({
 		case "fireworks": {
 			return resolveDynamicFirst(routerModels, "fireworks", fireworksModels, apiConfiguration.apiModelId, defaultModelId)
 		}
-		case "roo": {
-			const id = getValidatedModelId(apiConfiguration.apiModelId, routerModels.roo, defaultModelId)
-			const info = routerModels.roo?.[id]
+		case "njust-ai": {
+			const id = getValidatedModelId(apiConfiguration.apiModelId, routerModels["njust-ai"], defaultModelId)
+			const info = routerModels["njust-ai"]?.[id]
 			return { id, info }
 		}
 		case "qwen-code": {

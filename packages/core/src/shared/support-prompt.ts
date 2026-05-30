@@ -1,4 +1,4 @@
-import type { UnsafeAny } from "@njust-ai-cj/types"
+import type { UnsafeAny } from "@njust-ai/types"
 import { logger } from "./logger.js"
 
 // Support prompts

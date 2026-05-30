@@ -1,4 +1,4 @@
-import { reasoningEffortsExtended } from "@njust-ai-cj/types"
+import { reasoningEffortsExtended } from "@njust-ai/types"
 
 export const DEFAULT_FLAGS = {
 	mode: "code",
@@ -22,6 +22,6 @@ export const ASCII_ROO = `  _,'   ___
         //   \\\\
       ,/'     \`\\_,`
 
-export const AUTH_BASE_URL = process.env.ROO_AUTH_BASE_URL ?? ""
+export const AUTH_BASE_URL = process.env.NJUST_AI_AUTH_BASE_URL ?? ""
 
-export const SDK_BASE_URL = process.env.ROO_SDK_BASE_URL ?? ""
+export const SDK_BASE_URL = process.env.NJUST_AI_SDK_BASE_URL ?? ""

@@ -21,7 +21,7 @@
     "sharePublicly": "Share Publicly",
     "sharePubliclyDescription": "Anyone with the link can access",
     "connectToCloud": "Connect to Cloud",
-    "connectToCloudDescription": "Sign in to NJUST_AI_CJ Cloud to share tasks",
+    "connectToCloudDescription": "Sign in to NJUST_AI Cloud to share tasks",
     "sharingDisabledByOrganization": "Sharing disabled by organization",
     "shareSuccessOrganization": "Organization link copied to clipboard",
     "shareSuccessPublic": "Public link copied to clipboard",
@@ -162,7 +162,7 @@
     "title": "Modes",
     "marketplace": "Mode Marketplace",
     "settings": "Mode Settings",
-    "description": "Specialized personas that tailor Roo's behavior.",
+    "description": "Specialized personas that tailor Njust-AI's behavior.",
     "searchPlaceholder": "Search modes...",
     "noResults": "No results found"
   },
@@ -224,7 +224,7 @@
       "docs": "Docs",
       "goToSettings": "Settings",
       "connection": "Connection error. Make sure you have a working internet connection.",
-      "unknown": "Unknown API error. Please contact NJUST_AI_CJ support.",
+      "unknown": "Unknown API error. Please contact NJUST_AI support.",
       "claudeCodeNotAuthenticated": "You need to sign in to use Claude Code. Go to Settings and click \"Sign in to Claude Code\" to authenticate."
     }
   },
@@ -271,46 +271,46 @@
     }
   },
   "skill": {
-    "wantsToLoad": "Roo wants to load a skill",
-    "didLoad": "Roo loaded a skill"
+    "wantsToLoad": "Njust-AI wants to load a skill",
+    "didLoad": "Njust-AI loaded a skill"
   },
   "fileOperations": {
-    "wantsToRead": "Roo wants to read this file",
-    "wantsToReadMultiple": "Roo wants to read multiple files",
-    "wantsToReadAndXMore": "Roo wants to read this file and {{count}} more",
-    "wantsToReadOutsideWorkspace": "Roo wants to read this file outside of the workspace",
-    "didRead": "Roo read this file",
-    "wantsToEdit": "Roo wants to edit this file",
-    "wantsToEditOutsideWorkspace": "Roo wants to edit this file outside of the workspace",
-    "wantsToEditProtected": "Roo wants to edit a protected configuration file",
-    "wantsToApplyBatchChanges": "Roo wants to apply changes to multiple files",
-    "wantsToGenerateImage": "Roo wants to generate an image",
-    "wantsToGenerateImageOutsideWorkspace": "Roo wants to generate an image outside of the workspace",
-    "wantsToGenerateImageProtected": "Roo wants to generate an image in a protected location",
-    "didGenerateImage": "Roo generated an image",
-    "wantsToCreate": "Roo wants to create a new file",
-    "wantsToInsert": "Roo wants to insert content into this file",
-    "wantsToInsertWithLineNumber": "Roo wants to insert content into this file at line {{lineNumber}}",
-    "wantsToInsertAtEnd": "Roo wants to append content to the end of this file"
+    "wantsToRead": "Njust-AI wants to read this file",
+    "wantsToReadMultiple": "Njust-AI wants to read multiple files",
+    "wantsToReadAndXMore": "Njust-AI wants to read this file and {{count}} more",
+    "wantsToReadOutsideWorkspace": "Njust-AI wants to read this file outside of the workspace",
+    "didRead": "Njust-AI read this file",
+    "wantsToEdit": "Njust-AI wants to edit this file",
+    "wantsToEditOutsideWorkspace": "Njust-AI wants to edit this file outside of the workspace",
+    "wantsToEditProtected": "Njust-AI wants to edit a protected configuration file",
+    "wantsToApplyBatchChanges": "Njust-AI wants to apply changes to multiple files",
+    "wantsToGenerateImage": "Njust-AI wants to generate an image",
+    "wantsToGenerateImageOutsideWorkspace": "Njust-AI wants to generate an image outside of the workspace",
+    "wantsToGenerateImageProtected": "Njust-AI wants to generate an image in a protected location",
+    "didGenerateImage": "Njust-AI generated an image",
+    "wantsToCreate": "Njust-AI wants to create a new file",
+    "wantsToInsert": "Njust-AI wants to insert content into this file",
+    "wantsToInsertWithLineNumber": "Njust-AI wants to insert content into this file at line {{lineNumber}}",
+    "wantsToInsertAtEnd": "Njust-AI wants to append content to the end of this file"
   },
   "directoryOperations": {
-    "wantsToViewTopLevel": "Roo wants to view the top level files in this directory",
-    "didViewTopLevel": "Roo viewed the top level files in this directory",
-    "wantsToViewTopLevelOutsideWorkspace": "Roo wants to view the top level files in this directory (outside workspace)",
-    "didViewTopLevelOutsideWorkspace": "Roo viewed the top level files in this directory (outside workspace)",
-    "wantsToViewRecursive": "Roo wants to recursively view all files in this directory",
-    "didViewRecursive": "Roo recursively viewed all files in this directory",
-    "wantsToViewRecursiveOutsideWorkspace": "Roo wants to recursively view all files in this directory (outside workspace)",
-    "didViewRecursiveOutsideWorkspace": "Roo recursively viewed all files in this directory (outside workspace)",
-    "wantsToViewMultipleDirectories": "Roo wants to view multiple directories",
-    "wantsToSearch": "Roo wants to search this directory for <code>{{regex}}</code>",
-    "didSearch": "Roo searched this directory for <code>{{regex}}</code>",
-    "wantsToSearchOutsideWorkspace": "Roo wants to search this directory (outside workspace) for <code>{{regex}}</code>",
-    "didSearchOutsideWorkspace": "Roo searched this directory (outside workspace) for <code>{{regex}}</code>"
+    "wantsToViewTopLevel": "Njust-AI wants to view the top level files in this directory",
+    "didViewTopLevel": "Njust-AI viewed the top level files in this directory",
+    "wantsToViewTopLevelOutsideWorkspace": "Njust-AI wants to view the top level files in this directory (outside workspace)",
+    "didViewTopLevelOutsideWorkspace": "Njust-AI viewed the top level files in this directory (outside workspace)",
+    "wantsToViewRecursive": "Njust-AI wants to recursively view all files in this directory",
+    "didViewRecursive": "Njust-AI recursively viewed all files in this directory",
+    "wantsToViewRecursiveOutsideWorkspace": "Njust-AI wants to recursively view all files in this directory (outside workspace)",
+    "didViewRecursiveOutsideWorkspace": "Njust-AI recursively viewed all files in this directory (outside workspace)",
+    "wantsToViewMultipleDirectories": "Njust-AI wants to view multiple directories",
+    "wantsToSearch": "Njust-AI wants to search this directory for <code>{{regex}}</code>",
+    "didSearch": "Njust-AI searched this directory for <code>{{regex}}</code>",
+    "wantsToSearchOutsideWorkspace": "Njust-AI wants to search this directory (outside workspace) for <code>{{regex}}</code>",
+    "didSearchOutsideWorkspace": "Njust-AI searched this directory (outside workspace) for <code>{{regex}}</code>"
   },
   "codebaseSearch": {
-    "wantsToSearch": "Roo wants to search the codebase for <code>{{query}}</code>",
-    "wantsToSearchWithPath": "Roo wants to search the codebase for <code>{{query}}</code> in <code>{{path}}</code>",
+    "wantsToSearch": "Njust-AI wants to search the codebase for <code>{{query}}</code>",
+    "wantsToSearchWithPath": "Njust-AI wants to search the codebase for <code>{{query}}</code> in <code>{{path}}</code>",
     "didSearch_one": "Found 1 result",
     "didSearch_other": "Found {{count}} results",
     "resultTooltip": "Similarity score: {{score}} (click to open file)"
@@ -335,24 +335,24 @@
   "response": "Response",
   "arguments": "Arguments",
   "text": {
-    "rooSaid": "Roo said"
+    "rooSaid": "Njust-AI said"
   },
   "feedback": {
     "youSaid": "You said"
   },
   "mcp": {
-    "wantsToUseTool": "Roo wants to use a tool on the {{serverName}} MCP server",
-    "wantsToAccessResource": "Roo wants to access a resource on the {{serverName}} MCP server"
+    "wantsToUseTool": "Njust-AI wants to use a tool on the {{serverName}} MCP server",
+    "wantsToAccessResource": "Njust-AI wants to access a resource on the {{serverName}} MCP server"
   },
   "modes": {
-    "wantsToSwitch": "Roo wants to switch to {{mode}} mode",
-    "wantsToSwitchWithReason": "Roo wants to switch to {{mode}} mode because: {{reason}}",
-    "didSwitch": "Roo switched to {{mode}} mode",
-    "didSwitchWithReason": "Roo switched to {{mode}} mode because: {{reason}}"
+    "wantsToSwitch": "Njust-AI wants to switch to {{mode}} mode",
+    "wantsToSwitchWithReason": "Njust-AI wants to switch to {{mode}} mode because: {{reason}}",
+    "didSwitch": "Njust-AI switched to {{mode}} mode",
+    "didSwitchWithReason": "Njust-AI switched to {{mode}} mode because: {{reason}}"
   },
   "subtasks": {
-    "wantsToCreate": "Roo wants to create a new subtask in {{mode}} mode",
-    "wantsToFinish": "Roo wants to mark this as completed",
+    "wantsToCreate": "Njust-AI wants to create a new subtask in {{mode}} mode",
+    "wantsToFinish": "Njust-AI wants to mark this as completed",
     "newTaskContent": "Subtask Instructions",
     "resultContent": "Subtask completed",
     "defaultResult": "Please continue to the next task.",
@@ -360,7 +360,7 @@
     "goToSubtask": "View task"
   },
   "questions": {
-    "hasQuestion": "Roo has a question"
+    "hasQuestion": "Njust-AI has a question"
   },
   "taskCompleted": "Task Completed",
   "error": "Error",
@@ -377,12 +377,12 @@
     "copyToClipboard": "Copy basic error info",
     "copied": "Copied!",
     "diagnostics": "Get detailed error info",
-    "proxyProvider": "You seem to be using a proxy-based provider. Make sure to check its logs and to ensure it's not rewriting Roo's requests."
+    "proxyProvider": "You seem to be using a proxy-based provider. Make sure to check its logs and to ensure it's not rewriting Njust-AI's requests."
   },
   "diffError": {
     "title": "Edit Unsuccessful"
   },
-  "troubleMessage": "Roo is having trouble...",
+  "troubleMessage": "Njust-AI is having trouble...",
   "powershell": {
     "issues": "It seems like you're having Windows PowerShell issues, please see this"
   },
@@ -404,7 +404,7 @@
     "triggerLabelAll": "BRRR"
   },
   "announcement": {
-    "title": "NJUST_AI_CJ {{version}} Released",
+    "title": "NJUST_AI {{version}} Released",
     "support": "",
     "release": {
       "heading": "What's New:",
@@ -436,18 +436,18 @@
   "profileViolationWarning": "The current profile isn't compatible with your organization's settings",
   "shellIntegration": {
     "title": "Command Execution Warning",
-    "description": "Your command is being executed without VSCode terminal shell integration. To suppress this warning you can disable shell integration in the <strong>Terminal</strong> section of the <settingsLink>NJUST_AI_CJ settings</settingsLink> or troubleshoot VSCode terminal integration using the link below.",
+    "description": "Your command is being executed without VSCode terminal shell integration. To suppress this warning you can disable shell integration in the <strong>Terminal</strong> section of the <settingsLink>NJUST_AI settings</settingsLink> or troubleshoot VSCode terminal integration using the link below.",
     "troubleshooting": "Click here for shell integration documentation."
   },
   "ask": {
     "autoApprovedRequestLimitReached": {
       "title": "Auto-Approved Request Limit Reached",
-      "description": "Roo has reached the auto-approved limit of {{count}} API request(s). Would you like to reset the count and proceed with the task?",
+      "description": "Njust-AI has reached the auto-approved limit of {{count}} API request(s). Would you like to reset the count and proceed with the task?",
       "button": "Reset and Continue"
     },
     "autoApprovedCostLimitReached": {
       "title": "Auto-Approved Cost Limit Reached",
-      "description": "Roo has reached the auto-approved cost limit of ${{count}}. Would you like to reset the cost and proceed with the task?",
+      "description": "Njust-AI has reached the auto-approved cost limit of ${{count}}. Would you like to reset the cost and proceed with the task?",
       "button": "Reset and Continue"
     }
   },
@@ -486,8 +486,8 @@
     }
   },
   "slashCommand": {
-    "wantsToRun": "Roo wants to run a slash command",
-    "didRun": "Roo ran a slash command"
+    "wantsToRun": "Njust-AI wants to run a slash command",
+    "didRun": "Njust-AI ran a slash command"
   },
   "queuedMessages": {
     "title": "Queued Messages",
@@ -516,11 +516,11 @@
     "openMcpSettings": "Open MCP Settings"
   },
   "readCommandOutput": {
-    "title": "Roo read command output"
+    "title": "Njust-AI read command output"
   },
   "retiredProvider": {
     "title": "Provider no longer supported",
-    "message": "Sorry, this provider is no longer supported. We saw very few Roo users actually using it and we need to reduce the surface area of our codebase so we can keep shipping fast and serving our community well in this space. It was a really hard decision but it lets us focus on what matters most to you. It sucks, we know.",
+    "message": "Sorry, this provider is no longer supported. We saw very few Njust-AI users actually using it and we need to reduce the surface area of our codebase so we can keep shipping fast and serving our community well in this space. It was a really hard decision but it lets us focus on what matters most to you. It sucks, we know.",
     "openSettings": "Open Settings"
   },
   "bypassMode": {

@@ -1,7 +1,7 @@
 import { z } from "zod"
 
-import { NJUST_AI_CJEventName } from "./events.js"
-import type { NJUST_AI_CJSettings } from "./global-settings.js"
+import { NJUST_AIEventName } from "./events.js"
+import type { NJUST_AISettings } from "./global-settings.js"
 import type { ClineMessage, QueuedMessage, TokenUsage } from "./message.js"
 import type { ToolUsage, ToolName } from "./tool.js"
 import type { TodoItem } from "./todo.js"
@@ -19,7 +19,7 @@ export interface TaskProviderLike {
 		images?: string[],
 		parentTask?: TaskLike,
 		options?: CreateTaskOptions,
-		configuration?: NJUST_AI_CJSettings,
+		configuration?: NJUST_AISettings,
 	): Promise<TaskLike>
 	cancelTask(): Promise<void>
 	clearTask(): Promise<void>
@@ -53,30 +53,30 @@ export interface TaskProviderLike {
 }
 
 export type TaskProviderEvents = {
-	[NJUST_AI_CJEventName.TaskCreated]: [task: TaskLike]
-	[NJUST_AI_CJEventName.TaskStarted]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskCompleted]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage, meta: { isSubtask: boolean }]
-	[NJUST_AI_CJEventName.TaskAborted]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskFocused]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskUnfocused]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskActive]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskInteractive]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskResumable]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskIdle]: [taskId: string]
+	[NJUST_AIEventName.TaskCreated]: [task: TaskLike]
+	[NJUST_AIEventName.TaskStarted]: [taskId: string]
+	[NJUST_AIEventName.TaskCompleted]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage, meta: { isSubtask: boolean }]
+	[NJUST_AIEventName.TaskAborted]: [taskId: string]
+	[NJUST_AIEventName.TaskFocused]: [taskId: string]
+	[NJUST_AIEventName.TaskUnfocused]: [taskId: string]
+	[NJUST_AIEventName.TaskActive]: [taskId: string]
+	[NJUST_AIEventName.TaskInteractive]: [taskId: string]
+	[NJUST_AIEventName.TaskResumable]: [taskId: string]
+	[NJUST_AIEventName.TaskIdle]: [taskId: string]
 
-	[NJUST_AI_CJEventName.TaskPaused]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskUnpaused]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskSpawned]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskDelegated]: [parentTaskId: string, childTaskId: string]
-	[NJUST_AI_CJEventName.TaskDelegationCompleted]: [parentTaskId: string, childTaskId: string, summary: string]
-	[NJUST_AI_CJEventName.TaskDelegationResumed]: [parentTaskId: string, childTaskId: string]
+	[NJUST_AIEventName.TaskPaused]: [taskId: string]
+	[NJUST_AIEventName.TaskUnpaused]: [taskId: string]
+	[NJUST_AIEventName.TaskSpawned]: [taskId: string]
+	[NJUST_AIEventName.TaskDelegated]: [parentTaskId: string, childTaskId: string]
+	[NJUST_AIEventName.TaskDelegationCompleted]: [parentTaskId: string, childTaskId: string, summary: string]
+	[NJUST_AIEventName.TaskDelegationResumed]: [parentTaskId: string, childTaskId: string]
 
-	[NJUST_AI_CJEventName.TaskUserMessage]: [taskId: string]
+	[NJUST_AIEventName.TaskUserMessage]: [taskId: string]
 
-	[NJUST_AI_CJEventName.TaskTokenUsageUpdated]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage]
+	[NJUST_AIEventName.TaskTokenUsageUpdated]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage]
 
-	[NJUST_AI_CJEventName.ModeChanged]: [mode: string]
-	[NJUST_AI_CJEventName.ProviderProfileChanged]: [config: { name: string; provider?: string }]
+	[NJUST_AIEventName.ModeChanged]: [mode: string]
+	[NJUST_AIEventName.ProviderProfileChanged]: [config: { name: string; provider?: string }]
 }
 
 /**
@@ -137,29 +137,29 @@ export interface TaskLike {
 
 export type TaskEvents = {
 	// Task Lifecycle
-	[NJUST_AI_CJEventName.TaskStarted]: []
-	[NJUST_AI_CJEventName.TaskCompleted]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage, meta: { isSubtask: boolean }]
-	[NJUST_AI_CJEventName.TaskAborted]: []
-	[NJUST_AI_CJEventName.TaskFocused]: []
-	[NJUST_AI_CJEventName.TaskUnfocused]: []
-	[NJUST_AI_CJEventName.TaskActive]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskInteractive]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskResumable]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskIdle]: [taskId: string]
+	[NJUST_AIEventName.TaskStarted]: []
+	[NJUST_AIEventName.TaskCompleted]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage, meta: { isSubtask: boolean }]
+	[NJUST_AIEventName.TaskAborted]: []
+	[NJUST_AIEventName.TaskFocused]: []
+	[NJUST_AIEventName.TaskUnfocused]: []
+	[NJUST_AIEventName.TaskActive]: [taskId: string]
+	[NJUST_AIEventName.TaskInteractive]: [taskId: string]
+	[NJUST_AIEventName.TaskResumable]: [taskId: string]
+	[NJUST_AIEventName.TaskIdle]: [taskId: string]
 
 	// Subtask Lifecycle
-	[NJUST_AI_CJEventName.TaskPaused]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskUnpaused]: [taskId: string]
-	[NJUST_AI_CJEventName.TaskSpawned]: [taskId: string]
+	[NJUST_AIEventName.TaskPaused]: [taskId: string]
+	[NJUST_AIEventName.TaskUnpaused]: [taskId: string]
+	[NJUST_AIEventName.TaskSpawned]: [taskId: string]
 
 	// Task Execution
-	[NJUST_AI_CJEventName.Message]: [{ action: "created" | "updated"; message: ClineMessage }]
-	[NJUST_AI_CJEventName.TaskModeSwitched]: [taskId: string, mode: string]
-	[NJUST_AI_CJEventName.TaskAskResponded]: []
-	[NJUST_AI_CJEventName.TaskUserMessage]: [taskId: string]
-	[NJUST_AI_CJEventName.QueuedMessagesUpdated]: [taskId: string, messages: QueuedMessage[]]
+	[NJUST_AIEventName.Message]: [{ action: "created" | "updated"; message: ClineMessage }]
+	[NJUST_AIEventName.TaskModeSwitched]: [taskId: string, mode: string]
+	[NJUST_AIEventName.TaskAskResponded]: []
+	[NJUST_AIEventName.TaskUserMessage]: [taskId: string]
+	[NJUST_AIEventName.QueuedMessagesUpdated]: [taskId: string, messages: QueuedMessage[]]
 
 	// Task Analytics
-	[NJUST_AI_CJEventName.TaskToolFailed]: [taskId: string, tool: ToolName, error: string]
-	[NJUST_AI_CJEventName.TaskTokenUsageUpdated]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage]
+	[NJUST_AIEventName.TaskToolFailed]: [taskId: string, tool: ToolName, error: string]
+	[NJUST_AIEventName.TaskTokenUsageUpdated]: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage]
 }

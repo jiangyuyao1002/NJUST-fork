@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
 

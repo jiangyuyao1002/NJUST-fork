@@ -3,9 +3,9 @@
 import { render, screen, fireEvent } from "@/utils/test-utils"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
-import { type ModelInfo, type ProviderSettings } from "@njust-ai-cj/types"
-import { openAiModelInfoSaneDefaults } from "@njust-ai-cj/core/providers"
-import { openAiCodexDefaultModelId } from "@njust-ai-cj/core/providers"
+import { type ModelInfo, type ProviderSettings } from "@njust-ai/types"
+import { openAiModelInfoSaneDefaults } from "@njust-ai/core/providers"
+import { openAiCodexDefaultModelId } from "@njust-ai/core/providers"
 
 import * as ExtensionStateContext from "@src/context/ExtensionStateContext"
 const { ExtensionStateContextProvider } = ExtensionStateContext
@@ -229,16 +229,16 @@ vi.mock("../providers/LiteLLM", () => ({
 	),
 }))
 
-// Mock Roo provider for tests
-vi.mock("../providers/Roo", () => ({
-	Roo: ({ cloudIsAuthenticated }: any) => (
-		<div data-testid="roo-provider">{cloudIsAuthenticated ? "Authenticated" : "Not Authenticated"}</div>
+// Mock Njust-AI provider for tests
+vi.mock("../providers/NjustAI", () => ({
+	NjustAI: ({ cloudIsAuthenticated }: any) => (
+		<div data-testid="njust-ai-provider">{cloudIsAuthenticated ? "Authenticated" : "Not Authenticated"}</div>
 	),
 }))
 
 // Mock RooBalanceDisplay for tests
 vi.mock("../providers/RooBalanceDisplay", () => ({
-	RooBalanceDisplay: () => <div data-testid="roo-balance-display">Balance: $10.00</div>,
+	RooBalanceDisplay: () => <div data-testid="njust-ai-balance-display">Balance: $10.00</div>,
 }))
 
 vi.mock("@src/components/ui/hooks/useSelectedModel", () => ({
@@ -587,8 +587,8 @@ describe("ApiOptions", () => {
 		})
 	})
 
-	describe("Roo provider tests", () => {
-		it("does not render legacy roo-specific balance UI", () => {
+	describe("Njust-AI provider tests", () => {
+		it("does not render legacy njust-ai-specific balance UI", () => {
 			// Mock useExtensionState to ensure no filtering
 			const useExtensionStateMock = vi.spyOn(ExtensionStateContext, "useExtensionState")
 			useExtensionStateMock.mockReturnValue({
@@ -598,11 +598,11 @@ describe("ApiOptions", () => {
 
 			renderApiOptions({
 				apiConfiguration: {
-					apiProvider: "roo",
+					apiProvider: "njust-ai",
 				},
 			})
 
-			expect(screen.queryByTestId("roo-balance-display")).not.toBeInTheDocument()
+			expect(screen.queryByTestId("njust-ai-balance-display")).not.toBeInTheDocument()
 		})
 	})
 

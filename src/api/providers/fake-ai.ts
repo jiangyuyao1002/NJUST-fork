@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import type { ApiHandler, SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import type { ApiHandlerOptions } from "../../shared/api"

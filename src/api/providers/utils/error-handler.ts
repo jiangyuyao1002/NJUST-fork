@@ -9,7 +9,7 @@
  * - Enables telemetry and debugging with complete error context
  */
 
-import { ApiProviderError } from "@njust-ai-cj/types"
+import { ApiProviderError } from "@njust-ai/types"
 import i18n from "../../../i18n/setup"
 import { logger } from "../../../shared/logger"
 import { redactApiSecrets } from "../../../utils/redactApiSecrets"

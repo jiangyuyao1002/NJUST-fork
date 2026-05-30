@@ -1,6 +1,6 @@
 import type * as vscode from "vscode"
 
-import type { ExtensionMessage } from "@njust-ai-cj/types"
+import type { ExtensionMessage } from "@njust-ai/types"
 
 import type { TaskHostState } from "../../../core/task/interfaces/taskHostState"
 

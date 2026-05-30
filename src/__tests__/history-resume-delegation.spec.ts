@@ -1,7 +1,7 @@
 // npx vitest run __tests__/history-resume-delegation.spec.ts
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 
 /* vscode mock for Task/Provider imports */
 vi.mock("vscode", () => {
@@ -432,12 +432,12 @@ describe("History resume delegation - parent metadata transitions", () => {
 
 		// Verify both events emitted
 		const eventNames = emitSpy.mock.calls.map((c) => c[0])
-		expect(eventNames).toContain(NJUST_AI_CJEventName.TaskDelegationCompleted)
-		expect(eventNames).toContain(NJUST_AI_CJEventName.TaskDelegationResumed)
+		expect(eventNames).toContain(NJUST_AIEventName.TaskDelegationCompleted)
+		expect(eventNames).toContain(NJUST_AIEventName.TaskDelegationResumed)
 
 		// CRITICAL: verify ordering (TaskDelegationCompleted before TaskDelegationResumed)
-		const completedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AI_CJEventName.TaskDelegationCompleted)
-		const resumedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AI_CJEventName.TaskDelegationResumed)
+		const completedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AIEventName.TaskDelegationCompleted)
+		const resumedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AIEventName.TaskDelegationResumed)
 		expect(completedIdx).toBeGreaterThanOrEqual(0)
 		expect(resumedIdx).toBeGreaterThan(completedIdx)
 
@@ -516,15 +516,15 @@ describe("History resume delegation - parent metadata transitions", () => {
 		expect(parentInstance.resumeAfterDelegation).toHaveBeenCalledTimes(1)
 
 		expect(emitSpy).toHaveBeenCalledWith(
-			NJUST_AI_CJEventName.TaskDelegationCompleted,
+			NJUST_AIEventName.TaskDelegationCompleted,
 			"parent-rpd06",
 			"child-rpd06",
 			"Subtask finished despite overwrite failures",
 		)
-		expect(emitSpy).toHaveBeenCalledWith(NJUST_AI_CJEventName.TaskDelegationResumed, "parent-rpd06", "child-rpd06")
+		expect(emitSpy).toHaveBeenCalledWith(NJUST_AIEventName.TaskDelegationResumed, "parent-rpd06", "child-rpd06")
 
-		const completedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AI_CJEventName.TaskDelegationCompleted)
-		const resumedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AI_CJEventName.TaskDelegationResumed)
+		const completedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AIEventName.TaskDelegationCompleted)
+		const resumedIdx = emitSpy.mock.calls.findIndex((c) => c[0] === NJUST_AIEventName.TaskDelegationResumed)
 		expect(completedIdx).toBeGreaterThanOrEqual(0)
 		expect(resumedIdx).toBeGreaterThan(completedIdx)
 	})
@@ -570,9 +570,9 @@ describe("History resume delegation - parent metadata transitions", () => {
 
 		// CRITICAL: verify legacy pause/unpause events NOT emitted
 		const eventNames = emitSpy.mock.calls.map((c) => c[0])
-		expect(eventNames).not.toContain(NJUST_AI_CJEventName.TaskPaused)
-		expect(eventNames).not.toContain(NJUST_AI_CJEventName.TaskUnpaused)
-		expect(eventNames).not.toContain(NJUST_AI_CJEventName.TaskSpawned)
+		expect(eventNames).not.toContain(NJUST_AIEventName.TaskPaused)
+		expect(eventNames).not.toContain(NJUST_AIEventName.TaskUnpaused)
+		expect(eventNames).not.toContain(NJUST_AIEventName.TaskSpawned)
 	})
 
 	it("reopenParentFromDelegation skips child close when current task differs and still reopens parent (RPD-02)", async () => {
@@ -730,7 +730,7 @@ describe("History resume delegation - parent metadata transitions", () => {
 			}),
 		)
 		expect(parentInstance.resumeAfterDelegation).toHaveBeenCalledTimes(1)
-		expect(emitSpy).toHaveBeenCalledWith(NJUST_AI_CJEventName.TaskDelegationResumed, "parent-rpd04", "child-rpd04")
+		expect(emitSpy).toHaveBeenCalledWith(NJUST_AIEventName.TaskDelegationResumed, "parent-rpd04", "child-rpd04")
 	})
 
 	it("handles empty history gracefully when injecting synthetic messages", async () => {

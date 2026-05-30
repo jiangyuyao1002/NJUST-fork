@@ -19,7 +19,7 @@ import {
 	DEFAULT_CLOUD_AGENT_URL,
 	CloudAgentProfile,
 	CloudAgentProtocolType,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import {
 	Mode,
@@ -30,8 +30,8 @@ import {
 	getAllModes,
 	findModeBySlug as findCustomModeBySlug,
 	defaultModeSlug,
-} from "@roo/modes"
-import { TOOL_GROUPS } from "@roo/tools"
+} from "@shared/modes"
+import { TOOL_GROUPS } from "@shared/tools"
 
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"

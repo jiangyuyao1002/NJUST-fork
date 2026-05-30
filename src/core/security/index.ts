@@ -1,1 +1,1 @@
-export * from "@njust-ai-cj/core/security"
+export * from "@njust-ai/core/security"

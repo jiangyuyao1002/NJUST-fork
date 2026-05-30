@@ -25,7 +25,7 @@ interface AutoApproveDropdownProps {
 
 export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }: AutoApproveDropdownProps) => {
 	const [open, setOpen] = React.useState(false)
-	const portalContainer = useRooPortal("roo-portal")
+	const portalContainer = useRooPortal("njust-ai-portal")
 	const { t } = useAppTranslation()
 
 	const {

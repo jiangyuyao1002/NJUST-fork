@@ -1,4 +1,4 @@
-# NJUST_AI_CJ Changelog
+# NJUST_AI Changelog
 
 ## 3.51.1
 
@@ -12,11 +12,11 @@
 
 ### Minor Changes
 
-- Add OpenAI GPT-5.4 and GPT-5.3 Chat Latest model support so NJUST_AI_CJ can use the newest OpenAI chat models (PR #11848 by @PeterDaveHello)
+- Add OpenAI GPT-5.4 and GPT-5.3 Chat Latest model support so NJUST_AI can use the newest OpenAI chat models (PR #11848 by @PeterDaveHello)
 - Add support for exposing skills as slash commands with skill fallback execution for faster workflows (PR #11834 by @hannesrudolph)
 - Add CLI support for `--create-with-session-id` plus UUID session validation for more controlled session creation (PR #11859 by @cte)
 - Add support for choosing a specific shell when running terminal commands (PR #11851 by @jr)
-- Feature: Add the `ROO_ACTIVE` environment variable to terminal session settings for safer terminal guardrails (#11864 by @ajjuaire, PR #11862 by @ajjuaire)
+- Feature: Add the `NJUST_AI_ACTIVE` environment variable to terminal session settings for safer terminal guardrails (#11864 by @ajjuaire, PR #11862 by @ajjuaire)
 - Improve cloud settings freshness by updating the refresh interval to one hour (PR #11749 by @roomote-v0)
 - Add CLI session resume/history support plus an upgrade command for better long-running workflows (PR #11768 by @cte)
 - Add support for images in CLI stdin stream commands (PR #11831 by @cte)
@@ -45,14 +45,14 @@
 - Chore: Prepare CLI release v0.1.4 (PR #11751 by @cte)
 - Chore: Prepare CLI release v0.1.5 (PR #11772 by @cte)
 - Chore: Prepare CLI release v0.1.6 (PR #11780 by @cte)
-- Release NJUST_AI_CJ v1.113.0 (PR #11782 by @cte)
+- Release NJUST_AI v1.113.0 (PR #11782 by @cte)
 - Chore: Prepare CLI release v0.1.7 (PR #11812 by @cte)
 - Chore: Prepare CLI release v0.1.8 (PR #11816 by @cte)
 - Chore: Prepare CLI release v0.1.9 (PR #11818 by @cte)
 - Chore: Prepare CLI release v0.1.10 (PR #11821 by @cte)
-- Release NJUST_AI_CJ v1.114.0 (PR #11822 by @cte)
+- Release NJUST_AI v1.114.0 (PR #11822 by @cte)
 - Chore: Prepare CLI release v0.1.11 (PR #11832 by @cte)
-- Release NJUST_AI_CJ v1.115.0 (PR #11833 by @cte)
+- Release NJUST_AI v1.115.0 (PR #11833 by @cte)
 - Chore: Prepare CLI release v0.1.12 (PR #11836 by @cte)
 - Chore: Prepare CLI release v0.1.13 (PR #11837 by @hannesrudolph)
 - Chore: Prepare CLI release v0.1.14 (PR #11843 by @cte)
@@ -66,7 +66,7 @@
 - Add OpenAI's GPT-5.3-Codex model support
 - Add OpenAI's GPT-5.4 model support
 - Add OpenAI's GPT-5.3-Codex model support (PR #11728 by @PeterDaveHello)
-- Warm Roo models on CLI startup for faster initial responses (PR #11722 by @cte)
+- Warm Njust-AI models on CLI startup for faster initial responses (PR #11722 by @cte)
 - Fix spelling/grammar and casing inconsistencies (#11478 by @PeterDaveHello, PR #11485 by @PeterDaveHello)
 - Fix: Restore Linear integration page (PR #11725 by @roomote)
 - Chore: Prepare CLI release v0.1.1 (PR #11723 by @cte)
@@ -104,7 +104,7 @@
 - Add per-workspace indexing opt-in and stop/cancel indexing controls (#11455 by @JamesRobert20, PR #11456 by @JamesRobert20)
 - Add per-task file-based history store for cross-instance safety (PR #11490 by @roomote)
 - Fix: Redesign rehydration scroll lifecycle for smoother chat experience (PR #11483 by @hannesrudolph)
-- Fix: Bump @njust-ai-cj/types metadata version to 1.111.0 after revert regression (PR #11588 by @roomote)
+- Fix: Bump @njust-ai/types metadata version to 1.111.0 after revert regression (PR #11588 by @roomote)
 
 ## [3.48.1] - 2026-02-18
 
@@ -150,13 +150,13 @@
 - Clean up repo-facing mode rules (PR #11410 by @hannesrudolph)
 - Implement ModelMessage storage layer with AI SDK response messages (PR #11409 by @daniel-lxs)
 - Extract translation and merge resolver modes into reusable skills (PR #11215 by @app/roomote)
-- Add blog section with initial posts to njust-ai-cj.local (PR #11127 by @app/roomote)
+- Add blog section with initial posts to njust-ai.local (PR #11127 by @app/roomote)
 - Replace Roomote Control with Linear Integration in cloud features grid (PR #11280 by @app/roomote)
 - Add IPC query handlers for commands, modes, and models (PR #11279 by @cte)
 - Add stdin stream mode for the CLI (PR #11476 by @cte)
 - Make CLI auto-approve by default with require-approval opt-in (PR #11424 by @cte)
 - Update CLI default model from Opus 4.5 to Opus 4.6 (PR #11273 by @app/roomote)
-- Add linux-arm64 support for the Roo CLI (PR #11314 by @cte)
+- Add linux-arm64 support for the Njust-AI CLI (PR #11314 by @cte)
 - CLI release: v0.0.51 (PR #11274 by @cte)
 - CLI release: v0.0.52 (PR #11324 by @cte)
 - CLI release: v0.0.53 (PR #11425 by @cte)
@@ -166,7 +166,7 @@
 
 ![3.45.0 Release - Smart Code Folding](/releases/3.45.0-release.png)
 
-- Smart Code Folding: Context condensation now intelligently preserves a lightweight map of files you worked on—function signatures, class declarations, and type definitions—so Roo can continue referencing them accurately after condensing. Files are prioritized by most recent access, with a ~50k character budget ensuring your latest work is always preserved. (Idea by @shariqriazz, PR #10942 by @hannesrudolph)
+- Smart Code Folding: Context condensation now intelligently preserves a lightweight map of files you worked on—function signatures, class declarations, and type definitions—so Njust-AI can continue referencing them accurately after condensing. Files are prioritized by most recent access, with a ~50k character budget ensuring your latest work is always preserved. (Idea by @shariqriazz, PR #10942 by @hannesrudolph)
 
 ## [3.44.2] - 2026-01-27
 
@@ -179,7 +179,7 @@
 
 - Fix LiteLLM tool ID validation errors for Bedrock proxy (PR #10990 by @daniel-lxs)
 - Add temperature=0.9 and top_p=0.95 to zai-glm-4.7 model for better generation quality (PR #10945 by @sebastiand-cerebras)
-- Add quality checks to marketing site deployment workflows (PR #10959 by @mp-roocode)
+- Add quality checks to marketing site deployment workflows (PR #10959 by @mp-NjustAi)
 
 ## [3.44.0] - 2026-01-26
 
@@ -243,14 +243,14 @@
 - Fix: Remove custom condensing model option (PR #10901 by @hannesrudolph)
 - Unify user content tags to <user_message> for consistent prompt formatting (#10658 by @hannesrudolph, PR #10723 by @app/roomote)
 - Clarify linked SKILL.md file handling in prompts (PR #10907 by @hannesrudolph)
-- Fix: Padding on NJUST_AI_CJ Cloud teaser (PR #10889 by @app/roomote)
+- Fix: Padding on NJUST_AI Cloud teaser (PR #10889 by @app/roomote)
 
 ## [3.41.3] - 2026-01-18
 
 - Fix: Thinking block word-breaking to prevent horizontal scroll in the chat UI (PR #10806 by @roomote)
-- Add Claude-like CLI flags and authentication fixes for the NJUST_AI_CJ CLI (PR #10797 by @cte)
+- Add Claude-like CLI flags and authentication fixes for the NJUST_AI CLI (PR #10797 by @cte)
 - Improve CLI authentication by using a redirect instead of a fetch (PR #10799 by @cte)
-- Fix: NJUST_AI_CJ Router fixes for the CLI (PR #10789 by @cte)
+- Fix: NJUST_AI Router fixes for the CLI (PR #10789 by @cte)
 - Release CLI v0.0.48 with latest improvements (PR #10800 by @cte)
 - Release CLI v0.0.47 (PR #10798 by @cte)
 - Revert E2E tests enablement to address stability issues (PR #10794 by @cte)
@@ -312,10 +312,10 @@
 
 ## [3.39.3] - 2026-01-10
 
-![3.39.3 Release - NJUST_AI_CJ Router](/releases/3.39.3-release.png)
+![3.39.3 Release - NJUST_AI Router](/releases/3.39.3-release.png)
 
-- Rename NJUST_AI_CJ Cloud Provider to NJUST_AI_CJ Router for clearer branding (PR #10560 by @roomote)
-- Update NJUST_AI_CJ Router service name throughout the codebase (PR #10607 by @mrubens)
+- Rename NJUST_AI Cloud Provider to NJUST_AI Router for clearer branding (PR #10560 by @roomote)
+- Update NJUST_AI Router service name throughout the codebase (PR #10607 by @mrubens)
 - Update router name in types for consistency (PR #10605 by @mrubens)
 - Improve ExtensionHost code organization and cleanup (PR #10600 by @cte)
 - Add local installation option to CLI release script for testing (PR #10597 by @cte)
@@ -337,8 +337,8 @@
 - Chore: Stop overriding tool allow/deny lists for Gemini (PR #10592 by @hannesrudolph)
 - Chore: Change default CLI model to anthropic/claude-opus-4.5 (PR #10544 by @mrubens)
 - Chore: Update Terms of Service effective January 9, 2026 (PR #10568 by @mrubens)
-- Chore: Move more types to @njust-ai-cj/types for CLI support (PR #10583 by @cte)
-- Chore: Add functionality to @njust-ai-cj/core for CLI support (PR #10584 by @cte)
+- Chore: Move more types to @njust-ai/types for CLI support (PR #10583 by @cte)
+- Chore: Add functionality to @njust-ai/core for CLI support (PR #10584 by @cte)
 - Chore: Add slash commands useful for CLI development (PR #10586 by @cte)
 
 ## [3.39.1] - 2026-01-08
@@ -360,10 +360,10 @@
 - Filter @ mention file search results using .rooignore (#10169 by @jerrill-johnson-bitwerx, PR #10174 by @roomote)
 - Add image support documentation to read_file native tool description (#10440 by @nabilfreeman, PR #10442 by @roomote)
 - Add zai-glm-4.7 to Cerebras models (PR #10500 by @sebastiand-cerebras)
-- VSCode shim and basic CLI for running NJUST_AI_CJ headlessly (PR #10452 by @cte)
-- Add CLI installer for headless NJUST_AI_CJ (PR #10474 by @cte)
+- VSCode shim and basic CLI for running NJUST_AI headlessly (PR #10452 by @cte)
+- Add CLI installer for headless NJUST_AI (PR #10474 by @cte)
 - Add option to use CLI for evals (PR #10456 by @cte)
-- Remember last Roo model selection in web-evals and add evals skill (PR #10470 by @hannesrudolph)
+- Remember last Njust-AI model selection in web-evals and add evals skill (PR #10470 by @hannesrudolph)
 - Tweak the style of follow up suggestion modes (PR #9260 by @mrubens)
 - Fix: Handle PowerShell ENOENT error in os-name on Windows (#9859 by @Yang-strive, PR #9897 by @roomote)
 - Fix: Make command chaining examples shell-aware for Windows compatibility (#10352 by @AlexNek, PR #10434 by @roomote)
@@ -378,7 +378,7 @@
 
 ## [3.38.3] - 2026-01-03
 
-- Feat: Add option in Context settings to recursively load `.roo/rules` and `AGENTS.md` from subdirectories (PR #10446 by @mrubens)
+- Feat: Add option in Context settings to recursively load `.njust-ai/rules` and `AGENTS.md` from subdirectories (PR #10446 by @mrubens)
 - Fix: Stop frequent Claude Code sign-ins by hardening OAuth refresh token handling (PR #10410 by @hannesrudolph)
 - Fix: Add `maxConcurrentFileReads` limit to native `read_file` tool schema (PR #10449 by @app/roomote)
 - Fix: Add type check for `lastMessage.text` in TTS useEffect to prevent runtime errors (PR #10431 by @app/roomote)
@@ -410,12 +410,12 @@
 
 ![3.38.0 Release - Skills](/releases/3.38.0-release.png)
 
-- Add support for [Agent Skills](https://agentskills.io/), enabling reusable packages of prompts, tools, and resources to extend Roo's capabilities (PR #10335 by @mrubens)
+- Add support for [Agent Skills](https://agentskills.io/), enabling reusable packages of prompts, tools, and resources to extend Njust-AI's capabilities (PR #10335 by @mrubens)
 - Add optional mode field to slash command front matter, allowing commands to automatically switch to a specific mode when triggered (PR #10344 by @app/roomote)
 - Add support for npm packages and .env files to custom tools, allowing custom tools to import dependencies and access environment variables (PR #10336 by @cte)
 - Remove simpleReadFileTool feature, streamlining the file reading experience (PR #10254 by @app/roomote)
 - Remove OpenRouter Transforms feature (PR #10341 by @app/roomote)
-- Fix mergeToolResultText handling in Roo provider (PR #10359 by @mrubens)
+- Fix mergeToolResultText handling in Njust-AI provider (PR #10359 by @mrubens)
 
 ## [3.37.1] - 2025-12-23
 
@@ -426,7 +426,7 @@
 - Fix: Drain queued messages while waiting for ask to prevent message loss (PR #10315 by @hannesrudolph)
 - Feat: Add grace retry for empty assistant messages to improve reliability (PR #10297 by @hannesrudolph)
 - Feat: Enable mergeToolResultText for all OpenAI-compatible providers for better tool result handling (PR #10299 by @hannesrudolph)
-- Feat: Enable mergeToolResultText for NJUST_AI_CJ Router (PR #10301 by @hannesrudolph)
+- Feat: Enable mergeToolResultText for NJUST_AI Router (PR #10301 by @hannesrudolph)
 - Feat: Strengthen native tool-use guidance in prompts for improved model behavior (PR #10311 by @hannesrudolph)
 - UX: Account-centric signup flow for improved onboarding experience (PR #10306 by @brunobergher)
 
@@ -506,7 +506,7 @@
 - Fix: Normalize MCP tool schemas for Bedrock and OpenAI strict mode to ensure proper tool compatibility (PR #10148 by @daniel-lxs)
 - Fix: Remove dots and colons from MCP tool names for Bedrock compatibility (PR #10152 by @daniel-lxs)
 - Fix: Convert tool_result to XML text when native tools disabled for Bedrock (PR #10155 by @daniel-lxs)
-- Fix: Refresh Roo models cache with session token on auth state change to resolve model list refresh issues (PR #10156 by @daniel-lxs)
+- Fix: Refresh Njust-AI models cache with session token on auth state change to resolve model list refresh issues (PR #10156 by @daniel-lxs)
 - Fix: Support AWS GovCloud and China region ARNs in Bedrock provider for expanded regional support (PR #10157 by @app/roomote)
 
 ## [3.36.10] - 2025-12-17
@@ -597,7 +597,7 @@
 - Refactor: Unified context-management architecture with improved UX for better context control (PR #9795 by @hannesrudolph)
 - Add new `search_replace` native tool for single-replacement operations with improved editing precision (PR #9918 by @hannesrudolph)
 - Streaming tool stats and token usage throttling for better real-time feedback during generation (PR #9926 by @hannesrudolph)
-- Add versioned settings support with minPluginVersion gating for Roo provider (PR #9934 by @hannesrudolph)
+- Add versioned settings support with minPluginVersion gating for Njust-AI provider (PR #9934 by @hannesrudolph)
 - Make Architect mode save plans to `/plans` directory and gitignore it (PR #9944 by @brunobergher)
 - Add announcement support CTA and social icons to UI (PR #9945 by @hannesrudolph)
 - Add ability to save screenshots from the browser tool (PR #9963 by @mrubens)
@@ -616,7 +616,7 @@
 - Fix: Respect explicit supportsReasoningEffort array values for proper model configuration (PR #9970 by @hannesrudolph)
 - Add timeout configuration to OpenAI Compatible Provider Client (PR #9898 by @dcbartlett)
 - Revert default tool protocol change from xml to native for stability (PR #9956 by @mrubens)
-- Remove defaultTemperature from Roo provider configuration (PR #9932 by @mrubens)
+- Remove defaultTemperature from Njust-AI provider configuration (PR #9932 by @mrubens)
 - Improve OpenAI error messages to be more useful for debugging (PR #9639 by @mrubens)
 - Better error logs for parseToolCall exceptions (PR #9857 by @cte)
 - Improve cloud job error logging for RCC provider errors (PR #9924 by @cte)
@@ -641,7 +641,7 @@
 ![3.36.2 Release - Dynamic API Settings](/releases/3.36.2-release.png)
 
 - Restrict GPT-5 tool set to apply_patch for improved compatibility (PR #9853 by @hannesrudolph)
-- Add dynamic settings support for Roo models from API, allowing model-specific configurations to be fetched dynamically (PR #9852 by @hannesrudolph)
+- Add dynamic settings support for Njust-AI models from API, allowing model-specific configurations to be fetched dynamically (PR #9852 by @hannesrudolph)
 - Fix: Resolve Chutes provider model fetching issue (PR #9854 by @cte)
 
 ## [3.36.1] - 2025-12-04
@@ -655,7 +655,7 @@
 - ChatView: Smoother stick-to-bottom behavior during streaming (PR #8999 by @hannesrudolph)
 - UX: Improved error messages and documentation links (PR #9777 by @brunobergher)
 - Fix: Overly round follow-up question suggestions styling (PR #9829 by @brunobergher)
-- Add symlink support for slash commands in .roo/commands folder (PR #9838 by @mrubens)
+- Add symlink support for slash commands in .njust-ai/commands folder (PR #9838 by @mrubens)
 - Ignore input to the execa terminal process for safer command execution (PR #9827 by @mrubens)
 - Be safer about large file reads (PR #9843 by @jr)
 - Add gpt-5.1-codex-max model to OpenAI provider (PR #9848 by @hannesrudolph)
@@ -668,8 +668,8 @@
 ![3.36.0 Release - Rewind Kangaroo](/releases/3.36.0-release.png)
 
 - Fix: Restore context when rewinding after condense (#8295 by @hannesrudolph, PR #9665 by @hannesrudolph)
-- Add reasoning_details support to Roo provider for enhanced model reasoning visibility (PR #9796 by @app/roomote)
-- Default to native tools for all models in the Roo provider for improved performance (PR #9811 by @mrubens)
+- Add reasoning_details support to Njust-AI provider for enhanced model reasoning visibility (PR #9796 by @app/roomote)
+- Default to native tools for all models in the Njust-AI provider for improved performance (PR #9811 by @mrubens)
 - Enable search_and_replace for Minimax models (PR #9780 by @mrubens)
 - Fix: Resolve Vercel AI Gateway model fetching issues (PR #9791 by @cte)
 - Fix: Apply conservative max tokens for Cerebras provider (PR #9804 by @sebastiand-cerebras)
@@ -703,7 +703,7 @@
 ![3.35.2 Release - Model Default Temperatures](/releases/3.35.2-release.png)
 
 - Allow models to contain default temperature settings for provider-specific optimal defaults (PR #9734 by @mrubens)
-- Add tag-based native tool calling detection for Roo provider models (PR #9735 by @mrubens)
+- Add tag-based native tool calling detection for Njust-AI provider models (PR #9735 by @mrubens)
 - Enable native tool support for all LiteLLM models by default (PR #9736 by @mrubens)
 - Pass app version to provider for improved request tracking (PR #9730 by @cte)
 
@@ -720,7 +720,7 @@
 - Native tool calling support expanded across many providers: Bedrock (PR #9698 by @mrubens), Cerebras (PR #9692 by @mrubens), Chutes with auto-detection from API (PR #9715 by @daniel-lxs), DeepInfra (PR #9691 by @mrubens), DeepSeek and Doubao (PR #9671 by @daniel-lxs), Groq (PR #9673 by @daniel-lxs), LiteLLM (PR #9719 by @daniel-lxs), Ollama (PR #9696 by @mrubens), OpenAI-compatible providers (PR #9676 by @daniel-lxs), Requesty (PR #9672 by @daniel-lxs), Unbound (PR #9699 by @mrubens), Vercel AI Gateway (PR #9697 by @mrubens), Vertex Gemini (PR #9678 by @daniel-lxs), and xAI with new Grok 4 Fast and Grok 4.1 Fast models (PR #9690 by @mrubens)
 - Fix: Preserve tool_use blocks in summary for parallel tool calls (#9700 by @SilentFlower, PR #9714 by @SilentFlower)
 - Default Grok Code Fast to native tools for better performance (PR #9717 by @mrubens)
-- UX improvements to the NJUST_AI_CJ Router-centric onboarding flow (PR #9709 by @brunobergher)
+- UX improvements to the NJUST_AI Router-centric onboarding flow (PR #9709 by @brunobergher)
 - UX toolbar cleanup and settings consolidation for a cleaner interface (PR #9710 by @brunobergher)
 - Add model-specific tool customization via `excludedTools` and `includedTools` configuration (PR #9641 by @daniel-lxs)
 - Add new `apply_patch` native tool for more efficient file editing operations (PR #9663 by @hannesrudolph)
@@ -778,13 +778,13 @@
 - Set native tools as default for minimax-m2 and claude-haiku-4.5 (PR #9586 by @daniel-lxs)
 - Make single file read only apply to XML tools (PR #9600 by @mrubens)
 - Enhance web-evals dashboard with dynamic tool columns and UX improvements (PR #9592 by @hannesrudolph)
-- Revert "Add support for NJUST_AI_CJ Cloud as an embeddings provider" while we fix some issues (PR #9602 by @mrubens)
+- Revert "Add support for NJUST_AI Cloud as an embeddings provider" while we fix some issues (PR #9602 by @mrubens)
 
 ## [3.34.4] - 2025-11-25
 
 ![3.34.4 Release - BFL Image Generation](/releases/3.34.4-release.png)
 
-- Add new Black Forest Labs image generation models, free on NJUST_AI_CJ Cloud and also available on OpenRouter (PR #9587 and #9589 by @mrubens)
+- Add new Black Forest Labs image generation models, free on NJUST_AI Cloud and also available on OpenRouter (PR #9587 and #9589 by @mrubens)
 - Fix: Preserve dynamic MCP tool names in native mode API history to prevent tool name mismatches (PR #9559 by @daniel-lxs)
 - Fix: Preserve tool_use blocks in summary message during condensing with native tools to maintain conversation context (PR #9582 by @daniel-lxs)
 
@@ -796,9 +796,9 @@
 - Add Claude Opus 4.5 model to Claude Code provider (PR #9560 by @mrubens)
 - Add Claude Opus 4.5 model to Bedrock provider (#9571 by @pisicode, PR #9572 by @roomote)
 - Enable caching for Opus 4.5 model to improve performance (#9567 by @iainRedro, PR #9568 by @roomote)
-- Add support for NJUST_AI_CJ Cloud as an embeddings provider (PR #9543 by @mrubens)
+- Add support for NJUST_AI Cloud as an embeddings provider (PR #9543 by @mrubens)
 - Fix ask_followup_question streaming issue and add missing tool cases (PR #9561 by @daniel-lxs)
-- Add contact links to About NJUST_AI_CJ settings page (PR #9570 by @roomote)
+- Add contact links to About NJUST_AI settings page (PR #9570 by @roomote)
 - Switch from asdf to mise-en-place in bare-metal evals setup script (PR #9548 by @cte)
 
 ## [3.34.2] - 2025-11-24
@@ -807,7 +807,7 @@
 
 - Add support for Claude Opus 4.5 in Anthropic and Vertex providers (PR #9541 by @daniel-lxs)
 - Add support for Claude Opus 4.5 in OpenRouter with prompt caching and reasoning budget (PR #9540 by @daniel-lxs)
-- Add NJUST_AI_CJ Cloud as an image generation provider (PR #9528 by @mrubens)
+- Add NJUST_AI Cloud as an image generation provider (PR #9528 by @mrubens)
 - Fix: Gracefully skip unsupported content blocks in Gemini transformer (PR #9537 by @daniel-lxs)
 - Fix: Flush LiteLLM cache when credentials change on refresh (PR #9536 by @daniel-lxs)
 - Fix: Ensure XML parser state matches tool protocol on config update (PR #9535 by @daniel-lxs)
@@ -819,7 +819,7 @@
 - Show the prompt for image generation in the UI (PR #9505 by @mrubens)
 - Fix double todo list display issue (PR #9517 by @mrubens)
 - Add tracking for cloud synced messages (PR #9518 by @mrubens)
-- Enable the NJUST_AI_CJ Router in evals (PR #9492 by @cte)
+- Enable the NJUST_AI Router in evals (PR #9492 by @cte)
 
 ## [3.34.0] - 2025-11-21
 
@@ -829,7 +829,7 @@
 - Add support for Baseten as a new AI provider (PR #9461 by @AlexKer)
 - Improve base OpenAI compatible provider with better error handling and configuration (PR #9462 by @mrubens)
 - Add provider-oriented welcome screen to improve onboarding experience (PR #9484 by @mrubens)
-- Pin Roo provider to the top of the provider list for better discoverability (PR #9485 by @mrubens)
+- Pin Njust-AI provider to the top of the provider list for better discoverability (PR #9485 by @mrubens)
 - Enhance native tool descriptions with examples and clarifications for better AI understanding (PR #9486 by @daniel-lxs)
 - Fix: Make cancel button immediately responsive during streaming (#9435 by @jwadow, PR #9448 by @daniel-lxs)
 - Fix: Resolve apply_diff performance regression from earlier changes (PR #9474 by @daniel-lxs)
@@ -899,7 +899,7 @@
 - Use VSCode theme color for outline button borders (PR #9336 by @app/roomote)
 - Replace broken badgen.net badges with shields.io (PR #9318 by @app/roomote)
 - Add max git status files setting to evals (PR #9322 by @mrubens)
-- NJUST_AI_CJ Router pricing page and changes elsewhere (PR #9195 by @brunobergher)
+- NJUST_AI Router pricing page and changes elsewhere (PR #9195 by @brunobergher)
 
 ## [3.32.1] - 2025-11-14
 
@@ -925,7 +925,7 @@
 ![3.31.3 Release - Kangaroo Decrypting a Message](/releases/3.31.3-release.png)
 
 - Fix: OpenAI Native encrypted_content handling and remove gpt-5-chat-latest verbosity flag (#9225 by @politsin, PR by @hannesrudolph)
-- Fix: NJUST_AI_CJ Router Anthropic input token normalization to avoid double-counting (thanks @hannesrudolph!)
+- Fix: NJUST_AI Router Anthropic input token normalization to avoid double-counting (thanks @hannesrudolph!)
 - Refactor: Rename sliding-window to context-management and truncateConversationIfNeeded to manageContext (thanks @hannesrudolph!)
 
 ## [3.31.2] - 2025-11-12
@@ -954,7 +954,7 @@
 - Fix: Prevent crash when streaming chunks have null choices array (thanks @daniel-lxs!)
 - Fix: Prevent context condensing on settings save when provider/model unchanged (#4430 by @hannesrudolph, PR by @daniel-lxs)
 - Fix: Respect custom OpenRouter URL for all API operations (#8947 by @sstraus, PR by @roomote)
-- Add comprehensive error logging to Roo Cloud provider (thanks @daniel-lxs!)
+- Add comprehensive error logging to Njust-AI Cloud provider (thanks @daniel-lxs!)
 - UX: Less caffeinated kangaroo (thanks @brunobergher!)
 
 ## [3.30.3] - 2025-11-06
@@ -1024,7 +1024,7 @@
 - Fix: prevent MCP server restart when toggling tool permissions (#8231 by @hannesrudolph, PR by @heyseth)
 - Fix: truncate type definition to match max read line (#8149 by @chenxluo, PR by @elianiva)
 - Fix: auto-sync enableReasoningEffort with reasoning dropdown selection (thanks @daniel-lxs!)
-- Fix: Gate auth-driven Roo model refresh to active provider only (thanks @daniel-lxs!)
+- Fix: Gate auth-driven Njust-AI model refresh to active provider only (thanks @daniel-lxs!)
 - Prevent a noisy cloud agent exception (thanks @cte!)
 - Feat: improve @ file search for large projects (#5721 by @Naituw, PR by @daniel-lxs)
 - Feat: add zai-glm-4.6 model to Cerebras and set gpt-oss-120b as default (thanks @kevint-cerebras!)
@@ -1035,7 +1035,7 @@
 
 - Update Gemini models with latest 09-2025 versions including Gemini 2.5 Pro and Flash (#8485 by @cleacos, PR by @roomote)
 - Add reasoning support for Z.ai GLM binary thinking mode (#8465 by @BeWater799, PR by @daniel-lxs)
-- Enable reasoning in Roo provider (thanks @mrubens!)
+- Enable reasoning in Njust-AI provider (thanks @mrubens!)
 - Add settings to configure time and cost display in system prompt (#8450 by @jaxnb, PR by @roomote)
 - Fix: Use max_output_tokens when available in LiteLLM fetcher (#8454 by @fabb, PR by @roomote)
 - Fix: Process queued messages after context condensing completes (#8477 by @JosXa, PR by @roomote)
@@ -1048,7 +1048,7 @@
 
 - Add support for LongCat-Flash-Thinking-FP8 models in Chutes AI provider (#8425 by @leakless21, PR by @roomote)
 - Fix: Remove specific Claude model version from settings descriptions to avoid outdated references (#8435 by @rwydaegh, PR by @roomote)
-- Fix: Correct caching logic in Roo provider to improve performance (thanks @mrubens!)
+- Fix: Correct caching logic in Njust-AI provider to improve performance (thanks @mrubens!)
 - Fix: Ensure free models don't display pricing information in the UI (thanks @mrubens!)
 
 ## [3.29.1] - 2025-10-26
@@ -1065,7 +1065,7 @@
 
 - Add token-budget based file reading with intelligent preview to avoid context overruns (thanks @daniel-lxs!)
 - Enable browser-use tool for all image-capable models (#8116 by @hannesrudolph, PR by @app/roomote!)
-- Add dynamic model loading for NJUST_AI_CJ Router (thanks @app/roomote!)
+- Add dynamic model loading for NJUST_AI Router (thanks @app/roomote!)
 - Fix: Respect nested .gitignore files in search_files (#7921 by @hannesrudolph, PR by @daniel-lxs)
 - Fix: Preserve trailing newlines in stripLineNumbers for apply_diff (#8020 by @liyi3c, PR by @app/roomote)
 - Fix: Exclude max tokens field for models that don't support it in export (#7944 by @hannesrudolph, PR by @elianiva)
@@ -1080,7 +1080,7 @@
 - Update Mistral Medium model name (#8362 by @ThomsenDrake, PR by @ThomsenDrake)
 - Remove GPT-5 instructions/reasoning_summary from UI message metadata to prevent ui_messages.json bloat (thanks @hannesrudolph!)
 - Normalize docs-extractor audience tags; remove admin/stakeholder; strip tool invocations (thanks @hannesrudolph!)
-- Update X/Twitter username from roo_code to roocode (thanks @app/roomote!)
+- Update X/Twitter username from NJUST_AI to NjustAi (thanks @app/roomote!)
 - Update Configuring Profiles video link (thanks @app/roomote!)
 - Fix link text for Roomote Control in README (thanks @laz-001!)
 - Remove verbose error for cloud agents (thanks @cte!)
@@ -1161,8 +1161,8 @@
 ![3.28.9 Release - Supernova Upgrade](/releases/3.28.9-release.png)
 
 - The free Supernova model now has a 1M token context window (thanks @mrubens!)
-- Experiment to show the Roo provider on the welcome screen (thanks @mrubens!)
-- Web: Website improvements to https://njust-ai-cj.local/ (thanks @brunobergher!)
+- Experiment to show the Njust-AI provider on the welcome screen (thanks @mrubens!)
+- Web: Website improvements to https://njust-ai.local/ (thanks @brunobergher!)
 - Fix: Remove <thinking> tags from prompts for cleaner output and fewer tokens (#8318 by @hannesrudolph, PR by @app/roomote)
 - Correct tool use suggestion to improve model adherence to suggestion (thanks @hannesrudolph!)
 - feat: log out from cloud when resetting extension state (thanks @app/roomote!)
@@ -1176,7 +1176,7 @@
 
 - Fix: Resolve frequent "No tool used" errors by clarifying tool-use rules (thanks @hannesrudolph!)
 - Fix: Include initial ask in condense summarization (thanks @hannesrudolph!)
-- Add support for more free models in the Roo provider (thanks @mrubens!)
+- Add support for more free models in the Njust-AI provider (thanks @mrubens!)
 - Show cloud switcher and option to add a team when logged in (thanks @mrubens!)
 - Add Opengraph image for web (thanks @brunobergher!)
 
@@ -1223,7 +1223,7 @@
 - UX: Responsive Auto-Approve (thanks @brunobergher!)
 - Add telemetry retry queue for network resilience (thanks @daniel-lxs!)
 - Fix: Transform keybindings in nightly build to fix command+y shortcut (thanks @app/roomote!)
-- New code-supernova stealth model in the NJUST_AI_CJ Router (thanks @mrubens!)
+- New code-supernova stealth model in the NJUST_AI Router (thanks @mrubens!)
 
 ## [3.28.3] - 2025-09-16
 
@@ -1261,8 +1261,8 @@
 
 ![3.28.1 Release - Kangaroo riding rocket to the clouds](/releases/3.28.1-release.png)
 
-- Announce NJUST_AI_CJ Cloud!
-- Add cloud task button for opening tasks in NJUST_AI_CJ Cloud (thanks @app/roomote!)
+- Announce NJUST_AI Cloud!
+- Add cloud task button for opening tasks in NJUST_AI Cloud (thanks @app/roomote!)
 - Make Posthog telemetry the default (thanks @mrubens!)
 - Show notification when the checkpoint initialization fails (thanks @app/roomote!)
 - Bust cache in generated image preview (thanks @mrubens!)
@@ -1271,9 +1271,9 @@
 
 ## [3.28.0] - 2025-09-10
 
-![3.28.0 Release - Continue tasks in NJUST_AI_CJ Cloud](/releases/3.28.0-release.png)
+![3.28.0 Release - Continue tasks in NJUST_AI Cloud](/releases/3.28.0-release.png)
 
-- feat: Continue tasks in NJUST_AI_CJ Cloud (thanks @brunobergher!)
+- feat: Continue tasks in NJUST_AI Cloud (thanks @brunobergher!)
 - feat: Support connecting to Cloud without redirect handling (thanks @mrubens!)
 - feat: Add toggle to control task syncing to Cloud (thanks @jr!)
 - feat: Add click-to-edit, ESC-to-cancel, and fix padding consistency for chat messages (#7788 by @hannesrudolph, PR by @app/roomote)
@@ -1311,7 +1311,7 @@
 ![3.26.7 Release - OpenAI Service Tiers](/releases/3.26.7-release.png)
 
 - Feature: Add OpenAI Responses API service tiers (flex/priority) with UI selector and pricing (thanks @hannesrudolph!)
-- Feature: Add DeepInfra as a model provider in NJUST_AI_CJ (#7661 by @Thachnh, PR by @Thachnh)
+- Feature: Add DeepInfra as a model provider in NJUST_AI (#7661 by @Thachnh, PR by @Thachnh)
 - Feature: Update kimi-k2-0905-preview and kimi-k2-turbo-preview models on the Moonshot provider (thanks @CellenLee!)
 - Feature: Add kimi-k2-0905-preview to Groq, Moonshot, and Fireworks (thanks @daniel-lxs and Cline!)
 - Fix: Prevent countdown timer from showing in history for answered follow-up questions (#7624 by @XuyiK, PR by @daniel-lxs)
@@ -1406,7 +1406,7 @@
 
 - feat: add custom base URL support for Requesty provider (thanks @requesty-JohnCosta27!)
 - feat: add DeepSeek V3.1 model to Chutes AI provider (#7294 by @dmarkey, PR by @app/roomote)
-- Revert "feat: enable loading Roo modes from multiple files in .roo/modes directory" temporarily to fix a bug with mode installation
+- Revert "feat: enable loading Njust-AI modes from multiple files in .njust-ai/modes directory" temporarily to fix a bug with mode installation
 
 ## [3.25.22] - 2025-08-22
 
@@ -1423,9 +1423,9 @@
 - Improved MDM handling
 - Handle nullish token values in ContextCondenseRow to prevent UI crash (thanks @s97712)
 - Improved context window error handling for OpenAI and other providers
-- Add "installed" filter to Roo Marketplace (thanks @semidark)
+- Add "installed" filter to Njust-AI Marketplace (thanks @semidark)
 - Improve filesystem access checks (thanks @elianiva)
-- Support for loading Roo modes from multiple YAML files in the `.roo/modes/` directory (thanks @farazoman)
+- Support for loading Njust-AI modes from multiple YAML files in the `.njust-ai/modes/` directory (thanks @farazoman)
 - Add Featherless provider (thanks @DarinVerheijke)
 
 ## [3.25.20] - 2025-08-19
@@ -1434,11 +1434,11 @@
 
 ## [3.25.19] - 2025-08-19
 
-- Fix issue where new users couldn't select the NJUST_AI_CJ Router (thanks @daniel-lxs!)
+- Fix issue where new users couldn't select the NJUST_AI Router (thanks @daniel-lxs!)
 
 ## [3.25.18] - 2025-08-19
 
-- Add new stealth Sonic model through the NJUST_AI_CJ Router
+- Add new stealth Sonic model through the NJUST_AI Router
 - Fix: respect enableReasoningEffort setting when determining reasoning usage (#7048 by @ikbencasdoei, PR by @app/roomote)
 - Fix: prevent duplicate LM Studio models with case-insensitive deduplication (#6954 by @fbuechler, PR by @daniel-lxs)
 - Feat: simplify ask_followup_question prompt documentation (thanks @daniel-lxs!)
@@ -1600,7 +1600,7 @@
 - Fix: Prevent input clearing when clicking chat buttons (thanks @hassoncs!)
 - Update PR reviewer rules and mode configuration (thanks @daniel-lxs!)
 - Add translation check action to pull_request.opened event (thanks @app/roomote!)
-- Remove "(prev Roo Cline)" from extension title in all languages (thanks @app/roomote!)
+- Remove "(prev Njust-AI Cline)" from extension title in all languages (thanks @app/roomote!)
 - Remove event types mention from PR reviewer rules (thanks @daniel-lxs!)
 
 ## [3.25.2] - 2025-07-29
@@ -1653,7 +1653,7 @@
 
 ## [3.23.19] - 2025-07-23
 
-- Add NJUST_AI_CJ Cloud Waitlist CTAs (thanks @brunobergher!)
+- Add NJUST_AI Cloud Waitlist CTAs (thanks @brunobergher!)
 - Split commands on newlines when evaluating auto-approve
 - Smarter auto-deny of commands
 
@@ -1821,7 +1821,7 @@
 - Chat index UI enhancements (thanks @MuriloFP!)
 - Fix model search being prefilled on dropdown (thanks @kevinvandijk!)
 - Improve chat UI - add camera icon margin and make placeholder non-selectable (thanks @MuriloFP!)
-- Delete .roo/rules-{mode} folder when custom mode is deleted
+- Delete .njust-ai/rules-{mode} folder when custom mode is deleted
 - Enforce file restrictions for all edit tools in architect mode
 - Add User-Agent header to API providers
 - Fix auto question timer unmount (thanks @liwilliam2021!)
@@ -1888,7 +1888,7 @@
 ## [3.22.0] - 2025-06-25
 
 - Add 1-click task sharing
-- Add support for loading rules from a global .roo directory (thanks @samhvw8!)
+- Add support for loading rules from a global .njust-ai directory (thanks @samhvw8!)
 - Modes selector improvements (thanks @brunobergher!)
 - Use safeWriteJson for all JSON file writes to avoid task history corruption (thanks @KJ7LNW!)
 - Improve YAML error handling when editing modes
@@ -1953,7 +1953,7 @@
 
 ## [3.21.0] - 2025-06-17
 
-- Add Roo Marketplace to make it easy to discover and install great MCPs and modes!
+- Add Njust-AI Marketplace to make it easy to discover and install great MCPs and modes!
 - Add Gemini 2.5 models (Pro, Flash and Flash Lite) (thanks @daniel-lxs!)
 - Add support for Excel (.xlsx) files in tools (thanks @chrarnoldus!)
 - Add max tokens checkbox option for OpenAI compatible provider (thanks @AlexandruSmirnov!)
@@ -1964,7 +1964,7 @@
 - Fix codebase indexing alignment with list-files hidden directory filtering (thanks @daniel-lxs!)
 - Fix subtask completion mismatch (thanks @feifei325!)
 - Fix Windows path normalization in MCP variable injection (thanks @daniel-lxs!)
-- Update marketplace branding to 'Roo Marketplace' (thanks @SannidhyaSah!)
+- Update marketplace branding to 'Njust-AI Marketplace' (thanks @SannidhyaSah!)
 - Refactor to more consistent history UI (thanks @elianiva!)
 - Adjust context menu positioning to be near Copilot
 - Update evals Docker setup to work on Windows (thanks @StevenTCramer!)
@@ -2105,7 +2105,7 @@
 - Add DeepSeek R1 0528 model support to Chutes provider (thanks @zeozeozeo!)
 - Fix @directory not respecting .rooignore files (thanks @xyOz-dev!)
 - Add rooignore checking for insert_content and search_and_replace tools
-- Fix menu breaking when Roo is moved between primary and secondary sidebars (thanks @chrarnoldus!)
+- Fix menu breaking when Njust-AI is moved between primary and secondary sidebars (thanks @chrarnoldus!)
 - Resolve memory leak in ChatView by stabilizing callback props (thanks @samhvw8!)
 - Fix write_to_file to properly create empty files when content is empty (thanks @Ruakij!)
 - Fix chat input clearing during running tasks (thanks @xyOz-dev!)
@@ -2184,7 +2184,7 @@
 
 ## [3.17.2] - 2025-05-15
 
-- Revert "Switch to the new Roo message parser" (appears to cause a tool parsing bug)
+- Revert "Switch to the new Njust-AI message parser" (appears to cause a tool parsing bug)
 - Lock the versions of vsce and ovsx
 
 ## [3.17.1] - 2025-05-15
@@ -2199,14 +2199,14 @@
 - Add experimental feature to intelligently condense the task context instead of truncating it
 - Fix one of the causes of the gray screen issue (thanks @xyOz-dev!)
 - Focus improvements for better UI interactions (thanks Cline!)
-- Switch to the new Roo message parser for improved performance (thanks Cline!)
+- Switch to the new Njust-AI message parser for improved performance (thanks Cline!)
 - Enable source maps for improved debugging (thanks @KJ7LNW!)
 - Update OpenRouter provider to use provider-specific model info (thanks @daniel-lxs!)
 - Fix Requesty cost/token reporting (thanks @dtrugman!)
 - Improve command execution UI
 - Add more in-app links to relevant documentation
 - Update the new task tool description and the ask mode custom instructions in the system prompt
-- Add IPC types to roo-code.d.ts
+- Add IPC types to Njust-AI.d.ts
 - Add build VSIX workflow to pull requests (thanks @SmartManoj!)
 - Improve apply_diff tool to intelligently deduce line numbers (thanks @samhvw8!)
 - Fix command validation for shell array indexing (thanks @KJ7LNW!)
@@ -2273,7 +2273,7 @@
 - Fix display issue of the programming language dropdown in the code block component (thanks @zhangtony239)
 - MCP server errors are now captured and shown in a new "Errors" tab (thanks @robertheadley)
 - Error logging will no longer break MCP functionality if the server is properly connected (thanks @ksze)
-- You can now toggle the `terminal.integrated.inheritEnv` VSCode setting directly for the NJUST_AI_CJ settings (thanks @KJ7LNW)
+- You can now toggle the `terminal.integrated.inheritEnv` VSCode setting directly for the NJUST_AI settings (thanks @KJ7LNW)
 - Add `gemini-2.5-pro-preview-05-06` to the Vertex and Gemini providers (thanks @zetaloop)
 - Ensure evals exercises are up-to-date before running evals (thanks @shariqriazz)
 - Lots of general UI improvements (thanks @elianiva)
@@ -2290,7 +2290,7 @@
 
 ## [3.15.4] - 2025-05-04
 
-- Fix a nasty bug that would cause NJUST_AI_CJ to hang, particularly in orchestrator mode
+- Fix a nasty bug that would cause NJUST_AI to hang, particularly in orchestrator mode
 - Improve Gemini caching efficiency
 
 ## [3.15.3] - 2025-05-02
@@ -2329,8 +2329,8 @@
 - Improve the auto-approve toggle buttons for some high-contrast VSCode themes
 - Offload expensive count token operations to a web worker (thanks @samhvw8)
 - Improve support for multi-root workspaces (thanks @snoyiatk)
-- Simplify and streamline NJUST_AI_CJ's quick actions
-- Allow NJUST_AI_CJ settings to be imported from the welcome screen (thanks @julionav)
+- Simplify and streamline NJUST_AI's quick actions
+- Allow NJUST_AI settings to be imported from the welcome screen (thanks @julionav)
 - Remove unused types (thanks @wkordalski)
 - Improve the performance of mode switching (thanks @dlab-anton)
 - Fix importing & exporting of custom modes (thanks @julionav)
@@ -2344,7 +2344,7 @@
 - Clean up settings data model
 - Omit reasoning params for non-reasoning models
 - Clearer documentation for adding settings (thanks @shariqriazz!)
-- Fix word wrapping in Roo message title (thanks @zhangtony239!)
+- Fix word wrapping in Njust-AI message title (thanks @zhangtony239!)
 - Update default model id for Unbound from claude 3.5 to 3.7 (thanks @pugazhendhi-m!)
 
 ## [3.14.2] - 2025-04-24
@@ -2494,12 +2494,12 @@
 - Improve readFileTool XML output format (thanks @KJ7LNW!)
 - Add o1-pro support (thanks @arthurauffray!)
 - Follow symlinked rules files/directories to allow for more flexible rule setups
-- Focus NJUST_AI_CJ in the sidebar when running tasks in the sidebar via the API
+- Focus NJUST_AI in the sidebar when running tasks in the sidebar via the API
 - Improve subtasks UI
 
 ## [3.11.10] - 2025-04-08
 
-- Fix bug where nested .roo/rules directories are not respected properly (thanks @taisukeoe!)
+- Fix bug where nested .njust-ai/rules directories are not respected properly (thanks @taisukeoe!)
 - Handle long command output more efficiently in the chat row (thanks @samhvw8!)
 - Fix cache usage tracking for OpenAI-compatible providers
 - Add custom translation instructions for zh-CN (thanks @System233!)
@@ -2508,7 +2508,7 @@
 ## [3.11.9] - 2025-04-07
 
 - Rate-limit setting updated to be per-profile (thanks @ross and @olweraltuve!)
-- You can now place multiple rules files in the .roo/rules/ and .roo/rules-{mode}/ folders (thanks @upamune!)
+- You can now place multiple rules files in the .njust-ai/rules/ and .njust-ai/rules-{mode}/ folders (thanks @upamune!)
 - Prevent unnecessary autoscroll when buttons appear (thanks @shtse8!)
 - Add Gemini 2.5 Pro Preview to Vertex AI (thanks @nbihan-mediware!)
 - Tidy up following ClineProvider refactor (thanks @diarmidmackenzie!)
@@ -2516,7 +2516,7 @@
 - Enhance Rust tree-sitter parser with advanced language structures (thanks @KJ7LNW!)
 - Persist settings on api.setConfiguration (thanks @gtaylor!)
 - Add deep links to settings sections
-- Add command to focus NJUST_AI_CJ input field (thanks @axkirillov!)
+- Add command to focus NJUST_AI input field (thanks @axkirillov!)
 - Add resize and hover actions to the browser (thanks @SplittyDev!)
 - Add resumeTask and isTaskInHistory to the API (thanks @franekp!)
 - Fix bug displaying boolean/numeric suggested answers
@@ -2565,7 +2565,7 @@
 - Fix issue where prompts and settings tabs were not scrollable when accessed from dropdown menus
 - Update AWS region dropdown menu to the most recent data (thanks @Smartsheet-JB-Brown!)
 - Fix prompt enhancement for Bedrock (thanks @Smartsheet-JB-Brown!)
-- Allow processes to access the NJUST_AI_CJ API via a unix socket
+- Allow processes to access the NJUST_AI API via a unix socket
 - Improve zh-TW Traditional Chinese translations (thanks @PeterDaveHello!)
 - Add support for Azure AI Inference Service with DeepSeek-V3 model (thanks @thomasjeung!)
 - Fix off-by-one error in tree-sitter line numbers
@@ -2590,7 +2590,7 @@
 ## [3.11.0] - 2025-03-30
 
 - Replace single-block-diff with multi-block-diff fast editing strategy
-- Support project-level MCP config in .roo/mcp.json (thanks @aheizi!)
+- Support project-level MCP config in .njust-ai/mcp.json (thanks @aheizi!)
 - Show OpenRouter and Requesty key balance on the settings screen
 - Support import/export of settings
 - Add pinning and sorting for API configuration dropdown (thanks @jwcraig!)
@@ -2602,7 +2602,7 @@
 - Fix list_code_definition_names to support files (thanks @KJ7LNW!)
 - Refactor tool-calling logic to make the code a lot easier to work with (thanks @diarmidmackenzie, @bramburn, @KJ7LNW, and everyone else who helped!)
 - Prioritize “Add to Context” in the code actions and include line numbers (thanks @samhvw8!)
-- Add an activation command that other extensions can use to interface with NJUST_AI_CJ (thanks @gtaylor!)
+- Add an activation command that other extensions can use to interface with NJUST_AI (thanks @gtaylor!)
 - Preserve language characters in file @-mentions (thanks @aheizi!)
 - Browser tool improvements (thanks @afshawnlotfi!)
 - Display info about partial reads in the chat row
@@ -2690,13 +2690,13 @@
 
 ## [3.9.1] - 2025-03-18
 
-- Pass current language to system prompt correctly so Roo thinks and speaks in the selected language
+- Pass current language to system prompt correctly so Njust-AI thinks and speaks in the selected language
 
 ## [3.9.0] - 2025-03-18
 
-- Internationalize NJUST_AI_CJ into Catalan, German, Spanish, French, Hindi, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Vietnamese, Simplified Chinese, and Traditional Chinese (thanks @feifei325!)
+- Internationalize NJUST_AI into Catalan, German, Spanish, French, Hindi, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Vietnamese, Simplified Chinese, and Traditional Chinese (thanks @feifei325!)
 - Bring back support for MCP over SSE (thanks @aheizi!)
-- Add a text-to-speech option to have Roo talk to you as it works (thanks @heyseth!)
+- Add a text-to-speech option to have Njust-AI talk to you as it works (thanks @heyseth!)
 - Choose a specific provider when using OpenRouter (thanks PhunkyBob!)
 - Support batch deletion of task history (thanks @aheizi!)
 - Internationalize Human Relay, adjust the layout, and make it work on the welcome screen (thanks @NyxJae!)
@@ -2707,9 +2707,9 @@
 - Fix to task history saving when running multiple Roos (thanks @samhvw8!)
 - Improve task deletion when underlying files are missing (thanks @GitlyHallows!)
 - Improve support for NixOS & direnv (thanks @wkordalski!)
-- Fix wheel scrolling when Roo is opened in editor tabs (thanks @GitlyHallows!)
+- Fix wheel scrolling when Njust-AI is opened in editor tabs (thanks @GitlyHallows!)
 - Don’t automatically mention the file when using the "Add to context" code action (thanks @qdaxb!)
-- Expose task stack in `NJUST_AI_CJAPI` (thanks @franekp!)
+- Expose task stack in `NJUST_AIAPI` (thanks @franekp!)
 - Give the models visibility into the current task's API cost
 
 ## [3.8.6] - 2025-03-13
@@ -2747,7 +2747,7 @@
 ## [3.8.4] - 2025-03-09
 
 - Roll back multi-diff progress indicator temporarily to fix a double-confirmation in saving edits
-- Add an option in the prompts tab to save tokens by disabling the ability to ask Roo to create/edit custom modes for you (thanks @hannesrudolph!)
+- Add an option in the prompts tab to save tokens by disabling the ability to ask Njust-AI to create/edit custom modes for you (thanks @hannesrudolph!)
 
 ## [3.8.3] - 2025-03-09
 
@@ -2774,17 +2774,17 @@
 
 ## [3.8.0] - 2025-03-07
 
-- Add opt-in telemetry to help us improve NJUST_AI_CJ faster (thanks Cline!)
+- Add opt-in telemetry to help us improve NJUST_AI faster (thanks Cline!)
 - Fix terminal overload / gray screen of death, and other terminal issues
 - Add a new experimental diff editing strategy that applies multiple diff edits at once (thanks @qdaxb!)
-- Add support for a .rooignore to prevent NJUST_AI_CJ from read/writing certain files, with a setting to also exclude them from search/lists (thanks Cline!)
+- Add support for a .rooignore to prevent NJUST_AI from read/writing certain files, with a setting to also exclude them from search/lists (thanks Cline!)
 - Update the new_task tool to return results to the parent task on completion, supporting better orchestration (thanks @shaybc!)
-- Support running Roo in multiple editor windows simultaneously (thanks @samhvw8!)
+- Support running Njust-AI in multiple editor windows simultaneously (thanks @samhvw8!)
 - Make checkpoints asynchronous and exclude more files to speed them up
 - Redesign the settings page to make it easier to navigate
 - Add credential-based authentication for Vertex AI, enabling users to easily switch between Google Cloud accounts (thanks @eonghk!)
 - Update the DeepSeek provider with the correct baseUrl and track caching correctly (thanks @olweraltuve!)
-- Add a new “Human Relay” provider that allows you to manually copy information to a Web AI when needed, and then paste the AI's response back into NJUST_AI_CJ (thanks @NyxJae)!
+- Add a new “Human Relay” provider that allows you to manually copy information to a Web AI when needed, and then paste the AI's response back into NJUST_AI (thanks @NyxJae)!
 - Add observability for OpenAI providers (thanks @refactorthis!)
 - Support speculative decoding for LM Studio local models (thanks @adamwlarson!)
 - Improve UI for mode/provider selectors in chat
@@ -2847,7 +2847,7 @@
 
 ## [3.7.5] - 2025-02-26
 
-- Fix context window truncation math (see [#1173](https://github.com/NJUST-AI/NJUST_AI_CJ/issues/1173))
+- Fix context window truncation math (see [#1173](https://github.com/NJUST-AI/NJUST_AI/issues/1173))
 - Fix various issues with the model picker (thanks @System233!)
 - Fix model input / output cost parsing (thanks @System233!)
 - Add drag-and-drop for files
@@ -2873,7 +2873,7 @@
 
 ## [3.7.0] - 2025-02-24
 
-- Introducing NJUST_AI_CJ 3.7, with support for the new Claude Sonnet 3.7. Because who cares about skipping version numbers anymore? Thanks @lupuletic and @cte for the PRs!
+- Introducing NJUST_AI 3.7, with support for the new Claude Sonnet 3.7. Because who cares about skipping version numbers anymore? Thanks @lupuletic and @cte for the PRs!
 
 ## [3.3.26] - 2025-02-27
 
@@ -2910,7 +2910,7 @@
 - Fix default preferred language for zh-cn and zh-tw (thanks @System233!)
 - Fix Mistral integration (thanks @d-oit!)
 - Feature to mention `@terminal` to pull terminal output into context (thanks Cline!)
-- Fix system prompt to make sure Roo knows about all available modes
+- Fix system prompt to make sure Njust-AI knows about all available modes
 - Enable streaming mode for OpenAI o1
 
 ## [3.3.20] - 2025-02-14
@@ -3014,11 +3014,11 @@
 - Capture reasoning from more variants of DeepSeek R1 (thanks @Szpadel!)
 - Use an exponential backoff for API retries (if delay after first error is 5s, delay after second consecutive error will be 10s, then 20s, etc)
 - Add a slider in advanced settings to enable rate limiting requests to avoid overloading providers (i.e. wait at least 10 seconds between API requests)
-- Prompt tweaks to make Roo better at creating new custom modes for you
+- Prompt tweaks to make Njust-AI better at creating new custom modes for you
 
 ## [3.3.6]
 
-- Add a "new task" tool that allows Roo to start new tasks with an initial message and mode
+- Add a "new task" tool that allows Njust-AI to start new tasks with an initial message and mode
 - Fix a bug that was preventing the use of qwen-max and potentially other OpenAI-compatible providers (thanks @Szpadel!)
 - Add support for perplexity/sonar-reasoning (thanks @Szpadel!)
 - Visual fixes to dropdowns (thanks @psv2522!)
@@ -3062,7 +3062,7 @@
 - Ask and Architect modes can now edit markdown files
 - Custom modes can now be restricted to specific file patterns (for example, a technical writer who can only edit markdown files 👋)
 - Support for configuring the Bedrock provider with AWS Profiles
-- New NJUST_AI_CJ community Discord at https://njust-ai-cj.local/discord!
+- New NJUST_AI community Discord at https://njust-ai.local/discord!
 
 ## [3.2.8]
 
@@ -3094,15 +3094,15 @@
 
 ## [3.2.0 - 3.2.2]
 
-- **Name Change From Roo Cline to NJUST_AI_CJ:** We're excited to announce our new name! After growing beyond 50,000 installations, we've rebranded from Roo Cline to NJUST_AI_CJ to better reflect our identity as we chart our own course.
+- **Name Change From Njust-AI Cline to NJUST_AI:** We're excited to announce our new name! After growing beyond 50,000 installations, we've rebranded from Njust-AI Cline to NJUST_AI to better reflect our identity as we chart our own course.
 
-- **Custom Modes:** Create your own personas for NJUST_AI_CJ! While our built-in modes (Code, Architect, Ask) are still here, you can now shape entirely new ones:
+- **Custom Modes:** Create your own personas for NJUST_AI! While our built-in modes (Code, Architect, Ask) are still here, you can now shape entirely new ones:
     - Define custom prompts
     - Choose which tools each mode can access
     - Create specialized assistants for any workflow
     - Just type "Create a new mode for <X>" or visit the Prompts tab in the top menu to get started
 
-Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and be part of our next chapter!
+Join us at https://www.reddit.com/r/NJUST_AI to share your custom modes and be part of our next chapter!
 
 ## [3.1.7]
 
@@ -3155,7 +3155,7 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [3.0.0]
 
-- This release adds chat modes! Now you can ask NJUST_AI_CJ questions about system architecture or the codebase without immediately jumping into writing code. You can even assign different API configuration profiles to each mode if you prefer to use different models for thinking vs coding. Would love feedback in the new NJUST_AI_CJ Reddit! https://www.reddit.com/r/NJUST_AI_CJ
+- This release adds chat modes! Now you can ask NJUST_AI questions about system architecture or the codebase without immediately jumping into writing code. You can even assign different API configuration profiles to each mode if you prefer to use different models for thinking vs coding. Would love feedback in the new NJUST_AI Reddit! https://www.reddit.com/r/NJUST_AI
 
 ## [2.2.46]
 
@@ -3276,7 +3276,7 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [2.2.16]
 
-- Incorporate Premshay's [PR](https://github.com/NJUST-AI/NJUST_AI_CJ/pull/60) to add support for Amazon Nova and Meta Llama Models via Bedrock (3, 3.1, 3.2) and unified Bedrock calls using BedrockClient and Bedrock Runtime API
+- Incorporate Premshay's [PR](https://github.com/NJUST-AI/NJUST_AI/pull/60) to add support for Amazon Nova and Meta Llama Models via Bedrock (3, 3.1, 3.2) and unified Bedrock calls using BedrockClient and Bedrock Runtime API
 
 ## [2.2.14 - 2.2.15]
 
@@ -3348,7 +3348,7 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [2.1.15]
 
-- Incorporate dbasclpy's [PR](https://github.com/NJUST-AI/NJUST_AI_CJ/pull/54) to add support for gemini-exp-1206
+- Incorporate dbasclpy's [PR](https://github.com/NJUST-AI/NJUST_AI/pull/54) to add support for gemini-exp-1206
 - Make it clear that diff editing is very experimental
 
 ## [2.1.14]
@@ -3358,7 +3358,7 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [2.1.13]
 
-- Fix https://github.com/NJUST-AI/NJUST_AI_CJ/issues/50 where sound effects were not respecting settings
+- Fix https://github.com/NJUST-AI/NJUST_AI/issues/50 where sound effects were not respecting settings
 
 ## [2.1.12]
 
@@ -3366,7 +3366,7 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [2.1.11]
 
-- Incorporate lloydchang's [PR](https://github.com/NJUST-AI/NJUST_AI_CJ/pull/42) to add support for OpenRouter compression
+- Incorporate lloydchang's [PR](https://github.com/NJUST-AI/NJUST_AI/pull/42) to add support for OpenRouter compression
 
 ## [2.1.10]
 
@@ -3378,7 +3378,7 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [2.1.8]
 
-- Roo Cline now allows configuration of which commands are allowed without approval!
+- Njust-AI Cline now allows configuration of which commands are allowed without approval!
 
 ## [2.1.7]
 
@@ -3392,7 +3392,7 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [2.1.6]
 
-- Roo Cline now runs in all VSCode-compatible editors
+- Njust-AI Cline now runs in all VSCode-compatible editors
 
 ## [2.1.5]
 
@@ -3400,11 +3400,11 @@ Join us at https://www.reddit.com/r/NJUST_AI_CJ to share your custom modes and b
 
 ## [2.1.4]
 
-- Roo Cline now can run side-by-side with Cline
+- Njust-AI Cline now can run side-by-side with Cline
 
 ## [2.1.3]
 
-- Roo Cline now allows browser actions without approval when `alwaysAllowBrowser` is true
+- Njust-AI Cline now allows browser actions without approval when `alwaysAllowBrowser` is true
 
 ## [2.1.2]
 

@@ -2,11 +2,11 @@ import fs from "fs/promises"
 import * as path from "path"
 import { Dirent } from "fs"
 import matter from "gray-matter"
-import { getGlobalRooDirectory, getProjectRooDirectoryForCwd } from "../roo-config"
+import { getGlobalRooDirectory, getProjectRooDirectoryForCwd } from "../njust-ai-config"
 import { getBuiltInCommands, getBuiltInCommand } from "./built-in-commands"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Maximum depth for resolving symlinks to prevent cyclic symlink loops

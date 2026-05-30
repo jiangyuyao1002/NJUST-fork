@@ -1,6 +1,6 @@
 import * as assert from "assert"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitUntilCompleted } from "./utils"
 import { setDefaultSuiteTimeout } from "./test-utils"
@@ -13,7 +13,7 @@ suite("Markdown List Rendering", function () {
 
 		const messages: ClineMessage[] = []
 
-		api.on(NJUST_AI_CJEventName.Message, ({ message }: { message: ClineMessage }) => {
+		api.on(NJUST_AIEventName.Message, ({ message }: { message: ClineMessage }) => {
 			if (message.type === "say" && message.partial === false) {
 				messages.push(message)
 			}
@@ -50,7 +50,7 @@ suite("Markdown List Rendering", function () {
 
 		const messages: ClineMessage[] = []
 
-		api.on(NJUST_AI_CJEventName.Message, ({ message }: { message: ClineMessage }) => {
+		api.on(NJUST_AIEventName.Message, ({ message }: { message: ClineMessage }) => {
 			if (message.type === "say" && message.partial === false) {
 				messages.push(message)
 			}
@@ -87,7 +87,7 @@ suite("Markdown List Rendering", function () {
 
 		const messages: ClineMessage[] = []
 
-		api.on(NJUST_AI_CJEventName.Message, ({ message }: { message: ClineMessage }) => {
+		api.on(NJUST_AIEventName.Message, ({ message }: { message: ClineMessage }) => {
 			if (message.type === "say" && message.partial === false) {
 				messages.push(message)
 			}
@@ -139,7 +139,7 @@ suite("Markdown List Rendering", function () {
 
 		const messages: ClineMessage[] = []
 
-		api.on(NJUST_AI_CJEventName.Message, ({ message }: { message: ClineMessage }) => {
+		api.on(NJUST_AIEventName.Message, ({ message }: { message: ClineMessage }) => {
 			if (message.type === "say" && message.partial === false) {
 				messages.push(message)
 			}

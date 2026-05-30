@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { CloudAgentProfile } from "@njust-ai-cj/types"
+import { CloudAgentProfile } from "@njust-ai/types"
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@src/components/ui"

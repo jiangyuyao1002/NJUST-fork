@@ -1,4 +1,4 @@
-import type { McpResource, McpResourceTemplate } from "@njust-ai-cj/types"
+import type { McpResource, McpResourceTemplate } from "@njust-ai/types"
 
 /**
  * Matches a URI against an array of URI templates and returns the matching template

@@ -13,8 +13,8 @@ import {
 	type ProviderName,
 	isProviderName,
 	isRetiredProvider,
-} from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Mode, modes } from "../../shared/modes"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -27,8 +27,8 @@ type ModelMigrations = {
 }
 
 const MODEL_MIGRATIONS: ModelMigrations = {
-	roo: {
-		"roo/code-supernova": "roo/code-supernova-1-million",
+	"njust-ai": {
+		"njust-ai/code-supernova": "njust-ai/code-supernova-1-million",
 	},
 } as const satisfies ModelMigrations
 
@@ -57,7 +57,7 @@ export const providerProfilesSchema = z.object({
 export type ProviderProfiles = z.infer<typeof providerProfilesSchema>
 
 export class ProviderSettingsManager {
-	private static readonly SCOPE_PREFIX = "njust_ai_cj_config_"
+	private static readonly SCOPE_PREFIX = "njust_ai_config_"
 	private readonly defaultConfigId = this.generateId()
 
 	private readonly defaultModeApiConfigs: Record<string, string> = Object.fromEntries(

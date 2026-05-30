@@ -1,8 +1,8 @@
 import { useCallback } from "react"
 import { VSCodeTextField, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react"
 
-import { type ProviderSettings, zaiApiLineSchema } from "@njust-ai-cj/types"
-import { zaiApiLineConfigs } from "@njust-ai-cj/core/providers"
+import { type ProviderSettings, zaiApiLineSchema } from "@njust-ai/types"
+import { zaiApiLineConfigs } from "@njust-ai/core/providers"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"

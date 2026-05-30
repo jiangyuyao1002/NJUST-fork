@@ -1,5 +1,5 @@
 /**
- * Unified logger for NJUST_AI_CJ.
+ * Unified logger for NJUST_AI.
  * Provides scope-prefixed logging across four levels.
  * Zero external dependencies; does not depend on VS Code API.
  *

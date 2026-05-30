@@ -167,7 +167,7 @@ vi.mock("fs", () => ({
 	existsSync: vi.fn().mockReturnValue(false),
 }))
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		createInstance: vi.fn().mockReturnValue({

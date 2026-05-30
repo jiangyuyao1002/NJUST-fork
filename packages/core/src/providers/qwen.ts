@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://help.aliyun.com/zh/model-studio/getting-started/models
 // Pricing: https://help.aliyun.com/zh/model-studio/billing-overview

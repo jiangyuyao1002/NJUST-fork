@@ -2,8 +2,8 @@ import * as vscode from "vscode"
 import * as path from "path"
 
 import { logger } from "../../shared/logger"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 /**
  * Represents an effective range in a document along with the corresponding text.

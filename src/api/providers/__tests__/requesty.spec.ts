@@ -60,9 +60,9 @@ describe("RequestyHandler", () => {
 			baseURL: "https://router.requesty.ai/v1",
 			apiKey: mockOptions.requestyApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI_CJ",
-				"X-Title": "NJUST_AI_CJ",
-				"User-Agent": `NJUST_AI_CJ/${Package.version}`,
+				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI",
+				"X-Title": "NJUST_AI",
+				"User-Agent": `NJUST_AI/${Package.version}`,
 			},
 		})
 	})
@@ -75,9 +75,9 @@ describe("RequestyHandler", () => {
 			baseURL: "https://custom.requesty.ai/v1",
 			apiKey: mockOptions.requestyApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI_CJ",
-				"X-Title": "NJUST_AI_CJ",
-				"User-Agent": `NJUST_AI_CJ/${Package.version}`,
+				"HTTP-Referer": "https://github.com/NJUST-AI/NJUST_AI",
+				"X-Title": "NJUST_AI",
+				"User-Agent": `NJUST_AI/${Package.version}`,
 			},
 		})
 	})

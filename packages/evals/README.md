@@ -1,4 +1,4 @@
-# Run NJUST_AI_CJ Evals
+# Run NJUST_AI Evals
 
 ### Prerequisites
 
@@ -8,11 +8,11 @@
 
 ### Setup
 
-Clone the NJUST_AI_CJ repo:
+Clone the NJUST_AI repo:
 
 ```sh
-git clone https://github.com/NJUST-AI/NJUST_AI_CJ.git
-cd NJUST_AI_CJ
+git clone https://github.com/NJUST-AI/NJUST_AI.git
+cd NJUST_AI
 ```
 
 Add your OpenRouter API key:
@@ -37,7 +37,7 @@ Additionally, you'll find in Docker Desktop that database and redis services are
 
 Navigate to [localhost:3446](http://localhost:3446/) in your browser and click the 🚀 button.
 
-By default an evals run will run all programming exercises in [NJUST_AI_CJ Evals](https://github.com/NJUST-AI/NJUST_AI_CJ-Evals) repository with the Claude Sonnet 4 model and default settings. For basic configuration you can specify the LLM to use and any subset of the exercises you'd like. For advanced configuration you can import a NJUST_AI_CJ settings file which will allow you to run the evals with NJUST_AI_CJ configured any way you'd like (this includes custom modes, custom instructions, etc).
+By default an evals run will run all programming exercises in [NJUST_AI Evals](https://github.com/NJUST-AI/NJUST_AI-Evals) repository with the Claude Sonnet 4 model and default settings. For basic configuration you can specify the LLM to use and any subset of the exercises you'd like. For advanced configuration you can import a NJUST_AI settings file which will allow you to run the evals with NJUST_AI configured any way you'd like (this includes custom modes, custom instructions, etc).
 
 <img width="1053" src="https://github.com/user-attachments/assets/2367eef4-6ae9-4ac2-8ee4-80f981046486" />
 
@@ -87,7 +87,7 @@ The setup script does the following:
 - Clones/updates the evals repository
 - Creates and migrates a Postgres database
 - Prompts for an OpenRouter API key to add to `.env.local`
-- Optionally builds and installs the NJUST_AI_CJ extension from source
+- Optionally builds and installs the NJUST_AI extension from source
 
 ## Port Configuration
 

@@ -4,9 +4,9 @@ import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
 
-import { customToolRegistry } from "@njust-ai-cj/core"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { customToolRegistry } from "@njust-ai/core"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
 import { logger } from "./shared/logger"
@@ -155,7 +155,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(outputChannel)
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration((e) => {
-			// Respond to any NJUST_AI_CJ config change across all subsystems.
+			// Respond to any NJUST_AI config change across all subsystems.
 			if (e.affectsConfiguration(Package.name)) {
 				invalidateCangjieToolEnvCache()
 				bumpCangjieL3TtlConfigCache()
@@ -450,13 +450,13 @@ export async function activate(context: vscode.ExtensionContext) {
 				void vscode.window.showInformationMessage(`内联补全 API 可用：${id}`)
 			} else {
 				void vscode.window.showWarningMessage(
-					"内联补全：未解析到 API。请在扩展设置中配置提供商并填写密钥，或先开始侧边栏对话任务；详情见输出面板「NJUST_AI_CJ」。",
+					"内联补全：未解析到 API。请在扩展设置中配置提供商并填写密钥，或先开始侧边栏对话任务；详情见输出面板「NJUST_AI」。",
 				)
 			}
 		}),
 	)
 
-	// Register VSCode Chat Participant (@roo) for the native chat panel.
+	// Register VSCode Chat Participant (@njust-ai) for the native chat panel.
 	const chatParticipant = new ChatParticipantHandler(provider, context, outputChannel)
 	context.subscriptions.push({ dispose: () => chatParticipant.dispose() })
 
@@ -464,7 +464,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	const chatStateSync = new ChatStateSync(provider, outputChannel)
 	context.subscriptions.push({ dispose: () => chatStateSync.dispose() })
 
-	// Register Roo's native tools as VSCode Language Model Tools.
+	// Register Njust-AI's native tools as VSCode Language Model Tools.
 	registerLMTools(context, provider, outputChannel)
 
 	/**
@@ -746,11 +746,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		)
 	}
 
-	// Allows other extensions to activate once Roo is ready.
+	// Allows other extensions to activate once Njust-AI is ready.
 	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)
 
-	// Implements the `NJUST_AI_CJAPI` interface.
-	const rawSocketPath = process.env.NJUST_AI_CJ_IPC_SOCKET_PATH
+	// Implements the `NJUST_AIAPI` interface.
+	const rawSocketPath = process.env.NJUST_AI_IPC_SOCKET_PATH
 	let socketPath: string | undefined
 	if (typeof rawSocketPath === "string" && rawSocketPath.length > 0) {
 		const tmpDir = os.tmpdir()
@@ -763,7 +763,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			socketPath = rawSocketPath
 		} else {
 			outputChannel.appendLine(
-				`[Security] NJUST_AI_CJ_IPC_SOCKET_PATH rejected: must resolve within os.tmpdir() (${tmpDir})`,
+				`[Security] NJUST_AI_IPC_SOCKET_PATH rejected: must resolve within os.tmpdir() (${tmpDir})`,
 			)
 		}
 	}

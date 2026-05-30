@@ -1,4 +1,4 @@
-import { getModelId, type ProviderSettings } from "@njust-ai-cj/types"
+import { getModelId, type ProviderSettings } from "@njust-ai/types"
 
 export function shouldRebuildTaskApiHandler(
 	previousSettings: ProviderSettings | undefined,

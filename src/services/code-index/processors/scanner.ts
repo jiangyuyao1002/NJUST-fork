@@ -29,8 +29,8 @@ import { isPathInIgnoredDirectory } from "../../glob/ignore-utils"
 import { Package } from "../../../shared/package"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export class DirectoryScanner implements IDirectoryScanner {
 	private readonly batchSegmentThreshold: number

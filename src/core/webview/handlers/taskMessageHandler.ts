@@ -8,7 +8,7 @@ import {
 	checkoutDiffPayloadSchema,
 	checkoutRestorePayloadSchema,
 	TelemetryEventName,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import { type ApiMessage } from "../../task-persistence/apiMessages"
 import { saveTaskMessages } from "../../task-persistence"
 import { getTheme } from "../../../integrations/theme/getTheme"
@@ -22,7 +22,7 @@ import { resolveIncomingImages } from "./shared-utils"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 export function registerTaskHandlers(router: MessageRouter): void {
 	router.register("webviewDidLaunch", handleWebviewDidLaunch)

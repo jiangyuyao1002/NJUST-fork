@@ -1,8 +1,8 @@
 import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 import { logger } from "../../../shared/logger"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { mergeSafeEnv } from "../../../utils/env"
 
 import type { ITransportStrategy, TransportCallbacks } from "./ITransportStrategy"

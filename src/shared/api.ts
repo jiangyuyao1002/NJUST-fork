@@ -4,10 +4,10 @@ import {
 	type RouterProvider,
 	routerModelProviders as _routerModelProviders,
 	isRouterModelProvider as _isRouterModelProvider,
-} from "@njust-ai-cj/types"
-import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai-cj/core/providers"
+} from "@njust-ai/types"
+import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai/core/providers"
 
-// Re-export from @njust-ai-cj/types so consumers can import from either location.
+// Re-export from @njust-ai/types so consumers can import from either location.
 export { _routerModelProviders as routerModelProviders, _isRouterModelProvider as isRouterModelProvider }
 
 // ApiHandlerOptions
@@ -180,7 +180,7 @@ const _dynamicProviderExtras = {
 	unbound: {} as { apiKey?: string },
 	ollama: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	lmstudio: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
-	roo: {} as { apiKey?: string; baseUrl?: string },
+	"njust-ai": {} as { apiKey?: string; baseUrl?: string },
 	deepseek: {} as { apiKey?: string; baseUrl?: string },
 	gemini: {} as { apiKey?: string; baseUrl?: string },
 	anthropic: {} as { apiKey?: string; baseUrl?: string },

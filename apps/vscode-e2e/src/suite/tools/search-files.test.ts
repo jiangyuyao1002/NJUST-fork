@@ -3,7 +3,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
@@ -72,7 +72,7 @@ const searchFilesToolMatches = (message: ClineMessage, expected: string[] = []):
 	return expected.every((value) => (message.text || "").includes(value))
 }
 
-suite("NJUST_AI_CJ search_files Tool", function () {
+suite("NJUST_AI search_files Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -371,7 +371,7 @@ The search should find matches across different file types and provide context f
 				console.log("Captured search results:", searchResults.substring(0, 300))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -379,7 +379,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -445,8 +445,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! Function definitions found successfully with validated results")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -465,7 +465,7 @@ The search should find matches across different file types and provide context f
 				console.log("search_files tool executed for TODO search")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -473,7 +473,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -508,8 +508,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! TODO comments found successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -528,7 +528,7 @@ The search should find matches across different file types and provide context f
 				console.log("search_files tool executed with TypeScript filter")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -536,7 +536,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -570,8 +570,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! TypeScript interfaces found with file pattern filter")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -590,7 +590,7 @@ The search should find matches across different file types and provide context f
 				console.log("search_files tool executed for JSON configuration search")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -598,7 +598,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -634,8 +634,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! JSON configuration keys found successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -654,7 +654,7 @@ The search should find matches across different file types and provide context f
 				console.log("search_files tool executed for nested directory search")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -662,7 +662,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -695,8 +695,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! Nested directory search completed successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -715,7 +715,7 @@ The search should find matches across different file types and provide context f
 				console.log("search_files tool executed with complex regex pattern")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -723,7 +723,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -756,8 +756,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! Complex regex pattern search completed successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -784,7 +784,7 @@ The search should find matches across different file types and provide context f
 				console.log("AI completion message:", message.text?.substring(0, 300))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -792,7 +792,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -868,8 +868,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! No-match scenario handled correctly")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -888,7 +888,7 @@ The search should find matches across different file types and provide context f
 				console.log("search_files tool executed for class/method search")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -896,7 +896,7 @@ The search should find matches across different file types and provide context f
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -932,8 +932,8 @@ The search should find matches across different file types and provide context f
 			console.log("Test passed! Class definitions and async methods found successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 })

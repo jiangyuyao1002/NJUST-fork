@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 
-import { taskEventSchema } from "@njust-ai-cj/types"
-import { findRun } from "@njust-ai-cj/evals"
+import { taskEventSchema } from "@njust-ai/types"
+import { findRun } from "@njust-ai/evals"
 
 import { SSEStream } from "@/lib/server/sse-stream"
 import { redisClient } from "@/lib/server/redis"

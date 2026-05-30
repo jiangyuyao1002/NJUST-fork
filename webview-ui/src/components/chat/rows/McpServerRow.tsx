@@ -1,13 +1,13 @@
 import React from "react"
 
-import type { ClineMessage, ClineAskUseMcpServer } from "@njust-ai-cj/types"
-import type { McpServer } from "@njust-ai-cj/types"
+import type { ClineMessage, ClineAskUseMcpServer } from "@njust-ai/types"
+import type { McpServer } from "@njust-ai/types"
 
 import { findMatchingResourceOrTemplate } from "@src/utils/mcp"
 
 import McpResourceRow from "../../mcp/McpResourceRow"
 import { McpExecution } from "../McpExecution"
-import { safeJsonParse } from "@roo/core"
+import { safeJsonParse } from "@njust-ai/core/browser"
 
 import { headerStyle } from "./constants"
 

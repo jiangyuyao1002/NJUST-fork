@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { ModelInfo } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { BaseProvider } from "../../../api/providers/base-provider"
 import { ApiMessage } from "../../task-persistence/apiMessages"

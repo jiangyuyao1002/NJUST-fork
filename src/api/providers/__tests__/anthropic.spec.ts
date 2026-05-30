@@ -7,7 +7,7 @@ import { ApiHandlerOptions } from "../../../shared/api"
 import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from "../../../core/prompts/system"
 
 // Mock TelemetryService
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureException: vitest.fn(),

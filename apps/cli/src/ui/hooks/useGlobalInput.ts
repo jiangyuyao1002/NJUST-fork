@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useInput } from "ink"
-import type { WebviewMessage } from "@njust-ai-cj/types"
+import type { WebviewMessage } from "@njust-ai/types"
 
 import { matchesGlobalSequence } from "@/lib/utils/input.js"
 

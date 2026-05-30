@@ -1,4 +1,4 @@
-// pnpm --filter njust-ai-cj test core/webview/__tests__/ClineProvider.spec.ts
+// pnpm --filter njust-ai test core/webview/__tests__/ClineProvider.spec.ts
 
 
 import { describe, it, test, expect, vi, beforeEach, beforeAll, afterAll } from "vitest"
@@ -15,8 +15,8 @@ import {
 	type ExtensionState,
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
-} from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { defaultModeSlug } from "../../../shared/modes"
 import { experimentDefault } from "../../../shared/experiments"
@@ -2394,7 +2394,7 @@ describe("ClineProvider - Router Models", () => {
 		expect(getModels).toHaveBeenCalledWith({ provider: "vercel-ai-gateway" })
 		expect(getModels).toHaveBeenCalledWith(
 			expect.objectContaining({
-				provider: "roo",
+				provider: "njust-ai",
 				baseUrl: expect.any(String),
 			}),
 		)
@@ -2414,7 +2414,7 @@ describe("ClineProvider - Router Models", () => {
 				openrouter: mockModels,
 				requesty: mockModels,
 				unbound: mockModels,
-				roo: mockModels,
+				"njust-ai": mockModels,
 				litellm: mockModels,
 				ollama: {},
 				lmstudio: {},
@@ -2462,7 +2462,7 @@ describe("ClineProvider - Router Models", () => {
 			.mockRejectedValueOnce(new Error("Requesty API error")) // requesty fail
 			.mockResolvedValueOnce(mockModels) // unbound success
 			.mockResolvedValueOnce(mockModels) // vercel-ai-gateway success
-			.mockResolvedValueOnce(mockModels) // roo success
+			.mockResolvedValueOnce(mockModels) // njust-ai success
 			.mockRejectedValueOnce(new Error("LiteLLM connection failed")) // litellm fail
 
 		await messageHandler({ type: "requestRouterModels" })
@@ -2477,7 +2477,7 @@ describe("ClineProvider - Router Models", () => {
 				openrouter: mockModels,
 				requesty: {},
 				unbound: mockModels,
-				roo: mockModels,
+				"njust-ai": mockModels,
 				ollama: {},
 				lmstudio: {},
 				litellm: {},
@@ -2588,7 +2588,7 @@ describe("ClineProvider - Router Models", () => {
 				openrouter: mockModels,
 				requesty: mockModels,
 				unbound: mockModels,
-				roo: mockModels,
+				"njust-ai": mockModels,
 				litellm: {},
 				ollama: {},
 				lmstudio: {},

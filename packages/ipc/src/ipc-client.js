@@ -1,7 +1,7 @@
 import EventEmitter from "node:events";
 import * as crypto from "node:crypto";
 import ipc from "node-ipc";
-import { IpcOrigin, IpcMessageType, TaskCommandName, ipcMessageSchema, } from "@njust-ai-cj/types";
+import { IpcOrigin, IpcMessageType, TaskCommandName, ipcMessageSchema, } from "@njust-ai/types";
 export class IpcClient extends EventEmitter {
     _socketPath;
     _id;
@@ -11,7 +11,7 @@ export class IpcClient extends EventEmitter {
     constructor(socketPath, log = console.log) {
         super();
         this._socketPath = socketPath;
-        this._id = `roo-code-evals-${crypto.randomBytes(6).toString("hex")}`;
+        this._id = `Njust-AI-evals-${crypto.randomBytes(6).toString("hex")}`;
         this._log = log;
         ipc.config.silent = true;
         ipc.connectTo(this._id, this.socketPath, () => {

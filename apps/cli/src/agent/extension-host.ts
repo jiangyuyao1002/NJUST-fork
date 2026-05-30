@@ -1,5 +1,5 @@
 /**
- * ExtensionHost - Loads and runs the NJUST_AI_CJ extension in CLI mode
+ * ExtensionHost - Loads and runs the NJUST_AI extension in CLI mode
  *
  * This class is a thin coordination layer responsible for:
  * 1. Creating the vscode-shim mock
@@ -20,11 +20,11 @@ import type {
 	ClineMessage,
 	ExtensionMessage,
 	ReasoningEffortExtended,
-	NJUST_AI_CJSettings,
+	NJUST_AISettings,
 	WebviewMessage,
-} from "@njust-ai-cj/types"
-import { createVSCodeAPI, IExtensionHost, ExtensionHostEventMap, setRuntimeConfigValues } from "@njust-ai-cj/vscode-shim"
-import { DebugLogger, setDebugLogEnabled } from "@njust-ai-cj/core/cli"
+} from "@njust-ai/types"
+import { createVSCodeAPI, IExtensionHost, ExtensionHostEventMap, setRuntimeConfigValues } from "@njust-ai/vscode-shim"
+import { DebugLogger, setDebugLogEnabled } from "@njust-ai/core/cli"
 
 import { DEFAULT_FLAGS, type SupportedProvider } from "@/types/index.js"
 import type { User } from "@/lib/sdk/index.js"
@@ -42,7 +42,7 @@ import { AskDispatcher } from "./ask-dispatcher.js"
 const cliLogger = new DebugLogger("CLI")
 
 // Get the CLI package root directory (for finding node_modules/@vscode/ripgrep)
-// When running from a release tarball, ROO_CLI_ROOT is set by the wrapper script.
+// When running from a release tarball, NJUST_AI_CLI_ROOT is set by the wrapper script.
 // In development, we fall back to finding the CLI package root by walking up to package.json.
 // This works whether running from dist/ (bundled) or src/agent/ (tsx dev).
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -61,7 +61,7 @@ function findCliPackageRoot(): string {
 	return path.resolve(__dirname, "..")
 }
 
-const CLI_PACKAGE_ROOT = process.env.ROO_CLI_ROOT || findCliPackageRoot()
+const CLI_PACKAGE_ROOT = process.env.NJUST_AI_CLI_ROOT || findCliPackageRoot()
 
 export interface ExtensionHostOptions {
 	mode: string
@@ -109,7 +109,7 @@ interface WebviewViewProvider {
 export interface ExtensionHostInterface extends IExtensionHost<ExtensionHostEventMap> {
 	client: ExtensionClient
 	activate(): Promise<void>
-	runTask(prompt: string, taskId?: string, configuration?: NJUST_AI_CJSettings, images?: string[]): Promise<void>
+	runTask(prompt: string, taskId?: string, configuration?: NJUST_AISettings, images?: string[]): Promise<void>
 	resumeTask(taskId: string): Promise<void>
 	sendToExtension(message: WebviewMessage): void
 	dispose(): Promise<void>
@@ -123,7 +123,7 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 	private options: ExtensionHostOptions
 	private isReady = false
 	private messageListener: ((message: ExtensionMessage) => void) | null = null
-	private initialSettings: NJUST_AI_CJSettings
+	private initialSettings: NJUST_AISettings
 
 	// Console suppression.
 	private originalConsole: {
@@ -178,8 +178,8 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 		this.options = options
 		// Mark this process as CLI runtime so extension code can apply
 		// CLI-specific behavior without affecting VS Code desktop usage.
-		this.previousCliRuntimeEnv = process.env.ROO_CLI_RUNTIME
-		process.env.ROO_CLI_RUNTIME = "1"
+		this.previousCliRuntimeEnv = process.env.NJUST_AI_CLI_RUNTIME
+		process.env.NJUST_AI_CLI_RUNTIME = "1"
 
 		// Enable file-based debug logging only when --debug is passed.
 		if (options.debug) {
@@ -219,7 +219,7 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 		this.setupClientEventHandlers()
 
 		// Populate initial settings.
-		const baseSettings: NJUST_AI_CJSettings = {
+		const baseSettings: NJUST_AISettings = {
 			mode: this.options.mode,
 			consecutiveMistakeLimit: this.options.consecutiveMistakeLimit ?? DEFAULT_FLAGS.consecutiveMistakeLimit,
 			commandExecutionTimeout: 300,
@@ -447,7 +447,7 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 		// sending webviewDidLaunch. This prevents a race condition where the
 		// webviewDidLaunch handler's first-time init sync reads default state
 		// (apiProvider: "anthropic") instead of the CLI-provided settings.
-		setRuntimeConfigValues("njust-ai-cj", this.initialSettings as Record<string, unknown>)
+		setRuntimeConfigValues("njust-ai", this.initialSettings as Record<string, unknown>)
 		this.sendToExtension({ type: "updateSettings", updatedSettings: this.initialSettings })
 
 		// Now trigger extension initialization. The context proxy should already
@@ -519,7 +519,7 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 	public async runTask(
 		prompt: string,
 		taskId?: string,
-		configuration?: NJUST_AI_CJSettings,
+		configuration?: NJUST_AISettings,
 		images?: string[],
 	): Promise<void> {
 		this.sendToExtension({
@@ -606,9 +606,9 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 
 		// Restore previous CLI runtime marker for process hygiene in tests.
 		if (this.previousCliRuntimeEnv === undefined) {
-			delete process.env.ROO_CLI_RUNTIME
+			delete process.env.NJUST_AI_CLI_RUNTIME
 		} else {
-			process.env.ROO_CLI_RUNTIME = this.previousCliRuntimeEnv
+			process.env.NJUST_AI_CLI_RUNTIME = this.previousCliRuntimeEnv
 		}
 	}
 }

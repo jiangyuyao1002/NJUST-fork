@@ -2,14 +2,14 @@
  * Agent Loop State Detection
  *
  * This module provides the core logic for detecting the current state of the
- * NJUST_AI_CJ agent loop. The state is determined by analyzing the clineMessages
+ * NJUST_AI agent loop. The state is determined by analyzing the clineMessages
  * array, specifically the last message's type and properties.
  *
  * Key insight: The agent loop stops whenever a message with `type: "ask"` arrives,
  * and the specific `ask` value determines what kind of response the agent is waiting for.
  */
 
-import { ClineMessage, ClineAsk, isIdleAsk, isResumableAsk, isInteractiveAsk, isNonBlockingAsk } from "@njust-ai-cj/types"
+import { ClineMessage, ClineAsk, isIdleAsk, isResumableAsk, isInteractiveAsk, isNonBlockingAsk } from "@njust-ai/types"
 
 // =============================================================================
 // Agent Loop State Enum

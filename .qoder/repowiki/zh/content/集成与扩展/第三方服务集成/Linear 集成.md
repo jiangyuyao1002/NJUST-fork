@@ -2,8 +2,8 @@
 
 <cite>
 **本文档引用的文件**
-- [apps/web-roo-code/src/app/linear/page.tsx](file://apps/web-roo-code/src/app/linear/page.tsx)
-- [apps/web-roo-code/src/components/linear/linear-issue-demo.tsx](file://apps/web-roo-code/src/components/linear/linear-issue-demo.tsx)
+- [apps/web-Njust-AI/src/app/linear/page.tsx](file://apps/web-Njust-AI/src/app/linear/page.tsx)
+- [apps/web-Njust-AI/src/components/linear/linear-issue-demo.tsx](file://apps/web-Njust-AI/src/components/linear/linear-issue-demo.tsx)
 - [src/services/mcp/McpHub.ts](file://src/services/mcp/McpHub.ts)
 - [src/services/mcp/McpServerManager.ts](file://src/services/mcp/McpServerManager.ts)
 - [src/core/prompts/tools/native-tools/mcp_server.ts](file://src/core/prompts/tools/native-tools/mcp_server.ts)
@@ -26,9 +26,9 @@
 
 ## 简介
 
-Linear 集成是 NJUST_AI_CJ Cloud 平台的重要功能模块，允许用户直接从 Linear 任务管理系统中分配开发工作给 AI 代理。该集成实现了完整的任务生命周期管理，包括任务创建、状态同步、进度跟踪和项目管理。
+Linear 集成是 NJUST_AI Cloud 平台的重要功能模块，允许用户直接从 Linear 任务管理系统中分配开发工作给 AI 代理。该集成实现了完整的任务生命周期管理，包括任务创建、状态同步、进度跟踪和项目管理。
 
-该系统基于 Model Context Protocol (MCP) 架构，通过动态工具生成机制实现与 Linear API 的无缝集成。用户可以在 Linear 中直接提及 @NJUST_AI_CJ 来启动任务，AI 代理会自动分析需求、编写代码并创建 Pull Request，整个过程在 Linear 界面内完成，无需切换工具。
+该系统基于 Model Context Protocol (MCP) 架构，通过动态工具生成机制实现与 Linear API 的无缝集成。用户可以在 Linear 中直接提及 @NJUST_AI 来启动任务，AI 代理会自动分析需求、编写代码并创建 Pull Request，整个过程在 Linear 界面内完成，无需切换工具。
 
 ## 项目结构
 
@@ -68,11 +68,11 @@ D --> L
 ```
 
 **图表来源**
-- [apps/web-roo-code/src/app/linear/page.tsx:191-413](file://apps/web-roo-code/src/app/linear/page.tsx#L191-L413)
+- [apps/web-Njust-AI/src/app/linear/page.tsx:191-413](file://apps/web-Njust-AI/src/app/linear/page.tsx#L191-L413)
 - [src/services/mcp/McpHub.ts:151-176](file://src/services/mcp/McpHub.ts#L151-L176)
 
 **章节来源**
-- [apps/web-roo-code/src/app/linear/page.tsx:1-414](file://apps/web-roo-code/src/app/linear/page.tsx#L1-L414)
+- [apps/web-Njust-AI/src/app/linear/page.tsx:1-414](file://apps/web-Njust-AI/src/app/linear/page.tsx#L1-L414)
 - [src/services/mcp/McpHub.ts:1-800](file://src/services/mcp/McpHub.ts#L1-L800)
 
 ## 核心组件
@@ -93,7 +93,7 @@ Linear 集成的前端界面由两个主要组件构成：
 - **动态工具生成**: 自动从 MCP 服务器发现和生成工具定义
 
 **章节来源**
-- [apps/web-roo-code/src/components/linear/linear-issue-demo.tsx:130-443](file://apps/web-roo-code/src/components/linear/linear-issue-demo.tsx#L130-L443)
+- [apps/web-Njust-AI/src/components/linear/linear-issue-demo.tsx:130-443](file://apps/web-Njust-AI/src/components/linear/linear-issue-demo.tsx#L130-L443)
 - [src/services/mcp/McpHub.ts:151-800](file://src/services/mcp/McpHub.ts#L151-L800)
 - [src/services/mcp/McpServerManager.ts:1-87](file://src/services/mcp/McpServerManager.ts#L1-L87)
 
@@ -110,7 +110,7 @@ participant Hub as McpHub
 participant Tool as UseMcpToolTool
 participant Server as MCP 服务器
 participant GitHub as GitHub API
-User->>Linear : 在评论中提及 @NJUST_AI_CJ
+User->>Linear : 在评论中提及 @NJUST_AI
 Linear->>Page : 触发集成页面
 Page->>Hub : 初始化 MCP 连接
 Hub->>Server : 发现可用工具

@@ -30,7 +30,7 @@ vitest.mock("vscode", () => ({
 vitest.mock("lodash.debounce", () => ({ default: vitest.fn((fn) => fn) }))
 
 // Mock TelemetryService
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vitest.fn(),
 		instance: {
@@ -69,7 +69,7 @@ describe("CacheManager", () => {
 
 			expect(vscode.Uri.joinPath).toHaveBeenCalledWith(
 				mockContext.globalStorageUri,
-				`roo-index-cache-${expectedHash}.json`,
+				`njust-ai-index-cache-${expectedHash}.json`,
 			)
 		})
 

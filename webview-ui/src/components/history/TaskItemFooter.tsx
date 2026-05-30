@@ -1,5 +1,5 @@
 import React from "react"
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 import { formatTimeAgo } from "@/utils/format"
 import { CopyButton } from "./CopyButton"
 import { ExportButton } from "./ExportButton"

@@ -1,4 +1,4 @@
-import { type ProviderSettings, type ModelInfo, type VerbosityLevel, verbosityLevels } from "@njust-ai-cj/types"
+import { type ProviderSettings, type ModelInfo, type VerbosityLevel, verbosityLevels } from "@njust-ai/types"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@src/components/ui"

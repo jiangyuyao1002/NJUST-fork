@@ -1,4 +1,4 @@
-import type { ClineAsk, ClineSay, TodoItem } from "@njust-ai-cj/types"
+import type { ClineAsk, ClineSay, TodoItem } from "@njust-ai/types"
 
 export type MessageRole = "system" | "user" | "assistant" | "tool" | "thinking"
 

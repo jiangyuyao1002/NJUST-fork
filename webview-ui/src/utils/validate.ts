@@ -11,7 +11,7 @@ import {
 	isDynamicProvider,
 	isFauxProvider,
 	isCustomProvider,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 export function validateApiConfiguration(
 	apiConfiguration: ProviderSettings,

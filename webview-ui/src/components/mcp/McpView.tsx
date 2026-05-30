@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { VSCodePanels, VSCodePanelTab, VSCodePanelView } from "@vscode/webview-ui-toolkit/react"
 
-import type { McpServer } from "@njust-ai-cj/types"
+import type { McpServer } from "@njust-ai/types"
 
 import { vscode } from "@src/utils/vscode"
 import { useExtensionState } from "@src/context/ExtensionStateContext"

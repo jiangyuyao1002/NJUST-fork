@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { Ignore } from "ignore"
 
-import type { EmbedderProvider } from "@njust-ai-cj/types"
+import type { EmbedderProvider } from "@njust-ai/types"
 
 import { t } from "../../i18n"
 

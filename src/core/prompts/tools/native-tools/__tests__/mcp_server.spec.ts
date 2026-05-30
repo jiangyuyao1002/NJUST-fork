@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest"
 
 import type OpenAI from "openai"
 
-import type { McpServer, McpTool } from "@njust-ai-cj/types"
+import type { McpServer, McpTool } from "@njust-ai/types"
 
 import type { IMcpHubService } from "../../../../../services/mcp/interfaces/IMcpHubService"
 

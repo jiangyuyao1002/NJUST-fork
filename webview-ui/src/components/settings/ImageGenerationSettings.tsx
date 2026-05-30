@@ -1,6 +1,6 @@
 import React, { useMemo } from "react"
 import { VSCodeCheckbox, VSCodeTextField, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react"
-import { IMAGE_GENERATION_MODELS, type ImageGenerationProvider, getImageGenerationProvider } from "@njust-ai-cj/types"
+import { IMAGE_GENERATION_MODELS, type ImageGenerationProvider, getImageGenerationProvider } from "@njust-ai/types"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 
 interface ImageGenerationSettingsProps {
@@ -114,8 +114,8 @@ export const ImageGenerationSettings = ({
 							value={currentProvider}
 							onChange={(e: any) => handleProviderChange(e.target.value)}
 							className="w-full">
-							<VSCodeOption value="roo" className="py-2 px-3">
-								NJUST_AI_CJ Cloud
+							<VSCodeOption value="njust-ai" className="py-2 px-3">
+								NJUST_AI Cloud
 							</VSCodeOption>
 							<VSCodeOption value="openrouter" className="py-2 px-3">
 								OpenRouter

@@ -1,5 +1,5 @@
-import type { TaskLike, TodoItem } from "@njust-ai-cj/types"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import type { TaskLike, TodoItem } from "@njust-ai/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 
 import type { IMcpHubClient } from "../../../services/mcp/interfaces/IMcpHubClient"
 import type { IMcpHubService } from "../../../services/mcp/interfaces/IMcpHubService"
@@ -49,12 +49,12 @@ export interface ITaskHost extends IMcpHubClient, ITaskUINotifier {
 	createDiffViewProvider?(cwd: string, task: unknown): ITaskDiffViewProvider
 
 	on(
-		event: NJUST_AI_CJEventName.ProviderProfileChanged,
+		event: NJUST_AIEventName.ProviderProfileChanged,
 		listener: (config: { name: string; provider?: string }) => void | Promise<void>,
 	): void
 
 	off(
-		event: NJUST_AI_CJEventName.ProviderProfileChanged,
+		event: NJUST_AIEventName.ProviderProfileChanged,
 		listener: (config: { name: string; provider?: string }) => void | Promise<void>,
 	): void
 

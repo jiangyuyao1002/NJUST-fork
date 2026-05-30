@@ -19,7 +19,7 @@ export class Terminal extends BaseTerminal {
 
 		const env = Terminal.getEnv()
 		const iconPath = new vscode.ThemeIcon("rocket")
-		this.terminal = terminal ?? vscode.window.createTerminal({ cwd, name: "NJUST_AI_CJ", iconPath, env })
+		this.terminal = terminal ?? vscode.window.createTerminal({ cwd, name: "NJUST_AI", iconPath, env })
 
 		if (Terminal.getTerminalZdotdir()) {
 			ShellIntegrationManager.terminalTmpDirs.set(id, env.ZDOTDIR!)
@@ -154,7 +154,7 @@ export class Terminal extends BaseTerminal {
 
 	public static getEnv(): Record<string, string> {
 		const env: Record<string, string> = {
-			ROO_ACTIVE: "true",
+			NJUST_AI_ACTIVE: "true",
 			PAGER: process.platform === "win32" ? "" : "cat",
 
 			// VTE must be disabled because it prevents the prompt command from executing

@@ -49,7 +49,7 @@ export function createMockContext(overrides?: Partial<MessageHandlerContext>): M
 		},
 		isViewLaunched: false,
 		customModesManager: {
-			getCustomModesFilePath: vi.fn().mockResolvedValue("/mock/.roo/custom-modes.json"),
+			getCustomModesFilePath: vi.fn().mockResolvedValue("/mock/.njust-ai/custom-modes.json"),
 			getCustomModes: vi.fn().mockReturnValue([]),
 			deleteCustomMode: vi.fn(),
 			updateCustomMode: vi.fn().mockResolvedValue(undefined),

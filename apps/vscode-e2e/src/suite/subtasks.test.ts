@@ -1,10 +1,10 @@
 import * as assert from "assert"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { sleep, waitFor } from "./utils"
 
-suite("NJUST_AI_CJ Subtasks", () => {
+suite("NJUST_AI Subtasks", () => {
 	test("Should handle subtask cancellation and resumption correctly", async () => {
 		const api = globalThis.api
 
@@ -29,9 +29,9 @@ suite("NJUST_AI_CJ Subtasks", () => {
 		const taskCompletedHandler = (taskId: string) => completedTaskIds.add(taskId)
 		const taskAbortedHandler = (taskId: string) => abortedTaskIds.add(taskId)
 
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
-		api.on(NJUST_AI_CJEventName.TaskAborted, taskAbortedHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskAborted, taskAbortedHandler)
 
 		const childPrompt = "You are a calculator. Respond only with numbers. What is the square root of 9?"
 
@@ -87,9 +87,9 @@ suite("NJUST_AI_CJ Subtasks", () => {
 				() => undefined,
 			)
 		} finally {
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
-			api.off(NJUST_AI_CJEventName.TaskAborted, taskAbortedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.TaskAborted, taskAbortedHandler)
 		}
 	})
 })

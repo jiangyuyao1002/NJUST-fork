@@ -8,16 +8,16 @@
  * Phase 1: Extract ask/say logic from Task.ts
  * Phase 2 (future): Move webview response handling here once host surface is reduced
  */
-import type { ClineAsk, ClineAskResponse, ClineSay, ToolProgressStatus, ContextCondense, ContextTruncation, ToolName } from "@njust-ai-cj/types"
+import type { ClineAsk, ClineAskResponse, ClineSay, ToolProgressStatus, ContextCondense, ContextTruncation, ToolName } from "@njust-ai/types"
 import {
 	isInteractiveAsk,
 	isIdleAsk,
 	isResumableAsk,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import { findLastIndex } from "../../shared/array"
 import { formatResponse } from "../../core/prompts/responses"
-import { NJUST_AI_CJEventName, TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { NJUST_AIEventName, TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import type { TaskAskSayHost } from "./interfaces/TaskAskSayHost"
 import { logger } from "../../shared/logger"
 import pWaitFor from "p-wait-for"
@@ -125,7 +125,7 @@ export class TaskAskSayHandler {
 						const message = this.host.findMessageByTimestamp(askTs)
 						if (message) {
 							this.host.interactiveAsk = message
-							this.host.emit(NJUST_AI_CJEventName.TaskInteractive, this.host.taskId)
+							this.host.emit(NJUST_AIEventName.TaskInteractive, this.host.taskId)
 							provider?.postMessageToWebview({ type: "interactionRequired" })
 						}
 					}, statusMutationTimeout),
@@ -136,7 +136,7 @@ export class TaskAskSayHandler {
 						const message = this.host.findMessageByTimestamp(askTs)
 						if (message) {
 							this.host.resumableAsk = message
-							this.host.emit(NJUST_AI_CJEventName.TaskResumable, this.host.taskId)
+							this.host.emit(NJUST_AIEventName.TaskResumable, this.host.taskId)
 						}
 					}, statusMutationTimeout),
 				)
@@ -146,7 +146,7 @@ export class TaskAskSayHandler {
 						const message = this.host.findMessageByTimestamp(askTs)
 						if (message) {
 							this.host.idleAsk = message
-							this.host.emit(NJUST_AI_CJEventName.TaskIdle, this.host.taskId)
+							this.host.emit(NJUST_AIEventName.TaskIdle, this.host.taskId)
 						}
 					}, statusMutationTimeout),
 				)
@@ -201,10 +201,10 @@ export class TaskAskSayHandler {
 			this.host.idleAsk = undefined
 			this.host.resumableAsk = undefined
 			this.host.interactiveAsk = undefined
-			this.host.emit(NJUST_AI_CJEventName.TaskActive, this.host.taskId)
+			this.host.emit(NJUST_AIEventName.TaskActive, this.host.taskId)
 		}
 
-		this.host.emit(NJUST_AI_CJEventName.TaskAskResponded)
+		this.host.emit(NJUST_AIEventName.TaskAskResponded)
 		return result
 	}
 
@@ -342,7 +342,7 @@ export class TaskAskSayHandler {
 	async sayAndCreateMissingParamError(toolName: ToolName, paramName: string, relPath?: string) {
 		await this.say(
 			"error",
-			`Roo tried to use ${toolName}${relPath ? ` for '${relPath.toPosix()}'` : ""} without value for required parameter '${paramName}'. Retrying...`,
+			`Njust-AI tried to use ${toolName}${relPath ? ` for '${relPath.toPosix()}'` : ""} without value for required parameter '${paramName}'. Retrying...`,
 		)
 		return formatResponse.toolError(formatResponse.missingToolParameterError(paramName))
 	}

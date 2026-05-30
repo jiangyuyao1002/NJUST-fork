@@ -1,8 +1,8 @@
 import axios from "axios"
 import { LLM, LLMInfo, LLMInstanceInfo, LMStudioClient } from "@lmstudio/sdk"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
-import { lMStudioDefaultModelInfo } from "@njust-ai-cj/core/providers"
+import { type ModelInfo } from "@njust-ai/types"
+import { lMStudioDefaultModelInfo } from "@njust-ai/core/providers"
 
 import { logger } from "../../../shared/logger"
 

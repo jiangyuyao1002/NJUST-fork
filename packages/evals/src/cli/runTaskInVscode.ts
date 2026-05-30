@@ -9,11 +9,11 @@ import {
 	type ClineSay,
 	type ToolUsage,
 	TaskCommandName,
-	NJUST_AI_CJEventName,
+	NJUST_AIEventName,
 	IpcMessageType,
 	EVALS_SETTINGS,
-} from "@njust-ai-cj/types"
-import { IpcClient } from "@njust-ai-cj/ipc"
+} from "@njust-ai/types"
+import { IpcClient } from "@njust-ai/ipc"
 
 import { updateTask, createTaskMetrics, updateTaskMetrics, createToolError } from "../db/index"
 import { EVALS_REPO_PATH } from "../exercises/index"
@@ -27,18 +27,18 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 	const prompt = fs.readFileSync(path.resolve(EVALS_REPO_PATH, `prompts/${language}.md`), "utf-8")
 	const workspacePath = path.resolve(EVALS_REPO_PATH, language, exercise)
 	const ipcSocketPath = path.resolve(os.tmpdir(), `evals-${run.id}-${task.id}.sock`)
-	const env = { NJUST_AI_CJ_IPC_SOCKET_PATH: ipcSocketPath }
+	const env = { NJUST_AI_IPC_SOCKET_PATH: ipcSocketPath }
 	const controller = new AbortController()
 	const cancelSignal = controller.signal
 	const containerized = isDockerContainer()
 	const logDir = containerized ? `/var/log/evals/runs/${run.id}` : `/tmp/evals/runs/${run.id}`
 
 	let codeCommand = containerized
-		? `xvfb-run --auto-servernum --server-num=1 code --wait --log trace --disable-workspace-trust --disable-gpu --disable-lcd-text --no-sandbox --user-data-dir /roo/.vscode --password-store="basic" -n ${workspacePath}`
+		? `xvfb-run --auto-servernum --server-num=1 code --wait --log trace --disable-workspace-trust --disable-gpu --disable-lcd-text --no-sandbox --user-data-dir /njust-ai/.vscode --password-store="basic" -n ${workspacePath}`
 		: `code --disable-workspace-trust -n ${workspacePath}`
 
 	if (jobToken) {
-		codeCommand = `NJUST_AI_CJ_CLOUD_TOKEN=${jobToken} ${codeCommand}`
+		codeCommand = `NJUST_AI_CLOUD_TOKEN=${jobToken} ${codeCommand}`
 	}
 
 	logger.info(codeCommand)
@@ -93,9 +93,9 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 		resolveTaskMetricsReady = resolve
 	})
 
-	const ignoreEvents: Record<"broadcast" | "log", NJUST_AI_CJEventName[]> = {
-		broadcast: [NJUST_AI_CJEventName.Message],
-		log: [NJUST_AI_CJEventName.TaskTokenUsageUpdated, NJUST_AI_CJEventName.TaskAskResponded],
+	const ignoreEvents: Record<"broadcast" | "log", NJUST_AIEventName[]> = {
+		broadcast: [NJUST_AIEventName.Message],
+		log: [NJUST_AIEventName.TaskTokenUsageUpdated, NJUST_AIEventName.TaskAskResponded],
 	}
 
 	const loggableSays: ClineSay[] = [
@@ -117,7 +117,7 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 		const { eventName, payload } = taskEvent
 
 		if (
-			eventName === NJUST_AI_CJEventName.Message &&
+			eventName === NJUST_AIEventName.Message &&
 			payload[0].message.say &&
 			["api_req_retry_delayed", "api_req_retried"].includes(payload[0].message.say)
 		) {
@@ -133,12 +133,12 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 		// For message events we only log non-partial messages.
 		if (
 			!ignoreEvents.log.includes(eventName) &&
-			(eventName !== NJUST_AI_CJEventName.Message ||
+			(eventName !== NJUST_AIEventName.Message ||
 				(payload[0].message.say && loggableSays.includes(payload[0].message.say)) ||
 				payload[0].message.partial !== true)
 		) {
 			// Dedupe identical repeated message events (same message.ts + same payload)
-			if (eventName === NJUST_AI_CJEventName.Message) {
+			if (eventName === NJUST_AIEventName.Message) {
 				const action = payload[0]?.action as string | undefined
 				const message = payload[0]?.message
 				if (!messageLogDeduper.shouldLog(action, message)) {
@@ -148,7 +148,7 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 
 			// Extract tool name for tool-related messages for clearer logging
 			let logEventName: string = eventName
-			if (eventName === NJUST_AI_CJEventName.Message && payload[0]?.message?.ask === "tool") {
+			if (eventName === NJUST_AIEventName.Message && payload[0]?.message?.ask === "tool") {
 				try {
 					const textJson = JSON.parse(payload[0].message.text ?? "{}")
 					if (textJson.tool) {
@@ -157,15 +157,15 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 				} catch {
 					// If parsing fails, use the default event name
 				}
-			} else if (eventName === NJUST_AI_CJEventName.Message && payload[0]?.message?.ask === "command") {
+			} else if (eventName === NJUST_AIEventName.Message && payload[0]?.message?.ask === "command") {
 				logEventName = `${eventName} (command)`
-			} else if (eventName === NJUST_AI_CJEventName.Message && payload[0]?.message?.ask === "completion_result") {
+			} else if (eventName === NJUST_AIEventName.Message && payload[0]?.message?.ask === "completion_result") {
 				logEventName = `${eventName} (completion_result)`
 			}
 			logger.info(`${logEventName} ->`, payload)
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskStarted) {
+		if (eventName === NJUST_AIEventName.TaskStarted) {
 			taskStartedAt = Date.now()
 
 			const taskMetrics = await createTaskMetrics({
@@ -188,12 +188,12 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 			resolveTaskMetricsReady()
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskToolFailed) {
+		if (eventName === NJUST_AIEventName.TaskToolFailed) {
 			const [_taskId, toolName, error] = payload
 			await createToolError({ taskId: task.id, toolName, error })
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskTokenUsageUpdated || eventName === NJUST_AI_CJEventName.TaskCompleted) {
+		if (eventName === NJUST_AIEventName.TaskTokenUsageUpdated || eventName === NJUST_AIEventName.TaskCompleted) {
 			// Wait for taskMetricsId to be set by the TaskStarted handler.
 			// This prevents a race condition where these events arrive before
 			// the TaskStarted handler finishes its async database operations.
@@ -228,11 +228,11 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 			})
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskAborted) {
+		if (eventName === NJUST_AIEventName.TaskAborted) {
 			taskAbortedAt = Date.now()
 		}
 
-		if (eventName === NJUST_AI_CJEventName.TaskCompleted) {
+		if (eventName === NJUST_AIEventName.TaskCompleted) {
 			taskFinishedAt = Date.now()
 		}
 	})

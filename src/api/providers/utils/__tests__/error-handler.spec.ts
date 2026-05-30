@@ -277,9 +277,9 @@ describe("handleOpenAIError (backward compatibility)", () => {
 		const error = new Error("Authentication failed") as any
 		error.status = 401
 
-		const result = handleOpenAIError(error, "NJUST_AI_CJ Cloud")
+		const result = handleOpenAIError(error, "NJUST_AI Cloud")
 
-		expect(result.message).toBe("NJUST_AI_CJ Cloud completion error: Authentication failed")
+		expect(result.message).toBe("NJUST_AI Cloud completion error: Authentication failed")
 		expect((result as any).status).toBe(401)
 	})
 })

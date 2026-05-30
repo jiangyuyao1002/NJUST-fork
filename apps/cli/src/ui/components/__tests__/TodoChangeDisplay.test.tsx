@@ -1,6 +1,6 @@
 import { render } from "ink-testing-library"
 
-import type { TodoItem } from "@njust-ai-cj/types"
+import type { TodoItem } from "@njust-ai/types"
 
 import TodoChangeDisplay from "../TodoChangeDisplay.js"
 

@@ -1,8 +1,8 @@
 import * as vscode from "vscode"
 import crypto from "crypto"
 
-import { type ModeConfig, type PromptComponent, type CustomModePrompts, type TodoItem } from "@njust-ai-cj/types"
-import { renderPrompt } from "@njust-ai-cj/prompt-engine"
+import { type ModeConfig, type PromptComponent, type CustomModePrompts, type TodoItem } from "@njust-ai/types"
+import { renderPrompt } from "@njust-ai/prompt-engine"
 
 import { Mode, modes, defaultModeSlug, getModeBySlug, getGroupName, getModeSelection } from "../../shared/modes"
 import { DiffStrategy } from "../../shared/tools"

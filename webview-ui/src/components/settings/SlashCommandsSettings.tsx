@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { Plus, Globe, Folder, Edit, Trash2 } from "lucide-react"
-import type { Command } from "@njust-ai-cj/types"
+import type { Command } from "@njust-ai/types"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"

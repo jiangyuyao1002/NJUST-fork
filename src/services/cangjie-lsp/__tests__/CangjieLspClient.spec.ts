@@ -157,11 +157,11 @@ vi.mock("fs", () => ({
 	mkdirSync: mockMkdirSync,
 }))
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: { reportError: vi.fn() },
 }))
 
-vi.mock("@njust-ai-cj/types", () => ({
+vi.mock("@njust-ai/types", () => ({
 	TelemetryEventName: { CANGJIE_LSP_ERROR: "cangjie_lsp_error" },
 }))
 

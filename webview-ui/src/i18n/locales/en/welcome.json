@@ -7,7 +7,7 @@
 		"openrouter": {
 			"description": "A unified interface for LLMs"
 		},
-		"roo": {
+		"njust-ai": {
 			"description": "The best free models to get started",
 			"incentive": "Try it for free"
 		}
@@ -32,7 +32,7 @@
 		"goBack": "Go back"
 	},
 	"waitingForCloud": {
-		"heading": "Logging into NJUST_AI_CJ Cloud...",
+		"heading": "Logging into NJUST_AI Cloud...",
 		"description": "We'll take you to your browser to sign up. We'll then bring you back here to finish.",
 		"noPrompt": "If you don't get prompted to open a URL, <clickHere>click here</clickHere>.",
 		"havingTrouble": "If you've completed sign up but are having trouble, <clickHere>click here</clickHere>.",
@@ -44,8 +44,8 @@
 	"startRouter": "We recommend using an LLM Router:",
 	"startCustom": "Or you can bring your provider API key:",
 	"telemetry": {
-		"helpImprove": "Help Improve NJUST_AI_CJ",
-		"helpImproveMessage": "NJUST_AI_CJ collects error and usage data to help us fix bugs and improve the extension. This telemetry does not collect code, prompts or personal information. You can turn this off in <settingsLink>settings</settingsLink>."
+		"helpImprove": "Help Improve NJUST_AI",
+		"helpImproveMessage": "NJUST_AI collects error and usage data to help us fix bugs and improve the extension. This telemetry does not collect code, prompts or personal information. You can turn this off in <settingsLink>settings</settingsLink>."
 	},
 	"importSettings": "Import Settings"
 }

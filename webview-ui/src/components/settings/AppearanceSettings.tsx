@@ -1,5 +1,5 @@
 import { HTMLAttributes } from "react"
-import type { Language } from "@njust-ai-cj/types"
+import type { Language } from "@njust-ai/types"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 

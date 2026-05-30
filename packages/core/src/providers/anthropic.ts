@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://docs.anthropic.com/en/docs/about-claude/models
 // https://platform.claude.com/docs/en/about-claude/pricing

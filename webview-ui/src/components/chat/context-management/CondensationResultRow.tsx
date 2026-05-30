@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { VSCodeBadge } from "@vscode/webview-ui-toolkit/react"
 import { Sparkles } from "lucide-react"
 
-import type { ContextCondense } from "@njust-ai-cj/types"
+import type { ContextCondense } from "@njust-ai/types"
 
 import { Markdown } from "../Markdown"
 

@@ -1,4 +1,4 @@
-import type { ClineAsk, ClineSay } from "@njust-ai-cj/types"
+import type { ClineAsk, ClineSay } from "@njust-ai/types"
 
 import type { ClineAskResponse } from "../../../shared/WebviewMessage"
 import type { RooIgnoreController } from "../../ignore/RooIgnoreController"

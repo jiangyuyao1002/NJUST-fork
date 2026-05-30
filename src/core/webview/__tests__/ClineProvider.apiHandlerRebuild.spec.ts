@@ -4,8 +4,8 @@ import { describe, test, expect, vi, beforeEach } from "vitest"
 
 import * as vscode from "vscode"
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { getModelId } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { getModelId } from "@njust-ai/types"
 
 import { ContextProxy } from "../../config/ContextProxy"
 import { Task, TaskOptions } from "../../task/Task"

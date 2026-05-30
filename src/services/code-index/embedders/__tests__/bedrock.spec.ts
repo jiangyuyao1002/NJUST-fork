@@ -21,7 +21,7 @@ vitest.mock("@aws-sdk/credential-providers", () => ({
 }))
 
 // Mock TelemetryService
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vitest.fn(),
 		instance: {

@@ -89,7 +89,7 @@ importers:
       '@dotenvx/dotenvx':
         specifier: ^1.34.0
         version: 1.44.2
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:packages/config-typescript
       '@sonar/scan':
@@ -164,13 +164,13 @@ importers:
       '@inkjs/ui':
         specifier: ^2.0.0
         version: 2.0.0(ink@6.6.0(@types/react@18.3.23)(react@19.2.3))
-      '@njust-ai-cj/core':
+      '@njust-ai/core':
         specifier: workspace:^
         version: link:../../packages/core
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../../packages/types
-      '@njust-ai-cj/vscode-shim':
+      '@njust-ai/vscode-shim':
         specifier: workspace:^
         version: link:../../packages/vscode-shim
       '@trpc/client':
@@ -207,10 +207,10 @@ importers:
         specifier: ^5.0.0
         version: 5.0.9(@types/react@18.3.23)(react@19.2.3)
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../../packages/config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../../packages/config-typescript
       '@types/node':
@@ -234,16 +234,16 @@ importers:
 
   apps/vscode-e2e:
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../../packages/config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../../packages/config-typescript
-      '@njust-ai-cj/mock-api-server':
+      '@njust-ai/mock-api-server':
         specifier: workspace:^
         version: link:../../packages/mock-api-server
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../../packages/types
       '@types/mocha':
@@ -273,7 +273,7 @@ importers:
 
   apps/vscode-nightly:
     devDependencies:
-      '@njust-ai-cj/build':
+      '@njust-ai/build':
         specifier: workspace:^
         version: link:../../packages/build
 
@@ -282,10 +282,10 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.1.1
         version: 5.1.1(react-hook-form@7.57.0(react@18.3.1))
-      '@njust-ai-cj/evals':
+      '@njust-ai/evals':
         specifier: workspace:^
         version: link:../../packages/evals
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../../packages/types
       '@radix-ui/react-alert-dialog':
@@ -388,10 +388,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../../packages/config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../../packages/config-typescript
       '@tailwindcss/postcss':
@@ -416,12 +416,12 @@ importers:
         specifier: ^3.2.3
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.2.1)(@vitest/ui@3.2.4)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.30.1)(tsx@4.19.4)(yaml@2.9.0)
 
-  apps/web-roo-code:
+  apps/web-njust-ai:
     dependencies:
-      '@njust-ai-cj/evals':
+      '@njust-ai/evals':
         specifier: workspace:^
         version: link:../../packages/evals
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../../packages/types
       '@radix-ui/react-dialog':
@@ -509,10 +509,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../../packages/config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../../packages/config-typescript
       '@tailwindcss/typography':
@@ -549,10 +549,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -602,10 +602,10 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.52.0
         version: 0.52.0
-      '@njust-ai-cj/telemetry':
+      '@njust-ai/telemetry':
         specifier: workspace:^
         version: link:../telemetry
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../types
       esbuild:
@@ -630,10 +630,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -651,10 +651,10 @@ importers:
 
   packages/evals:
     dependencies:
-      '@njust-ai-cj/ipc':
+      '@njust-ai/ipc':
         specifier: workspace:^
         version: link:../ipc
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../types
       cmd-ts:
@@ -691,10 +691,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -718,17 +718,17 @@ importers:
 
   packages/ipc:
     dependencies:
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../types
       node-ipc:
         specifier: ^12.0.0
         version: 12.0.0
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -743,10 +743,10 @@ importers:
 
   packages/mock-api-server:
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -764,10 +764,10 @@ importers:
 
   packages/prompt-engine:
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -782,14 +782,14 @@ importers:
 
   packages/telemetry:
     dependencies:
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../types
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.0
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
       typescript:
@@ -802,10 +802,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -823,10 +823,10 @@ importers:
 
   packages/vscode-shim:
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../config-typescript
       '@types/node':
@@ -886,19 +886,19 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@3.25.76)
-      '@njust-ai-cj/core':
+      '@njust-ai/core':
         specifier: workspace:^
         version: link:../packages/core
-      '@njust-ai-cj/ipc':
+      '@njust-ai/ipc':
         specifier: workspace:^
         version: link:../packages/ipc
-      '@njust-ai-cj/prompt-engine':
+      '@njust-ai/prompt-engine':
         specifier: workspace:^
         version: link:../packages/prompt-engine
-      '@njust-ai-cj/telemetry':
+      '@njust-ai/telemetry':
         specifier: workspace:^
         version: link:../packages/telemetry
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../packages/types
       '@qdrant/js-client-rest':
@@ -1094,13 +1094,13 @@ importers:
       '@ai-sdk/openai-compatible':
         specifier: ^2.0.28
         version: 2.0.28(zod@3.25.76)
-      '@njust-ai-cj/build':
+      '@njust-ai/build':
         specifier: workspace:^
         version: link:../packages/build
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../packages/config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../packages/config-typescript
       '@openrouter/ai-sdk-provider':
@@ -1199,10 +1199,10 @@ importers:
 
   webview-ui:
     dependencies:
-      '@njust-ai-cj/core':
+      '@njust-ai/core':
         specifier: workspace:^
         version: link:../packages/core
-      '@njust-ai-cj/types':
+      '@njust-ai/types':
         specifier: workspace:^
         version: link:../packages/types
       '@radix-ui/react-alert-dialog':
@@ -1410,10 +1410,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@njust-ai-cj/config-eslint':
+      '@njust-ai/config-eslint':
         specifier: workspace:^
         version: link:../packages/config-eslint
-      '@njust-ai-cj/config-typescript':
+      '@njust-ai/config-typescript':
         specifier: workspace:^
         version: link:../packages/config-typescript
       '@testing-library/jest-dom':
@@ -5177,11 +5177,6 @@ packages:
   browser-stdout@1.3.1:
     resolution: {integrity: sha512-qhAVI1+Av2X7qelOfAIYwXONood6XlZE/fXaBSmW/T5SzLAmCgzi+eiWE7fUvbHaeNBQH13UftjpXxsfLkMpgw==}
 
-  browserslist@4.24.5:
-    resolution: {integrity: sha512-FDToo4Wo82hIdgc1CQ+NQD0hEhmpPjrZ3hiUgwgOG6IuTdlpr8jdjyG24P6cNP1yJpTLzS5OcGgSw0xmDU1/Tw==}
-    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
-    hasBin: true
-
   browserslist@4.28.1:
     resolution: {integrity: sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -6132,9 +6127,6 @@ packages:
 
   effect@3.21.0:
     resolution: {integrity: sha512-PPN80qRokCd1f015IANNhrwOnLO7GrrMQfk4/lnZRE/8j7UPWrNNjPV0uBrZutI/nHzernbW+J0hdqQysHiSnQ==}
-
-  electron-to-chromium@1.5.152:
-    resolution: {integrity: sha512-xBOfg/EBaIlVsHipHl2VdTPJRSvErNUaqW8ejTq5OlOlIYx1wOllCHsAvAIrr55jD1IYEfdR86miUEt8H5IeJg==}
 
   electron-to-chromium@1.5.283:
     resolution: {integrity: sha512-3vifjt1HgrGW/h76UEeny+adYApveS9dH2h3p57JYzBSXJIKUJAvtmIytDKjcSCt9xHfrNCFJ7gts6vkhuq++w==}
@@ -8389,9 +8381,6 @@ packages:
     resolution: {integrity: sha512-QHJ2gAJiqA3cM7cQiRjLsfCOBRB0TwQ6axYD4FSllQWipEbP6i7Se1dP8EzPKk5J1nCe27W69eqPmCoKyQ61Vg==}
     engines: {node: '>=14'}
 
-  node-releases@2.0.19:
-    resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
-
   node-releases@2.0.27:
     resolution: {integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==}
 
@@ -9169,6 +9158,7 @@ packages:
   recharts@2.15.4:
     resolution: {integrity: sha512-UT/q6fwS3c1dHbXv2uFgYJ9BMFHu3fwnd7AYZaEQhXuYQ4hgsxLvsUXzGdKeZrW5xopzDCvuA2N41WJ88I7zIw==}
     engines: {node: '>=14'}
+    deprecated: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -10253,12 +10243,6 @@ packages:
 
   unzipper@0.10.14:
     resolution: {integrity: sha512-ti4wZj+0bQTiX2KmKWuwj7lhV+2n//uXEotUmGuQqrbVZSEGFMbI68+c6JCQ8aAmUWYvtHEz2A8K6wXvueR/6g==}
-
-  update-browserslist-db@1.1.3:
-    resolution: {integrity: sha512-UxhIZQ+QInVdunkDAaiazvvT/+fXL5Osr0JZlJulepYu6Jd7qJtDZjlur0emRlT71EN3ScPoE7gvsuIKKNavKw==}
-    hasBin: true
-    peerDependencies:
-      browserslist: '>= 4.21.0'
 
   update-browserslist-db@1.2.3:
     resolution: {integrity: sha512-Js0m9cx+qOgDxo0eMiFGEueWztz+d4+M3rGlmKPT+T4IS/jP4ylw3Nwpu6cpTTP8R1MAC1kF4VbdLt3ARf209w==}
@@ -11349,7 +11333,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.27.2
       '@babel/helper-validator-option': 7.27.1
-      browserslist: 4.24.5
+      browserslist: 4.28.1
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -14862,13 +14846,6 @@ snapshots:
 
   browser-stdout@1.3.1: {}
 
-  browserslist@4.24.5:
-    dependencies:
-      caniuse-lite: 1.0.30001766
-      electron-to-chromium: 1.5.152
-      node-releases: 2.0.19
-      update-browserslist-db: 1.1.3(browserslist@4.24.5)
-
   browserslist@4.28.1:
     dependencies:
       baseline-browser-mapping: 2.9.19
@@ -15734,8 +15711,6 @@ snapshots:
     dependencies:
       '@standard-schema/spec': 1.1.0
       fast-check: 3.23.2
-
-  electron-to-chromium@1.5.152: {}
 
   electron-to-chromium@1.5.283: {}
 
@@ -18501,8 +18476,6 @@ snapshots:
       js-queue: 2.0.2
       strong-type: 1.1.0
 
-  node-releases@2.0.19: {}
-
   node-releases@2.0.27: {}
 
   noms@0.0.0:
@@ -20676,12 +20649,6 @@ snapshots:
       listenercount: 1.0.1
       readable-stream: 2.3.8
       setimmediate: 1.0.5
-
-  update-browserslist-db@1.1.3(browserslist@4.24.5):
-    dependencies:
-      browserslist: 4.24.5
-      escalade: 3.2.0
-      picocolors: 1.1.1
 
   update-browserslist-db@1.2.3(browserslist@4.28.1):
     dependencies:

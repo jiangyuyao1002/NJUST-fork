@@ -1,5 +1,5 @@
 import { z } from "zod"
-import type { ClineAskUseMcpServer } from "@njust-ai-cj/types"
+import type { ClineAskUseMcpServer } from "@njust-ai/types"
 
 import type { ToolUse } from "../../shared/tools"
 import { Task } from "../task/Task"

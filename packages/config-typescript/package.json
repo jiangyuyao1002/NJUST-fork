@@ -1,5 +1,5 @@
 {
-	"name": "@njust-ai-cj/config-typescript",
+	"name": "@njust-ai/config-typescript",
 	"private": true,
 	"publishConfig": {
 		"access": "public"

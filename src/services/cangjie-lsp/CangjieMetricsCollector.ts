@@ -1,8 +1,8 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
-import { NJUST_AI_CONFIG_DIR, TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { NJUST_AI_CONFIG_DIR, TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import type { CompileResult } from "./CangjieCompileGuard"
 
 // ---------------------------------------------------------------------------

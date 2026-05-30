@@ -4,12 +4,12 @@ import * as path from "path"
 import * as os from "os"
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite("NJUST_AI_CJ write_to_file Tool", function () {
+suite("NJUST_AI write_to_file Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let tempDir: string
@@ -18,7 +18,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 
 	// Create a temporary directory for test files
 	suiteSetup(async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "roo-test-"))
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "njust-ai-test-"))
 		workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || tempDir
 	})
 
@@ -124,7 +124,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 				console.log("AI response:", message.text?.substring(0, 200))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -133,7 +133,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -141,7 +141,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -228,7 +228,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 					const tmpFiles = await fs.readdir(os.tmpdir())
 					console.log(
 						"Test files in temp root:",
-						tmpFiles.filter((f) => f.includes("test-file") || f.includes("roo-test")),
+						tmpFiles.filter((f) => f.includes("test-file") || f.includes("njust-ai-test")),
 					)
 				} catch (e) {
 					console.log("Could not list temp root:", e)
@@ -249,9 +249,9 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 			console.log("write_to_file tool was properly executed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -303,7 +303,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 				}
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -312,7 +312,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -320,7 +320,7 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -396,9 +396,9 @@ suite("NJUST_AI_CJ write_to_file Tool", function () {
 			console.log("write_to_file tool was properly executed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 })

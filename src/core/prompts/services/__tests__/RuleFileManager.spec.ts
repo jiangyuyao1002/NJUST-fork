@@ -9,7 +9,7 @@ vi.mock("os", () => ({
 	homedir: () => "/home/user",
 }))
 
-vi.mock("../../../../services/roo-config", () => ({
+vi.mock("../../../../services/njust-ai-config", () => ({
 	getRooDirectoriesForCwd: vi.fn().mockImplementation((cwd: string) => {
 		return [`/home/user/.njust_ai`, `${cwd}/.njust_ai`]
 	}),

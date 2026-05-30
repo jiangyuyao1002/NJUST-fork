@@ -1,16 +1,16 @@
-# NJUST_AI_CJ API
+# NJUST_AI API
 
-The NJUST_AI_CJ extension exposes an API that can be used by other extensions.
+The NJUST_AI extension exposes an API that can be used by other extensions.
 To use this API in your extension:
 
-1. Install `@njust-ai-cj/types` with npm, pnpm, or yarn.
-2. Import the `NJUST_AI_CJAPI` type.
+1. Install `@njust-ai/types` with npm, pnpm, or yarn.
+2. Import the `NJUST_AIAPI` type.
 3. Load the extension API.
 
 ```typescript
-import { NJUST_AI_CJAPI } from "@njust-ai-cj/types"
+import { NJUST_AIAPI } from "@njust-ai/types"
 
-const extension = vscode.extensions.getExtension<NJUST_AI_CJAPI>("RooVeterinaryInc.njust-ai-cj")
+const extension = vscode.extensions.getExtension<NJUST_AIAPI>("JunjieChen-YuyaoJiang.njust-ai")
 
 if (!extension?.isActive) {
 	throw new Error("Extension is not activated")
@@ -23,7 +23,7 @@ if (!api) {
 }
 
 // Start a new task with an initial message.
-await api.startNewTask("Hello, NJUST_AI_CJ API! Let's make a new project...")
+await api.startNewTask("Hello, NJUST_AI API! Let's make a new project...")
 
 // Start a new task with an initial message and images.
 await api.startNewTask("Use this design language", ["data:image/webp;base64,..."])
@@ -38,10 +38,10 @@ await api.pressPrimaryButton()
 await api.pressSecondaryButton()
 ```
 
-**NOTE:** To ensure that the `RooVeterinaryInc.njust-ai-cj` extension is activated before your extension, add it to the `extensionDependencies` in your `package.json`:
+**NOTE:** To ensure that the `JunjieChen-YuyaoJiang.njust-ai` extension is activated before your extension, add it to the `extensionDependencies` in your `package.json`:
 
 ```json
-"extensionDependencies": ["RooVeterinaryInc.njust-ai-cj"]
+"extensionDependencies": ["JunjieChen-YuyaoJiang.njust-ai"]
 ```
 
-For detailed information on the available methods and their usage, refer to the `roo-code.d.ts` file.
+For detailed information on the available methods and their usage, refer to the `Njust-AI.d.ts` file.

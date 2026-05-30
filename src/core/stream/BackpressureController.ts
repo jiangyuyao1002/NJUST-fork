@@ -1,1 +1,1 @@
-export { BackpressureController } from "@njust-ai-cj/core/stream"
+export { BackpressureController } from "@njust-ai/core/stream"

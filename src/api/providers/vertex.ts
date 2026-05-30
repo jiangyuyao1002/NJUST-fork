@@ -1,5 +1,5 @@
-import { type ModelInfo } from "@njust-ai-cj/types"
-import { type VertexModelId, vertexDefaultModelId, vertexModels } from "@njust-ai-cj/core/providers"
+import { type ModelInfo } from "@njust-ai/types"
+import { type VertexModelId, vertexDefaultModelId, vertexModels } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

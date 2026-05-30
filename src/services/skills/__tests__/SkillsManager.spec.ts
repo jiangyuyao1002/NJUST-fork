@@ -82,12 +82,12 @@ vi.mock("vscode", () => ({
 	RelativePattern: vi.fn(),
 }))
 
-// Global roo directory - computed once
+// Global njust-ai directory - computed once
 const GLOBAL_ROO_DIR = p(HOME_DIR, ".njust_ai")
 const GLOBAL_AGENTS_DIR = p(HOME_DIR, ".agents")
 
-// Mock roo-config
-vi.mock("../../roo-config", () => ({
+// Mock njust-ai-config
+vi.mock("../../njust-ai-config", () => ({
 	getGlobalRooDirectory: () => GLOBAL_ROO_DIR,
 	getGlobalAgentsDirectory: () => GLOBAL_AGENTS_DIR,
 	getProjectAgentsDirectoryForCwd: (cwd: string) => p(cwd, ".agents"),
@@ -802,10 +802,10 @@ description: Agent version (should be overridden)
 				if (file === rooSkillMd) {
 					return `---
 name: common-skill
-description: Roo version (should take priority)
+description: Njust-AI version (should take priority)
 ---
 
-# Roo Common Skill`
+# Njust-AI Common Skill`
 				}
 				throw new Error("File not found")
 			})
@@ -816,7 +816,7 @@ description: Roo version (should take priority)
 			const commonSkill = skills.find((s) => s.name === "common-skill")
 			expect(commonSkill).toBeDefined()
 			// .njust_ai should override .agents
-			expect(commonSkill?.description).toBe("Roo version (should take priority)")
+			expect(commonSkill?.description).toBe("Njust-AI version (should take priority)")
 		})
 
 		it("should discover mode-specific skills from .agents directory", async () => {

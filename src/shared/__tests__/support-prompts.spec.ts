@@ -91,7 +91,7 @@ describe("Code Action Prompts", () => {
 	describe("ADD_TO_CONTEXT action", () => {
 		it("should format ADD_TO_CONTEXT prompt correctly with all parameters", () => {
 			const prompt = supportPrompt.create("ADD_TO_CONTEXT", {
-				name: "Roo",
+				name: "Njust-AI",
 				place: "Workspace",
 				filePath: testFilePath,
 				selectedText: testCode,
@@ -131,7 +131,7 @@ describe("Code Action Prompts", () => {
 
 		it("should replace remaining placeholders (not in params) with empty strings", () => {
 			const prompt = supportPrompt.create("ADD_TO_CONTEXT", {
-				name: "Roo",
+				name: "Njust-AI",
 				filePath: testFilePath,
 				selectedText: testCode,
 				startLine: "1",

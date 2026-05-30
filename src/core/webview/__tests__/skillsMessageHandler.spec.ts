@@ -2,7 +2,7 @@
 
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import type { SkillMetadata, WebviewMessage } from "@njust-ai-cj/types"
+import type { SkillMetadata, WebviewMessage } from "@njust-ai/types"
 import type { ClineProvider } from "../ClineProvider"
 
 // Mock vscode first

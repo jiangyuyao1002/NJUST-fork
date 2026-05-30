@@ -1,5 +1,5 @@
 import { MarketplaceViewStateManager, ViewStateTransition } from "../MarketplaceViewStateManager"
-import { MarketplaceItem } from "@njust-ai-cj/types"
+import { MarketplaceItem } from "@njust-ai/types"
 
 // Mock vscode module
 vi.mock("@/utils/vscode", () => ({

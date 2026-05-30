@@ -1,4 +1,4 @@
-import type { Command } from "@njust-ai-cj/types"
+import type { Command } from "@njust-ai/types"
 
 import { getContextMenuOptions, ContextMenuOptionType } from "../utils/context-mentions"
 

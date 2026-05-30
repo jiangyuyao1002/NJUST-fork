@@ -1,13 +1,13 @@
-import type { UnsafeAny } from "@njust-ai-cj/types"
-import { SECRET_STATE_KEYS, GLOBAL_SECRET_KEYS, ProviderSettings } from "@njust-ai-cj/types"
+import type { UnsafeAny } from "@njust-ai/types"
+import { SECRET_STATE_KEYS, GLOBAL_SECRET_KEYS, ProviderSettings } from "@njust-ai/types"
 
 export function checkExistKey(config: ProviderSettings | undefined) {
 	if (!config) {
 		return false
 	}
 
-	// Special case for fake-ai, openai-codex, qwen-code, and roo providers which don't need any configuration.
-	if (config.apiProvider && ["fake-ai", "openai-codex", "qwen-code", "roo"].includes(config.apiProvider)) {
+	// Special case for fake-ai, openai-codex, qwen-code, and njust-ai providers which don't need any configuration.
+	if (config.apiProvider && ["fake-ai", "openai-codex", "qwen-code", "njust-ai"].includes(config.apiProvider)) {
 		return true
 	}
 

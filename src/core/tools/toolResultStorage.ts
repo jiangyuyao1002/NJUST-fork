@@ -31,8 +31,8 @@ export async function persistToolResult(
 	toolUseId: string,
 	cwd: string,
 ): Promise<StoredToolResult> {
-	// 存储到 .roo/tool-results/{taskId}/{toolUseId}.txt
-	const storageDir = path.join(cwd, ".roo", "tool-results", taskId)
+	// 存储到 .njust-ai/tool-results/{taskId}/{toolUseId}.txt
+	const storageDir = path.join(cwd, ".njust-ai", "tool-results", taskId)
 	await fs.mkdir(storageDir, { recursive: true })
 	const filePath = path.join(storageDir, `${toolUseId}.txt`)
 	await fs.writeFile(filePath, result, "utf-8")

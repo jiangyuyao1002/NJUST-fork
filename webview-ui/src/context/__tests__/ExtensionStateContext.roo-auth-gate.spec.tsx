@@ -10,7 +10,7 @@ vi.mock("@src/utils/vscode", () => ({
 import { ExtensionStateContextProvider } from "@src/context/ExtensionStateContext"
 import { vscode } from "@src/utils/vscode"
 
-describe("ExtensionStateContext Roo auth gate", () => {
+describe("ExtensionStateContext Njust-AI auth gate", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 	})
@@ -26,20 +26,20 @@ describe("ExtensionStateContext Roo auth gate", () => {
 		)
 	}
 
-	it("does not post requestRooModels when auth flips and provider !== 'roo'", async () => {
+	it("does not post requestRooModels when auth flips and provider !== 'njust-ai'", async () => {
 		render(
 			<ExtensionStateContextProvider>
 				<div />
 			</ExtensionStateContextProvider>,
 		)
 
-		// Flip auth to true with a non-roo provider (anthropic)
+		// Flip auth to true with a non-njust-ai provider (anthropic)
 		postStateMessage({
 			cloudIsAuthenticated: true,
 			apiConfiguration: { apiProvider: "anthropic" },
 		})
 
-		// Should NOT fire auth-driven Roo refresh
+		// Should NOT fire auth-driven Njust-AI refresh
 		await waitFor(() => {
 			const calls = (vscode.postMessage as any).mock.calls as any[][]
 			const hasRequest = calls.some((c) => c[0]?.type === "requestRooModels")
@@ -47,7 +47,7 @@ describe("ExtensionStateContext Roo auth gate", () => {
 		})
 	})
 
-	it("does not post requestRooModels when auth flips and provider === 'roo'", async () => {
+	it("does not post requestRooModels when auth flips and provider === 'njust-ai'", async () => {
 		render(
 			<ExtensionStateContextProvider>
 				<div />
@@ -57,15 +57,15 @@ describe("ExtensionStateContext Roo auth gate", () => {
 		// Ensure prev false (explicit)
 		postStateMessage({
 			cloudIsAuthenticated: false,
-			apiConfiguration: { apiProvider: "roo" },
+			apiConfiguration: { apiProvider: "njust-ai" },
 		})
 
 		vi.clearAllMocks()
 
-		// Flip to true with provider roo.
+		// Flip to true with provider njust-ai.
 		postStateMessage({
 			cloudIsAuthenticated: true,
-			apiConfiguration: { apiProvider: "roo" },
+			apiConfiguration: { apiProvider: "njust-ai" },
 		})
 
 		await waitFor(() => {

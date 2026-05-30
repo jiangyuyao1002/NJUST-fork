@@ -1,6 +1,6 @@
 import React from "react"
 import { fireEvent, render, screen } from "@/utils/test-utils"
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 import { TranslationProvider } from "@/i18n/__mocks__/TranslationContext"
 import FileChangesPanel from "../components/chat/FileChangesPanel"
 

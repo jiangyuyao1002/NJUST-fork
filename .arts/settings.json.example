@@ -1,4 +1,4 @@
 // 一般用户无需配置：Cloud Agent 的 serverUrl / apiKey 默认值在扩展 package.json 中。
 // 仅在连接自建服务时，在用户设置里覆盖：
-// "njust-ai-cj.cloudAgent.serverUrl": "http://...",
-// "njust-ai-cj.cloudAgent.apiKey": "..."
+// "njust-ai.cloudAgent.serverUrl": "http://...",
+// "njust-ai.cloudAgent.apiKey": "..."

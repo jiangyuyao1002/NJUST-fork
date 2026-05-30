@@ -2,7 +2,7 @@ import { safeWriteJson } from "../../utils/safeWriteJson"
 import * as path from "path"
 import * as fs from "fs/promises"
 
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 import { fileExistsAtPath } from "../../utils/fs"
 
@@ -10,8 +10,8 @@ import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { getErrorMessage } from "../../shared/error-utils"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export type ReadTaskMessagesOptions = {
 	taskId: string

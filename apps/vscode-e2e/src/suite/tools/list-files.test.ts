@@ -3,7 +3,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
@@ -43,7 +43,7 @@ const getListFilesResult = (message: ClineMessage): string | null => {
 	return null
 }
 
-suite("NJUST_AI_CJ list_files Tool", function () {
+suite("NJUST_AI list_files Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -226,7 +226,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				console.log("Captured list results:", listResults.substring(0, 300))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -234,7 +234,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -290,8 +290,8 @@ This directory contains various files and subdirectories for testing the list_fi
 			console.log("Test passed! Directory listing (non-recursive) executed successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -313,7 +313,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				console.log("Captured recursive list results:", listResults.substring(0, 300))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -321,7 +321,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -384,8 +384,8 @@ This directory contains various files and subdirectories for testing the list_fi
 			console.log("Test passed! Directory listing (recursive) executed successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -407,7 +407,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				console.log("Captured symlink test results:", listResults.substring(0, 300))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -415,7 +415,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -486,8 +486,8 @@ This directory contains various files and subdirectories for testing the list_fi
 			await fs.rm(testDir, { recursive: true, force: true })
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -507,7 +507,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				console.log("list_files tool executed (workspace root):", result.substring(0, 200))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -515,7 +515,7 @@ This directory contains various files and subdirectories for testing the list_fi
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -553,8 +553,8 @@ This directory contains various files and subdirectories for testing the list_fi
 			console.log("Test passed! Workspace root directory listing executed successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 })

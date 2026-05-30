@@ -6,7 +6,7 @@ import {
 	vercelAiGatewayDefaultModelInfo,
 	VERCEL_AI_GATEWAY_DEFAULT_TEMPERATURE,
 	VERCEL_AI_GATEWAY_PROMPT_CACHING_MODELS,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { ApiHandlerOptions } from "../../shared/api"
 

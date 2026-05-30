@@ -12,7 +12,7 @@ interface TaskStopParams {
 type TaskStopMode = "self_only" | "tree_only" | "admin"
 
 function getTaskStopMode(): TaskStopMode {
-	const raw = (process.env.ROO_TASK_STOP_MODE || "tree_only").toLowerCase()
+	const raw = (process.env.NJUST_AI_TASK_STOP_MODE || "tree_only").toLowerCase()
 	if (raw === "self_only" || raw === "tree_only" || raw === "admin") {
 		return raw
 	}

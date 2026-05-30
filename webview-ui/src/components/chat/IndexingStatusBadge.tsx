@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react"
 import { Database } from "lucide-react"
 
-import type { IndexingStatus, IndexingStatusUpdateMessage } from "@njust-ai-cj/types"
+import type { IndexingStatus, IndexingStatusUpdateMessage } from "@njust-ai/types"
 
 import { cn } from "@src/lib/utils"
 import { vscode } from "@src/utils/vscode"

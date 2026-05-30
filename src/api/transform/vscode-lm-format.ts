@@ -24,7 +24,7 @@ function asObjectSafe(value: UnsafeAny): object {
 
 		return {}
 	} catch (error) {
-		logger.warn("VscodeLmFormat", "NJUST_AI_CJ <Language Model API>: Failed to parse object:", error)
+		logger.warn("VscodeLmFormat", "NJUST_AI <Language Model API>: Failed to parse object:", error)
 		return {}
 	}
 }
@@ -185,7 +185,7 @@ export function extractTextCountFromMessage(message: vscode.LanguageModelChatMes
 					try {
 						text += JSON.stringify(item.input)
 					} catch (error) {
-						logger.error("VscodeLmFormat", "NJUST_AI_CJ <Language Model API>: Failed to stringify tool call input:", error)
+						logger.error("VscodeLmFormat", "NJUST_AI <Language Model API>: Failed to stringify tool call input:", error)
 					}
 				}
 			}

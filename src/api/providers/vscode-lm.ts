@@ -2,8 +2,8 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import * as vscode from "vscode"
 import OpenAI from "openai"
 
-import { type ModelInfo, TelemetryEventName } from "@njust-ai-cj/types"
-import { openAiModelInfoSaneDefaults } from "@njust-ai-cj/core/providers"
+import { type ModelInfo, TelemetryEventName } from "@njust-ai/types"
+import { openAiModelInfoSaneDefaults } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { SELECTOR_SEPARATOR, stringifyVsCodeLmModelSelector } from "../../shared/vsCodeSelectorUtils"
@@ -12,7 +12,7 @@ import { normalizeToolSchema } from "../../utils/json-schema"
 import { ApiStream } from "../transform/stream"
 import { convertToVsCodeLmMessages, extractTextCountFromMessage } from "../transform/vscode-lm-format"
 
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
@@ -97,7 +97,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			// Ensure cleanup if constructor fails
 			this.dispose()
 
-			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to initialize handler: ${getErrorMessage(error)}`)
+			throw new Error(`NJUST_AI <Language Model API>: Failed to initialize handler: ${getErrorMessage(error)}`)
 		}
 	}
 	/**
@@ -111,18 +111,18 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 		try {
 			// Check if the client is already initialized
 			if (this.client) {
-				debugLog("NJUST_AI_CJ <Language Model API>: Client already initialized")
+				debugLog("NJUST_AI <Language Model API>: Client already initialized")
 				return
 			}
 			// Create a new client instance
 			this.client = await this.createClient(this.options.vsCodeLmModelSelector || {})
-			debugLog("NJUST_AI_CJ <Language Model API>: Client initialized successfully")
+			debugLog("NJUST_AI <Language Model API>: Client initialized successfully")
 		} catch (error) {
 			// Handle errors during client initialization
 			const errorMessage = getErrorMessage(error)
 			logger.error("VsCodeLm", "Client initialization failed:", errorMessage)
 			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
-			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to initialize client: ${errorMessage}`)
+			throw new Error(`NJUST_AI <Language Model API>: Failed to initialize client: ${errorMessage}`)
 		}
 	}
 	/**
@@ -174,7 +174,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			}
 		} catch (error) {
 			const errorMessage = getErrorMessage(error)
-			throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to select model: ${errorMessage}`)
+			throw new Error(`NJUST_AI <Language Model API>: Failed to select model: ${errorMessage}`)
 		}
 	}
 
@@ -241,7 +241,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 
 		// Validate input
 		if (!text) {
-			debugLog("NJUST_AI_CJ <Language Model API>: Empty text provided for token counting")
+			debugLog("NJUST_AI <Language Model API>: Empty text provided for token counting")
 			return 0
 		}
 
@@ -265,7 +265,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			} else if (text instanceof vscode.LanguageModelChatMessage) {
 				// For chat messages, ensure we have content
 				if (!text.content || (Array.isArray(text.content) && text.content.length === 0)) {
-					debugLog("NJUST_AI_CJ <Language Model API>: Empty chat message content")
+					debugLog("NJUST_AI <Language Model API>: Empty chat message content")
 					return 0
 				}
 				const countMessage = extractTextCountFromMessage(text)
@@ -290,7 +290,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 		} catch (error) {
 			// Handle specific error types
 			if (error instanceof vscode.CancellationError) {
-				debugLog("NJUST_AI_CJ <Language Model API>: Token counting cancelled by user")
+				debugLog("NJUST_AI <Language Model API>: Token counting cancelled by user")
 				return 0
 			}
 
@@ -332,7 +332,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			await this.initPromise
 		}
 		if (!this.client) {
-			debugLog("NJUST_AI_CJ <Language Model API>: Getting client with options:", {
+			debugLog("NJUST_AI <Language Model API>: Getting client with options:", {
 				vsCodeLmModelSelector: this.options.vsCodeLmModelSelector,
 				hasOptions: !!this.options,
 				selectorKeys: this.options.vsCodeLmModelSelector ? Object.keys(this.options.vsCodeLmModelSelector) : [],
@@ -341,13 +341,13 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			try {
 				// Use default empty selector if none provided to get all available models
 				const selector = this.options?.vsCodeLmModelSelector || {}
-				debugLog("NJUST_AI_CJ <Language Model API>: Creating client with selector:", selector)
+				debugLog("NJUST_AI <Language Model API>: Creating client with selector:", selector)
 				this.client = await this.createClient(selector)
 			} catch (error) {
 				const message = getErrorMessage(error)
 				logger.error("VsCodeLm", "Client creation failed:", message)
 				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
-				throw new Error(`NJUST_AI_CJ <Language Model API>: Failed to create client: ${message}`)
+				throw new Error(`NJUST_AI <Language Model API>: Failed to create client: ${message}`)
 			}
 		}
 
@@ -411,7 +411,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 		try {
 			// Create the response stream with required options
 			const requestOptions: vscode.LanguageModelChatRequestOptions = {
-				justification: `NJUST_AI_CJ would like to use '${client.name}' from '${client.vendor}', Click 'Allow' to proceed.`,
+				justification: `NJUST_AI would like to use '${client.name}' from '${client.vendor}', Click 'Allow' to proceed.`,
 				tools: convertToVsCodeLmTools(metadata?.tools ?? []),
 			}
 
@@ -455,7 +455,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 						}
 
 						// Log tool call for debugging
-						debugLog("NJUST_AI_CJ <Language Model API>: Processing tool call:", {
+						debugLog("NJUST_AI <Language Model API>: Processing tool call:", {
 							name: chunk.name,
 							callId: chunk.callId,
 							inputSize: JSON.stringify(chunk.input).length,
@@ -496,7 +496,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			this.ensureCleanState()
 
 			if (error instanceof vscode.CancellationError) {
-				throw new Error("NJUST_AI_CJ <Language Model API>: Request cancelled by user")
+				throw new Error("NJUST_AI <Language Model API>: Request cancelled by user")
 			}
 
 				if (error instanceof Error) {
@@ -515,13 +515,13 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				const errorDetails = JSON.stringify(error, null, 2)
 				logger.error("VsCodeLm", "Stream error object:", errorDetails)
 				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
-				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorDetails}`)
+				throw new Error(`NJUST_AI <Language Model API>: Response stream error: ${errorDetails}`)
 			} else {
 				// Fallback for UnsafeAny error types
 				const errorMessage = String(error)
 				logger.error("VsCodeLm", "Unknown stream error:", errorMessage)
 				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
-				throw new Error(`NJUST_AI_CJ <Language Model API>: Response stream error: ${errorMessage}`)
+				throw new Error(`NJUST_AI <Language Model API>: Response stream error: ${errorMessage}`)
 			}
 		}
 	}
@@ -572,7 +572,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 			? stringifyVsCodeLmModelSelector(this.options.vsCodeLmModelSelector)
 			: "vscode-lm"
 
-		debugLog("NJUST_AI_CJ <Language Model API>: No client available, using fallback model info")
+		debugLog("NJUST_AI <Language Model API>: No client available, using fallback model info")
 
 		return {
 			id: fallbackId,

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the `@njust-ai-cj/cli` package will be documented in this file.
+All notable changes to the `@njust-ai/cli` package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -157,13 +157,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Telemetry Control**: Added `NJUST_AI_CJ_DISABLE_TELEMETRY=1` environment variable to disable cloud telemetry.
+- **Telemetry Control**: Added `NJUST_AI_DISABLE_TELEMETRY=1` environment variable to disable cloud telemetry.
 
 ## [0.1.1] - 2026-02-24
 
 ### Added
 
-- **Roo Model Warmup**: When configured with the Roo provider, the CLI now proactively fetches and warms the model list during activation so that model information is available before the first prompt is sent. The warmup has a 10s timeout and failures are logged only in debug mode.
+- **Njust-AI Model Warmup**: When configured with the Njust-AI provider, the CLI now proactively fetches and warms the model list during activation so that model information is available before the first prompt is sent. The warmup has a 10s timeout and failures are logged only in debug mode.
 - **Unbound Provider**: Added Unbound as an available provider option.
 
 ## [0.1.0] - 2026-02-19
@@ -227,14 +227,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Linux Support**: The CLI now supports Linux platforms in addition to macOS
-- **Roo Provider API Key Support**: Allow `--api-key` flag and `ROO_API_KEY` environment variable for the roo provider instead of requiring cloud auth token
+- **Njust-AI Provider API Key Support**: Allow `--api-key` flag and `NJUST_AI_API_KEY` environment variable for the njust-ai provider instead of requiring cloud auth token
 - **Exit on Error**: New `--exit-on-error` flag to exit immediately on API request errors instead of retrying, useful for CI/CD pipelines
 
 ### Changed
 
 - **Improved Dev Experience**: Dev scripts now use `tsx` for running directly from source without building first
 - **Path Resolution Fixes**: Fixed path resolution in [`version.ts`](src/lib/utils/version.ts), [`extension.ts`](src/lib/utils/extension.ts), and [`extension-host.ts`](src/agent/extension-host.ts) to work from both source and bundled locations
-- **Debug Logging**: Debug log file (`~/.roo/cli-debug.log`) is now disabled by default unless `--debug` flag is passed
+- **Debug Logging**: Debug log file (`~/.njust-ai/cli-debug.log`) is now disabled by default unless `--debug` flag is passed
 - Updated README with complete environment variable table and dev workflow documentation
 
 ### Fixed
@@ -273,12 +273,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Skip onboarding flow when a provider is explicitly specified via `--provider` flag or saved in settings
 - Unified permission flags: Combined approval-skipping flags into a single option for Claude Code-like CLI compatibility
-- Improved NJUST_AI_CJ Router authentication flow and error messaging
+- Improved NJUST_AI Router authentication flow and error messaging
 
 ### Fixed
 
 - Removed unnecessary timeout that could cause issues with long-running tasks
-- Fixed authentication token validation for NJUST_AI_CJ Router provider
+- Fixed authentication token validation for NJUST_AI Router provider
 
 ## [0.0.45] - 2026-01-08
 
@@ -375,7 +375,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Support for Kitty keyboard protocol (CSI u encoding) for better terminal compatibility
     - Built-in sequences for `Ctrl+C` (exit) and `Ctrl+M` (mode cycling)
 
-- **Local Tarball Installation**: The install script now supports installing from a local tarball via the `ROO_LOCAL_TARBALL` environment variable, useful for offline installation or testing pre-release builds.
+- **Local Tarball Installation**: The install script now supports installing from a local tarball via the `NJUST_AI_LOCAL_TARBALL` environment variable, useful for offline installation or testing pre-release builds.
 
 ### Changed
 

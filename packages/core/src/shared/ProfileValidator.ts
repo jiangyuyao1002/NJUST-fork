@@ -1,4 +1,4 @@
-import type { ProviderSettings, OrganizationAllowList } from "@njust-ai-cj/types"
+import type { ProviderSettings, OrganizationAllowList } from "@njust-ai/types"
 
 export class ProfileValidator {
 	public static isProfileAllowed(profile: ProviderSettings, allowList: OrganizationAllowList): boolean {

@@ -1,0 +1,2440 @@
+File: src/core/task/Task.ts
+  1 | import * as path from "path"
+  2 | import * as vscode from "vscode"
+  3 | import os from "os"
+  4 | import crypto from "crypto"
+  5 | import { promises as fs } from "fs"
+  6 | import { v7 as uuidv7 } from "uuid"
+  7 | import EventEmitter from "events"
+  8 | 
+  9 | import { AskIgnoredError } from "./AskIgnoredError"
+ 10 | import { startAllPrefetch } from "../prefetch"
+ 11 | 
+ 12 | import { Anthropic } from "@anthropic-ai/sdk"
+ 13 | import OpenAI from "openai"
+ 14 | import debounce from "lodash.debounce"
+ 15 | import delay from "delay"
+ 16 | import pWaitFor from "p-wait-for"
+ 17 | import { serializeError } from "serialize-error"
+ 18 | import { Package } from "../../shared/package"
+ 19 | import { formatToolInvocation } from "../tools/helpers/toolResultFormatting"
+ 20 | 
+ 21 | import {
+ 22 | 	type TaskLike,
+ 23 | 	type TaskMetadata,
+ 24 | 	type TaskEvents,
+ 25 | 	type ProviderSettings,
+ 26 | 	type TokenUsage,
+ 27 | 	type ToolUsage,
+ 28 | 	type ToolName,
+ 29 | 	type ContextCondense,
+ 30 | 	type ContextTruncation,
+ 31 | 	type ClineMessage,
+ 32 | 	type ClineSay,
+ 33 | 	type ClineAsk,
+ 34 | 	type ToolProgressStatus,
+ 35 | 	type HistoryItem,
+ 36 | 	type CreateTaskOptions,
+ 37 | 	type ModelInfo,
+ 38 | 	type ClineApiReqCancelReason,
+ 39 | 	type ClineApiReqInfo,
+ 40 | 	NJUST_AIEventName,
+ 41 | 	TaskStatus,
+ 42 | 	TodoItem,
+ 43 | 	getApiProtocol,
+ 44 | 	getModelId,
+ 45 | 	isRetiredProvider,
+ 46 | 	isIdleAsk,
+ 47 | 	isInteractiveAsk,
+ 48 | 	isResumableAsk,
+ 49 | 	QueuedMessage,
+ 50 | 	DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
+ 51 | 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
+ 52 | 	MAX_CHECKPOINT_TIMEOUT_SECONDS,
+ 53 | 	MIN_CHECKPOINT_TIMEOUT_SECONDS,
+ 54 | 	MAX_MCP_TOOLS_THRESHOLD,
+ 55 | 	countEnabledMcpTools,
+ 56 | 	DEFAULT_REQUEST_DELAY_SECONDS,
+ 57 | 	DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
+ 58 | } from "@njust-ai/types"
+ 59 | 
+ 60 | // api
+ 61 | import { ApiHandler, ApiHandlerCreateMessageMetadata, buildApiHandler } from "../../api"
+ 62 | import { ApiStream, GroundingSource } from "../../api/transform/stream"
+ 63 | import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
+ 64 | 
+ 65 | // shared
+ 66 | import { findLastIndex } from "../../shared/array"
+ 67 | import { combineApiRequests } from "../../shared/combineApiRequests"
+ 68 | import { combineCommandSequences } from "../../shared/combineCommandSequences"
+ 69 | import { t } from "../../i18n"
+ 70 | import { getApiMetrics, hasTokenUsageChanged, hasToolUsageChanged } from "../../shared/getApiMetrics"
+ 71 | import { ClineAskResponse } from "../../shared/WebviewMessage"
+ 72 | import { DEFAULT_MODE_SLUG } from "../../shared/mode-constants"
+ 73 | import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
+ 74 | import { DiffStrategy, type ToolUse, type ToolParamName, toolParamNames } from "../../shared/tools"
+ 75 | import { getModelMaxOutputTokens } from "../../shared/api"
+ 76 | 
+ 77 | // services
+ 78 | import { McpServerManager } from "../../services/mcp/McpServerManager"
+ 79 | import { RepoPerTaskCheckpointService } from "../../services/checkpoints"
+ 80 | import { deleteGeneratedCangjieTestFilesForTask } from "../../services/cangjie-lsp/cangjieGeneratedTestCleanup"
+ 81 | 
+ 82 | // integrations
+ 83 | import { DiffViewProvider } from "../../integrations/editor/DiffViewProvider"
+ 84 | import { findToolName } from "../../integrations/misc/export-markdown"
+ 85 | import { RooTerminalProcess } from "../../integrations/terminal/types"
+ 86 | import { TerminalRegistry } from "../../integrations/terminal/TerminalRegistry"
+ 87 | import { OutputInterceptor } from "../../integrations/terminal/OutputInterceptor"
+ 88 | 
+ 89 | // utils
+ 90 | import { calculateApiCostAnthropic, calculateApiCostOpenAI } from "../../shared/cost"
+ 91 | import { getWorkspacePath } from "../../utils/path"
+ 92 | import { CloudAgentOrchestrator, type ICloudAgentHost } from "./CloudAgentOrchestrator"
+ 93 | import { sanitizeToolUseId } from "../../utils/tool-id"
+ 94 | import { getTaskDirectoryPath } from "../../utils/storage"
+ 95 | import { tokenCountCache } from "../../utils/tokenCountCache"
+ 96 | import { globalCacheMetrics } from "../../utils/cacheMetrics"
+ 97 | import { globalQueryProfiler } from "../../utils/queryProfiler"
+ 98 | import { globalPromptCacheBreakDetector } from "../prompts/promptCacheBreakDetection"
+ 99 | 
+100 | // prompts
+
+101 | import { formatResponse } from "../prompts/responses"
+102 | import {
+103 | 	type SystemPromptParts,
+104 | } from "../prompts/system"
+105 | import { buildNativeToolsArrayWithRestrictions } from "./build-tools"
+106 | 
+107 | // core modules
+108 | import { ToolRepetitionDetector } from "../tools/ToolRepetitionDetector"
+109 | import { restoreTodoListForTask } from "../tools/UpdateTodoListTool"
+110 | import { FileContextTracker } from "../context-tracking/FileContextTracker"
+111 | import { allowRooIgnorePathAccess, RooIgnoreController } from "../ignore/RooIgnoreController"
+112 | import { RooProtectedController } from "../protect/RooProtectedController"
+113 | import { type AssistantMessageContent, presentAssistantMessage } from "../assistant-message"
+114 | import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
+115 | import { ToolExecutionContext } from "./ToolExecutionContext"
+116 | import { manageContext, willManageContext } from "../context-management"
+117 | import { TokenGrowthTracker } from "../context-management/tokenGrowthTracker"
+118 | import { taskEventBus, type TaskEventBus } from "../events/TaskEventBus"
+119 | import type { ITaskHost } from "./interfaces/ITaskHost"
+120 | import type { ITaskUINotifier } from "./interfaces/ITaskUINotifier"
+121 | import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
+122 | import {
+123 | 	type ApiMessage,
+124 | 	readApiMessages,
+125 | 	saveApiMessages,
+126 | 	readTaskMessages,
+127 | 	saveTaskMessages,
+128 | 	taskMetadata,
+129 | } from "../task-persistence"
+130 | import { getEnvironmentDetails } from "../environment/getEnvironmentDetails"
+131 | import { clearRetryEvents } from "../errors/retryPersistence"
+132 | import { ErrorRecoveryHandler } from "./ErrorRecoveryHandler"
+133 | import { PersistentRetryManager } from "./PersistentRetry"
+134 | import { clearMcpInstructionsDelta } from "../prompts/sections/mcp-instructions-delta"
+135 | import {
+136 | 	type CheckpointDiffOptions,
+137 | 	type CheckpointRestoreOptions,
+138 | 	getCheckpointService,
+139 | 	checkpointSave,
+140 | 	checkpointRestore,
+141 | 	checkpointDiff,
+142 | } from "../checkpoints"
+143 | import { processUserContentMentions } from "../mentions/processUserContentMentions"
+144 | import { getMessagesSinceLastSummary, getEffectiveApiHistory } from "../condense"
+145 | import { MessageQueueService } from "../message-queue/MessageQueueService"
+146 | import { AutoApprovalHandler, checkAutoApproval } from "../auto-approval"
+147 | import { MessageManager } from "../message-manager"
+148 | import { validateAndFixToolResultIds } from "./validateToolResultIds"
+149 | import { mergeConsecutiveApiMessages } from "./mergeConsecutiveApiMessages"
+150 | import { TaskStateMachine, TaskState } from "./TaskStateMachine"
+151 | import { TaskRequestBuilder } from "./TaskRequestBuilder"
+152 | import { TaskStreamProcessor } from "./TaskStreamProcessor"
+153 | import { generateParentContextSummary } from "./SubTaskContextBuilder"
+154 | import { AGENT_TYPE_CONTEXT_BUDGET } from "./SubTaskOptions"
+155 | import type { IsolationLevel, ForkedContextConfig } from "./SubTaskOptions"
+156 | import { DEFAULT_FORKED_CONTEXT_CONFIG } from "./SubTaskOptions"
+157 | import { TaskMessageManager, type TaskMessageContext } from "./TaskMessageManager"
+158 | import { TaskToolHandler } from "./TaskToolHandler"
+159 | import { TaskExecutor } from "./TaskExecutor"
+160 | import { TaskLifecycleHandler } from "./TaskLifecycleHandler"
+161 | import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
+162 | 
+163 | const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
+164 | const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000 // 5 seconds
+165 | const FORCED_CONTEXT_REDUCTION_PERCENT = 75 // Keep 75% of context (remove 25%) on context window errors
+166 | 
+167 | export interface TaskOptions extends CreateTaskOptions {
+168 | 	host?: ITaskHost
+169 | 	/** @deprecated Use {@link host}. Accepted for backward compatibility with tests/call sites. */
+170 | 	provider?: ITaskHost
+171 | 	/** Optional override; defaults to shared {@link taskEventBus}. */
+172 | 	eventBus?: TaskEventBus
+173 | 	apiConfiguration: ProviderSettings
+174 | 	enableCheckpoints?: boolean
+175 | 	checkpointTimeout?: number
+176 | 	consecutiveMistakeLimit?: number
+177 | 	task?: string
+178 | 	images?: string[]
+179 | 	historyItem?: HistoryItem
+180 | 	experiments?: Record<string, boolean>
+181 | 	startTask?: boolean
+182 | 	rootTask?: Task
+183 | 	parentTask?: Task
+184 | 	taskNumber?: number
+185 | 	onCreated?: (task: Task) => void
+186 | 	initialTodos?: TodoItem[]
+187 | 	workspacePath?: string
+188 | 	/** Capability-scoped tool whitelist for this task (used for delegated child tasks). */
+189 | 	allowedTools?: string[]
+190 | 	/** Optional trace id used to stitch parent/child task observability spans. */
+191 | 	parentTraceId?: string
+192 | 	/** Initial status for the task's history item (e.g., "active" for child tasks) */
+193 | 	initialStatus?: "active" | "delegated" | "completed"
+194 | }
+195 | 
+196 | export class Task extends EventEmitter<TaskEvents> implements TaskLike {
+197 | 	readonly taskId: string
+198 | 	readonly rootTaskId?: string
+199 | 	readonly parentTaskId?: string
+200 | 	childTaskId?: string
+
+201 | 	pendingNewTaskToolCallId?: string
+202 | 
+203 | 	readonly instanceId: string
+204 | 	readonly metadata: TaskMetadata
+205 | 
+206 | 	todoList?: TodoItem[]
+207 | 
+208 | 	readonly rootTask: Task | undefined = undefined
+209 | 	readonly parentTask: Task | undefined = undefined
+210 | 	readonly taskNumber: number
+211 | 	readonly workspacePath: string
+212 | 	readonly allowedTools?: ReadonlySet<string>
+213 | 	readonly parentTraceId?: string
+214 | 
+215 | 	/** Forked context summary injected by parent when isolationLevel is "forked" */
+216 | 	forkedContextSummary?: string
+217 | 	/** Isolation level for this task (set when created as a sub-task) */
+218 | 	isolationLevel?: IsolationLevel
+219 | 
+220 | 	/**
+221 | 	 * Cached tool definitions to avoid rebuilding for the same mode.
+222 | 	 * Shared from parent to child via inheritCacheFromParent.
+223 | 	 */
+224 | 	public cachedToolDefinitions?: { mode: string; tools: any[]; time: number }
+225 | 
+226 | 	/**
+227 | 	 * The mode associated with this task. Persisted across sessions
+228 | 	 * to maintain user context when reopening tasks from history.
+229 | 	 *
+230 | 	 * ## Lifecycle
+231 | 	 *
+232 | 	 * ### For new tasks:
+233 | 	 * 1. Initially `undefined` during construction
+234 | 	 * 2. Asynchronously initialized from provider state via `initializeTaskMode()`
+235 | 	 * 3. Falls back to `defaultModeSlug` if provider state is unavailable
+236 | 	 *
+237 | 	 * ### For history items:
+238 | 	 * 1. Immediately set from `historyItem.mode` during construction
+239 | 	 * 2. Falls back to `defaultModeSlug` if mode is not stored in history
+240 | 	 *
+241 | 	 * ## Important
+242 | 	 * This property should NOT be accessed directly until `taskModeReady` promise resolves.
+243 | 	 * Use `getTaskMode()` for async access or `taskMode` getter for sync access after initialization.
+244 | 	 *
+245 | 	 * @private
+246 | 	 * @see {@link getTaskMode} - For safe async access
+247 | 	 * @see {@link taskMode} - For sync access after initialization
+248 | 	 * @see {@link waitForModeInitialization} - To ensure initialization is complete
+249 | 	 */
+250 | 	private _taskMode: string | undefined
+251 | 
+252 | 	/**
+253 | 	 * Promise that resolves when the task mode has been initialized.
+254 | 	 * This ensures async mode initialization completes before the task is used.
+255 | 	 *
+256 | 	 * ## Purpose
+257 | 	 * - Prevents race conditions when accessing task mode
+258 | 	 * - Ensures provider state is properly loaded before mode-dependent operations
+259 | 	 * - Provides a synchronization point for async initialization
+260 | 	 *
+261 | 	 * ## Resolution timing
+262 | 	 * - For history items: Resolves immediately (sync initialization)
+263 | 	 * - For new tasks: Resolves after provider state is fetched (async initialization)
+264 | 	 *
+265 | 	 * @private
+266 | 	 * @see {@link waitForModeInitialization} - Public method to await this promise
+267 | 	 */
+268 | 	private taskModeReady: Promise<void>
+269 | 
+270 | 	/**
+271 | 	 * The API configuration name (provider profile) associated with this task.
+272 | 	 * Persisted across sessions to maintain the provider profile when reopening tasks from history.
+273 | 	 *
+274 | 	 * ## Lifecycle
+275 | 	 *
+276 | 	 * ### For new tasks:
+277 | 	 * 1. Initially `undefined` during construction
+278 | 	 * 2. Asynchronously initialized from provider state via `initializeTaskApiConfigName()`
+279 | 	 * 3. Falls back to "default" if provider state is unavailable
+280 | 	 *
+281 | 	 * ### For history items:
+282 | 	 * 1. Immediately set from `historyItem.apiConfigName` during construction
+283 | 	 * 2. Falls back to undefined if not stored in history (for backward compatibility)
+284 | 	 *
+285 | 	 * ## Important
+286 | 	 * If you need a non-`undefined` provider profile (e.g., for profile-dependent operations),
+287 | 	 * wait for `taskApiConfigReady` first (or use `getTaskApiConfigName()`).
+288 | 	 * The sync `taskApiConfigName` getter may return `undefined` for backward compatibility.
+289 | 	 *
+290 | 	 * @private
+291 | 	 * @see {@link getTaskApiConfigName} - For safe async access
+292 | 	 * @see {@link taskApiConfigName} - For sync access after initialization
+293 | 	 */
+294 | 	private _taskApiConfigName: string | undefined
+295 | 
+296 | 	/**
+297 | 	 * Promise that resolves when the task API config name has been initialized.
+298 | 	 * This ensures async API config name initialization completes before the task is used.
+299 | 	 *
+300 | 	 * ## Purpose
+
+301 | 	 * - Prevents race conditions when accessing task API config name
+302 | 	 * - Ensures provider state is properly loaded before profile-dependent operations
+303 | 	 * - Provides a synchronization point for async initialization
+304 | 	 *
+305 | 	 * ## Resolution timing
+306 | 	 * - For history items: Resolves immediately (sync initialization)
+307 | 	 * - For new tasks: Resolves after provider state is fetched (async initialization)
+308 | 	 *
+309 | 	 * @private
+310 | 	 */
+311 | 	private taskApiConfigReady: Promise<void>
+312 | 
+313 | 	hostRef: WeakRef<ITaskHost>
+314 | 	private readonly eventBus: TaskEventBus
+315 | 
+316 | 	/** @deprecated Use hostRef (same WeakRef). Presents Task host for legacy call sites. */
+317 | 	get providerRef(): WeakRef<ITaskHost> {
+318 | 		return this.hostRef
+319 | 	}
+320 | 
+321 | 	/** Narrow accessor: returns only the UI notification facet of the host. */
+322 | 	private get notifier(): ITaskUINotifier | undefined {
+323 | 		return this.hostRef.deref()
+324 | 	}
+325 | 
+326 | 	/** Emit a UI state refresh. Fires event bus + calls host notifier. */
+327 | 	protected async refreshWebviewState(): Promise<void> {
+328 | 		this.eventBus.emit("task:tokens-updated", { taskId: this.taskId })
+329 | 		await this.notifier?.postStateToWebviewWithoutTaskHistory()
+330 | 	}
+331 | 
+332 | 	readonly globalStoragePath: string
+333 | 	abort: boolean = false
+334 | 	private persistentRetryHandler?: PersistentRetryManager
+335 | 	currentRequestAbortController?: AbortController
+336 | 	skipPrevResponseIdOnce: boolean = false
+337 | 
+338 | 	// TaskStatus
+339 | 	idleAsk?: ClineMessage
+340 | 	resumableAsk?: ClineMessage
+341 | 	interactiveAsk?: ClineMessage
+342 | 
+343 | 	// Context management circuit breaker
+344 | 	compactFailureCount = 0
+345 | 	readonly maxCompactFailures = 3
+346 | 
+347 | 	didFinishAbortingStream = false
+348 | 	abandoned = false
+349 | 	abortReason?: ClineApiReqCancelReason
+350 | 	isInitialized = false
+351 | 	isPaused: boolean = false
+352 | 
+353 | 	// API
+354 | 	apiConfiguration: ProviderSettings
+355 | 	api: ApiHandler
+356 | 	private static lastGlobalApiRequestTime?: number
+357 | 	private autoApprovalHandler: AutoApprovalHandler
+358 | 
+359 | 	/**
+360 | 	 * Reset the global API request timestamp. This should only be used for testing.
+361 | 	 * @internal
+362 | 	 */
+363 | 	static resetGlobalApiRequestTime(): void {
+364 | 		Task.lastGlobalApiRequestTime = undefined
+365 | 	}
+366 | 
+367 | 	/**
+368 | 	 * Get the last global API request timestamp.
+369 | 	 * Exposed for TaskStreamProcessor (delegation pattern).
+370 | 	 */
+371 | 	static getLastGlobalApiRequestTime(): number | undefined {
+372 | 		return Task.lastGlobalApiRequestTime
+373 | 	}
+374 | 
+375 | 	toolRepetitionDetector: ToolRepetitionDetector
+376 | 	rooIgnoreController?: RooIgnoreController
+377 | 	rooProtectedController?: RooProtectedController
+378 | 	fileContextTracker: FileContextTracker
+379 | 	terminalProcess?: RooTerminalProcess
+380 | 
+381 | 	// Editing
+382 | 	diffViewProvider: DiffViewProvider
+383 | 	diffStrategy?: DiffStrategy
+384 | 	didEditFile: boolean = false
+385 | 
+386 | 	/** Std library module names observed via `search_files` on bundled Cangjie corpus (cangjie mode). Used for write/edit search-gate warnings. */
+387 | 	cangjieSearchHistory: Set<string> = new Set()
+388 | 	readonly cangjieRuntimePolicy: CangjieRuntimePolicy
+389 | 
+390 | 	// LLM Messages & Chat Messages
+391 | 	apiConversationHistory: ApiMessage[] = []
+392 | 	clineMessages: ClineMessage[] = []
+393 | 
+394 | 	// Ask
+395 | 	private askResponse?: ClineAskResponse
+396 | 	private askResponseText?: string
+397 | 	private askResponseImages?: string[]
+398 | 	public lastMessageTs?: number
+399 | 	private autoApprovalTimeoutRef?: NodeJS.Timeout
+400 | 
+
+401 | 	// Tool Use
+402 | 	consecutiveMistakeCount: number = 0
+403 | 	consecutiveMistakeLimit: number
+404 | 	consecutiveMistakeCountForApplyDiff: Map<string, number> = new Map()
+405 | 	consecutiveMistakeCountForEditFile: Map<string, number> = new Map()
+406 | 	consecutiveNoToolUseCount: number = 0
+407 | 	consecutiveNoAssistantMessagesCount: number = 0
+408 | 	toolUsage: ToolUsage = {}
+409 | 
+410 | 	// Checkpoints
+411 | 	enableCheckpoints: boolean
+412 | 	checkpointTimeout: number
+413 | 	checkpointService?: RepoPerTaskCheckpointService
+414 | 	checkpointServiceInitializing = false
+415 | 
+416 | 	// Message Queue Service
+417 | 	public readonly messageQueueService: MessageQueueService
+418 | 	private messageQueueStateChangedHandler: (() => void) | undefined
+419 | 
+420 | 	// Streaming
+421 | 	isWaitingForFirstChunk = false
+422 | 	isStreaming = false
+423 | 	currentStreamingContentIndex = 0
+424 | 	currentStreamingDidCheckpoint = false
+425 | 	assistantMessageContent: AssistantMessageContent[] = []
+426 | 	presentAssistantMessageLocked = false
+427 | 	presentAssistantMessageHasPendingUpdates = false
+428 | 	userMessageContent: (Anthropic.TextBlockParam | Anthropic.ImageBlockParam | Anthropic.ToolResultBlockParam)[] = []
+429 | 	userMessageContentReady = false
+430 | 
+431 | 	/**
+432 | 	 * Flag indicating whether the assistant message for the current streaming session
+433 | 	 * has been saved to API conversation history.
+434 | 	 *
+435 | 	 * This is critical for parallel tool calling: tools should NOT execute until
+436 | 	 * the assistant message is saved. Otherwise, if a tool like `new_task` triggers
+437 | 	 * `flushPendingToolResultsToHistory()`, the user message with tool_results would
+438 | 	 * appear BEFORE the assistant message with tool_uses, causing API errors.
+439 | 	 *
+440 | 	 * Reset to `false` at the start of each API request.
+441 | 	 * Set to `true` after the assistant message is saved in `recursivelyMakeClineRequests`.
+442 | 	 */
+443 | 	assistantMessageSavedToHistory = false
+444 | 
+445 | 	/**
+446 | 	 * Push a tool_result block to userMessageContent, preventing duplicates.
+447 | 	 * Duplicate tool_use_ids cause API errors.
+448 | 	 *
+449 | 	 * @param toolResult - The tool_result block to add
+450 | 	 * @returns true if added, false if duplicate was skipped
+451 | 	 */
+452 | 	public pushToolResultToUserContent(toolResult: Anthropic.ToolResultBlockParam): boolean {
+453 | 		const existingResult = this.userMessageContent.find(
+454 | 			(block): block is Anthropic.ToolResultBlockParam =>
+455 | 				block.type === "tool_result" && block.tool_use_id === toolResult.tool_use_id,
+456 | 		)
+457 | 		if (existingResult) {
+458 | 			console.warn(
+459 | 				`[Task#pushToolResultToUserContent] Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`,
+460 | 			)
+461 | 			return false
+462 | 		}
+463 | 		this.userMessageContent.push(toolResult)
+464 | 		return true
+465 | 	}
+466 | 	didRejectTool = false
+467 | 	didAlreadyUseTool = false
+468 | 	didToolFailInCurrentTurn = false
+469 | 	didCompleteReadingStream = false
+470 | 	private _started = false
+471 | 	// No streaming parser is required.
+472 | 	assistantMessageParser?: undefined
+473 | 	private providerProfileChangeListener?: (config: { name: string; provider?: string }) => void
+474 | 
+475 | 	// Native tool call streaming state (track which index each tool is at)
+476 | 	private streamingToolCallIndices: Map<string, number> = new Map()
+477 | 	readonly toolExecution = new ToolExecutionContext(Math.max(1, Number(process.env.NJUST_AI_MAX_TOOL_CONCURRENCY ?? 10) || 10))
+478 | 	private requestCacheReadWindow: number[] = []
+479 | 	private requestInputTokensWindow: number[] = []
+480 | 	private readonly tokenGrowthTracker = new TokenGrowthTracker({ maxWindowSize: 6, emaAlpha: 0.4 })
+481 | 
+482 | 	// Cached model info for current streaming session (set at start of each API request)
+483 | 	// This prevents excessive getModel() calls during tool execution
+484 | 	cachedStreamingModel?: { id: string; info: ModelInfo }
+485 | 
+486 | 	// Token Usage Cache
+487 | 	tokenUsageSnapshot?: TokenUsage
+488 | 	tokenUsageSnapshotAt?: number
+489 | 
+490 | 	// Tool Usage Cache
+491 | 	private toolUsageSnapshot?: ToolUsage
+492 | 
+493 | 	// Token Usage Throttling - Debounced emit function
+494 | 	private readonly TOKEN_USAGE_EMIT_INTERVAL_MS = 2000 // 2 seconds
+495 | 	private debouncedEmitTokenUsage: ReturnType<typeof debounce>
+496 | 
+497 | 	// Delegate for system prompt generation, caching, and context condensation
+498 | 	readonly requestBuilder: TaskRequestBuilder
+499 | 
+500 | 	// Delegate for stream-related helpers (rate limiting, backoff, context window recovery, etc.)
+
+501 | 	readonly streamProcessor: TaskStreamProcessor
+502 | 
+503 | 	// Delegate for error classification, recovery strategies, and circuit breaker logic
+504 | 	readonly errorRecovery: ErrorRecoveryHandler
+505 | 
+506 | 	// Initial status for the task's history item (set at creation time to avoid race conditions)
+507 | 	private readonly initialStatus?: "active" | "delegated" | "completed"
+508 | 
+509 | 	// MessageManager for high-level message operations (lazy initialized)
+510 | 	private _messageManager?: MessageManager
+511 | 	private readonly stateMachine = new TaskStateMachine()
+512 | 
+513 | 	// Extracted sub-modules (Task 7 decomposition)
+514 | 	private _taskMessageManager?: TaskMessageManager
+515 | 	private _taskToolHandler?: TaskToolHandler
+516 | 	private _executor?: TaskExecutor
+517 | 	private _lifecycleHandler?: TaskLifecycleHandler
+518 | 
+519 | 	/** @internal Persistence/CRUD operations on messages — delegates to TaskMessageManager. */
+520 | 	private get msgMgr(): TaskMessageManager {
+521 | 		if (!this._taskMessageManager) {
+522 | 			this._taskMessageManager = new TaskMessageManager(this as unknown as TaskMessageContext)
+523 | 		}
+524 | 		return this._taskMessageManager
+525 | 	}
+526 | 
+527 | 	/** @internal Tool result accumulation — delegates to TaskToolHandler. */
+528 | 	private get toolHandler(): TaskToolHandler {
+529 | 		if (!this._taskToolHandler) {
+530 | 			this._taskToolHandler = new TaskToolHandler(this)
+531 | 		}
+532 | 		return this._taskToolHandler
+533 | 	}
+534 | 
+535 | 	/** @internal API request loop — delegates to TaskExecutor. */
+536 | 	private get executor(): TaskExecutor {
+537 | 		if (!this._executor) {
+538 | 			this._executor = new TaskExecutor(this as any)
+539 | 		}
+540 | 		return this._executor
+541 | 	}
+542 | 
+543 | 	/** @internal Lifecycle operations — delegates to TaskLifecycleHandler. */
+544 | 	private get lifecycleHandler(): TaskLifecycleHandler {
+545 | 		if (!this._lifecycleHandler) {
+546 | 			this._lifecycleHandler = new TaskLifecycleHandler(this as any)
+547 | 		}
+548 | 		return this._lifecycleHandler
+549 | 	}
+550 | 
+551 | 	/** Accessor for the static lastGlobalApiRequestTime (used by TaskExecutor). */
+552 | 	public setLastGlobalApiRequestTime(time: number): void {
+553 | 		Task.lastGlobalApiRequestTime = time
+554 | 	}
+555 | 
+556 | 	/** Accessor for the static lastGlobalApiRequestTime (used by TaskExecutor). */
+557 | 	public getLastGlobalApiRequestTimeValue(): number | undefined {
+558 | 		return Task.lastGlobalApiRequestTime
+559 | 	}
+560 | 
+561 | 	public get taskState(): TaskState {
+562 | 		return this.stateMachine.state
+563 | 	}
+564 | 
+565 | 	public forceTaskState(state: TaskState): void {
+566 | 		this.stateMachine.force(state)
+567 | 	}
+568 | 
+569 | 	constructor({
+570 | 		host: hostOption,
+571 | 		provider,
+572 | 		eventBus: injectedEventBus,
+573 | 		apiConfiguration,
+574 | 		enableCheckpoints = true,
+575 | 		checkpointTimeout = DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
+576 | 		consecutiveMistakeLimit = DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
+577 | 		taskId,
+578 | 		task,
+579 | 		images,
+580 | 		historyItem,
+581 | 		experiments: experimentsConfig,
+582 | 		startTask = true,
+583 | 		rootTask,
+584 | 		parentTask,
+585 | 		taskNumber = -1,
+586 | 		onCreated,
+587 | 		initialTodos,
+588 | 		workspacePath,
+589 | 		initialStatus,
+590 | 	}: TaskOptions) {
+591 | 		super()
+592 | 
+593 | 		const host = hostOption ?? provider
+594 | 		if (!host) {
+595 | 			throw new Error("Task requires host (or legacy provider) option")
+596 | 		}
+597 | 
+598 | 		this.eventBus = injectedEventBus ?? taskEventBus
+599 | 
+600 | 		if (startTask && !task && !images && !historyItem) {
+
+601 | 			throw new Error("Either historyItem or task/images must be provided")
+602 | 		}
+603 | 
+604 | 		if (
+605 | 			!checkpointTimeout ||
+606 | 			checkpointTimeout > MAX_CHECKPOINT_TIMEOUT_SECONDS ||
+607 | 			checkpointTimeout < MIN_CHECKPOINT_TIMEOUT_SECONDS
+608 | 		) {
+609 | 			throw new Error(
+610 | 				"checkpointTimeout must be between " +
+611 | 					MIN_CHECKPOINT_TIMEOUT_SECONDS +
+612 | 					" and " +
+613 | 					MAX_CHECKPOINT_TIMEOUT_SECONDS +
+614 | 					" seconds",
+615 | 			)
+616 | 		}
+617 | 
+618 | 		this.taskId = historyItem ? historyItem.id : (taskId ?? uuidv7())
+619 | 		this.rootTaskId = historyItem ? historyItem.rootTaskId : rootTask?.taskId
+620 | 		this.parentTaskId = historyItem ? historyItem.parentTaskId : parentTask?.taskId
+621 | 		this.childTaskId = undefined
+622 | 
+623 | 		this.metadata = {
+624 | 			task: historyItem ? historyItem.task : task,
+625 | 			images: historyItem ? [] : images,
+626 | 		}
+627 | 
+628 | 		// Normal use-case is usually retry similar history task with new workspace.
+629 | 		this.workspacePath = parentTask
+630 | 			? parentTask.workspacePath
+631 | 			: (workspacePath ?? getWorkspacePath(path.join(os.homedir(), "Desktop")))
+632 | 
+633 | 		this.instanceId = crypto.randomUUID().slice(0, 8)
+634 | 		this.taskNumber = -1
+635 | 
+636 | 		this.rooIgnoreController = new RooIgnoreController(this.cwd)
+637 | 		this.rooProtectedController = new RooProtectedController(this.cwd)
+638 | 		this.fileContextTracker = new FileContextTracker(host, this.taskId)
+639 | 		this.cangjieRuntimePolicy = new CangjieRuntimePolicy(this.cwd)
+640 | 
+641 | 		this.rooIgnoreController.initialize().catch((error) => {
+642 | 			console.error("Failed to initialize RooIgnoreController:", error)
+643 | 		})
+644 | 
+645 | 		this.apiConfiguration = apiConfiguration
+646 | 		this.api = buildApiHandler(this.apiConfiguration)
+647 | 		this.autoApprovalHandler = new AutoApprovalHandler()
+648 | 
+649 | 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
+650 | 		this.hostRef = new WeakRef(host)
+651 | 		this.globalStoragePath = host.context.globalStorageUri.fsPath
+652 | 		this.diffViewProvider = new DiffViewProvider(this.cwd, this)
+653 | 		this.enableCheckpoints = enableCheckpoints
+654 | 		this.checkpointTimeout = checkpointTimeout
+655 | 
+656 | 		this.parentTask = parentTask
+657 | 		this.taskNumber = taskNumber
+658 | 		this.initialStatus = initialStatus
+659 | 		this.requestBuilder = new TaskRequestBuilder(this)
+660 | 		this.streamProcessor = new TaskStreamProcessor(this)
+661 | 		this.errorRecovery = new ErrorRecoveryHandler(this)
+662 | 		if (parentTask) {
+663 | 			this.requestBuilder.inheritCacheFromParent(parentTask)
+664 | 		}
+665 | 
+666 | 		// Store the task's mode and API config name when it's created.
+667 | 		// For history items, use the stored values; for new tasks, we'll set them
+668 | 		// after getting state.
+669 | 		if (historyItem) {
+670 | 			this._taskMode = historyItem.mode || defaultModeSlug
+671 | 			this._taskApiConfigName = historyItem.apiConfigName
+672 | 			this.taskModeReady = Promise.resolve()
+673 | 			this.taskApiConfigReady = Promise.resolve()
+674 | 		} else {
+675 | 			// For new tasks, don't set the mode/apiConfigName yet - wait for async initialization.
+676 | 			this._taskMode = undefined
+677 | 			this._taskApiConfigName = undefined
+678 | 			this.taskModeReady = this.initializeTaskMode(host)
+679 | 			this.taskApiConfigReady = this.initializeTaskApiConfigName(host)
+680 | 		}
+681 | 
+682 | 		this.assistantMessageParser = undefined
+683 | 
+684 | 		this.messageQueueService = new MessageQueueService()
+685 | 
+686 | 		this.messageQueueStateChangedHandler = () => {
+687 | 			this.emit(NJUST_AIEventName.TaskUserMessage, this.taskId)
+688 | 			this.emit(NJUST_AIEventName.QueuedMessagesUpdated, this.taskId, this.messageQueueService.messages)
+689 | 			void this.refreshWebviewState()
+690 | 		}
+691 | 
+692 | 		this.messageQueueService.on("stateChanged", this.messageQueueStateChangedHandler)
+693 | 
+694 | 		// Listen for provider profile changes to update parser state
+695 | 		this.setupProviderProfileChangeListener(host)
+696 | 
+697 | 		// Set up diff strategy
+698 | 		this.diffStrategy = new MultiSearchReplaceDiffStrategy()
+699 | 
+700 | 		this.toolRepetitionDetector = new ToolRepetitionDetector(this.consecutiveMistakeLimit)
+
+701 | 		this.toolExecution.enableAdaptiveTuning()
+702 | 
+703 | 		// Initialize todo list if provided
+704 | 		if (initialTodos && initialTodos.length > 0) {
+705 | 			this.todoList = initialTodos
+706 | 		}
+707 | 
+708 | 		// Initialize debounced token usage emit function
+709 | 		// Uses debounce with maxWait to achieve throttle-like behavior:
+710 | 		// - leading: true  - Emit immediately on first call
+711 | 		// - trailing: true - Emit final state when updates stop
+712 | 		// - maxWait        - Ensures at most one emit per interval during rapid updates (throttle behavior)
+713 | 		this.debouncedEmitTokenUsage = debounce(
+714 | 			(tokenUsage: TokenUsage, toolUsage: ToolUsage) => {
+715 | 				const tokenChanged = hasTokenUsageChanged(tokenUsage, this.tokenUsageSnapshot)
+716 | 				const toolChanged = hasToolUsageChanged(toolUsage, this.toolUsageSnapshot)
+717 | 
+718 | 				if (tokenChanged || toolChanged) {
+719 | 					this.emit(NJUST_AIEventName.TaskTokenUsageUpdated, this.taskId, tokenUsage, toolUsage)
+720 | 					this.tokenUsageSnapshot = tokenUsage
+721 | 					this.tokenUsageSnapshotAt = this.clineMessages.at(-1)?.ts
+722 | 					// Deep copy tool usage for snapshot
+723 | 					this.toolUsageSnapshot = JSON.parse(JSON.stringify(toolUsage))
+724 | 				}
+725 | 			},
+726 | 			this.TOKEN_USAGE_EMIT_INTERVAL_MS,
+727 | 			{ leading: true, trailing: true, maxWait: this.TOKEN_USAGE_EMIT_INTERVAL_MS },
+728 | 		)
+729 | 
+730 | 		onCreated?.(this)
+731 | 
+732 | 		if (startTask) {
+733 | 			this._started = true
+734 | 			if (task || images) {
+735 | 				this.startTask(task, images)
+736 | 			} else if (historyItem) {
+737 | 				this.resumeTaskFromHistory()
+738 | 			} else {
+739 | 				throw new Error("Either historyItem or task/images must be provided")
+740 | 			}
+741 | 		}
+742 | 	}
+743 | 
+744 | 	/**
+745 | 	 * Initialize the task mode from the provider state.
+746 | 	 * This method handles async initialization with proper error handling.
+747 | 	 *
+748 | 	 * ## Flow
+749 | 	 * 1. Attempts to fetch the current mode from provider state
+750 | 	 * 2. Sets `_taskMode` to the fetched mode or `defaultModeSlug` if unavailable
+751 | 	 * 3. Handles errors gracefully by falling back to default mode
+752 | 	 * 4. Logs any initialization errors for debugging
+753 | 	 *
+754 | 	 * ## Error handling
+755 | 	 * - Network failures when fetching provider state
+756 | 	 * - Provider not yet initialized
+757 | 	 * - Invalid state structure
+758 | 	 *
+759 | 	 * All errors result in fallback to `defaultModeSlug` to ensure task can proceed.
+760 | 	 *
+761 | 	 * @private
+762 | 	 * @param provider - The ClineProvider instance to fetch state from
+763 | 	 * @returns Promise that resolves when initialization is complete
+764 | 	 */
+765 | 	private async initializeTaskMode(host: ITaskHost): Promise<void> {
+766 | 		try {
+767 | 			const state = await host.getState()
+768 | 			this._taskMode = state?.mode || defaultModeSlug
+769 | 		} catch (error) {
+770 | 			// If there's an error getting state, use the default mode
+771 | 			this._taskMode = defaultModeSlug
+772 | 			// Use the provider's log method for better error visibility
+773 | 			const errorMessage = `Failed to initialize task mode: ${error instanceof Error ? error.message : String(error)}`
+774 | 			host.log(errorMessage)
+775 | 		}
+776 | 	}
+777 | 
+778 | 	/**
+779 | 	 * Initialize the task API config name from the provider state.
+780 | 	 * This method handles async initialization with proper error handling.
+781 | 	 *
+782 | 	 * ## Flow
+783 | 	 * 1. Attempts to fetch the current API config name from provider state
+784 | 	 * 2. Sets `_taskApiConfigName` to the fetched name or "default" if unavailable
+785 | 	 * 3. Handles errors gracefully by falling back to "default"
+786 | 	 * 4. Logs any initialization errors for debugging
+787 | 	 *
+788 | 	 * ## Error handling
+789 | 	 * - Network failures when fetching provider state
+790 | 	 * - Provider not yet initialized
+791 | 	 * - Invalid state structure
+792 | 	 *
+793 | 	 * All errors result in fallback to "default" to ensure task can proceed.
+794 | 	 *
+795 | 	 * @private
+796 | 	 * @param provider - The ClineProvider instance to fetch state from
+797 | 	 * @returns Promise that resolves when initialization is complete
+798 | 	 */
+799 | 	private async initializeTaskApiConfigName(host: ITaskHost): Promise<void> {
+800 | 		try {
+
+801 | 			const state = await host.getState()
+802 | 
+803 | 			// Avoid clobbering a newer value that may have been set while awaiting provider state
+804 | 			// (e.g., user switches provider profile immediately after task creation).
+805 | 			if (this._taskApiConfigName === undefined) {
+806 | 				this._taskApiConfigName = state?.currentApiConfigName ?? "default"
+807 | 			}
+808 | 		} catch (error) {
+809 | 			// If there's an error getting state, use the default profile (unless a newer value was set).
+810 | 			if (this._taskApiConfigName === undefined) {
+811 | 				this._taskApiConfigName = "default"
+812 | 			}
+813 | 			// Use the provider's log method for better error visibility
+814 | 			const errorMessage = `Failed to initialize task API config name: ${error instanceof Error ? error.message : String(error)}`
+815 | 			host.log(errorMessage)
+816 | 		}
+817 | 	}
+818 | 
+819 | 	/**
+820 | 	 * Sets up a listener for provider profile changes.
+821 | 	 *
+822 | 	 * @private
+823 | 	 * @param provider - The ClineProvider instance to listen to
+824 | 	 */
+825 | 	private setupProviderProfileChangeListener(host: ITaskHost): void {
+826 | 		// Only set up listener if provider has the on method (may not exist in test mocks)
+827 | 		if (typeof host.on !== "function") {
+828 | 			return
+829 | 		}
+830 | 
+831 | 		this.providerProfileChangeListener = async () => {
+832 | 			// Abort fetch before awaiting provider state so the in-flight stream stops immediately.
+833 | 			this.cancelCurrentRequest()
+834 | 			try {
+835 | 				const newState = await host.getState()
+836 | 				if (newState?.apiConfiguration) {
+837 | 					this.updateApiConfiguration(newState.apiConfiguration)
+838 | 				}
+839 | 			} catch (error) {
+840 | 				console.error(
+841 | 					`[Task#${this.taskId}.${this.instanceId}] Failed to update API configuration on profile change:`,
+842 | 					error,
+843 | 				)
+844 | 			}
+845 | 		}
+846 | 
+847 | 		host.on(NJUST_AIEventName.ProviderProfileChanged, this.providerProfileChangeListener)
+848 | 	}
+849 | 
+850 | 	/**
+851 | 	 * Wait for the task mode to be initialized before proceeding.
+852 | 	 * This method ensures that any operations depending on the task mode
+853 | 	 * will have access to the correct mode value.
+854 | 	 *
+855 | 	 * ## When to use
+856 | 	 * - Before accessing mode-specific configurations
+857 | 	 * - When switching between tasks with different modes
+858 | 	 * - Before operations that depend on mode-based permissions
+859 | 	 *
+860 | 	 * ## Example usage
+861 | 	 * ```typescript
+862 | 	 * // Wait for mode initialization before mode-dependent operations
+863 | 	 * await task.waitForModeInitialization();
+864 | 	 * const mode = task.taskMode; // Now safe to access synchronously
+865 | 	 *
+866 | 	 * // Or use with getTaskMode() for a one-liner
+867 | 	 * const mode = await task.getTaskMode(); // Internally waits for initialization
+868 | 	 * ```
+869 | 	 *
+870 | 	 * @returns Promise that resolves when the task mode is initialized
+871 | 	 * @public
+872 | 	 */
+873 | 	public async waitForModeInitialization(): Promise<void> {
+874 | 		return this.taskModeReady
+875 | 	}
+876 | 
+877 | 	/**
+878 | 	 * Get the task mode asynchronously, ensuring it's properly initialized.
+879 | 	 * This is the recommended way to access the task mode as it guarantees
+880 | 	 * the mode is available before returning.
+881 | 	 *
+882 | 	 * ## Async behavior
+883 | 	 * - Internally waits for `taskModeReady` promise to resolve
+884 | 	 * - Returns the initialized mode or `defaultModeSlug` as fallback
+885 | 	 * - Safe to call multiple times - subsequent calls return immediately if already initialized
+886 | 	 *
+887 | 	 * ## Example usage
+888 | 	 * ```typescript
+889 | 	 * // Safe async access
+890 | 	 * const mode = await task.getTaskMode();
+891 | 	 * console.log(`Task is running in ${mode} mode`);
+892 | 	 *
+893 | 	 * // Use in conditional logic
+894 | 	 * if (await task.getTaskMode() === 'architect') {
+895 | 	 *   // Perform architect-specific operations
+896 | 	 * }
+897 | 	 * ```
+898 | 	 *
+899 | 	 * @returns Promise resolving to the task mode string
+900 | 	 * @public
+
+ 901 | 	 */
+ 902 | 	public async getTaskMode(): Promise<string> {
+ 903 | 		await this.taskModeReady
+ 904 | 		return this._taskMode || defaultModeSlug
+ 905 | 	}
+ 906 | 
+ 907 | 	/**
+ 908 | 	 * Get the task mode synchronously. This should only be used when you're certain
+ 909 | 	 * that the mode has already been initialized (e.g., after waitForModeInitialization).
+ 910 | 	 *
+ 911 | 	 * ## When to use
+ 912 | 	 * - In synchronous contexts where async/await is not available
+ 913 | 	 * - After explicitly waiting for initialization via `waitForModeInitialization()`
+ 914 | 	 * - In event handlers or callbacks where mode is guaranteed to be initialized
+ 915 | 	 *
+ 916 | 	 * ## Example usage
+ 917 | 	 * ```typescript
+ 918 | 	 * // After ensuring initialization
+ 919 | 	 * await task.waitForModeInitialization();
+ 920 | 	 * const mode = task.taskMode; // Safe synchronous access
+ 921 | 	 *
+ 922 | 	 * // In an event handler after task is started
+ 923 | 	 * task.on('taskStarted', () => {
+ 924 | 	 *   console.log(`Task started in ${task.taskMode} mode`); // Safe here
+ 925 | 	 * });
+ 926 | 	 * ```
+ 927 | 	 *
+ 928 | 	 * @throws {Error} If the mode hasn't been initialized yet
+ 929 | 	 * @returns The task mode string
+ 930 | 	 * @public
+ 931 | 	 */
+ 932 | 	public get taskMode(): string {
+ 933 | 		if (this._taskMode === undefined) {
+ 934 | 			throw new Error("Task mode accessed before initialization. Use getTaskMode() or wait for taskModeReady.")
+ 935 | 		}
+ 936 | 
+ 937 | 		return this._taskMode
+ 938 | 	}
+ 939 | 
+ 940 | 	/**
+ 941 | 	 * Wait for the task API config name to be initialized before proceeding.
+ 942 | 	 * This method ensures that any operations depending on the task's provider profile
+ 943 | 	 * will have access to the correct value.
+ 944 | 	 *
+ 945 | 	 * ## When to use
+ 946 | 	 * - Before accessing provider profile-specific configurations
+ 947 | 	 * - When switching between tasks with different provider profiles
+ 948 | 	 * - Before operations that depend on the provider profile
+ 949 | 	 *
+ 950 | 	 * @returns Promise that resolves when the task API config name is initialized
+ 951 | 	 * @public
+ 952 | 	 */
+ 953 | 	public async waitForApiConfigInitialization(): Promise<void> {
+ 954 | 		return this.taskApiConfigReady
+ 955 | 	}
+ 956 | 
+ 957 | 	/**
+ 958 | 	 * Get the task API config name asynchronously, ensuring it's properly initialized.
+ 959 | 	 * This is the recommended way to access the task's provider profile as it guarantees
+ 960 | 	 * the value is available before returning.
+ 961 | 	 *
+ 962 | 	 * ## Async behavior
+ 963 | 	 * - Internally waits for `taskApiConfigReady` promise to resolve
+ 964 | 	 * - Returns the initialized API config name or undefined as fallback
+ 965 | 	 * - Safe to call multiple times - subsequent calls return immediately if already initialized
+ 966 | 	 *
+ 967 | 	 * @returns Promise resolving to the task API config name string or undefined
+ 968 | 	 * @public
+ 969 | 	 */
+ 970 | 	public async getTaskApiConfigName(): Promise<string | undefined> {
+ 971 | 		await this.taskApiConfigReady
+ 972 | 		return this._taskApiConfigName
+ 973 | 	}
+ 974 | 
+ 975 | 	/**
+ 976 | 	 * Get the task API config name synchronously. This should only be used when you're certain
+ 977 | 	 * that the value has already been initialized (e.g., after waitForApiConfigInitialization).
+ 978 | 	 *
+ 979 | 	 * ## When to use
+ 980 | 	 * - In synchronous contexts where async/await is not available
+ 981 | 	 * - After explicitly waiting for initialization via `waitForApiConfigInitialization()`
+ 982 | 	 * - In event handlers or callbacks where API config name is guaranteed to be initialized
+ 983 | 	 *
+ 984 | 	 * Note: Unlike taskMode, this getter does not throw if uninitialized since the API config
+ 985 | 	 * name can legitimately be undefined (backward compatibility with tasks created before
+ 986 | 	 * this feature was added).
+ 987 | 	 *
+ 988 | 	 * @returns The task API config name string or undefined
+ 989 | 	 * @public
+ 990 | 	 */
+ 991 | 	public get taskApiConfigName(): string | undefined {
+ 992 | 		return this._taskApiConfigName
+ 993 | 	}
+ 994 | 
+ 995 | 	/**
+ 996 | 	 * Update the task's API config name. This is called when the user switches
+ 997 | 	 * provider profiles while a task is active, allowing the task to remember
+ 998 | 	 * its new provider profile.
+ 999 | 	 *
+1000 | 	 * @param apiConfigName - The new API config name to set
+
+1001 | 	 * @internal
+1002 | 	 */
+1003 | 	public setTaskApiConfigName(apiConfigName: string | undefined): void {
+1004 | 		this._taskApiConfigName = apiConfigName
+1005 | 	}
+1006 | 
+1007 | 	static create(options: TaskOptions): [Task, Promise<void>] {
+1008 | 		const instance = new Task({ ...options, startTask: false })
+1009 | 		const { images, task, historyItem } = options
+1010 | 		let promise
+1011 | 
+1012 | 		if (images || task) {
+1013 | 			promise = instance.startTask(task, images)
+1014 | 		} else if (historyItem) {
+1015 | 			promise = instance.resumeTaskFromHistory()
+1016 | 		} else {
+1017 | 			throw new Error("Either historyItem or task/images must be provided")
+1018 | 		}
+1019 | 
+1020 | 		return [instance, promise]
+1021 | 	}
+1022 | 
+1023 | 	// API Messages
+1024 | 
+1025 | 	private async getSavedApiConversationHistory(): Promise<ApiMessage[]> {
+1026 | 		return readApiMessages({ taskId: this.taskId, globalStoragePath: this.globalStoragePath })
+1027 | 	}
+1028 | 
+1029 | 	async addToApiConversationHistory(message: Anthropic.MessageParam, reasoning?: string) {
+1030 | 		// Capture the encrypted_content / thought signatures from the provider (e.g., OpenAI Responses API, Google GenAI) if present.
+1031 | 		// We only persist data reported by the current response body.
+1032 | 		const handler = this.api as ApiHandler & {
+1033 | 			getResponseId?: () => string | undefined
+1034 | 			getEncryptedContent?: () => { encrypted_content: string; id?: string } | undefined
+1035 | 			getThoughtSignature?: () => string | undefined
+1036 | 			getSummary?: () => any[] | undefined
+1037 | 			getReasoningDetails?: () => any[] | undefined
+1038 | 		}
+1039 | 
+1040 | 		if (message.role === "assistant") {
+1041 | 			const responseId = handler.getResponseId?.()
+1042 | 			const reasoningData = handler.getEncryptedContent?.()
+1043 | 			const thoughtSignature = handler.getThoughtSignature?.()
+1044 | 			const reasoningSummary = handler.getSummary?.()
+1045 | 			const reasoningDetails = handler.getReasoningDetails?.()
+1046 | 
+1047 | 			// Only Anthropic's API expects/validates the special `thinking` content block signature.
+1048 | 			// Other providers (notably Gemini 3) use different signature semantics (e.g. `thoughtSignature`)
+1049 | 			// and require round-tripping the signature in their own format.
+1050 | 			const modelId = getModelId(this.apiConfiguration)
+1051 | 			const apiProvider = this.apiConfiguration.apiProvider
+1052 | 			const apiProtocol = getApiProtocol(
+1053 | 				apiProvider && !isRetiredProvider(apiProvider) ? apiProvider : undefined,
+1054 | 				modelId,
+1055 | 			)
+1056 | 			const isAnthropicProtocol = apiProtocol === "anthropic"
+1057 | 
+1058 | 			// Start from the original assistant message
+1059 | 			const messageWithTs: any = {
+1060 | 				...message,
+1061 | 				...(responseId ? { id: responseId } : {}),
+1062 | 				ts: Date.now(),
+1063 | 			}
+1064 | 
+1065 | 			// Store reasoning_details array if present (for models like Gemini 3)
+1066 | 			if (reasoningDetails) {
+1067 | 				messageWithTs.reasoning_details = reasoningDetails
+1068 | 			}
+1069 | 
+1070 | 			// Store reasoning: Anthropic thinking (with signature), plain text (most providers), or encrypted (OpenAI Native)
+1071 | 			// Skip if reasoning_details already contains the reasoning (to avoid duplication)
+1072 | 			if (isAnthropicProtocol && reasoning && thoughtSignature && !reasoningDetails) {
+1073 | 				// Anthropic provider with extended thinking: Store as proper `thinking` block
+1074 | 				// This format passes through anthropic-filter.ts and is properly round-tripped
+1075 | 				// for interleaved thinking with tool use (required by Anthropic API)
+1076 | 				const thinkingBlock = {
+1077 | 					type: "thinking",
+1078 | 					thinking: reasoning,
+1079 | 					signature: thoughtSignature,
+1080 | 				}
+1081 | 
+1082 | 				if (typeof messageWithTs.content === "string") {
+1083 | 					messageWithTs.content = [
+1084 | 						thinkingBlock,
+1085 | 						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+1086 | 					]
+1087 | 				} else if (Array.isArray(messageWithTs.content)) {
+1088 | 					messageWithTs.content = [thinkingBlock, ...messageWithTs.content]
+1089 | 				} else if (!messageWithTs.content) {
+1090 | 					messageWithTs.content = [thinkingBlock]
+1091 | 				}
+1092 | 			} else if (reasoning && !reasoningDetails) {
+1093 | 				// Other providers (non-Anthropic): Store as generic reasoning block
+1094 | 				const reasoningBlock = {
+1095 | 					type: "reasoning",
+1096 | 					text: reasoning,
+1097 | 					summary: reasoningSummary ?? ([] as any[]),
+1098 | 				}
+1099 | 
+1100 | 				// Also store reasoning_content as a top-level field so that it
+
+1101 | 				// survives content-array transformations (e.g., buildCleanConversationHistory
+1102 | 				// converting the array to a string when the model doesn't set preserveReasoning).
+1103 | 				// DeepSeek/Z.ai require this field to be passed back in thinking mode.
+1104 | 				messageWithTs.reasoning_content = reasoning
+1105 | 
+1106 | 				if (typeof messageWithTs.content === "string") {
+1107 | 					messageWithTs.content = [
+1108 | 						reasoningBlock,
+1109 | 						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+1110 | 					]
+1111 | 				} else if (Array.isArray(messageWithTs.content)) {
+1112 | 					messageWithTs.content = [reasoningBlock, ...messageWithTs.content]
+1113 | 				} else if (!messageWithTs.content) {
+1114 | 					messageWithTs.content = [reasoningBlock]
+1115 | 				}
+1116 | 			} else if (reasoningData?.encrypted_content) {
+1117 | 				// OpenAI Native encrypted reasoning
+1118 | 				const reasoningBlock = {
+1119 | 					type: "reasoning",
+1120 | 					summary: [] as any[],
+1121 | 					encrypted_content: reasoningData.encrypted_content,
+1122 | 					...(reasoningData.id ? { id: reasoningData.id } : {}),
+1123 | 				}
+1124 | 
+1125 | 				if (typeof messageWithTs.content === "string") {
+1126 | 					messageWithTs.content = [
+1127 | 						reasoningBlock,
+1128 | 						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+1129 | 					]
+1130 | 				} else if (Array.isArray(messageWithTs.content)) {
+1131 | 					messageWithTs.content = [reasoningBlock, ...messageWithTs.content]
+1132 | 				} else if (!messageWithTs.content) {
+1133 | 					messageWithTs.content = [reasoningBlock]
+1134 | 				}
+1135 | 			}
+1136 | 
+1137 | 			// For non-Anthropic providers (e.g., Gemini 3), persist the thought signature as its own
+1138 | 			// content block so converters can attach it back to the correct provider-specific fields.
+1139 | 			// Note: For Anthropic extended thinking, the signature is already included in the thinking block above.
+1140 | 			if (thoughtSignature && !isAnthropicProtocol) {
+1141 | 				const thoughtSignatureBlock = {
+1142 | 					type: "thoughtSignature",
+1143 | 					thoughtSignature,
+1144 | 				}
+1145 | 
+1146 | 				if (typeof messageWithTs.content === "string") {
+1147 | 					messageWithTs.content = [
+1148 | 						{ type: "text", text: messageWithTs.content } satisfies Anthropic.Messages.TextBlockParam,
+1149 | 						thoughtSignatureBlock,
+1150 | 					]
+1151 | 				} else if (Array.isArray(messageWithTs.content)) {
+1152 | 					messageWithTs.content = [...messageWithTs.content, thoughtSignatureBlock]
+1153 | 				} else if (!messageWithTs.content) {
+1154 | 					messageWithTs.content = [thoughtSignatureBlock]
+1155 | 				}
+1156 | 			}
+1157 | 
+1158 | 			this.apiConversationHistory.push(messageWithTs)
+1159 | 		} else {
+1160 | 			// For user messages, validate tool_result IDs ONLY when the immediately previous *effective* message
+1161 | 			// is an assistant message.
+1162 | 			//
+1163 | 			// If the previous effective message is also a user message (e.g., summary + a new user message),
+1164 | 			// validating against any earlier assistant message can incorrectly inject placeholder tool_results.
+1165 | 			const effectiveHistoryForValidation = getEffectiveApiHistory(this.apiConversationHistory)
+1166 | 			const lastEffective = effectiveHistoryForValidation[effectiveHistoryForValidation.length - 1]
+1167 | 			const historyForValidation = lastEffective?.role === "assistant" ? effectiveHistoryForValidation : []
+1168 | 
+1169 | 			// If the previous effective message is NOT an assistant, convert tool_result blocks to text blocks.
+1170 | 			// This prevents orphaned tool_results from being filtered out by getEffectiveApiHistory.
+1171 | 			// This can happen when condensing occurs after the assistant sends tool_uses but before
+1172 | 			// the user responds - the tool_use blocks get condensed away, leaving orphaned tool_results.
+1173 | 			let messageToAdd = message
+1174 | 			if (lastEffective?.role !== "assistant" && Array.isArray(message.content)) {
+1175 | 				messageToAdd = {
+1176 | 					...message,
+1177 | 					content: message.content.map((block) =>
+1178 | 						block.type === "tool_result"
+1179 | 							? {
+1180 | 									type: "text" as const,
+1181 | 									text: `Tool result:\n${typeof block.content === "string" ? block.content : JSON.stringify(block.content)}`,
+1182 | 								}
+1183 | 							: block,
+1184 | 					),
+1185 | 				}
+1186 | 			}
+1187 | 
+1188 | 			const validatedMessage = validateAndFixToolResultIds(messageToAdd, historyForValidation)
+1189 | 			const messageWithTs = { ...validatedMessage, ts: Date.now() }
+1190 | 			this.apiConversationHistory.push(messageWithTs)
+1191 | 		}
+1192 | 
+1193 | 		await this.saveApiConversationHistory()
+1194 | 	}
+1195 | 
+1196 | 	// NOTE: We intentionally do NOT mutate stored messages to merge consecutive user turns.
+1197 | 	// For API requests, consecutive same-role messages are merged via mergeConsecutiveApiMessages()
+1198 | 	// so rewind/edit behavior can still reference original message boundaries.
+1199 | 
+1200 | 	async overwriteApiConversationHistory(newHistory: ApiMessage[]) {
+
+1201 | 		this.apiConversationHistory = newHistory
+1202 | 		await this.saveApiConversationHistory()
+1203 | 	}
+1204 | 
+1205 | 	/**
+1206 | 	 * Flush any pending tool results to the API conversation history.
+1207 | 	 *
+1208 | 	 * This is critical when the task is about to be
+1209 | 	 * delegated (e.g., via new_task). Before delegation, if other tools were
+1210 | 	 * called in the same turn before new_task, their tool_result blocks are
+1211 | 	 * accumulated in `userMessageContent` but haven't been saved to the API
+1212 | 	 * history yet. If we don't flush them before the parent is disposed,
+1213 | 	 * the API conversation will be incomplete and cause 400 errors when
+1214 | 	 * the parent resumes (missing tool_result for tool_use blocks).
+1215 | 	 *
+1216 | 	 * NOTE: The assistant message is typically already in history by the time
+1217 | 	 * tools execute (added in recursivelyMakeClineRequests after streaming completes).
+1218 | 	 * So we usually only need to flush the pending user message with tool_results.
+1219 | 	 */
+1220 | 	public async flushPendingToolResultsToHistory(): Promise<boolean> {
+1221 | 		// Only flush if there's actually pending content to save
+1222 | 		if (this.userMessageContent.length === 0) {
+1223 | 			return true
+1224 | 		}
+1225 | 
+1226 | 		// CRITICAL: Wait for the assistant message to be saved to API history first.
+1227 | 		// Without this, tool_result blocks would appear BEFORE tool_use blocks in the
+1228 | 		// conversation history, causing API errors like:
+1229 | 		// "unexpected `tool_use_id` found in `tool_result` blocks"
+1230 | 		//
+1231 | 		// This can happen when parallel tools are called (e.g., update_todo_list + new_task).
+1232 | 		// Tools execute during streaming via presentAssistantMessage, BEFORE the assistant
+1233 | 		// message is saved. When new_task triggers delegation, it calls this method to
+1234 | 		// flush pending results - but the assistant message hasn't been saved yet.
+1235 | 		//
+1236 | 		// The assistantMessageSavedToHistory flag is:
+1237 | 		// - Reset to false at the start of each API request
+1238 | 		// - Set to true after the assistant message is saved in recursivelyMakeClineRequests
+1239 | 		if (!this.assistantMessageSavedToHistory) {
+1240 | 			await pWaitFor(() => this.assistantMessageSavedToHistory || this.abort, {
+1241 | 				interval: 50,
+1242 | 				timeout: 30_000, // 30 second timeout as safety net
+1243 | 			}).catch(() => {
+1244 | 				// If timeout or abort, log and proceed anyway to avoid hanging
+1245 | 				console.warn(
+1246 | 					`[Task#${this.taskId}] flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved`,
+1247 | 				)
+1248 | 			})
+1249 | 		}
+1250 | 
+1251 | 		// If task was aborted while waiting, don't flush
+1252 | 		if (this.abort) {
+1253 | 			return false
+1254 | 		}
+1255 | 
+1256 | 		// Save the user message with tool_result blocks
+1257 | 		const userMessage: Anthropic.MessageParam = {
+1258 | 			role: "user",
+1259 | 			content: this.userMessageContent,
+1260 | 		}
+1261 | 
+1262 | 		// Validate and fix tool_result IDs when the previous *effective* message is an assistant message.
+1263 | 		const effectiveHistoryForValidation = getEffectiveApiHistory(this.apiConversationHistory)
+1264 | 		const lastEffective = effectiveHistoryForValidation[effectiveHistoryForValidation.length - 1]
+1265 | 		const historyForValidation = lastEffective?.role === "assistant" ? effectiveHistoryForValidation : []
+1266 | 		const validatedMessage = validateAndFixToolResultIds(userMessage, historyForValidation)
+1267 | 		const userMessageWithTs = { ...validatedMessage, ts: Date.now() }
+1268 | 		this.apiConversationHistory.push(userMessageWithTs as ApiMessage)
+1269 | 
+1270 | 		const saved = await this.saveApiConversationHistory()
+1271 | 
+1272 | 		if (saved) {
+1273 | 			// Clear the pending content since it's now saved
+1274 | 			this.userMessageContent = []
+1275 | 		} else {
+1276 | 			console.warn(
+1277 | 				`[Task#${this.taskId}] flushPendingToolResultsToHistory: save failed, retaining pending tool results in memory`,
+1278 | 			)
+1279 | 		}
+1280 | 
+1281 | 		return saved
+1282 | 	}
+1283 | 
+1284 | 	private async saveApiConversationHistory(): Promise<boolean> {
+1285 | 		try {
+1286 | 			await saveApiMessages({
+1287 | 				messages: structuredClone(this.apiConversationHistory),
+1288 | 				taskId: this.taskId,
+1289 | 				globalStoragePath: this.globalStoragePath,
+1290 | 			})
+1291 | 			return true
+1292 | 		} catch (error) {
+1293 | 			console.error("Failed to save API conversation history:", error)
+1294 | 			return false
+1295 | 		}
+1296 | 	}
+1297 | 
+1298 | 	/**
+1299 | 	 * Public wrapper to retry saving the API conversation history.
+1300 | 	 * Uses exponential backoff: up to 3 attempts with delays of 100 ms, 500 ms, 1500 ms.
+
+1301 | 	 * Used by delegation flow when flushPendingToolResultsToHistory reports failure.
+1302 | 	 */
+1303 | 	public async retrySaveApiConversationHistory(): Promise<boolean> {
+1304 | 		const delays = [100, 500, 1500]
+1305 | 
+1306 | 		for (let attempt = 0; attempt < delays.length; attempt++) {
+1307 | 			await new Promise<void>((resolve) => setTimeout(resolve, delays[attempt]))
+1308 | 			console.warn(
+1309 | 				`[Task#${this.taskId}] retrySaveApiConversationHistory: retry attempt ${attempt + 1}/${delays.length}`,
+1310 | 			)
+1311 | 
+1312 | 			const success = await this.saveApiConversationHistory()
+1313 | 
+1314 | 			if (success) {
+1315 | 				return true
+1316 | 			}
+1317 | 		}
+1318 | 
+1319 | 		return false
+1320 | 	}
+1321 | 
+1322 | 	// Cline Messages
+1323 | 
+1324 | 	private async getSavedClineMessages(): Promise<ClineMessage[]> {
+1325 | 		return readTaskMessages({ taskId: this.taskId, globalStoragePath: this.globalStoragePath })
+1326 | 	}
+1327 | 
+1328 | 	private async addToClineMessages(message: ClineMessage) {
+1329 | 		this.clineMessages.push(message)
+1330 | 		const provider = this.hostRef.deref()
+1331 | 		// Avoid resending large, mostly-static fields (notably taskHistory) on every chat message update.
+1332 | 		// taskHistory is maintained in-memory in the webview and updated via taskHistoryItemUpdated.
+1333 | 		await provider?.postStateToWebviewWithoutTaskHistory()
+1334 | 		this.emit(NJUST_AIEventName.Message, { action: "created", message })
+1335 | 		await this.saveClineMessages()
+1336 | 
+1337 | 		// Cloud service disabled - no message capture
+1338 | 	}
+1339 | 
+1340 | 	public async overwriteClineMessages(newMessages: ClineMessage[]) {
+1341 | 		this.clineMessages = newMessages
+1342 | 		restoreTodoListForTask(this)
+1343 | 		await this.saveClineMessages()
+1344 | 	}
+1345 | 
+1346 | 	private async updateClineMessage(message: ClineMessage) {
+1347 | 		const provider = this.hostRef.deref()
+1348 | 		await provider?.postMessageToWebview({ type: "messageUpdated", clineMessage: message })
+1349 | 		this.emit(NJUST_AIEventName.Message, { action: "updated", message })
+1350 | 		// Cloud service disabled - no message capture
+1351 | 	}
+1352 | 
+1353 | 	private async saveClineMessages(): Promise<boolean> {
+1354 | 		try {
+1355 | 			await saveTaskMessages({
+1356 | 				messages: structuredClone(this.clineMessages),
+1357 | 				taskId: this.taskId,
+1358 | 				globalStoragePath: this.globalStoragePath,
+1359 | 			})
+1360 | 
+1361 | 			if (this._taskApiConfigName === undefined) {
+1362 | 				await this.taskApiConfigReady
+1363 | 			}
+1364 | 
+1365 | 			const { historyItem, tokenUsage } = await taskMetadata({
+1366 | 				taskId: this.taskId,
+1367 | 				rootTaskId: this.rootTaskId,
+1368 | 				parentTaskId: this.parentTaskId,
+1369 | 				taskNumber: this.taskNumber,
+1370 | 				messages: this.clineMessages,
+1371 | 				globalStoragePath: this.globalStoragePath,
+1372 | 				workspace: this.cwd,
+1373 | 				mode: this._taskMode || defaultModeSlug, // Use the task's own mode, not the current provider mode.
+1374 | 				apiConfigName: this._taskApiConfigName, // Use the task's own provider profile, not the current provider profile.
+1375 | 				initialStatus: this.initialStatus,
+1376 | 			})
+1377 | 
+1378 | 			// Emit token/tool usage updates using debounced function
+1379 | 			// The debounce with maxWait ensures:
+1380 | 			// - Immediate first emit (leading: true)
+1381 | 			// - At most one emit per interval during rapid updates (maxWait)
+1382 | 			// - Final state is emitted when updates stop (trailing: true)
+1383 | 			this.debouncedEmitTokenUsage(tokenUsage, this.toolUsage)
+1384 | 
+1385 | 			await this.notifier?.updateTaskHistory(historyItem)
+1386 | 			return true
+1387 | 		} catch (error) {
+1388 | 			console.error("Failed to save Njust-AI messages:", error)
+1389 | 			return false
+1390 | 		}
+1391 | 	}
+1392 | 
+1393 | 	private findMessageByTimestamp(ts: number): ClineMessage | undefined {
+1394 | 		for (let i = this.clineMessages.length - 1; i >= 0; i--) {
+1395 | 			if (this.clineMessages[i].ts === ts) {
+1396 | 				return this.clineMessages[i]
+1397 | 			}
+1398 | 		}
+1399 | 
+1400 | 		return undefined
+
+1401 | 	}
+1402 | 
+1403 | 	// Note that `partial` has three valid states true (partial message),
+1404 | 	// false (completion of partial message), undefined (individual complete
+1405 | 	// message).
+1406 | 	async ask(
+1407 | 		type: ClineAsk,
+1408 | 		text?: string,
+1409 | 		partial?: boolean,
+1410 | 		progressStatus?: ToolProgressStatus,
+1411 | 		isProtected?: boolean,
+1412 | 	): Promise<{ response: ClineAskResponse; text?: string; images?: string[] }> {
+1413 | 		// If this Cline instance was aborted by the provider, then the only
+1414 | 		// thing keeping us alive is a promise still running in the background,
+1415 | 		// in which case we don't want to send its result to the webview as it
+1416 | 		// is attached to a new instance of Cline now. So we can safely ignore
+1417 | 		// the result of any active promises, and this class will be
+1418 | 		// deallocated. (Although we set Cline = undefined in provider, that
+1419 | 		// simply removes the reference to this instance, but the instance is
+1420 | 		// still alive until this promise resolves or rejects.)
+1421 | 		if (this.abort) {
+1422 | 			throw new Error(`[NJUST_AI#ask] task ${this.taskId}.${this.instanceId} aborted`)
+1423 | 		}
+1424 | 
+1425 | 		let askTs: number
+1426 | 
+1427 | 		if (partial !== undefined) {
+1428 | 			const lastMessage = this.clineMessages.at(-1)
+1429 | 
+1430 | 			const isUpdatingPreviousPartial =
+1431 | 				lastMessage && lastMessage.partial && lastMessage.type === "ask" && lastMessage.ask === type
+1432 | 
+1433 | 			if (partial) {
+1434 | 				if (isUpdatingPreviousPartial) {
+1435 | 					// Existing partial message, so update it.
+1436 | 					lastMessage.text = text
+1437 | 					lastMessage.partial = partial
+1438 | 					lastMessage.progressStatus = progressStatus
+1439 | 					lastMessage.isProtected = isProtected
+1440 | 					// TODO: Be more efficient about saving and posting only new
+1441 | 					// data or one whole message at a time so ignore partial for
+1442 | 					// saves, and only post parts of partial message instead of
+1443 | 					// whole array in new listener.
+1444 | 					this.updateClineMessage(lastMessage)
+1445 | 					// console.log("Task#ask: current ask promise was ignored (#1)")
+1446 | 					throw new AskIgnoredError("updating existing partial")
+1447 | 				} else {
+1448 | 					// This is a new partial message, so add it with partial
+1449 | 					// state.
+1450 | 					askTs = Date.now()
+1451 | 					this.lastMessageTs = askTs
+1452 | 					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, partial, isProtected })
+1453 | 					// console.log("Task#ask: current ask promise was ignored (#2)")
+1454 | 					throw new AskIgnoredError("new partial")
+1455 | 				}
+1456 | 			} else {
+1457 | 				if (isUpdatingPreviousPartial) {
+1458 | 					// This is the complete version of a previously partial
+1459 | 					// message, so replace the partial with the complete version.
+1460 | 					this.askResponse = undefined
+1461 | 					this.askResponseText = undefined
+1462 | 					this.askResponseImages = undefined
+1463 | 
+1464 | 					// Bug for the history books:
+1465 | 					// In the webview we use the ts as the chatrow key for the
+1466 | 					// virtuoso list. Since we would update this ts right at the
+1467 | 					// end of streaming, it would cause the view to flicker. The
+1468 | 					// key prop has to be stable otherwise react has trouble
+1469 | 					// reconciling items between renders, causing unmounting and
+1470 | 					// remounting of components (flickering).
+1471 | 					// The lesson here is if you see flickering when rendering
+1472 | 					// lists, it's likely because the key prop is not stable.
+1473 | 					// So in this case we must make sure that the message ts is
+1474 | 					// never altered after first setting it.
+1475 | 					askTs = lastMessage.ts
+1476 | 					this.lastMessageTs = askTs
+1477 | 					lastMessage.text = text
+1478 | 					lastMessage.partial = false
+1479 | 					lastMessage.progressStatus = progressStatus
+1480 | 					lastMessage.isProtected = isProtected
+1481 | 					await this.saveClineMessages()
+1482 | 					this.updateClineMessage(lastMessage)
+1483 | 				} else {
+1484 | 					// This is a new and complete message, so add it like normal.
+1485 | 					this.askResponse = undefined
+1486 | 					this.askResponseText = undefined
+1487 | 					this.askResponseImages = undefined
+1488 | 					askTs = Date.now()
+1489 | 					this.lastMessageTs = askTs
+1490 | 					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, isProtected })
+1491 | 				}
+1492 | 			}
+1493 | 		} else {
+1494 | 			// This is a new non-partial message, so add it like normal.
+1495 | 			this.askResponse = undefined
+1496 | 			this.askResponseText = undefined
+1497 | 			this.askResponseImages = undefined
+1498 | 			askTs = Date.now()
+1499 | 			this.lastMessageTs = askTs
+1500 | 			await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, isProtected })
+
+1501 | 		}
+1502 | 
+1503 | 		let timeouts: NodeJS.Timeout[] = []
+1504 | 
+1505 | 		// Automatically approve if the ask according to the user's settings.
+1506 | 		const provider = this.hostRef.deref()
+1507 | 		const state = provider ? await provider.getState() : undefined
+1508 | 		const approval = await checkAutoApproval({ state: state as any, ask: type, text, isProtected })
+1509 | 
+1510 | 		if (approval.decision === "approve") {
+1511 | 			this.approveAsk()
+1512 | 		} else if (approval.decision === "deny") {
+1513 | 			this.denyAsk()
+1514 | 		} else if (approval.decision === "timeout") {
+1515 | 			// Store the auto-approval timeout so it can be cancelled if user interacts
+1516 | 			this.autoApprovalTimeoutRef = setTimeout(() => {
+1517 | 				const { askResponse, text, images } = approval.fn()
+1518 | 				this.handleWebviewAskResponse(askResponse, text, images)
+1519 | 				this.autoApprovalTimeoutRef = undefined
+1520 | 			}, approval.timeout)
+1521 | 			timeouts.push(this.autoApprovalTimeoutRef)
+1522 | 		}
+1523 | 
+1524 | 		// The state is mutable if the message is complete and the task will
+1525 | 		// block (via the `pWaitFor`).
+1526 | 		const isBlocking = !(this.askResponse !== undefined || this.lastMessageTs !== askTs)
+1527 | 		const isMessageQueued = !this.messageQueueService.isEmpty()
+1528 | 		// Keep queued user messages intact during command_output asks. Those asks
+1529 | 		// are terminal flow-control, not conversational turns.
+1530 | 		const shouldDrainQueuedMessageForAsk = type !== "command_output"
+1531 | 		const isStatusMutable = !partial && isBlocking && !isMessageQueued && approval.decision === "ask"
+1532 | 
+1533 | 		if (isStatusMutable) {
+1534 | 			const statusMutationTimeout = 2_000
+1535 | 
+1536 | 			if (isInteractiveAsk(type)) {
+1537 | 				timeouts.push(
+1538 | 					setTimeout(() => {
+1539 | 						const message = this.findMessageByTimestamp(askTs)
+1540 | 
+1541 | 						if (message) {
+1542 | 							this.interactiveAsk = message
+1543 | 							this.emit(NJUST_AIEventName.TaskInteractive, this.taskId)
+1544 | 							provider?.postMessageToWebview({ type: "interactionRequired" })
+1545 | 						}
+1546 | 					}, statusMutationTimeout),
+1547 | 				)
+1548 | 			} else if (isResumableAsk(type)) {
+1549 | 				timeouts.push(
+1550 | 					setTimeout(() => {
+1551 | 						const message = this.findMessageByTimestamp(askTs)
+1552 | 
+1553 | 						if (message) {
+1554 | 							this.resumableAsk = message
+1555 | 							this.emit(NJUST_AIEventName.TaskResumable, this.taskId)
+1556 | 						}
+1557 | 					}, statusMutationTimeout),
+1558 | 				)
+1559 | 			} else if (isIdleAsk(type)) {
+1560 | 				timeouts.push(
+1561 | 					setTimeout(() => {
+1562 | 						const message = this.findMessageByTimestamp(askTs)
+1563 | 
+1564 | 						if (message) {
+1565 | 							this.idleAsk = message
+1566 | 							this.emit(NJUST_AIEventName.TaskIdle, this.taskId)
+1567 | 						}
+1568 | 					}, statusMutationTimeout),
+1569 | 				)
+1570 | 			}
+1571 | 		} else if (isMessageQueued && shouldDrainQueuedMessageForAsk) {
+1572 | 			const message = this.messageQueueService.dequeueMessage()
+1573 | 
+1574 | 			if (message) {
+1575 | 				// Check if this is a tool approval ask that needs to be handled.
+1576 | 				if (type === "tool" || type === "command" || type === "use_mcp_server") {
+1577 | 					// For tool approvals, we need to approve first, then send
+1578 | 					// the message if there's text/images.
+1579 | 					this.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
+1580 | 				} else {
+1581 | 					// For other ask types (like followup or command_output), fulfill the ask
+1582 | 					// directly.
+1583 | 					this.handleWebviewAskResponse("messageResponse", message.text, message.images)
+1584 | 				}
+1585 | 			}
+1586 | 		}
+1587 | 
+1588 | 		// Wait for askResponse to be set
+1589 | 		await pWaitFor(
+1590 | 			() => {
+1591 | 				if (this.askResponse !== undefined || this.lastMessageTs !== askTs) {
+1592 | 					return true
+1593 | 				}
+1594 | 
+1595 | 				// If a queued message arrives while we're blocked on an ask (e.g. a follow-up
+1596 | 				// suggestion click that was incorrectly queued due to UI state), consume it
+1597 | 				// immediately so the task doesn't hang.
+1598 | 				if (shouldDrainQueuedMessageForAsk && !this.messageQueueService.isEmpty()) {
+1599 | 					const message = this.messageQueueService.dequeueMessage()
+1600 | 					if (message) {
+
+1601 | 						// If this is a tool approval ask, we need to approve first (yesButtonClicked)
+1602 | 						// and include any queued text/images.
+1603 | 						if (type === "tool" || type === "command" || type === "use_mcp_server") {
+1604 | 							this.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
+1605 | 						} else {
+1606 | 							this.handleWebviewAskResponse("messageResponse", message.text, message.images)
+1607 | 						}
+1608 | 					}
+1609 | 				}
+1610 | 
+1611 | 				return false
+1612 | 			},
+1613 | 			{ interval: 100 },
+1614 | 		)
+1615 | 
+1616 | 		if (this.lastMessageTs !== askTs) {
+1617 | 			// Could happen if we send multiple asks in a row i.e. with
+1618 | 			// command_output. It's important that when we know an ask could
+1619 | 			// fail, it is handled gracefully.
+1620 | 			throw new AskIgnoredError("superseded")
+1621 | 		}
+1622 | 
+1623 | 		const result = { response: this.askResponse!, text: this.askResponseText, images: this.askResponseImages }
+1624 | 		this.askResponse = undefined
+1625 | 		this.askResponseText = undefined
+1626 | 		this.askResponseImages = undefined
+1627 | 
+1628 | 		// Cancel the timeouts if they are still running.
+1629 | 		timeouts.forEach((timeout) => clearTimeout(timeout))
+1630 | 
+1631 | 		// Switch back to an active state.
+1632 | 		if (this.idleAsk || this.resumableAsk || this.interactiveAsk) {
+1633 | 			this.idleAsk = undefined
+1634 | 			this.resumableAsk = undefined
+1635 | 			this.interactiveAsk = undefined
+1636 | 			this.emit(NJUST_AIEventName.TaskActive, this.taskId)
+1637 | 		}
+1638 | 
+1639 | 		this.emit(NJUST_AIEventName.TaskAskResponded)
+1640 | 		return result
+1641 | 	}
+1642 | 
+1643 | 	handleWebviewAskResponse(askResponse: ClineAskResponse, text?: string, images?: string[]) {
+1644 | 		// Clear any pending auto-approval timeout when user responds
+1645 | 		this.cancelAutoApprovalTimeout()
+1646 | 
+1647 | 		this.askResponse = askResponse
+1648 | 		this.askResponseText = text
+1649 | 		this.askResponseImages = images
+1650 | 
+1651 | 		// Create a checkpoint whenever the user sends a message.
+1652 | 		// Use allowEmpty=true to ensure a checkpoint is recorded even if there are no file changes.
+1653 | 		// Suppress the checkpoint_saved chat row for this particular checkpoint to keep the timeline clean.
+1654 | 		if (askResponse === "messageResponse") {
+1655 | 			void this.checkpointSave(false, true)
+1656 | 		}
+1657 | 
+1658 | 		// Mark the last follow-up question as answered
+1659 | 		if (askResponse === "messageResponse" || askResponse === "yesButtonClicked") {
+1660 | 			// Find the last unanswered follow-up message using findLastIndex
+1661 | 			const lastFollowUpIndex = findLastIndex(
+1662 | 				this.clineMessages,
+1663 | 				(msg) => msg.type === "ask" && msg.ask === "followup" && !msg.isAnswered,
+1664 | 			)
+1665 | 
+1666 | 			if (lastFollowUpIndex !== -1) {
+1667 | 				// Mark this follow-up as answered
+1668 | 				this.clineMessages[lastFollowUpIndex].isAnswered = true
+1669 | 				// Save the updated messages
+1670 | 				this.saveClineMessages().catch((error) => {
+1671 | 					console.error("Failed to save answered follow-up state:", error)
+1672 | 				})
+1673 | 			}
+1674 | 		}
+1675 | 
+1676 | 		// Mark the last tool-approval ask as answered when user approves (or auto-approval)
+1677 | 		if (askResponse === "yesButtonClicked") {
+1678 | 			const lastToolAskIndex = findLastIndex(
+1679 | 				this.clineMessages,
+1680 | 				(msg) => msg.type === "ask" && msg.ask === "tool" && !msg.isAnswered,
+1681 | 			)
+1682 | 			if (lastToolAskIndex !== -1) {
+1683 | 				this.clineMessages[lastToolAskIndex].isAnswered = true
+1684 | 				void this.updateClineMessage(this.clineMessages[lastToolAskIndex])
+1685 | 				this.saveClineMessages().catch((error) => {
+1686 | 					console.error("Failed to save answered tool-ask state:", error)
+1687 | 				})
+1688 | 			}
+1689 | 		}
+1690 | 	}
+1691 | 
+1692 | 	/**
+1693 | 	 * Cancel any pending auto-approval timeout.
+1694 | 	 * Called when user interacts (types, clicks buttons, etc.) to prevent the timeout from firing.
+1695 | 	 */
+1696 | 	public cancelAutoApprovalTimeout(): void {
+1697 | 		if (this.autoApprovalTimeoutRef) {
+1698 | 			clearTimeout(this.autoApprovalTimeoutRef)
+1699 | 			this.autoApprovalTimeoutRef = undefined
+1700 | 		}
+
+1701 | 	}
+1702 | 
+1703 | 	public approveAsk({ text, images }: { text?: string; images?: string[] } = {}) {
+1704 | 		this.handleWebviewAskResponse("yesButtonClicked", text, images)
+1705 | 	}
+1706 | 
+1707 | 	public denyAsk({ text, images }: { text?: string; images?: string[] } = {}) {
+1708 | 		this.handleWebviewAskResponse("noButtonClicked", text, images)
+1709 | 	}
+1710 | 
+1711 | 	public supersedePendingAsk(): void {
+1712 | 		this.lastMessageTs = Date.now()
+1713 | 	}
+1714 | 
+1715 | 	/**
+1716 | 	 * Updates the API configuration and rebuilds the API handler.
+1717 | 	 * Cancels any in-flight request and resets streaming/parser/token-cache state so
+1718 | 	 * mixed dimensions cannot leak across profiles or models.
+1719 | 	 *
+1720 | 	 * @param newApiConfiguration - The new API configuration to use
+1721 | 	 */
+1722 | 	public updateApiConfiguration(newApiConfiguration: ProviderSettings): void {
+1723 | 		this.cancelCurrentRequest()
+1724 | 		try {
+1725 | 			NativeToolCallParser.clearAllStreamingToolCalls()
+1726 | 			NativeToolCallParser.clearRawChunkState()
+1727 | 		} catch {
+1728 | 			// non-fatal
+1729 | 		}
+1730 | 		this.debouncedEmitTokenUsage.cancel()
+1731 | 
+1732 | 		this.isWaitingForFirstChunk = false
+1733 | 		this.isStreaming = false
+1734 | 		this.currentStreamingContentIndex = 0
+1735 | 		this.currentStreamingDidCheckpoint = false
+1736 | 		this.assistantMessageContent = []
+1737 | 		this.presentAssistantMessageLocked = false
+1738 | 		this.presentAssistantMessageHasPendingUpdates = false
+1739 | 		this.didCompleteReadingStream = false
+1740 | 		this.userMessageContent = []
+1741 | 		this.userMessageContentReady = false
+1742 | 		this.didRejectTool = false
+1743 | 		this.didAlreadyUseTool = false
+1744 | 		this.didToolFailInCurrentTurn = false
+1745 | 		this.assistantMessageSavedToHistory = false
+1746 | 		this.streamingToolCallIndices.clear()
+1747 | 		this.cachedStreamingModel = undefined
+1748 | 		this.tokenUsageSnapshot = undefined
+1749 | 		this.tokenUsageSnapshotAt = undefined
+1750 | 		this.toolUsageSnapshot = undefined
+1751 | 		tokenCountCache.clear()
+1752 | 
+1753 | 		this.apiConfiguration = newApiConfiguration
+1754 | 		this.api = buildApiHandler(this.apiConfiguration)
+1755 | 	}
+1756 | 
+1757 | 	public async submitUserMessage(
+1758 | 		text: string,
+1759 | 		images?: string[],
+1760 | 		mode?: string,
+1761 | 		providerProfile?: string,
+1762 | 	): Promise<void> {
+1763 | 		try {
+1764 | 			text = (text ?? "").trim()
+1765 | 			images = images ?? []
+1766 | 
+1767 | 			if (text.length === 0 && images.length === 0) {
+1768 | 				return
+1769 | 			}
+1770 | 
+1771 | 			const provider = this.hostRef.deref()
+1772 | 
+1773 | 			if (provider) {
+1774 | 				if (mode) {
+1775 | 					await provider.setMode(mode)
+1776 | 				}
+1777 | 
+1778 | 				if (providerProfile) {
+1779 | 					await provider.setProviderProfile(providerProfile)
+1780 | 
+1781 | 					// Update this task's API configuration to match the new profile
+1782 | 					// This ensures the parser state is synchronized with the selected model
+1783 | 					const newState = await provider.getState()
+1784 | 					if (newState?.apiConfiguration) {
+1785 | 						this.updateApiConfiguration(newState.apiConfiguration)
+1786 | 					}
+1787 | 				}
+1788 | 
+1789 | 				this.emit(NJUST_AIEventName.TaskUserMessage, this.taskId)
+1790 | 
+1791 | 				// Handle the message directly instead of routing through the webview.
+1792 | 				// This avoids a race condition where the webview's message state hasn't
+1793 | 				// hydrated yet, causing it to interpret the message as a new task request.
+1794 | 				this.handleWebviewAskResponse("messageResponse", text, images)
+1795 | 			} else {
+1796 | 				console.error("[Task#submitUserMessage] Provider reference lost")
+1797 | 			}
+1798 | 		} catch (error) {
+1799 | 			console.error("[Task#submitUserMessage] Failed to submit user message:", error)
+1800 | 		}
+
+1801 | 	}
+1802 | 
+1803 | 	async handleTerminalOperation(terminalOperation: "continue" | "abort") {
+1804 | 		if (terminalOperation === "continue") {
+1805 | 			this.terminalProcess?.continue()
+1806 | 		} else if (terminalOperation === "abort") {
+1807 | 			this.terminalProcess?.abort()
+1808 | 		}
+1809 | 	}
+1810 | 
+1811 | 	// Delegated to TaskStreamProcessor
+1812 | 	private async getFilesReadByRooSafely(context: string): Promise<string[] | undefined> {
+1813 | 		return this.streamProcessor.getFilesReadByRooSafely(context)
+1814 | 	}
+1815 | 
+1816 | 	public async condenseContext(): Promise<void> {
+1817 | 		return this.requestBuilder.condenseContext()
+1818 | 	}
+1819 | 
+1820 | 	async say(
+1821 | 		type: ClineSay,
+1822 | 		text?: string,
+1823 | 		images?: string[],
+1824 | 		partial?: boolean,
+1825 | 		checkpoint?: Record<string, unknown>,
+1826 | 		progressStatus?: ToolProgressStatus,
+1827 | 		options: {
+1828 | 			isNonInteractive?: boolean
+1829 | 		} = {},
+1830 | 		contextCondense?: ContextCondense,
+1831 | 		contextTruncation?: ContextTruncation,
+1832 | 	): Promise<undefined> {
+1833 | 		if (this.abort) {
+1834 | 			throw new Error(`[NJUST_AI#say] task ${this.taskId}.${this.instanceId} aborted`)
+1835 | 		}
+1836 | 
+1837 | 		if (partial !== undefined) {
+1838 | 			const lastMessage = this.clineMessages.at(-1)
+1839 | 
+1840 | 			const isUpdatingPreviousPartial =
+1841 | 				lastMessage && lastMessage.partial && lastMessage.type === "say" && lastMessage.say === type
+1842 | 
+1843 | 			if (partial) {
+1844 | 				if (isUpdatingPreviousPartial) {
+1845 | 					// Existing partial message, so update it.
+1846 | 					lastMessage.text = text
+1847 | 					lastMessage.images = images
+1848 | 					lastMessage.partial = partial
+1849 | 					lastMessage.progressStatus = progressStatus
+1850 | 					this.updateClineMessage(lastMessage)
+1851 | 				} else {
+1852 | 					// This is a new partial message, so add it with partial state.
+1853 | 					const sayTs = Date.now()
+1854 | 
+1855 | 					if (!options.isNonInteractive) {
+1856 | 						this.lastMessageTs = sayTs
+1857 | 					}
+1858 | 
+1859 | 					await this.addToClineMessages({
+1860 | 						ts: sayTs,
+1861 | 						type: "say",
+1862 | 						say: type,
+1863 | 						text,
+1864 | 						images,
+1865 | 						partial,
+1866 | 						contextCondense,
+1867 | 						contextTruncation,
+1868 | 					})
+1869 | 				}
+1870 | 			} else {
+1871 | 				// New now have a complete version of a previously partial message.
+1872 | 				// This is the complete version of a previously partial
+1873 | 				// message, so replace the partial with the complete version.
+1874 | 				if (isUpdatingPreviousPartial) {
+1875 | 					if (!options.isNonInteractive) {
+1876 | 						this.lastMessageTs = lastMessage.ts
+1877 | 					}
+1878 | 
+1879 | 					lastMessage.text = text
+1880 | 					lastMessage.images = images
+1881 | 					lastMessage.partial = false
+1882 | 					lastMessage.progressStatus = progressStatus
+1883 | 
+1884 | 					// Instead of streaming partialMessage events, we do a save
+1885 | 					// and post like normal to persist to disk.
+1886 | 					await this.saveClineMessages()
+1887 | 
+1888 | 					// More performant than an entire `postStateToWebview`.
+1889 | 					this.updateClineMessage(lastMessage)
+1890 | 				} else {
+1891 | 					// This is a new and complete message, so add it like normal.
+1892 | 					const sayTs = Date.now()
+1893 | 
+1894 | 					if (!options.isNonInteractive) {
+1895 | 						this.lastMessageTs = sayTs
+1896 | 					}
+1897 | 
+1898 | 					await this.addToClineMessages({
+1899 | 						ts: sayTs,
+1900 | 						type: "say",
+
+1901 | 						say: type,
+1902 | 						text,
+1903 | 						images,
+1904 | 						contextCondense,
+1905 | 						contextTruncation,
+1906 | 					})
+1907 | 				}
+1908 | 			}
+1909 | 		} else {
+1910 | 			// This is a new non-partial message, so add it like normal.
+1911 | 			const sayTs = Date.now()
+1912 | 
+1913 | 			// A "non-interactive" message is a message is one that the user
+1914 | 			// does not need to respond to. We don't want these message types
+1915 | 			// to trigger an update to `lastMessageTs` since they can be created
+1916 | 			// asynchronously and could interrupt a pending ask.
+1917 | 			if (!options.isNonInteractive) {
+1918 | 				this.lastMessageTs = sayTs
+1919 | 			}
+1920 | 
+1921 | 			await this.addToClineMessages({
+1922 | 				ts: sayTs,
+1923 | 				type: "say",
+1924 | 				say: type,
+1925 | 				text,
+1926 | 				images,
+1927 | 				checkpoint,
+1928 | 				contextCondense,
+1929 | 				contextTruncation,
+1930 | 			})
+1931 | 		}
+1932 | 	}
+1933 | 
+1934 | 	async sayAndCreateMissingParamError(toolName: ToolName, paramName: string, relPath?: string) {
+1935 | 		await this.say(
+1936 | 			"error",
+1937 | 			`Njust-AI tried to use ${toolName}${
+1938 | 				relPath ? ` for '${relPath.toPosix()}'` : ""
+1939 | 			} without value for required parameter '${paramName}'. Retrying...`,
+1940 | 		)
+1941 | 		return formatResponse.toolError(formatResponse.missingToolParameterError(paramName))
+1942 | 	}
+1943 | 
+1944 | 	// Lifecycle
+1945 | 	// Start / Resume / Abort / Dispose
+1946 | 
+1947 | 	/**
+1948 | 	 * Get enabled MCP tools count for this task.
+1949 | 	 * Returns the count along with the number of servers contributing.
+1950 | 	 *
+1951 | 	 * @returns Object with enabledToolCount and enabledServerCount
+1952 | 	 */
+1953 | 	private async getEnabledMcpToolsCount(): Promise<{ enabledToolCount: number; enabledServerCount: number }> {
+1954 | 		try {
+1955 | 			const provider = this.hostRef.deref()
+1956 | 			if (!provider) {
+1957 | 				return { enabledToolCount: 0, enabledServerCount: 0 }
+1958 | 			}
+1959 | 
+1960 | 			const { mcpEnabled } = (await provider.getState()) ?? {}
+1961 | 			if (!(mcpEnabled ?? true)) {
+1962 | 				return { enabledToolCount: 0, enabledServerCount: 0 }
+1963 | 			}
+1964 | 
+1965 | 			const mcpHub = await McpServerManager.getInstance(provider.context, provider)
+1966 | 			if (!mcpHub) {
+1967 | 				return { enabledToolCount: 0, enabledServerCount: 0 }
+1968 | 			}
+1969 | 
+1970 | 			const servers = mcpHub.getServers()
+1971 | 			return countEnabledMcpTools(servers)
+1972 | 		} catch (error) {
+1973 | 			console.error("[Task#getEnabledMcpToolsCount] Error counting MCP tools:", error)
+1974 | 			return { enabledToolCount: 0, enabledServerCount: 0 }
+1975 | 		}
+1976 | 	}
+1977 | 
+1978 | 	/**
+1979 | 	 * Manually start a **new** task when it was created with `startTask: false`.
+1980 | 	 *
+1981 | 	 * This fires `startTask` as a background async operation for the
+1982 | 	 * `task/images` code-path only.  It does **not** handle the
+1983 | 	 * `historyItem` resume path (use the constructor with `startTask: true`
+1984 | 	 * for that).  The primary use-case is in the delegation flow where the
+1985 | 	 * parent's metadata must be persisted to globalState **before** the
+1986 | 	 * child task begins writing its own history (avoiding a read-modify-write
+1987 | 	 * race on globalState).
+1988 | 	 */
+1989 | 	public start(): void {
+1990 | 		if (this._started) {
+1991 | 			return
+1992 | 		}
+1993 | 		this._started = true
+1994 | 
+1995 | 		const { task, images } = this.metadata
+1996 | 
+1997 | 		if (task || images) {
+1998 | 			this.startTask(task ?? undefined, images ?? undefined)
+1999 | 		}
+2000 | 	}
+
+2001 | 
+2002 | 	private async startTask(task?: string, images?: string[]): Promise<void> {
+2003 | 		return this.lifecycleHandler.startTask(task, images)
+2004 | 	}
+2005 | 
+2006 | 	private async resumeTaskFromHistory() {
+2007 | 		return this.lifecycleHandler.resumeTaskFromHistory()
+2008 | 	}
+2009 | 
+2010 | 	/**
+2011 | 	 * Cancels the current HTTP request if one is in progress.
+2012 | 	 * This immediately aborts the underlying stream rather than waiting for the next chunk.
+2013 | 	 */
+2014 | 	public cancelCurrentRequest(): void {
+2015 | 		if (this.currentRequestAbortController) {
+2016 | 			console.log(`[Task#${this.taskId}.${this.instanceId}] Aborting current HTTP request`)
+2017 | 			this.currentRequestAbortController.abort()
+2018 | 			this.currentRequestAbortController = undefined
+2019 | 		}
+2020 | 	}
+2021 | 
+2022 | 	/**
+2023 | 	 * Force emit a final token usage update, ignoring throttle.
+2024 | 	 * Called before task completion or abort to ensure final stats are captured.
+2025 | 	 * Triggers the debounce with current values and immediately flushes to ensure emit.
+2026 | 	 */
+2027 | 	public emitFinalTokenUsageUpdate(): void {
+2028 | 		const tokenUsage = this.getTokenUsage()
+2029 | 		this.debouncedEmitTokenUsage(tokenUsage, this.toolUsage)
+2030 | 		this.debouncedEmitTokenUsage.flush()
+2031 | 	}
+2032 | 
+2033 | 	public async abortTask(isAbandoned = false) {
+2034 | 		return this.lifecycleHandler.abortTask(isAbandoned)
+2035 | 	}
+2036 | 
+2037 | 	public isDisposed = false
+2038 | 
+2039 | 	public dispose(): void {
+2040 | 		return this.lifecycleHandler.dispose()
+2041 | 	}
+2042 | 
+2043 | 	// Subtasks
+2044 | 	// Spawn / Wait / Complete
+2045 | 
+2046 | 	public async startSubtask(
+2047 | 		message: string,
+2048 | 		initialTodos: TodoItem[],
+2049 | 		mode: string,
+2050 | 		isolationLevel: IsolationLevel = "shared",
+2051 | 		forkedConfig?: ForkedContextConfig,
+2052 | 	) {
+2053 | 		const provider = this.hostRef.deref()
+2054 | 
+2055 | 		if (!provider) {
+2056 | 			throw new Error("Provider not available")
+2057 | 		}
+2058 | 
+2059 | 		let forkedContextSummary: string | undefined
+2060 | 
+2061 | 		if (isolationLevel === "forked") {
+2062 | 			// Generate a concise summary of parent context instead of passing full history
+2063 | 			const config = forkedConfig ?? DEFAULT_FORKED_CONTEXT_CONFIG
+2064 | 			forkedContextSummary = generateParentContextSummary(
+2065 | 				this.apiConversationHistory,
+2066 | 				config.summaryMaxTokens,
+2067 | 				config,
+2068 | 			)
+2069 | 		}
+2070 | 
+2071 | 		const child = await provider.delegateParentAndOpenChild({
+2072 | 			parentTaskId: this.taskId,
+2073 | 			message,
+2074 | 			initialTodos,
+2075 | 			mode,
+2076 | 			isolationLevel,
+2077 | 			forkedContextSummary,
+2078 | 		})
+2079 | 		return child
+2080 | 	}
+2081 | 
+2082 | 	/**
+2083 | 	 * Resume parent task after delegation completion without showing resume ask.
+2084 | 	 * Used in metadata-driven subtask flow.
+2085 | 	 *
+2086 | 	 * This method:
+2087 | 	 * - Clears any pending ask states
+2088 | 	 * - Resets abort and streaming flags
+2089 | 	 * - Ensures next API call includes full context
+2090 | 	 * - Immediately continues task loop without user interaction
+2091 | 	 */
+2092 | 	public async resumeAfterDelegation(): Promise<void> {
+2093 | 		// Clear any ask states that might have been set during history load
+2094 | 		this.idleAsk = undefined
+2095 | 		this.resumableAsk = undefined
+2096 | 		this.interactiveAsk = undefined
+2097 | 
+2098 | 		// Reset abort and streaming state to ensure clean continuation
+2099 | 		this.abort = false
+2100 | 		this.abandoned = false
+
+2101 | 		this.abortReason = undefined
+2102 | 		this.didFinishAbortingStream = false
+2103 | 		this.isStreaming = false
+2104 | 		this.isWaitingForFirstChunk = false
+2105 | 
+2106 | 		// Ensure next API call includes full context after delegation
+2107 | 		this.skipPrevResponseIdOnce = true
+2108 | 
+2109 | 		// Mark as initialized and active
+2110 | 		this.isInitialized = true
+2111 | 		this.emit(NJUST_AIEventName.TaskActive, this.taskId)
+2112 | 
+2113 | 		// Load conversation history if not already loaded
+2114 | 		if (this.apiConversationHistory.length === 0) {
+2115 | 			this.apiConversationHistory = await this.getSavedApiConversationHistory()
+2116 | 		}
+2117 | 
+2118 | 		// Add environment details to the existing last user message (which contains the tool_result)
+2119 | 		// This avoids creating a new user message which would cause consecutive user messages
+2120 | 		const environmentDetails = await getEnvironmentDetails(this, true)
+2121 | 		let lastUserMsgIndex = -1
+2122 | 		for (let i = this.apiConversationHistory.length - 1; i >= 0; i--) {
+2123 | 			if (this.apiConversationHistory[i].role === "user") {
+2124 | 				lastUserMsgIndex = i
+2125 | 				break
+2126 | 			}
+2127 | 		}
+2128 | 		if (lastUserMsgIndex >= 0) {
+2129 | 			const lastUserMsg = this.apiConversationHistory[lastUserMsgIndex]
+2130 | 			if (Array.isArray(lastUserMsg.content)) {
+2131 | 				// Remove any existing environment_details blocks before adding fresh ones
+2132 | 				const contentWithoutEnvDetails = lastUserMsg.content.filter(
+2133 | 					(block: Anthropic.Messages.ContentBlockParam) => {
+2134 | 						if (block.type === "text" && typeof block.text === "string") {
+2135 | 							const isEnvironmentDetailsBlock =
+2136 | 								block.text.trim().startsWith("<environment_details>") &&
+2137 | 								block.text.trim().endsWith("</environment_details>")
+2138 | 							return !isEnvironmentDetailsBlock
+2139 | 						}
+2140 | 						return true
+2141 | 					},
+2142 | 				)
+2143 | 				// Add fresh environment details
+2144 | 				lastUserMsg.content = [...contentWithoutEnvDetails, { type: "text" as const, text: environmentDetails }]
+2145 | 			}
+2146 | 		}
+2147 | 
+2148 | 		// Save the updated history
+2149 | 		await this.saveApiConversationHistory()
+2150 | 
+2151 | 		// Continue task loop - pass empty array to signal no new user content needed
+2152 | 		// The initiateTaskLoop will handle this by skipping user message addition
+2153 | 		await this.initiateTaskLoop([])
+2154 | 	}
+2155 | 
+2156 | 	// Cloud Agent orchestration delegated to CloudAgentOrchestrator
+2157 | 
+2158 | 	private async initiateCloudAgentLoop(userMessage: string, images?: string[]): Promise<void> {
+2159 | 		const host: ICloudAgentHost = {
+2160 | 			taskId: this.taskId,
+2161 | 			cwd: this.cwd,
+2162 | 			get abort() { return (this as unknown as { _task: Task })._task?.abort ?? false },
+2163 | 			rooIgnoreController: this.rooIgnoreController,
+2164 | 			rooProtectedController: this.rooProtectedController,
+2165 | 			say: (type, text?, imgs?) => this.say(type, text, imgs),
+2166 | 			ask: (type, text?, partial?) => this.ask(type, text, partial),
+2167 | 			emit: (event, ...args) => (EventEmitter.prototype.emit.call(this, event, ...args) as boolean),
+2168 | 			setCurrentRequestAbortController: (ctrl) => { this.currentRequestAbortController = ctrl },
+2169 | 		}
+2170 | 		// Patch the abort getter to actually read from this task instance
+2171 | 		Object.defineProperty(host, "abort", { get: () => this.abort })
+2172 | 
+2173 | 		const orchestrator = new CloudAgentOrchestrator(host)
+2174 | 		await orchestrator.run(userMessage, images)
+2175 | 	}
+2176 | 
+2177 | 	// Task Loop
+2178 | 
+2179 | 	private async initiateTaskLoop(userContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {
+2180 | 		// Kicks off the checkpoints initialization process in the background.
+2181 | 		getCheckpointService(this)
+2182 | 
+2183 | 		// Start skill/memory prefetch in parallel (non-blocking)
+2184 | 		const provider = this.hostRef.deref()
+2185 | 		startAllPrefetch({
+2186 | 			skillFetchFn: async () => {
+2187 | 				const skillsManager = provider?.getSkillsManager()
+2188 | 				const skills = skillsManager?.getAllSkills() ?? []
+2189 | 				return skills.map((s) => s.name)
+2190 | 			},
+2191 | 		})
+2192 | 
+2193 | 		let nextUserContent = userContent
+2194 | 		let includeFileDetails = true
+2195 | 
+2196 | 		this.emit(NJUST_AIEventName.TaskStarted)
+2197 | 
+2198 | 		while (!this.abort) {
+2199 | 			const didEndLoop = await this.recursivelyMakeClineRequests(nextUserContent, includeFileDetails)
+2200 | 			includeFileDetails = false // We only need file details the first time.
+
+2201 | 
+2202 | 			// The way this agentic loop works is that cline will be given a
+2203 | 			// task that he then calls tools to complete. Unless there's an
+2204 | 			// attempt_completion call, we keep responding back to him with his
+2205 | 			// tool's responses until he either attempt_completion or does not
+2206 | 			// use anymore tools. If he does not use anymore tools, we ask him
+2207 | 			// to consider if he's completed the task and then call
+2208 | 			// attempt_completion, otherwise proceed with completing the task.
+2209 | 			// There is a MAX_REQUESTS_PER_TASK limit to prevent infinite
+2210 | 			// requests, but Cline is prompted to finish the task as efficiently
+2211 | 			// as he can.
+2212 | 
+2213 | 			if (didEndLoop) {
+2214 | 				// For now a task never 'completes'. This will only happen if
+2215 | 				// the user hits max requests and denies resetting the count.
+2216 | 				break
+2217 | 			} else {
+2218 | 				nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
+2219 | 			}
+2220 | 		}
+2221 | 	}
+2222 | 
+2223 | 	public async recursivelyMakeClineRequests(
+2224 | 		userContent: Anthropic.Messages.ContentBlockParam[],
+2225 | 		includeFileDetails: boolean = false,
+2226 | 	): Promise<boolean> {
+2227 | 		return this.executor.recursivelyMakeClineRequests(userContent, includeFileDetails)
+2228 | 	}
+2229 | 
+2230 | 	private async getSystemPromptParts(): Promise<SystemPromptParts> {
+2231 | 		return this.requestBuilder.getSystemPromptParts()
+2232 | 	}
+2233 | 
+2234 | 	private async getSystemPrompt(): Promise<string> {
+2235 | 		return this.requestBuilder.getSystemPrompt()
+2236 | 	}
+2237 | 
+2238 | 	// Delegated to TaskStreamProcessor
+2239 | 	private getCurrentProfileId(state: any): string {
+2240 | 		return this.streamProcessor.getCurrentProfileId(state)
+2241 | 	}
+2242 | 
+2243 | 	// Delegated to TaskStreamProcessor
+2244 | 	async handleContextWindowExceededError(): Promise<void> {
+2245 | 		return this.streamProcessor.handleContextWindowExceededError()
+2246 | 	}
+2247 | 
+2248 | 	// Delegated to TaskStreamProcessor
+2249 | 	private async maybeWaitForProviderRateLimit(retryAttempt: number): Promise<void> {
+2250 | 		return this.streamProcessor.maybeWaitForProviderRateLimit(retryAttempt)
+2251 | 	}
+2252 | 
+2253 | 	public async *attemptApiRequest(
+2254 | 		retryAttempt: number = 0,
+2255 | 		options: { skipProviderRateLimit?: boolean } = {},
+2256 | 	): ApiStream {
+2257 | 		yield* this.executor.attemptApiRequest(retryAttempt, options)
+2258 | 	}
+2259 | 
+2260 | 	// Delegated to TaskStreamProcessor
+2261 | 	// Shared exponential backoff for retries (first-chunk and mid-stream)
+2262 | 	private async backoffAndAnnounce(retryAttempt: number, error: any): Promise<void> {
+2263 | 		return this.streamProcessor.backoffAndAnnounce(retryAttempt, error)
+2264 | 	}
+2265 | 
+2266 | 	// Checkpoints
+2267 | 
+2268 | 	public async checkpointSave(force: boolean = false, suppressMessage: boolean = false) {
+2269 | 		return checkpointSave(this, force, suppressMessage)
+2270 | 	}
+2271 | 
+2272 | 	// Delegated to TaskStreamProcessor
+2273 | 	private buildCleanConversationHistory(
+2274 | 		messages: ApiMessage[],
+2275 | 	): Array<
+2276 | 		Anthropic.Messages.MessageParam | { type: "reasoning"; encrypted_content: string; id?: string; summary?: any[] }
+2277 | 	> {
+2278 | 		return this.streamProcessor.buildCleanConversationHistory(messages)
+2279 | 	}
+2280 | 	public async checkpointRestore(options: CheckpointRestoreOptions) {
+2281 | 		return checkpointRestore(this, options)
+2282 | 	}
+2283 | 
+2284 | 	public async checkpointDiff(options: CheckpointDiffOptions) {
+2285 | 		return checkpointDiff(this, options)
+2286 | 	}
+2287 | 
+2288 | 	// Metrics
+2289 | 
+2290 | 	public combineMessages(messages: ClineMessage[]) {
+2291 | 		return combineApiRequests(combineCommandSequences(messages))
+2292 | 	}
+2293 | 
+2294 | 	public getTokenUsage(): TokenUsage {
+2295 | 		return getApiMetrics(this.combineMessages(this.clineMessages.slice(1)))
+2296 | 	}
+2297 | 
+2298 | 	// checkSubtaskTokenBudget() moved to TaskExecutor
+2299 | 
+2300 | 	public recordToolUsage(toolName: ToolName) {
+
+2301 | 		if (!this.toolUsage[toolName]) {
+2302 | 			this.toolUsage[toolName] = { attempts: 0, failures: 0 }
+2303 | 		}
+2304 | 
+2305 | 		this.toolUsage[toolName].attempts++
+2306 | 	}
+2307 | 
+2308 | 	public recordToolError(toolName: ToolName, error?: string) {
+2309 | 		if (!this.toolUsage[toolName]) {
+2310 | 			this.toolUsage[toolName] = { attempts: 0, failures: 0 }
+2311 | 		}
+2312 | 
+2313 | 		this.toolUsage[toolName].failures++
+2314 | 		this.toolExecution.recordToolErrorMetric(toolName)
+2315 | 
+2316 | 		if (error) {
+2317 | 			this.emit(NJUST_AIEventName.TaskToolFailed, this.taskId, toolName, error)
+2318 | 		}
+2319 | 	}
+2320 | 
+2321 | 	// Getters
+2322 | 
+2323 | 	public get taskStatus(): TaskStatus {
+2324 | 		if (this.interactiveAsk) {
+2325 | 			return TaskStatus.Interactive
+2326 | 		}
+2327 | 
+2328 | 		if (this.resumableAsk) {
+2329 | 			return TaskStatus.Resumable
+2330 | 		}
+2331 | 
+2332 | 		if (this.idleAsk) {
+2333 | 			return TaskStatus.Idle
+2334 | 		}
+2335 | 
+2336 | 		return TaskStatus.Running
+2337 | 	}
+2338 | 
+2339 | 	public get taskAsk(): ClineMessage | undefined {
+2340 | 		return this.idleAsk || this.resumableAsk || this.interactiveAsk
+2341 | 	}
+2342 | 
+2343 | 	public get queuedMessages(): QueuedMessage[] {
+2344 | 		return this.messageQueueService.messages
+2345 | 	}
+2346 | 
+2347 | 	public get tokenUsage(): TokenUsage | undefined {
+2348 | 		if (this.tokenUsageSnapshot && this.tokenUsageSnapshotAt) {
+2349 | 			return this.tokenUsageSnapshot
+2350 | 		}
+2351 | 
+2352 | 		this.tokenUsageSnapshot = this.getTokenUsage()
+2353 | 		this.tokenUsageSnapshotAt = this.clineMessages.at(-1)?.ts
+2354 | 
+2355 | 		return this.tokenUsageSnapshot
+2356 | 	}
+2357 | 
+2358 | 	public get cwd() {
+2359 | 		return this.workspacePath
+2360 | 	}
+2361 | 
+2362 | 	/**
+2363 | 	 * Provides convenient access to high-level message operations.
+2364 | 	 * Uses lazy initialization - the MessageManager is only created when first accessed.
+2365 | 	 * Subsequent accesses return the same cached instance.
+2366 | 	 *
+2367 | 	 * ## Important: Single Coordination Point
+2368 | 	 *
+2369 | 	 * **All MessageManager operations must go through this getter** rather than
+2370 | 	 * instantiating `new MessageManager(task)` directly. This ensures:
+2371 | 	 * - A single shared instance for consistent behavior
+2372 | 	 * - Centralized coordination of all rewind/message operations
+2373 | 	 * - Ability to add internal state or instrumentation in the future
+2374 | 	 *
+2375 | 	 * @example
+2376 | 	 * ```typescript
+2377 | 	 * // Correct: Use the getter
+2378 | 	 * await task.messageManager.rewindToTimestamp(ts)
+2379 | 	 *
+2380 | 	 * // Incorrect: Do NOT create new instances directly
+2381 | 	 * // const manager = new MessageManager(task) // Don't do this!
+2382 | 	 * ```
+2383 | 	 */
+2384 | 	get messageManager(): MessageManager {
+2385 | 		if (!this._messageManager) {
+2386 | 			this._messageManager = new MessageManager(this)
+2387 | 		}
+2388 | 		return this._messageManager
+2389 | 	}
+2390 | 
+2391 | 	/**
+2392 | 	 * Process any queued messages by dequeuing and submitting them.
+2393 | 	 * This ensures that queued user messages are sent when appropriate,
+2394 | 	 * preventing them from getting stuck in the queue.
+2395 | 	 *
+2396 | 	 * @param context - Context string for logging (e.g., the calling tool name)
+2397 | 	 */
+2398 | 	public processQueuedMessages(): void {
+2399 | 		try {
+2400 | 			if (!this.messageQueueService.isEmpty()) {
+
+2401 | 				const queued = this.messageQueueService.dequeueMessage()
+2402 | 				if (queued) {
+2403 | 					setTimeout(() => {
+2404 | 						this.submitUserMessage(queued.text, queued.images).catch((err) =>
+2405 | 							console.error(`[Task] Failed to submit queued message:`, err),
+2406 | 						)
+2407 | 					}, 0)
+2408 | 				}
+2409 | 			}
+2410 | 		} catch (e) {
+2411 | 			console.error(`[Task] Queue processing error:`, e)
+2412 | 		}
+2413 | 	}
+2414 | }
+2415 | 

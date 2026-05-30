@@ -20,7 +20,7 @@ Initialize Spec Kit spec-driven development workflow in the current workspace.
    - If it exists, inform the user that Spec Kit is already initialized and show a summary of the current state.
    - If not, proceed with initialization.
 
-2. Try to run \`specify init <project-name> --ai roo --script ps\` (where project-name is derived from the workspace folder name).
+2. Try to run \`specify init <project-name> --ai njust-ai --script ps\` (where project-name is derived from the workspace folder name).
    - If the \`specify\` CLI is available, run it and handle the output.
    - If the CLI is not available, create the directory structure manually (see step 3).
 
@@ -350,7 +350,7 @@ Please analyze this codebase and create an AGENTS.md file containing:
     Create or deeply improve mode-specific AGENTS.md files IN THE PROJECT ROOT.
     
     CRITICAL: For each of these paths (RELATIVE TO PROJECT ROOT), check if the file exists FIRST:
-    - .njust_ai/rules-code/AGENTS.md (create .roo in project root, not system root!)
+    - .njust_ai/rules-code/AGENTS.md (create .njust-ai in project root, not system root!)
     - .njust_ai/rules-debug/AGENTS.md (relative to project root)
     - .njust_ai/rules-ask/AGENTS.md (relative to project root)
     - .njust_ai/rules-architect/AGENTS.md (relative to project root)

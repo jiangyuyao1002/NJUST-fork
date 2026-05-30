@@ -1,7 +1,7 @@
 /**
  * Agent Directory Loader
  *
- * Scans `.roo/agents/` for Markdown files defining custom agents.
+ * Scans `.njust-ai/agents/` for Markdown files defining custom agents.
  * Each file uses YAML frontmatter for metadata and the body for the
  * system prompt. Plugin agents are integrated via registerPluginAgent().
  *
@@ -150,11 +150,11 @@ async function loadMarkdownAgents(
  * Priority order: projectSettings > userSettings > plugin > built-in.
  */
 export async function getAgentDefinitions(cwd?: string): Promise<AgentDefinition[]> {
-	const userDir = cwd ? path.join(cwd, ".roo", "agents") : path.join(process.cwd(), ".roo", "agents")
+	const userDir = cwd ? path.join(cwd, ".njust-ai", "agents") : path.join(process.cwd(), ".njust-ai", "agents")
 
 	const [userAgents, projectAgents] = await Promise.all([
 		loadMarkdownAgents(userDir, "userSettings"),
-		// Project agents could also live in .roo/agents at the workspace root
+		// Project agents could also live in .njust-ai/agents at the workspace root
 		Promise.resolve([] as CustomAgentDefinition[]),
 	])
 

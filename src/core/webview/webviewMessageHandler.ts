@@ -1,4 +1,4 @@
-import type { WebviewMessage, GlobalState } from "@njust-ai-cj/types"
+import type { WebviewMessage, GlobalState } from "@njust-ai/types"
 import { defaultModeSlug } from "../../shared/modes"
 import type { ClineProvider } from "./ClineProvider"
 import { MessageRouter, type MessageHandlerContext } from "./handlers/MessageRouter"

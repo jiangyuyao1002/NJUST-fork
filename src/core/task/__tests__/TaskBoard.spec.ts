@@ -50,7 +50,7 @@ describe("TaskBoard", () => {
 			updatedAt: 1000,
 			metadata: { owner: "test" },
 		})
-		expect(fs.mkdir).toHaveBeenCalledWith(expect.stringContaining(".roo"), { recursive: true })
+		expect(fs.mkdir).toHaveBeenCalledWith(expect.stringContaining(".njust-ai"), { recursive: true })
 		expect(fs.writeFile).toHaveBeenCalledWith(
 			expect.stringContaining("session.json"),
 			expect.stringContaining('"title": "Implement"'),

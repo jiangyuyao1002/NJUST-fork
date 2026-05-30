@@ -44,7 +44,7 @@ describe("AdaptiveConcurrencyController", () => {
 	it("tunes based on stats", () => {
 		const c = new AdaptiveConcurrencyController({ read: 2 })
 		const stats = new ToolExecutionStats()
-		for (let i = 0; i < 10; i++) stats.record("roo_readFile", 3000, i < 3)
+		for (let i = 0; i < 10; i++) stats.record("njust_ai_readFile", 3000, i < 3)
 		c.tune(stats)
 		expect(c.getStatus().read.limit).toBeLessThanOrEqual(2)
 	})

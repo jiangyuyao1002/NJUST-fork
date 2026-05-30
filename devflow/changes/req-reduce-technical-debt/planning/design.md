@@ -147,7 +147,7 @@
 | `src/services/cangjie-lsp/CangjieTemplateLibrary.ts` | Complete handleClient implementation | MEDIUM priority incomplete impl |
 | `src/integrations/terminal/TerminalRegistry.ts` | Extract VSCode-specific code | MEDIUM priority architecture |
 | `src/core/config/importExport.ts` | Clarify data source responsibility | MEDIUM priority dual source |
-| `apps/web-roo-code/src/lib/stats.ts` | Remove eslint-disable for any types | MEDIUM priority type safety |
+| `apps/web-Njust-AI/src/lib/stats.ts` | Remove eslint-disable for any types | MEDIUM priority type safety |
 | Various files | Resolve TODO comments appropriately | LOW priority cleanup |
 
 ## Implementation Decision Horizon

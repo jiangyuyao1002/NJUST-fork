@@ -2,7 +2,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 
-import type { ToolUsage } from "@njust-ai-cj/types"
+import type { ToolUsage } from "@njust-ai/types"
 import * as vscode from "vscode"
 
 import { Task } from "../../task/Task"
@@ -10,7 +10,7 @@ import { formatResponse } from "../../prompts/responses"
 import { ToolUse, AskApproval, HandleError, PushToolResult } from "../../../shared/tools"
 import { unescapeHtmlEntities } from "../../../utils/text-normalization"
 
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureEvent: vitest.fn(),
@@ -75,7 +75,7 @@ describe("executeCommandTool", () => {
 	let mockHandleError: any
 	let mockPushToolResult: any
 	let mockToolUse: ToolUse<"execute_command">
-	const originalCliRuntime = process.env.ROO_CLI_RUNTIME
+	const originalCliRuntime = process.env.NJUST_AI_CLI_RUNTIME
 
 	beforeEach(() => {
 		// Reset mocks
@@ -142,7 +142,7 @@ describe("executeCommandTool", () => {
 	})
 
 	afterEach(() => {
-		process.env.ROO_CLI_RUNTIME = originalCliRuntime
+		process.env.NJUST_AI_CLI_RUNTIME = originalCliRuntime
 	})
 
 	/**
@@ -310,12 +310,12 @@ describe("executeCommandTool", () => {
 		})
 
 		it("should enforce minimum CLI timeout when model timeout is set", () => {
-			process.env.ROO_CLI_RUNTIME = "1"
+			process.env.NJUST_AI_CLI_RUNTIME = "1"
 			expect(executeCommandModule.resolveAgentTimeoutMs(30)).toBe(300_000)
 		})
 
 		it("should honor model timeout outside CLI runtime", () => {
-			delete process.env.ROO_CLI_RUNTIME
+			delete process.env.NJUST_AI_CLI_RUNTIME
 			expect(executeCommandModule.resolveAgentTimeoutMs(30)).toBe(30_000)
 		})
 	})

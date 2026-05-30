@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 import { PlayCircle, Wrench, AlertCircle, Cloud, Loader2, CheckCircle2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"

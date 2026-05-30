@@ -1,4 +1,4 @@
-import { ClineMessage } from "@njust-ai-cj/types"
+import { ClineMessage } from "@njust-ai/types"
 
 export function getLatestTodo(clineMessages: ClineMessage[]) {
 	const todos = clineMessages

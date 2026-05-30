@@ -3,13 +3,13 @@ import path from "path"
 import * as os from "os"
 import { Dirent } from "fs"
 
-import { NJUST_AI_CONFIG_DIR } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
 import {
 	getRooDirectoriesForCwd,
 	getAllRooDirectoriesForCwd,
 	getAgentsDirectoriesForCwd,
-} from "../../../services/roo-config"
+} from "../../../services/njust-ai-config"
 
 const MAX_DEPTH = 5
 
@@ -503,8 +503,8 @@ export async function loadModeRules(
 		}
 	}
 
-	// Workspace-root `.roo/rules-{mode}/` (parallel to `.njust_ai/rules-{mode}/`) for hot-reload + mirror layouts.
-	const legacyRooModeDir = path.join(cwd, ".roo", `rules-${mode}`)
+	// Workspace-root `.njust-ai/rules-{mode}/` (parallel to `.njust_ai/rules-{mode}/`) for hot-reload + mirror layouts.
+	const legacyRooModeDir = path.join(cwd, ".njust-ai", `rules-${mode}`)
 	if (await directoryExists(legacyRooModeDir)) {
 		const files = await readTextFilesFromDirectory(legacyRooModeDir)
 		if (files.length > 0) {

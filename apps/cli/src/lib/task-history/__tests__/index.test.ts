@@ -1,4 +1,4 @@
-import { readTaskSessionsFromStoragePath } from "@njust-ai-cj/core/cli"
+import { readTaskSessionsFromStoragePath } from "@njust-ai/core/cli"
 
 import {
 	filterSessionsForWorkspace,
@@ -7,8 +7,8 @@ import {
 	resolveWorkspaceResumeSessionId,
 } from "../index.js"
 
-vi.mock("@njust-ai-cj/core/cli", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@njust-ai-cj/core/cli")>()
+vi.mock("@njust-ai/core/cli", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@njust-ai/core/cli")>()
 	return {
 		...actual,
 		readTaskSessionsFromStoragePath: vi.fn(),

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { VSCodeCheckbox, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
-import { type ProviderSettings, type OrganizationAllowList, type RouterModels } from "@njust-ai-cj/types"
-import { requestyDefaultModelId } from "@njust-ai-cj/core/providers"
+import { type ProviderSettings, type OrganizationAllowList, type RouterModels } from "@njust-ai/types"
+import { requestyDefaultModelId } from "@njust-ai/core/providers"
 
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
@@ -12,7 +12,7 @@ import { inputEventTransform } from "../transforms"
 import { ModelPicker } from "../ModelPicker"
 import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
 import { getCallbackUrl } from "@/oauth/urls"
-import { toRequestyServiceUrl } from "@roo/utils/requesty"
+import { toRequestyServiceUrl } from "@shared/utils/requesty"
 
 type RequestyProps = {
 	apiConfiguration: ProviderSettings

@@ -1,6 +1,6 @@
 // npx vitest run packages/core/src/message-utils/__tests__/consolidateTokenUsage.spec.ts
 
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 import { consolidateTokenUsage, hasTokenUsageChanged, hasToolUsageChanged } from "../consolidateTokenUsage.js"
 

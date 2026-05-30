@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://platform.xiaomimimo.com
 // Pay-as-you-go mode: https://api.xiaomimimo.com/v1

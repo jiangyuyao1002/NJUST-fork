@@ -1,7 +1,7 @@
 {
-	"extension.displayName": "NJUST_AI_CJ Nightly",
-	"views.contextMenu.label": "NJUST_AI_CJ Nightly",
-	"views.terminalMenu.label": "NJUST_AI_CJ Nightly",
-	"views.activitybar.title": "NJUST_AI_CJ Nightly",
-	"configuration.title": "NJUST_AI_CJ Nightly"
+	"extension.displayName": "NJUST_AI Nightly",
+	"views.contextMenu.label": "NJUST_AI Nightly",
+	"views.terminalMenu.label": "NJUST_AI Nightly",
+	"views.activitybar.title": "NJUST_AI Nightly",
+	"configuration.title": "NJUST_AI Nightly"
 }

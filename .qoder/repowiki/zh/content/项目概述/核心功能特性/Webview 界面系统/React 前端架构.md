@@ -2,14 +2,14 @@
 
 <cite>
 **本文档引用的文件**
-- [apps/web-roo-code/package.json](file://apps/web-roo-code/package.json)
-- [apps/web-roo-code/next.config.ts](file://apps/web-roo-code/next.config.ts)
-- [apps/web-roo-code/tsconfig.json](file://apps/web-roo-code/tsconfig.json)
-- [apps/web-roo-code/turbo.json](file://apps/web-roo-code/turbo.json)
-- [apps/web-roo-code/src/app/layout.tsx](file://apps/web-roo-code/src/app/layout.tsx)
-- [apps/web-roo-code/src/app/page.tsx](file://apps/web-roo-code/src/app/page.tsx)
-- [apps/web-roo-code/src/lib/seo.ts](file://apps/web-roo-code/src/lib/seo.ts)
-- [apps/web-roo-code/src/lib/constants.ts](file://apps/web-roo-code/src/lib/constants.ts)
+- [apps/web-Njust-AI/package.json](file://apps/web-Njust-AI/package.json)
+- [apps/web-Njust-AI/next.config.ts](file://apps/web-Njust-AI/next.config.ts)
+- [apps/web-Njust-AI/tsconfig.json](file://apps/web-Njust-AI/tsconfig.json)
+- [apps/web-Njust-AI/turbo.json](file://apps/web-Njust-AI/turbo.json)
+- [apps/web-Njust-AI/src/app/layout.tsx](file://apps/web-Njust-AI/src/app/layout.tsx)
+- [apps/web-Njust-AI/src/app/page.tsx](file://apps/web-Njust-AI/src/app/page.tsx)
+- [apps/web-Njust-AI/src/lib/seo.ts](file://apps/web-Njust-AI/src/lib/seo.ts)
+- [apps/web-Njust-AI/src/lib/constants.ts](file://apps/web-Njust-AI/src/lib/constants.ts)
 </cite>
 
 ## 目录
@@ -27,7 +27,7 @@
 本文件面向 React 前端架构，聚焦于基于 Next.js 的应用设计与实现。文档从整体架构、组件层次、路由配置与构建系统入手，深入解释应用启动流程、全局状态管理策略、国际化支持与主题系统，并结合实际代码路径说明如何配置新页面、添加路由、实现国际化切换以及优化构建性能。
 
 ## 项目结构
-该前端工程位于 `apps/web-roo-code`，采用 Next.js 16 应用模式（App Router），使用 TypeScript、Tailwind CSS 与 Turborepo 进行统一构建与缓存管理。关键特性包括：
+该前端工程位于 `apps/web-Njust-AI`，采用 Next.js 16 应用模式（App Router），使用 TypeScript、Tailwind CSS 与 Turborepo 进行统一构建与缓存管理。关键特性包括：
 - 使用 Next.js 元数据 API 配置 SEO 与 Open Graph 标签
 - 通过自定义 Providers 包裹应用，集中处理主题、国际化等横切关注点
 - 通过 next.config.ts 定义重定向规则与 Turbopack 根路径
@@ -36,7 +36,7 @@
 
 ```mermaid
 graph TB
-A["Next.js 应用根目录<br/>apps/web-roo-code"] --> B["配置文件<br/>next.config.ts / tsconfig.json / turbo.json"]
+A["Next.js 应用根目录<br/>apps/web-Njust-AI"] --> B["配置文件<br/>next.config.ts / tsconfig.json / turbo.json"]
 A --> C["应用入口布局<br/>src/app/layout.tsx"]
 A --> D["首页页面<br/>src/app/page.tsx"]
 A --> E["工具库<br/>src/lib/*"]
@@ -46,17 +46,17 @@ C --> H["Shell 容器<br/>src/app/shell"]
 ```
 
 图表来源
-- [apps/web-roo-code/src/app/layout.tsx](file://apps/web-roo-code/src/app/layout.tsx)
-- [apps/web-roo-code/src/app/page.tsx](file://apps/web-roo-code/src/app/page.tsx)
-- [apps/web-roo-code/next.config.ts](file://apps/web-roo-code/next.config.ts)
-- [apps/web-roo-code/tsconfig.json](file://apps/web-roo-code/tsconfig.json)
-- [apps/web-roo-code/turbo.json](file://apps/web-roo-code/turbo.json)
+- [apps/web-Njust-AI/src/app/layout.tsx](file://apps/web-Njust-AI/src/app/layout.tsx)
+- [apps/web-Njust-AI/src/app/page.tsx](file://apps/web-Njust-AI/src/app/page.tsx)
+- [apps/web-Njust-AI/next.config.ts](file://apps/web-Njust-AI/next.config.ts)
+- [apps/web-Njust-AI/tsconfig.json](file://apps/web-Njust-AI/tsconfig.json)
+- [apps/web-Njust-AI/turbo.json](file://apps/web-Njust-AI/turbo.json)
 
 章节来源
-- [apps/web-roo-code/package.json](file://apps/web-roo-code/package.json)
-- [apps/web-roo-code/next.config.ts](file://apps/web-roo-code/next.config.ts)
-- [apps/web-roo-code/tsconfig.json](file://apps/web-roo-code/tsconfig.json)
-- [apps/web-roo-code/turbo.json](file://apps/web-roo-code/turbo.json)
+- [apps/web-Njust-AI/package.json](file://apps/web-Njust-AI/package.json)
+- [apps/web-Njust-AI/next.config.ts](file://apps/web-Njust-AI/next.config.ts)
+- [apps/web-Njust-AI/tsconfig.json](file://apps/web-Njust-AI/tsconfig.json)
+- [apps/web-Njust-AI/turbo.json](file://apps/web-Njust-AI/turbo.json)
 
 ## 核心组件
 - 根布局（RootLayout）：负责注入全局样式、元数据、第三方字体与 Cookie 同意横幅；通过 Providers 统一注入主题、国际化等上下文；包裹 Shell 作为页面容器。
@@ -65,10 +65,10 @@ C --> H["Shell 容器<br/>src/app/shell"]
 - 外部链接常量（EXTERNAL_LINKS）：统一维护所有外部链接，便于维护与变更。
 
 章节来源
-- [apps/web-roo-code/src/app/layout.tsx](file://apps/web-roo-code/src/app/layout.tsx)
-- [apps/web-roo-code/src/app/page.tsx](file://apps/web-roo-code/src/app/page.tsx)
-- [apps/web-roo-code/src/lib/seo.ts](file://apps/web-roo-code/src/lib/seo.ts)
-- [apps/web-roo-code/src/lib/constants.ts](file://apps/web-roo-code/src/lib/constants.ts)
+- [apps/web-Njust-AI/src/app/layout.tsx](file://apps/web-Njust-AI/src/app/layout.tsx)
+- [apps/web-Njust-AI/src/app/page.tsx](file://apps/web-Njust-AI/src/app/page.tsx)
+- [apps/web-Njust-AI/src/lib/seo.ts](file://apps/web-Njust-AI/src/lib/seo.ts)
+- [apps/web-Njust-AI/src/lib/constants.ts](file://apps/web-Njust-AI/src/lib/constants.ts)
 
 ## 架构总览
 下图展示了应用启动到页面渲染的关键流程，包括元数据生成、Providers 注入、Shell 容器与页面内容渲染。
@@ -91,8 +91,8 @@ Page-->>Browser : 返回 HTML 响应
 ```
 
 图表来源
-- [apps/web-roo-code/src/app/layout.tsx](file://apps/web-roo-code/src/app/layout.tsx)
-- [apps/web-roo-code/src/app/page.tsx](file://apps/web-roo-code/src/app/page.tsx)
+- [apps/web-Njust-AI/src/app/layout.tsx](file://apps/web-Njust-AI/src/app/layout.tsx)
+- [apps/web-Njust-AI/src/app/page.tsx](file://apps/web-Njust-AI/src/app/page.tsx)
 
 ## 详细组件分析
 
@@ -105,8 +105,8 @@ Page-->>Browser : 返回 HTML 响应
   - 使用 `suppressHydrationWarning` 处理 SSR/CSR 水合差异（如主题切换）。
 
 章节来源
-- [apps/web-roo-code/src/app/layout.tsx](file://apps/web-roo-code/src/app/layout.tsx)
-- [apps/web-roo-code/src/lib/seo.ts](file://apps/web-roo-code/src/lib/seo.ts)
+- [apps/web-Njust-AI/src/app/layout.tsx](file://apps/web-Njust-AI/src/app/layout.tsx)
+- [apps/web-Njust-AI/src/lib/seo.ts](file://apps/web-Njust-AI/src/lib/seo.ts)
 
 ### 首页页面（Home）
 - 职责：组织首页内容区块，包含品牌介绍、CTA 按钮、合作伙伴标识、功能概览、使用示例、用户评价、FAQ 与行动号召。
@@ -116,8 +116,8 @@ Page-->>Browser : 返回 HTML 响应
   - 引入结构化数据组件以增强 SEO。
 
 章节来源
-- [apps/web-roo-code/src/app/page.tsx](file://apps/web-roo-code/src/app/page.tsx)
-- [apps/web-roo-code/src/lib/constants.ts](file://apps/web-roo-code/src/lib/constants.ts)
+- [apps/web-Njust-AI/src/app/page.tsx](file://apps/web-Njust-AI/src/app/page.tsx)
+- [apps/web-Njust-AI/src/lib/constants.ts](file://apps/web-Njust-AI/src/lib/constants.ts)
 
 ### SEO 工具（SEO）
 - 职责：集中管理站点基础信息与 SEO 配置，提供类型安全的配置对象。
@@ -127,7 +127,7 @@ Page-->>Browser : 返回 HTML 响应
   - 与根布局中的元数据配置配合，统一生成 Open Graph 与 Twitter 卡片。
 
 章节来源
-- [apps/web-roo-code/src/lib/seo.ts](file://apps/web-roo-code/src/lib/seo.ts)
+- [apps/web-Njust-AI/src/lib/seo.ts](file://apps/web-Njust-AI/src/lib/seo.ts)
 
 ### 外部链接常量（EXTERNAL_LINKS）
 - 职责：集中维护所有外部链接，包括社区、文档、市场、隐私政策、博客等。
@@ -136,7 +136,7 @@ Page-->>Browser : 返回 HTML 响应
   - 支持在首页页面中直接使用，用于 CTA 按钮与导航链接。
 
 章节来源
-- [apps/web-roo-code/src/lib/constants.ts](file://apps/web-roo-code/src/lib/constants.ts)
+- [apps/web-Njust-AI/src/lib/constants.ts](file://apps/web-Njust-AI/src/lib/constants.ts)
 
 ### 构建与配置系统
 - Next.js 配置（next.config.ts）：
@@ -149,9 +149,9 @@ Page-->>Browser : 返回 HTML 响应
   - 将构建任务的输入输出定义为 src/**、package.json、tsconfig.json、next.config.ts，提升增量构建效率。
 
 章节来源
-- [apps/web-roo-code/next.config.ts](file://apps/web-roo-code/next.config.ts)
-- [apps/web-roo-code/tsconfig.json](file://apps/web-roo-code/tsconfig.json)
-- [apps/web-roo-code/turbo.json](file://apps/web-roo-code/turbo.json)
+- [apps/web-Njust-AI/next.config.ts](file://apps/web-Njust-AI/next.config.ts)
+- [apps/web-Njust-AI/tsconfig.json](file://apps/web-Njust-AI/tsconfig.json)
+- [apps/web-Njust-AI/turbo.json](file://apps/web-Njust-AI/turbo.json)
 
 ## 依赖关系分析
 - 应用依赖：
@@ -167,7 +167,7 @@ Page-->>Browser : 返回 HTML 响应
 
 ```mermaid
 graph TB
-App["web-roo-code 应用"] --> Next["Next.js 16"]
+App["web-Njust-AI 应用"] --> Next["Next.js 16"]
 App --> React["React 18"]
 App --> UI["@radix-ui/* + lucide-react"]
 App --> Style["Tailwind CSS + clsx + tailwind-merge"]
@@ -179,10 +179,10 @@ App --> Dev["ESLint + PostCSS + Vitest"]
 ```
 
 图表来源
-- [apps/web-roo-code/package.json](file://apps/web-roo-code/package.json)
+- [apps/web-Njust-AI/package.json](file://apps/web-Njust-AI/package.json)
 
 章节来源
-- [apps/web-roo-code/package.json](file://apps/web-roo-code/package.json)
+- [apps/web-Njust-AI/package.json](file://apps/web-Njust-AI/package.json)
 
 ## 性能考虑
 - 静态生成与缓存：
@@ -197,9 +197,9 @@ App --> Dev["ESLint + PostCSS + Vitest"]
   - 通过 Metadata API 与结构化数据提升 SEO 与社交分享效果。
 
 章节来源
-- [apps/web-roo-code/src/app/page.tsx](file://apps/web-roo-code/src/app/page.tsx)
-- [apps/web-roo-code/next.config.ts](file://apps/web-roo-code/next.config.ts)
-- [apps/web-roo-code/turbo.json](file://apps/web-roo-code/turbo.json)
+- [apps/web-Njust-AI/src/app/page.tsx](file://apps/web-Njust-AI/src/app/page.tsx)
+- [apps/web-Njust-AI/next.config.ts](file://apps/web-Njust-AI/next.config.ts)
+- [apps/web-Njust-AI/turbo.json](file://apps/web-Njust-AI/turbo.json)
 
 ## 故障排除指南
 - 重定向不生效：
@@ -212,10 +212,10 @@ App --> Dev["ESLint + PostCSS + Vitest"]
   - 清理 .next 与 .turbo 缓存后重新构建；核对 turbo.json 的输入输出定义是否覆盖最新源码。
 
 章节来源
-- [apps/web-roo-code/next.config.ts](file://apps/web-roo-code/next.config.ts)
-- [apps/web-roo-code/src/lib/seo.ts](file://apps/web-roo-code/src/lib/seo.ts)
-- [apps/web-roo-code/src/app/layout.tsx](file://apps/web-roo-code/src/app/layout.tsx)
-- [apps/web-roo-code/turbo.json](file://apps/web-roo-code/turbo.json)
+- [apps/web-Njust-AI/next.config.ts](file://apps/web-Njust-AI/next.config.ts)
+- [apps/web-Njust-AI/src/lib/seo.ts](file://apps/web-Njust-AI/src/lib/seo.ts)
+- [apps/web-Njust-AI/src/app/layout.tsx](file://apps/web-Njust-AI/src/app/layout.tsx)
+- [apps/web-Njust-AI/turbo.json](file://apps/web-Njust-AI/turbo.json)
 
 ## 结论
 该前端架构以 Next.js 16 为核心，结合 TypeScript、Tailwind CSS、Radix UI 与主题系统，实现了高性能、可维护且具备良好 SEO 表现的应用。通过集中化的元数据配置、重定向规则与构建优化，开发者可以快速扩展页面与功能，同时保持一致的用户体验与开发体验。建议在新增页面时遵循现有布局与配置规范，充分利用 Providers 机制进行全局状态与主题管理，并通过 SEO 工具与结构化数据提升搜索可见性。

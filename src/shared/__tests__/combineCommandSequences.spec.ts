@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 import { combineCommandSequences } from "../combineCommandSequences"
 

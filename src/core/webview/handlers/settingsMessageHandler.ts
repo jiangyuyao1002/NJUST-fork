@@ -6,7 +6,7 @@ import {
 	type WebviewMessage,
 	ExperimentId,
 	TelemetryEventName,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { type RouterName, toRouterName } from "../../../shared/api"
 import { Package } from "../../../shared/package"
@@ -23,7 +23,7 @@ import { debugLog } from "../../../utils/debugLog"
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { clearOpenAiCodexAuthCache } from "../WebviewStateBuilder"
 import { getProfileStorageService } from "../../../services/cloud-agent/ProfileStorageService"
 
@@ -319,10 +319,10 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 
 	const routerModels: Partial<Record<RouterName, ModelRecord>> = providerFilter
 		? {}
-		: { openrouter: {}, "vercel-ai-gateway": {}, litellm: {}, requesty: {}, unbound: {}, ollama: {}, lmstudio: {}, roo: {} }
+		: { openrouter: {}, "vercel-ai-gateway": {}, litellm: {}, requesty: {}, unbound: {}, ollama: {}, lmstudio: {}, "njust-ai": {} }
 
 	const getProviderModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
-		const oldProviders = ["openrouter", "requesty", "unbound", "vercel-ai-gateway", "litellm", "roo", "ollama", "lmstudio"]
+		const oldProviders = ["openrouter", "requesty", "unbound", "vercel-ai-gateway", "litellm", "njust-ai", "ollama", "lmstudio"]
 		if (oldProviders.includes(options.provider)) {
 			return getModels(options)
 		}
@@ -347,7 +347,7 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 		{ key: "requesty", options: { provider: "requesty", apiKey: apiConfiguration.requestyApiKey, baseUrl: apiConfiguration.requestyBaseUrl } },
 		{ key: "unbound", options: { provider: "unbound", apiKey: apiConfiguration.unboundApiKey } },
 		{ key: "vercel-ai-gateway", options: { provider: "vercel-ai-gateway" } },
-		{ key: "roo", options: { provider: "roo", baseUrl: process.env.NJUST_AI_CJ_PROVIDER_URL ?? "", apiKey: undefined } },
+		{ key: "njust-ai", options: { provider: "njust-ai", baseUrl: process.env.NJUST_AI_PROVIDER_URL ?? "", apiKey: undefined } },
 		{
 			key: "deepseek",
 			options: {
@@ -530,13 +530,13 @@ async function handleRequestLmStudioModels(context: MessageHandlerContext, _mess
 async function handleRequestRooModels(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	try {
-		const rooOptions = { provider: "roo" as const, baseUrl: process.env.NJUST_AI_CJ_PROVIDER_URL ?? "", apiKey: undefined }
+		const rooOptions = { provider: "njust-ai" as const, baseUrl: process.env.NJUST_AI_PROVIDER_URL ?? "", apiKey: undefined }
 		await flushModels(rooOptions, true)
 		const rooModels = await getModels(rooOptions)
-		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: true, values: { provider: "roo", models: rooModels } })
+		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: true, values: { provider: "njust-ai", models: rooModels } })
 	} catch (error) {
 		const errorMessage = getErrorMessage(error)
-		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: false, error: errorMessage, values: { provider: "roo" } })
+		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: false, error: errorMessage, values: { provider: "njust-ai" } })
 	}
 }
 

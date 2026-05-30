@@ -154,7 +154,7 @@ export type RouterProvider =
 	| "vercel-ai-gateway"
 	| "litellm"
 	| "requesty"
-	| "roo"
+	| "njust-ai"
 	| "unbound"
 	| "ollama"
 	| "lmstudio"
@@ -181,7 +181,7 @@ export const routerModelProviders: readonly RouterProvider[] = [
 	"vercel-ai-gateway",
 	"litellm",
 	"requesty",
-	"roo",
+	"njust-ai",
 	"unbound",
 	"ollama",
 	"lmstudio",

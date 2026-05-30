@@ -1,8 +1,8 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics } from "@njust-ai-cj/types"
-import { unboundDefaultModelId, unboundDefaultModelInfo } from "@njust-ai-cj/core/providers"
+import { type ModelInfo, type ModelRecord, type OpenAiUsageMetrics } from "@njust-ai/types"
+import { unboundDefaultModelId, unboundDefaultModelInfo } from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 import { calculateApiCostOpenAI } from "../../shared/cost"
@@ -62,7 +62,7 @@ export class UnboundHandler extends BaseProvider implements SingleCompletionHand
 			apiKey: apiKey,
 			defaultHeaders: {
 				...DEFAULT_HEADERS,
-				"X-Unbound-Metadata": JSON.stringify({ labels: [{ key: "app", value: "roo-code" }] }),
+				"X-Unbound-Metadata": JSON.stringify({ labels: [{ key: "app", value: "Njust-AI" }] }),
 			},
 		})
 	}
@@ -156,7 +156,7 @@ export class UnboundHandler extends BaseProvider implements SingleCompletionHand
 			...(thinking && { thinking }),
 			stream: true,
 			stream_options: { include_usage: true },
-			unbound_metadata: { originApp: "roo-code", taskId: metadata?.taskId, mode: metadata?.mode },
+			unbound_metadata: { originApp: "Njust-AI", taskId: metadata?.taskId, mode: metadata?.mode },
 			tools: this.convertToolsForOpenAI(metadata?.tools),
 			tool_choice: metadata?.tool_choice,
 		}

@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import axios from "axios"
 import { LMStudioClient, LLMInstanceInfo, LLMInfo } from "@lmstudio/sdk"
 
-import { ModelInfo } from "@njust-ai-cj/types"
-import { lMStudioDefaultModelInfo } from "@njust-ai-cj/core/providers"
+import { ModelInfo } from "@njust-ai/types"
+import { lMStudioDefaultModelInfo } from "@njust-ai/core/providers"
 
 import { getLMStudioModels, parseLMStudioModel } from "../lmstudio"
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest"
-import { toolNames } from "@njust-ai-cj/types"
+import { toolNames } from "@njust-ai/types"
 import { NativeToolCallParser } from "../NativeToolCallParser"
 import { getNativeTools } from "../../prompts/tools/native-tools"
 import { toolParamNames } from "../../../shared/tools"

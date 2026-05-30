@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest"
-import type { WebviewMessage } from "@njust-ai-cj/types"
+import type { WebviewMessage } from "@njust-ai/types"
 
 vi.mock("vscode", () => ({
 	window: { showErrorMessage: vi.fn() },

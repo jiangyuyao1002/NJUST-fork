@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import { GlobalState, ClineMessage } from "@njust-ai-cj/types"
+import { GlobalState, ClineMessage } from "@njust-ai/types"
 
 import { getApiMetrics } from "../../shared/getApiMetrics.js"
 import { AutoApprovalHandler } from "../AutoApprovalHandler.js"

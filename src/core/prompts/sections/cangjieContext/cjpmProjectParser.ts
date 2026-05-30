@@ -5,8 +5,8 @@ import { parse as parseToml } from "smol-toml"
 import { getCjpmTreeSummaryForPrompt } from "../../../../services/cangjie-lsp/cjpmTreeForPrompt"
 import { CangjieSymbolIndex } from "../../../../services/cangjie-lsp/CangjieSymbolIndex"
 import { logger } from "../../../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 import { simpleHash } from "./budget"
 
 const PACKAGE_DECL_REGEX = /^\s*package\s+([\w.]+)\s*$/m

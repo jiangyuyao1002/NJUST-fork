@@ -9,12 +9,12 @@
 
 import type { Anthropic } from "@anthropic-ai/sdk"
 import type { TaskSubtaskHost } from "./interfaces/TaskSubtaskHost"
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 import { generateParentContextSummary } from "./SubTaskContextBuilder"
 import { getEnvironmentDetails } from "../environment/getEnvironmentDetails"
 import { DEFAULT_FORKED_CONTEXT_CONFIG } from "./SubTaskOptions"
 import type { IsolationLevel, ForkedContextConfig, CacheSafeParams } from "./SubTaskOptions"
-import type { TodoItem } from "@njust-ai-cj/types"
+import type { TodoItem } from "@njust-ai/types"
 
 export class TaskSubtaskHandler {
 	constructor(private host: TaskSubtaskHost) {}
@@ -77,7 +77,7 @@ export class TaskSubtaskHandler {
 		this.host.skipPrevResponseIdOnce = true
 
 		this.host.isInitialized = true
-		this.host.emit(NJUST_AI_CJEventName.TaskActive, this.host.taskId)
+		this.host.emit(NJUST_AIEventName.TaskActive, this.host.taskId)
 
 		if (this.host.apiConversationHistory.length === 0) {
 			this.host.apiConversationHistory = await this.host.getSavedApiConversationHistory()

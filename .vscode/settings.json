@@ -11,8 +11,8 @@
 	// Turn off tsc task auto detection since we have the necessary tasks as npm scripts
 	"typescript.tsc.autoDetect": "off",
 	"vitest.disableWorkspaceWarning": true,
-	"njust-ai-cj.mcpServer.enabled": false,
-	"njust-ai-cj.mcpServer.port": 3100,
+	"njust-ai.mcpServer.enabled": false,
+	"njust-ai.mcpServer.port": 3100,
 	"terminal.integrated.env.windows": {
 		"CANGJIE_HOME": "D:\\cangjie",
 		"CANGJIE_PATH": "D:\\cangjie\\runtime\\lib\\windows_x86_64_cjnative;D:\\cangjie\\bin;D:\\cangjie\\tools\\bin;D:\\cangjie\\tools\\lib;D:\\cangjie\\debugger\\bin;C:\\Users\\Junjie\\.cjpm\\bin",

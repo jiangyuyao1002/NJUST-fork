@@ -28,7 +28,7 @@ import {
 	type CreateTaskOptions,
 	type ModelInfo,
 	type ClineApiReqCancelReason,
-	NJUST_AI_CJEventName,
+	NJUST_AIEventName,
 	TelemetryEventName,
 	TaskStatus,
 	TodoItem,
@@ -38,8 +38,8 @@ import {
 	MAX_CHECKPOINT_TIMEOUT_SECONDS,
 	MIN_CHECKPOINT_TIMEOUT_SECONDS,
 	countEnabledMcpTools,
-} from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 // api
 import { ApiHandler, buildApiHandler } from "../../api"
@@ -453,7 +453,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// Native tool call streaming state (track which index each tool is at)
 	private streamingToolCallIndices: Map<string, number> = new Map()
 	readonly toolExecution = new ToolExecutionContext(
-		Math.max(1, Number(process.env.ROO_MAX_TOOL_CONCURRENCY ?? 10) || 10),
+		Math.max(1, Number(process.env.NJUST_AI_MAX_TOOL_CONCURRENCY ?? 10) || 10),
 	)
 	private requestCacheReadWindow: number[] = []
 	private requestInputTokensWindow: number[] = []
@@ -691,8 +691,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.messageQueueService = new MessageQueueService()
 
 		this.messageQueueStateChangedHandler = () => {
-			this.emit(NJUST_AI_CJEventName.TaskUserMessage, this.taskId)
-			this.emit(NJUST_AI_CJEventName.QueuedMessagesUpdated, this.taskId, this.messageQueueService.messages)
+			this.emit(NJUST_AIEventName.TaskUserMessage, this.taskId)
+			this.emit(NJUST_AIEventName.QueuedMessagesUpdated, this.taskId, this.messageQueueService.messages)
 			void this.refreshWebviewState()
 		}
 
@@ -723,7 +723,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				const toolChanged = hasToolUsageChanged(toolUsage, this.toolUsageSnapshot)
 
 				if (tokenChanged || toolChanged) {
-					this.emit(NJUST_AI_CJEventName.TaskTokenUsageUpdated, this.taskId, tokenUsage, toolUsage)
+					this.emit(NJUST_AIEventName.TaskTokenUsageUpdated, this.taskId, tokenUsage, toolUsage)
 					this.tokenUsageSnapshot = tokenUsage
 					this.tokenUsageSnapshotAt = this.clineMessages.at(-1)?.ts
 					// Deep copy tool usage for snapshot
@@ -859,7 +859,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 		}
 
-		host.on(NJUST_AI_CJEventName.ProviderProfileChanged, this.providerProfileChangeListener)
+		host.on(NJUST_AIEventName.ProviderProfileChanged, this.providerProfileChangeListener)
 	}
 
 	/**
@@ -1283,7 +1283,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					}
 				}
 
-				this.emit(NJUST_AI_CJEventName.TaskUserMessage, this.taskId)
+				this.emit(NJUST_AIEventName.TaskUserMessage, this.taskId)
 
 				// Handle the message directly instead of routing through the webview.
 				// This avoids a race condition where the webview's message state hasn't
@@ -1570,7 +1570,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		let nextUserContent = userContent
 		let includeFileDetails = true
 
-		this.emit(NJUST_AI_CJEventName.TaskStarted)
+		this.emit(NJUST_AIEventName.TaskStarted)
 
 		while (!this.abort && !this.taskCompleted) {
 			const didEndLoop = await this.recursivelyMakeClineRequests(nextUserContent, includeFileDetails)
@@ -1687,7 +1687,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.toolExecution.recordToolErrorMetric(toolName)
 
 		if (error) {
-			this.emit(NJUST_AI_CJEventName.TaskToolFailed, this.taskId, toolName, error)
+			this.emit(NJUST_AIEventName.TaskToolFailed, this.taskId, toolName, error)
 		}
 	}
 

@@ -1,12 +1,12 @@
-import type { ToolName, ModeConfig, GroupOptions, GroupEntry } from "@njust-ai-cj/types"
-import { toolNames as validToolNames, TelemetryEventName } from "@njust-ai-cj/types"
-import { customToolRegistry } from "@njust-ai-cj/core"
+import type { ToolName, ModeConfig, GroupOptions, GroupEntry } from "@njust-ai/types"
+import { toolNames as validToolNames, TelemetryEventName } from "@njust-ai/types"
+import { customToolRegistry } from "@njust-ai/core/custom-tools"
 
 import { type Mode, FileRestrictionError, getModeBySlug, getGroupName } from "../../shared/modes"
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS, TOOL_ALIASES } from "../../shared/tools"
 import { isAllowedCangjieCommand } from "../task/CangjieRuntimePolicy"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 /**
  * Merge `params` with typed `nativeArgs` for mode and schema validation.

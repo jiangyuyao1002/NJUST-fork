@@ -2,7 +2,7 @@ import {
 	mimoTokenPlanModels,
 	mimoTokenPlanDefaultModelId,
 	MIMO_TOKEN_PLAN_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

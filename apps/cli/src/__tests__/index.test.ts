@@ -10,7 +10,7 @@
  * Run with: RUN_CLI_INTEGRATION_TESTS=true OPENROUTER_API_KEY=sk-or-v1-... pnpm test
  */
 
-// pnpm --filter @njust-ai-cj/cli test src/__tests__/index.test.ts
+// pnpm --filter @njust-ai/cli test src/__tests__/index.test.ts
 
 import path from "path"
 import fs from "fs"
@@ -53,7 +53,7 @@ function buildCliIfNeeded(): void {
 
 function buildExtensionIfNeeded(): void {
 	if (!isExtensionBuilt()) {
-		execSync("pnpm --filter njust-ai-cj bundle", { cwd: findMonorepoRoot(), stdio: "inherit" })
+		execSync("pnpm --filter njust-ai bundle", { cwd: findMonorepoRoot(), stdio: "inherit" })
 		console.log("Extension build complete.")
 	}
 }

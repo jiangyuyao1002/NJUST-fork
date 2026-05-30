@@ -5,7 +5,7 @@ import crypto from "crypto"
 import {
 	type ContextCondense,
 	TelemetryEventName,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import { Package } from "../../shared/package"
 import { defaultModeSlug } from "../../shared/modes"
 
@@ -28,7 +28,7 @@ import { summarizeConversation } from "../condense"
 
 import type { Task } from "./Task"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 /**
  * TaskRequestBuilder handles system prompt generation, prompt caching,
@@ -402,13 +402,13 @@ export class TaskRequestBuilder {
 	}
 
 	/**
-	 * Safely get files read by Roo, catching errors.
+	 * Safely get files read by Njust-AI, catching errors.
 	 */
 	private async getFilesReadByRooSafely(_context: string): Promise<string[] | undefined> {
 		try {
 			return await this.task.fileContextTracker.getFilesReadByRoo()
 		} catch (error) {
-			logger.error("TaskRequestBuilder", `Failed to get files read by Roo:`, error)
+			logger.error("TaskRequestBuilder", `Failed to get files read by Njust-AI:`, error)
 			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
 			return undefined
 		}

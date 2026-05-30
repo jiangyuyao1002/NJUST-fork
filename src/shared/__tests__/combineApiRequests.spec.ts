@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import type { ClineMessage, ClineSay } from "@njust-ai-cj/types"
+import type { ClineMessage, ClineSay } from "@njust-ai/types"
 
 import { combineApiRequests } from "../combineApiRequests"
 

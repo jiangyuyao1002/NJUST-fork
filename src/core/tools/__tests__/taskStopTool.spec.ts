@@ -2,12 +2,12 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { taskStopTool } from "../TaskStopTool"
 
 describe("TaskStopTool", () => {
-	const prevMode = process.env.ROO_TASK_STOP_MODE
+	const prevMode = process.env.NJUST_AI_TASK_STOP_MODE
 	beforeEach(() => {
-		delete process.env.ROO_TASK_STOP_MODE
+		delete process.env.NJUST_AI_TASK_STOP_MODE
 	})
 	afterEach(() => {
-		process.env.ROO_TASK_STOP_MODE = prevMode
+		process.env.NJUST_AI_TASK_STOP_MODE = prevMode
 	})
 
 	it("stops a running task by id", async () => {
@@ -66,7 +66,7 @@ describe("TaskStopTool", () => {
 	})
 
 	it("enforces self_only mode", async () => {
-		process.env.ROO_TASK_STOP_MODE = "self_only"
+		process.env.NJUST_AI_TASK_STOP_MODE = "self_only"
 		const provider = {
 			getTaskWithId: vi.fn().mockResolvedValue({ historyItem: { id: "t-1", rootTaskId: "root-1" } }),
 			getAllTaskInstances: vi.fn().mockReturnValue([{ taskId: "t-1", abortTask: vi.fn() }]),
@@ -85,7 +85,7 @@ describe("TaskStopTool", () => {
 	})
 
 	it("allows cross-tree stop in admin mode", async () => {
-		process.env.ROO_TASK_STOP_MODE = "admin"
+		process.env.NJUST_AI_TASK_STOP_MODE = "admin"
 		const abortTask = vi.fn().mockResolvedValue(undefined)
 		const provider = {
 			getTaskWithId: vi.fn().mockResolvedValue({ historyItem: { id: "t-2", rootTaskId: "root-2" } }),

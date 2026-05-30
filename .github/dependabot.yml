@@ -62,7 +62,7 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "npm"
-    directory: "/apps/web-roo-code"
+    directory: "/apps/web-Njust-AI"
     schedule:
       interval: "weekly"
   - package-ecosystem: "npm"

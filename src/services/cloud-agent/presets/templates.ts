@@ -30,7 +30,7 @@ function builtIn(
  * 与当前 CloudAgentClient 的默认行为完全一致。
  */
 export const NJUST_STANDARD_PROFILE: CloudAgentProfile = builtIn(
-	"njust-ai-cj-standard",
+	"njust-ai-standard",
 	"标准配置 (NJUST AI CJ)",
 	"http://120.79.250.232:8765",
 	{

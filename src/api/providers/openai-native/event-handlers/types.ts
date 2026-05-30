@@ -1,4 +1,4 @@
-import type { ServiceTier } from "@njust-ai-cj/types"
+import type { ServiceTier } from "@njust-ai/types"
 import type { ApiStreamUsageChunk } from "../../../transform/stream"
 import type { OpenAiNativeModel, ResponsesOutputItem } from "../base"
 

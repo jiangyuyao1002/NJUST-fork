@@ -1,7 +1,7 @@
 import axios from "axios"
 import { z } from "zod"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import { logger } from "../../../shared/logger"
 import { parseApiPrice } from "../../../shared/cost"

@@ -82,7 +82,7 @@ export abstract class BaseTerminal implements RooTerminal {
 			if (!this.process) {
 				this.running = false
 
-				logger.warn("BaseTerminal", `[Terminal ${this.provider}/${this.id}] process is undefined, so cannot set terminal stream (probably user-initiated non-Roo command)`)
+				logger.warn("BaseTerminal", `[Terminal ${this.provider}/${this.id}] process is undefined, so cannot set terminal stream (probably user-initiated non-Njust-AI command)`)
 
 				return
 			}

@@ -5,8 +5,8 @@ import fsSync from "fs"
 import ignore, { Ignore } from "ignore"
 import type * as vscode from "vscode"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export const LOCK_TEXT_SYMBOL = "\u{1F512}"
 

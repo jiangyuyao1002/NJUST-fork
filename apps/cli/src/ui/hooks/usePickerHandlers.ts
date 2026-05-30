@@ -1,5 +1,5 @@
 import { useCallback } from "react"
-import type { WebviewMessage } from "@njust-ai-cj/types"
+import type { WebviewMessage } from "@njust-ai/types"
 
 import type {
 	AutocompletePickerState,

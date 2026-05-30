@@ -3,14 +3,14 @@
  *
  * 用法（与插件默认 CloudAgentClient 一致，推荐）：
  *   1. node src/test-cloud-agent-mock.mjs  （或从仓库根目录: node src/test-cloud-agent-mock.mjs）
- *   2. 设置 "njust-ai-cj.cloudAgent.serverUrl": "http://127.0.0.1:4000"
+ *   2. 设置 "njust-ai.cloudAgent.serverUrl": "http://127.0.0.1:4000"
  *   3. F5 调试扩展，选择 Cloud Agent 模式发消息
  *
  * REST（插件实际调用）：
  *   - GET  /health     → 200 JSON { "status": "ok" }
  *   - POST /v1/run     → 请求体 { goal, session_id, workspace_path?, images? }，响应 CloudRunResponse（含示例 workspace_ops）
  *   - POST /v1/run/deferred/start|resume|abort、POST /v1/run/compile → 与扩展 deferred/compile 协议对齐（本 mock 为极简成功响应）
- *     本地写盘默认在开启 njust-ai-cj.cloudAgent.applyRemoteWorkspaceOps 时生效（默认为 true）；见 AGENTS.md
+ *     本地写盘默认在开启 njust-ai.cloudAgent.applyRemoteWorkspaceOps 时生效（默认为 true）；见 AGENTS.md
  *
  * MCP Streamable HTTP（可选，其他客户端）：
  *   - POST /mcp        → MCP 会话；submit_task 工具会模拟通知与 cloudagent/executeTool（插件 REST 路径不会走这里）
@@ -275,7 +275,7 @@ async function handleV1Run(req, res) {
 		"Mock task finished. In production, logs and summary come from the cloud service. " +
 		"(MCP tool callbacks are not used by the extension REST client.)"
 
-	// Optional structured ops for extension when njust-ai-cj.cloudAgent.applyRemoteWorkspaceOps is true.
+	// Optional structured ops for extension when njust-ai.cloudAgent.applyRemoteWorkspaceOps is true.
 	const workspace_ops = {
 		version: 1,
 		operations: [
@@ -557,7 +557,7 @@ httpServer.listen(PORT, "127.0.0.1", () => {
 	console.log(`         POST http://127.0.0.1:${PORT}/v1/run/compile`)
 	console.log(`  MCP:   POST http://127.0.0.1:${PORT}/mcp`)
 	console.log("")
-	console.log(`  Set njust-ai-cj.cloudAgent.serverUrl to http://127.0.0.1:${PORT}`)
+	console.log(`  Set njust-ai.cloudAgent.serverUrl to http://127.0.0.1:${PORT}`)
 	console.log("=".repeat(60))
 	console.log("")
 })

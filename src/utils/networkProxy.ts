@@ -1,7 +1,7 @@
 /**
  * Network Proxy Configuration Module
  *
- * Provides proxy configuration for all outbound HTTP/HTTPS requests from the NJUST_AI_CJ extension.
+ * Provides proxy configuration for all outbound HTTP/HTTPS requests from the NJUST_AI extension.
  * When running in debug mode (F5), a proxy can be enabled for outbound traffic.
  * Optionally, TLS certificate verification can be disabled (debug only) to allow
  * MITM proxy inspection.
@@ -15,8 +15,8 @@ import { Package } from "../shared/package"
 
 import { logger } from "../shared/logger"
 import { getErrorMessage } from "../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Proxy configuration state
@@ -303,7 +303,7 @@ async function configureUndiciProxy(config: ProxyConfig): Promise<void> {
 
 		// Node's built-in `fetch()` (Node 18+) is powered by an internal undici copy.
 		// Setting a dispatcher on our `undici` dependency does NOT affect that internal fetch.
-		// To ensure NJUST_AI_CJ's `fetch()` calls are proxied, patch global fetch in debug mode.
+		// To ensure NJUST_AI's `fetch()` calls are proxied, patch global fetch in debug mode.
 		// This patch is scoped to the extension lifecycle (restored on deactivate) and can be restored
 		// immediately if the proxy is disabled.
 		if (!fetchPatched) {

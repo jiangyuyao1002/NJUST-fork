@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs/promises"
 
-import { NJUST_AI_CONFIG_DIR, type WebviewMessage } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR, type WebviewMessage } from "@njust-ai/types"
 import { Package } from "../../../shared/package"
 import { openFile } from "../../../integrations/misc/open-file"
 import { fileExistsAtPath } from "../../../utils/fs"

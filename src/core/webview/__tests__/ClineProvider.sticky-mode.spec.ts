@@ -3,11 +3,11 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as vscode from "vscode"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { ClineProvider } from "../ClineProvider"
 import { ContextProxy } from "../../config/ContextProxy"
 import { Task } from "../../task/Task"
-import type { HistoryItem, ProviderName } from "@njust-ai-cj/types"
+import type { HistoryItem, ProviderName } from "@njust-ai/types"
 
 vi.mock("vscode", () => ({
 	ExtensionContext: vi.fn(),
@@ -174,7 +174,7 @@ vi.mock("../../../utils/storage", async (importOriginal) => {
 	}
 })
 
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		hasInstance: vi.fn().mockReturnValue(true),
 		createInstance: vi.fn(),

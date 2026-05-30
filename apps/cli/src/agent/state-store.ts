@@ -12,7 +12,7 @@
  * - Queryable: Current state is always accessible
  */
 
-import { ClineMessage, ExtensionState } from "@njust-ai-cj/types"
+import { ClineMessage, ExtensionState } from "@njust-ai/types"
 
 import { detectAgentState, AgentStateInfo, AgentLoopState } from "./agent-state.js"
 import { Observable } from "./events.js"

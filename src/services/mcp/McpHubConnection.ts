@@ -47,7 +47,7 @@ export async function connectToServerWithHub(
 	try {
 		const client = new Client(
 			{
-				name: "NJUST_AI_CJ",
+				name: "NJUST_AI",
 				version: hub.providerRef.deref()?.getExtensionPackageVersion() ?? "1.0.0",
 			},
 			{

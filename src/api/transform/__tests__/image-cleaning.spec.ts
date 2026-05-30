@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import { ApiHandler } from "../../types"
 import { ApiMessage } from "../../../core/task-persistence/apiMessages"

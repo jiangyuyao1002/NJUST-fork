@@ -18,7 +18,7 @@ vi.mock("vscode", () => ({
 	},
 }))
 
-import type { ModeConfig } from "@njust-ai-cj/types"
+import type { ModeConfig } from "@njust-ai/types"
 
 describe("Native Tools Filtering by Mode", () => {
 	describe("attemptApiRequest native tool filtering", () => {

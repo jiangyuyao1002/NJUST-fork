@@ -1,4 +1,4 @@
-import type { ProviderName } from "@njust-ai-cj/types"
+import type { ProviderName } from "@njust-ai/types"
 import type { DynamicModelRecord, ListModelsOptions } from "../modelTypes"
 
 interface ProviderConfig {

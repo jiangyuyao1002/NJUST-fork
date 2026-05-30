@@ -37,7 +37,7 @@ describe("TerminalProcess", () => {
 			shellIntegration: {
 				executeCommand: vi.fn(),
 			},
-			name: "NJUST_AI_CJ",
+			name: "NJUST_AI",
 			processId: Promise.resolve(123),
 			creationOptions: {},
 			exitStatus: undefined,

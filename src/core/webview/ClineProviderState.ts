@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { DEFAULT_CLOUD_AGENT_URL } from "@njust-ai-cj/types"
+import { DEFAULT_CLOUD_AGENT_URL } from "@njust-ai/types"
 import { Package } from "../../shared/package"
 import { mergeAllowedCommands, mergeDeniedCommands } from "./commandListUtils"
 

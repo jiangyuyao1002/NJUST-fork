@@ -1,7 +1,7 @@
-import type { UnsafeAny } from "@njust-ai-cj/types"
+import type { UnsafeAny } from "@njust-ai/types"
 import { logger } from "./logger.js"
-import type { ModelInfo } from "@njust-ai-cj/types"
-import type { ServiceTier } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
+import type { ServiceTier } from "@njust-ai/types"
 
 /**
  * Normalize OpenAI-style usage numbers before billing.
@@ -51,7 +51,7 @@ export function resolveOpenAiUsageForCost(args: {
 		}
 	}
 
-	// If prompt total is smaller than cache rows alone, input is almost certainly non-cached-only â€?	// expand so base+discount math stays consistent with OpenAI billing.
+	// If prompt total is smaller than cache rows alone, input is almost certainly non-cached-only ï¿½?	// expand so base+discount math stays consistent with OpenAI billing.
 	const minTotal = cw + cr
 	if (total < minTotal) {
 		total = minTotal
@@ -173,7 +173,7 @@ function normalizeOpenAiCostOptions(
 }
 
 // For OpenAI compliant usage, the input tokens count usually INCLUDES cached tokens;
-// some responses only report non-cached totals â€?see resolveOpenAiUsageForCost.
+// some responses only report non-cached totals ï¿½?see resolveOpenAiUsageForCost.
 export function calculateApiCostOpenAI(
 	modelInfo: ModelInfo,
 	inputTokens: number,

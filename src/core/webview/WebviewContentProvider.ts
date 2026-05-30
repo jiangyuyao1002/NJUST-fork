@@ -13,8 +13,8 @@ import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 export interface WebviewContentProviderHost {
 	readonly extensionUri: vscode.Uri
@@ -114,7 +114,7 @@ export class WebviewContentProvider {
 						window.AUDIO_BASE_URI = "${audioUri}"
 						window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
 					</script>
-					<title>NJUST_AI_CJ</title>
+					<title>NJUST_AI</title>
 				</head>
 				<body>
 					<div id="root"></div>
@@ -166,7 +166,7 @@ export class WebviewContentProvider {
 				window.AUDIO_BASE_URI = "${audioUri}"
 				window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
 			</script>
-            <title>NJUST_AI_CJ</title>
+            <title>NJUST_AI</title>
           </head>
           <body>
             <noscript>You need to enable JavaScript to run this app.</noscript>

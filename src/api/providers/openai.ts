@@ -3,13 +3,13 @@ import OpenAI, { AzureOpenAI } from "openai"
 import axios from "axios"
 import { z } from "zod"
 
-import { type ModelInfo, type OpenAiUsageMetrics } from "@njust-ai-cj/types"
+import { type ModelInfo, type OpenAiUsageMetrics } from "@njust-ai/types"
 import {
 	azureOpenAiDefaultApiVersion,
 	openAiModelInfoSaneDefaults,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 

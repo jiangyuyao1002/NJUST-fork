@@ -1,4 +1,4 @@
-import { DEFAULT_CONSECUTIVE_MISTAKE_LIMIT } from "@njust-ai-cj/types"
+import { DEFAULT_CONSECUTIVE_MISTAKE_LIMIT } from "@njust-ai/types"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 

@@ -1,5 +1,5 @@
 import EventEmitter from "node:events";
-import { type TaskCommand, type IpcClientEvents, type IpcMessage } from "@njust-ai-cj/types";
+import { type TaskCommand, type IpcClientEvents, type IpcMessage } from "@njust-ai/types";
 export declare class IpcClient extends EventEmitter<IpcClientEvents> {
     private readonly _socketPath;
     private readonly _id;

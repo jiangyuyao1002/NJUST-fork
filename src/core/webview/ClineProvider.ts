@@ -7,12 +7,12 @@ import axios from "axios"
 import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 
-import type { McpServer } from "@njust-ai-cj/types"
+import type { McpServer } from "@njust-ai/types"
 import {
 	type TaskProviderLike,
 	type TaskProviderEvents,
 	type ProviderSettings,
-	type NJUST_AI_CJSettings,
+	type NJUST_AISettings,
 	type ProviderSettingsEntry,
 	type TelemetryPropertiesProvider,
 	type TelemetryProperties,
@@ -25,12 +25,12 @@ import {
 	type ExtensionMessage,
 	type ExtensionState,
 	type GlobalState,
-	NJUST_AI_CJEventName,
+	NJUST_AIEventName,
 	DEFAULT_MODES,
 	TelemetryEventName,
-} from "@njust-ai-cj/types"
-import {} from "@njust-ai-cj/core/providers"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/types"
+import {} from "@njust-ai/core/providers"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { Package } from "../../shared/package"
 
 import { Mode } from "../../shared/modes"
@@ -111,8 +111,8 @@ import {
 } from "./ClineProviderDelegation"
 import { TaskStackManager } from "./TaskStackManager"
 import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
-import type { TodoItem } from "@njust-ai-cj/types"
-import { requestyDefaultModelId, openRouterDefaultModelId } from "@njust-ai-cj/core/providers"
+import type { TodoItem } from "@njust-ai/types"
+import { requestyDefaultModelId, openRouterDefaultModelId } from "@njust-ai/core/providers"
 import { TaskHistoryStore } from "../task-persistence"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { logger } from "../../shared/logger"
@@ -181,7 +181,7 @@ export class ClineProvider
 	compileLocal?: (cwd: string) => Promise<{ success: boolean; output: string }>
 
 	get cloudAuthSkipModel(): boolean {
-		return this.context.globalState.get<boolean>("roo-auth-skip-model") ?? false
+		return this.context.globalState.get<boolean>("njust-ai-auth-skip-model") ?? false
 	}
 
 	get lockApiConfigAcrossModes(): boolean {
@@ -325,7 +325,7 @@ export class ClineProvider
 		// Forward <most> task events to the provider.
 		// We do something fairly similar for the IPC-based API.
 		this.taskCreationCallback = (instance: Task) => {
-			this.emit(NJUST_AI_CJEventName.TaskCreated, instance)
+			this.emit(NJUST_AIEventName.TaskCreated, instance)
 			this.stack.bindEventForwarders(instance)
 		}
 	}
@@ -627,7 +627,7 @@ export class ClineProvider
 		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
 		options?: { startTask?: boolean },
 	) {
-		const isCliRuntime = process.env.ROO_CLI_RUNTIME === "1"
+		const isCliRuntime = process.env.NJUST_AI_CLI_RUNTIME === "1"
 		const skipProfileRestoreFromHistory = isCliRuntime
 		const isRehydratingCurrentTask = this.getCurrentTask()?.taskId === historyItem.id
 
@@ -796,21 +796,21 @@ export class ClineProvider
 		// Get platform-specific application data directory
 		let mcpServersDir: string
 		if (process.platform === "win32") {
-			// Windows: %APPDATA%\NJUST_AI_CJ\MCP
-			mcpServersDir = path.join(os.homedir(), "AppData", "Roaming", "NJUST_AI_CJ", "MCP")
+			// Windows: %APPDATA%\NJUST_AI\MCP
+			mcpServersDir = path.join(os.homedir(), "AppData", "Roaming", "NJUST_AI", "MCP")
 		} else if (process.platform === "darwin") {
 			// macOS: ~/Documents/Cline/MCP
 			mcpServersDir = path.join(os.homedir(), "Documents", "Cline", "MCP")
 		} else {
 			// Linux: ~/.local/share/Cline/MCP
-			mcpServersDir = path.join(os.homedir(), ".local", "share", "NJUST_AI_CJ", "MCP")
+			mcpServersDir = path.join(os.homedir(), ".local", "share", "NJUST_AI", "MCP")
 		}
 
 		try {
 			await fs.mkdir(mcpServersDir, { recursive: true })
 		} catch (_error) {
 			// Fallback to a relative path if directory creation fails
-			return path.join(os.homedir(), ".roo-code", "mcp")
+			return path.join(os.homedir(), ".Njust-AI", "mcp")
 		}
 		return mcpServersDir
 	}
@@ -970,11 +970,11 @@ export class ClineProvider
 		return this.taskHistory.broadcastTaskHistoryUpdate(history)
 	}
 
-	public async setValue<K extends keyof NJUST_AI_CJSettings>(key: K, value: NJUST_AI_CJSettings[K]) {
+	public async setValue<K extends keyof NJUST_AISettings>(key: K, value: NJUST_AISettings[K]) {
 		await this.settingsManager.setValue(key, value)
 	}
 
-	public getValue<K extends keyof NJUST_AI_CJSettings>(key: K) {
+	public getValue<K extends keyof NJUST_AISettings>(key: K) {
 		return this.settingsManager.getValue(key)
 	}
 
@@ -982,7 +982,7 @@ export class ClineProvider
 		return this.settingsManager.getValues()
 	}
 
-	public async setValues(values: NJUST_AI_CJSettings) {
+	public async setValues(values: NJUST_AISettings) {
 		await this.settingsManager.setValues(values)
 	}
 
@@ -1131,7 +1131,7 @@ export class ClineProvider
 		images?: string[],
 		parentTask?: Task,
 		options: CreateTaskOptions = {},
-		configuration: NJUST_AI_CJSettings = {},
+		configuration: NJUST_AISettings = {},
 	): Promise<Task> {
 		return this.taskCoordinator.createTask(text, images, parentTask, options, configuration)
 	}
@@ -1141,7 +1141,7 @@ export class ClineProvider
 		images?: string[],
 		parentTask?: Task,
 		options: CreateTaskOptions = {},
-		configuration: NJUST_AI_CJSettings = {},
+		configuration: NJUST_AISettings = {},
 	): Promise<Task> {
 		if (configuration) {
 			await this.setValues(configuration)

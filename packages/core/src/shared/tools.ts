@@ -1,7 +1,7 @@
-import type { UnsafeAny } from "@njust-ai-cj/types"
+import type { UnsafeAny } from "@njust-ai/types"
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ClineAsk, ToolProgressStatus, ToolGroup, ToolName, GenerateImageParams } from "@njust-ai-cj/types"
+import type { ClineAsk, ToolProgressStatus, ToolGroup, ToolName, GenerateImageParams } from "@njust-ai/types"
 
 export type ToolResponse = string | Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam>
 
@@ -151,7 +151,7 @@ export type ToolParamName = (typeof toolParamNames)[number]
  */
 export type NativeToolArgs = {
 	access_mcp_resource: { server_name: string; uri: string }
-	read_file: import("@njust-ai-cj/types").ReadFileToolParams
+	read_file: import("@njust-ai/types").ReadFileToolParams
 	read_command_output: { artifact_id: string; search?: string; offset?: number; limit?: number }
 	attempt_completion: { result: string }
 	execute_command: { command: string; cwd?: string; timeout?: number | null }

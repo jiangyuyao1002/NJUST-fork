@@ -1,5 +1,5 @@
 {
-	"extends": "@njust-ai-cj/config-typescript/base.json",
+	"extends": "@njust-ai/config-typescript/base.json",
 	"compilerOptions": {
 		"types": ["node"]
 	},

@@ -11,14 +11,14 @@ import {
 	type VerbosityLevel,
 	type ReasoningEffortExtended,
 	type ServiceTier,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import {
 	openAiNativeDefaultModelId,
 	OpenAiNativeModelId,
 	openAiNativeModels,
 	OPENAI_NATIVE_DEFAULT_TEMPERATURE,
-} from "@njust-ai-cj/core/providers"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/core/providers"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
 import { calculateApiCostOpenAI, resolveOpenAiUsageForCost } from "../../../shared/cost"
@@ -166,12 +166,12 @@ export abstract class OpenAiNativeHandlerBase extends BaseProvider implements Si
 			this.options.enableResponsesReasoningSummary = true
 		}
 		const apiKey = requireApiKey(this.options.openAiNativeApiKey, "OpenAI Native")
-		const userAgent = `roo-code/${Package.version} (${os.platform()} ${os.release()}; ${os.arch()}) node/${process.version.slice(1)}`
+		const userAgent = `Njust-AI/${Package.version} (${os.platform()} ${os.release()}; ${os.arch()}) node/${process.version.slice(1)}`
 		this.client = new OpenAI({
 			baseURL: this.options.openAiNativeBaseUrl || undefined,
 			apiKey,
 			defaultHeaders: {
-				originator: "roo-code",
+				originator: "Njust-AI",
 				session_id: this.sessionId,
 				"User-Agent": userAgent,
 			},

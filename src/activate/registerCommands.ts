@@ -1,9 +1,9 @@
 import * as vscode from "vscode"
 import delay from "delay"
 
-import type { CommandId } from "@njust-ai-cj/types"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { CommandId } from "@njust-ai/types"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { getCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
@@ -23,7 +23,7 @@ import { getErrorMessage } from "../shared/error-utils"
 export function getVisibleProviderOrLog(outputChannel: vscode.OutputChannel): ClineProvider | undefined {
 	const visibleProvider = getVisibleInstance() as ClineProvider | undefined
 	if (!visibleProvider) {
-		outputChannel.appendLine("Cannot find any visible NJUST_AI_CJ instances.")
+		outputChannel.appendLine("Cannot find any visible NJUST_AI instances.")
 		return undefined
 	}
 	return visibleProvider
@@ -223,7 +223,7 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	const targetCol = hasVisibleEditors ? Math.max(lastCol + 1, 1) : vscode.ViewColumn.Two
 
-	const newPanel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "NJUST_AI_CJ", targetCol, {
+	const newPanel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "NJUST_AI", targetCol, {
 		enableScripts: true,
 		retainContextWhenHidden: true,
 		localResourceRoots: [context.extensionUri],

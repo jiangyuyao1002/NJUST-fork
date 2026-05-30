@@ -1,6 +1,6 @@
 import React from "react"
 
-import type { Command } from "@njust-ai-cj/types"
+import type { Command } from "@njust-ai/types"
 
 interface SlashCommandItemSimpleProps {
 	command: Command

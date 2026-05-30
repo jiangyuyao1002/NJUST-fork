@@ -1,4 +1,4 @@
-import type { HistoryItem } from "@njust-ai-cj/types"
+import type { HistoryItem } from "@njust-ai/types"
 
 import { render, screen, fireEvent } from "@/utils/test-utils"
 import { vscode } from "@/utils/vscode"
@@ -47,11 +47,11 @@ vi.mock("react-i18next", () => ({
 				"chat:task.sharePublicly": "Share Publicly",
 				"chat:task.sharePubliclyDescription": "Anyone with the link can access",
 				"chat:task.connectToCloud": "Connect to Cloud",
-				"chat:task.connectToCloudDescription": "Sign in to NJUST_AI_CJ Cloud to share tasks",
+				"chat:task.connectToCloudDescription": "Sign in to NJUST_AI Cloud to share tasks",
 				"chat:task.sharingDisabledByOrganization": "Sharing disabled by organization",
 				"chat:task.openApiHistory": "Open API History",
 				"chat:task.openUiHistory": "Open UI History",
-				"cloud:cloudBenefitsTitle": "Connect to NJUST_AI_CJ Cloud",
+				"cloud:cloudBenefitsTitle": "Connect to NJUST_AI Cloud",
 				"cloud:cloudBenefitHistory": "Access your task history from anywhere",
 				"cloud:cloudBenefitSharing": "Share tasks with your team",
 				"cloud:cloudBenefitMetrics": "Track usage and costs",

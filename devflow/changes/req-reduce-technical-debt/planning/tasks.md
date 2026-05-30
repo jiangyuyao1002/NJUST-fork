@@ -57,7 +57,7 @@
 | cangjie-lsp service | Complete handleClient implementation | T006 | Low - isolated file |
 | TerminalRegistry | Extract VSCode-specific code | T007 | Low - isolated file |
 | importExport config | Clarify data source responsibility | T008 | Low - isolated file |
-| web-roo-code stats | Remove any types | T009 | Low - isolated file |
+| web-Njust-AI stats | Remove any types | T009 | Low - isolated file |
 | TODO comments | Resolve in priority order | T010 | Low - various files |
 
 ## Tracer Bullet Map
@@ -71,7 +71,7 @@
 | Slice 5 | cangjie-lsp handleClient complete | Run tests, verify behavior | `npm test -- src/services/cangjie-lsp` |
 | Slice 6 | TerminalRegistry VSCode code extracted | Run tsc, verify no errors | `npx tsc --noEmit` |
 | Slice 7 | importExport data source clarified | Run tsc, verify no errors | `npx tsc --noEmit` |
-| Slice 8 | web-roo-code type safety improved | Run tsc, verify no errors | `npx tsc --noEmit` |
+| Slice 8 | web-Njust-AI type safety improved | Run tsc, verify no errors | `npx tsc --noEmit` |
 | Slice 9 | TODO comments resolved | Run tsc, lint, tests | Full verification suite |
 
 ## Phase 1: HIGH Priority - ProviderSettingsManager
@@ -146,11 +146,11 @@
   Evidence: Data source responsibility clarified
   Completion: Single source of truth for provider settings
 
-## Phase 5: MEDIUM Priority - Web Roo Code Type Safety
+## Phase 5: MEDIUM Priority - Web Njust-AI Code Type Safety
 
-- [ ] T009 [IMPL] Fix type safety in stats.ts (dependsOn: T008) `apps/web-roo-code/src/lib/stats.ts`
+- [ ] T009 [IMPL] Fix type safety in stats.ts (dependsOn: T008) `apps/web-Njust-AI/src/lib/stats.ts`
   Goal: Remove eslint-disable for any types, add proper TypeScript interfaces.
-  Files: `apps/web-roo-code/src/lib/stats.ts`
+  Files: `apps/web-Njust-AI/src/lib/stats.ts`
   Read first: `design.md`
   Verification: `npx tsc --noEmit`
   Evidence: No more `any` types without explicit disable

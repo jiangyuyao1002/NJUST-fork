@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { recordSecurityMetric, startTraceSpan } from "../metrics"
 
 describe("recordSecurityMetric", () => {

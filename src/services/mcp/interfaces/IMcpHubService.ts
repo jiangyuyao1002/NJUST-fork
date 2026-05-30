@@ -2,7 +2,7 @@ import type {
 	McpResourceResponse,
 	McpServer,
 	McpToolCallResponse,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import type { McpConnection } from "../McpHub"
 

@@ -1,4 +1,4 @@
-import { parametersSchema, defineCustomTool } from "@njust-ai-cj/types"
+import { parametersSchema, defineCustomTool } from "@njust-ai/types"
 
 // This tool only exists in fixtures-override/ to test combined loading.
 export default defineCustomTool({

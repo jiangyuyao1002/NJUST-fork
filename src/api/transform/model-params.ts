@@ -3,7 +3,7 @@ import {
 	type ProviderSettings,
 	type VerbosityLevel,
 	type ReasoningEffortExtended,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import {
 	DEFAULT_HYBRID_REASONING_MODEL_THINKING_TOKENS,

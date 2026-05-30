@@ -524,7 +524,7 @@ Terminal --> CommandExecution[命令执行]
 graph TD
 subgraph "核心依赖"
 VSCode[VS Code API]
-Types[@njust-ai-cj/types]
+Types[@njust-ai/types]
 EventEmitter[EventEmitter]
 end
 subgraph "业务服务"

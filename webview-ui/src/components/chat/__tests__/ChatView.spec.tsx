@@ -1,4 +1,4 @@
-// pnpm --filter @njust-ai-cj/vscode-webview test src/components/chat/__tests__/ChatView.spec.tsx
+// pnpm --filter @shared/vscode-webview test src/components/chat/__tests__/ChatView.spec.tsx
 
 import React from "react"
 import { render, waitFor, act, fireEvent } from "@/utils/test-utils"
@@ -128,14 +128,14 @@ vi.mock("../QueuedMessages", () => ({
 // Mock RooTips component
 vi.mock("@src/components/welcome/RooTips", () => ({
 	default: function MockRooTips() {
-		return <div data-testid="roo-tips">Tips content</div>
+		return <div data-testid="njust-ai-tips">Tips content</div>
 	},
 }))
 
 // Mock RooHero component
 vi.mock("@src/components/welcome/RooHero", () => ({
 	default: function MockRooHero() {
-		return <div data-testid="roo-hero">Hero content</div>
+		return <div data-testid="njust-ai-hero">Hero content</div>
 	},
 }))
 
@@ -594,7 +594,7 @@ describe("ChatView - DismissibleUpsell Display Tests", () => {
 		// Current implementation keeps welcome tips visible and does not render DismissibleUpsell.
 		await waitFor(() => {
 			expect(queryByTestId("dismissible-upsell")).not.toBeInTheDocument()
-			expect(getByTestId("roo-tips")).toBeInTheDocument()
+			expect(getByTestId("njust-ai-tips")).toBeInTheDocument()
 		})
 	})
 
@@ -625,9 +625,9 @@ describe("ChatView - DismissibleUpsell Display Tests", () => {
 			// Should not show DismissibleUpsell during active task
 			expect(queryByTestId("dismissible-upsell")).not.toBeInTheDocument()
 			// Should not show RooTips either since the entire welcome screen is hidden during active tasks
-			expect(queryByTestId("roo-tips")).not.toBeInTheDocument()
+			expect(queryByTestId("njust-ai-tips")).not.toBeInTheDocument()
 			// Should not show RooHero either since the entire welcome screen is hidden during active tasks
-			expect(queryByTestId("roo-hero")).not.toBeInTheDocument()
+			expect(queryByTestId("njust-ai-hero")).not.toBeInTheDocument()
 		})
 	})
 
@@ -648,7 +648,7 @@ describe("ChatView - DismissibleUpsell Display Tests", () => {
 
 		// Should not show DismissibleUpsell but should show RooTips
 		expect(queryByTestId("dismissible-upsell")).not.toBeInTheDocument()
-		expect(getByTestId("roo-tips")).toBeInTheDocument()
+		expect(getByTestId("njust-ai-tips")).toBeInTheDocument()
 	})
 
 	it("shows RooTips when user has fewer than 6 tasks (instead of DismissibleUpsell)", () => {
@@ -667,7 +667,7 @@ describe("ChatView - DismissibleUpsell Display Tests", () => {
 
 		// Should not show DismissibleUpsell but should show RooTips
 		expect(queryByTestId("dismissible-upsell")).not.toBeInTheDocument()
-		expect(getByTestId("roo-tips")).toBeInTheDocument()
+		expect(getByTestId("njust-ai-tips")).toBeInTheDocument()
 	})
 })
 

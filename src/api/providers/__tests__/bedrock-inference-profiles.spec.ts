@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import { AWS_INFERENCE_PROFILE_MAPPING } from "@njust-ai-cj/core/providers"
+import { AWS_INFERENCE_PROFILE_MAPPING } from "@njust-ai/core/providers"
 import { AwsBedrockHandler } from "../bedrock"
 import { ApiHandlerOptions } from "../../../shared/api"
 

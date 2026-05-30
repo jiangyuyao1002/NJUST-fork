@@ -1,4 +1,4 @@
-import type { ProviderName, ModelInfo, OrganizationAllowList } from "@njust-ai-cj/types"
+import type { ProviderName, ModelInfo, OrganizationAllowList } from "@njust-ai/types"
 
 export const filterProviders = (
 	providers: Array<{ value: string; label: string }>,

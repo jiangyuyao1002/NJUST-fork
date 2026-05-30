@@ -6,7 +6,7 @@ import {
 	type ExtensionState,
 	type ClineMessage,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { ExtensionStateContextProvider, useExtensionState, mergeExtensionState } from "../ExtensionStateContext"
 

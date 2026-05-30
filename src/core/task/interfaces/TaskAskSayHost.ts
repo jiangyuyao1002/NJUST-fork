@@ -12,7 +12,7 @@ import type {
 	ContextCondense,
 	ContextTruncation,
 	ToolName,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 import type { TaskMessageManager } from "../TaskMessageManager"
 
 export interface QueuedMessage {

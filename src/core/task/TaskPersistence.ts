@@ -1,6 +1,6 @@
 import { v7 as uuidv7 } from "uuid"
 import type { Anthropic } from "@anthropic-ai/sdk"
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 import type { ApiMessage } from "../task-persistence"
 import type { TaskMessageManager } from "./TaskMessageManager"

@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import type { GlobalSettings, NJUST_AI_CJSettings } from "./global-settings.js"
+import type { GlobalSettings, NJUST_AISettings } from "./global-settings.js"
 import type { ProviderSettings, ProviderSettingsEntry } from "./provider-settings.js"
 import type { HistoryItem } from "./history.js"
 import type { ModeConfig, PromptComponent } from "./mode.js"
@@ -357,10 +357,10 @@ export type ExtensionState = Pick<
 	 */
 	clineMessagesSeq?: number
 
-	/** Mirrored from VS Code setting `njust-ai-cj.saveAllBeforeExecuteCommand` (not persisted in global state). */
+	/** Mirrored from VS Code setting `njust-ai.saveAllBeforeExecuteCommand` (not persisted in global state). */
 	saveAllBeforeExecuteCommand?: boolean
 
-	/** Mirrored from VS Code `njust-ai-cj.inlineCompletion.*` (workspace configuration). */
+	/** Mirrored from VS Code `njust-ai.inlineCompletion.*` (workspace configuration). */
 	inlineCompletionEnabled?: boolean
 	inlineCompletionTriggerDelayMs?: number
 	inlineCompletionMaxLines?: number
@@ -649,7 +649,7 @@ export interface WebviewMessage {
 		codebaseIndexVercelAiGatewayApiKey?: string
 		codebaseIndexOpenRouterApiKey?: string
 	}
-	updatedSettings?: NJUST_AI_CJSettings & {
+	updatedSettings?: NJUST_AISettings & {
 		cloudAgentServerUrl?: string
 		inlineCompletionEnabled?: boolean
 		inlineCompletionTriggerDelayMs?: number
@@ -658,7 +658,7 @@ export interface WebviewMessage {
 		inlineCompletionTriggerCommand?: string
 	}
 	/** Task configuration applied via `createTask()` when starting a cloud task. */
-	taskConfiguration?: NJUST_AI_CJSettings
+	taskConfiguration?: NJUST_AISettings
 	action?: string
 	planId?: string
 	stepId?: string

@@ -54,7 +54,7 @@ function generateSPDX(packages) {
 		name: `${pkg.name}-${pkg.version}`,
 		creationInfo: {
 			created: now,
-			creators: ["Tool: njust-ai-cj-sbom-generator"],
+			creators: ["Tool: njust-ai-sbom-generator"],
 		},
 		packages: [
 			{

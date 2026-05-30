@@ -1,6 +1,6 @@
 # 测试指南
 
-本文档介绍如何为 NJUST_AI_CJ 项目编写和运行测试。
+本文档介绍如何为 NJUST_AI 项目编写和运行测试。
 
 ## 目录
 
@@ -13,7 +13,7 @@
 ## 测试架构
 
 ```
-NJUST_AI_CJ (Monorepo - pnpm + turbo)
+NJUST_AI (Monorepo - pnpm + turbo)
 │
 ├── src/                              # VS Code 扩展主包
 │   ├── vitest.config.ts              # Vitest 配置
@@ -57,13 +57,13 @@ pnpm test
 
 ```bash
 # src 包
-pnpm --filter njust-ai-cj test
+pnpm --filter njust-ai test
 
 # webview-ui 包
-pnpm --filter @njust-ai-cj/vscode-webview test
+pnpm --filter @njust-ai/vscode-webview test
 
 # packages/core 包
-pnpm --filter @njust-ai-cj/core test
+pnpm --filter @njust-ai/core test
 ```
 
 ### 运行覆盖率报告
@@ -73,7 +73,7 @@ pnpm --filter @njust-ai-cj/core test
 pnpm test:coverage
 
 # webview-ui 覆盖率
-pnpm --filter @njust-ai-cj/vscode-webview test:coverage
+pnpm --filter @njust-ai/vscode-webview test:coverage
 ```
 
 ### 运行单个测试文件
@@ -220,7 +220,7 @@ pnpm test
 E2E 测试使用 Mock API 服务器，不依赖真实的 LLM API。
 
 ```typescript
-import { createMockServer } from "@njust-ai-cj/mock-api-server"
+import { createMockServer } from "@njust-ai/mock-api-server"
 
 suite("My E2E Test", () => {
   let server

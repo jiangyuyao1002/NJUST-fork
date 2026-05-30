@@ -7,8 +7,8 @@ import { byLengthAsc, Fzf } from "fzf"
 import { getBinPath } from "../ripgrep"
 import { Package } from "../../shared/package"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export type FileResult = { path: string; type: "file" | "folder"; label?: string }
 

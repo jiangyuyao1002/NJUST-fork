@@ -2,7 +2,7 @@ import { memo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Scissors, AlertTriangle } from "lucide-react"
 
-import type { ContextTruncation } from "@njust-ai-cj/types"
+import type { ContextTruncation } from "@njust-ai/types"
 
 interface TruncationResultRowProps {
 	data: ContextTruncation

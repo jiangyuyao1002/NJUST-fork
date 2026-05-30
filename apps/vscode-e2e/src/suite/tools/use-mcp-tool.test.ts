@@ -4,12 +4,12 @@ import * as path from "path"
 import * as os from "os"
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
+suite("NJUST_AI use_mcp_tool Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let tempDir: string
@@ -21,7 +21,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 
 	// Create a temporary directory and test files
 	suiteSetup(async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "roo-test-mcp-"))
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "njust-ai-test-mcp-"))
 
 		// Create test files in VSCode workspace directory
 		const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || tempDir
@@ -179,7 +179,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.error("Error:", message.text)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -188,7 +188,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -196,8 +196,8 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
-		await sleep(2000) // Wait for NJUST_AI_CJ to fully initialize
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
+		await sleep(2000) // Wait for NJUST_AI to fully initialize
 
 		// Trigger MCP server detection by opening and modifying the file
 		console.log("Triggering MCP server detection by modifying the config file...")
@@ -206,7 +206,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			const document = await vscode.workspace.openTextDocument(mcpConfigUri)
 			const editor = await vscode.window.showTextDocument(document)
 
-			// Make a small modification to trigger the save event, without this NJUST_AI_CJ won't load the MCP server
+			// Make a small modification to trigger the save event, without this NJUST_AI won't load the MCP server
 			const edit = new vscode.WorkspaceEdit()
 			const currentContent = document.getText()
 			const modifiedContent = currentContent.replace(
@@ -296,9 +296,9 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			console.log("Test passed! MCP read_file tool used successfully and task completed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -358,7 +358,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.error("Error:", message.text)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -366,7 +366,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				_taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -427,8 +427,8 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			console.log("Test passed! MCP write_file tool used successfully and task completed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -488,7 +488,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.error("Error:", message.text)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -496,7 +496,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				_taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -568,8 +568,8 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			console.log("Test passed! MCP list_directory tool used successfully and task completed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -629,7 +629,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.error("Error:", message.text)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -637,7 +637,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				_taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -709,8 +709,8 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			console.log("Test passed! MCP directory_tree tool used successfully and task completed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -746,7 +746,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.log("Attempt completion called:", message.text?.substring(0, 200))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -754,7 +754,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				_taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -778,8 +778,8 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			console.log("Test passed! MCP error handling verified and task completed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -811,14 +811,14 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.log("Attempt completion called:", message.text?.substring(0, 200))
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
 				_taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -840,8 +840,8 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 
 			console.log("Test passed! Missing MCP server handling verified and task completed")
 		} finally {
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -912,7 +912,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				console.error("Error:", message.text)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task completion
 		const taskCompletedHandler = (id: string) => {
@@ -920,7 +920,7 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 				_taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -1001,8 +1001,8 @@ suite("NJUST_AI_CJ use_mcp_tool Tool", function () {
 			console.log("Test passed! MCP message format validation successful and task completed")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 })

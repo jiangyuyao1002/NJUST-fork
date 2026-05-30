@@ -17,7 +17,7 @@
 		{
 			"label": "watch:webview",
 			"type": "shell",
-			"command": "pnpm --filter @njust-ai-cj/vscode-webview dev",
+			"command": "pnpm --filter @njust-ai/vscode-webview dev",
 			"group": "build",
 			"problemMatcher": {
 				"owner": "vite",

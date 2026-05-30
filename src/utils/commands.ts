@@ -1,4 +1,4 @@
-import type { CommandId, CodeActionId, TerminalActionId } from "@njust-ai-cj/types"
+import type { CommandId, CodeActionId, TerminalActionId } from "@njust-ai/types"
 
 import { Package } from "../shared/package"
 

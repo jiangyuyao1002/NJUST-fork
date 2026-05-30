@@ -8,7 +8,7 @@
 
 import { EventEmitter } from "events"
 
-import { ClineMessage, ClineAsk } from "@njust-ai-cj/types"
+import { ClineMessage, ClineAsk } from "@njust-ai/types"
 
 import type { AgentStateInfo } from "./agent-state.js"
 

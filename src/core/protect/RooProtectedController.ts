@@ -1,20 +1,20 @@
 import path from "path"
 import ignore, { Ignore } from "ignore"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 export const SHIELD_SYMBOL = "\u{1F6E1}"
 
 /**
- * Controls write access to Roo configuration files by enforcing protection patterns.
- * Prevents auto-approved modifications to sensitive Roo configuration files.
+ * Controls write access to Njust-AI configuration files by enforcing protection patterns.
+ * Prevents auto-approved modifications to sensitive Njust-AI configuration files.
  */
 export class RooProtectedController {
 	private cwd: string
 	private ignoreInstance: Ignore
 
-	// Predefined list of protected Roo configuration patterns
+	// Predefined list of protected Njust-AI configuration patterns
 	private static readonly PROTECTED_PATTERNS = [
 		".rooignore",
 		".roomodes",
@@ -95,7 +95,7 @@ export class RooProtectedController {
 	 * Get display message for protected file operations
 	 */
 	getProtectionMessage(): string {
-		return "This is a Roo configuration file and requires approval for modifications"
+		return "This is a Njust-AI configuration file and requires approval for modifications"
 	}
 
 	/**
@@ -104,7 +104,7 @@ export class RooProtectedController {
 	 */
 	getInstructions(): string {
 		const patterns = RooProtectedController.PROTECTED_PATTERNS.join(", ")
-		return `# Protected Files\n\n(The following Roo configuration file patterns are write-protected and always require approval for modifications, regardless of autoapproval settings. When using list_files, you'll notice a ${SHIELD_SYMBOL} next to files that are write-protected.)\n\nProtected patterns: ${patterns}`
+		return `# Protected Files\n\n(The following Njust-AI configuration file patterns are write-protected and always require approval for modifications, regardless of autoapproval settings. When using list_files, you'll notice a ${SHIELD_SYMBOL} next to files that are write-protected.)\n\nProtected patterns: ${patterns}`
 	}
 
 	/**

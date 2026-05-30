@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import type { ModeConfig } from "@njust-ai-cj/types"
+import type { ModeConfig } from "@njust-ai/types"
 
 import { getAllModesWithPrompts } from "../../../shared/modes"
 import { ensureSettingsDirectoryExists } from "../../../utils/globalContext"

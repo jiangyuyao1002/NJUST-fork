@@ -1,7 +1,7 @@
 import * as path from "path"
 import { z } from "zod"
 
-import { type ClineSayTool } from "@njust-ai-cj/types"
+import { type ClineSayTool } from "@njust-ai/types"
 
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"

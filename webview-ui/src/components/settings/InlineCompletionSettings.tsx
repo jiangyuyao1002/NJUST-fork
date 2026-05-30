@@ -1,6 +1,6 @@
 import { HTMLAttributes } from "react"
 import { Trans } from "react-i18next"
-import { Package } from "@roo/package"
+import { Package } from "@shared/package"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { vscode } from "@/utils/vscode"

@@ -131,7 +131,7 @@ describe("loadRuleFiles", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 		readFileMock.mockImplementation((filePath: PathLike) => {
 			if (filePath.toString().endsWith(".roorules")) {
-				return Promise.resolve("roo rules content")
+				return Promise.resolve("njust-ai rules content")
 			}
 			if (filePath.toString().endsWith(".clinerules")) {
 				return Promise.resolve("cline rules content")
@@ -140,7 +140,7 @@ describe("loadRuleFiles", () => {
 		})
 
 		const result = await loadRuleFiles("/fake/path")
-		expect(result).toBe("\n# Rules from .roorules:\nroo rules content\n")
+		expect(result).toBe("\n# Rules from .roorules:\nnjust-ai rules content\n")
 	})
 
 	it("should handle when no rule files exist", async () => {
@@ -346,13 +346,13 @@ describe("loadRuleFiles", () => {
 		// Simulate .roorules exists
 		readFileMock.mockImplementation((filePath: PathLike) => {
 			if (filePath.toString().endsWith(".roorules")) {
-				return Promise.resolve("roo rules content")
+				return Promise.resolve("njust-ai rules content")
 			}
 			return Promise.reject({ code: "ENOENT" })
 		})
 
 		const result = await loadRuleFiles("/fake/path")
-		expect(result).toBe("\n# Rules from .roorules:\nroo rules content\n")
+		expect(result).toBe("\n# Rules from .roorules:\nnjust-ai rules content\n")
 	})
 
 	it("should handle errors when reading directory", async () => {
@@ -367,13 +367,13 @@ describe("loadRuleFiles", () => {
 		// Simulate .roorules exists
 		readFileMock.mockImplementation((filePath: PathLike) => {
 			if (filePath.toString().endsWith(".roorules")) {
-				return Promise.resolve("roo rules content")
+				return Promise.resolve("njust-ai rules content")
 			}
 			return Promise.reject({ code: "ENOENT" })
 		})
 
 		const result = await loadRuleFiles("/fake/path")
-		expect(result).toBe("\n# Rules from .roorules:\nroo rules content\n")
+		expect(result).toBe("\n# Rules from .roorules:\nnjust-ai rules content\n")
 	})
 
 	it("should read files from nested subdirectories in .njust_ai/rules/", async () => {
@@ -669,7 +669,7 @@ describe("addCustomInstructions", () => {
 				return Promise.resolve("Agent rules content")
 			}
 			if (pathStr.endsWith(".roorules")) {
-				return Promise.resolve("Roo rules content")
+				return Promise.resolve("Njust-AI rules content")
 			}
 			return Promise.reject({ code: "ENOENT" })
 		})
@@ -692,7 +692,7 @@ describe("addCustomInstructions", () => {
 		expect(result).toContain("# Agent Rules Standard (AGENTS.md):")
 		expect(result).toContain("Agent rules content")
 		expect(result).toContain("# Rules from .roorules:")
-		expect(result).toContain("Roo rules content")
+		expect(result).toContain("Njust-AI rules content")
 	})
 
 	it("should follow symlinks when loading AGENTS.md", async () => {

@@ -2,7 +2,7 @@ import { EventEmitter } from "events"
 
 import { v4 as uuidv4 } from "uuid"
 
-import { QueuedMessage } from "@njust-ai-cj/types"
+import { QueuedMessage } from "@njust-ai/types"
 
 export interface MessageQueueState {
 	messages: QueuedMessage[]

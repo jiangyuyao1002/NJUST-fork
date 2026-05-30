@@ -25,7 +25,7 @@ import {
 	type McpToolCallResponse,
 	TelemetryEventName,
 	NJUST_AI_CONFIG_DIR,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { t } from "../../i18n"
 
@@ -38,7 +38,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { TIMING } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
 import {

@@ -1,9 +1,9 @@
 import * as fs from "fs"
 import * as path from "path"
 import type { Memento } from "vscode"
-import type { HistoryItem } from "@njust-ai-cj/types"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { HistoryItem } from "@njust-ai/types"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { getStorageBasePath } from "../../utils/storage"

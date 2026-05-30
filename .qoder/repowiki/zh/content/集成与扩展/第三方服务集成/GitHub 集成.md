@@ -3,7 +3,7 @@
 <cite>
 **本文档引用的文件**
 - [upgrade.ts](file://apps/cli/src/commands/cli/upgrade.ts)
-- [stats.ts](file://apps/web-roo-code/src/lib/stats.ts)
+- [stats.ts](file://apps/web-Njust-AI/src/lib/stats.ts)
 - [oauth.ts](file://src/integrations/openai-codex/oauth.ts)
 - [urls.ts](file://webview-ui/src/oauth/urls.ts)
 - [git.ts](file://src/utils/git.ts)
@@ -11,9 +11,9 @@
 - [ShadowCheckpointService.ts](file://src/services/checkpoints/ShadowCheckpointService.ts)
 - [TaskHistoryStore.ts](file://src/core/task-persistence/TaskHistoryStore.ts)
 - [website-preview.yml](file://.github/workflows/website-preview.yml)
-- [5_pull_request_workflow.xml](file://.roo/rule-issue-fixer/5_pull_request_workflow.xml)
-- [3_common_patterns.xml](file://.roo/rules-pr-fixer/3_common_patterns.xml)
-- [1_Workflow.xml](file://.roo/rules-issue-writer/1_workflow.xml)
+- [5_pull_request_workflow.xml](file://.njust-ai/rule-issue-fixer/5_pull_request_workflow.xml)
+- [3_common_patterns.xml](file://.njust-ai/rules-pr-fixer/3_common_patterns.xml)
+- [1_Workflow.xml](file://.njust-ai/rules-issue-writer/1_workflow.xml)
 - [constants.spec.ts](file://src/api/providers/__tests__/constants.spec.ts)
 </cite>
 
@@ -77,13 +77,13 @@ IssueWorkflow --> Git
 
 **图表来源**
 - [upgrade.ts:1-156](file://apps/cli/src/commands/cli/upgrade.ts#L1-L156)
-- [stats.ts:1-125](file://apps/web-roo-code/src/lib/stats.ts#L1-L125)
+- [stats.ts:1-125](file://apps/web-Njust-AI/src/lib/stats.ts#L1-L125)
 - [git.ts:84-130](file://src/utils/git.ts#L84-L130)
 - [ShadowCheckpointService.ts:450-489](file://src/services/checkpoints/ShadowCheckpointService.ts#L450-L489)
 
 **章节来源**
 - [upgrade.ts:1-156](file://apps/cli/src/commands/cli/upgrade.ts#L1-L156)
-- [stats.ts:1-125](file://apps/web-roo-code/src/lib/stats.ts#L1-L125)
+- [stats.ts:1-125](file://apps/web-Njust-AI/src/lib/stats.ts#L1-L125)
 - [git.ts:84-130](file://src/utils/git.ts#L84-L130)
 
 ## 核心组件
@@ -97,7 +97,7 @@ sequenceDiagram
 participant CLI as CLI 应用
 participant GitHub as GitHub API
 participant Parser as 版本解析器
-CLI->>GitHub : GET /repos/NJUST-AI/NJUST_AI_CJ/releases
+CLI->>GitHub : GET /repos/NJUST-AI/NJUST_AI/releases
 GitHub-->>CLI : 返回发布列表
 CLI->>Parser : 解析版本号
 Parser->>Parser : 比较版本版本
@@ -194,7 +194,7 @@ GitClient --> CLI
 
 **图表来源**
 - [upgrade.ts:68-110](file://apps/cli/src/commands/cli/upgrade.ts#L68-L110)
-- [stats.ts:1-125](file://apps/web-roo-code/src/lib/stats.ts#L1-L125)
+- [stats.ts:1-125](file://apps/web-Njust-AI/src/lib/stats.ts#L1-L125)
 
 ## 详细组件分析
 
@@ -219,7 +219,7 @@ Note over System,GitHub : 支持实时监控和状态同步
 ```
 
 **图表来源**
-- [5_pull_request_workflow.xml:35-52](file://.roo/rule-issue-fixer/5_pull_request_workflow.xml#L35-L52)
+- [5_pull_request_workflow.xml:35-52](file://.njust-ai/rule-issue-fixer/5_pull_request_workflow.xml#L35-L52)
 - [website-preview.yml:71-102](file://.github/workflows/website-preview.yml#L71-L102)
 
 ### 分支管理集成
@@ -245,7 +245,7 @@ AddRemote --> ValidateRemote
 ```
 
 **图表来源**
-- [3_common_patterns.xml:59-88](file://.roo/rules-pr-fixer/3_common_patterns.xml#L59-L88)
+- [3_common_patterns.xml:59-88](file://.njust-ai/rules-pr-fixer/3_common_patterns.xml#L59-L88)
 
 ### 任务持久化系统
 
@@ -286,8 +286,8 @@ CheckpointService --> TaskHistoryStore : 依赖
 - [ShadowCheckpointService.ts:450-489](file://src/services/checkpoints/ShadowCheckpointService.ts#L450-L489)
 
 **章节来源**
-- [5_pull_request_workflow.xml:35-52](file://.roo/rule-issue-fixer/5_pull_request_workflow.xml#L35-L52)
-- [3_common_patterns.xml:59-88](file://.roo/rules-pr-fixer/3_common_patterns.xml#L59-L88)
+- [5_pull_request_workflow.xml:35-52](file://.njust-ai/rule-issue-fixer/5_pull_request_workflow.xml#L35-L52)
+- [3_common_patterns.xml:59-88](file://.njust-ai/rules-pr-fixer/3_common_patterns.xml#L59-L88)
 - [TaskHistoryStore.ts:44-573](file://src/core/task-persistence/TaskHistoryStore.ts#L44-L573)
 - [ShadowCheckpointService.ts:450-489](file://src/services/checkpoints/ShadowCheckpointService.ts#L450-L489)
 

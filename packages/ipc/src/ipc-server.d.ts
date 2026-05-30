@@ -1,7 +1,7 @@
 import EventEmitter from "node:events";
 import { Socket } from "node:net";
-import { type IpcServerEvents, type NJUST_AI_CJIpcServer, type IpcMessage } from "@njust-ai-cj/types";
-export declare class IpcServer extends EventEmitter<IpcServerEvents> implements NJUST_AI_CJIpcServer {
+import { type IpcServerEvents, type NJUST_AIIpcServer, type IpcMessage } from "@njust-ai/types";
+export declare class IpcServer extends EventEmitter<IpcServerEvents> implements NJUST_AIIpcServer {
     private readonly _socketPath;
     private readonly _log;
     private readonly _clients;

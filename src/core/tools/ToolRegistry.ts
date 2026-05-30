@@ -1,4 +1,4 @@
-import type { ToolName } from "@njust-ai-cj/types"
+import type { ToolName } from "@njust-ai/types"
 import type { BaseTool } from "./BaseTool"
 import type { ToolRegistry as IToolRegistry } from "./ToolSearchTool"
 import { TOOL_ALIASES } from "../../shared/tools"

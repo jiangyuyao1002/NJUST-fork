@@ -3,7 +3,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
@@ -30,7 +30,7 @@ const isApplyDiffToolMessage = (message: ClineMessage): boolean => {
 	return false
 }
 
-suite("NJUST_AI_CJ apply_diff Tool", function () {
+suite("NJUST_AI apply_diff Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string
@@ -209,7 +209,7 @@ function validateInput(input) {
 				console.log("apply_diff tool executed!")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -218,7 +218,7 @@ function validateInput(input) {
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -226,7 +226,7 @@ function validateInput(input) {
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -277,9 +277,9 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			console.log("Test passed! apply_diff tool executed and file modified successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -317,7 +317,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 				console.log("apply_diff tool executed!")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -326,7 +326,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -334,7 +334,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -387,9 +387,9 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			console.log("Test passed! apply_diff tool executed and multiple replacements applied successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -431,7 +431,7 @@ function keepThis() {
 				console.log("apply_diff tool executed!")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -439,14 +439,14 @@ function keepThis() {
 				taskStarted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -494,9 +494,9 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 			console.log("Test passed! apply_diff tool executed and targeted modification successful")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -534,7 +534,7 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 				console.log("apply_diff tool attempted!")
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -542,14 +542,14 @@ ${testFile.content}\nAssume the file exists and you can modify it directly.`,
 				taskStarted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -600,9 +600,9 @@ Assume the file exists and you can modify it directly.`,
 			console.log("Test passed! apply_diff attempted and error handled gracefully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 
@@ -660,7 +660,7 @@ function checkInput(input) {
 				console.log(`apply_diff tool executed! (count: ${applyDiffCount})`)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		// Listen for task events
 		const taskStartedHandler = (id: string) => {
@@ -669,7 +669,7 @@ function checkInput(input) {
 				console.log("Task started:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
+		api.on(NJUST_AIEventName.TaskStarted, taskStartedHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
@@ -677,7 +677,7 @@ function checkInput(input) {
 				console.log("Task completed:", id)
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -739,9 +739,9 @@ Assume the file exists and you can modify it directly.`,
 			console.log("Test passed! apply_diff tool executed and multiple search/replace blocks applied successfully")
 		} finally {
 			// Clean up
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskStarted, taskStartedHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskStarted, taskStartedHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 })

@@ -5,7 +5,7 @@ import {
 	isResumableAsk,
 	isInteractiveAsk,
 	isNonBlockingAsk,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { AgentLoopState, detectAgentState } from "../agent-state.js"
 import { createMockClient } from "../extension-client.js"

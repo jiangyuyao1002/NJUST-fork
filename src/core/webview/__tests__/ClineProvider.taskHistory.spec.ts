@@ -1,10 +1,10 @@
-// pnpm --filter njust-ai-cj test core/webview/__tests__/ClineProvider.taskHistory.spec.ts
+// pnpm --filter njust-ai test core/webview/__tests__/ClineProvider.taskHistory.spec.ts
 
 
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest"
 import * as vscode from "vscode"
-import type { HistoryItem } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import type { HistoryItem } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { ContextProxy } from "../../config/ContextProxy"
 import { ClineProvider } from "../ClineProvider"

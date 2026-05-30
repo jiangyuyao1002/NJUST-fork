@@ -1,5 +1,5 @@
 {
-	"name": "@njust-ai-cj/config-eslint",
+	"name": "@njust-ai/config-eslint",
 	"private": true,
 	"type": "module",
 	"exports": {

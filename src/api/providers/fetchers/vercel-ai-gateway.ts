@@ -1,11 +1,11 @@
 import axios from "axios"
 import { z } from "zod"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 import {
 	VERCEL_AI_GATEWAY_VISION_ONLY_MODELS,
 	VERCEL_AI_GATEWAY_VISION_AND_TOOLS_MODELS,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
 import { logger } from "../../../shared/logger"

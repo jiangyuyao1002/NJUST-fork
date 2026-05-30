@@ -47,7 +47,7 @@ vi.mock("fs/promises")
 
 import * as vscode from "vscode"
 
-import { ModeConfig } from "@njust-ai-cj/types"
+import { ModeConfig } from "@njust-ai/types"
 
 import { SYSTEM_PROMPT } from "../system"
 import type { IMcpHubService } from "../../../services/mcp/interfaces/IMcpHubService"

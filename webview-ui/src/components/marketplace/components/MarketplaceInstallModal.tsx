@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react"
-import { MarketplaceItem, McpParameter, McpInstallationMethod } from "@njust-ai-cj/types"
+import { MarketplaceItem, McpParameter, McpInstallationMethod } from "@njust-ai/types"
 import { vscode } from "@/utils/vscode"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import {

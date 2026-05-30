@@ -195,7 +195,7 @@ describe("MockWorkspaceConfiguration", () => {
 		})
 
 		it("should return runtime config value over disk-based values", async () => {
-			const config = new MockWorkspaceConfiguration("njust-ai-cj", context)
+			const config = new MockWorkspaceConfiguration("njust-ai", context)
 
 			// Set a value in disk-based storage
 			await config.update("commandExecutionTimeout", 10)
@@ -204,52 +204,52 @@ describe("MockWorkspaceConfiguration", () => {
 			expect(config.get("commandExecutionTimeout")).toBe(10)
 
 			// Set runtime config (should take precedence)
-			setRuntimeConfig("njust-ai-cj", "commandExecutionTimeout", 20)
+			setRuntimeConfig("njust-ai", "commandExecutionTimeout", 20)
 
 			// Now runtime value should be returned
 			expect(config.get("commandExecutionTimeout")).toBe(20)
 		})
 
 		it("should set and get runtime config values", () => {
-			setRuntimeConfig("njust-ai-cj", "testSetting", "testValue")
+			setRuntimeConfig("njust-ai", "testSetting", "testValue")
 
-			expect(getRuntimeConfig("njust-ai-cj.testSetting")).toBe("testValue")
+			expect(getRuntimeConfig("njust-ai.testSetting")).toBe("testValue")
 		})
 
 		it("should set multiple runtime config values at once", () => {
-			setRuntimeConfigValues("njust-ai-cj", {
+			setRuntimeConfigValues("njust-ai", {
 				setting1: "value1",
 				setting2: 42,
 				setting3: true,
 			})
 
-			expect(getRuntimeConfig("njust-ai-cj.setting1")).toBe("value1")
-			expect(getRuntimeConfig("njust-ai-cj.setting2")).toBe(42)
-			expect(getRuntimeConfig("njust-ai-cj.setting3")).toBe(true)
+			expect(getRuntimeConfig("njust-ai.setting1")).toBe("value1")
+			expect(getRuntimeConfig("njust-ai.setting2")).toBe(42)
+			expect(getRuntimeConfig("njust-ai.setting3")).toBe(true)
 		})
 
 		it("should ignore undefined values in setRuntimeConfigValues", () => {
-			setRuntimeConfigValues("njust-ai-cj", {
+			setRuntimeConfigValues("njust-ai", {
 				defined: "value",
 				notDefined: undefined,
 			})
 
-			expect(getRuntimeConfig("njust-ai-cj.defined")).toBe("value")
-			expect(getRuntimeConfig("njust-ai-cj.notDefined")).toBeUndefined()
+			expect(getRuntimeConfig("njust-ai.defined")).toBe("value")
+			expect(getRuntimeConfig("njust-ai.notDefined")).toBeUndefined()
 		})
 
 		it("should clear all runtime config values", () => {
-			setRuntimeConfig("njust-ai-cj", "setting1", "value1")
-			setRuntimeConfig("njust-ai-cj", "setting2", "value2")
+			setRuntimeConfig("njust-ai", "setting1", "value1")
+			setRuntimeConfig("njust-ai", "setting2", "value2")
 
 			clearRuntimeConfig()
 
-			expect(getRuntimeConfig("njust-ai-cj.setting1")).toBeUndefined()
-			expect(getRuntimeConfig("njust-ai-cj.setting2")).toBeUndefined()
+			expect(getRuntimeConfig("njust-ai.setting1")).toBeUndefined()
+			expect(getRuntimeConfig("njust-ai.setting2")).toBeUndefined()
 		})
 
 		it("should return default value when no runtime config is set", () => {
-			const config = new MockWorkspaceConfiguration("njust-ai-cj", context)
+			const config = new MockWorkspaceConfiguration("njust-ai", context)
 
 			expect(config.get("nonexistent", 0)).toBe(0)
 			expect(config.get("nonexistent", "default")).toBe("default")
@@ -257,12 +257,12 @@ describe("MockWorkspaceConfiguration", () => {
 
 		it("should work with MockWorkspaceConfiguration.get() for CLI settings", () => {
 			// Simulate CLI setting commandExecutionTimeout
-			setRuntimeConfigValues("njust-ai-cj", {
+			setRuntimeConfigValues("njust-ai", {
 				commandExecutionTimeout: 20,
 				commandTimeoutAllowlist: ["npm", "yarn"],
 			})
 
-			const config = new MockWorkspaceConfiguration("njust-ai-cj", context)
+			const config = new MockWorkspaceConfiguration("njust-ai", context)
 
 			// These should return the runtime config values
 			expect(config.get<number>("commandExecutionTimeout", 0)).toBe(20)

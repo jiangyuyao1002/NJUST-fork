@@ -1,6 +1,6 @@
 import { CircleCheck, CircleDashed, CircleSlash, LoaderCircle } from "lucide-react"
 
-import type { Task } from "@njust-ai-cj/evals"
+import type { Task } from "@njust-ai/evals"
 
 type TaskStatusProps = {
 	task: Task

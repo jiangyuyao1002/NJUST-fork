@@ -1,5 +1,5 @@
 {
-  "name": "njust-ai-cj",
+  "name": "njust-ai",
   "packageManager": "pnpm@10.8.1",
   "engines": {
     "node": "20.19.2"
@@ -13,7 +13,7 @@
     "lint-staged": "lint-staged",
     "check-types": "turbo check-types --log-order grouped --output-logs new-only",
     "test": "turbo test --log-order grouped --output-logs new-only",
-    "pretest:coverage": "pnpm --filter @njust-ai-cj/types build",
+    "pretest:coverage": "pnpm --filter @njust-ai/types build",
     "test:coverage": "pnpm exec vitest run --coverage --config src/vitest.config.ts",
     "format": "turbo format --log-order grouped --output-logs new-only",
     "build": "turbo build --log-order grouped --output-logs new-only",
@@ -31,12 +31,12 @@
     "syncpack:report": "syncpack list-mismatches",
     "check-secrets": "node scripts/check-secrets.mjs --staged",
     "evals": "dotenvx run -f packages/evals/.env.development packages/evals/.env.local -- docker compose -f packages/evals/docker-compose.yml --profile server --profile runner up --build --scale runner=0",
-    "npm:publish:types": "pnpm --filter @njust-ai-cj/types npm:publish"
+    "npm:publish:types": "pnpm --filter @njust-ai/types npm:publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.10",
     "@dotenvx/dotenvx": "^1.34.0",
-    "@njust-ai-cj/config-typescript": "workspace:^",
+    "@njust-ai/config-typescript": "workspace:^",
     "@sonar/scan": "^4.3.6",
     "@types/glob": "^9.0.0",
     "@types/node": "20.x",

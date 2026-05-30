@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-import type { ModelInfo, ProviderSettings, ReasoningEffortWithMinimal } from "@njust-ai-cj/types"
+import type { ModelInfo, ProviderSettings, ReasoningEffortWithMinimal } from "@njust-ai/types"
 
 import {
 	getOpenRouterReasoning,

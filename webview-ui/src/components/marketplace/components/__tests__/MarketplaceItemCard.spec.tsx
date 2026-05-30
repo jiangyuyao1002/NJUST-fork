@@ -1,7 +1,7 @@
 import { render, screen } from "@/utils/test-utils"
 import userEvent from "@testing-library/user-event"
 
-import { MarketplaceItem } from "@njust-ai-cj/types"
+import { MarketplaceItem } from "@njust-ai/types"
 
 import { vscode } from "@/utils/vscode"
 import { TooltipProvider } from "@/components/ui/tooltip"

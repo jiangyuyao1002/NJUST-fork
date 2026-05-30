@@ -10,7 +10,7 @@ vi.mock("@src/utils/vscode", () => ({
 	},
 }))
 
-vi.mock("@roo/package", () => ({
+vi.mock("@shared/package", () => ({
 	Package: {
 		version: "2026.4.30",
 	},
@@ -38,11 +38,11 @@ vi.mock("@src/i18n/TranslationContext", () => ({
 				"chat:announcement.release.cangjieContext":
 					"Context management enhancements for Cangjie projects with more stable compaction behavior.",
 				"chat:announcement.release.cangjieWelcome":
-					"Updated welcome and onboarding experience for NJUST_AI_CJ.",
+					"Updated welcome and onboarding experience for NJUST_AI.",
 			}
 
 			if (key === "chat:announcement.title") {
-				return `NJUST_AI_CJ ${options?.version ?? ""} Released`
+				return `NJUST_AI ${options?.version ?? ""} Released`
 			}
 
 			return translations[key] ?? key
@@ -54,7 +54,7 @@ describe("Announcement", () => {
 	it("renders current announcement title and highlights", () => {
 		render(<Announcement hideAnnouncement={vi.fn()} />)
 
-		expect(screen.getByText("NJUST_AI_CJ 2026.4.30 Released")).toBeInTheDocument()
+		expect(screen.getByText("NJUST_AI 2026.4.30 Released")).toBeInTheDocument()
 		expect(
 			screen.getByText(
 				"Cangjie toolchain integration: improved cjpm/cjfmt/cjlint workflow support.",
@@ -66,7 +66,7 @@ describe("Announcement", () => {
 			),
 		).toBeInTheDocument()
 		expect(
-			screen.getByText("Updated welcome and onboarding experience for NJUST_AI_CJ."),
+			screen.getByText("Updated welcome and onboarding experience for NJUST_AI."),
 		).toBeInTheDocument()
 	})
 

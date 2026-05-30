@@ -1,1 +1,1 @@
-export * from "@njust-ai-cj/core/prefetch"
+export * from "@njust-ai/core/prefetch"

@@ -7,8 +7,8 @@ import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
 import type { CangjieLintConfig } from "./CangjieLintConfig"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 const execFileAsync = promisify(execFile)
 

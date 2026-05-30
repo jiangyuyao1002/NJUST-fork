@@ -1,4 +1,4 @@
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 import { Writable } from "stream"
 
 import type { TaskCompletedEvent } from "../events.js"

@@ -7,7 +7,7 @@
 		"openrouter": {
 			"description": "LLM 统一接口"
 		},
-		"roo": {
+		"njust-ai": {
 			"description": "开始使用的最佳免费模型",
 			"incentive": "免费试用"
 		}
@@ -32,7 +32,7 @@
 		"goBack": "返回"
 	},
 	"waitingForCloud": {
-		"heading": "登录到 NJUST_AI_CJ Cloud...",
+		"heading": "登录到 NJUST_AI Cloud...",
 		"description": "我们将带你前往浏览器注册。然后我们会把你带回这里以完成设置。",
 		"noPrompt": "如果没有提示你打开 URL，<clickHere>点击这里</clickHere>。",
 		"havingTrouble": "如果你已完成注册但遇到问题，<clickHere>点击这里</clickHere>。",
@@ -44,8 +44,8 @@
 	"startRouter": "我们建议使用 LLM 路由器：",
 	"startCustom": "或者你可以带上自己的 API 密钥：",
 	"telemetry": {
-		"helpImprove": "帮助改进 NJUST_AI_CJ",
-		"helpImproveMessage": "NJUST_AI_CJ 收集错误和使用数据以帮助我们修复 Bug 并改进扩展。此遥测不收集代码、提示或个人信息。你可以在<settingsLink>设置</settingsLink>中将其关闭。"
+		"helpImprove": "帮助改进 NJUST_AI",
+		"helpImproveMessage": "NJUST_AI 收集错误和使用数据以帮助我们修复 Bug 并改进扩展。此遥测不收集代码、提示或个人信息。你可以在<settingsLink>设置</settingsLink>中将其关闭。"
 	},
 	"importSettings": "导入设置"
 }

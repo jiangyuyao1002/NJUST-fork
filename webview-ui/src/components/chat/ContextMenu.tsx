@@ -3,7 +3,7 @@ import { getIconForFilePath, getIconUrlByName, getIconForDirectoryPath } from "v
 import { t } from "i18next"
 import { Settings } from "lucide-react"
 
-import type { ModeConfig, Command } from "@njust-ai-cj/types"
+import type { ModeConfig, Command } from "@njust-ai/types"
 
 import {
 	ContextMenuOptionType,

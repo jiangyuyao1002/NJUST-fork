@@ -5,7 +5,7 @@ import { Button, StandardTooltip } from "@/components/ui"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
-import { SuggestionItem } from "@njust-ai-cj/types"
+import { SuggestionItem } from "@njust-ai/types"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_FOLLOWUP_TIMEOUT_MS = 60000

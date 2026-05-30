@@ -4,8 +4,8 @@ import { useMemo, useState, useCallback, useEffect, Fragment } from "react"
 import { toast } from "sonner"
 import { LoaderCircle, FileText, Copy, Check, StopCircle, List, Layers } from "lucide-react"
 
-import type { Run, TaskMetrics as _TaskMetrics, Task } from "@njust-ai-cj/evals"
-import type { ToolName } from "@njust-ai-cj/types"
+import type { Run, TaskMetrics as _TaskMetrics, Task } from "@njust-ai/evals"
+import type { ToolName } from "@njust-ai/types"
 
 import { formatCurrency, formatDuration, formatTokens, formatToolUsageSuccessRate } from "@/lib/formatters"
 import { useRunStatus } from "@/hooks/use-run-status"

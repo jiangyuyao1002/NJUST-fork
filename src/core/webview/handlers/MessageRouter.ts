@@ -1,5 +1,5 @@
 import type { ClineProvider } from "../ClineProvider"
-import type { WebviewMessage, GlobalState } from "@njust-ai-cj/types"
+import type { WebviewMessage, GlobalState } from "@njust-ai/types"
 import { logger } from "../../../shared/logger"
 
 export type MessageHandler = (context: MessageHandlerContext, message: WebviewMessage) => void | Promise<void>

@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header"
 import "./globals.css"
 
 export const metadata: Metadata = {
-	title: "NJUST_AI_CJ Evals",
+	title: "NJUST_AI Evals",
 }
 
 export default function RootLayout({

@@ -1,9 +1,9 @@
-// pnpm --filter @njust-ai-cj/core test src/custom-tools/__tests__/custom-tool-registry.spec.ts
+// pnpm --filter @njust-ai/core test src/custom-tools/__tests__/custom-tool-registry.spec.ts
 
 import path from "path"
 import { fileURLToPath } from "url"
 
-import { type CustomToolDefinition, parametersSchema as z } from "@njust-ai-cj/types"
+import { type CustomToolDefinition, parametersSchema as z } from "@njust-ai/types"
 
 import { CustomToolRegistry } from "../custom-tool-registry.js"
 

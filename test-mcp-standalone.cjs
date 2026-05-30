@@ -144,7 +144,7 @@ async function handleJsonRpc(body, reqSessionId) {
 					result: {
 						protocolVersion: "2025-03-26",
 						capabilities: { tools: { listChanged: false } },
-						serverInfo: { name: "roo-tools-test", version: "1.0.0" },
+						serverInfo: { name: "njust-ai-tools-test", version: "1.0.0" },
 					},
 				},
 			}
@@ -283,7 +283,7 @@ async function main() {
 			clientInfo: { name: "test", version: "1.0" },
 		})
 		check("Got session ID", !!sessionId)
-		check("Server name", init?.result?.serverInfo?.name === "roo-tools-test")
+		check("Server name", init?.result?.serverInfo?.name === "njust-ai-tools-test")
 		check("Has tools capability", !!init?.result?.capabilities?.tools)
 		console.log(`  Session: ${sessionId}`)
 

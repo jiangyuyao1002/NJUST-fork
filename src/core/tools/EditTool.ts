@@ -3,7 +3,7 @@ import fs from "fs/promises"
 import path from "path"
 import { z } from "zod"
 
-import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai-cj/types"
+import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@njust-ai/types"
 
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
@@ -201,7 +201,7 @@ export class EditTool extends BaseTool<"edit"> {
 				}
 
 				if (relPath) {
-					await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+					await task.fileContextTracker.trackFileContext(relPath, "njust_ai_edited" as RecordSource)
 				}
 
 				task.didEditFile = true
@@ -456,7 +456,7 @@ export class EditTool extends BaseTool<"edit"> {
 
 			// Track file edit operation
 			if (relPath) {
-				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+				await task.fileContextTracker.trackFileContext(relPath, "njust_ai_edited" as RecordSource)
 			}
 
 			task.didEditFile = true

@@ -1,4 +1,4 @@
-import type { ExperimentId } from "@njust-ai-cj/types"
+import type { ExperimentId } from "@njust-ai/types"
 
 import { ExtensionStateContextType } from "@/context/ExtensionStateContext"
 

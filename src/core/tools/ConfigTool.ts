@@ -11,12 +11,12 @@ interface ConfigParams {
 }
 
 /**
- * ConfigTool – read / write VS Code workspace configuration under "roo-code".
+ * ConfigTool – read / write VS Code workspace configuration under "Njust-AI".
  *
  * Actions:
  *   - get  : return the value of a single key
  *   - set  : update a key to a new value
- *   - list : return all keys under "roo-code"
+ *   - list : return all keys under "Njust-AI"
  */
 export class ConfigTool extends BaseTool<"config"> {
 	readonly name = "config" as const
@@ -67,7 +67,7 @@ export class ConfigTool extends BaseTool<"config"> {
 
 			// Dynamically import vscode to avoid hard dependency at module level
 			const vscode = await import("vscode")
-			const config = vscode.workspace.getConfiguration("roo-code")
+			const config = vscode.workspace.getConfiguration("Njust-AI")
 
 			switch (action) {
 				case "get": {

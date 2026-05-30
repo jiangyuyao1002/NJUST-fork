@@ -590,7 +590,7 @@ UIComponents[UI Components]
 CommonComponents[Common Components]
 end
 subgraph "类型定义"
-Types[@njust-ai-cj/types]
+Types[@njust-ai/types]
 ExtensionState[ExtensionStateContext]
 Utils[Utility Functions]
 end

@@ -8,7 +8,7 @@ import {
 	type ToolGroup,
 	type PromptComponent,
 	DEFAULT_MODES,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
 import { DEFAULT_MODE_SLUG } from "./mode-constants"
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS } from "./tools"

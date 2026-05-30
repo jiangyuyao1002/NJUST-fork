@@ -1,12 +1,12 @@
 import axios from "axios"
 import { z } from "zod"
 
-import { type ModelInfo, isModelParameter } from "@njust-ai-cj/types"
+import { type ModelInfo, isModelParameter } from "@njust-ai/types"
 import {
 	OPEN_ROUTER_REASONING_BUDGET_MODELS,
 	OPEN_ROUTER_REQUIRED_REASONING_BUDGET_MODELS,
 	anthropicModels,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import type { ApiHandlerOptions } from "../../../shared/api"
 import { logger } from "../../../shared/logger"

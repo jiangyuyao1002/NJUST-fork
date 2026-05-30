@@ -1,4 +1,4 @@
-import { type CustomToolDefinition } from "@njust-ai-cj/types"
+import { type CustomToolDefinition } from "@njust-ai/types"
 
 export type StoredCustomTool = CustomToolDefinition & { source?: string }
 

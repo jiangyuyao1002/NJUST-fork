@@ -1,7 +1,7 @@
 import EventEmitter from "node:events";
 import * as crypto from "node:crypto";
 import ipc from "node-ipc";
-import { IpcOrigin, IpcMessageType, IPC_PROTOCOL_VERSION, ipcMessageSchema, } from "@njust-ai-cj/types";
+import { IpcOrigin, IpcMessageType, IPC_PROTOCOL_VERSION, ipcMessageSchema, } from "@njust-ai/types";
 export class IpcServer extends EventEmitter {
     _socketPath;
     _log;

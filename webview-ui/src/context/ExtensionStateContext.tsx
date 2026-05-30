@@ -18,14 +18,14 @@ import {
 	RouterModels,
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
-} from "@njust-ai-cj/types"
+} from "@njust-ai/types"
 
-import { findLastIndex } from "@roo/array"
+import { findLastIndex } from "@shared/array"
 
-import { checkExistKey } from "@roo/checkExistApiConfig"
-import { Mode, defaultModeSlug, defaultPrompts } from "@roo/modes"
-import { CustomSupportPrompts } from "@roo/support-prompt"
-import { experimentDefault } from "@roo/experiments"
+import { checkExistKey } from "@shared/checkExistApiConfig"
+import { Mode, defaultModeSlug, defaultPrompts } from "@shared/modes"
+import { CustomSupportPrompts } from "@shared/support-prompt"
+import { experimentDefault } from "@shared/experiments"
 
 import { vscode } from "@src/utils/vscode"
 import { convertTextMateToHljs } from "@src/utils/textMateToHljs"

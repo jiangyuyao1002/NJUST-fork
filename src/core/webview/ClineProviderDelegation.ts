@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type ClineMessage, type TodoItem, TelemetryEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage, type TodoItem, TelemetryEventName } from "@njust-ai/types"
 
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -9,7 +9,7 @@ import type { Task } from "../task/Task"
 import { readApiMessages, saveApiMessages, saveTaskMessages, type ApiMessage } from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { validateAndFixToolResultIds } from "../task/validateToolResultIds"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 export interface IDelegationHost {
 	getCurrentTask(): Task | undefined
@@ -186,7 +186,7 @@ export async function delegateParentAndOpenChildWithProvider(provider: IDelegati
 
 		// 7) Emit TaskDelegated (provider-level)
 		try {
-			provider.emit(NJUST_AI_CJEventName.TaskDelegated, parentTaskId, child.taskId)
+			provider.emit(NJUST_AIEventName.TaskDelegated, parentTaskId, child.taskId)
 		} catch (error) {
 			// non-fatal
 			logger.warn("ClineProvider", "TaskDelegated event emission failed", error)
@@ -362,7 +362,7 @@ export async function reopenParentFromDelegationWithProvider(provider: IDelegati
 
 		// 6) Emit TaskDelegationCompleted (provider-level)
 		try {
-			provider.emit(NJUST_AI_CJEventName.TaskDelegationCompleted, parentTaskId, childTaskId, completionResultSummary)
+			provider.emit(NJUST_AIEventName.TaskDelegationCompleted, parentTaskId, childTaskId, completionResultSummary)
 		} catch (error) {
 			// non-fatal
 			logger.warn("ClineProvider", "TaskDelegationCompleted event emission failed", error)
@@ -396,7 +396,7 @@ export async function reopenParentFromDelegationWithProvider(provider: IDelegati
 
 		// 9) Emit TaskDelegationResumed (provider-level)
 		try {
-			provider.emit(NJUST_AI_CJEventName.TaskDelegationResumed, parentTaskId, childTaskId)
+			provider.emit(NJUST_AIEventName.TaskDelegationResumed, parentTaskId, childTaskId)
 		} catch (error) {
 			// non-fatal
 			logger.warn("ClineProvider", "TaskDelegationResumed event emission failed", error)

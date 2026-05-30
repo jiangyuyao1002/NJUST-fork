@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
 import { Anthropic } from "@anthropic-ai/sdk"
 
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 import { BaseOpenAiCompatibleProvider } from "../base-openai-compatible-provider"
 

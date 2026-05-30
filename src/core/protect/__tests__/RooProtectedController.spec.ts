@@ -72,9 +72,9 @@ describe("RooProtectedController", () => {
 			expect(controller.isWriteProtected("README.md")).toBe(false)
 		})
 
-		it("should not protect files that contain 'roo' but don't start with .njust_ai", () => {
-			expect(controller.isWriteProtected("src/roo-utils.ts")).toBe(false)
-			expect(controller.isWriteProtected("config/roo.config.js")).toBe(false)
+		it("should not protect files that contain 'njust-ai' but don't start with .njust_ai", () => {
+			expect(controller.isWriteProtected("src/njust-ai-utils.ts")).toBe(false)
+			expect(controller.isWriteProtected("config/njust-ai.config.js")).toBe(false)
 		})
 
 		it("should handle nested paths correctly", () => {
@@ -136,7 +136,7 @@ describe("RooProtectedController", () => {
 	describe("getProtectionMessage", () => {
 		it("should return appropriate protection message", () => {
 			const message = controller.getProtectionMessage()
-			expect(message).toBe("This is a Roo configuration file and requires approval for modifications")
+			expect(message).toBe("This is a Njust-AI configuration file and requires approval for modifications")
 		})
 	})
 

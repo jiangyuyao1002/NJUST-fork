@@ -1,5 +1,5 @@
 import type * as vscode from "vscode"
-import type { ProviderSettings, ProviderSettingsEntry, CreateTaskOptions, HistoryItem } from "@njust-ai-cj/types"
+import type { ProviderSettings, ProviderSettingsEntry, CreateTaskOptions, HistoryItem } from "@njust-ai/types"
 import type { ContextProxy } from "../core/config/ContextProxy"
 import type { ProviderSettingsManager } from "../core/config/ProviderSettingsManager"
 import type { Task } from "../core/task/Task"

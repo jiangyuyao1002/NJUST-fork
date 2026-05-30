@@ -20,7 +20,7 @@ vitest.mock("../../../shared/embeddingModels", () => ({
 }))
 
 // Mock TelemetryService
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureEvent: vitest.fn(),

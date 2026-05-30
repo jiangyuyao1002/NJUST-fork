@@ -30,8 +30,8 @@ vi.mock("@anthropic-ai/sdk", () => ({
 
 import { MimoHandler } from "../mimo"
 import { MimoTokenPlanHandler } from "../mimo-token-plan"
-import { mimoModels, mimoDefaultModelId } from "@njust-ai-cj/core/providers"
-import { mimoTokenPlanModels, mimoTokenPlanDefaultModelId } from "@njust-ai-cj/core/providers"
+import { mimoModels, mimoDefaultModelId } from "@njust-ai/core/providers"
+import { mimoTokenPlanModels, mimoTokenPlanDefaultModelId } from "@njust-ai/core/providers"
 
 function makeMimoOptions(overrides: Partial<ApiHandlerOptions> = {}): ApiHandlerOptions {
 	return {

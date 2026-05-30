@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://platform.xiaomimimo.com
 // Token Plan subscription mode: https://token-plan-cn.xiaomimimo.com/v1

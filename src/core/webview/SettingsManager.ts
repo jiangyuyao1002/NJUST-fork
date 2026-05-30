@@ -1,4 +1,4 @@
-import type { GlobalState, NJUST_AI_CJSettings } from "@njust-ai-cj/types"
+import type { GlobalState, NJUST_AISettings } from "@njust-ai/types"
 
 import type { ContextProxy } from "../config/ContextProxy"
 
@@ -13,19 +13,19 @@ export class SettingsManager {
 		return this.contextProxy.getValue(key)
 	}
 
-	public async setValue<K extends keyof NJUST_AI_CJSettings>(key: K, value: NJUST_AI_CJSettings[K]): Promise<void> {
+	public async setValue<K extends keyof NJUST_AISettings>(key: K, value: NJUST_AISettings[K]): Promise<void> {
 		await this.contextProxy.setValue(key, value)
 	}
 
-	public getValue<K extends keyof NJUST_AI_CJSettings>(key: K): NJUST_AI_CJSettings[K] | undefined {
+	public getValue<K extends keyof NJUST_AISettings>(key: K): NJUST_AISettings[K] | undefined {
 		return this.contextProxy.getValue(key)
 	}
 
-	public getValues(): NJUST_AI_CJSettings {
+	public getValues(): NJUST_AISettings {
 		return this.contextProxy.getValues()
 	}
 
-	public async setValues(values: NJUST_AI_CJSettings): Promise<void> {
+	public async setValues(values: NJUST_AISettings): Promise<void> {
 		await this.contextProxy.setValues(values)
 	}
 }

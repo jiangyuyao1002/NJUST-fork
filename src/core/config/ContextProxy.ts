@@ -11,14 +11,14 @@ import {
 	type GlobalSettings,
 	type SecretState,
 	type GlobalState,
-	type NJUST_AI_CJSettings,
+	type NJUST_AISettings,
 	providerSettingsSchema,
 	globalSettingsSchema,
 	isSecretStateKey,
 	isProviderName,
 	isRetiredProvider,
-} from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { logger } from "../../utils/logging"
 import { supportPrompt } from "../../shared/support-prompt"
@@ -27,7 +27,7 @@ import { getErrorMessage } from "../../shared/error-utils"
 
 type GlobalStateKey = keyof GlobalState
 type SecretStateKey = keyof SecretState
-type NJUST_AI_CJSettingsKey = keyof NJUST_AI_CJSettings
+type NJUST_AISettingsKey = keyof NJUST_AISettings
 
 const PASS_THROUGH_STATE_KEYS = ["taskHistory"]
 
@@ -478,7 +478,7 @@ export class ContextProxy {
 	 * Sanitizes provider values by resetting UnsafeAny apiProvider values.
 	 * Active and retired providers are preserved.
 	 */
-	private sanitizeProviderValues(values: NJUST_AI_CJSettings): NJUST_AI_CJSettings {
+	private sanitizeProviderValues(values: NJUST_AISettings): NJUST_AISettings {
 		// Remove legacy Claude Code CLI wrapper keys that may still exist in global state.
 		// These keys were used by a removed local CLI runner and are no longer part of ProviderSettings.
 		const legacyKeys = ["claudeCodePath", "claudeCodeMaxOutputTokens"] as const
@@ -488,7 +488,7 @@ export class ContextProxy {
 			if (key in sanitizedValues) {
 				const copy = { ...sanitizedValues } as Record<string, UnsafeAny>
 				delete copy[key as string]
-				sanitizedValues = copy as NJUST_AI_CJSettings
+				sanitizedValues = copy as NJUST_AISettings
 			}
 		}
 
@@ -500,7 +500,7 @@ export class ContextProxy {
 			logger.info(`[ContextProxy] Sanitizing invalid provider "${values.apiProvider}" - resetting to undefined`)
 			// Return a new values object without the invalid apiProvider
 			const { apiProvider: _apiProvider, ...restValues } = sanitizedValues
-			return restValues as NJUST_AI_CJSettings
+			return restValues as NJUST_AISettings
 		}
 		return sanitizedValues
 	}
@@ -530,22 +530,22 @@ export class ContextProxy {
 	}
 
 	/**
-	 * NJUST_AI_CJSettings
+	 * NJUST_AISettings
 	 */
 
-	public async setValue<K extends NJUST_AI_CJSettingsKey>(key: K, value: NJUST_AI_CJSettings[K]) {
+	public async setValue<K extends NJUST_AISettingsKey>(key: K, value: NJUST_AISettings[K]) {
 		return isSecretStateKey(key)
 			? this.storeSecret(key as SecretStateKey, value as string)
 			: this.updateGlobalState(key as GlobalStateKey, value)
 	}
 
-	public getValue<K extends NJUST_AI_CJSettingsKey>(key: K): NJUST_AI_CJSettings[K] {
+	public getValue<K extends NJUST_AISettingsKey>(key: K): NJUST_AISettings[K] {
 		return isSecretStateKey(key)
-			? (this.getSecret(key as SecretStateKey) as NJUST_AI_CJSettings[K])
-			: (this.getGlobalState(key as GlobalStateKey) as NJUST_AI_CJSettings[K])
+			? (this.getSecret(key as SecretStateKey) as NJUST_AISettings[K])
+			: (this.getGlobalState(key as GlobalStateKey) as NJUST_AISettings[K])
 	}
 
-	public getValues(): NJUST_AI_CJSettings {
+	public getValues(): NJUST_AISettings {
 		const globalState = this.getAllGlobalState()
 		const secretState = this.getAllSecretState()
 
@@ -553,8 +553,8 @@ export class ContextProxy {
 		return { ...globalState, ...secretState }
 	}
 
-	public async setValues(values: NJUST_AI_CJSettings) {
-		const entries = Object.entries(values) as [NJUST_AI_CJSettingsKey, UnsafeAny][]
+	public async setValues(values: NJUST_AISettings) {
+		const entries = Object.entries(values) as [NJUST_AISettingsKey, UnsafeAny][]
 		const results = await Promise.allSettled(entries.map(([key, value]) => this.setValue(key, value)))
 		for (const [index, result] of results.entries()) {
 			if (result.status === "rejected") {

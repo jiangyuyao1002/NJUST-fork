@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { fallbackModels } from "../fallbackModels"
-import type { ProviderName } from "@njust-ai-cj/types"
+import type { ProviderName } from "@njust-ai/types"
 
 const providersWithFetcher: ProviderName[] = [
 	"openai",

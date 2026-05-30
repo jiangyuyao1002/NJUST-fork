@@ -1,6 +1,6 @@
 {
-	"name": "@njust-ai-cj/evals",
-	"description": "NJUST_AI_CJ evals.",
+	"name": "@njust-ai/evals",
+	"description": "NJUST_AI evals.",
 	"version": "0.0.0",
 	"type": "module",
 	"exports": "./src/index.ts",
@@ -28,8 +28,8 @@
 		"services:down": "dotenvx run -f .env.development .env.local -- docker compose down db redis"
 	},
 	"dependencies": {
-		"@njust-ai-cj/ipc": "workspace:^",
-		"@njust-ai-cj/types": "workspace:^",
+		"@njust-ai/ipc": "workspace:^",
+		"@njust-ai/types": "workspace:^",
 		"cmd-ts": "^0.13.0",
 		"drizzle-orm": "^0.45.2",
 		"execa": "^9.6.0",
@@ -43,8 +43,8 @@
 		"zod": "3.25.76"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@types/node": "20.x",
 		"@types/node-ipc": "^9.2.3",
 		"@types/ps-tree": "^1.1.6",

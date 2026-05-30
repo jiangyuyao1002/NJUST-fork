@@ -1,6 +1,6 @@
 {
-	"name": "@njust-ai-cj/ipc",
-	"description": "IPC server and client for remote NJUST_AI_CJ access.",
+	"name": "@njust-ai/ipc",
+	"description": "IPC server and client for remote NJUST_AI access.",
 	"version": "0.0.0",
 	"type": "module",
 	"exports": "./src/index.ts",
@@ -10,12 +10,12 @@
 		"clean": "rimraf .turbo"
 	},
 	"dependencies": {
-		"@njust-ai-cj/types": "workspace:^",
+		"@njust-ai/types": "workspace:^",
 		"node-ipc": "^12.0.0"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@types/node": "20.x",
 		"@types/node-ipc": "^9.2.3",
 		"vitest": "^3.2.3"

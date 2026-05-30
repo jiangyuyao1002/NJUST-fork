@@ -5,11 +5,11 @@
  * Runtime state machine is in TaskStateMachine.ts (TaskState enum).
  */
 
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 import { logger } from "../../shared/logger"
-import { clineApiReqInfoSchema } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { clineApiReqInfoSchema } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 // ─── History Message Cleanup ─────────────────────────────────────────────────
 

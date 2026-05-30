@@ -8,8 +8,8 @@ import { arePathsEqual } from "../../utils/path"
 import { getBinPath } from "../../services/ripgrep"
 import { DIRS_TO_IGNORE } from "./constants"
 import { logger } from "../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Context object for directory scanning operations
@@ -582,7 +582,7 @@ function shouldIncludeRegularDirectory(dirName: string, fullDirPath: string, con
  */
 function shouldIncludeDirectory(dirName: string, fullDirPath: string, context: ScanContext): boolean {
 	// If this is the explicitly targeted directory, allow it even if it's hidden
-	// This preserves the ability to explicitly target hidden directories like .roo-memory
+	// This preserves the ability to explicitly target hidden directories like .njust-ai-memory
 	if (context.isTargetDir) {
 		return shouldIncludeTargetDirectory(dirName)
 	}

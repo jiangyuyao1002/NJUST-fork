@@ -5,13 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { renderHook } from "@testing-library/react"
 import type { Mock } from "vitest"
 
-import { ProviderSettings, ModelInfo } from "@njust-ai-cj/types"
+import { ProviderSettings, ModelInfo } from "@njust-ai/types"
 import {
 	BEDROCK_1M_CONTEXT_MODEL_IDS,
 	deepSeekModels,
 	litellmDefaultModelInfo,
 	openAiModelInfoSaneDefaults,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { useSelectedModel } from "../useSelectedModel"
 import { useRouterModels } from "../useRouterModels"

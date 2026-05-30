@@ -39,7 +39,7 @@ const MAX_RETAINED_SESSIONS = 5
 const CHARS_PER_TOKEN = 4
 
 /** Directory name for session memory storage */
-export const SESSION_MEMORIES_DIR = ".roo/session-memories"
+export const SESSION_MEMORIES_DIR = ".njust-ai/session-memories"
 
 // ─── Original SessionMemory interface (kept for backward compatibility) ───
 
@@ -378,7 +378,7 @@ export function generateSessionSummary(messages: ApiMessage[], taskId: string): 
 
 /**
  * Persist a session summary to disk.
- * Stored in the workspace's .roo/session-memories/ directory.
+ * Stored in the workspace's .njust-ai/session-memories/ directory.
  */
 export async function persistSessionMemory(
 	summary: SessionMemorySummary,

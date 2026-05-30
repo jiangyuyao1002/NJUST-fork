@@ -1,17 +1,17 @@
 import * as assert from "assert"
 
-import { NJUST_AI_CJEventName } from "@njust-ai-cj/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
 
 import { waitUntilCompleted } from "./utils"
 import { setDefaultSuiteTimeout } from "./test-utils"
 
-suite("NJUST_AI_CJ Modes", function () {
+suite("NJUST_AI Modes", function () {
 	setDefaultSuiteTimeout(this)
 
 	test("Should handle switching modes correctly", async () => {
 		const modes: string[] = []
 
-		globalThis.api.on(NJUST_AI_CJEventName.TaskModeSwitched, (_taskId, mode) => modes.push(mode))
+		globalThis.api.on(NJUST_AIEventName.TaskModeSwitched, (_taskId, mode) => modes.push(mode))
 
 		const switchModesTaskId = await globalThis.api.startNewTask({
 			configuration: { mode: "code", alwaysAllowModeSwitch: true, autoApprovalEnabled: true },

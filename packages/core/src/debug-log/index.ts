@@ -5,7 +5,7 @@
  * which would break TUI applications. The log format is timestamped JSON.
  *
  * Usage:
- *   import { debugLog, DebugLogger } from "@njust-ai-cj/core/cli"
+ *   import { debugLog, DebugLogger } from "@njust-ai/core/cli"
  *
  *   // Simple logging
  *   debugLog("handleModeSwitch", { mode: newMode, configId })
@@ -19,7 +19,7 @@ import * as fs from "fs"
 import * as path from "path"
 import * as os from "os"
 
-import { NJUST_AI_CONFIG_DIR } from "@njust-ai-cj/types"
+import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
 const DEBUG_LOG_PATH = path.join(os.homedir(), NJUST_AI_CONFIG_DIR, "cli-debug.log")
 

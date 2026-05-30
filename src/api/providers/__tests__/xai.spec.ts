@@ -4,7 +4,7 @@
 import { describe, it, test, expect, vi, beforeEach } from "vitest"
 
 const mockCaptureException = vitest.hoisted(() => vitest.fn())
-vitest.mock("@njust-ai-cj/telemetry", () => ({
+vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureException: mockCaptureException,
@@ -26,7 +26,7 @@ vitest.mock("openai", () => {
 import OpenAI from "openai"
 import type { Anthropic } from "@anthropic-ai/sdk"
 
-import { xaiDefaultModelId, xaiModels } from "@njust-ai-cj/core/providers"
+import { xaiDefaultModelId, xaiModels } from "@njust-ai/core/providers"
 
 import { XAIHandler } from "../xai"
 

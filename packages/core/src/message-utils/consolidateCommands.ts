@@ -1,4 +1,4 @@
-import type { ClineMessage } from "@njust-ai-cj/types"
+import type { ClineMessage } from "@njust-ai/types"
 
 import { safeJsonParse } from "./safeJsonParse.js"
 

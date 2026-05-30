@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { CodeActionName, CodeActionId } from "@njust-ai-cj/types"
+import { CodeActionName, CodeActionId } from "@njust-ai/types"
 import { Package } from "../shared/package"
 
 import { getCodeActionCommand } from "../utils/commands"
@@ -9,11 +9,11 @@ import { matchCjcErrorPattern } from "../core/prompts/sections/cangjie-context"
 import { logger } from "../shared/logger"
 
 export const TITLES: Record<CodeActionName, string> = {
-	EXPLAIN: "Explain with NJUST_AI_CJ",
-	FIX: "Fix with NJUST_AI_CJ",
-	IMPROVE: "Improve with NJUST_AI_CJ",
-	ADD_TO_CONTEXT: "Add to NJUST_AI_CJ",
-	NEW_TASK: "New NJUST_AI_CJ Task",
+	EXPLAIN: "Explain with NJUST_AI",
+	FIX: "Fix with NJUST_AI",
+	IMPROVE: "Improve with NJUST_AI",
+	ADD_TO_CONTEXT: "Add to NJUST_AI",
+	NEW_TASK: "New NJUST_AI Task",
 } as const
 
 /**

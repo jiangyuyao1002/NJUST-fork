@@ -3,10 +3,10 @@
 	"tasks": {
 		"lint": {},
 		"check-types": {
-			"dependsOn": ["@njust-ai-cj/types#build"]
+			"dependsOn": ["@njust-ai/types#build"]
 		},
 		"test": {
-			"dependsOn": ["@njust-ai-cj/types#build"]
+			"dependsOn": ["@njust-ai/types#build"]
 		},
 		"format": {},
 		"clean": {

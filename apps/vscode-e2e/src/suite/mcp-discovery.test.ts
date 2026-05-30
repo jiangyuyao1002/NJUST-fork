@@ -1,11 +1,11 @@
 import * as assert from "assert"
 
-import { NJUST_AI_CJEventName, type ClineMessage } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type ClineMessage } from "@njust-ai/types"
 
 import { waitFor } from "./utils"
 import { setDefaultSuiteTimeout } from "./test-utils"
 
-suite("NJUST_AI_CJ MCP Discovery Flow", function () {
+suite("NJUST_AI MCP Discovery Flow", function () {
 	setDefaultSuiteTimeout(this)
 
 	test("(c) Discover MCP tools and use them in conversation", async () => {
@@ -16,14 +16,14 @@ suite("NJUST_AI_CJ MCP Discovery Flow", function () {
 		const messageHandler = ({ message }: { message: ClineMessage }) => {
 			messages.push(message)
 		}
-		api.on(NJUST_AI_CJEventName.Message, messageHandler)
+		api.on(NJUST_AIEventName.Message, messageHandler)
 
 		const taskCompletedHandler = (id: string) => {
 			if (id === taskId) {
 				taskCompleted = true
 			}
 		}
-		api.on(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+		api.on(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 
 		let taskId: string
 		try {
@@ -49,8 +49,8 @@ suite("NJUST_AI_CJ MCP Discovery Flow", function () {
 			)
 			assert.ok(hasMcpMention, "AI should mention MCP tools or state they are not configured")
 		} finally {
-			api.off(NJUST_AI_CJEventName.Message, messageHandler)
-			api.off(NJUST_AI_CJEventName.TaskCompleted, taskCompletedHandler)
+			api.off(NJUST_AIEventName.Message, messageHandler)
+			api.off(NJUST_AIEventName.TaskCompleted, taskCompletedHandler)
 		}
 	})
 })

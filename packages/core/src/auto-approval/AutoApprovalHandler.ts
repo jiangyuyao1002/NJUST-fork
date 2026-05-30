@@ -1,4 +1,4 @@
-import { GlobalState, ClineMessage, ClineAsk } from "@njust-ai-cj/types"
+import { GlobalState, ClineMessage, ClineAsk } from "@njust-ai/types"
 
 import { ClineAskResponse } from "../shared/WebviewMessage.js"
 

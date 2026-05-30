@@ -1,4 +1,4 @@
-import type { GlobalSettings } from "@njust-ai-cj/types"
+import type { GlobalSettings } from "@njust-ai/types"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { cn } from "@/lib/utils"
@@ -15,7 +15,7 @@ type CoreAutoApproveToggles = Pick<
 	| "alwaysAllowFollowupQuestions"
 >
 
-/** Mirrors VS Code `njust-ai-cj.saveAllBeforeExecuteCommand`; not part of GlobalSettings storage. */
+/** Mirrors VS Code `njust-ai.saveAllBeforeExecuteCommand`; not part of GlobalSettings storage. */
 type AutoApproveToggles = CoreAutoApproveToggles & {
 	saveAllBeforeExecuteCommand?: boolean
 }

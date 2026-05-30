@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ClineProvider } from "../ClineProvider"
 import { Task } from "../../task/Task"
 import type { ExtensionContext, OutputChannel } from "vscode"
-import type { ProviderSettings, HistoryItem } from "@njust-ai-cj/types"
+import type { ProviderSettings, HistoryItem } from "@njust-ai/types"
 
 // Mock dependencies
 vi.mock("vscode", () => {
@@ -68,7 +68,7 @@ vi.mock("../../../utils/path", () => ({
 }))
 
 // Mock TelemetryService
-vi.mock("@njust-ai-cj/telemetry", () => ({
+vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
 		instance: {

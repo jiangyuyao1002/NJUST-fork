@@ -2,15 +2,15 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"
 import { GoogleAuth, JWTInput } from "google-auth-library"
 
-import { type ModelInfo } from "@njust-ai-cj/types"
+import { type ModelInfo } from "@njust-ai/types"
 import {
 	type VertexModelId,
 	vertexDefaultModelId,
 	vertexModels,
 	ANTHROPIC_DEFAULT_MAX_TOKENS,
 	VERTEX_1M_CONTEXT_MODEL_IDS,
-} from "@njust-ai-cj/core/providers"
-import { safeJsonParse } from "@njust-ai-cj/core"
+} from "@njust-ai/core/providers"
+import { safeJsonParse } from "@njust-ai/core"
 
 import { ApiHandlerOptions } from "../../shared/api"
 

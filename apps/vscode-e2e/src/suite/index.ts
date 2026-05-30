@@ -3,17 +3,17 @@ import Mocha from "mocha"
 import { glob } from "glob"
 import * as vscode from "vscode"
 
-import { NJUST_AI_CJEventName, type NJUST_AI_CJAPI } from "@njust-ai-cj/types"
+import { NJUST_AIEventName, type NJUST_AIAPI } from "@njust-ai/types"
 
 import { waitFor } from "./utils"
 
-type TestApiWithCurrentTask = NJUST_AI_CJAPI & {
+type TestApiWithCurrentTask = NJUST_AIAPI & {
 	sidebarProvider?: {
 		getCurrentTask?: () => { approveAsk?: () => void } | undefined
 	}
 }
 
-const approveMockCompletion = async (api: NJUST_AI_CJAPI) => {
+const approveMockCompletion = async (api: NJUST_AIAPI) => {
 	const currentTask = (api as TestApiWithCurrentTask).sidebarProvider?.getCurrentTask?.()
 
 	if (currentTask?.approveAsk) {
@@ -24,7 +24,7 @@ const approveMockCompletion = async (api: NJUST_AI_CJAPI) => {
 	await api.pressPrimaryButton()
 }
 
-const approveMockAskWithRetry = async (api: NJUST_AI_CJAPI) => {
+const approveMockAskWithRetry = async (api: NJUST_AIAPI) => {
 	for (let attempt = 0; attempt < 10; attempt++) {
 		await approveMockCompletion(api)
 		await new Promise((resolve) => setTimeout(resolve, 200))
@@ -32,7 +32,7 @@ const approveMockAskWithRetry = async (api: NJUST_AI_CJAPI) => {
 }
 
 export async function run() {
-	const extension = vscode.extensions.getExtension<NJUST_AI_CJAPI>("JunjieChen-YuyaoJiang.njust-ai")
+	const extension = vscode.extensions.getExtension<NJUST_AIAPI>("JunjieChen-YuyaoJiang.njust-ai")
 
 	if (!extension) {
 		throw new Error("Extension not found")
@@ -64,7 +64,7 @@ export async function run() {
 	globalThis.api = api
 
 	if (process.env.MOCK_API_URL) {
-		api.on(NJUST_AI_CJEventName.Message, ({ message }) => {
+		api.on(NJUST_AIEventName.Message, ({ message }) => {
 			const shouldApproveNewTask =
 				message.type === "ask" &&
 				message.ask === "tool" &&

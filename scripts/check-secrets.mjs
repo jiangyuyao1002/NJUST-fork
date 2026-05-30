@@ -35,7 +35,7 @@ const SECRET_PATTERNS = [
 const patterns = SECRET_PATTERNS
 
 const ALLOWLISTED_FINDINGS = [
-	{ file: /^\.roo\/skills\/cangjie-full-docs\/libs_stdx\/logger\/logger_samples\/logger_sample\.md$/, name: "Password" },
+	{ file: /^\.njust-ai\/skills\/cangjie-full-docs\/libs_stdx\/logger\/logger_samples\/logger_sample\.md$/, name: "Password" },
 	{ file: /^CangjieCorpus-1\.0\.0\/libs\/stdx\/logger\/logger_samples\/logger_sample\.md$/, name: "Password" },
 	{ file: /^src\/utils\/__tests__\/git\.spec\.ts$/, name: "GitHub personal access token" },
 	{ file: /^webview-ui\/src\/i18n\/locales\/(?:en|zh-CN|zh-TW)\/settings\.json$/, name: "JSON API key" },

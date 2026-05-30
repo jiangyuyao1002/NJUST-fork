@@ -1,4 +1,4 @@
-import type { ModelInfo } from "@njust-ai-cj/types"
+import type { ModelInfo } from "@njust-ai/types"
 
 // https://ai-gateway.vercel.sh/v1/
 export const vercelAiGatewayDefaultModelId = "anthropic/claude-sonnet-4"

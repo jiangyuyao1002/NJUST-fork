@@ -5,8 +5,8 @@ import {
 	type CodeActionName,
 	type TerminalActionId,
 	type TerminalActionPromptType,
-} from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+} from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 import { supportPrompt } from "../shared/support-prompt"
 import { Package } from "../shared/package"

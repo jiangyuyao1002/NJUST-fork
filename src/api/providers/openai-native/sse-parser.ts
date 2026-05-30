@@ -1,5 +1,5 @@
-import { ApiProviderError } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { ApiProviderError } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { getErrorMessage } from "../../../shared/error-utils"
 import { reportExtensionError } from "../../../utils/errorReporter"
 import type { ApiStream } from "../../transform/stream"

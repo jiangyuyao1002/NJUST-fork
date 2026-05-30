@@ -12,8 +12,8 @@ import { Package } from "../../../shared/package"
 import { t } from "../../../i18n"
 import { withValidationErrorHandling, formatEmbeddingError } from "../shared/validation-helpers"
 import { logger } from "../../../shared/logger"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 
 /**
  * Amazon Bedrock implementation of the embedder interface with batching and rate limiting
@@ -42,7 +42,7 @@ export class BedrockEmbedder implements IEmbedder {
 		const credentials = this.profile ? fromIni({ profile: this.profile }) : fromNodeProviderChain()
 
 		this.bedrockClient = new BedrockRuntimeClient({
-			userAgentAppId: `NJUST_AI_CJ#${Package.version}`,
+			userAgentAppId: `NJUST_AI#${Package.version}`,
 			region: this.region,
 			credentials,
 		})

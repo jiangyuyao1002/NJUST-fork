@@ -4,8 +4,8 @@ import { Anthropic } from "@anthropic-ai/sdk"
 
 import { LiteLLMHandler } from "../lite-llm"
 import { ApiHandlerOptions } from "../../../shared/api"
-import { litellmDefaultModelId } from "@njust-ai-cj/core/providers"
-import { litellmDefaultModelInfo } from "@njust-ai-cj/core/providers"
+import { litellmDefaultModelId } from "@njust-ai/core/providers"
+import { litellmDefaultModelInfo } from "@njust-ai/core/providers"
 
 // Mock vscode first to avoid import errors
 vi.mock("vscode", () => ({}))

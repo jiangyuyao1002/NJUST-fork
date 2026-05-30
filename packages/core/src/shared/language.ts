@@ -1,4 +1,4 @@
-import { type Language, isLanguage } from "@njust-ai-cj/types"
+import { type Language, isLanguage } from "@njust-ai/types"
 
 /**
  * Language name mapping from ISO codes to full language names.

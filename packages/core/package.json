@@ -1,6 +1,6 @@
 {
-	"name": "@njust-ai-cj/core",
-	"description": "Platform agnostic core functionality for NJUST_AI_CJ.",
+	"name": "@njust-ai/core",
+	"description": "Platform agnostic core functionality for NJUST_AI.",
 	"version": "0.0.0",
 	"type": "module",
 	"exports": {
@@ -14,7 +14,8 @@
 		"./feature-flags": "./src/feature-flags/index.ts",
 		"./stream": "./src/stream/index.ts",
 		"./prefetch": "./src/prefetch/index.ts",
-		"./message-queue": "./src/message-queue/index.ts"
+		"./message-queue": "./src/message-queue/index.ts",
+		"./custom-tools": "./src/custom-tools/index.ts"
 	},
 	"scripts": {
 		"lint": "eslint src --ext=ts --max-warnings=0",
@@ -24,8 +25,8 @@
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.52.0",
-		"@njust-ai-cj/telemetry": "workspace:^",
-		"@njust-ai-cj/types": "workspace:^",
+		"@njust-ai/telemetry": "workspace:^",
+		"@njust-ai/types": "workspace:^",
 		"esbuild": "^0.25.0",
 		"execa": "^9.5.2",
 		"ignore": "^7.0.3",
@@ -35,8 +36,8 @@
 		"zod": "3.25.76"
 	},
 	"devDependencies": {
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@types/node": "20.x",
 		"@types/shell-quote": "^1.7.5",
 		"@types/uuid": "^10.0.0",

@@ -2,8 +2,8 @@ import { getErrorMessage } from "../../shared/error-utils"
 import { parseWorkspaceOps } from "./parseWorkspaceOps"
 import { logger } from "../../shared/logger"
 import { ApiRetryExecutor, type ApiRetryOptions } from "../../api/retry/ApiRetryStrategy"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
-import { TelemetryEventName } from "@njust-ai-cj/types"
+import { TelemetryService } from "@njust-ai/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
 import { analyzeErrorForRetry } from "../../api/retry/ApiErrorClassifier"
 import type {
 	CloudAgentCallbacks,
@@ -60,7 +60,7 @@ function apiKeyHintFor401(status: number, bodySnippet: string): string {
 	}
 	return (
 		' Hint: set VS Code "njust-ai.cloudAgent.apiKey" (User settings) to match server CLOUD_AGENT_MOCK_API_KEY, ' +
-		"or set process env CLOUD_AGENT_MOCK_API_KEY / NJUST_CLOUD_AGENT_API_KEY for the extension host (e.g. Roo-Code/.env). " +
+		"or set process env CLOUD_AGENT_MOCK_API_KEY / NJUST_CLOUD_AGENT_API_KEY for the extension host (e.g. Njust-AI/.env). " +
 		"Workspace .vscode/settings.json only applies when that folder is the workspace root."
 	)
 }

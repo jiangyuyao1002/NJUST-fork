@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest"
 
 import { ZodError } from "zod"
 
-import { type ModeConfig, customModesSettingsSchema } from "@njust-ai-cj/types"
+import { type ModeConfig, customModesSettingsSchema } from "@njust-ai/types"
 
 describe("CustomModesSettings", () => {
 	const validMode = {

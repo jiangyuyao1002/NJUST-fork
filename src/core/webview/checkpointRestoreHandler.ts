@@ -5,8 +5,8 @@ import pWaitFor from "p-wait-for"
 import { t } from "../../i18n"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
-import { TelemetryEventName } from "@njust-ai-cj/types"
-import { TelemetryService } from "@njust-ai-cj/telemetry"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 
 export interface ICheckpointRestoreHost {
 	setPendingEditOperation(operationId: string, editData: {

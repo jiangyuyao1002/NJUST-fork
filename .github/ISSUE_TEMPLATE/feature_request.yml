@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for helping improve NJUST_AI_CJ!
+        Thank you for helping improve NJUST_AI!
         Please focus on the problem and the desired behavior in plain language.
 
   - type: textarea
@@ -54,11 +54,11 @@ body:
           required: true
 
   - type: textarea
-    id: roo-code-tasks
+    id: Njust-AI-tasks
     attributes:
-      label: NJUST_AI_CJ Task Links (optional)
-      description: If you explored this with NJUST_AI_CJ, share public task links for context.
-      placeholder: Paste your NJUST_AI_CJ share links here, one per line
+      label: NJUST_AI Task Links (optional)
+      description: If you explored this with NJUST_AI, share public task links for context.
+      placeholder: Paste your NJUST_AI share links here, one per line
 
   - type: markdown
     attributes:

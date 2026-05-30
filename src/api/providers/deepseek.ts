@@ -1,13 +1,13 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 
-import { type OpenAiUsageMetrics, type ModelInfo } from "@njust-ai-cj/types"
+import { type OpenAiUsageMetrics, type ModelInfo } from "@njust-ai/types"
 import {
 	deepSeekModels,
 	deepSeekDefaultModelId,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
-} from "@njust-ai-cj/core/providers"
+} from "@njust-ai/core/providers"
 
 import { shouldUseReasoningBudget, type ApiHandlerOptions } from "../../shared/api"
 

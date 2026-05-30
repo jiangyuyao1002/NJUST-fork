@@ -16,7 +16,7 @@ merged_into: ""
 
 # Purpose
 
-Systematic identification and resolution of code quality issues to improve maintainability, type safety, and system reliability across the entire Roo-Code repository.
+Systematic identification and resolution of code quality issues to improve maintainability, type safety, and system reliability across the entire Njust-AI repository.
 
 # Boundary
 
