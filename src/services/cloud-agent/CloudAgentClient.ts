@@ -59,7 +59,7 @@ function apiKeyHintFor401(status: number, bodySnippet: string): string {
 		return ""
 	}
 	return (
-		' Hint: set VS Code "njust-ai-cj.cloudAgent.apiKey" (User settings) to match server CLOUD_AGENT_MOCK_API_KEY, ' +
+		' Hint: set VS Code "njust-ai.cloudAgent.apiKey" (User settings) to match server CLOUD_AGENT_MOCK_API_KEY, ' +
 		"or set process env CLOUD_AGENT_MOCK_API_KEY / NJUST_CLOUD_AGENT_API_KEY for the extension host (e.g. Roo-Code/.env). " +
 		"Workspace .vscode/settings.json only applies when that folder is the workspace root."
 	)

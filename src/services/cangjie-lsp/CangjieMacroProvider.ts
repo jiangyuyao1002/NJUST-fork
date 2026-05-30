@@ -76,14 +76,14 @@ export class CangjieMacroCodeLensProvider implements vscode.CodeLensProvider {
 				if (macroDefs.length > 0) {
 					lenses.push(new vscode.CodeLens(range, {
 						title: `$(symbol-event) 跳转到宏定义: ${macroName}`,
-						command: "njust-ai-cj.cangjieGoToMacroDef",
+						command: "njust-ai.cangjieGoToMacroDef",
 						arguments: [macroDefs[0]!.filePath, macroDefs[0]!.startLine],
 					}))
 				}
 
 				lenses.push(new vscode.CodeLens(range, {
 					title: `$(unfold) 展开宏: @${macroName}`,
-					command: "njust-ai-cj.cangjieExpandMacro",
+					command: "njust-ai.cangjieExpandMacro",
 					arguments: [document.uri, i],
 				}))
 			}
@@ -148,7 +148,7 @@ export class CangjieMacroHoverProvider implements vscode.HoverProvider {
 export function registerMacroCommands(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			"njust-ai-cj.cangjieGoToMacroDef",
+			"njust-ai.cangjieGoToMacroDef",
 			async (filePath: string, startLine: number) => {
 				const uri = vscode.Uri.file(filePath)
 				const doc = await vscode.workspace.openTextDocument(uri)
@@ -162,7 +162,7 @@ export function registerMacroCommands(context: vscode.ExtensionContext, outputCh
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			"njust-ai-cj.cangjieExpandMacro",
+			"njust-ai.cangjieExpandMacro",
 			async (uri: vscode.Uri, _line: number) => {
 				const cjcPath = resolveCangjieToolPath("cjc", CJC_CONFIG_KEY)
 				if (!cjcPath) {

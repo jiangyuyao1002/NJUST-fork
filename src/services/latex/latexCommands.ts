@@ -113,10 +113,10 @@ export function registerLatexCommands(context: vscode.ExtensionContext, _outputC
 			latexChannel.appendLine(`\n[LaTeX] 错误: ${msg}`)
 			TelemetryService.reportError(e instanceof Error ? e : new Error(msg), TelemetryEventName.UTILITY_ERROR)
 			void vscode.window.showErrorMessage(
-				`LaTeX 编译失败。请安装 MiKTeX 或 TeX Live，或将 MiKTeX 的 bin 加入系统 PATH；也可在设置中填写 njust-ai-cj.latex.latexmkPath（latexmk.exe 完整路径）。详情见输出「${LATEX_OUTPUT_CHANNEL}」。`,
+				`LaTeX 编译失败。请安装 MiKTeX 或 TeX Live，或将 MiKTeX 的 bin 加入系统 PATH；也可在设置中填写 njust-ai.latex.latexmkPath（latexmk.exe 完整路径）。详情见输出「${LATEX_OUTPUT_CHANNEL}」。`,
 			)
 		}
 	}
 
-	context.subscriptions.push(vscode.commands.registerCommand("njust-ai-cj.latexCompile", runCompile))
+	context.subscriptions.push(vscode.commands.registerCommand("njust-ai.latexCompile", runCompile))
 }

@@ -129,7 +129,7 @@ export class CangjieEnhancedRenameProvider implements vscode.RenameProvider {
 		name: string,
 		refs: Array<{ filePath: string; line: number; column: number }>,
 	): Promise<Array<{ filePath: string; line: number; column: number }>> {
-		const useAst = vscode.workspace.getConfiguration("njust-ai-cj").get<boolean>("cangjieTools.useCjcAstForIndex", false)
+		const useAst = vscode.workspace.getConfiguration("njust-ai").get<boolean>("cangjieTools.useCjcAstForIndex", false)
 		if (!useAst) return refs
 		const fileCache = new Map<string, string[]>()
 		const out: Array<{ filePath: string; line: number; column: number }> = []

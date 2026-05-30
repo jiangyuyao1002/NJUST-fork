@@ -63,7 +63,7 @@ async function promptManualSelect(context: vscode.ExtensionContext, outputChanne
 		void formatCangjieToolchainSummaryLine().then((line) => {
 			if (line) {
 				vscode.window.showInformationMessage(line, "验证工具链").then((c) => {
-					if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai-cj.cangjieVerifySdk")
+					if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
 				})
 			}
 		})
@@ -97,7 +97,7 @@ export async function checkAndPromptSdkSetup(
 				const steps =
 					"快速开始：(1) 命令面板「Cangjie: Verify SDK Installation」确认工具链 (2) 使用 cjpm init 或打开含 cjpm.toml 的工程 (3) 打开 .cj 以启动 LSP 与保存编译。"
 				void vscode.window.showInformationMessage(`${msg}\n${steps}`, "验证工具链").then((c) => {
-					if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai-cj.cangjieVerifySdk")
+					if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
 				})
 			})
 		}
@@ -128,7 +128,7 @@ export async function checkAndPromptSdkSetup(
 			void formatCangjieToolchainSummaryLine().then((line) => {
 				if (line) {
 					vscode.window.showInformationMessage(line, "验证工具链").then((c) => {
-						if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai-cj.cangjieVerifySdk")
+						if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
 					})
 				}
 			})

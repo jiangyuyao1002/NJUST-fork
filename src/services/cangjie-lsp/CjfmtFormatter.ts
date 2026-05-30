@@ -82,7 +82,7 @@ export class CjfmtFormatter implements vscode.DocumentFormattingEditProvider, vs
 		const t0 = Date.now()
 		const cjfmtPath = resolveCangjieToolPath("cjfmt", "cangjieTools.cjfmtPath")
 		if (!cjfmtPath) {
-			this.outputChannel.appendLine("[CjFmt] cjfmt not found. Set njust-ai-cj.cangjieTools.cjfmtPath or CANGJIE_HOME.")
+			this.outputChannel.appendLine("[CjFmt] cjfmt not found. Set njust-ai.cangjieTools.cjfmtPath or CANGJIE_HOME.")
 			return []
 		}
 

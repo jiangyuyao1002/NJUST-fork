@@ -6,8 +6,8 @@ import type { CangjieCompileGuard } from "./CangjieCompileGuard"
 import { resolveCangjieToolPath, buildCangjieToolEnv, CJC_CONFIG_KEY } from "./cangjieToolUtils"
 
 const execFileAsync = promisify(execFile)
-const LSP_OUTPUT_COMMAND = "njust-ai-cj.cangjieShowLspOutput"
-const COMPILE_OUTPUT_COMMAND = "njust-ai-cj.cangjieShowCompileOutput"
+const LSP_OUTPUT_COMMAND = "njust-ai.cangjieShowLspOutput"
+const COMPILE_OUTPUT_COMMAND = "njust-ai.cangjieShowCompileOutput"
 
 export class CangjieLspStatusBar implements vscode.Disposable {
 	private lspItem: vscode.StatusBarItem

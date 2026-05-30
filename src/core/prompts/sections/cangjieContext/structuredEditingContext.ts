@@ -38,7 +38,7 @@ export async function fetchHoverAtPosition(
 	document: vscode.TextDocument,
 	position: vscode.Position,
 ): Promise<string | null> {
-	const hoverEnabled = vscode.workspace.getConfiguration("njust-ai-cj").get<boolean>("cangjieLsp.enabled", true)
+	const hoverEnabled = vscode.workspace.getConfiguration("njust-ai").get<boolean>("cangjieLsp.enabled", true)
 	if (!hoverEnabled) return null
 	const key = `${document.uri.toString()}:${position.line}:${position.character}`
 	const now = Date.now()

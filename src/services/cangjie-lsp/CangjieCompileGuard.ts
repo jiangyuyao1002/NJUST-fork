@@ -234,7 +234,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			const dt = Date.now() - t0
 			this.metricsCollector?.recordBuild(r, dt)
 			void vscode.window.showErrorMessage(
-				"未找到 cjpm：请设置 CANGJIE_HOME、PATH，或在设置中配置 njust-ai-cj.cangjieTools.cjpmPath。",
+				"未找到 cjpm：请设置 CANGJIE_HOME、PATH，或在设置中配置 njust-ai.cangjieTools.cjpmPath。",
 				"打开设置",
 			).then((c) => {
 				if (c === "打开设置") {

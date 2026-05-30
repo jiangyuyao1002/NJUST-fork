@@ -327,7 +327,7 @@ function buildSwiftConfig(filePath: string): RunConfig {
 
 /**
  * LaTeX: compile to PDF in the same directory as the .tex file (default tool output location).
- * Uses `njust-ai-cj.latex.*` settings (same as command LaTeX: Compile local).
+ * Uses `njust-ai.latex.*` settings (same as command LaTeX: Compile local).
  */
 function buildLatexConfig(filePath: string, _workDir: string): RunConfig {
 	const cwd = path.dirname(filePath)

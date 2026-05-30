@@ -117,7 +117,7 @@ function scheduleCangjieToolchainGapCheck(): void {
 		await vscode.window
 			.showWarningMessage(`仓颉工具链不完整或不可运行：${detail}`, "验证 SDK", "打开工具设置")
 			.then((c) => {
-				if (c === "验证 SDK") void vscode.commands.executeCommand("njust-ai-cj.cangjieVerifySdk")
+				if (c === "验证 SDK") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
 				if (c === "打开工具设置") {
 					void vscode.commands.executeCommand("workbench.action.openSettings", `${Package.name}.cangjieTools`)
 				}
@@ -241,7 +241,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Auto-generate Cloud Agent device token on first activation.
 	// Stored in SecretStorage to prevent exposure to other extensions.
-	const DEVICE_TOKEN_KEY = "njust-ai-cj.cloudAgent.deviceToken"
+	const DEVICE_TOKEN_KEY = "njust-ai.cloudAgent.deviceToken"
 	let deviceToken = await context.secrets.get(DEVICE_TOKEN_KEY)
 	if (!deviceToken) {
 		// Migration: check old globalState key then old config value
@@ -437,12 +437,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		),
 	)
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.triggerInlineCompletion", async () => {
+		vscode.commands.registerCommand("njust-ai.triggerInlineCompletion", async () => {
 			await vscode.commands.executeCommand("editor.action.inlineSuggest.trigger")
 		}),
 	)
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.inlineCompletionDiagnostics", async () => {
+		vscode.commands.registerCommand("njust-ai.inlineCompletionDiagnostics", async () => {
 			const log = (m: string) => outputChannel.appendLine(m)
 			const api = await resolveInlineCompletionApiHandler(provider, log)
 			if (api) {
@@ -552,7 +552,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Test run/debug commands for CodeLens
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieRunTest", (testName: string, fileUri?: vscode.Uri) => {
+		vscode.commands.registerCommand("njust-ai.cangjieRunTest", (testName: string, fileUri?: vscode.Uri) => {
 			const folder = fileUri
 				? vscode.workspace.getWorkspaceFolder(fileUri)
 				: vscode.workspace.workspaceFolders?.[0]
@@ -563,7 +563,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieDebugTest", (testName: string, fileUri?: vscode.Uri) => {
+		vscode.commands.registerCommand("njust-ai.cangjieDebugTest", (testName: string, fileUri?: vscode.Uri) => {
 			const folder = fileUri ? vscode.workspace.getWorkspaceFolder(fileUri) : undefined
 			vscode.debug.startDebugging(folder, {
 				type: "cangjie",
@@ -664,7 +664,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const bindAddress = mcpServerConfig.get<string>("mcpServer.bindAddress", "127.0.0.1")
 
 		// Read MCP authToken from SecretStorage (preferred) or migrate from settings.
-		const MCP_AUTH_TOKEN_SECRET_KEY = "njust-ai-cj.mcpServer.authToken"
+		const MCP_AUTH_TOKEN_SECRET_KEY = "njust-ai.mcpServer.authToken"
 		let authToken = (await context.secrets.get(MCP_AUTH_TOKEN_SECRET_KEY)) || undefined
 		if (!authToken) {
 			// Migration: read legacy token from settings and store in SecretStorage.

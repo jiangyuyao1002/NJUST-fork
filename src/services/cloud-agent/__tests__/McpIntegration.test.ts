@@ -100,7 +100,7 @@ describe("McpProtocolAdapter Integration (InMemory)", () => {
 		;(adapter as any).transport = clientTransport
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		;(adapter as any).client = new Client(
-			{ name: "njust-ai-cj", version: "1.0.0" },
+			{ name: "njust-ai", version: "1.0.0" },
 			{ capabilities: {} },
 		)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

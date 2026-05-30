@@ -464,7 +464,7 @@ export class CangjieLspClient {
 		if (!serverExecutable) {
 			const msg = config.serverPath
 				? `Cangjie LSP server not found at configured path: ${config.serverPath}`
-				: "Cangjie LSP server not found. Set 'njust-ai-cj.cangjieLsp.serverPath' or the CANGJIE_HOME environment variable."
+				: "Cangjie LSP server not found. Set 'njust-ai.cangjieLsp.serverPath' or the CANGJIE_HOME environment variable."
 			vscode.window.showWarningMessage(msg)
 			this.extensionOutputChannel.appendLine(`[CangjieLSP] ${msg}`)
 			this.setState("warning", msg)

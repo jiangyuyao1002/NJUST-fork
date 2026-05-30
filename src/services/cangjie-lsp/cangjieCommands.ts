@@ -35,11 +35,11 @@ interface CjpmCommandDef {
 }
 
 const CJPM_COMMANDS: CjpmCommandDef[] = [
-	{ id: "njust-ai-cj.cangjieBuild", label: "Cangjie: Build (cjpm build)", cjpmArg: "build" },
-	{ id: "njust-ai-cj.cangjieRun", label: "Cangjie: Run (cjpm run)", cjpmArg: "run" },
-	{ id: "njust-ai-cj.cangjieTest", label: "Cangjie: Test (cjpm test)", cjpmArg: "test" },
-	{ id: "njust-ai-cj.cangjieCheck", label: "Cangjie: Check (cjpm check)", cjpmArg: "check" },
-	{ id: "njust-ai-cj.cangjieClean", label: "Cangjie: Clean (cjpm clean)", cjpmArg: "clean" },
+	{ id: "njust-ai.cangjieBuild", label: "Cangjie: Build (cjpm build)", cjpmArg: "build" },
+	{ id: "njust-ai.cangjieRun", label: "Cangjie: Run (cjpm run)", cjpmArg: "run" },
+	{ id: "njust-ai.cangjieTest", label: "Cangjie: Test (cjpm test)", cjpmArg: "test" },
+	{ id: "njust-ai.cangjieCheck", label: "Cangjie: Check (cjpm check)", cjpmArg: "check" },
+	{ id: "njust-ai.cangjieClean", label: "Cangjie: Clean (cjpm clean)", cjpmArg: "clean" },
 ]
 
 function findCjpmRoot(): string | undefined {
@@ -293,7 +293,7 @@ function runCjpmCommand(cjpmArg: string): void {
 	if (!cjpmPath) {
 		void vscode.window
 			.showErrorMessage(
-				"未找到 cjpm：请设置 CANGJIE_HOME / PATH，或在设置中配置 njust-ai-cj.cangjieTools.cjpmPath。",
+				"未找到 cjpm：请设置 CANGJIE_HOME / PATH，或在设置中配置 njust-ai.cangjieTools.cjpmPath。",
 				"打开设置",
 			)
 			.then((c) => {
@@ -329,7 +329,7 @@ export function registerCangjieCommands(
 	getCurrentTaskId?: () => string | undefined,
 ): void {
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieVerifySdk", async () => {
+		vscode.commands.registerCommand("njust-ai.cangjieVerifySdk", async () => {
 			const ch = vscode.window.createOutputChannel("Cangjie SDK Verify")
 			ch.show(true)
 			ch.appendLine("正在检测 cjc / cjpm / cjfmt / cjlint …")
@@ -354,7 +354,7 @@ export function registerCangjieCommands(
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieViewLearnedFixes", async () => {
+		vscode.commands.registerCommand("njust-ai.cangjieViewLearnedFixes", async () => {
 			const cwd = findCjpmRoot()
 			if (!cwd) {
 				vscode.window.showErrorMessage("未找到含 cjpm.toml 的工作区项目。")
@@ -368,7 +368,7 @@ export function registerCangjieCommands(
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieManageLearnedFixes", async () => {
+		vscode.commands.registerCommand("njust-ai.cangjieManageLearnedFixes", async () => {
 			const cwd = findCjpmRoot()
 			if (!cwd) {
 				vscode.window.showErrorMessage("未找到含 cjpm.toml 的工作区项目。")
@@ -421,13 +421,13 @@ export function registerCangjieCommands(
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieGenerateTestFile", (resource?: vscode.Uri) =>
+		vscode.commands.registerCommand("njust-ai.cangjieGenerateTestFile", (resource?: vscode.Uri) =>
 			runCangjieGenerateTestFile(getCurrentTaskId, resource),
 		),
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieCleanGeneratedTests", () => {
+		vscode.commands.registerCommand("njust-ai.cangjieCleanGeneratedTests", () => {
 			const { filesRemoved, taskEntriesRemoved } = purgeAllTrackedCangjieTestFiles()
 			if (taskEntriesRemoved > 0) {
 				void vscode.window.showInformationMessage(
@@ -446,7 +446,7 @@ export function registerCangjieCommands(
 	}
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieRestartLsp", async () => {
+		vscode.commands.registerCommand("njust-ai.cangjieRestartLsp", async () => {
 			vscode.window.showInformationMessage("Restarting Cangjie Language Server…")
 			await lspClient.restart()
 			vscode.window.showInformationMessage("Cangjie Language Server restarted.")
@@ -456,7 +456,7 @@ export function registerCangjieCommands(
 	// ── Template Library ──
 	const templateLibrary = new CangjieTemplateLibrary()
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieInsertTemplate", () =>
+		vscode.commands.registerCommand("njust-ai.cangjieInsertTemplate", () =>
 			templateLibrary.showTemplatePicker(),
 		),
 	)
@@ -466,7 +466,7 @@ export function registerCangjieCommands(
 	const profiler = new CangjieProfiler(outputChannel)
 	context.subscriptions.push(profiler)
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai-cj.cangjieProfile", async () => {
+		vscode.commands.registerCommand("njust-ai.cangjieProfile", async () => {
 			const cwd = findCjpmRoot()
 			if (!cwd) {
 				vscode.window.showErrorMessage("No cjpm project found.")
@@ -494,13 +494,13 @@ export function registerCangjieCommands(
 		)
 		context.subscriptions.push(
 			vscode.commands.registerCommand(
-				"njust-ai-cj.cangjieExtractFunction",
+				"njust-ai.cangjieExtractFunction",
 				(doc: vscode.TextDocument, range: vscode.Range) =>
 					refactoring.extractFunction(doc, range),
 			),
 		)
 		context.subscriptions.push(
-			vscode.commands.registerCommand("njust-ai-cj.cangjieMoveFile", async () => {
+			vscode.commands.registerCommand("njust-ai.cangjieMoveFile", async () => {
 				const editor = vscode.window.activeTextEditor
 				if (editor?.document.fileName.endsWith(".cj")) {
 					await refactoring.moveFile(editor.document.uri)

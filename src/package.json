@@ -196,223 +196,223 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "njust-ai-cj-ActivityBar",
+					"id": "njust-ai-ActivityBar",
 					"title": "%views.activitybar.title%",
 					"icon": "assets/icons/icon.svg"
 				}
 			]
 		},
 		"views": {
-			"njust-ai-cj-ActivityBar": [
+			"njust-ai-ActivityBar": [
 				{
 					"icon": "assets/icons/icon.svg",
 					"type": "webview",
-					"id": "njust-ai-cj.SidebarProvider",
+					"id": "njust-ai.SidebarProvider",
 					"name": "%views.sidebar.name%"
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "njust-ai-cj.plusButtonClicked",
+				"command": "njust-ai.plusButtonClicked",
 				"title": "%command.newTask.title%",
 				"icon": "$(edit)"
 			},
 			{
-				"command": "njust-ai-cj.historyButtonClicked",
+				"command": "njust-ai.historyButtonClicked",
 				"title": "%command.history.title%",
 				"icon": "$(history)"
 			},
 			{
-				"command": "njust-ai-cj.popoutButtonClicked",
+				"command": "njust-ai.popoutButtonClicked",
 				"title": "%command.openInEditor.title%",
 				"icon": "$(link-external)"
 			},
 			{
-				"command": "njust-ai-cj.settingsButtonClicked",
+				"command": "njust-ai.settingsButtonClicked",
 				"title": "%command.settings.title%",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "njust-ai-cj.openInNewTab",
+				"command": "njust-ai.openInNewTab",
 				"title": "%command.openInNewTab.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.explainCode",
+				"command": "njust-ai.explainCode",
 				"title": "%command.explainCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.fixCode",
+				"command": "njust-ai.fixCode",
 				"title": "%command.fixCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.improveCode",
+				"command": "njust-ai.improveCode",
 				"title": "%command.improveCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.addToContext",
+				"command": "njust-ai.addToContext",
 				"title": "%command.addToContext.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.newTask",
+				"command": "njust-ai.newTask",
 				"title": "%command.newTask.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.terminalAddToContext",
+				"command": "njust-ai.terminalAddToContext",
 				"title": "%command.terminal.addToContext.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "njust-ai-cj.terminalFixCommand",
+				"command": "njust-ai.terminalFixCommand",
 				"title": "%command.terminal.fixCommand.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "njust-ai-cj.terminalExplainCommand",
+				"command": "njust-ai.terminalExplainCommand",
 				"title": "%command.terminal.explainCommand.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "njust-ai-cj.setCustomStoragePath",
+				"command": "njust-ai.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.importSettings",
+				"command": "njust-ai.importSettings",
 				"title": "%command.importSettings.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.focusInput",
+				"command": "njust-ai.focusInput",
 				"title": "%command.focusInput.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.acceptInput",
+				"command": "njust-ai.acceptInput",
 				"title": "%command.acceptInput.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.toggleAutoApprove",
+				"command": "njust-ai.toggleAutoApprove",
 				"title": "%command.toggleAutoApprove.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.runCode",
+				"command": "njust-ai.runCode",
 				"title": "%command.runCode.title%",
 				"icon": "$(play)",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.openMarkdownPreview",
+				"command": "njust-ai.openMarkdownPreview",
 				"title": "%command.openMarkdownPreview.title%",
 				"icon": "$(open-preview)",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "njust-ai-cj.latexCompile",
+				"command": "njust-ai.latexCompile",
 				"title": "%command.latexCompile.title%",
 				"icon": "$(output)",
 				"category": "LaTeX"
 			},
 			{
-				"command": "njust-ai-cj.cangjieBuild",
+				"command": "njust-ai.cangjieBuild",
 				"title": "Cangjie: Build (cjpm build)",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieRun",
+				"command": "njust-ai.cangjieRun",
 				"title": "Cangjie: Run (cjpm run)",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieTest",
+				"command": "njust-ai.cangjieTest",
 				"title": "Cangjie: Test (cjpm test)",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieCheck",
+				"command": "njust-ai.cangjieCheck",
 				"title": "Cangjie: Check (cjpm check)",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieClean",
+				"command": "njust-ai.cangjieClean",
 				"title": "Cangjie: Clean (cjpm clean)",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieVerifySdk",
+				"command": "njust-ai.cangjieVerifySdk",
 				"title": "Cangjie: Verify SDK Installation",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieRestartLsp",
+				"command": "njust-ai.cangjieRestartLsp",
 				"title": "Cangjie: Restart Language Server",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieRunTest",
+				"command": "njust-ai.cangjieRunTest",
 				"title": "Cangjie: Run Test",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieDebugTest",
+				"command": "njust-ai.cangjieDebugTest",
 				"title": "Cangjie: Debug Test",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieInsertTemplate",
+				"command": "njust-ai.cangjieInsertTemplate",
 				"title": "Cangjie: Insert Template",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieProfile",
+				"command": "njust-ai.cangjieProfile",
 				"title": "Cangjie: Profile (cjprof)",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieExtractFunction",
+				"command": "njust-ai.cangjieExtractFunction",
 				"title": "Cangjie: Extract Function",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieMoveFile",
+				"command": "njust-ai.cangjieMoveFile",
 				"title": "Cangjie: Move File",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieViewLearnedFixes",
+				"command": "njust-ai.cangjieViewLearnedFixes",
 				"title": "Cangjie: View Learned Fixes",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieManageLearnedFixes",
+				"command": "njust-ai.cangjieManageLearnedFixes",
 				"title": "Cangjie: Manage Learned Fixes",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieGenerateTestFile",
+				"command": "njust-ai.cangjieGenerateTestFile",
 				"title": "Cangjie: Generate Test File",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieCleanGeneratedTests",
+				"command": "njust-ai.cangjieCleanGeneratedTests",
 				"title": "Cangjie: Clean Generated Test Files",
 				"category": "Cangjie"
 			},
 			{
-				"command": "njust-ai-cj.triggerInlineCompletion",
+				"command": "njust-ai.triggerInlineCompletion",
 				"title": "%command.triggerInlineCompletion.title%",
 				"category": "NJUST_AI_CJ"
 			},
 			{
-				"command": "njust-ai-cj.inlineCompletionDiagnostics",
+				"command": "njust-ai.inlineCompletionDiagnostics",
 				"title": "%command.inlineCompletionDiagnostics.title%",
 				"category": "NJUST_AI_CJ"
 			}
@@ -420,152 +420,152 @@
 		"menus": {
 			"editor/context": [
 				{
-					"submenu": "njust-ai-cj.contextMenu",
+					"submenu": "njust-ai.contextMenu",
 					"group": "1"
 				}
 			],
-			"njust-ai-cj.contextMenu": [
+			"njust-ai.contextMenu": [
 				{
-					"command": "njust-ai-cj.addToContext",
+					"command": "njust-ai.addToContext",
 					"group": "1_actions@1"
 				},
 				{
-					"command": "njust-ai-cj.explainCode",
+					"command": "njust-ai.explainCode",
 					"group": "1_actions@2"
 				},
 				{
-					"command": "njust-ai-cj.improveCode",
+					"command": "njust-ai.improveCode",
 					"group": "1_actions@3"
 				},
 				{
-					"command": "njust-ai-cj.cangjieGenerateTestFile",
+					"command": "njust-ai.cangjieGenerateTestFile",
 					"group": "2_cangjie@1",
 					"when": "resourceLangId == cangjie || editorLangId == cangjie"
 				}
 			],
 			"explorer/context": [
 				{
-					"command": "njust-ai-cj.cangjieGenerateTestFile",
+					"command": "njust-ai.cangjieGenerateTestFile",
 					"group": "2_cangjie@1",
 					"when": "resourceLangId == cangjie"
 				}
 			],
 			"terminal/context": [
 				{
-					"submenu": "njust-ai-cj.terminalMenu",
+					"submenu": "njust-ai.terminalMenu",
 					"group": "2"
 				}
 			],
-			"njust-ai-cj.terminalMenu": [
+			"njust-ai.terminalMenu": [
 				{
-					"command": "njust-ai-cj.terminalAddToContext",
+					"command": "njust-ai.terminalAddToContext",
 					"group": "1_actions@1"
 				},
 				{
-					"command": "njust-ai-cj.terminalFixCommand",
+					"command": "njust-ai.terminalFixCommand",
 					"group": "1_actions@2"
 				},
 				{
-					"command": "njust-ai-cj.terminalExplainCommand",
+					"command": "njust-ai.terminalExplainCommand",
 					"group": "1_actions@3"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "njust-ai-cj.latexCompile",
+					"command": "njust-ai.latexCompile",
 					"when": "editorLangId == latex || editorLangId == tex"
 				},
 				{
-					"command": "njust-ai-cj.cangjieBuild",
+					"command": "njust-ai.cangjieBuild",
 					"when": "editorLangId == cangjie"
 				},
 				{
-					"command": "njust-ai-cj.cangjieRun",
+					"command": "njust-ai.cangjieRun",
 					"when": "editorLangId == cangjie"
 				},
 				{
-					"command": "njust-ai-cj.cangjieTest",
+					"command": "njust-ai.cangjieTest",
 					"when": "editorLangId == cangjie"
 				},
 				{
-					"command": "njust-ai-cj.cangjieCheck",
+					"command": "njust-ai.cangjieCheck",
 					"when": "editorLangId == cangjie"
 				},
 				{
-					"command": "njust-ai-cj.cangjieClean",
+					"command": "njust-ai.cangjieClean",
 					"when": "editorLangId == cangjie"
 				},
 				{
-					"command": "njust-ai-cj.cangjieViewLearnedFixes",
+					"command": "njust-ai.cangjieViewLearnedFixes",
 					"when": "workspaceFolderCount > 0"
 				},
 				{
-					"command": "njust-ai-cj.cangjieManageLearnedFixes",
+					"command": "njust-ai.cangjieManageLearnedFixes",
 					"when": "workspaceFolderCount > 0"
 				},
 				{
-					"command": "njust-ai-cj.cangjieGenerateTestFile",
+					"command": "njust-ai.cangjieGenerateTestFile",
 					"when": "editorLangId == cangjie"
 				},
 				{
-					"command": "njust-ai-cj.cangjieCleanGeneratedTests"
+					"command": "njust-ai.cangjieCleanGeneratedTests"
 				}
 			],
 			"view/title": [
 				{
-					"command": "njust-ai-cj.plusButtonClicked",
+					"command": "njust-ai.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "view == njust-ai-cj.SidebarProvider"
+					"when": "view == njust-ai.SidebarProvider"
 				},
 				{
-					"command": "njust-ai-cj.runCode",
+					"command": "njust-ai.runCode",
 					"group": "navigation@2",
-					"when": "view == njust-ai-cj.SidebarProvider"
+					"when": "view == njust-ai.SidebarProvider"
 				},
 				{
-					"command": "njust-ai-cj.settingsButtonClicked",
+					"command": "njust-ai.settingsButtonClicked",
 					"group": "navigation@3",
-					"when": "view == njust-ai-cj.SidebarProvider"
+					"when": "view == njust-ai.SidebarProvider"
 				},
 				{
-					"command": "njust-ai-cj.historyButtonClicked",
+					"command": "njust-ai.historyButtonClicked",
 					"group": "overflow@1",
-					"when": "view == njust-ai-cj.SidebarProvider"
+					"when": "view == njust-ai.SidebarProvider"
 				},
 				{
-					"command": "njust-ai-cj.popoutButtonClicked",
+					"command": "njust-ai.popoutButtonClicked",
 					"group": "overflow@2",
-					"when": "view == njust-ai-cj.SidebarProvider"
+					"when": "view == njust-ai.SidebarProvider"
 				}
 			],
 			"editor/title": [
 				{
-					"command": "njust-ai-cj.plusButtonClicked",
+					"command": "njust-ai.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "activeWebviewPanelId == njust-ai-cj.TabPanelProvider"
+					"when": "activeWebviewPanelId == njust-ai.TabPanelProvider"
 				},
 				{
-					"command": "njust-ai-cj.runCode",
+					"command": "njust-ai.runCode",
 					"group": "navigation@2",
-					"when": "activeWebviewPanelId == njust-ai-cj.TabPanelProvider"
+					"when": "activeWebviewPanelId == njust-ai.TabPanelProvider"
 				},
 				{
-					"command": "njust-ai-cj.settingsButtonClicked",
+					"command": "njust-ai.settingsButtonClicked",
 					"group": "navigation@3",
-					"when": "activeWebviewPanelId == njust-ai-cj.TabPanelProvider"
+					"when": "activeWebviewPanelId == njust-ai.TabPanelProvider"
 				},
 				{
-					"command": "njust-ai-cj.historyButtonClicked",
+					"command": "njust-ai.historyButtonClicked",
 					"group": "overflow@1",
-					"when": "activeWebviewPanelId == njust-ai-cj.TabPanelProvider"
+					"when": "activeWebviewPanelId == njust-ai.TabPanelProvider"
 				},
 				{
-					"command": "njust-ai-cj.popoutButtonClicked",
+					"command": "njust-ai.popoutButtonClicked",
 					"group": "overflow@2",
-					"when": "activeWebviewPanelId == njust-ai-cj.TabPanelProvider"
+					"when": "activeWebviewPanelId == njust-ai.TabPanelProvider"
 				},
 				{
-					"command": "njust-ai-cj.latexCompile",
+					"command": "njust-ai.latexCompile",
 					"group": "navigation@9",
 					"when": "editorTextFocus && (editorLangId == latex || editorLangId == tex)"
 				}
@@ -573,7 +573,7 @@
 		},
 		"keybindings": [
 			{
-				"command": "njust-ai-cj.addToContext",
+				"command": "njust-ai.addToContext",
 				"key": "cmd+k cmd+a",
 				"mac": "cmd+k cmd+a",
 				"win": "ctrl+k ctrl+a",
@@ -581,14 +581,14 @@
 				"when": "editorTextFocus && editorHasSelection"
 			},
 			{
-				"command": "njust-ai-cj.toggleAutoApprove",
+				"command": "njust-ai.toggleAutoApprove",
 				"key": "cmd+alt+a",
 				"mac": "cmd+alt+a",
 				"win": "ctrl+alt+a",
 				"linux": "ctrl+alt+a"
 			},
 			{
-				"command": "njust-ai-cj.runCode",
+				"command": "njust-ai.runCode",
 				"key": "ctrl+f5",
 				"mac": "cmd+f5",
 				"win": "ctrl+f5",
@@ -596,7 +596,7 @@
 				"when": "editorTextFocus"
 			},
 			{
-				"command": "njust-ai-cj.cangjieBuild",
+				"command": "njust-ai.cangjieBuild",
 				"key": "ctrl+shift+b",
 				"mac": "cmd+shift+b",
 				"win": "ctrl+shift+b",
@@ -604,7 +604,7 @@
 				"when": "editorTextFocus && editorLangId == cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieTest",
+				"command": "njust-ai.cangjieTest",
 				"key": "ctrl+shift+t",
 				"mac": "cmd+shift+t",
 				"win": "ctrl+shift+t",
@@ -612,7 +612,7 @@
 				"when": "editorTextFocus && editorLangId == cangjie"
 			},
 			{
-				"command": "njust-ai-cj.cangjieClean",
+				"command": "njust-ai.cangjieClean",
 				"key": "ctrl+shift+delete",
 				"mac": "cmd+shift+delete",
 				"win": "ctrl+shift+delete",
@@ -620,7 +620,7 @@
 				"when": "editorTextFocus && editorLangId == cangjie"
 			},
 			{
-				"command": "njust-ai-cj.triggerInlineCompletion",
+				"command": "njust-ai.triggerInlineCompletion",
 				"key": "alt+\\",
 				"mac": "alt+\\",
 				"win": "alt+\\",
@@ -628,7 +628,7 @@
 				"when": "editorTextFocus"
 			},
 			{
-				"command": "njust-ai-cj.openMarkdownPreview",
+				"command": "njust-ai.openMarkdownPreview",
 				"key": "ctrl+q",
 				"mac": "ctrl+q",
 				"win": "ctrl+q",
@@ -638,11 +638,11 @@
 		],
 		"submenus": [
 			{
-				"id": "njust-ai-cj.contextMenu",
+				"id": "njust-ai.contextMenu",
 				"label": "%views.contextMenu.label%"
 			},
 			{
-				"id": "njust-ai-cj.terminalMenu",
+				"id": "njust-ai.terminalMenu",
 				"label": "%views.terminalMenu.label%"
 			}
 		],
@@ -789,7 +789,7 @@
 		],
 		"chatParticipants": [
 			{
-				"id": "njust-ai-cj.agent",
+				"id": "njust-ai.agent",
 				"name": "roo",
 				"fullName": "Roo Agent",
 				"description": "AI-powered coding agent - read, write, execute, debug",
@@ -834,7 +834,7 @@
 		"configuration": {
 			"title": "%configuration.title%",
 			"properties": {
-				"njust-ai-cj.allowedCommands": {
+				"njust-ai.allowedCommands": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -846,7 +846,7 @@
 					],
 					"description": "%commands.allowedCommands.description%"
 				},
-				"njust-ai-cj.deniedCommands": {
+				"njust-ai.deniedCommands": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -854,19 +854,19 @@
 					"default": [],
 					"description": "%commands.deniedCommands.description%"
 				},
-				"njust-ai-cj.saveAllBeforeExecuteCommand": {
+				"njust-ai.saveAllBeforeExecuteCommand": {
 					"type": "boolean",
 					"default": true,
 					"description": "%commands.saveAllBeforeExecuteCommand.description%"
 				},
-				"njust-ai-cj.commandExecutionTimeout": {
+				"njust-ai.commandExecutionTimeout": {
 					"type": "number",
 					"default": 0,
 					"minimum": 0,
 					"maximum": 600,
 					"description": "%commands.commandExecutionTimeout.description%"
 				},
-				"njust-ai-cj.commandTimeoutAllowlist": {
+				"njust-ai.commandTimeoutAllowlist": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -874,27 +874,27 @@
 					"default": [],
 					"description": "%commands.commandTimeoutAllowlist.description%"
 				},
-				"njust-ai-cj.preventCompletionWithOpenTodos": {
+				"njust-ai.preventCompletionWithOpenTodos": {
 					"type": "boolean",
 					"default": false,
 					"description": "%commands.preventCompletionWithOpenTodos.description%"
 				},
-				"njust-ai-cj.enableWebSearch": {
+				"njust-ai.enableWebSearch": {
 					"type": "boolean",
 					"default": false,
 					"description": "Enable web search tool for AI agent to fetch real-time information from the internet"
 				},
-				"njust-ai-cj.enableStreamingToolExecution": {
+				"njust-ai.enableStreamingToolExecution": {
 					"type": "boolean",
 					"default": true,
 					"description": "Enable eager streaming execution for auto-approved concurrency-safe tools. Disable to fully fallback to post-stream tool execution behavior."
 				},
-				"njust-ai-cj.webSearchApiKey": {
+				"njust-ai.webSearchApiKey": {
 					"type": "string",
 					"default": "",
 					"description": "API key for web search provider (Tavily). Get a free key at https://tavily.com"
 				},
-				"njust-ai-cj.vsCodeLmModelSelector": {
+				"njust-ai.vsCodeLmModelSelector": {
 					"type": "object",
 					"properties": {
 						"vendor": {
@@ -908,67 +908,67 @@
 					},
 					"description": "%settings.vsCodeLmModelSelector.description%"
 				},
-				"njust-ai-cj.customStoragePath": {
+				"njust-ai.customStoragePath": {
 					"type": "string",
 					"default": "",
 					"description": "%settings.customStoragePath.description%"
 				},
-				"njust-ai-cj.enableCodeActions": {
+				"njust-ai.enableCodeActions": {
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.enableCodeActions.description%"
 				},
-				"njust-ai-cj.autoImportSettingsPath": {
+				"njust-ai.autoImportSettingsPath": {
 					"type": "string",
 					"default": "",
 					"description": "%settings.autoImportSettingsPath.description%"
 				},
-				"njust-ai-cj.maximumIndexedFilesForFileSearch": {
+				"njust-ai.maximumIndexedFilesForFileSearch": {
 					"type": "number",
 					"default": 10000,
 					"minimum": 5000,
 					"maximum": 500000,
 					"description": "%settings.maximumIndexedFilesForFileSearch.description%"
 				},
-				"njust-ai-cj.useAgentRules": {
+				"njust-ai.useAgentRules": {
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.useAgentRules.description%"
 				},
-				"njust-ai-cj.apiRequestTimeout": {
+				"njust-ai.apiRequestTimeout": {
 					"type": "number",
 					"default": 300,
 					"minimum": 0,
 					"maximum": 3600,
 					"description": "%settings.apiRequestTimeout.description%"
 				},
-				"njust-ai-cj.newTaskRequireTodos": {
+				"njust-ai.newTaskRequireTodos": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.newTaskRequireTodos.description%"
 				},
-				"njust-ai-cj.codeIndex.embeddingBatchSize": {
+				"njust-ai.codeIndex.embeddingBatchSize": {
 					"type": "number",
 					"default": 60,
 					"minimum": 1,
 					"maximum": 200,
 					"description": "%settings.codeIndex.embeddingBatchSize.description%"
 				},
-				"njust-ai-cj.cangjieContext.l3CacheTtlMs": {
+				"njust-ai.cangjieContext.l3CacheTtlMs": {
 					"type": "number",
 					"default": 12000,
 					"minimum": 1000,
 					"maximum": 120000,
 					"description": "TTL (ms) for the Cangjie Dev L3 full-context cache (mtime-based key). Increase for fewer rebuilds; decrease for fresher prompts."
 				},
-				"njust-ai-cj.cangjieContextTokenBudget": {
+				"njust-ai.cangjieContextTokenBudget": {
 					"type": "number",
 					"default": 0,
 					"minimum": 0,
 					"maximum": 12000,
 					"markdownDescription": "Override the Cangjie Dev dynamic context token budget. When set to a positive value, this takes priority over the automatic model-scaled budget. When 0 (default), the budget is derived from the model's context window (e.g. 2400 for 16k, 4800 for 128k, 6000 for 200k+)."
 				},
-				"njust-ai-cj.latex.engine": {
+				"njust-ai.latex.engine": {
 					"type": "string",
 					"enum": [
 						"latexmk",
@@ -977,22 +977,22 @@
 					"default": "latexmk",
 					"description": "Local LaTeX compiler driver. Uses TeX Live / MiKTeX on your machine (not Overleaf cloud). latexmk runs multiple passes for references; pdflatex runs a single pass."
 				},
-				"njust-ai-cj.latex.latexmkPath": {
+				"njust-ai.latex.latexmkPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to latexmk (e.g. ...\\\\MiKTeX\\\\miktex\\\\bin\\\\x64\\\\latexmk.exe on Windows). Empty: try PATH, then common MiKTeX/TeX Live locations on Windows."
 				},
-				"njust-ai-cj.latex.pdflatexPath": {
+				"njust-ai.latex.pdflatexPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to pdflatex. Empty: try PATH, then common MiKTeX/TeX Live locations on Windows."
 				},
-				"njust-ai-cj.latex.openPdfAfterSuccess": {
+				"njust-ai.latex.openPdfAfterSuccess": {
 					"type": "boolean",
 					"default": true,
 					"description": "Open the generated PDF in VS Code after a successful compile."
 				},
-				"njust-ai-cj.latex.extraArgs": {
+				"njust-ai.latex.extraArgs": {
 					"type": "array",
 					"default": [],
 					"items": {
@@ -1000,150 +1000,150 @@
 					},
 					"description": "Extra arguments passed to latexmk or pdflatex (after built-in flags)."
 				},
-				"njust-ai-cj.cangjieLsp.enabled": {
+				"njust-ai.cangjieLsp.enabled": {
 					"type": "boolean",
 					"default": true,
 					"description": "Enable/disable the Cangjie Language Server (LSP)."
 				},
-				"njust-ai-cj.cangjieLsp.serverPath": {
+				"njust-ai.cangjieLsp.serverPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to the Cangjie LSP server executable (LSPServer / LSPServer.exe). Leave empty to auto-detect from CANGJIE_HOME or PATH."
 				},
-				"njust-ai-cj.cangjieLsp.enableLog": {
+				"njust-ai.cangjieLsp.enableLog": {
 					"type": "boolean",
 					"default": false,
 					"description": "Enable Cangjie LSP server logging."
 				},
-				"njust-ai-cj.cangjieLsp.logPath": {
+				"njust-ai.cangjieLsp.logPath": {
 					"type": "string",
 					"default": "",
 					"description": "Custom log path for the Cangjie LSP server. If empty, logs are written to the server's default location."
 				},
-				"njust-ai-cj.cangjieLsp.disableAutoImport": {
+				"njust-ai.cangjieLsp.disableAutoImport": {
 					"type": "boolean",
 					"default": false,
 					"description": "Disable auto-import in Cangjie code completion."
 				},
-				"njust-ai-cj.cangjieLsp.suppressLspErrorsAfterCjpmSuccessMs": {
+				"njust-ai.cangjieLsp.suppressLspErrorsAfterCjpmSuccessMs": {
 					"type": "number",
 					"default": 0,
 					"minimum": 0,
 					"maximum": 30000,
 					"description": "After cjpm build succeeds, drop incoming LSP Error diagnostics for this many ms per project root (0 = off). Use ~1500–3000 if the server immediately republishes stale errors."
 				},
-				"njust-ai-cj.cangjieLsp.cjcPath": {
+				"njust-ai.cangjieLsp.cjcPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to the Cangjie compiler (cjc) for AST analysis. Leave empty to auto-detect from CANGJIE_HOME or PATH."
 				},
-				"njust-ai-cj.cangjieTools.cjfmtPath": {
+				"njust-ai.cangjieTools.cjfmtPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to the cjfmt formatter executable. Leave empty to auto-detect from CANGJIE_HOME or PATH."
 				},
-				"njust-ai-cj.cangjieTools.cjlintPath": {
+				"njust-ai.cangjieTools.cjlintPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to the cjlint static analysis tool. Leave empty to auto-detect from CANGJIE_HOME or PATH."
 				},
-				"njust-ai-cj.cangjieTools.runLintAfterBuild": {
+				"njust-ai.cangjieTools.runLintAfterBuild": {
 					"type": "boolean",
 					"default": true,
 					"description": "After a successful cjpm build from the save pipeline, run cjlint on the saved file so diagnostics stay aligned with compile."
 				},
-				"njust-ai-cj.cangjieTools.cjpmPath": {
+				"njust-ai.cangjieTools.cjpmPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to the cjpm project manager. Leave empty to auto-detect from CANGJIE_HOME or PATH."
 				},
-				"njust-ai-cj.cangjieTools.cjprofPath": {
+				"njust-ai.cangjieTools.cjprofPath": {
 					"type": "string",
 					"default": "",
 					"description": "Path to the cjprof profiler executable. Leave empty to auto-detect from CANGJIE_HOME or PATH."
 				},
-				"njust-ai-cj.cangjieTools.hotReload": {
+				"njust-ai.cangjieTools.hotReload": {
 					"type": "boolean",
 					"default": false,
 					"description": "During a Cangjie debug session, re-run cjpm build on .cj save and send a DAP hotReload request (requires cjdb/SDK support)."
 				},
-				"njust-ai-cj.cangjieTools.useCjcAstForIndex": {
+				"njust-ai.cangjieTools.useCjcAstForIndex": {
 					"type": "boolean",
 					"default": false,
 					"description": "Use `cjc --dump-ast` for richer symbol indexing when cjc is available. Falls back to the regex parser on failure. Requires Cangjie SDK."
 				},
-				"njust-ai-cj.matlabTools.matlabPath": {
+				"njust-ai.matlabTools.matlabPath": {
 					"type": "string",
 					"default": "",
 					"description": "MATLAB 可执行文件完整路径（matlab / matlab.exe；留空则自动检测 PATH 与常见安装目录）"
 				},
-				"njust-ai-cj.matlabTools.octavePath": {
+				"njust-ai.matlabTools.octavePath": {
 					"type": "string",
 					"default": "",
 					"description": "Octave 可执行文件完整路径（留空则自动检测 PATH；未安装 MATLAB 时使用）"
 				},
-				"njust-ai-cj.cloudAgent.serverUrl": {
+				"njust-ai.cloudAgent.serverUrl": {
 					"type": "string",
 					"default": "http://120.79.250.232:8765",
 					"description": "[已废弃] 请使用 Cloud Agent Profile 管理连接配置。此设置仅在未配置 Profile 时作为后备。Cloud Agent REST base URL (GET /health, POST /v1/run)."
 				},
-				"njust-ai-cj.cloudAgent.deviceToken": {
+				"njust-ai.cloudAgent.deviceToken": {
 					"type": "string",
 					"default": "",
 					"description": "Auto-generated device token for Cloud Agent authentication. Do not modify manually."
 				},
-				"njust-ai-cj.cloudAgent.apiKey": {
+				"njust-ai.cloudAgent.apiKey": {
 					"type": "string",
 					"default": "",
 					"description": "[已废弃] 请使用 Cloud Agent Profile 管理 API Key。此设置仅在未配置 Profile 时作为后备。X-API-Key for Cloud Agent (must match server CLOUD_AGENT_MOCK_API_KEY)."
 				},
-				"njust-ai-cj.cloudAgent.requestTimeoutMs": {
+				"njust-ai.cloudAgent.requestTimeoutMs": {
 					"type": "number",
 					"default": 0,
 					"minimum": 0,
 					"maximum": 3600000,
 					"description": "Timeout in milliseconds for each Cloud Agent HTTP request (health and /v1/run). 0 means no timeout."
 				},
-				"njust-ai-cj.cloudAgent.applyRemoteWorkspaceOps": {
+				"njust-ai.cloudAgent.applyRemoteWorkspaceOps": {
 					"type": "boolean",
 					"default": true,
 					"description": "When true (default), apply structured workspace_ops (write_file / apply_diff) from Cloud Agent POST /v1/run responses inside the current workspace. Disable if you do not trust the cloud service; paths are restricted to the workspace."
 				},
-				"njust-ai-cj.cloudAgent.confirmRemoteWorkspaceOps": {
+				"njust-ai.cloudAgent.confirmRemoteWorkspaceOps": {
 					"type": "boolean",
 					"default": true,
 					"description": "When applyRemoteWorkspaceOps is enabled, show a tool-style approval UI for each operation before writing. When false, all operations run in one batch without per-step confirmation."
 				},
-				"njust-ai-cj.cloudAgent.deferredProtocol": {
+				"njust-ai.cloudAgent.deferredProtocol": {
 					"type": "boolean",
 					"default": true,
 					"description": "Use the deferred execution protocol (POST /v1/run/deferred/start → local tool execution → POST /v1/run/deferred/resume → loop until done). When false, falls back to single-shot POST /v1/run. The deferred protocol allows the server to request local tool calls (read_file, write_file, execute_command, etc.) and iterate until the task completes."
 				},
-				"njust-ai-cj.cloudAgent.compileLoop.enabled": {
+				"njust-ai.cloudAgent.compileLoop.enabled": {
 					"type": "boolean",
 					"default": true,
 					"description": "After Cloud Agent writes code via workspace_ops, call POST /v1/run/compile on the server to compile. If compilation fails, send errors back to the agent for automatic correction and loop until success or maxRetries. Applies to both legacy (/v1/run) and default deferred (/v1/run/deferred/start) paths."
 				},
-				"njust-ai-cj.cloudAgent.compileLoop.maxRetries": {
+				"njust-ai.cloudAgent.compileLoop.maxRetries": {
 					"type": "number",
 					"default": 3,
 					"minimum": 1,
 					"maximum": 10,
 					"description": "Maximum compile-fix iterations in the compile feedback loop. Each iteration: compile → read errors → agent fixes → re-compile."
 				},
-				"njust-ai-cj.mcpServer.enabled": {
+				"njust-ai.mcpServer.enabled": {
 					"type": "boolean",
 					"default": true,
 					"description": "Enable the built-in MCP Tools Server, allowing external agents to call internal tools (read/write files, execute commands, search, etc.) via the MCP protocol over HTTP."
 				},
-				"njust-ai-cj.mcpServer.port": {
+				"njust-ai.mcpServer.port": {
 					"type": "number",
 					"default": 3100,
 					"minimum": 1024,
 					"maximum": 65535,
 					"description": "Port number for the MCP Tools Server (requires restart after change)."
 				},
-				"njust-ai-cj.mcpServer.bindAddress": {
+				"njust-ai.mcpServer.bindAddress": {
 					"type": "string",
 					"default": "127.0.0.1",
 					"enum": [
@@ -1156,64 +1156,64 @@
 					],
 					"description": "Network address for the MCP Tools Server to bind to. Use '0.0.0.0' to allow remote agents (cloud-deployed) to connect. Requires authToken when set to '0.0.0.0'. Requires restart after change."
 				},
-				"njust-ai-cj.mcpServer.authToken": {
+				"njust-ai.mcpServer.authToken": {
 					"type": "string",
 					"default": "",
 					"description": "Bearer token for authenticating MCP Tools Server requests. REQUIRED when bindAddress is '0.0.0.0'. Leave empty to disable authentication (only for local-only access)."
 				},
-				"njust-ai-cj.debug": {
+				"njust-ai.debug": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.debug.description%"
 				},
-				"njust-ai-cj.debugProxy.enabled": {
+				"njust-ai.debugProxy.enabled": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.debugProxy.enabled.description%",
 					"markdownDescription": "%settings.debugProxy.enabled.description%"
 				},
-				"njust-ai-cj.debugProxy.serverUrl": {
+				"njust-ai.debugProxy.serverUrl": {
 					"type": "string",
 					"default": "http://127.0.0.1:8888",
 					"description": "%settings.debugProxy.serverUrl.description%",
 					"markdownDescription": "%settings.debugProxy.serverUrl.description%"
 				},
-				"njust-ai-cj.debugProxy.tlsInsecure": {
+				"njust-ai.debugProxy.tlsInsecure": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.debugProxy.tlsInsecure.description%",
 					"markdownDescription": "%settings.debugProxy.tlsInsecure.description%"
 				},
-				"njust-ai-cj.inlineCompletion.enabled": {
+				"njust-ai.inlineCompletion.enabled": {
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.inlineCompletion.enabled.description%"
 				},
-				"njust-ai-cj.inlineCompletion.triggerDelayMs": {
+				"njust-ai.inlineCompletion.triggerDelayMs": {
 					"type": "number",
 					"default": 300,
 					"minimum": 100,
 					"maximum": 2000,
 					"description": "%settings.inlineCompletion.triggerDelayMs.description%"
 				},
-				"njust-ai-cj.inlineCompletion.maxLines": {
+				"njust-ai.inlineCompletion.maxLines": {
 					"type": "number",
 					"default": 10,
 					"minimum": 1,
 					"maximum": 50,
 					"description": "%settings.inlineCompletion.maxLines.description%"
 				},
-				"njust-ai-cj.inlineCompletion.enableCangjieEnhanced": {
+				"njust-ai.inlineCompletion.enableCangjieEnhanced": {
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.inlineCompletion.enableCangjieEnhanced.description%"
 				},
-				"njust-ai-cj.inlineCompletion.triggerCommand": {
+				"njust-ai.inlineCompletion.triggerCommand": {
 					"type": "string",
 					"default": "alt+\\",
 					"description": "%settings.inlineCompletion.triggerCommand.description%"
 				},
-				"njust-ai-cj.inlineCompletion.verboseLog": {
+				"njust-ai.inlineCompletion.verboseLog": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.inlineCompletion.verboseLog.description%"
@@ -1252,11 +1252,11 @@
 		"@lmstudio/sdk": "^1.1.1",
 		"@mistralai/mistralai": "^1.9.18",
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@njust-ai-cj/core": "workspace:^",
-		"@njust-ai-cj/ipc": "workspace:^",
-		"@njust-ai-cj/prompt-engine": "workspace:^",
-		"@njust-ai-cj/telemetry": "workspace:^",
-		"@njust-ai-cj/types": "workspace:^",
+		"@njust-ai/core": "workspace:^",
+		"@njust-ai/ipc": "workspace:^",
+		"@njust-ai/prompt-engine": "workspace:^",
+		"@njust-ai/telemetry": "workspace:^",
+		"@njust-ai/types": "workspace:^",
 		"@qdrant/js-client-rest": "^1.14.0",
 		"@vscode/codicons": "^0.0.36",
 		"async-mutex": "^0.5.0",
@@ -1323,9 +1323,9 @@
 	},
 	"devDependencies": {
 		"@ai-sdk/openai-compatible": "^2.0.28",
-		"@njust-ai-cj/build": "workspace:^",
-		"@njust-ai-cj/config-eslint": "workspace:^",
-		"@njust-ai-cj/config-typescript": "workspace:^",
+		"@njust-ai/build": "workspace:^",
+		"@njust-ai/config-eslint": "workspace:^",
+		"@njust-ai/config-typescript": "workspace:^",
 		"@openrouter/ai-sdk-provider": "^2.1.1",
 		"@types/clone-deep": "^4.0.4",
 		"@types/debug": "^4.1.12",

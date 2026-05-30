@@ -34,7 +34,7 @@ export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
 				vscode.CodeActionKind.RefactorExtract,
 			)
 			extractAction.command = {
-				command: "njust-ai-cj.cangjieExtractFunction",
+				command: "njust-ai.cangjieExtractFunction",
 				title: "Extract Function",
 				arguments: [document, range],
 			}

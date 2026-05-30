@@ -68,7 +68,7 @@ export class McpProtocolAdapter implements IProtocolAdapter {
 		)
 
 		this.client = new Client(
-			{ name: "njust-ai-cj", version: "1.0.0" },
+			{ name: "njust-ai", version: "1.0.0" },
 			{ capabilities: {} },
 		)
 	}

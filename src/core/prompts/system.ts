@@ -77,7 +77,7 @@ export function deriveCangjieContextTokenBudgetFromContextWindow(contextWindow: 
 /**
  * Resolve the effective Cangjie context token budget with the following priority:
  *
- * 1. VS Code setting `njust-ai-cj.cangjieContextTokenBudget` — explicit user override
+ * 1. VS Code setting `njust-ai.cangjieContextTokenBudget` — explicit user override
  * 2. `settings.cangjieContextTokenBudget` — model-scaled value from
  *    `deriveCangjieContextTokenBudgetFromContextWindow`
  * 3. `DEFAULT_CANGJIE_CONTEXT_TOKEN_BUDGET` (4800) — hardcoded fallback

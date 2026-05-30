@@ -201,7 +201,7 @@ export class RooToolsMcpServer {
 		if (!this.isLocalOnly() && !authToken) {
 			throw new Error(
 				"Security: authToken is required when binding to a non-localhost address. " +
-					"Set njust-ai-cj.mcpServer.authToken in your settings before exposing the MCP server to the network.",
+					"Set njust-ai.mcpServer.authToken in your settings before exposing the MCP server to the network.",
 			)
 		}
 

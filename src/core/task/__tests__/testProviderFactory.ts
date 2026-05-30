@@ -26,7 +26,7 @@ export function createTestProvider(
 		},
 		subscriptions: [],
 		extensionPath: "/test/extension",
-		extension: { packageJSON: { name: "njust-ai-cj", version: "1.0.0" } },
+		extension: { packageJSON: { name: "njust-ai", version: "1.0.0" } },
 		asAbsolutePath: vi.fn((p: string) => `/test/extension/${p}`),
 		storagePath: "/test/storage",
 		logPath: "/test/logs",

@@ -6,7 +6,7 @@ import { TelemetryEventName } from "@njust-ai-cj/types"
 import { TelemetryService } from "@njust-ai-cj/telemetry"
 import { getErrorMessage } from "../shared/error-utils"
 
-const PARTICIPANT_ID = "njust-ai-cj.agent"
+const PARTICIPANT_ID = "njust-ai.agent"
 
 const COMMAND_MODE_MAP: Record<string, string> = {
 	code: "code",

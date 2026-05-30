@@ -21,13 +21,13 @@ export class CangjieTestCodeLensProvider implements vscode.CodeLensProvider {
 
 			lenses.push(new vscode.CodeLens(range, {
 				title: "$(play) 运行测试",
-				command: "njust-ai-cj.cangjieRunTest",
+				command: "njust-ai.cangjieRunTest",
 				arguments: [target.name, document.uri],
 			}))
 
 			lenses.push(new vscode.CodeLens(range, {
 				title: "$(debug-alt) 调试测试",
-				command: "njust-ai-cj.cangjieDebugTest",
+				command: "njust-ai.cangjieDebugTest",
 				arguments: [target.name, document.uri],
 			}))
 		}
