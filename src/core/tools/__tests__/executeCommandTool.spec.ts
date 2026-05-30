@@ -224,9 +224,7 @@ describe("executeCommandTool", () => {
 		it("should handle command rejection", async () => {
 			// Setup
 			mockToolUse.params.command = "echo test"
-			mockAskApproval.mockImplementation((type: string) =>
-				type === "tool" ? Promise.resolve(true) : Promise.resolve(false),
-			)
+			mockAskApproval.mockResolvedValue(false)
 			mockToolUse.nativeArgs = { command: "echo test" }
 
 			// Execute
@@ -237,7 +235,6 @@ describe("executeCommandTool", () => {
 			})
 
 			// Verify
-			expect(mockAskApproval).toHaveBeenCalledWith("tool")
 			expect(mockAskApproval).toHaveBeenCalledWith("command", "echo test")
 			// executeCommandInTerminal should not be called since approval was denied
 			expect(mockPushToolResult).not.toHaveBeenCalled()
@@ -268,8 +265,7 @@ describe("executeCommandTool", () => {
 			expect(mockCline.say).toHaveBeenCalledWith("rooignore_error", ".env")
 			expect(formatResponse.rooIgnoreError).toHaveBeenCalledWith(".env")
 			expect(mockPushToolResult).toHaveBeenCalledWith(mockRooIgnoreError, undefined)
-			expect(mockAskApproval).toHaveBeenCalledWith("tool")
-			expect(mockAskApproval).not.toHaveBeenCalledWith("command", expect.anything())
+			expect(mockAskApproval).not.toHaveBeenCalled()
 			// executeCommandInTerminal should not be called since rooignore blocked it
 		})
 	})

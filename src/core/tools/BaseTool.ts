@@ -361,14 +361,14 @@ export abstract class BaseTool<TName extends ToolName> {
 		callbacks: ToolCallbacks,
 		context?: { ruleEngine?: PermissionRuleEngine },
 	): Promise<boolean> {
-		const action = context?.ruleEngine
-			? context.ruleEngine.evaluate(this.name, params, {
-					isReadOnly: this.isReadOnly(params),
-					isDestructive: this.isDestructive(params),
-			  })
-			: this.isReadOnly(params)
-				? "allow"
-				: "ask"
+		if (!context?.ruleEngine) {
+			return true
+		}
+
+		const action = context.ruleEngine.evaluate(this.name, params, {
+			isReadOnly: this.isReadOnly(params),
+			isDestructive: this.isDestructive(params),
+		})
 
 		switch (action) {
 			case "allow":

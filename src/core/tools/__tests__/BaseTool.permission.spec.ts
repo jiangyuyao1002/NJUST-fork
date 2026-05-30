@@ -60,6 +60,67 @@ describe("BaseTool permission gating", () => {
 		expect(pushToolResult).toHaveBeenCalled()
 	})
 
+	it("does not request a generic tool approval when no rule engine is configured", async () => {
+		const tool = new TestTool()
+		const block = {
+			type: "tool_use",
+			id: "no-engine",
+			name: "read_file",
+			partial: false,
+			params: {},
+			nativeArgs: {},
+		} as ToolUse<"read_file">
+
+		const askApproval = vi.fn().mockResolvedValue(true)
+		const callbacks: ToolCallbacks = {
+			askApproval,
+			handleError: vi.fn(),
+			pushToolResult: vi.fn(),
+		}
+
+		const task = {
+			taskId: "t-no-engine",
+			cwd: ".",
+			api: undefined,
+		} as any
+
+		await tool.handle(task, block, callbacks)
+
+		expect(tool.executed).toBe(true)
+		expect(askApproval).not.toHaveBeenCalled()
+	})
+
+	it("requests approval when the rule engine returns ask", async () => {
+		const tool = new TestTool()
+		const block = {
+			type: "tool_use",
+			id: "ask-engine",
+			name: "read_file",
+			partial: false,
+			params: {},
+			nativeArgs: {},
+		} as ToolUse<"read_file">
+
+		const askApproval = vi.fn().mockResolvedValue(true)
+		const callbacks: ToolCallbacks = {
+			askApproval,
+			handleError: vi.fn(),
+			pushToolResult: vi.fn(),
+		}
+
+		const task = {
+			taskId: "t-ask-engine",
+			cwd: ".",
+			api: undefined,
+			permissionRuleEngine: { evaluate: vi.fn().mockReturnValue("ask") },
+		} as any
+
+		await tool.handle(task, block, callbacks)
+
+		expect(tool.executed).toBe(true)
+		expect(askApproval).toHaveBeenCalledWith("tool")
+	})
+
 	it("records performance metrics in finally", async () => {
 		recordSecurityMetricMock.mockClear()
 		const tool = new TestTool()

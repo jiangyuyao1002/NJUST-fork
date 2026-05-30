@@ -331,7 +331,7 @@ describe("editTool", () => {
 			// In the new approval flow, rejection happens at the tool level
 			// before any diff changes are applied, so revertChanges is not needed
 			expect(mockTask.diffViewProvider.saveChanges).not.toHaveBeenCalled()
-			expect(result).toContain("denied")
+			expect(result).toContain("Changes were rejected by the user.")
 		})
 	})
 
