@@ -96,9 +96,12 @@ vi.mock("../../../services/cloud-agent/ProfileStorageService", () => ({
 	})),
 }))
 
-vi.mock("../../services/mcp/McpServerManager", () => ({
+vi.mock("../../../services/mcp/McpServerManager", () => ({
 	McpServerManager: {
-		getInstance: vi.fn().mockResolvedValue(undefined),
+		getInstance: vi.fn().mockResolvedValue({
+			getServers: vi.fn().mockReturnValue([]),
+			isConnecting: false,
+		}),
 	},
 }))
 
@@ -120,6 +123,10 @@ vi.mock("uuid", async (importOriginal) => {
 
 vi.mock("execa", () => ({
 	execa: vi.fn(),
+}))
+
+vi.mock("../../../utils/safeWriteJson", () => ({
+	safeWriteJson: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("fs/promises", async (importOriginal) => {
