@@ -104,8 +104,6 @@ export class TaskExecutor {
 	 * Migrated from Task.ts — the original method body is preserved verbatim.
 	 */
 	async *attemptApiRequest(retryAttempt: number = 0, options: { skipProviderRateLimit?: boolean } = {}): ApiStream {
-		console.log("attemptApiRequest starting")
-		const st = Date.now()
 		const h = this.host
 
 		if (h.parentTask) {

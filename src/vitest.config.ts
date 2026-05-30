@@ -2,7 +2,7 @@ import { defineConfig, defaultExclude } from "vitest/config"
 import path from "path"
 import { resolveVerbosity } from "./utils/vitest-verbosity"
 
-const { silent, reporters, onConsoleLog } = resolveVerbosity()
+const { reporters, onConsoleLog } = resolveVerbosity()
 
 export default defineConfig({
 	test: {
