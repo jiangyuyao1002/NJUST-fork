@@ -16,7 +16,7 @@ vi.mock("vscode", () => ({
 // Mock Package module
 vi.mock("../../../shared/package", () => ({
 	Package: {
-		name: "njust-ai-cj",
+		name: "njust-ai",
 		publisher: "RooVeterinaryInc",
 		version: "1.0.0",
 		outputChannel: "NJUST_AI_CJ",
@@ -519,7 +519,7 @@ describe("newTaskTool", () => {
 			})
 
 			// Verify that VSCode configuration was accessed with Package.name
-			expect(mockGetConfiguration).toHaveBeenCalledWith("njust-ai-cj")
+			expect(mockGetConfiguration).toHaveBeenCalledWith("njust-ai")
 			expect(mockGet).toHaveBeenCalledWith("newTaskRequireTodos", false)
 		})
 

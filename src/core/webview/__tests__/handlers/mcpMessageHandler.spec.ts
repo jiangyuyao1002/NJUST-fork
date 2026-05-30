@@ -10,7 +10,7 @@ vi.mock("vscode", () => ({
 vi.mock("../../../utils/fs", () => ({ fileExistsAtPath: vi.fn().mockResolvedValue(false) }))
 vi.mock("../../../utils/safeWriteJson", () => ({ safeWriteJson: vi.fn().mockResolvedValue(undefined) }))
 vi.mock("../../../i18n", () => ({ t: (key: string) => key }))
-vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai-cj" } }))
+vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
 vi.mock("../../../integrations/misc/open-file", () => ({ openFile: vi.fn() }))
 
 import { openFile } from "../../../integrations/misc/open-file"

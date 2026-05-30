@@ -30,7 +30,7 @@ describe("getApiRequestTimeout", () => {
 
 		const timeout = getApiRequestTimeout()
 
-		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith("njust-ai-cj")
+		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith("njust-ai")
 		expect(mockGetConfig).toHaveBeenCalledWith("apiRequestTimeout", 300)
 		expect(timeout).toBe(300000) // 300 seconds in milliseconds
 	})

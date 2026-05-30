@@ -15,7 +15,7 @@ vi.mock("vscode", () => ({
 }))
 
 vi.mock("../../../i18n", () => ({ t: (key: string) => key, changeLanguage: vi.fn() }))
-vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai-cj" } }))
+vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
 vi.mock("../../../shared/api", () => ({
 	toRouterName: (s: string) => s,
 }))

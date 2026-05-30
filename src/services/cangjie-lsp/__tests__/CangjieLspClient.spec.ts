@@ -166,7 +166,7 @@ vi.mock("@njust-ai-cj/types", () => ({
 }))
 
 vi.mock("../../../shared/package", () => ({
-	Package: { name: "njust-ai-cj" },
+	Package: { name: "njust-ai" },
 }))
 
 vi.mock("../../../shared/error-utils", () => ({

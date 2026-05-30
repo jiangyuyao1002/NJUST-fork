@@ -42,7 +42,7 @@ vi.mock("../../../utils/export", () => ({
 	resolveDefaultSaveUri: vi.fn().mockResolvedValue(undefined),
 	saveLastExportPath: vi.fn(),
 }))
-vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai-cj" } }))
+vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
 vi.mock("../../ignore/RooIgnoreController", () => ({
 	RooIgnoreController: vi.fn().mockImplementation(() => ({
 		initialize: vi.fn(),

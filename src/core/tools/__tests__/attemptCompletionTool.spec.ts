@@ -40,7 +40,7 @@ vi.mock("vscode", () => ({
 // Mock Package module
 vi.mock("../../../shared/package", () => ({
 	Package: {
-		name: "njust-ai-cj",
+		name: "njust-ai",
 	},
 }))
 

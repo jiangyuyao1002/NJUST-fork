@@ -4,7 +4,7 @@ import * as vscode from "vscode"
 // Mock Package
 vi.mock("../../../shared/package", () => ({
 	Package: {
-		name: "njust-ai-cj",
+		name: "njust-ai",
 		publisher: "RooVeterinaryInc",
 		version: "1.0.0",
 		outputChannel: "NJUST_AI_CJ",
@@ -48,7 +48,7 @@ describe("file-search", () => {
 
 			;(vscode.workspace.getConfiguration as any).mockImplementation((section: string) => {
 				if (section === "search") return mockSearchConfig
-				if (section === "njust-ai-cj") return mockRooConfig
+				if (section === "njust-ai") return mockRooConfig
 				return { get: vi.fn() }
 			})
 

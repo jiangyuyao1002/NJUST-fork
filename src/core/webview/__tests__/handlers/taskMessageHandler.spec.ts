@@ -9,11 +9,11 @@ vi.mock("vscode", () => ({
 vi.mock("p-wait-for", () => ({ default: vi.fn().mockResolvedValue(undefined) }))
 vi.mock("../../../i18n", () => ({ t: (key: string) => key }))
 vi.mock("../../../shared/checkExistApiConfig", () => ({ checkExistKey: vi.fn().mockReturnValue(false) }))
-vi.mock("../../../utils/commands", () => ({ getCommand: (cmd: string) => `njust-ai-cj.${cmd}` }))
+vi.mock("../../../../utils/commands", () => ({ getCommand: (cmd: string) => `njust-ai.${cmd}` }))
 vi.mock("../../../tools/UpdateTodoListTool", () => ({ setPendingTodoList: vi.fn() }))
 vi.mock("../../checkpointRestoreHandler", () => ({ handleCheckpointRestoreOperation: vi.fn() }))
 vi.mock("../../../integrations/theme/getTheme", () => ({ getTheme: vi.fn().mockResolvedValue({}) }))
-vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai-cj" } }))
+vi.mock("../../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
 vi.mock("../../../task-persistence", () => ({ saveTaskMessages: vi.fn() }))
 vi.mock("../../handlers/shared-utils", () => ({
 	resolveIncomingImages: vi.fn().mockImplementation((_ctx: any, data: any) => Promise.resolve({ text: data.text, images: data.images })),
@@ -142,7 +142,7 @@ describe("taskMessageHandler", () => {
 
 		await router.route(context, { type: "focusPanelRequest" } as WebviewMessage)
 
-		expect(vscode.commands.executeCommand).toHaveBeenCalledWith("njust-ai-cj.focusPanel")
+		expect(vscode.commands.executeCommand).toHaveBeenCalledWith("njust-ai.focusPanel")
 	})
 
 	it("newTask calls createTask on provider", async () => {

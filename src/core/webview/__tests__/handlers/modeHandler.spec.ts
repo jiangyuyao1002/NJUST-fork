@@ -13,7 +13,7 @@ vi.mock("../../../utils/fs", () => ({ fileExistsAtPath: vi.fn().mockResolvedValu
 vi.mock("../../../i18n", () => ({ t: (key: string) => key }))
 vi.mock("../../../shared/modes", () => ({ defaultModeSlug: "code" }))
 vi.mock("../../../utils/path", () => ({ getWorkspacePath: () => "/mock/workspace" }))
-vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai-cj" } }))
+vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
 vi.mock("../../../services/roo-config/index.js", () => ({ getRooDirectoriesForCwd: () => [] }))
 vi.mock("../../../utils/export", () => ({
 	resolveDefaultSaveUri: vi.fn().mockResolvedValue(undefined),
