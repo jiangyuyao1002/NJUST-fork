@@ -278,6 +278,19 @@ const mockMessages = [
 ]
 
 describe("Cline", () => {
+let originalSetTimeout: any;
+beforeEach(() => {
+originalSetTimeout = global.setTimeout;
+(global as any).setTimeout = (cb: any, ms?: number, ...args: any[]) => {
+if (ms && ms > 50) {
+return originalSetTimeout(cb, 0, ...args);
+}
+return originalSetTimeout(cb, ms, ...args);
+};
+})
+afterEach(() => {
+global.setTimeout = originalSetTimeout;
+})
 	let mockProvider: any
 	let mockApiConfig: ProviderSettings
 	let mockOutputChannel: any
