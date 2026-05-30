@@ -9,7 +9,7 @@
 		"src/extension.ts",
 		"scripts/**",
 		"apps/cli/scripts/**",
-		"apps/web-Njust-AI/next-sitemap.config.cjs",
+		"apps/web-njust-ai/next-sitemap.config.cjs",
 		".arts/**",
 		".vscode/**",
 		"test-mcp-*.mjs",
