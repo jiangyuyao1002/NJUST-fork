@@ -37,9 +37,11 @@ vi.mock("vscode", () => ({
 // Mock modelCache getModels/flushModels used by the handler
 const getModelsMock = vi.fn()
 const flushModelsMock = vi.fn()
+const listProviderModelsMock = vi.fn()
 vi.mock("../../../api/providers/fetchers/modelCache", () => ({
 	getModels: (...args: any[]) => getModelsMock(...args),
 	flushModels: (...args: any[]) => flushModelsMock(...args),
+	listProviderModels: (...args: any[]) => listProviderModelsMock(...args),
 }))
 
 describe("webviewMessageHandler - requestRouterModels provider filter", () => {
@@ -82,6 +84,7 @@ describe("webviewMessageHandler - requestRouterModels provider filter", () => {
 					return {}
 			}
 		})
+		listProviderModelsMock.mockResolvedValue({})
 	})
 
 	it("fetches only requested provider when values.provider is present ('njust-ai')", async () => {

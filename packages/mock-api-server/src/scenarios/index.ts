@@ -403,6 +403,15 @@ export function autoResolveScenario(body: Record<string, unknown>): MockScenario
 	const text = getLastUserText(body)
 	const lower = text.toLowerCase()
 	const bodyText = JSON.stringify(body).toLowerCase()
+	const wantsWriteFile =
+		/create a file named\s+"[^"]+"/i.test(text) ||
+		lower.includes("nested directory structure") ||
+		lower.includes("use the write_to_file tool")
+	const wantsExecuteCommand =
+		lower.includes("use the execute_command tool") ||
+		lower.includes("run this command") ||
+		lower.includes("execute these commands") ||
+		lower.includes("with these exact parameters")
 	if (bodyText.includes("what is your name")) {
 		return {
 			name: "auto-complete",
@@ -449,11 +458,11 @@ export function autoResolveScenario(body: Record<string, unknown>): MockScenario
 	}
 	if (lower.includes("apply_diff")) return resolveScenario("apply-diff")
 	if (lower.includes("search_files") || lower.includes("search the") || lower.includes("search for") || lower.includes("use search")) return resolveScenario("search-files")
-	if (lower.includes("execute_command") && /(?:^|\n)\s*\d+\.\s*/.test(text)) {
+	if (wantsWriteFile) return resolveScenario("write-file")
+	if (wantsExecuteCommand && /(?:^|\n)\s*\d+\.\s*/.test(text)) {
 		return resolveScenario("execute-command-multiple")
 	}
-	if (lower.includes("execute_command") || lower.includes("run this command")) return resolveScenario("execute-command")
-	if (lower.includes("write_to_file") || lower.includes("create a file")) return resolveScenario("write-file")
+	if (wantsExecuteCommand) return resolveScenario("execute-command")
 	return {
 		name: "auto-complete",
 		resolve: () => completionResponse(textOnlyResult(text)),

@@ -214,6 +214,31 @@ describe("MockAPIServer", () => {
 		expect(body).toContain(expectedArgs)
 	})
 
+	it("routes create-file prompts to write_to_file even when tool names are present", async () => {
+		const server = await start()
+
+		const response = await fetch(`${server.url}/v1/chat/completions`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				messages: [
+					{
+						role: "user",
+						content:
+							"Available tools: execute_command, write_to_file.\n\nCreate a file named \"created.txt\" with the following content:\nHello",
+					},
+				],
+			}),
+		})
+		const body = await readStream(response)
+
+		expect(response.status).toBe(200)
+		expect(body).toContain('"name":"write_to_file"')
+		expect(body).toContain('\\"path\\":\\"created.txt\\"')
+		expect(body).toContain('\\"content\\":\\"Hello\\"')
+		expect(body).not.toContain('"name":"execute_command"')
+	})
+
 	it("prioritizes explicit execute_command over generic create-file routing", async () => {
 		const server = await start()
 
@@ -225,6 +250,8 @@ describe("MockAPIServer", () => {
 					{
 						role: "user",
 						content: [
+							"Available tools: execute_command, write_to_file.",
+							"",
 							"Use the execute_command tool to create a file with multiple lines.",
 							"Execute these commands one by one:",
 							"1. echo \"Line 1\" > test.txt",
