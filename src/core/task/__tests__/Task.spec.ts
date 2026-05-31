@@ -44,6 +44,12 @@ vi.mock("../../../api", () => ({
 	})),
 }))
 
+vi.mock("../../../integrations/terminal/TerminalRegistry", () => ({
+	TerminalRegistry: {
+		releaseTerminalsForTask: vi.fn(),
+	},
+}))
+
 vi.mock("../../ignore/RooIgnoreController", () => ({
 	LOCK_TEXT_SYMBOL: "\u{1F512}",
 	RooIgnoreController: vi.fn().mockImplementation(() => ({
