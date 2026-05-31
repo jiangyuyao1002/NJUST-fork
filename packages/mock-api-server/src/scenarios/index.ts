@@ -323,6 +323,14 @@ const toolScenario = (
 				},
 })
 
+const extractSequentialExecuteCommands = (text: string): string[] => {
+	const commands = [...text.matchAll(/^\s*\d+\.\s*(.+)$/gm)]
+		.map((match) => match[1]?.trim())
+		.filter((command): command is string => Boolean(command))
+
+	return commands.length > 0 ? commands : [String(extractExecuteCommandArgs(text).command ?? "echo mock")]
+}
+
 const scenarioList: MockScenario[] = [
 	{
 		name: "text-only",
@@ -337,6 +345,23 @@ const scenarioList: MockScenario[] = [
 	toolScenario("read-file", "read_file", extractReadFileArgs),
 	toolScenario("write-file", "write_to_file", extractWriteFileArgs),
 	toolScenario("search-files", "search_files", extractSearchFilesArgs),
+	{
+		name: "execute-command-multiple",
+		resolve: ({ body }) => {
+			if (hasToolResult(body)) {
+				return completionResponse(toolCompletionResult("execute_command"))
+			}
+
+			return {
+				type: "tool_calls",
+				toolCalls: extractSequentialExecuteCommands(getLastUserText(body)).map((command, index) => ({
+					id: `call_execute_command_${index + 1}`,
+					name: "execute_command",
+					arguments: { command },
+				})),
+			}
+		},
+	},
 	toolScenario("execute-command", "execute_command", extractExecuteCommandArgs),
 	toolScenario("apply-diff", "apply_patch", extractApplyPatchArgs),
 	toolScenario("switch-mode", "switch_mode", { mode_slug: "ask", reason: "Requested by E2E test." }),
@@ -424,8 +449,11 @@ export function autoResolveScenario(body: Record<string, unknown>): MockScenario
 	}
 	if (lower.includes("apply_diff")) return resolveScenario("apply-diff")
 	if (lower.includes("search_files") || lower.includes("search the") || lower.includes("search for") || lower.includes("use search")) return resolveScenario("search-files")
-	if (lower.includes("write_to_file") || lower.includes("create a file")) return resolveScenario("write-file")
+	if (lower.includes("execute_command") && /(?:^|\n)\s*\d+\.\s*/.test(text)) {
+		return resolveScenario("execute-command-multiple")
+	}
 	if (lower.includes("execute_command") || lower.includes("run this command")) return resolveScenario("execute-command")
+	if (lower.includes("write_to_file") || lower.includes("create a file")) return resolveScenario("write-file")
 	return {
 		name: "auto-complete",
 		resolve: () => completionResponse(textOnlyResult(text)),

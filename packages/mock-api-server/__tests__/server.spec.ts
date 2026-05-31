@@ -214,6 +214,36 @@ describe("MockAPIServer", () => {
 		expect(body).toContain(expectedArgs)
 	})
 
+	it("prioritizes explicit execute_command over generic create-file routing", async () => {
+		const server = await start()
+
+		const response = await fetch(`${server.url}/v1/chat/completions`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				messages: [
+					{
+						role: "user",
+						content: [
+							"Use the execute_command tool to create a file with multiple lines.",
+							"Execute these commands one by one:",
+							"1. echo \"Line 1\" > test.txt",
+							"2. echo \"Line 2\" >> test.txt",
+						].join("\n"),
+					},
+				],
+			}),
+		})
+		const body = await readStream(response)
+
+		expect(response.status).toBe(200)
+		expect(body).toContain('"id":"call_execute_command_1"')
+		expect(body).toContain('"id":"call_execute_command_2"')
+		expect(body).toContain('\\"command\\":\\"echo \\\\\\"Line 1\\\\\\" > test.txt\\"')
+		expect(body).toContain('\\"command\\":\\"echo \\\\\\"Line 2\\\\\\" >> test.txt\\"')
+		expect(body).not.toContain('"name":"write_to_file"')
+	})
+
 	it("auto-routes the square-root child prompt to attempt_completion", async () => {
 		const server = await start()
 

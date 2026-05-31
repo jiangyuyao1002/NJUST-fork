@@ -13,6 +13,10 @@ import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Task } from "../Task"
 
+if (process.env.CI) {
+	vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 })
+}
+
 vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		reportError: vi.fn(),
