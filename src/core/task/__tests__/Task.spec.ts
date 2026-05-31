@@ -25,6 +25,21 @@ vi.mock("@njust-ai/telemetry", () => ({
 	},
 }))
 
+vi.mock("../../../utils/countTokens", () => ({
+	countTokens: vi.fn().mockResolvedValue(0),
+	countTokensDetailed: vi.fn().mockResolvedValue({ totalTokens: 0, imageTokens: 0, textTokens: 0 }),
+}))
+
+vi.mock("../../../api", () => ({
+	ApiHandler: class {},
+	buildApiHandler: vi.fn().mockImplementation(() => ({
+		createMessage: vi.fn(),
+		getModel: vi.fn().mockReturnValue({ id: "mock-model", info: {} }),
+		countTokens: vi.fn().mockResolvedValue(0),
+		dispose: vi.fn(),
+	})),
+}))
+
 vi.mock("../../ignore/RooIgnoreController", () => ({
 	LOCK_TEXT_SYMBOL: "\u{1F512}",
 	RooIgnoreController: vi.fn().mockImplementation(() => ({
@@ -168,6 +183,23 @@ vi.mock("fs/promises", async (importOriginal) => {
 		...actual,
 		...mockFunctions,
 		default: mockFunctions,
+	}
+})
+
+vi.mock("fs", async (importOriginal) => {
+	const actual = (await importOriginal()) as Record<string, any>
+	return {
+		...actual,
+		promises: {
+			mkdir: vi.fn().mockResolvedValue(undefined),
+			writeFile: vi.fn().mockResolvedValue(undefined),
+			readFile: vi.fn().mockResolvedValue("[]"),
+			unlink: vi.fn().mockResolvedValue(undefined),
+			rmdir: vi.fn().mockResolvedValue(undefined),
+			stat: vi.fn().mockRejectedValue({ code: "ENOENT" }),
+			readdir: vi.fn().mockResolvedValue([]),
+			appendFile: vi.fn().mockResolvedValue(undefined),
+		},
 	}
 })
 

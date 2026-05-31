@@ -92,6 +92,11 @@ export async function run() {
 					console.error("Failed to auto-approve mock use_mcp_server:", error)
 				})
 			}
+			if (message.type === "ask" && message.ask === "command") {
+				void approveMockAskWithRetry(api).catch((error) => {
+					console.error("Failed to auto-approve mock command:", error)
+				})
+			}
 		})
 	}
 
