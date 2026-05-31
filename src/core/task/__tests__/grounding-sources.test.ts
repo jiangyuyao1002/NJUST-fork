@@ -146,6 +146,10 @@ vi.mock("../../../utils/fs", () => ({
 	fileExistsAtPath: vi.fn().mockReturnValue(false),
 }))
 
+vi.mock("../../../utils/safeWriteJson", () => ({
+	safeWriteJson: vi.fn().mockResolvedValue(undefined),
+}))
+
 // Import Task AFTER all vi.mock() calls - Vitest hoists mocks so this works
 import { Task } from "../Task"
 
