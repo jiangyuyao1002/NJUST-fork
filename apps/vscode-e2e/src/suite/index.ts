@@ -13,22 +13,26 @@ type TestApiWithCurrentTask = NJUST_AIAPI & {
 	}
 }
 
-const approveMockCompletion = async (api: NJUST_AIAPI) => {
+const approveCurrentTaskAsk = (api: NJUST_AIAPI): boolean => {
 	const currentTask = (api as TestApiWithCurrentTask).sidebarProvider?.getCurrentTask?.()
 
 	if (currentTask?.approveAsk) {
 		currentTask.approveAsk()
-		return
+		return true
 	}
 
-	await api.pressPrimaryButton()
+	return false
 }
 
 const approveMockAskWithRetry = async (api: NJUST_AIAPI) => {
 	for (let attempt = 0; attempt < 10; attempt++) {
-		await approveMockCompletion(api)
+		if (approveCurrentTaskAsk(api)) {
+			return
+		}
 		await new Promise((resolve) => setTimeout(resolve, 200))
 	}
+
+	console.warn("Skipped mock auto-approval because no current task was available")
 }
 
 export async function run() {
@@ -78,9 +82,11 @@ export async function run() {
 				})()
 
 			if (message.type === "ask" && message.ask === "completion_result") {
-				void approveMockCompletion(api).catch((error) => {
-					console.error("Failed to auto-approve mock completion:", error)
-				})
+				if (!approveCurrentTaskAsk(api)) {
+					void approveMockAskWithRetry(api).catch((error) => {
+						console.error("Failed to auto-approve mock completion:", error)
+					})
+				}
 			}
 			if (shouldApproveNewTask) {
 				void approveMockAskWithRetry(api).catch((error) => {
