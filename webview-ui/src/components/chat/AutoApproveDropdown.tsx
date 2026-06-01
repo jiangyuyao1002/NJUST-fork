@@ -32,12 +32,17 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 		autoApprovalEnabled,
 		setAutoApprovalEnabled,
 		setAlwaysAllowReadOnly,
+		setAlwaysAllowReadOnlyOutsideWorkspace,
 		setAlwaysAllowWrite,
+		setAlwaysAllowWriteOutsideWorkspace,
+		setAlwaysAllowWriteProtected,
 		setAlwaysAllowExecute,
 		setAlwaysAllowMcp,
 		setAlwaysAllowModeSwitch,
 		setAlwaysAllowSubtasks,
 		setAlwaysAllowFollowupQuestions,
+		setSaveAllBeforeExecuteCommand,
+		setAllowedCommands,
 	} = useExtensionState()
 
 	const toggles = useAutoApprovalToggles()
@@ -90,23 +95,84 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 	)
 
 	const handleSelectAll = React.useCallback(() => {
-		// Enable all options
-		Object.keys(autoApproveSettingsConfig).forEach((key) => {
-			onAutoApproveToggle(key as AutoApproveSetting, true)
-		})
-		// Enable master auto-approval
+		const updatedSettings = {
+			...Object.fromEntries(Object.keys(autoApproveSettingsConfig).map((key) => [key, true])),
+			alwaysAllowReadOnlyOutsideWorkspace: true,
+			alwaysAllowWriteOutsideWorkspace: true,
+			alwaysAllowWriteProtected: true,
+			allowedCommands: ["*"],
+		}
+
+		vscode.postMessage({ type: "updateSettings", updatedSettings })
+
+		setAlwaysAllowReadOnly(true)
+		setAlwaysAllowReadOnlyOutsideWorkspace(true)
+		setAlwaysAllowWrite(true)
+		setAlwaysAllowWriteOutsideWorkspace(true)
+		setAlwaysAllowWriteProtected(true)
+		setAlwaysAllowExecute(true)
+		setAlwaysAllowMcp(true)
+		setAlwaysAllowModeSwitch(true)
+		setAlwaysAllowSubtasks(true)
+		setSaveAllBeforeExecuteCommand(true)
+		setAlwaysAllowFollowupQuestions(true)
+		setAllowedCommands(["*"])
+
 		if (!autoApprovalEnabled) {
 			setAutoApprovalEnabled(true)
 			vscode.postMessage({ type: "autoApprovalEnabled", bool: true })
 		}
-	}, [onAutoApproveToggle, autoApprovalEnabled, setAutoApprovalEnabled])
+	}, [
+		autoApprovalEnabled,
+		setAllowedCommands,
+		setAlwaysAllowExecute,
+		setAlwaysAllowFollowupQuestions,
+		setAlwaysAllowMcp,
+		setAlwaysAllowModeSwitch,
+		setAlwaysAllowReadOnly,
+		setAlwaysAllowReadOnlyOutsideWorkspace,
+		setAlwaysAllowSubtasks,
+		setAlwaysAllowWrite,
+		setAlwaysAllowWriteOutsideWorkspace,
+		setAlwaysAllowWriteProtected,
+		setAutoApprovalEnabled,
+		setSaveAllBeforeExecuteCommand,
+	])
 
 	const handleSelectNone = React.useCallback(() => {
-		// Disable all options
-		Object.keys(autoApproveSettingsConfig).forEach((key) => {
-			onAutoApproveToggle(key as AutoApproveSetting, false)
-		})
-	}, [onAutoApproveToggle])
+		const updatedSettings = {
+			...Object.fromEntries(Object.keys(autoApproveSettingsConfig).map((key) => [key, false])),
+			alwaysAllowReadOnlyOutsideWorkspace: false,
+			alwaysAllowWriteOutsideWorkspace: false,
+			alwaysAllowWriteProtected: false,
+		}
+
+		vscode.postMessage({ type: "updateSettings", updatedSettings })
+
+		setAlwaysAllowReadOnly(false)
+		setAlwaysAllowReadOnlyOutsideWorkspace(false)
+		setAlwaysAllowWrite(false)
+		setAlwaysAllowWriteOutsideWorkspace(false)
+		setAlwaysAllowWriteProtected(false)
+		setAlwaysAllowExecute(false)
+		setAlwaysAllowMcp(false)
+		setAlwaysAllowModeSwitch(false)
+		setAlwaysAllowSubtasks(false)
+		setSaveAllBeforeExecuteCommand(false)
+		setAlwaysAllowFollowupQuestions(false)
+	}, [
+		setAlwaysAllowExecute,
+		setAlwaysAllowFollowupQuestions,
+		setAlwaysAllowMcp,
+		setAlwaysAllowModeSwitch,
+		setAlwaysAllowReadOnly,
+		setAlwaysAllowReadOnlyOutsideWorkspace,
+		setAlwaysAllowSubtasks,
+		setAlwaysAllowWrite,
+		setAlwaysAllowWriteOutsideWorkspace,
+		setAlwaysAllowWriteProtected,
+		setSaveAllBeforeExecuteCommand,
+	])
 
 	const handleOpenSettings = React.useCallback(
 		() =>
