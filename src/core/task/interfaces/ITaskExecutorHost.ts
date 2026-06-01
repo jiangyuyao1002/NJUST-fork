@@ -39,6 +39,7 @@ export interface TaskExecutorIdentityHost {
 	readonly cwd: string
 	abort: boolean
 	abortReason?: string
+	taskCompleted: boolean
 	isPaused: boolean
 	isStreaming: boolean
 	isWaitingForFirstChunk: boolean

@@ -141,6 +141,7 @@ function createMockHost(overrides: Record<string, unknown> = {}): TaskExecutorHo
 		cwd: "/workspace",
 		abort: false,
 		abortReason: undefined,
+		taskCompleted: false,
 		isPaused: false,
 		isStreaming: false,
 		isWaitingForFirstChunk: false,
@@ -709,6 +710,70 @@ describe("TaskStreamConsumer — finalizeStreamResponse", () => {
 		})
 
 		expect(host.consecutiveNoToolUseCount).toBe(0)
+	})
+
+	it("taskCompleted 后无工具调用时直接结束且不追加 noToolsUsed", async () => {
+		const host = createMockHost({ taskCompleted: true })
+		const currentUserContent: Anthropic.Messages.ContentBlockParam[] = []
+
+		const result = await finalizeStreamResponse({
+			task: host,
+			toolCallParser,
+			placeFinalizedStreamingToolUse: noopFinalizeToolUse,
+			consumptionResult: {
+				assistantMessage: "completed",
+				reasoningMessage: "",
+				pendingGroundingSources: [],
+				action: "proceed",
+			},
+			requestProfileId: "test-finalize-task-completed",
+			lastApiReqIndex: -1,
+			retryAttempt: 0,
+			currentUserContent,
+			stack: [],
+		})
+
+		expect(result.action).toBe("done")
+		expect(currentUserContent).toEqual([])
+		expect(host.consecutiveNoToolUseCount).toBe(0)
+	})
+
+	it("taskCompleted 后有工具调用结果时处理结果但不继续请求", async () => {
+		const stack: StackItem[] = []
+		const host = createMockHost({ taskCompleted: true, consecutiveNoToolUseCount: 2 })
+		;(host as any).assistantMessageContent = [
+			{ type: "tool_use", name: "attempt_completion", params: {}, id: "tu_done" },
+		]
+		host.userMessageContent.push({
+			type: "tool_result",
+			tool_use_id: "tu_done",
+			content: "The user accepted the completion.",
+		})
+
+		const result = await finalizeStreamResponse({
+			task: host,
+			toolCallParser,
+			placeFinalizedStreamingToolUse: noopFinalizeToolUse,
+			consumptionResult: {
+				assistantMessage: "using completion tool",
+				reasoningMessage: "",
+				pendingGroundingSources: [],
+				action: "proceed",
+			},
+			requestProfileId: "test-finalize-task-completed-tooluse",
+			lastApiReqIndex: -1,
+			retryAttempt: 0,
+			currentUserContent: [],
+			stack,
+		})
+
+		expect(result.action).toBe("done")
+		expect(stack).toEqual([])
+		expect(host.consecutiveNoToolUseCount).toBe(0)
+		expect(host.addToApiConversationHistory).toHaveBeenCalledWith(
+			expect.objectContaining({ role: "assistant" }),
+			undefined,
+		)
 	})
 })
 

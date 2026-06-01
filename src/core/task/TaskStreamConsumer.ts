@@ -748,6 +748,10 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 		const didToolUse = t.assistantMessageContent.some(isAnyToolUse)
 
 		if (!didToolUse) {
+			if (t.taskCompleted) {
+				return { action: "done" }
+			}
+
 			t.consecutiveNoToolUseCount++
 
 			if (t.consecutiveNoToolUseCount >= 3) {
@@ -789,6 +793,10 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 			}
 		} else {
 			t.consecutiveNoToolUseCount = 0
+		}
+
+		if (t.taskCompleted) {
+			return { action: "done" }
 		}
 
 		if (t.userMessageContent.length > 0 || t.isPaused) {
