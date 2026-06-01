@@ -573,8 +573,10 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 		}
 	}
 
-	await t.saveClineMessages()
-	await t.refreshWebviewState()
+	if (!t._savedMessagesForCurrentRequest) {
+		await t.saveClineMessages()
+		await t.refreshWebviewState()
+	}
 
 	const hasTextContent = assistantMessage.length > 0
 

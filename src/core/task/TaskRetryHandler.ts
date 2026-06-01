@@ -33,6 +33,11 @@ export async function* handleAttemptApiRequestError(options: {
 	host.isWaitingForFirstChunk = false
 	host.currentRequestAbortController = undefined
 
+	if (host.abort) {
+		host.stateMachine.force(TaskState.ERROR)
+		throw new TaskAbortedError(host.taskId, host.instanceId)
+	}
+
 	const persistentRetryHandler =
 		host.persistentRetryHandler ?? (host.persistentRetryHandler = new (await import("./PersistentRetry")).PersistentRetryManager())
 

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import { TaskStreamProcessor } from "../TaskStreamProcessor"
 import { TaskState } from "../TaskStateMachine"
+import { logger } from "../../../shared/logger"
 
 // Mock delay to prevent actual delays in tests
 vi.mock("delay", () => ({
@@ -213,6 +214,15 @@ describe("TaskStreamProcessor", () => {
 	})
 
 	describe("inferErrorCategory (via backoffAndAnnounce)", () => {
+		it("silently exits failed backoff work when the task was aborted", async () => {
+			mockTask.abort = true
+			mockTask.say = vi.fn().mockRejectedValue(new Error("Request cancelled by user"))
+
+			await processor.backoffAndAnnounce(0, new Error("temporary failure"))
+
+			expect(logger.error).not.toHaveBeenCalled()
+		})
+
 		it("应正确分类超时错误", async () => {
 			const timeoutError = new Error("Request timeout")
 			;(timeoutError as any).code = "ETIMEDOUT"

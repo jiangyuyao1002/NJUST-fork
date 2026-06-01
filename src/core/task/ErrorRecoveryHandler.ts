@@ -37,6 +37,10 @@ export class ErrorRecoveryHandler {
 	 * - { action: "fallthrough" } → continue to the existing backoff / user-prompt logic
 	 */
 	async handleApiError(error: unknown, retryAttempt: number, querySource: QuerySource = "user_query"): Promise<RecoveryResult> {
+		if (this.task.abort) {
+			return { action: "fallthrough" }
+		}
+
 		const classified = classifyApiError(error)
 	
 		// 529 capacity errors: background queries (auto_compact) should not retry

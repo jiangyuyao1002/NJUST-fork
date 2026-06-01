@@ -107,6 +107,16 @@ describe("ErrorRecoveryHandler", () => {
 			expect(result).toEqual({ action: "retry", nextAttempt: 1 })
 		})
 
+		it("returns fallthrough without classifying when task is aborted", async () => {
+			const task = createMockTask({ abort: true })
+			const handler = new ErrorRecoveryHandler(task)
+
+			const result = await handler.handleApiError(new Error("test error"), 0)
+
+			expect(result).toEqual({ action: "fallthrough" })
+			expect(classifyApiError).not.toHaveBeenCalled()
+		})
+
 		it("content_policy → fallthrough (never retries)", async () => {
 			const { result, task } = await handle("content_policy")
 			expect(result).toEqual({ action: "fallthrough" })

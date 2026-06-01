@@ -22,7 +22,6 @@ import { getLastGlobalApiRequestTime } from "./globalApiTiming"
 import { PersistentRetryManager } from "./PersistentRetry"
 import { logger } from "../../shared/logger"
 import { TIMING, LIMITS } from "../../shared/constants"
-import { getErrorMessage } from "../../shared/error-utils"
 import { TaskAbortedError } from "./TaskErrors"
 import { TelemetryService } from "@njust-ai/telemetry"
 
@@ -225,9 +224,7 @@ export class TaskStreamProcessor {
 			)
 			}
 		} catch (err) {
-			const message = getErrorMessage(err)
-
-			if (this.task.abort && message.includes("Aborted during retry countdown")) {
+			if (this.task.abort) {
 				return
 			}
 

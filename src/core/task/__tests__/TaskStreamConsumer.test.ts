@@ -538,6 +538,30 @@ describe("TaskStreamConsumer — finalizeStreamResponse", () => {
 		expect(result.action).toBe("continue")
 	})
 
+	it("skips duplicate message save when the current request was already saved", async () => {
+		const host = createMockHost({ _savedMessagesForCurrentRequest: true })
+
+		await finalizeStreamResponse({
+			task: host,
+			toolCallParser,
+			placeFinalizedStreamingToolUse: noopFinalizeToolUse,
+			consumptionResult: {
+				assistantMessage: "Hello!",
+				reasoningMessage: "",
+				pendingGroundingSources: [],
+				action: "proceed",
+			},
+			requestProfileId: "test-finalize-saved",
+			lastApiReqIndex: -1,
+			retryAttempt: 0,
+			currentUserContent: [],
+			stack: [],
+		})
+
+		expect(host.saveClineMessages).not.toHaveBeenCalled()
+		expect(host.refreshWebviewState).not.toHaveBeenCalled()
+	})
+
 	it("abort 时抛出错误", async () => {
 		const host = createMockHost({ abort: true })
 

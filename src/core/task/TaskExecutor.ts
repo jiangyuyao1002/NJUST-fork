@@ -116,6 +116,9 @@ export class TaskExecutor {
 			h.stateMachine.force(TaskState.COMPLETED)
 		}
 		h.stateMachine.force(TaskState.PREPARING)
+		if (h.abort) {
+			throw new TaskAbortedError(h.taskId, h.instanceId)
+		}
 		const state = await h.hostRef.deref()?.getState()
 
 		const {
@@ -134,7 +137,7 @@ export class TaskExecutor {
 
 		const customCondensingPrompt = state?.customSupportPrompts?.CONDENSE
 
-		if (!options.skipProviderRateLimit) {
+		if (!options.skipProviderRateLimit && !h._rateLimitAlreadyWaitedForThisRequest) {
 			await h.streamProcessor.maybeWaitForProviderRateLimit(retryAttempt)
 		}
 
@@ -405,6 +408,7 @@ export class TaskExecutor {
 			checkToolPromptConsistency(systemPrompt, allTools)
 		}
 
+		h._rateLimitAlreadyWaitedForThisRequest = false
 		h.currentRequestAbortController = new AbortController()
 		const abortSignal = h.currentRequestAbortController.signal
 		h.skipPrevResponseIdOnce = false
@@ -510,6 +514,7 @@ export class TaskExecutor {
 			const currentItem = stack.pop()!
 			const currentUserContent = currentItem.userContent
 			const currentIncludeFileDetails = currentItem.includeFileDetails
+			t._savedMessagesForCurrentRequest = false
 
 			if (t.abort) {
 				t.stateMachine.force(TaskState.ERROR)
@@ -553,6 +558,7 @@ export class TaskExecutor {
 			})
 
 			await t.maybeWaitForProviderRateLimit(currentItem.retryAttempt ?? 0)
+			t._rateLimitAlreadyWaitedForThisRequest = true
 			t.setLastGlobalApiRequestTime(performance.now())
 
 			await t.say(
@@ -617,8 +623,11 @@ export class TaskExecutor {
 				} satisfies ClineApiReqInfo)
 			}
 
-			await t.saveClineMessages()
-			await t.refreshWebviewState()
+			if (!t._savedMessagesForCurrentRequest) {
+				await t.saveClineMessages()
+				await t.refreshWebviewState()
+			}
+			t._savedMessagesForCurrentRequest = true
 
 			try {
 				// Reset streaming state for each new API request
@@ -697,10 +706,12 @@ export class TaskExecutor {
 					)
 					h.presentAssistantMessageLocked = false
 				}
-				try {
-					await h.say("error", `Task ended unexpectedly: ${errMsg}`)
-				} catch (sayError) {
-					logger.warn("TaskExecutor", "Failed to notify user about task error", sayError)
+				if (!h.abort) {
+					try {
+						await h.say("error", `Task ended unexpectedly: ${errMsg}`)
+					} catch (sayError) {
+						logger.warn("TaskExecutor", "Failed to notify user about task error", sayError)
+					}
 				}
 				return true
 			}

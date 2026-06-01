@@ -118,6 +118,7 @@ export interface TaskExecutorRequestHost {
 	consecutiveMistakeCount: number
 	consecutiveMistakeLimit: number
 	didEditFile: boolean
+	_rateLimitAlreadyWaitedForThisRequest?: boolean
 }
 
 /** Streaming presentation state and lifecycle flags. */
@@ -135,6 +136,7 @@ export interface TaskExecutorStreamHost {
 	notifier?: { postMessageToWebview(message: UnsafeAny): Promise<void> }
 	didFinishAbortingStream: boolean
 	currentStreamingDidCheckpoint: boolean
+	_savedMessagesForCurrentRequest?: boolean
 }
 
 /** Diff view and file context tracking. */
