@@ -16,7 +16,7 @@ vi.mock("../../../utils/storage", () => ({
 
 // Mock safeWriteJson to use plain fs writes in tests (avoids proper-lockfile issues)
 vi.mock("../../../utils/safeWriteJson", () => ({
-	safeWriteJson: vi.fn().mockImplementation(async (filePath: string, data: any) => {
+	safeWriteJson: vi.fn(async function (filePath: string, data: any) {
 		await fs.mkdir(path.dirname(filePath), { recursive: true })
 		await fs.writeFile(filePath, JSON.stringify(data, null, "\t"), "utf8")
 	}),

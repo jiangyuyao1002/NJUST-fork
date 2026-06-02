@@ -1155,7 +1155,7 @@ describe("summarizeConversation with custom settings", () => {
 
 		// Setup mock API handler
 		mockMainApiHandler = {
-			createMessage: vi.fn().mockImplementation(() => {
+			createMessage: vi.fn(function () {
 				return (async function* () {
 					yield { type: "text" as const, text: "Summary from main handler" }
 					yield { type: "usage" as const, totalCost: 0.05, outputTokens: 100 }
@@ -1220,9 +1220,7 @@ describe("summarizeConversation with custom settings", () => {
 		// Verify the default compact prompt was used (contains CRITICAL instructions)
 		let createMessageCalls = (mockMainApiHandler.createMessage as Mock).mock.calls
 		expect(createMessageCalls.length).toBe(1)
-		expect(createMessageCalls[0][0]).toContain(
-			"CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.",
-		)
+		expect(createMessageCalls[0][0]).toContain("CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.")
 		expect(createMessageCalls[0][0]).toContain("CRITICAL: This summarization request is a SYSTEM OPERATION")
 
 		// Reset mock and test with undefined
@@ -1238,9 +1236,7 @@ describe("summarizeConversation with custom settings", () => {
 		// Verify the default compact prompt was used again (contains CRITICAL instructions)
 		createMessageCalls = (mockMainApiHandler.createMessage as Mock).mock.calls
 		expect(createMessageCalls.length).toBe(1)
-		expect(createMessageCalls[0][0]).toContain(
-			"CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.",
-		)
+		expect(createMessageCalls[0][0]).toContain("CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.")
 		expect(createMessageCalls[0][0]).toContain("CRITICAL: This summarization request is a SYSTEM OPERATION")
 	})
 

@@ -11,10 +11,12 @@ vi.mock("vscode", () => ({
 	},
 	workspace: {
 		workspaceFolders: undefined,
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn(),
-			update: vi.fn(),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(),
+				update: vi.fn(),
+			}
+		}),
 	},
 	env: {
 		clipboard: { writeText: vi.fn() },
@@ -24,8 +26,16 @@ vi.mock("vscode", () => ({
 		executeCommand: vi.fn(),
 	},
 	Uri: {
-		parse: vi.fn((s: string) => ({ toString: () => s })),
-		file: vi.fn((p: string) => ({ fsPath: p })),
+		parse: vi.fn(function (s: string) {
+			return {
+				toString: () => s,
+			}
+		}),
+		file: vi.fn(function (p: string) {
+			return {
+				fsPath: p,
+			}
+		}),
 	},
 	ConfigurationTarget: {
 		Global: 1,
@@ -68,7 +78,7 @@ describe("webviewMessageHandler - requestRouterModels provider filter", () => {
 		} as any
 
 		// Default mock: return distinct model maps per provider so we can verify keys
-		getModelsMock.mockImplementation(async (options: any) => {
+		getModelsMock.mockImplementation(async function (options: any) {
 			switch (options?.provider) {
 				case "njust-ai":
 					return { "njust-ai/sonnet": { contextWindow: 8192, supportsPromptCache: false } }

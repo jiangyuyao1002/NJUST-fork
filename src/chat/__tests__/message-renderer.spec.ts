@@ -8,10 +8,10 @@ function createMockSink(): RenderSink & { markdownCalls: string[]; progressCalls
 	return {
 		markdownCalls,
 		progressCalls,
-		markdown: vi.fn((value: string) => {
+		markdown: vi.fn(function (value: string) {
 			markdownCalls.push(value)
 		}),
-		progress: vi.fn((value: string) => {
+		progress: vi.fn(function (value: string) {
 			progressCalls.push(value)
 		}),
 	}

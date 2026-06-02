@@ -19,7 +19,9 @@ vitest.mock("openai", () => {
 
 	return {
 		__esModule: true,
-		default: mockConstructor.mockImplementation(() => ({ chat: { completions: { create: mockCreate } } })),
+		default: mockConstructor.mockImplementation(function () {
+			return { chat: { completions: { create: mockCreate } } }
+		}),
 	}
 })
 

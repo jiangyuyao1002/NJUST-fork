@@ -151,7 +151,7 @@ describe("CacheManager", () => {
 		})
 
 		it("should handle save errors gracefully", async () => {
-			const consoleErrorSpy = vitest.spyOn(console, "error").mockImplementation(() => {})
+			const consoleErrorSpy = vitest.spyOn(console, "error").mockImplementation(function () {})
 			;(safeWriteJson as Mock).mockRejectedValue(new Error("Save failed"))
 
 			cacheManager.updateHash("test.ts", "hash")
@@ -159,9 +159,7 @@ describe("CacheManager", () => {
 			// Wait for any pending promises
 			await new Promise((resolve) => setTimeout(resolve, 0))
 
-			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[CacheManager] Failed to save cache"),
-			)
+			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("[CacheManager] Failed to save cache"))
 
 			consoleErrorSpy.mockRestore()
 		})
@@ -182,7 +180,7 @@ describe("CacheManager", () => {
 		})
 
 		it("should handle clear errors gracefully", async () => {
-			const consoleErrorSpy = vitest.spyOn(console, "error").mockImplementation(() => {})
+			const consoleErrorSpy = vitest.spyOn(console, "error").mockImplementation(function () {})
 			;(safeWriteJson as Mock).mockRejectedValue(new Error("Save failed"))
 
 			await cacheManager.clearCacheFile()

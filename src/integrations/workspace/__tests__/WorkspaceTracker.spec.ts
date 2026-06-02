@@ -16,7 +16,7 @@ let registeredTabChangeCallback: (() => Promise<void>) | null = null
 // Mock workspace path
 vitest.mock("../../../utils/path", () => ({
 	getWorkspacePath: vitest.fn().mockReturnValue("/test/workspace"),
-	toRelativePath: vitest.fn((path, cwd) => {
+	toRelativePath: vitest.fn(function (path, cwd) {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		const relativePath = require("path").relative(cwd, path)
 		// Convert to forward slashes for consistency
@@ -37,13 +37,17 @@ const mockWatcher = {
 vitest.mock("vscode", () => ({
 	window: {
 		tabGroups: {
-			onDidChangeTabs: vitest.fn((callback) => {
+			onDidChangeTabs: vitest.fn(function (callback) {
 				registeredTabChangeCallback = callback
 				return { dispose: mockDispose }
 			}),
 			all: [],
 		},
-		onDidChangeActiveTextEditor: vitest.fn(() => ({ dispose: vitest.fn() })),
+		onDidChangeActiveTextEditor: vitest.fn(function () {
+			return {
+				dispose: vitest.fn(),
+			}
+		}),
 	},
 	workspace: {
 		workspaceFolders: [
@@ -263,7 +267,7 @@ describe("WorkspaceTracker", () => {
 		})
 
 		// Setup listFiles to use our controlled promise
-		;(listFiles as Mock).mockImplementation(() => {
+		;(listFiles as Mock).mockImplementation(function () {
 			// Change workspace path before listFiles resolves
 			;(getWorkspacePath as Mock).mockReturnValue("/test/changed-workspace")
 			return listFilesPromise

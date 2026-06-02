@@ -6,11 +6,18 @@ import { tmpdir } from "os"
 import { mkdtemp, rm } from "fs/promises"
 
 vi.mock("../../core/tools/helpers/commandSafety", () => ({
-	checkCommandSafety: vi.fn(() => ({ riskLevel: "safe", reasons: [] })),
+	checkCommandSafety: vi.fn(function () {
+		return {
+			riskLevel: "safe",
+			reasons: [],
+		}
+	}),
 }))
 
 vi.mock("../../utils/env", () => ({
-	filterSensitiveEnv: vi.fn(() => ({})),
+	filterSensitiveEnv: vi.fn(function () {
+		return {}
+	}),
 }))
 
 const { mockRegexSearchFiles, mockListFiles } = vi.hoisted(() => ({
@@ -88,23 +95,15 @@ describe("execCommand security boundaries", () => {
 		it("rejects command not in allowed list", async () => {
 			await setupDirs()
 
-			await expect(
-				execCommand(
-					workspaceCwd,
-					{ command: "npm install" },
-					["git", "echo"],
-				),
-			).rejects.toThrow("Command requires explicit approval")
+			await expect(execCommand(workspaceCwd, { command: "npm install" }, ["git", "echo"])).rejects.toThrow(
+				"Command requires explicit approval",
+			)
 		})
 
 		it("allows command in allowed list", async () => {
 			await setupDirs()
 
-			const result = await execCommand(
-				workspaceCwd,
-				{ command: "echo test" },
-				["git", "echo"],
-			)
+			const result = await execCommand(workspaceCwd, { command: "echo test" }, ["git", "echo"])
 
 			expect(result).toContain("Exit code:")
 		})
@@ -112,11 +111,7 @@ describe("execCommand security boundaries", () => {
 		it("allows any command when wildcard is present", async () => {
 			await setupDirs()
 
-			const result = await execCommand(
-				workspaceCwd,
-				{ command: 'node -e "console.log(\'wildcard\')"' },
-				["*"],
-			)
+			const result = await execCommand(workspaceCwd, { command: "node -e \"console.log('wildcard')\"" }, ["*"])
 
 			expect(result).toContain("Exit code:")
 		})
@@ -124,11 +119,7 @@ describe("execCommand security boundaries", () => {
 		it("matches command by base name", async () => {
 			await setupDirs()
 
-			const result = await execCommand(
-				workspaceCwd,
-				{ command: "echo test" },
-				["echo"],
-			)
+			const result = await execCommand(workspaceCwd, { command: "echo test" }, ["echo"])
 
 			expect(result).toContain("Exit code:")
 		})
@@ -137,12 +128,7 @@ describe("execCommand security boundaries", () => {
 			await setupDirs()
 
 			await expect(
-				execCommand(
-					workspaceCwd,
-					{ command: "git status && rm file" },
-					["git"],
-					["rm"],
-				),
+				execCommand(workspaceCwd, { command: "git status && rm file" }, ["git"], ["rm"]),
 			).rejects.toThrow("Command denied by policy")
 		})
 	})
@@ -151,27 +137,17 @@ describe("execCommand security boundaries", () => {
 		it("rejects command in denied list", async () => {
 			await setupDirs()
 
-			await expect(
-				execCommand(
-					workspaceCwd,
-					{ command: "rm -rf /" },
-					["*"],
-					["rm"],
-				),
-			).rejects.toThrow("Command denied by policy")
+			await expect(execCommand(workspaceCwd, { command: "rm -rf /" }, ["*"], ["rm"])).rejects.toThrow(
+				"Command denied by policy",
+			)
 		})
 
 		it("deniedCommands checked after allowedCommands", async () => {
 			await setupDirs()
 
-			await expect(
-				execCommand(
-					workspaceCwd,
-					{ command: "rm file" },
-					["rm"],
-					["rm"],
-				),
-			).rejects.toThrow("Command denied by policy")
+			await expect(execCommand(workspaceCwd, { command: "rm file" }, ["rm"], ["rm"])).rejects.toThrow(
+				"Command denied by policy",
+			)
 		})
 	})
 })
@@ -203,11 +179,7 @@ describe("execListFiles with rooIgnoreController", () => {
 			validateAccess: vi.fn((relPath: string) => !relPath.includes(".rooignore")),
 		}
 
-		const result = await execListFiles(
-			workspaceCwd,
-			{ path: "src" },
-			rooIgnoreController as any,
-		)
+		const result = await execListFiles(workspaceCwd, { path: "src" }, rooIgnoreController as any)
 
 		expect(rooIgnoreController.validateAccess).toHaveBeenCalled()
 		expect(result).not.toContain(".rooignore")
@@ -250,11 +222,7 @@ describe("execSearchFiles with rooIgnoreController", () => {
 			validateAccess: vi.fn(() => true),
 		}
 
-		await execSearchFiles(
-			workspaceCwd,
-			{ path: "src", regex: "test" },
-			rooIgnoreController as any,
-		)
+		await execSearchFiles(workspaceCwd, { path: "src", regex: "test" }, rooIgnoreController as any)
 
 		expect(mockRegexSearchFiles).toHaveBeenCalledWith(
 			workspaceCwd,
@@ -307,9 +275,9 @@ describe("symlink escape prevention", () => {
 		const linkDir = path.join(workspaceCwd, "link")
 		await createSymlink(outsideDir, linkDir)
 
-		await expect(
-			execWriteFile(workspaceCwd, { path: "link/new.txt", content: "escaped" }),
-		).rejects.toThrow("Path escapes workspace boundary")
+		await expect(execWriteFile(workspaceCwd, { path: "link/new.txt", content: "escaped" })).rejects.toThrow(
+			"Path escapes workspace boundary",
+		)
 	})
 
 	it("rejects apply_diff through symlink to outside directory", async () => {
@@ -321,7 +289,10 @@ describe("symlink escape prevention", () => {
 		await createSymlink(outsideDir, linkDir)
 
 		await expect(
-			execApplyDiff(workspaceCwd, { path: "link/existing.txt", diff: "--- original\n+++ modified\n@@ -1 +1 @@\n-original\n+escaped\n" }),
+			execApplyDiff(workspaceCwd, {
+				path: "link/existing.txt",
+				diff: "--- original\n+++ modified\n@@ -1 +1 @@\n-original\n+escaped\n",
+			}),
 		).rejects.toThrow("Path escapes workspace boundary")
 	})
 
@@ -354,8 +325,8 @@ describe("symlink escape prevention", () => {
 		const linkDir = path.join(workspaceCwd, "link")
 		await createSymlink(outsideDir, linkDir)
 
-		await expect(
-			execWriteFile(workspaceCwd, { path: "link/newdir/new.txt", content: "escaped" }),
-		).rejects.toThrow("Path escapes workspace boundary")
+		await expect(execWriteFile(workspaceCwd, { path: "link/newdir/new.txt", content: "escaped" })).rejects.toThrow(
+			"Path escapes workspace boundary",
+		)
 	})
 })

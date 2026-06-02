@@ -18,33 +18,33 @@ vi.mock("vscode", () => {
 
 	return {
 		workspace: {
-			onDidChangeConfiguration: vi.fn((_callback) => ({
-				dispose: vi.fn(),
-			})),
+			onDidChangeConfiguration: vi.fn(function (_callback) {
+				return {
+					dispose: vi.fn(),
+				}
+			}),
 		},
-		CancellationTokenSource: vi.fn(() => ({
-			token: {
+		CancellationTokenSource: vi.fn(function () {
+			this.token = {
 				isCancellationRequested: false,
 				onCancellationRequested: vi.fn(),
-			},
-			cancel: vi.fn(),
-			dispose: vi.fn(),
-		})),
+			}
+			this.cancel = vi.fn()
+			this.dispose = vi.fn()
+		}),
 		CancellationError: class CancellationError extends Error {
 			constructor() {
 				super("Operation cancelled")
 				this.name = "CancellationError"
 			}
 		},
-		LanguageModelChatMessage: {
-			Assistant: vi.fn((content) => ({
-				role: "assistant",
-				content: Array.isArray(content) ? content : [new MockLanguageModelTextPart(content)],
-			})),
-			User: vi.fn((content) => ({
-				role: "user",
-				content: Array.isArray(content) ? content : [new MockLanguageModelTextPart(content)],
-			})),
+		LanguageModelChatMessage: class {
+			static Assistant = vi.fn(function (content: any) {
+				this.content = content
+			})
+			static User = vi.fn(function (content: any) {
+				this.content = content
+			})
 		},
 		LanguageModelTextPart: MockLanguageModelTextPart,
 		LanguageModelToolCallPart: MockLanguageModelToolCallPart,

@@ -27,7 +27,7 @@ vi.mock("../../skillsMessageHandler", () => ({
 	handleUpdateSkillModes: vi.fn(),
 	handleOpenSkillFile: vi.fn(),
 }))
-vi.mock("../../../services/command/commands", () => ({
+vi.mock("../../../../services/command/commands", () => ({
 	getCommands: vi.fn().mockResolvedValue([]),
 	getCommand: vi.fn().mockResolvedValue(null),
 }))
@@ -49,12 +49,29 @@ describe("modeHandler", () => {
 
 	it("registers all expected mode handlers", () => {
 		const registeredTypes = [
-			"mode", "updatePrompt", "openCustomModesSettings", "openKeyboardShortcuts",
-			"refreshCustomTools", "updateCustomMode", "deleteCustomMode", "exportMode",
-			"importMode", "checkRulesDirectory", "requestCommands", "requestModes",
-			"requestSkills", "createSkill", "deleteSkill", "moveSkill",
-			"updateSkillModes", "openSkillFile", "openCommandFile", "deleteCommand",
-			"createCommand", "openDebugApiHistory", "openDebugUiHistory",
+			"mode",
+			"updatePrompt",
+			"openCustomModesSettings",
+			"openKeyboardShortcuts",
+			"refreshCustomTools",
+			"updateCustomMode",
+			"deleteCustomMode",
+			"exportMode",
+			"importMode",
+			"checkRulesDirectory",
+			"requestCommands",
+			"requestModes",
+			"requestSkills",
+			"createSkill",
+			"deleteSkill",
+			"moveSkill",
+			"updateSkillModes",
+			"openSkillFile",
+			"openCommandFile",
+			"deleteCommand",
+			"createCommand",
+			"openDebugApiHistory",
+			"openDebugUiHistory",
 		]
 		for (const type of registeredTypes) {
 			const handler = vi.fn()
@@ -91,9 +108,7 @@ describe("modeHandler", () => {
 			customPrompt: "test",
 		} as any)
 
-		expect(context.provider.postMessageToWebview).toHaveBeenCalledWith(
-			expect.objectContaining({ type: "state" }),
-		)
+		expect(context.provider.postMessageToWebview).toHaveBeenCalledWith(expect.objectContaining({ type: "state" }))
 	})
 
 	it("requestModes calls provider.getModes and posts result", async () => {
@@ -168,11 +183,14 @@ describe("modeHandler", () => {
 
 		await router.route(context, { type: "openKeyboardShortcuts", text: "terminal" } as WebviewMessage)
 
-		expect(vscode.commands.executeCommand).toHaveBeenCalledWith("workbench.action.openGlobalKeybindings", "terminal")
+		expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+			"workbench.action.openGlobalKeybindings",
+			"terminal",
+		)
 	})
 
 	it("requestCommands posts commands to webview", async () => {
-		const { getCommands } = await import("../../../services/command/commands")
+		const { getCommands } = await import("../../../../services/command/commands")
 		;(getCommands as any).mockResolvedValue([{ name: "test-cmd", source: "project", filePath: "/path" }])
 
 		await router.route(context, { type: "requestCommands" } as WebviewMessage)
@@ -183,7 +201,7 @@ describe("modeHandler", () => {
 	})
 
 	it("requestCommands handles error by posting empty array", async () => {
-		const { getCommands } = await import("../../../services/command/commands")
+		const { getCommands } = await import("../../../../services/command/commands")
 		;(getCommands as any).mockRejectedValue(new Error("fail"))
 
 		await router.route(context, { type: "requestCommands" } as WebviewMessage)

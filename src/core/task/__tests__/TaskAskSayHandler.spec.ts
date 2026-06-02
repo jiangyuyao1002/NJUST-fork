@@ -37,7 +37,7 @@ function createHost(overrides: Record<string, unknown> = {}) {
 		messageQueueService: createQueue(),
 		emit: vi.fn(),
 		hostRef: { deref: () => undefined },
-		addToClineMessages: vi.fn(async (message) => {
+		addToClineMessages: vi.fn(async function (message) {
 			host.clineMessages.push(message)
 		}),
 		updateClineMessage: vi.fn().mockResolvedValue(undefined),
@@ -45,14 +45,14 @@ function createHost(overrides: Record<string, unknown> = {}) {
 		findMessageByTimestamp: vi.fn((ts: number) => host.clineMessages.find((m: any) => m.ts === ts)),
 		checkpointSave: vi.fn().mockResolvedValue(undefined),
 		cancelAutoApprovalTimeout: vi.fn(),
-		approveAsk: vi.fn(() => {
+		approveAsk: vi.fn(function () {
 			host.askResponse = "yesButtonClicked"
 		}),
-		denyAsk: vi.fn(() => {
+		denyAsk: vi.fn(function () {
 			host.askResponse = "noButtonClicked"
 		}),
 		supersedePendingAsk: vi.fn(),
-		handleWebviewAskResponse: vi.fn((response, text, images) => {
+		handleWebviewAskResponse: vi.fn(function (response, text, images) {
 			host.askResponse = response
 			host.askResponseText = text
 			host.askResponseImages = images
@@ -70,7 +70,7 @@ describe("TaskAskSayHandler", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		checkAutoApprovalMock.mockResolvedValue({ decision: "ask" })
-		pWaitForMock.mockImplementation(async (predicate: () => boolean) => {
+		pWaitForMock.mockImplementation(async function (predicate: () => boolean) {
 			predicate()
 			return undefined
 		})
@@ -88,12 +88,14 @@ describe("TaskAskSayHandler", () => {
 
 		await expect(handler.ask("tool", "partial", true)).rejects.toThrow("new partial")
 
-		expect(host.addToClineMessages).toHaveBeenCalledWith(expect.objectContaining({
-			type: "ask",
-			ask: "tool",
-			text: "partial",
-			partial: true,
-		}))
+		expect(host.addToClineMessages).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "ask",
+				ask: "tool",
+				text: "partial",
+				partial: true,
+			}),
+		)
 	})
 
 	it("updates the previous partial ask in place", async () => {
@@ -101,7 +103,9 @@ describe("TaskAskSayHandler", () => {
 		const host = createHost({ clineMessages: [message] })
 		const handler = new TaskAskSayHandler(host)
 
-		await expect(handler.ask("tool", "new", true, { status: "running" } as any, true)).rejects.toThrow("updating existing partial")
+		await expect(handler.ask("tool", "new", true, { status: "running" } as any, true)).rejects.toThrow(
+			"updating existing partial",
+		)
 
 		expect(message).toMatchObject({
 			text: "new",
@@ -203,13 +207,15 @@ describe("TaskAskSayHandler", () => {
 
 		await handler.say("text", "hello", ["img"], undefined, { hash: "abc" })
 
-		expect(host.addToClineMessages).toHaveBeenCalledWith(expect.objectContaining({
-			type: "say",
-			say: "text",
-			text: "hello",
-			images: ["img"],
-			checkpoint: { hash: "abc" },
-		}))
+		expect(host.addToClineMessages).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "say",
+				say: "text",
+				text: "hello",
+				images: ["img"],
+				checkpoint: { hash: "abc" },
+			}),
+		)
 		expect(host.lastMessageTs).toBeGreaterThan(0)
 	})
 
@@ -228,12 +234,14 @@ describe("TaskAskSayHandler", () => {
 
 		await handler.say("text", "partial", undefined, true)
 
-		expect(host.addToClineMessages).toHaveBeenCalledWith(expect.objectContaining({
-			type: "say",
-			say: "text",
-			text: "partial",
-			partial: true,
-		}))
+		expect(host.addToClineMessages).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "say",
+				say: "text",
+				text: "partial",
+				partial: true,
+			}),
+		)
 	})
 
 	it("updates previous partial say in place", async () => {
@@ -243,7 +251,12 @@ describe("TaskAskSayHandler", () => {
 
 		await handler.say("text", "new", ["img"], true, undefined, { status: "running" } as any)
 
-		expect(message).toMatchObject({ text: "new", images: ["img"], partial: true, progressStatus: { status: "running" } })
+		expect(message).toMatchObject({
+			text: "new",
+			images: ["img"],
+			partial: true,
+			progressStatus: { status: "running" },
+		})
 		expect(host.updateClineMessage).toHaveBeenCalledWith(message)
 	})
 
@@ -294,11 +307,13 @@ describe("TaskAskSayHandler", () => {
 
 		const result = await handler.sayAndCreateMissingParamError("read_file" as any, "path", "src/a.ts")
 
-		expect(host.addToClineMessages).toHaveBeenCalledWith(expect.objectContaining({
-			type: "say",
-			say: "error",
-			text: expect.stringContaining("without value for required parameter 'path'"),
-		}))
+		expect(host.addToClineMessages).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "say",
+				say: "error",
+				text: expect.stringContaining("without value for required parameter 'path'"),
+			}),
+		)
 		expect(result).toContain("Missing value for required parameter 'path'")
 	})
 
@@ -328,7 +343,13 @@ describe("TaskAskSayHandler", () => {
 
 		it("schedules timeout and resolves via fn when checkAutoApproval returns timeout", async () => {
 			vi.useFakeTimers()
-			const timeoutFn = vi.fn(() => ({ askResponse: "messageResponse", text: "auto", images: ["img"] }))
+			const timeoutFn = vi.fn(function () {
+				return {
+					askResponse: "messageResponse",
+					text: "auto",
+					images: ["img"],
+				}
+			})
 			checkAutoApprovalMock.mockResolvedValue({
 				decision: "timeout",
 				timeout: 500,
@@ -336,7 +357,7 @@ describe("TaskAskSayHandler", () => {
 			})
 
 			const host = createHost()
-			pWaitForMock.mockImplementation(async (predicate: () => boolean) => {
+			pWaitForMock.mockImplementation(async function (predicate: () => boolean) {
 				vi.runOnlyPendingTimers()
 				predicate()
 			})

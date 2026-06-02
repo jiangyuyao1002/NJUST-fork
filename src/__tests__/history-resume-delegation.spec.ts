@@ -6,15 +6,25 @@ import { NJUST_AIEventName } from "@njust-ai/types"
 /* vscode mock for Task/Provider imports */
 vi.mock("vscode", () => {
 	const window = {
-		createTextEditorDecorationType: vi.fn(() => ({ dispose: vi.fn() })),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 		showErrorMessage: vi.fn(),
-		onDidChangeActiveTextEditor: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidChangeActiveTextEditor: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	}
 	const workspace = {
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn((_key: string, defaultValue: any) => defaultValue),
-			update: vi.fn(),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn((_key: string, defaultValue: any) => defaultValue),
+				update: vi.fn(),
+			}
+		}),
 		workspaceFolders: [],
 	}
 	const env = { machineId: "test-machine", uriScheme: "vscode", appName: "VSCode", language: "en", sessionId: "sess" }
@@ -69,13 +79,19 @@ describe("History resume delegation - parent metadata transitions", () => {
 			taskId: "parent-1",
 			skipPrevResponseIdOnce: false,
 			resumeAfterDelegation: vi.fn().mockResolvedValue(undefined),
+			overwriteClineMessages: vi.fn().mockResolvedValue(undefined),
+			overwriteApiConversationHistory: vi.fn().mockResolvedValue(undefined),
 		})
 
 		const provider = {
 			contextProxy: { globalStorageUri: { fsPath: "/tmp" } },
 			getTaskWithId,
 			emit: providerEmit,
-			getCurrentTask: vi.fn(() => ({ taskId: "child-1" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "child-1",
+				}
+			}),
 			removeClineFromStack,
 			createTaskWithHistoryItem,
 			updateTaskHistory,
@@ -137,7 +153,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				},
 			}),
 			emit: vi.fn(),
-			getCurrentTask: vi.fn(() => ({ taskId: "c1" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "c1",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue({
 				taskId: "p1",
@@ -221,7 +241,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				},
 			}),
 			emit: vi.fn(),
-			getCurrentTask: vi.fn(() => ({ taskId: "c-tool" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "c-tool",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue({
 				taskId: "p-tool",
@@ -308,7 +332,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				},
 			}),
 			emit: vi.fn(),
-			getCurrentTask: vi.fn(() => ({ taskId: "c-no-tool" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "c-no-tool",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue({
 				taskId: "p-no-tool",
@@ -369,7 +397,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				},
 			}),
 			emit: vi.fn(),
-			getCurrentTask: vi.fn(() => ({ taskId: "child-2" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "child-2",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue(parentInstance),
 			updateTaskHistory: vi.fn().mockResolvedValue([]),
@@ -410,7 +442,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				},
 			}),
 			emit: emitSpy,
-			getCurrentTask: vi.fn(() => ({ taskId: "c3" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "c3",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue({
 				resumeAfterDelegation: vi.fn().mockResolvedValue(undefined),
@@ -463,7 +499,7 @@ describe("History resume delegation - parent metadata transitions", () => {
 
 		const provider = {
 			contextProxy: { globalStorageUri: { fsPath: "/tmp" } },
-			getTaskWithId: vi.fn().mockImplementation(async (id: string) => {
+			getTaskWithId: vi.fn(async function (id: string) {
 				if (id === "parent-rpd06") {
 					return {
 						historyItem: {
@@ -493,7 +529,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				}
 			}),
 			emit: emitSpy,
-			getCurrentTask: vi.fn(() => ({ taskId: "child-rpd06" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "child-rpd06",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue(parentInstance),
 			updateTaskHistory: vi.fn().mockResolvedValue([]),
@@ -548,7 +588,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				},
 			}),
 			emit: emitSpy,
-			getCurrentTask: vi.fn(() => ({ taskId: "c4" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "c4",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue({
 				resumeAfterDelegation: vi.fn().mockResolvedValue(undefined),
@@ -588,7 +632,7 @@ describe("History resume delegation - parent metadata transitions", () => {
 
 		const provider = {
 			contextProxy: { globalStorageUri: { fsPath: "/tmp" } },
-			getTaskWithId: vi.fn().mockImplementation(async (id: string) => {
+			getTaskWithId: vi.fn(async function (id: string) {
 				if (id === "parent-rpd02") {
 					return {
 						historyItem: {
@@ -617,7 +661,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				}
 			}),
 			emit: vi.fn(),
-			getCurrentTask: vi.fn(() => ({ taskId: "different-open-task" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "different-open-task",
+				}
+			}),
 			removeClineFromStack,
 			createTaskWithHistoryItem,
 			updateTaskHistory,
@@ -660,7 +708,7 @@ describe("History resume delegation - parent metadata transitions", () => {
 			overwriteApiConversationHistory: vi.fn().mockResolvedValue(undefined),
 		}
 
-		const updateTaskHistory = vi.fn().mockImplementation(async (historyItem: { id?: string }) => {
+		const updateTaskHistory = vi.fn(async function (historyItem: { id?: string }) {
 			if (historyItem.id === "child-rpd04") {
 				throw new Error("child status persist failed")
 			}
@@ -669,7 +717,7 @@ describe("History resume delegation - parent metadata transitions", () => {
 
 		const provider = {
 			contextProxy: { globalStorageUri: { fsPath: "/tmp" } },
-			getTaskWithId: vi.fn().mockImplementation(async (id: string) => {
+			getTaskWithId: vi.fn(async function (id: string) {
 				if (id === "parent-rpd04") {
 					return {
 						historyItem: {
@@ -699,7 +747,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 			}),
 			emit: emitSpy,
 			log: logSpy,
-			getCurrentTask: vi.fn(() => ({ taskId: "child-rpd04" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "child-rpd04",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue(parentInstance),
 			updateTaskHistory,
@@ -750,7 +802,11 @@ describe("History resume delegation - parent metadata transitions", () => {
 				},
 			}),
 			emit: vi.fn(),
-			getCurrentTask: vi.fn(() => ({ taskId: "c5" })),
+			getCurrentTask: vi.fn(function () {
+				return {
+					taskId: "c5",
+				}
+			}),
 			removeClineFromStack: vi.fn().mockResolvedValue(undefined),
 			createTaskWithHistoryItem: vi.fn().mockResolvedValue({
 				resumeAfterDelegation: vi.fn().mockResolvedValue(undefined),

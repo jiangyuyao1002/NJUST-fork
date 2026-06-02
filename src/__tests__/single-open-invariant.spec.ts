@@ -73,7 +73,9 @@ describe("Single-open-task invariant", () => {
 				setValue: vi.fn(),
 				getValue: vi.fn(),
 				setProviderSettings: vi.fn(),
-				getProviderSettings: vi.fn(() => ({})),
+				getProviderSettings: vi.fn(function () {
+					return {}
+				}),
 			},
 		} as unknown as ClineProvider
 		;(provider as any).taskCoordinator = {
@@ -128,7 +130,9 @@ describe("Single-open-task invariant", () => {
 				getValue: vi.fn(),
 				setValue: vi.fn(),
 				setProviderSettings: vi.fn(),
-				getProviderSettings: vi.fn(() => ({})),
+				getProviderSettings: vi.fn(function () {
+					return {}
+				}),
 			},
 			postStateToWebview: vi.fn(),
 			restoreHistoryModeAndProfile: vi.fn().mockResolvedValue(undefined),
@@ -168,9 +172,11 @@ describe("Single-open-task invariant", () => {
 			postStateToWebview: vi.fn(),
 			postMessageToWebview: vi.fn(),
 			createTask,
-			getValues: vi.fn(() => ({})),
+			getValues: vi.fn(function () {
+				return {}
+			}),
 			providerSettingsManager: { saveConfig: vi.fn() },
-			on: vi.fn((ev: any, _cb: any) => {
+			on: vi.fn(function (ev: any, _cb: any) {
 				if (ev === "taskCreated") {
 					// no-op for this test
 				}

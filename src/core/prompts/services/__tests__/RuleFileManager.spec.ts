@@ -10,13 +10,13 @@ vi.mock("os", () => ({
 }))
 
 vi.mock("../../../../services/njust-ai-config", () => ({
-	getRooDirectoriesForCwd: vi.fn().mockImplementation((cwd: string) => {
+	getRooDirectoriesForCwd: vi.fn(function (cwd: string) {
 		return [`/home/user/.njust_ai`, `${cwd}/.njust_ai`]
 	}),
-	getAllRooDirectoriesForCwd: vi.fn().mockImplementation(async (cwd: string) => {
+	getAllRooDirectoriesForCwd: vi.fn(async function (cwd: string) {
 		return [`/home/user/.njust_ai`, `${cwd}/.njust_ai`]
 	}),
-	getAgentsDirectoriesForCwd: vi.fn().mockImplementation(async (cwd: string) => {
+	getAgentsDirectoriesForCwd: vi.fn(async function (cwd: string) {
 		return [cwd]
 	}),
 }))
@@ -147,14 +147,14 @@ describe("RuleFileManager", () => {
 				},
 			] as any)
 
-			statMock.mockImplementation((_path) => {
+			statMock.mockImplementation(function (_path) {
 				return Promise.resolve({
 					isFile: () => true,
 					isDirectory: () => false,
 				})
 			})
 
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				const pathStr = filePath.toString()
 				if (pathStr.includes("file1.txt")) return Promise.resolve("content1")
 				if (pathStr.includes("file2.md")) return Promise.resolve("content2")
@@ -193,7 +193,7 @@ describe("RuleFileManager", () => {
 				}),
 			)
 
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				const pathStr = filePath.toString()
 				if (pathStr.includes("zebra")) return Promise.resolve("zebra content")
 				if (pathStr.includes("alpha")) return Promise.resolve("alpha content")
@@ -229,7 +229,7 @@ describe("RuleFileManager", () => {
 				}),
 			)
 
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				const pathStr = filePath.toString()
 				if (pathStr.includes("rule.txt")) return Promise.resolve("rule content")
 				return Promise.reject({ code: "ENOENT" })
@@ -291,7 +291,7 @@ describe("RuleFileManager", () => {
 				}),
 			)
 
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("rule.md")) return Promise.resolve("rule content")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -303,7 +303,7 @@ describe("RuleFileManager", () => {
 
 		it("should fall back to legacy .roorules when no rules directory exists", async () => {
 			statMock.mockRejectedValueOnce({ code: "ENOENT" })
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes(".roorules")) return Promise.resolve("legacy rules")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -360,7 +360,7 @@ describe("RuleFileManager", () => {
 			lstatMock.mockResolvedValueOnce({
 				isSymbolicLink: () => false,
 			} as any)
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("AGENTS.md")) return Promise.resolve("agent rules")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -371,13 +371,12 @@ describe("RuleFileManager", () => {
 		})
 
 		it("should load AGENT.md when AGENTS.md doesn't exist", async () => {
-			lstatMock.mockImplementation((filePath: PathLike) => {
+			lstatMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("AGENTS.md")) return Promise.reject({ code: "ENOENT" })
-				if (filePath.toString().includes("AGENT.md"))
-					return Promise.resolve({ isSymbolicLink: () => false })
+				if (filePath.toString().includes("AGENT.md")) return Promise.resolve({ isSymbolicLink: () => false })
 				return Promise.reject({ code: "ENOENT" })
 			})
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("AGENT.md")) return Promise.resolve("agent rules")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -391,7 +390,7 @@ describe("RuleFileManager", () => {
 			lstatMock.mockResolvedValue({
 				isSymbolicLink: () => false,
 			} as any)
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("AGENTS.local.md")) return Promise.resolve("local overrides")
 				if (filePath.toString().includes("AGENTS.md")) return Promise.resolve("standard rules")
 				return Promise.reject({ code: "ENOENT" })
@@ -408,7 +407,7 @@ describe("RuleFileManager", () => {
 			lstatMock.mockResolvedValueOnce({
 				isSymbolicLink: () => false,
 			} as any)
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("AGENTS.md")) return Promise.resolve("root agent rules")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -425,7 +424,7 @@ describe("RuleFileManager", () => {
 		})
 
 		it("should load summary and full fix files", async () => {
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("-summary.md")) return Promise.resolve("summary fixes")
 				if (filePath.toString().includes("code.md")) return Promise.resolve("full fixes")
 				return Promise.reject({ code: "ENOENT" })
@@ -467,7 +466,7 @@ describe("RuleFileManager", () => {
 				}),
 			)
 
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("rule.txt")) return Promise.resolve("mode rule content")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -479,7 +478,7 @@ describe("RuleFileManager", () => {
 
 		it("should fall back to legacy .roorules-{mode} file", async () => {
 			statMock.mockRejectedValueOnce({ code: "ENOENT" })
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes(".roorules-test")) return Promise.resolve("legacy mode rules")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -491,7 +490,7 @@ describe("RuleFileManager", () => {
 
 		it("should fall back to .clinerules-{mode} when .roorules-{mode} doesn't exist", async () => {
 			statMock.mockRejectedValueOnce({ code: "ENOENT" })
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes(".roorules-test")) return Promise.reject({ code: "ENOENT" })
 				if (filePath.toString().includes(".clinerules-test")) return Promise.resolve("cline mode rules")
 				return Promise.reject({ code: "ENOENT" })
@@ -506,7 +505,7 @@ describe("RuleFileManager", () => {
 	describe("loadGenericRules", () => {
 		it("should load generic rules", async () => {
 			statMock.mockRejectedValueOnce({ code: "ENOENT" })
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes(".roorules")) return Promise.resolve("generic rules")
 				return Promise.reject({ code: "ENOENT" })
 			})
@@ -534,7 +533,7 @@ describe("RuleFileManager", () => {
 			lstatMock.mockResolvedValueOnce({
 				isSymbolicLink: () => false,
 			} as any)
-			readFileMock.mockImplementation((filePath: PathLike) => {
+			readFileMock.mockImplementation(function (filePath: PathLike) {
 				if (filePath.toString().includes("AGENTS.md")) return Promise.resolve("agent rules")
 				return Promise.reject({ code: "ENOENT" })
 			})

@@ -263,7 +263,7 @@ describe("CloudAgentClient", () => {
 	}, 15_000)
 
 	it("aborts connect when signal is already aborted", async () => {
-		const fetchMock = vi.fn((_url: string | URL, init?: RequestInit) => {
+		const fetchMock = vi.fn(function (_url: string | URL, init?: RequestInit) {
 			if (init?.signal?.aborted) {
 				return Promise.reject(new DOMException("Aborted", "AbortError"))
 			}
@@ -282,59 +282,67 @@ describe("CloudAgentClient", () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
 
-	it(
-		"times out when requestTimeoutMs elapses",
-		async () => {
-			const fetchMock = vi.fn((_url: string | URL, init?: RequestInit) => {
-				return new Promise<Response>((resolve, reject) => {
-					init?.signal?.addEventListener("abort", () => {
-						reject(new DOMException("Aborted", "AbortError"))
-					})
+	it("times out when requestTimeoutMs elapses", async () => {
+		const fetchMock = vi.fn(function (_url: string | URL, init?: RequestInit) {
+			return new Promise<Response>((resolve, reject) => {
+				init?.signal?.addEventListener("abort", () => {
+					reject(new DOMException("Aborted", "AbortError"))
 				})
 			})
-			globalThis.fetch = fetchMock as unknown as typeof fetch
+		})
+		globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			const client = new CloudAgentClient(createCallbacks(), {
-				profile: createMockProfile(),
-				requestTimeoutMs: 40,
-			})
+		const client = new CloudAgentClient(createCallbacks(), {
+			profile: createMockProfile(),
+			requestTimeoutMs: 40,
+		})
 
-			await expect(client.connect()).rejects.toMatchObject({ name: "AbortError" })
-		},
-		10_000,
-	)
+		await expect(client.connect()).rejects.toMatchObject({ name: "AbortError" })
+	}, 10_000)
 
 	describe("constructor HTTPS enforcement", () => {
 		it("rejects non-localhost HTTP", () => {
-			expect(() => new CloudAgentClient(createCallbacks(), {
-				profile: createMockProfile({ serverUrl: "http://evil.com" }),
-			})).toThrow("requires HTTPS")
+			expect(
+				() =>
+					new CloudAgentClient(createCallbacks(), {
+						profile: createMockProfile({ serverUrl: "http://evil.com" }),
+					}),
+			).toThrow("requires HTTPS")
 		})
 
 		it("accepts localhost HTTP", () => {
-			expect(() => new CloudAgentClient(createCallbacks(), {
-				profile: createMockProfile({ serverUrl: "http://localhost:3000" }),
-			})).not.toThrow()
+			expect(
+				() =>
+					new CloudAgentClient(createCallbacks(), {
+						profile: createMockProfile({ serverUrl: "http://localhost:3000" }),
+					}),
+			).not.toThrow()
 		})
 
 		it("accepts 127.0.0.1 HTTP", () => {
-			expect(() => new CloudAgentClient(createCallbacks(), {
-				profile: createMockProfile({ serverUrl: "http://127.0.0.1:4000" }),
-			})).not.toThrow()
+			expect(
+				() =>
+					new CloudAgentClient(createCallbacks(), {
+						profile: createMockProfile({ serverUrl: "http://127.0.0.1:4000" }),
+					}),
+			).not.toThrow()
 		})
 
 		it("accepts HTTPS", () => {
-			expect(() => new CloudAgentClient(createCallbacks(), {
-				profile: createMockProfile({ serverUrl: "https://api.example.com" }),
-			})).not.toThrow()
+			expect(
+				() =>
+					new CloudAgentClient(createCallbacks(), {
+						profile: createMockProfile({ serverUrl: "https://api.example.com" }),
+					}),
+			).not.toThrow()
 		})
 	})
 
 	describe("compile", () => {
 		it("returns success result", async () => {
-			const fetchMock = vi.fn().mockResolvedValue(
-				new Response(JSON.stringify({ success: true, output: "" }), { status: 200 }),
-			)
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValue(new Response(JSON.stringify({ success: true, output: "" }), { status: 200 }))
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
 			const client = new CloudAgentClient(createCallbacks(), {
@@ -349,9 +357,11 @@ describe("CloudAgentClient", () => {
 		})
 
 		it("returns failure with compile errors", async () => {
-			const fetchMock = vi.fn().mockResolvedValue(
-				new Response(JSON.stringify({ success: false, output: "error: line 5" }), { status: 200 }),
-			)
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValue(
+					new Response(JSON.stringify({ success: false, output: "error: line 5" }), { status: 200 }),
+				)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
 			const client = new CloudAgentClient(createCallbacks(), {
@@ -365,7 +375,7 @@ describe("CloudAgentClient", () => {
 
 		it("throws on non-OK HTTP", async () => {
 			let callCount = 0
-			const fetchMock = vi.fn().mockImplementation(() => {
+			const fetchMock = vi.fn(function () {
 				callCount++
 				return Promise.resolve(new Response("internal error", { status: 500 }))
 			})
@@ -409,12 +419,11 @@ describe("CloudAgentClient", () => {
 		})
 
 		it("deferredStart returns done status", async () => {
-			const fetchMock = vi.fn().mockResolvedValue(
-				new Response(
-					JSON.stringify({ run_id: "run-2", status: "done", ok: true }),
-					{ status: 200 },
-				),
-			)
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValue(
+					new Response(JSON.stringify({ run_id: "run-2", status: "done", ok: true }), { status: 200 }),
+				)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
 			const client = new CloudAgentClient(createCallbacks(), {
@@ -426,12 +435,11 @@ describe("CloudAgentClient", () => {
 		})
 
 		it("deferredResume sends tool results", async () => {
-			const fetchMock = vi.fn().mockResolvedValue(
-				new Response(
-					JSON.stringify({ run_id: "run-1", status: "done", ok: true }),
-					{ status: 200 },
-				),
-			)
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValue(
+					new Response(JSON.stringify({ run_id: "run-1", status: "done", ok: true }), { status: 200 }),
+				)
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
 			const client = new CloudAgentClient(createCallbacks(), {
@@ -460,7 +468,11 @@ describe("CloudAgentClient", () => {
 			const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 200 }))
 			globalThis.fetch = fetchMock as unknown as typeof fetch
 
-			await CloudAgentClient.sendDeferredAbort(createMockProfile({ serverUrl: "http://localhost:4000" }), "sid-1", "run-1")
+			await CloudAgentClient.sendDeferredAbort(
+				createMockProfile({ serverUrl: "http://localhost:4000" }),
+				"sid-1",
+				"run-1",
+			)
 
 			const url = fetchMock.mock.calls[0][0] as string
 			expect(url).toContain("/v1/run/deferred/abort")
@@ -584,9 +596,7 @@ describe("CloudAgentClient", () => {
 
 		it("should abort MCP connect when signal is already aborted", async () => {
 			const mockAdapter = createMcpMockAdapter()
-			mockAdapter.connect.mockImplementation(
-				() => new Promise(() => {}),
-			)
+			mockAdapter.connect.mockImplementation(() => new Promise(() => {}))
 			vi.spyOn(AdapterFactory, "create").mockReturnValue(mockAdapter as UnsafeAny)
 
 			const abortController = new AbortController()

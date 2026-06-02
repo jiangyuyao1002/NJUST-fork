@@ -11,7 +11,12 @@ vi.mock("@njust-ai/telemetry", () => ({
 		reportError: vi.fn(),
 		instance: {
 			captureEvent: vi.fn(),
-			startSpan: vi.fn(() => ({ traceId: "t", spanId: "s" })),
+			startSpan: vi.fn(function () {
+				return {
+					traceId: "t",
+					spanId: "s",
+				}
+			}),
 			endSpan: vi.fn(),
 			captureTaskCompleted: vi.fn(),
 		},
@@ -23,18 +28,20 @@ vi.mock("../../security/metrics", async (importOriginal) => {
 	return {
 		...actual,
 		recordSecurityMetric: vi.fn(),
-		startTraceSpan: vi.fn(() => ({
-			traceId: "test-trace",
-			spanId: "test-span",
-			end: vi.fn(),
-		})),
+		startTraceSpan: vi.fn(function () {
+			return {
+				traceId: "test-trace",
+				spanId: "test-span",
+				end: vi.fn(),
+			}
+		}),
 	}
 })
 
 // Mock dependencies
 vi.mock("../../prompts/responses", () => ({
 	formatResponse: {
-		toolResult: vi.fn((result: string, images?: string[]) => {
+		toolResult: vi.fn(function (result: string, images?: string[]) {
 			if (images && images.length > 0) {
 				return `Tool result: ${result} [with ${images.length} image(s)]`
 			}
@@ -42,11 +49,11 @@ vi.mock("../../prompts/responses", () => ({
 		}),
 		toolError: vi.fn((error: string) => `Tool error: ${error}`),
 		invalidMcpToolArgumentError: vi.fn((server: string, tool: string) => `Invalid args for ${server}:${tool}`),
-		unknownMcpToolError: vi.fn((server: string, tool: string, availableTools: string[]) => {
+		unknownMcpToolError: vi.fn(function (server: string, tool: string, availableTools: string[]) {
 			const toolsList = availableTools.length > 0 ? availableTools.join(", ") : "No tools available"
 			return `Tool '${tool}' does not exist on server '${server}'. Available tools: ${toolsList}`
 		}),
-		unknownMcpServerError: vi.fn((server: string, availableServers: string[]) => {
+		unknownMcpServerError: vi.fn(function (server: string, availableServers: string[]) {
 			const list = availableServers.length > 0 ? availableServers.join(", ") : "No servers available"
 			return `Server '${server}' is not configured. Available servers: ${list}`
 		}),
@@ -54,7 +61,7 @@ vi.mock("../../prompts/responses", () => ({
 }))
 
 vi.mock("../../../i18n", () => ({
-	t: vi.fn((key: string, params?: any) => {
+	t: vi.fn(function (key: string, params?: any) {
 		if (key === "mcp:errors.invalidJsonArgument" && params?.toolName) {
 			return `Njust-AI tried to use ${params.toolName} with an invalid JSON argument. Retrying...`
 		}
@@ -163,7 +170,9 @@ describe("useMcpToolTool", () => {
 				getMcpHub: () => ({
 					getAllServers: vi
 						.fn()
-						.mockReturnValue([{ name: "test_server", tools: [{ name: "test_tool", description: "desc" }] }]),
+						.mockReturnValue([
+							{ name: "test_server", tools: [{ name: "test_tool", description: "desc" }] },
+						]),
 					callTool: vi.fn().mockResolvedValue(mockToolResult),
 				}),
 				postMessageToWebview: vi.fn(),
@@ -258,7 +267,7 @@ describe("useMcpToolTool", () => {
 			})
 
 			const error = new Error("Unexpected error")
-			mockAskApproval.mockImplementation((type: string) => {
+			mockAskApproval.mockImplementation(function (type: string) {
 				if (type === "tool") return Promise.resolve(true)
 				return Promise.reject(error)
 			})

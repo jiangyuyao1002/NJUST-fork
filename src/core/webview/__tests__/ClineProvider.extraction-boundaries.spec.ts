@@ -6,11 +6,18 @@ vi.mock("vscode", () => ({
 		showErrorMessage: vi.fn(),
 	},
 	workspace: {
-		getConfiguration: vi.fn(() => ({ get: vi.fn() })),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(),
+			}
+		}),
 	},
 }))
 
-import { delegateParentAndOpenChildWithProvider, reopenParentFromDelegationWithProvider } from "../ClineProviderDelegation"
+import {
+	delegateParentAndOpenChildWithProvider,
+	reopenParentFromDelegationWithProvider,
+} from "../ClineProviderDelegation"
 import { handleModeSwitchWithProvider, restoreHistoryModeAndProfileWithProvider } from "../ClineProviderModeSync"
 
 describe("ClineProvider extraction boundaries", () => {

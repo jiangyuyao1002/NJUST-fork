@@ -26,7 +26,7 @@ describe("checkpointRestoreHandler", () => {
 		mockCline = {
 			taskId: "test-task-123",
 			abort: false,
-			abortTask: vi.fn(() => {
+			abortTask: vi.fn(function () {
 				mockCline.abort = true
 			}),
 			checkpointRestore: vi.fn(),
@@ -48,9 +48,11 @@ describe("checkpointRestoreHandler", () => {
 		mockProvider = {
 			getCurrentTask: vi.fn(() => mockCline),
 			postMessageToWebview: vi.fn(),
-			getTaskWithId: vi.fn(() => ({
-				historyItem: { id: "test-task-123", messages: mockCline.clineMessages },
-			})),
+			getTaskWithId: vi.fn(function () {
+				return {
+					historyItem: { id: "test-task-123", messages: mockCline.clineMessages },
+				}
+			}),
 			createTaskWithHistoryItem: vi.fn(),
 			setPendingEditOperation: vi.fn(),
 			contextProxy: {
@@ -59,7 +61,7 @@ describe("checkpointRestoreHandler", () => {
 		}
 
 		// Mock pWaitFor to resolve immediately
-		;(pWaitFor as any).mockImplementation(async (_condition: () => boolean) => {
+		;(pWaitFor as any).mockImplementation(async function (_condition: () => boolean) {
 			// Simulate the condition being met
 			return Promise.resolve()
 		})
@@ -147,7 +149,7 @@ describe("checkpointRestoreHandler", () => {
 
 		it("should save messages after delete operation", async () => {
 			// Mock the checkpoint restore to simulate message deletion
-			mockCline.checkpointRestore.mockImplementation(async () => {
+			mockCline.checkpointRestore.mockImplementation(async function () {
 				mockCline.clineMessages = mockCline.clineMessages.slice(0, 2)
 			})
 

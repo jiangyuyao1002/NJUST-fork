@@ -27,15 +27,25 @@ vi.mock("@njust-ai/telemetry", () => ({
 // vscode mock for Task/Provider imports
 vi.mock("vscode", () => {
 	const window = {
-		createTextEditorDecorationType: vi.fn(() => ({ dispose: vi.fn() })),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 		showErrorMessage: vi.fn(),
-		onDidChangeActiveTextEditor: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidChangeActiveTextEditor: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	}
 	const workspace = {
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn((_key: string, defaultValue: any) => defaultValue),
-			update: vi.fn(),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn((_key: string, defaultValue: any) => defaultValue),
+				update: vi.fn(),
+			}
+		}),
 		workspaceFolders: [],
 	}
 	const env = { machineId: "test-machine", uriScheme: "vscode", appName: "VSCode", language: "en", sessionId: "sess" }
@@ -118,27 +128,25 @@ describe("Nested delegation resume (A �?B �?C)", () => {
 		}
 
 		const emitSpy = vi.fn()
-		const removeClineFromStack = vi.fn().mockImplementation(async () => {
+		const removeClineFromStack = vi.fn(async function () {
 			// Simulate closing current child
 			currentActiveId = undefined
 		})
-		const createTaskWithHistoryItem = vi
-			.fn()
-			.mockImplementation(async (historyItem: any, opts?: { startTask?: boolean }) => {
-				// Assert startTask:false to avoid resume asks
-				expect(opts).toEqual(expect.objectContaining({ startTask: false }))
-				// Reopen the parent
-				currentActiveId = historyItem.id
-				// Return minimal parent instance with resumeAfterDelegation
-				return {
-					taskId: historyItem.id,
-					resumeAfterDelegation: vi.fn().mockResolvedValue(undefined),
-					overwriteClineMessages: vi.fn().mockResolvedValue(undefined),
-					overwriteApiConversationHistory: vi.fn().mockResolvedValue(undefined),
-				}
-			})
+		const createTaskWithHistoryItem = vi.fn(async function (historyItem: any, opts?: { startTask?: boolean }) {
+			// Assert startTask:false to avoid resume asks
+			expect(opts).toEqual(expect.objectContaining({ startTask: false }))
+			// Reopen the parent
+			currentActiveId = historyItem.id
+			// Return minimal parent instance with resumeAfterDelegation
+			return {
+				taskId: historyItem.id,
+				resumeAfterDelegation: vi.fn().mockResolvedValue(undefined),
+				overwriteClineMessages: vi.fn().mockResolvedValue(undefined),
+				overwriteApiConversationHistory: vi.fn().mockResolvedValue(undefined),
+			}
+		})
 
-		const getTaskWithId = vi.fn(async (id: string) => {
+		const getTaskWithId = vi.fn(async function (id: string) {
 			if (!historyIndex[id]) throw new Error("Task not found")
 			return {
 				historyItem: historyIndex[id],
@@ -149,7 +157,7 @@ describe("Nested delegation resume (A �?B �?C)", () => {
 			}
 		})
 
-		const updateTaskHistory = vi.fn(async (updated: any) => {
+		const updateTaskHistory = vi.fn(async function (updated: any) {
 			// Persist updated history back into index (simulate)
 			historyIndex[updated.id] = updated
 			return Object.values(historyIndex)
@@ -165,7 +173,7 @@ describe("Nested delegation resume (A �?B �?C)", () => {
 			updateTaskHistory,
 			stack: { pop: vi.fn().mockResolvedValue(undefined) },
 			// Wire through provider method so attemptCompletionTool can call it
-			reopenParentFromDelegation: vi.fn(async (params: any) => {
+			reopenParentFromDelegation: vi.fn(async function (params: any) {
 				return await reopenParentFromDelegationWithProvider(provider, params)
 			}),
 		} as unknown as IDelegationHost
@@ -183,7 +191,9 @@ describe("Nested delegation resume (A �?B �?C)", () => {
 			providerRef: { deref: () => provider },
 			say: vi.fn().mockResolvedValue(undefined),
 			emit: vi.fn(),
-			getTokenUsage: vi.fn(() => ({})),
+			getTokenUsage: vi.fn(function () {
+				return {}
+			}),
 			toolUsage: {},
 			clineMessages: [],
 			userMessageContent: [],
@@ -207,7 +217,7 @@ describe("Nested delegation resume (A �?B �?C)", () => {
 		} as any
 
 		const askFinishSubTaskApproval = vi.fn(async () => true)
-		const handleError = vi.fn(async (_action: string, err: Error) => {
+		const handleError = vi.fn(async function (_action: string, err: Error) {
 			// Fail fast in this test if the tool hits an error path.
 			throw err
 		})
@@ -237,7 +247,9 @@ describe("Nested delegation resume (A �?B �?C)", () => {
 			providerRef: { deref: () => provider },
 			say: vi.fn().mockResolvedValue(undefined),
 			emit: vi.fn(),
-			getTokenUsage: vi.fn(() => ({})),
+			getTokenUsage: vi.fn(function () {
+				return {}
+			}),
 			toolUsage: {},
 			clineMessages: [],
 			userMessageContent: [],

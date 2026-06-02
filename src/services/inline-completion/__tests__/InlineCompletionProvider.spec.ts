@@ -191,7 +191,7 @@ describe("debounceInlineDelay", () => {
 describe("InlineCompletionProvider", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
-		mockGetConfig.mockImplementation((k: string) => {
+		mockGetConfig.mockImplementation(function (k: string) {
 			if (k === "inlineCompletion.enabled") return true
 			if (k === "inlineCompletion.triggerDelayMs") return 0
 			if (k === "inlineCompletion.maxLines") return 10
@@ -223,7 +223,7 @@ describe("InlineCompletionProvider", () => {
 	})
 
 	it("uses generic engine when Cangjie enhanced is off", async () => {
-		mockGetConfig.mockImplementation((k: string) => {
+		mockGetConfig.mockImplementation(function (k: string) {
 			if (k === "inlineCompletion.enabled") return true
 			if (k === "inlineCompletion.triggerDelayMs") return 0
 			if (k === "inlineCompletion.maxLines") return 10
@@ -249,7 +249,7 @@ describe("InlineCompletionProvider", () => {
 	})
 
 	it("returns null when cancelled after debounce", async () => {
-		mockGetConfig.mockImplementation((k: string) => {
+		mockGetConfig.mockImplementation(function (k: string) {
 			if (k === "inlineCompletion.enabled") return true
 			if (k === "inlineCompletion.triggerDelayMs") return 50
 			if (k === "inlineCompletion.maxLines") return 10

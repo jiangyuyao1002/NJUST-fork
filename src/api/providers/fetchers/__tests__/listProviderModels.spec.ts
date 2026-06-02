@@ -10,15 +10,19 @@ const { sharedMockGet, sharedMockSet, sharedMockDel } = vi.hoisted(() => ({
 
 vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
-		reportError: vi.fn(), instance: { captureEvent: vi.fn() } },
+		reportError: vi.fn(),
+		instance: { captureEvent: vi.fn() },
+	},
 }))
 
 vi.mock("node-cache", () => ({
-	default: vi.fn().mockImplementation(() => ({
-		get: sharedMockGet,
-		set: sharedMockSet,
-		del: sharedMockDel,
-	})),
+	default: vi.fn(function () {
+		return {
+			get: sharedMockGet,
+			set: sharedMockSet,
+			del: sharedMockDel,
+		}
+	}),
 }))
 
 vi.mock("fs/promises", () => ({
@@ -90,7 +94,7 @@ describe("listProviderModels", () => {
 	})
 
 	it("returns memory cache hit without calling API", async () => {
-		sharedMockGet.mockImplementation((key: string) => {
+		sharedMockGet.mockImplementation(function (key: string) {
 			if (key === "openai") return FAKE_MODELS_API
 			return undefined
 		})
@@ -159,7 +163,7 @@ describe("listProviderModels", () => {
 			models: FAKE_MODELS_API,
 		})
 		vi.mocked(fsSync.existsSync).mockReturnValue(true)
-		vi.mocked(fsSync.readFileSync).mockImplementation((p: any) => {
+		vi.mocked(fsSync.readFileSync).mockImplementation(function (p: any) {
 			if (String(p).includes("dynamic_openai")) return staleEntry
 			return "{}"
 		})
@@ -187,7 +191,7 @@ describe("listProviderModels", () => {
 			models: FAKE_MODELS_API,
 		})
 		vi.mocked(fsSync.existsSync).mockReturnValue(true)
-		vi.mocked(fsSync.readFileSync).mockImplementation((p: any) => {
+		vi.mocked(fsSync.readFileSync).mockImplementation(function (p: any) {
 			if (String(p).includes("dynamic_openai")) return diskEntry
 			return "{}"
 		})
@@ -218,7 +222,9 @@ describe("listProviderModels", () => {
 
 	it("reuses in-flight request for concurrent calls", async () => {
 		let resolveApi: (v: any) => void
-		const pending = new Promise((resolve) => { resolveApi = resolve })
+		const pending = new Promise((resolve) => {
+			resolveApi = resolve
+		})
 		mockFetchOpenAI.mockReturnValue(pending)
 
 		const p1 = listProviderModels("openai", { apiKey: "k" })

@@ -3,35 +3,40 @@ import { McpProtocolAdapter } from "../adapters/McpProtocolAdapter"
 import type { CloudAgentProfile } from "../types/profile"
 
 const { notificationHandlers, requestHandlers } = vi.hoisted(() => ({
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	 
 	notificationHandlers: {} as Record<string, (...args: any[]) => any>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	 
 	requestHandlers: {} as Record<string, (...args: any[]) => any>,
 }))
 
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
-	Client: vi.fn().mockImplementation(() => ({
-		connect: vi.fn().mockResolvedValue(undefined),
-		close: vi.fn().mockResolvedValue(undefined),
-		getServerCapabilities: vi.fn().mockReturnValue({ tools: {} }),
-		callTool: vi.fn().mockResolvedValue({
-			content: [{ type: "text", text: JSON.stringify({ ok: true, text: "test result" }) }],
-		}),
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		setNotificationHandler: vi.fn((method: { method: string }, handler: (...args: any[]) => any) => {
-			notificationHandlers[method.method] = handler
-		}),
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		setRequestHandler: vi.fn((method: { method: string }, handler: (...args: any[]) => any) => {
-			requestHandlers[method.method] = handler
-		}),
-	})),
+	Client: vi.fn(function () {
+		return {
+			connect: vi.fn().mockResolvedValue(undefined),
+			close: vi.fn().mockResolvedValue(undefined),
+			getServerCapabilities: vi.fn().mockReturnValue({ tools: {} }),
+
+			callTool: vi.fn().mockResolvedValue({
+				content: [{ type: "text", text: JSON.stringify({ ok: true, text: "test result" }) }],
+			}),
+
+			 
+			setNotificationHandler: vi.fn(function (method: { method: string }, handler: (...args: any[]) => any) {
+				notificationHandlers[method.method] = handler
+			}),
+
+			 
+			setRequestHandler: vi.fn(function (method: { method: string }, handler: (...args: any[]) => any) {
+				requestHandlers[method.method] = handler
+			}),
+		}
+	}),
 }))
 
 vi.mock("@modelcontextprotocol/sdk/client/streamableHttp.js", () => ({
-	StreamableHTTPClientTransport: vi.fn().mockImplementation(() => ({
-		// mock transport
-	})),
+	StreamableHTTPClientTransport: vi.fn(function () {
+		return {}
+	}),
 }))
 
 vi.mock("../../../shared/logger", () => ({
@@ -147,24 +152,24 @@ describe("McpProtocolAdapter", () => {
 		adapter.initialize(profile)
 
 		const mcpResult = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({
-					ok: true,
-					status: "done",
-					run_id: "run-789",
-					text: "result text",
-					reasoning: "reasoning text",
-					logs: ["log1", "log2"],
-					memory_summary: "memory",
-					tokens_in: 100,
-					tokens_out: 200,
-					cost: 0.05,
-					pending_tools: [
-						{ call_id: "call-1", tool: "read_file", arguments: { path: "test.txt" } },
-					],
-				}),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						ok: true,
+						status: "done",
+						run_id: "run-789",
+						text: "result text",
+						reasoning: "reasoning text",
+						logs: ["log1", "log2"],
+						memory_summary: "memory",
+						tokens_in: 100,
+						tokens_out: 200,
+						cost: 0.05,
+						pending_tools: [{ call_id: "call-1", tool: "read_file", arguments: { path: "test.txt" } }],
+					}),
+				},
+			],
 		}
 
 		const result = adapter.parseResponseBody(mcpResult)
@@ -246,14 +251,20 @@ describe("McpProtocolAdapter", () => {
 		adapter.initialize(profile)
 
 		const mcpResult = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({
-					tool_calls: [
-						{ call_id: "call-2", tool: "write_file", arguments: { path: "test.txt", content: "hello" } },
-					],
-				}),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						tool_calls: [
+							{
+								call_id: "call-2",
+								tool: "write_file",
+								arguments: { path: "test.txt", content: "hello" },
+							},
+						],
+					}),
+				},
+			],
 		}
 
 		const result = adapter.parseResponseBody(mcpResult)
@@ -266,12 +277,14 @@ describe("McpProtocolAdapter", () => {
 		adapter.initialize(profile)
 
 		const mcpResult = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({
-					pending_tools: "not-an-array",
-				}),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						pending_tools: "not-an-array",
+					}),
+				},
+			],
 		}
 
 		const result = adapter.parseResponseBody(mcpResult)
@@ -288,10 +301,12 @@ describe("McpProtocolAdapter", () => {
 		adapter.initialize(profile)
 
 		const mcpResult = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({ success: true, output: "Build succeeded" }),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({ success: true, output: "Build succeeded" }),
+				},
+			],
 		}
 
 		const result = adapter.parseCompileResponse(mcpResult)
@@ -356,10 +371,12 @@ describe("McpProtocolAdapter", () => {
 		adapter.initialize(profile)
 
 		const mcpResult = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({}),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({}),
+				},
+			],
 		}
 
 		const result = adapter.parseCompileResponse(mcpResult)
@@ -372,10 +389,12 @@ describe("McpProtocolAdapter", () => {
 		adapter.initialize(profile)
 
 		const data = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({ ok: true }),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({ ok: true }),
+				},
+			],
 		}
 
 		const result = adapter.parseMcpContent(data)

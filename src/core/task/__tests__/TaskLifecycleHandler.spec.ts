@@ -240,7 +240,7 @@ describe("TaskLifecycleHandler", () => {
 	it("continues abort cleanup when save and dispose throw", async () => {
 		const host = createHost({
 			saveClineMessages: vi.fn().mockRejectedValue(new Error("save failed")),
-			dispose: vi.fn(() => {
+			dispose: vi.fn(function () {
 				throw new Error("dispose failed")
 			}),
 		})

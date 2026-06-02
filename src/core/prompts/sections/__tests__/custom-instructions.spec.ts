@@ -8,7 +8,7 @@ vi.mock("fs/promises")
 // Mock path.resolve and path.join to be predictable in tests
 vi.mock("path", async () => ({
 	...(await vi.importActual("path")),
-	resolve: vi.fn().mockImplementation((...args) => {
+	resolve: vi.fn(function (...args) {
 		// On Windows, use backslashes; on Unix, use forward slashes
 		const separator = process.platform === "win32" ? "\\" : "/"
 		// Filter out empty strings and normalize separators
@@ -30,7 +30,7 @@ vi.mock("path", async () => ({
 			return cleanArgs.join(separator)
 		}
 	}),
-	join: vi.fn().mockImplementation((...args) => {
+	join: vi.fn(function (...args) {
 		const separator = process.platform === "win32" ? "\\" : "/"
 		// Filter out empty strings and normalize separators
 		const cleanArgs = args
@@ -38,7 +38,7 @@ vi.mock("path", async () => ({
 			.map((arg) => arg.toString().replace(/[/\\]+/g, separator))
 		return cleanArgs.join(separator)
 	}),
-	relative: vi.fn().mockImplementation((from, to) => {
+	relative: vi.fn(function (from, to) {
 		// Simple relative path computation for test scenarios
 		const separator = process.platform === "win32" ? "\\" : "/"
 		const normalizedFrom = from.replace(/[/\\]+$/, "") // Remove trailing slashes
@@ -48,7 +48,7 @@ vi.mock("path", async () => ({
 		}
 		return to
 	}),
-	dirname: vi.fn().mockImplementation((path) => {
+	dirname: vi.fn(function (path) {
 		const separator = process.platform === "win32" ? "\\" : "/"
 		const parts = path.split(/[/\\]/)
 		return parts.slice(0, -1).join(separator)
@@ -129,7 +129,7 @@ describe("loadRuleFiles", () => {
 	it("should not combine content from multiple rule files when they exist", async () => {
 		// Simulate no .njust_ai/rules directory
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			if (filePath.toString().endsWith(".roorules")) {
 				return Promise.resolve("njust-ai rules content")
 			}
@@ -155,7 +155,7 @@ describe("loadRuleFiles", () => {
 	it("should skip directories with same name as rule files", async () => {
 		// Simulate no .njust_ai/rules directory
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			if (filePath.toString().endsWith(".roorules")) {
 				return Promise.reject({ code: "EISDIR" })
 			}
@@ -177,11 +177,21 @@ describe("loadRuleFiles", () => {
 
 		// Simulate listing files
 		readdirMock.mockResolvedValueOnce([
-			{ name: "file1.txt", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
-			{ name: "file2.txt", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
+			{
+				name: "file1.txt",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
+			{
+				name: "file2.txt",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
 		] as any)
 
-		statMock.mockImplementation((path) => {
+		statMock.mockImplementation(function (path) {
 			// Handle both Unix and Windows path separators
 			const normalizedPath = path.toString().replace(/\\/g, "/")
 			if (
@@ -197,7 +207,7 @@ describe("loadRuleFiles", () => {
 			}) as any
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			// Handle both Unix and Windows path separators
 			const normalizedPath = pathStr.replace(/\\/g, "/")
@@ -212,8 +222,10 @@ describe("loadRuleFiles", () => {
 
 		const result = await loadRuleFiles("/fake/path")
 		// Paths in output should be relative to cwd
-		const expectedRelativePath1 = process.platform === "win32" ? ".njust_ai\\rules\\file1.txt" : ".njust_ai/rules/file1.txt"
-		const expectedRelativePath2 = process.platform === "win32" ? ".njust_ai\\rules\\file2.txt" : ".njust_ai/rules/file2.txt"
+		const expectedRelativePath1 =
+			process.platform === "win32" ? ".njust_ai\\rules\\file1.txt" : ".njust_ai/rules/file1.txt"
+		const expectedRelativePath2 =
+			process.platform === "win32" ? ".njust_ai\\rules\\file2.txt" : ".njust_ai/rules/file2.txt"
 		expect(result).toContain(`# Rules from ${expectedRelativePath1}:`)
 		expect(result).toContain("content of file1")
 		expect(result).toContain(`# Rules from ${expectedRelativePath2}:`)
@@ -221,11 +233,16 @@ describe("loadRuleFiles", () => {
 
 		// We expect both checks because our new implementation checks the files again for validation
 		// These are the absolute paths used internally
-		const expectedRulesDir = process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules" : "/fake/path/.njust_ai/rules"
+		const expectedRulesDir =
+			process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules" : "/fake/path/.njust_ai/rules"
 		const expectedFile1Path =
-			process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules\\file1.txt" : "/fake/path/.njust_ai/rules/file1.txt"
+			process.platform === "win32"
+				? "\\fake\\path\\.njust_ai\\rules\\file1.txt"
+				: "/fake/path/.njust_ai/rules/file1.txt"
 		const expectedFile2Path =
-			process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules\\file2.txt" : "/fake/path/.njust_ai/rules/file2.txt"
+			process.platform === "win32"
+				? "\\fake\\path\\.njust_ai\\rules\\file2.txt"
+				: "/fake/path/.njust_ai/rules/file2.txt"
 
 		expect(statMock).toHaveBeenCalledWith(expectedRulesDir)
 		expect(statMock).toHaveBeenCalledWith(expectedFile1Path)
@@ -242,18 +259,48 @@ describe("loadRuleFiles", () => {
 
 		// Simulate listing files including cache files
 		readdirMock.mockResolvedValueOnce([
-			{ name: "rule1.txt", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
-			{ name: ".DS_Store", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
-			{ name: "Thumbs.db", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
-			{ name: "rule2.md", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
-			{ name: "cache.log", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
+			{
+				name: "rule1.txt",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
+			{
+				name: ".DS_Store",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
+			{
+				name: "Thumbs.db",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
+			{
+				name: "rule2.md",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
+			{
+				name: "cache.log",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
 			{
 				name: "backup.bak",
 				isFile: () => true,
 				isSymbolicLink: () => false,
 				parentPath: "/fake/path/.njust_ai/rules",
 			},
-			{ name: "temp.tmp", isFile: () => true, isSymbolicLink: () => false, parentPath: "/fake/path/.njust_ai/rules" },
+			{
+				name: "temp.tmp",
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				parentPath: "/fake/path/.njust_ai/rules",
+			},
 			{
 				name: "script.pyc",
 				isFile: () => true,
@@ -262,13 +309,13 @@ describe("loadRuleFiles", () => {
 			},
 		] as any)
 
-		statMock.mockImplementation((_path) => {
+		statMock.mockImplementation(function (_path) {
 			return Promise.resolve({
 				isFile: vi.fn().mockReturnValue(true),
 			}) as any
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			const normalizedPath = pathStr.replace(/\\/g, "/")
 
@@ -344,7 +391,7 @@ describe("loadRuleFiles", () => {
 		readdirMock.mockResolvedValueOnce([])
 
 		// Simulate .roorules exists
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			if (filePath.toString().endsWith(".roorules")) {
 				return Promise.resolve("njust-ai rules content")
 			}
@@ -365,7 +412,7 @@ describe("loadRuleFiles", () => {
 		readdirMock.mockRejectedValueOnce(new Error("Failed to read directory"))
 
 		// Simulate .roorules exists
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			if (filePath.toString().endsWith(".roorules")) {
 				return Promise.resolve("njust-ai rules content")
 			}
@@ -414,7 +461,7 @@ describe("loadRuleFiles", () => {
 			},
 		] as any)
 
-		statMock.mockImplementation((path: string) => {
+		statMock.mockImplementation(function (path: string) {
 			// Handle both Unix and Windows path separators
 			const normalizedPath = path.toString().replace(/\\/g, "/")
 			if (normalizedPath.endsWith("txt")) {
@@ -429,7 +476,7 @@ describe("loadRuleFiles", () => {
 			} as any)
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			// Handle both Unix and Windows path separators
 			const normalizedPath = pathStr.replace(/\\/g, "/")
@@ -448,9 +495,12 @@ describe("loadRuleFiles", () => {
 		const result = await loadRuleFiles("/fake/path")
 
 		// Check root file content - paths in output should be relative
-		const expectedRelativeRootPath = process.platform === "win32" ? ".njust_ai\\rules\\root.txt" : ".njust_ai/rules/root.txt"
+		const expectedRelativeRootPath =
+			process.platform === "win32" ? ".njust_ai\\rules\\root.txt" : ".njust_ai/rules/root.txt"
 		const expectedRelativeNested1Path =
-			process.platform === "win32" ? ".njust_ai\\rules\\subdir\\nested1.txt" : ".njust_ai/rules/subdir/nested1.txt"
+			process.platform === "win32"
+				? ".njust_ai\\rules\\subdir\\nested1.txt"
+				: ".njust_ai/rules/subdir/nested1.txt"
 		const expectedRelativeNested2Path =
 			process.platform === "win32"
 				? ".njust_ai\\rules\\subdir\\subdir2\\nested2.txt"
@@ -467,7 +517,9 @@ describe("loadRuleFiles", () => {
 
 		// Verify correct absolute paths were checked internally
 		const expectedRootPath2 =
-			process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules\\root.txt" : "/fake/path/.njust_ai/rules/root.txt"
+			process.platform === "win32"
+				? "\\fake\\path\\.njust_ai\\rules\\root.txt"
+				: "/fake/path/.njust_ai/rules/root.txt"
 		const expectedNested1Path2 =
 			process.platform === "win32"
 				? "\\fake\\path\\.njust_ai\\rules\\subdir\\nested1.txt"
@@ -520,7 +572,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate AGENTS.md is NOT a symlink
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve({
@@ -530,7 +582,7 @@ describe("addCustomInstructions", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("Agent rules from AGENTS.md file")
@@ -561,7 +613,7 @@ describe("addCustomInstructions", () => {
 		// Simulate no .njust_ai/rules-test-mode directory
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("Agent rules from AGENTS.md file")
@@ -592,7 +644,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate AGENTS.md is NOT a symlink
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve({
@@ -602,7 +654,7 @@ describe("addCustomInstructions", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("Agent rules from AGENTS.md file")
@@ -653,7 +705,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate AGENTS.md is NOT a symlink
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve({
@@ -663,7 +715,7 @@ describe("addCustomInstructions", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("Agent rules content")
@@ -700,7 +752,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate AGENTS.md is a symlink
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve({
@@ -711,7 +763,7 @@ describe("addCustomInstructions", () => {
 		})
 
 		// Mock readlink to return the symlink target
-		readlinkMock.mockImplementation((filePath: PathLike) => {
+		readlinkMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("../actual-agents-file.md")
@@ -720,7 +772,7 @@ describe("addCustomInstructions", () => {
 		})
 
 		// Mock stat to indicate the resolved target is a file
-		statMock.mockImplementation((filePath: PathLike) => {
+		statMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			const normalizedPath = pathStr.replace(/\\/g, "/")
 			if (normalizedPath.endsWith("actual-agents-file.md")) {
@@ -732,7 +784,7 @@ describe("addCustomInstructions", () => {
 		})
 
 		// Mock readFile to return content from the resolved path
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			const normalizedPath = pathStr.replace(/\\/g, "/")
 			if (normalizedPath.endsWith("actual-agents-file.md")) {
@@ -773,7 +825,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate AGENTS.md is NOT a symlink
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve({
@@ -784,7 +836,7 @@ describe("addCustomInstructions", () => {
 		})
 
 		// Mock readFile to return content directly from AGENTS.md
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("Agent rules from regular file")
@@ -824,7 +876,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate AGENTS.md doesn't exist but AGENT.md does
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.reject({ code: "ENOENT" })
@@ -837,7 +889,7 @@ describe("addCustomInstructions", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENT.md")) {
 				return Promise.resolve("Agent rules from AGENT.md file (singular)")
@@ -869,7 +921,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate both files exist
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md") || pathStr.endsWith("AGENT.md")) {
 				return Promise.resolve({
@@ -879,7 +931,7 @@ describe("addCustomInstructions", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("Agent rules from AGENTS.md file (plural)")
@@ -975,7 +1027,7 @@ describe("addCustomInstructions", () => {
 		// Simulate no .njust_ai/rules-test-mode directory
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			if (filePath.toString().includes(".clinerules-test-mode")) {
 				return Promise.reject({ code: "EISDIR" })
 			}
@@ -1016,7 +1068,7 @@ describe("addCustomInstructions", () => {
 			},
 		] as any)
 
-		statMock.mockImplementation((path) => {
+		statMock.mockImplementation(function (path) {
 			// Handle both Unix and Windows path separators
 			const normalizedPath = path.toString().replace(/\\/g, "/")
 			if (
@@ -1032,7 +1084,7 @@ describe("addCustomInstructions", () => {
 			}) as any
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			// Handle both Unix and Windows path separators
 			const normalizedPath = pathStr.replace(/\\/g, "/")
@@ -1055,9 +1107,13 @@ describe("addCustomInstructions", () => {
 
 		// Paths in output should be relative
 		const expectedRelativeRule1Path =
-			process.platform === "win32" ? ".njust_ai\\rules-test-mode\\rule1.txt" : ".njust_ai/rules-test-mode/rule1.txt"
+			process.platform === "win32"
+				? ".njust_ai\\rules-test-mode\\rule1.txt"
+				: ".njust_ai/rules-test-mode/rule1.txt"
 		const expectedRelativeRule2Path =
-			process.platform === "win32" ? ".njust_ai\\rules-test-mode\\rule2.txt" : ".njust_ai/rules-test-mode/rule2.txt"
+			process.platform === "win32"
+				? ".njust_ai\\rules-test-mode\\rule2.txt"
+				: ".njust_ai/rules-test-mode/rule2.txt"
 
 		expect(result).toContain(`# Rules from ${expectedRelativeRule1Path}:`)
 		expect(result).toContain("mode specific rule 1")
@@ -1066,7 +1122,9 @@ describe("addCustomInstructions", () => {
 
 		// Verify absolute paths were used internally
 		const expectedAbsTestModeDir =
-			process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules-test-mode" : "/fake/path/.njust_ai/rules-test-mode"
+			process.platform === "win32"
+				? "\\fake\\path\\.njust_ai\\rules-test-mode"
+				: "/fake/path/.njust_ai/rules-test-mode"
 		const expectedAbsRule1Path =
 			process.platform === "win32"
 				? "\\fake\\path\\.njust_ai\\rules-test-mode\\rule1.txt"
@@ -1088,7 +1146,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Simulate .roorules-test-mode exists
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			if (filePath.toString().includes(".roorules-test-mode")) {
 				return Promise.resolve("mode specific rules from file")
 			}
@@ -1110,7 +1168,7 @@ describe("addCustomInstructions", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Simulate file reading
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			if (filePath.toString().includes(".roorules-test-mode")) {
 				return Promise.reject({ code: "ENOENT" })
 			}
@@ -1150,7 +1208,7 @@ describe("addCustomInstructions", () => {
 
 		// Set up stat mock for checking files
 		let statCallCount = 0
-		statMock.mockImplementation((filePath) => {
+		statMock.mockImplementation(function (filePath) {
 			statCallCount++
 			// Handle both Unix and Windows path separators
 			const normalizedPath = filePath.toString().replace(/\\/g, "/")
@@ -1166,7 +1224,7 @@ describe("addCustomInstructions", () => {
 			} as any)
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			// Handle both Unix and Windows path separators
 			const normalizedPath = pathStr.replace(/\\/g, "/")
@@ -1185,7 +1243,9 @@ describe("addCustomInstructions", () => {
 
 		// Paths in output should be relative
 		const expectedRelativeRule1Path =
-			process.platform === "win32" ? ".njust_ai\\rules-test-mode\\rule1.txt" : ".njust_ai/rules-test-mode/rule1.txt"
+			process.platform === "win32"
+				? ".njust_ai\\rules-test-mode\\rule1.txt"
+				: ".njust_ai/rules-test-mode/rule1.txt"
 
 		expect(result).toContain(`# Rules from ${expectedRelativeRule1Path}:`)
 		expect(result).toContain("mode specific rule content")
@@ -1215,7 +1275,8 @@ describe("Directory existence checks", () => {
 		await loadRuleFiles("/fake/path")
 
 		// Verify stat was called to check directory existence
-		const expectedRulesDir = process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules" : "/fake/path/.njust_ai/rules"
+		const expectedRulesDir =
+			process.platform === "win32" ? "\\fake\\path\\.njust_ai\\rules" : "/fake/path/.njust_ai/rules"
 		expect(statMock).toHaveBeenCalledWith(expectedRulesDir)
 	})
 
@@ -1270,7 +1331,11 @@ describe("Rules directory reading", () => {
 				},
 			] as any)
 			.mockResolvedValueOnce([
-				{ name: "subdir_link.txt", isFile: () => true, parentPath: "/fake/path/.njust_ai/rules/symlink-target-dir" },
+				{
+					name: "subdir_link.txt",
+					isFile: () => true,
+					parentPath: "/fake/path/.njust_ai/rules/symlink-target-dir",
+				},
 			] as any)
 
 		// Simulate readlink response
@@ -1282,7 +1347,7 @@ describe("Rules directory reading", () => {
 
 		// Reset and set up the stat mock with more granular control
 		statMock.mockReset()
-		statMock.mockImplementation((path: string) => {
+		statMock.mockImplementation(function (path: string) {
 			// For directory check
 			if (path === "/fake/path/.njust_ai/rules" || path.endsWith("dir")) {
 				return Promise.resolve({
@@ -1308,7 +1373,7 @@ describe("Rules directory reading", () => {
 		})
 
 		// Simulate file content reading
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			// Handle both Unix and Windows path separators
 			const normalizedPath = pathStr.replace(/\\/g, "/")
@@ -1339,7 +1404,9 @@ describe("Rules directory reading", () => {
 				? ".njust_ai\\rules\\symlink-target-dir\\subdir_link.txt"
 				: ".njust_ai/rules/symlink-target-dir/subdir_link.txt"
 		const expectedRelativeNestedPath =
-			process.platform === "win32" ? ".njust_ai\\nested-symlink-target.txt" : ".njust_ai/nested-symlink-target.txt"
+			process.platform === "win32"
+				? ".njust_ai\\nested-symlink-target.txt"
+				: ".njust_ai/nested-symlink-target.txt"
 
 		expect(result).toContain(`# Rules from ${expectedRelativeRegularPath}:`)
 		expect(result).toContain("regular file content")
@@ -1357,7 +1424,10 @@ describe("Rules directory reading", () => {
 		// Verify both files were read
 		expect(readFileMock).toHaveBeenCalledWith("/fake/path/.njust_ai/rules/regular.txt", "utf-8")
 		expect(readFileMock).toHaveBeenCalledWith("/fake/path/.njust_ai/symlink-target.txt", "utf-8")
-		expect(readFileMock).toHaveBeenCalledWith("/fake/path/.njust_ai/rules/symlink-target-dir/subdir_link.txt", "utf-8")
+		expect(readFileMock).toHaveBeenCalledWith(
+			"/fake/path/.njust_ai/rules/symlink-target-dir/subdir_link.txt",
+			"utf-8",
+		)
 		expect(readFileMock).toHaveBeenCalledWith("/fake/path/.njust_ai/nested-symlink-target.txt", "utf-8")
 	})
 	beforeEach(() => {
@@ -1377,7 +1447,7 @@ describe("Rules directory reading", () => {
 			{ name: "file3.txt", isFile: () => true, parentPath: "/fake/path/.njust_ai/rules" },
 		] as any)
 
-		statMock.mockImplementation((path) => {
+		statMock.mockImplementation(function (path) {
 			// Handle both Unix and Windows path separators
 			const normalizedPath = path.toString().replace(/\\/g, "/")
 			expect([
@@ -1391,7 +1461,7 @@ describe("Rules directory reading", () => {
 			}) as any
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			// Handle both Unix and Windows path separators
 			const normalizedPath = pathStr.replace(/\\/g, "/")
@@ -1438,13 +1508,13 @@ describe("Rules directory reading", () => {
 			{ name: "Beta.txt", isFile: () => true, parentPath: "/fake/path/.njust_ai/rules" }, // Test case-insensitive sorting
 		] as any)
 
-		statMock.mockImplementation((_path) => {
+		statMock.mockImplementation(function (_path) {
 			return Promise.resolve({
 				isFile: vi.fn().mockReturnValue(true),
 			}) as any
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			const normalizedPath = pathStr.replace(/\\/g, "/")
 			if (normalizedPath === "/fake/path/.njust_ai/rules/zebra.txt") {
@@ -1472,7 +1542,8 @@ describe("Rules directory reading", () => {
 		// Verify the expected file paths are in the result (should be relative)
 		const expectedRelativeAlphaPath =
 			process.platform === "win32" ? ".njust_ai\\rules\\alpha.txt" : ".njust_ai/rules/alpha.txt"
-		const expectedRelativeBetaPath = process.platform === "win32" ? ".njust_ai\\rules\\Beta.txt" : ".njust_ai/rules/Beta.txt"
+		const expectedRelativeBetaPath =
+			process.platform === "win32" ? ".njust_ai\\rules\\Beta.txt" : ".njust_ai/rules/Beta.txt"
 		const expectedRelativeZebraPath =
 			process.platform === "win32" ? ".njust_ai\\rules\\zebra.txt" : ".njust_ai/rules/zebra.txt"
 
@@ -1522,7 +1593,7 @@ describe("Rules directory reading", () => {
 			.mockResolvedValueOnce("../../targets/mmm-middle.txt") // 03-third.link -> mmm-middle.txt
 
 		// Set up stat mock for the remaining calls
-		statMock.mockImplementation((path) => {
+		statMock.mockImplementation(function (path) {
 			const normalizedPath = path.toString().replace(/\\/g, "/")
 			// Target files exist and are files
 			if (normalizedPath.endsWith(".txt")) {
@@ -1537,7 +1608,7 @@ describe("Rules directory reading", () => {
 			} as any)
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			const normalizedPath = pathStr.replace(/\\/g, "/")
 			if (normalizedPath.endsWith("zzz-last.txt")) {
@@ -1595,7 +1666,7 @@ describe("Rules directory reading", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate both AGENTS.md and AGENTS.local.md exist (not symlinks)
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md") || pathStr.endsWith("AGENTS.local.md")) {
 				return Promise.resolve({
@@ -1605,7 +1676,7 @@ describe("Rules directory reading", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.local.md")) {
 				return Promise.resolve("Local overrides from AGENTS.local.md")
@@ -1642,7 +1713,7 @@ describe("Rules directory reading", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate only AGENTS.local.md exists (no base file)
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.local.md")) {
 				return Promise.resolve({
@@ -1652,7 +1723,7 @@ describe("Rules directory reading", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.local.md")) {
 				return Promise.resolve("Local overrides without base file")
@@ -1684,7 +1755,7 @@ describe("Rules directory reading", () => {
 		statMock.mockRejectedValueOnce({ code: "ENOENT" })
 
 		// Mock lstat to indicate only AGENTS.md exists (no local override)
-		lstatMock.mockImplementation((filePath: PathLike) => {
+		lstatMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve({
@@ -1694,7 +1765,7 @@ describe("Rules directory reading", () => {
 			return Promise.reject({ code: "ENOENT" })
 		})
 
-		readFileMock.mockImplementation((filePath: PathLike) => {
+		readFileMock.mockImplementation(function (filePath: PathLike) {
 			const pathStr = filePath.toString()
 			if (pathStr.endsWith("AGENTS.md")) {
 				return Promise.resolve("Base rules from AGENTS.md only")

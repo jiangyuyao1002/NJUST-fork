@@ -8,9 +8,7 @@ const fsMock = vi.hoisted(() => ({
 vi.mock("fs/promises", () => fsMock)
 
 vi.mock("../../../../services/cangjie-lsp/CangjieErrorAnalyzer", () => ({
-	STDLIB_DOC_MAP: [
-		{ prefix: "std.collection", summary: "collections", docPaths: ["std/collection.md"] },
-	],
+	STDLIB_DOC_MAP: [{ prefix: "std.collection", summary: "collections", docPaths: ["std/collection.md"] }],
 	getErrorFixDirective: vi.fn(() => "fix the root cause"),
 	getMatchingCjcPatternsByCategory: vi.fn((text: string) =>
 		text.includes("missing_symbol")
@@ -28,13 +26,17 @@ vi.mock("../../../../services/cangjie-lsp/CangjieErrorAnalyzer", () => ({
 
 vi.mock("../../../../services/cangjie-lsp/CangjieSymbolIndex", () => ({
 	CangjieSymbolIndex: {
-		getInstance: vi.fn(() => ({
-			findEnclosingSymbol: vi.fn(() => ({
-				kind: "func",
-				name: "main",
-				signature: "func main(): Int64",
-			})),
-		})),
+		getInstance: vi.fn(function () {
+			return {
+				findEnclosingSymbol: vi.fn(function () {
+					return {
+						kind: "func",
+						name: "main",
+						signature: "func main(): Int64",
+					}
+				}),
+			}
+		}),
 	},
 }))
 

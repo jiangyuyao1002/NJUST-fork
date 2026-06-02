@@ -20,7 +20,7 @@ describe("askFollowupQuestionTool", () => {
 			recordToolError: vi.fn(),
 		}
 
-		mockPushToolResult = vi.fn((result) => {
+		mockPushToolResult = vi.fn(function (result) {
 			_toolResult = result
 		})
 	})

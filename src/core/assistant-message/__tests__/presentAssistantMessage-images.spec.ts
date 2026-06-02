@@ -7,7 +7,11 @@ import { presentAssistantMessage } from "../presentAssistantMessage"
 vi.mock("../../task/Task")
 vi.mock("../../tools/validateToolUse", () => ({
 	validateToolUse: vi.fn(),
-	mergeToolParamsForValidation: vi.fn((block: any) => ({ ...block.params })),
+	mergeToolParamsForValidation: vi.fn(function (block: any) {
+		return {
+			...block.params,
+		}
+	}),
 	isValidToolName: vi.fn((toolName: string) =>
 		["read_file", "write_to_file", "ask_followup_question", "attempt_completion", "use_mcp_tool"].includes(
 			toolName,
@@ -21,6 +25,8 @@ vi.mock("@njust-ai/telemetry", () => ({
 			captureToolUsage: vi.fn(),
 			captureConsecutiveMistakeError: vi.fn(),
 			startSpan: vi.fn(),
+			captureEvent: vi.fn(),
+			endSpan: vi.fn(),
 		},
 	},
 }))
@@ -64,7 +70,7 @@ describe("presentAssistantMessage - Image Handling in Native Tool Calling", () =
 		}
 
 		// Add pushToolResultToUserContent method after mockTask is created so it can reference mockTask
-		mockTask.pushToolResultToUserContent = vi.fn().mockImplementation((toolResult: any) => {
+		mockTask.pushToolResultToUserContent = vi.fn(function (toolResult: any) {
 			const existingResult = mockTask.userMessageContent.find(
 				(block: any) => block.type === "tool_result" && block.tool_use_id === toolResult.tool_use_id,
 			)

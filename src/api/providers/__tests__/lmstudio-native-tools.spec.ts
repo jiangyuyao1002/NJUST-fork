@@ -7,13 +7,15 @@ const mockCreate = vi.fn()
 vi.mock("openai", () => {
 	return {
 		__esModule: true,
-		default: vi.fn().mockImplementation(() => ({
-			chat: {
-				completions: {
-					create: mockCreate,
+		default: vi.fn(function () {
+			return {
+				chat: {
+					completions: {
+						create: mockCreate,
+					},
 				},
-			},
-		})),
+			}
+		}),
 	}
 })
 

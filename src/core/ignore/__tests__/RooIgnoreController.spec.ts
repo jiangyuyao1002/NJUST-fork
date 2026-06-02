@@ -24,18 +24,21 @@ vi.mock("vscode", () => {
 
 	return {
 		workspace: {
-			createFileSystemWatcher: vi.fn(() => ({
-				onDidCreate: vi.fn(() => mockDisposable),
-				onDidChange: vi.fn(() => mockDisposable),
-				onDidDelete: vi.fn(() => mockDisposable),
-				dispose: vi.fn(),
-			})),
+			createFileSystemWatcher: vi.fn(function () {
+				return {
+					onDidCreate: vi.fn(() => mockDisposable),
+					onDidChange: vi.fn(() => mockDisposable),
+					onDidDelete: vi.fn(() => mockDisposable),
+					dispose: vi.fn(),
+				}
+			}),
 		},
-		RelativePattern: vi.fn().mockImplementation((base, pattern) => ({
-			base,
-			pattern,
-		})),
-		EventEmitter: vi.fn().mockImplementation(() => mockEventEmitter),
+		RelativePattern: vi.fn(function (base, pattern) {
+			return { base, pattern }
+		}),
+		EventEmitter: vi.fn(function () {
+			return mockEventEmitter
+		}),
 		Disposable: {
 			from: vi.fn(),
 		},
@@ -151,7 +154,7 @@ describe("RooIgnoreController", () => {
 			mockReadFile.mockRejectedValue(new Error("Test file read error"))
 
 			// Spy on console.error
-			const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+			const consoleSpy = vi.spyOn(console, "error").mockImplementation(function () {})
 
 			// Initialize controller - shouldn't throw
 			await controller.initialize()
@@ -234,7 +237,7 @@ describe("RooIgnoreController", () => {
 		it("should block symlinks pointing to ignored files", () => {
 			// Mock fsSync.realpathSync to simulate symlink resolution
 			const mockRealpathSync = vi.mocked(fsSync.realpathSync)
-			mockRealpathSync.mockImplementation((filePath) => {
+			mockRealpathSync.mockImplementation(function (filePath) {
 				// Simulate "config.json" being a symlink to "node_modules/package.json"
 				if (filePath.toString().endsWith("config.json")) {
 					return path.join(TEST_CWD, "node_modules/package.json")
@@ -357,12 +360,12 @@ describe("RooIgnoreController", () => {
 		 */
 		it("should handle errors in filterPaths and fail closed", () => {
 			// Mock validateAccess to throw an error
-			vi.spyOn(controller, "validateAccess").mockImplementation(() => {
+			vi.spyOn(controller, "validateAccess").mockImplementation(function () {
 				throw new Error("Test error")
 			})
 
 			// Spy on console.error
-			const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+			const consoleSpy = vi.spyOn(console, "error").mockImplementation(function () {})
 
 			// Should return empty array on error (fail closed)
 			const result = controller.filterPaths(["file1.txt", "file2.txt"])
@@ -512,6 +515,7 @@ describe("RooIgnoreController", () => {
 			mockFileExists.mockResolvedValue(true)
 			mockReadFile.mockResolvedValue("node_modules")
 			await controller.initialize()
+			await new Promise((r) => setTimeout(r, 0))
 
 			// Verify initial state
 			expect(controller.validateAccess("node_modules/package.json")).toBe(false)

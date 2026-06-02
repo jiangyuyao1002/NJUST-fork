@@ -7,7 +7,11 @@ import { openFile } from "../open-file"
 // Mock vscode module
 vi.mock("vscode", () => ({
 	Uri: {
-		file: vi.fn((path: string) => ({ fsPath: path })),
+		file: vi.fn(function (path: string) {
+			return {
+				fsPath: path,
+			}
+		}),
 	},
 	workspace: {
 		fs: {
@@ -31,10 +35,12 @@ vi.mock("vscode", () => ({
 		Directory: 2,
 		File: 1,
 	},
-	Selection: vi.fn((startLine: number, startChar: number, endLine: number, endChar: number) => ({
-		start: { line: startLine, character: startChar },
-		end: { line: endLine, character: endChar },
-	})),
+	Selection: vi.fn(function (startLine: number, startChar: number, endLine: number, endChar: number) {
+		return {
+			start: { line: startLine, character: startChar },
+			end: { line: endLine, character: endChar },
+		}
+	}),
 	TabInputText: vi.fn(),
 }))
 
@@ -44,7 +50,7 @@ vi.mock("../../utils/path", () => {
 	const nodePath = require("path")
 	return {
 		arePathsEqual: vi.fn((a: string, b: string) => a === b),
-		getWorkspacePath: vi.fn(() => {
+		getWorkspacePath: vi.fn(function () {
 			// In tests, we need to return a consistent workspace path
 			// The actual workspace is /Users/NjustAi/rc2 in local, but varies in CI
 			const cwd = process.cwd()
@@ -59,7 +65,7 @@ vi.mock("../../utils/path", () => {
 
 // Mock i18n
 vi.mock("../../i18n", () => ({
-	t: vi.fn((key: string, _params?: any) => {
+	t: vi.fn(function (key: string, _params?: any) {
 		// Return the key without namespace prefix to match actual behavior
 		if (key.startsWith("common:")) {
 			return key.replace("common:", "")
@@ -71,7 +77,7 @@ vi.mock("../../i18n", () => ({
 describe("openFile", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
-		vi.spyOn(console, "warn").mockImplementation(() => {})
+		vi.spyOn(console, "warn").mockImplementation(function () {})
 	})
 
 	afterEach(() => {

@@ -7,12 +7,24 @@ import * as vscode from "vscode"
 vi.mock("vscode", () => ({
 	window: {
 		showErrorMessage: vi.fn(),
-		createTextEditorDecorationType: vi.fn(() => ({})),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {}
+		}),
 		showInformationMessage: vi.fn(),
 	},
 	Uri: {
-		file: vi.fn((path: string) => ({ fsPath: path })),
-		parse: vi.fn((_uri: string) => ({ with: vi.fn(() => ({})) })),
+		file: vi.fn(function (path: string) {
+			return {
+				fsPath: path,
+			}
+		}),
+		parse: vi.fn(function (_uri: string) {
+			return {
+				with: vi.fn(function () {
+					return {}
+				}),
+			}
+		}),
 	},
 	commands: {
 		executeCommand: vi.fn(),
@@ -40,7 +52,7 @@ vi.mock("../../../utils/git", () => ({
 }))
 
 vi.mock("../../../i18n", () => ({
-	t: vi.fn((key: string, options?: Record<string, any>) => {
+	t: vi.fn(function (key: string, options?: Record<string, any>) {
 		if (key === "common:errors.wait_checkpoint_long_time") {
 			return `Checkpoint initialization is taking longer than ${options?.timeout} seconds...`
 		}
@@ -291,7 +303,9 @@ describe("Checkpoint functionality", () => {
 			})
 
 			expect(mockTask.enableCheckpoints).toBe(false)
-			expect(mockProvider.log).toHaveBeenCalledWith("[checkpointRestore] disabling checkpoints for this task: Restore failed")
+			expect(mockProvider.log).toHaveBeenCalledWith(
+				"[checkpointRestore] disabling checkpoints for this task: Restore failed",
+			)
 		})
 	})
 
@@ -400,7 +414,9 @@ describe("Checkpoint functionality", () => {
 			})
 
 			expect(mockTask.enableCheckpoints).toBe(false)
-			expect(mockProvider.log).toHaveBeenCalledWith("[checkpointDiff] disabling checkpoints for this task: Diff failed")
+			expect(mockProvider.log).toHaveBeenCalledWith(
+				"[checkpointDiff] disabling checkpoints for this task: Diff failed",
+			)
 		})
 	})
 

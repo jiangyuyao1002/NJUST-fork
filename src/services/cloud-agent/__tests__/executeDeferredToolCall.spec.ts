@@ -9,7 +9,7 @@ vi.mock("../../mcp-server/tool-executors", () => ({
 	execWriteFile: vi.fn(() => Promise.resolve("file written")),
 	execListFiles: vi.fn(() => Promise.resolve("file1\nfile2")),
 	execSearchFiles: vi.fn(() => Promise.resolve("search results")),
-	execCommand: vi.fn((_cwd, params, allowedCommands, deniedCommands) => {
+	execCommand: vi.fn(function (_cwd, params, allowedCommands, deniedCommands) {
 		if (allowedCommands?.length) {
 			const baseName = params.command.split(/\s+/)[0]
 			const hasWildcard = allowedCommands.some((c: string) => c.trim().toLowerCase() === "*")
@@ -256,13 +256,7 @@ describe("executeDeferredToolCall security", () => {
 				arguments: { command: "cat .rooignore/secret.txt" },
 			}
 
-			const result = await executeDeferredToolCall(
-				cwd,
-				call,
-				undefined,
-				undefined,
-				rooIgnoreController,
-			)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Access denied by .rooignore")
@@ -278,13 +272,7 @@ describe("executeDeferredToolCall security", () => {
 				arguments: { command: "echo test" },
 			}
 
-			const result = await executeDeferredToolCall(
-				cwd,
-				call,
-				undefined,
-				undefined,
-				rooIgnoreController,
-			)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
 
 			expect(result.is_error).toBe(false)
 		})

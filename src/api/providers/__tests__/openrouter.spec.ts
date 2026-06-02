@@ -23,7 +23,7 @@ vitest.mock("@njust-ai/telemetry", () => ({
 }))
 
 vitest.mock("../fetchers/modelCache", () => ({
-	getModels: vitest.fn().mockImplementation(() => {
+	getModels: vitest.fn(function () {
 		return Promise.resolve({
 			"anthropic/claude-sonnet-4": {
 				maxTokens: 8192,
@@ -165,7 +165,7 @@ describe("OpenRouterHandler", () => {
 
 			const result = await handler.fetchModel()
 			expect(result.id).toBe("openai/gpt-4o")
-			
+
 			expect(result.info.excludedTools).toContain("write_to_file")
 			expect(result.info.includedTools).toContain("apply_patch")
 		})
@@ -179,7 +179,7 @@ describe("OpenRouterHandler", () => {
 			const result = await handler.fetchModel()
 			expect(result.id).toBe("openai/o1")
 			// Should have the new exclusions
-			
+
 			expect(result.info.excludedTools).toContain("write_to_file")
 			// Should preserve existing exclusions
 			expect(result.info.excludedTools).toContain("existing_excluded")
@@ -403,9 +403,9 @@ describe("OpenRouterHandler", () => {
 			NativeToolCallParser.clearRawChunkState()
 
 			const mockToolCallParser = {
-				processFinishReason: vitest.fn().mockReturnValue([
-					{ type: "tool_call_end", id: "call_openrouter_test" },
-				]),
+				processFinishReason: vitest
+					.fn()
+					.mockReturnValue([{ type: "tool_call_end", id: "call_openrouter_test" }]),
 			}
 
 			const handler = new OpenRouterHandler({

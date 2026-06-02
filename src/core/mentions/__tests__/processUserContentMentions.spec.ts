@@ -22,11 +22,13 @@ describe("processUserContentMentions", () => {
 		_mockRooIgnoreController = {}
 
 		// Default mock implementation - returns ParseMentionsResult object
-		vi.mocked(parseMentions).mockImplementation(async (text) => ({
-			text: `parsed: ${text}`,
-			mode: undefined,
-			contentBlocks: [],
-		}))
+		vi.mocked(parseMentions).mockImplementation(async function (text) {
+			return {
+				text: `parsed: ${text}`,
+				mode: undefined,
+				contentBlocks: [],
+			}
+		})
 	})
 
 	describe("content processing", () => {

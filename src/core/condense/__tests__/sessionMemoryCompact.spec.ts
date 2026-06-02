@@ -97,16 +97,12 @@ describe("sessionMemoryCompact", () => {
 				},
 				{
 					role: "assistant",
-					content:
-						"apply_diff path: src/newFeature.ts. decision: keep the mock server protocol stable.",
+					content: "apply_diff path: src/newFeature.ts. decision: keep the mock server protocol stable.",
 				},
 			])
 
 			expect(memory.modifiedFiles).toEqual(["src/newFeature.ts", "src/existing.ts"])
-			expect(memory.decisions).toEqual([
-				"cachedState for settings edits",
-				"keep the mock server protocol stable",
-			])
+			expect(memory.decisions).toEqual(["cachedState for settings edits", "keep the mock server protocol stable"])
 			expect(memory.timestamp).toBe(Date.now())
 		})
 
@@ -326,7 +322,7 @@ describe("sessionMemoryCompact", () => {
 				{
 					role: "assistant",
 					content:
-						'write_to_file path: src/app.ts. decided to keep fallback. error resolved. attempt_completion result: Finished the deferred execution smoke validation.',
+						"write_to_file path: src/app.ts. decided to keep fallback. error resolved. attempt_completion result: Finished the deferred execution smoke validation.",
 				},
 			])
 
@@ -447,8 +443,11 @@ describe("sessionMemoryCompact", () => {
 		})
 
 		it("skips corrupted session memory files", async () => {
-			vi.mocked(fs.readdir).mockResolvedValue(["session-1700000000002-good.json", "session-1700000000001-bad.json"])
-			vi.mocked(fs.readFile).mockImplementation(async (file) => {
+			vi.mocked(fs.readdir).mockResolvedValue([
+				"session-1700000000002-good.json",
+				"session-1700000000001-bad.json",
+			])
+			vi.mocked(fs.readFile).mockImplementation(async function (file) {
 				const filename = path.basename(String(file))
 				return filename.includes("bad") ? "{not json" : mockValidSessionFile(filename)
 			})

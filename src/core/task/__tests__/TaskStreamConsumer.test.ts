@@ -58,7 +58,7 @@ vi.mock("../TaskStreamChunkProcessor", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("../TaskStreamChunkProcessor")>()
 	return {
 		...actual,
-		processTaskStreamChunk: vi.fn().mockImplementation(async (options: any) => {
+		processTaskStreamChunk: vi.fn(async function (options: any) {
 			const { chunk, appendReasoningText, appendAssistantText, addUsage, pendingGroundingSources } = options
 			switch (chunk?.type) {
 				case "text":
@@ -522,11 +522,13 @@ describe("TaskStreamConsumer timeout handling", () => {
 		let secondWaitResolvedFromUserMessageContentReady = false
 
 		const host = createMockHost({ taskCompleted: false, userMessageContentReady: false })
-		pWaitFor.mockRejectedValueOnce(new Error("Timeout")).mockImplementationOnce(async (condition: () => boolean) => {
-			host.userMessageContentReady = true
-			secondWaitResolvedFromUserMessageContentReady = condition()
-			host.taskCompleted = true
-		})
+		pWaitFor
+			.mockRejectedValueOnce(new Error("Timeout"))
+			.mockImplementationOnce(async (condition: () => boolean) => {
+				host.userMessageContentReady = true
+				secondWaitResolvedFromUserMessageContentReady = condition()
+				host.taskCompleted = true
+			})
 		;(host as any).assistantMessageContent = [
 			{
 				type: "tool_use",
@@ -777,10 +779,7 @@ describe("TaskStreamConsumer — finalizeStreamResponse", () => {
 			consumptionResult: {
 				assistantMessage: "Here are sources:",
 				reasoningMessage: "",
-				pendingGroundingSources: [
-					{ url: "https://example.com/1" },
-					{ url: "https://example.com/2" },
-				],
+				pendingGroundingSources: [{ url: "https://example.com/1" }, { url: "https://example.com/2" }],
 				action: "proceed",
 			},
 			requestProfileId: "test-finalize-grounding",
@@ -790,7 +789,15 @@ describe("TaskStreamConsumer — finalizeStreamResponse", () => {
 			stack: [],
 		})
 
-		expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("[1]"), undefined, false, undefined, undefined, { isNonInteractive: true })
+		expect(host.say).toHaveBeenCalledWith(
+			"text",
+			expect.stringContaining("[1]"),
+			undefined,
+			false,
+			undefined,
+			undefined,
+			{ isNonInteractive: true },
+		)
 		expect(result.action).toBe("continue")
 	})
 
@@ -819,9 +826,7 @@ describe("TaskStreamConsumer — finalizeStreamResponse", () => {
 
 	it("有工具使用时重置 consecutiveNoToolUseCount", async () => {
 		const host = createMockHost({ consecutiveNoToolUseCount: 2 })
-		;(host as any).assistantMessageContent = [
-			{ type: "tool_use", name: "read_file", params: {}, id: "tu_1" },
-		]
+		;(host as any).assistantMessageContent = [{ type: "tool_use", name: "read_file", params: {}, id: "tu_1" }]
 
 		await finalizeStreamResponse({
 			task: host,

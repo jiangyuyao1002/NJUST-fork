@@ -31,12 +31,15 @@ vi.mock("../../../utils/bundledCangjieCorpus", () => ({
 }))
 
 vi.mock("../../../services/cangjie-corpus/CangjieCorpusSemanticIndex", () => ({
-	CangjieCorpusSemanticIndex: vi.fn().mockImplementation(() => ({
-		get isAvailable() {
-			return semanticAvailableMock()
-		},
-		search: semanticSearchMock,
-	})),
+	CangjieCorpusSemanticIndex: vi.fn(function () {
+		return {
+			get isAvailable() {
+				return semanticAvailableMock()
+			},
+
+			search: semanticSearchMock,
+		}
+	}),
 	expandCangjieSemanticQuery: expandSemanticQueryMock,
 	getCangjieSemanticIndexFingerprint: semanticFingerprintMock,
 }))
@@ -154,7 +157,10 @@ describe("SearchFilesTool", () => {
 
 		await tool.execute({ path: "src", regex: "boom" }, createTask(), callbacks as any)
 
-		expect(callbacks.handleError).toHaveBeenCalledWith("searching files", expect.objectContaining({ message: "ripgrep failed" }))
+		expect(callbacks.handleError).toHaveBeenCalledWith(
+			"searching files",
+			expect.objectContaining({ message: "ripgrep failed" }),
+		)
 	})
 
 	it("returns and caches cangjie corpus regex results without approval", async () => {
@@ -181,7 +187,11 @@ describe("SearchFilesTool", () => {
 		])
 		const callbacks = createCallbacks()
 
-		await tool.execute({ path: ".", regex: "std.fs", semantic_query: "std.fs open" }, createTask({ taskMode: "cangjie" }), callbacks as any)
+		await tool.execute(
+			{ path: ".", regex: "std.fs", semantic_query: "std.fs open" },
+			createTask({ taskMode: "cangjie" }),
+			callbacks as any,
+		)
 
 		const output = callbacks.pushToolResult.mock.calls[0][0] as string
 		expect(output).toContain('Semantic search results for: "std.fs open"')
@@ -197,7 +207,11 @@ describe("SearchFilesTool", () => {
 				{ relPath: "libs/std/net/http.cj", startLine: 0, score: 1.1, heading: "HTTP", snippet: "request" },
 			])
 
-		await tool.execute({ path: ".", regex: "std.net", semantic_query: "http" }, createTask(), createCallbacks() as any)
+		await tool.execute(
+			{ path: ".", regex: "std.net", semantic_query: "http" },
+			createTask(),
+			createCallbacks() as any,
+		)
 
 		expect(expandSemanticQueryMock).toHaveBeenCalledWith("http")
 		expect(semanticSearchMock).toHaveBeenNthCalledWith(2, "http expanded", 10, expect.anything())
@@ -208,7 +222,11 @@ describe("SearchFilesTool", () => {
 		semanticAvailableMock.mockReturnValue(false)
 		const callbacks = createCallbacks()
 
-		await tool.execute({ path: ".", regex: "fallback", semantic_query: "not indexed" }, createTask(), callbacks as any)
+		await tool.execute(
+			{ path: ".", regex: "fallback", semantic_query: "not indexed" },
+			createTask(),
+			callbacks as any,
+		)
 
 		expect(regexSearchFilesMock).toHaveBeenCalled()
 		expect(callbacks.pushToolResult).toHaveBeenCalledWith("regex matches")

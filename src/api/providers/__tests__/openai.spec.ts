@@ -15,43 +15,18 @@ vitest.mock("openai", () => {
 	const mockConstructor = vitest.fn()
 	return {
 		__esModule: true,
-		default: mockConstructor.mockImplementation(() => ({
-			chat: {
-				completions: {
-					create: mockCreate.mockImplementation(async (options) => {
-						if (!options.stream) {
-							return {
-								id: "test-completion",
-								choices: [
-									{
-										message: { role: "assistant", content: "Test response", refusal: null },
-										finish_reason: "stop",
-										index: 0,
-									},
-								],
-								usage: {
-									prompt_tokens: 10,
-									completion_tokens: 5,
-									total_tokens: 15,
-								},
-							}
-						}
-
-						return {
-							[Symbol.asyncIterator]: async function* () {
-								yield {
+		default: mockConstructor.mockImplementation(function () {
+			return {
+				chat: {
+					completions: {
+						create: mockCreate.mockImplementation(async function (options) {
+							if (!options.stream) {
+								return {
+									id: "test-completion",
 									choices: [
 										{
-											delta: { content: "Test response" },
-											index: 0,
-										},
-									],
-									usage: null,
-								}
-								yield {
-									choices: [
-										{
-											delta: {},
+											message: { role: "assistant", content: "Test response", refusal: null },
+											finish_reason: "stop",
 											index: 0,
 										},
 									],
@@ -61,12 +36,39 @@ vitest.mock("openai", () => {
 										total_tokens: 15,
 									},
 								}
-							},
-						}
-					}),
+							}
+
+							return {
+								[Symbol.asyncIterator]: async function* () {
+									yield {
+										choices: [
+											{
+												delta: { content: "Test response" },
+												index: 0,
+											},
+										],
+										usage: null,
+									}
+									yield {
+										choices: [
+											{
+												delta: {},
+												index: 0,
+											},
+										],
+										usage: {
+											prompt_tokens: 10,
+											completion_tokens: 5,
+											total_tokens: 15,
+										},
+									}
+								},
+							}
+						}),
+					},
 				},
-			},
-		})),
+			}
+		}),
 	}
 })
 
@@ -221,7 +223,7 @@ describe("OpenAiHandler", () => {
 		})
 
 		it("should handle tool calls in streaming responses", async () => {
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async function (_options) {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {
@@ -303,7 +305,7 @@ describe("OpenAiHandler", () => {
 		})
 
 		it("should yield tool calls even when finish_reason is not set (fallback behavior)", async () => {
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async function (_options) {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {
@@ -826,7 +828,7 @@ describe("OpenAiHandler", () => {
 		it("should handle tool calls with O3 model in streaming mode", async () => {
 			const o3Handler = new OpenAiHandler(o3Options)
 
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async function (_options) {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {
@@ -891,7 +893,7 @@ describe("OpenAiHandler", () => {
 		it("should yield tool calls for O3 model even when finish_reason is not set (fallback behavior)", async () => {
 			const o3Handler = new OpenAiHandler(o3Options)
 
-			mockCreate.mockImplementation(async (_options) => {
+			mockCreate.mockImplementation(async function (_options) {
 				return {
 					[Symbol.asyncIterator]: async function* () {
 						yield {

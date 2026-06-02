@@ -27,11 +27,13 @@ const mockResponsesCreate = vitest.fn()
 vitest.mock("openai", () => {
 	return {
 		__esModule: true,
-		default: vitest.fn().mockImplementation(() => ({
-			responses: {
-				create: mockResponsesCreate,
-			},
-		})),
+		default: vitest.fn(function () {
+			return {
+				responses: {
+					create: mockResponsesCreate,
+				},
+			}
+		}),
 	}
 })
 
@@ -132,7 +134,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail so it falls back to fetch
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			const stream = handler.createMessage(systemPrompt, messages)
 			const chunks: any[] = []
@@ -157,7 +161,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			const stream = handler.createMessage(systemPrompt, messages)
 			await expect(async () => {
@@ -367,7 +373,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail so it uses fetch
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -434,7 +442,9 @@ describe("OpenAiNativeHandler", () => {
 			})
 			global.fetch = mockFetch as any
 
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -486,7 +496,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail so it uses fetch
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -537,7 +549,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -578,7 +592,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -619,7 +635,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -662,7 +680,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -704,7 +724,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -744,7 +766,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			const handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -782,7 +806,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -833,7 +859,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -911,7 +939,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -967,7 +997,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -1012,7 +1044,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -1053,7 +1087,9 @@ describe("OpenAiNativeHandler", () => {
 				}),
 			})
 			global.fetch = mockFetch as any
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			const gpt5Handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -1098,7 +1134,9 @@ describe("OpenAiNativeHandler", () => {
 				global.fetch = mockFetch as any
 
 				// Mock SDK to fail
-				mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+				mockResponsesCreate.mockRejectedValue(
+					Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+				)
 
 				handler = new OpenAiNativeHandler({
 					...mockOptions,
@@ -1143,7 +1181,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail so it falls back to fetch
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			const stream = handler.createMessage(errorSystemPrompt, errorMessages)
 
@@ -1187,7 +1227,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail so it falls back to fetch
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			const stream = handler.createMessage(errorSystemPrompt, errorMessages)
 
@@ -1247,7 +1289,9 @@ describe("OpenAiNativeHandler", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			const stream = handler.createMessage(errorSystemPrompt, errorMessages)
 
@@ -1449,7 +1493,9 @@ describe("GPT-5 streaming event coverage (additional)", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -1560,7 +1606,9 @@ describe("GPT-5 streaming event coverage (additional)", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -1600,7 +1648,9 @@ describe("GPT-5 streaming event coverage (additional)", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -1663,7 +1713,9 @@ describe("GPT-5 streaming event coverage (additional)", () => {
 			global.fetch = mockFetch as any
 
 			// Mock SDK to fail
-			mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+			mockResponsesCreate.mockRejectedValue(
+				Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+			)
 
 			handler = new OpenAiNativeHandler({
 				...mockOptions,
@@ -1702,7 +1754,9 @@ describe("GPT-5 streaming event coverage (additional)", () => {
 				;(global as any).fetch = mockFetch as any
 
 				// Force SDK path to fail so we use fetch fallback
-				mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+				mockResponsesCreate.mockRejectedValue(
+					Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+				)
 
 				const handler = new OpenAiNativeHandler({
 					apiModelId: "gpt-4.1",
@@ -1741,7 +1795,9 @@ describe("GPT-5 streaming event coverage (additional)", () => {
 				;(global as any).fetch = mockFetch as any
 
 				// Force SDK path to fail so we use fetch fallback
-				mockResponsesCreate.mockRejectedValue(Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }))
+				mockResponsesCreate.mockRejectedValue(
+					Object.assign(new Error("SDK not available"), { code: "ECONNREFUSED" }),
+				)
 
 				const handler = new OpenAiNativeHandler({
 					apiModelId: "gpt-4o",

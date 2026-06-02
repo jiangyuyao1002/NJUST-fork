@@ -5,43 +5,18 @@ const mockCreate = vi.fn()
 vi.mock("openai", () => {
 	return {
 		__esModule: true,
-		default: vi.fn().mockImplementation(() => ({
-			chat: {
-				completions: {
-					create: mockCreate.mockImplementation(async (options) => {
-						if (!options.stream) {
-							return {
-								id: "test-completion",
-								choices: [
-									{
-										message: { role: "assistant", content: "Test response" },
-										finish_reason: "stop",
-										index: 0,
-									},
-								],
-								usage: {
-									prompt_tokens: 10,
-									completion_tokens: 5,
-									total_tokens: 15,
-								},
-							}
-						}
-
-						return {
-							[Symbol.asyncIterator]: async function* () {
-								yield {
+		default: vi.fn(function () {
+			return {
+				chat: {
+					completions: {
+						create: mockCreate.mockImplementation(async function (options) {
+							if (!options.stream) {
+								return {
+									id: "test-completion",
 									choices: [
 										{
-											delta: { content: "Test response" },
-											index: 0,
-										},
-									],
-									usage: null,
-								}
-								yield {
-									choices: [
-										{
-											delta: {},
+											message: { role: "assistant", content: "Test response" },
+											finish_reason: "stop",
 											index: 0,
 										},
 									],
@@ -51,12 +26,39 @@ vi.mock("openai", () => {
 										total_tokens: 15,
 									},
 								}
-							},
-						}
-					}),
+							}
+
+							return {
+								[Symbol.asyncIterator]: async function* () {
+									yield {
+										choices: [
+											{
+												delta: { content: "Test response" },
+												index: 0,
+											},
+										],
+										usage: null,
+									}
+									yield {
+										choices: [
+											{
+												delta: {},
+												index: 0,
+											},
+										],
+										usage: {
+											prompt_tokens: 10,
+											completion_tokens: 5,
+											total_tokens: 15,
+										},
+									}
+								},
+							}
+						}),
+					},
 				},
-			},
-		})),
+			}
+		}),
 	}
 })
 

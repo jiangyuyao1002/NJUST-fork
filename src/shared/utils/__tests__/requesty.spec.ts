@@ -6,7 +6,7 @@ describe("toRequestyServiceUrl", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		// Mock console.warn to avoid noise in test output
-		vi.spyOn(console, "warn").mockImplementation(() => {})
+		vi.spyOn(console, "warn").mockImplementation(function () {})
 	})
 
 	describe("with default parameters", () => {
@@ -85,7 +85,9 @@ describe("toRequestyServiceUrl", () => {
 		it("should fall back to default URL for invalid baseUrl", () => {
 			const result = toRequestyServiceUrl("not-a-valid-url")
 			expect(result).toBe("https://router.requesty.ai/v1")
-			expect(console.warn).toHaveBeenCalledWith('[Requesty] Invalid base URL "not-a-valid-url", falling back to default')
+			expect(console.warn).toHaveBeenCalledWith(
+				'[Requesty] Invalid base URL "not-a-valid-url", falling back to default',
+			)
 		})
 
 		it("should fall back to default URL for malformed URL", () => {

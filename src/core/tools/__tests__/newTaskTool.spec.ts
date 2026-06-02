@@ -7,9 +7,11 @@ import type { AskApproval, HandleError, NativeToolArgs, ToolUse } from "../../..
 // Mock vscode module
 vi.mock("vscode", () => ({
 	workspace: {
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn(),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(),
+			}
+		}),
 	},
 }))
 
@@ -36,7 +38,7 @@ vi.mock("../../prompts/responses", () => ({
 }))
 
 vi.mock("../updateTodoListTool", () => ({
-	parseMarkdownChecklist: vi.fn((md: string) => {
+	parseMarkdownChecklist: vi.fn(function (md: string) {
 		// Simple mock implementation
 		const lines = md.split("\n").filter((line) => line.trim())
 		return lines.map((line, index) => {
@@ -77,13 +79,16 @@ const mockStartSubtask = vi
 	.mockResolvedValue({ taskId: "mock-subtask-id" })
 
 // Adapter to satisfy legacy expectations while exercising new delegation path
-const mockDelegateParentAndOpenChild = vi.fn(
-	async (args: { parentTaskId: string; message: string; initialTodos: any[]; mode: string }) => {
-		// Call legacy spy so existing expectations still pass
-		await mockStartSubtask(args.message, args.initialTodos, args.mode)
-		return { taskId: "child-1" }
-	},
-)
+const mockDelegateParentAndOpenChild = vi.fn(async function (args: {
+	parentTaskId: string
+	message: string
+	initialTodos: any[]
+	mode: string
+}) {
+	// Call legacy spy so existing expectations still pass
+	await mockStartSubtask(args.message, args.initialTodos, args.mode)
+	return { taskId: "child-1" }
+})
 const mockCheckpointSave = vi.fn()
 
 // Mock the Cline instance and its methods/properties
@@ -100,11 +105,19 @@ const mockCline = {
 	checkpointSave: mockCheckpointSave,
 	startSubtask: mockStartSubtask,
 	providerRef: {
-		deref: vi.fn(() => ({
-			getState: vi.fn(() => ({ customModes: [], mode: "ask" })),
-			handleModeSwitch: vi.fn(),
-			delegateParentAndOpenChild: mockDelegateParentAndOpenChild,
-		})),
+		deref: vi.fn(function () {
+			return {
+				getState: vi.fn(function () {
+					return {
+						customModes: [],
+						mode: "ask",
+					}
+				}),
+
+				handleModeSwitch: vi.fn(),
+				delegateParentAndOpenChild: mockDelegateParentAndOpenChild,
+			}
+		}),
 	},
 }
 
@@ -379,7 +392,10 @@ describe("newTaskTool", () => {
 			expect(mockStartSubtask).toHaveBeenCalledWith("Test message", [], "code")
 
 			// Should complete successfully
-			expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("Delegated to child task"), undefined)
+			expect(mockPushToolResult).toHaveBeenCalledWith(
+				expect.stringContaining("Delegated to child task"),
+				undefined,
+			)
 		})
 
 		it("should REQUIRE todos when VSCode setting is enabled", async () => {
@@ -457,7 +473,10 @@ describe("newTaskTool", () => {
 			)
 
 			// Should complete successfully
-			expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("Delegated to child task"), undefined)
+			expect(mockPushToolResult).toHaveBeenCalledWith(
+				expect.stringContaining("Delegated to child task"),
+				undefined,
+			)
 		})
 
 		it("should work with empty todos string when VSCode setting is enabled", async () => {
@@ -492,7 +511,10 @@ describe("newTaskTool", () => {
 			expect(mockStartSubtask).toHaveBeenCalledWith("Test message", [], "code")
 
 			// Should complete successfully
-			expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("Delegated to child task"), undefined)
+			expect(mockPushToolResult).toHaveBeenCalledWith(
+				expect.stringContaining("Delegated to child task"),
+				undefined,
+			)
 		})
 
 		it("should check VSCode setting with Package.name configuration key", async () => {
@@ -629,6 +651,9 @@ describe("newTaskTool delegation flow", () => {
 		expect(pauseEvents.length).toBe(0)
 
 		// Assert: tool result reflects delegation
-		expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("Delegated to child task child-1"), undefined)
+		expect(mockPushToolResult).toHaveBeenCalledWith(
+			expect.stringContaining("Delegated to child task child-1"),
+			undefined,
+		)
 	})
 })

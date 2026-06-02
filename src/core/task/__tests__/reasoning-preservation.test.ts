@@ -8,41 +8,64 @@ import type { ITaskHost } from "../interfaces/ITaskHost"
 // Mock vscode module before importing Task
 vi.mock("vscode", () => ({
 	workspace: {
-		createFileSystemWatcher: vi.fn(() => ({
-			onDidCreate: vi.fn(),
-			onDidChange: vi.fn(),
-			onDidDelete: vi.fn(),
-			dispose: vi.fn(),
-		})),
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn(() => true),
-		})),
+		createFileSystemWatcher: vi.fn(function () {
+			return {
+				onDidCreate: vi.fn(),
+				onDidChange: vi.fn(),
+				onDidDelete: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(() => true),
+			}
+		}),
 		openTextDocument: vi.fn(),
 		applyEdit: vi.fn(),
 	},
-	RelativePattern: vi.fn((base, pattern) => ({ base, pattern })),
+	RelativePattern: vi.fn(function (base, pattern) {
+		return {
+			base,
+			pattern,
+		}
+	}),
 	window: {
-		createOutputChannel: vi.fn(() => ({
-			appendLine: vi.fn(),
-			dispose: vi.fn(),
-		})),
-		createTextEditorDecorationType: vi.fn(() => ({
-			dispose: vi.fn(),
-		})),
+		createOutputChannel: vi.fn(function () {
+			return {
+				appendLine: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 		showTextDocument: vi.fn(),
 		activeTextEditor: undefined,
 	},
 	Uri: {
-		file: vi.fn((path) => ({ fsPath: path })),
-		parse: vi.fn((str) => ({ toString: () => str })),
+		file: vi.fn(function (path) {
+			return {
+				fsPath: path,
+			}
+		}),
+		parse: vi.fn(function (str) {
+			return {
+				toString: () => str,
+			}
+		}),
 	},
 	Range: vi.fn(),
 	Position: vi.fn(),
-	WorkspaceEdit: vi.fn(() => ({
-		replace: vi.fn(),
-		insert: vi.fn(),
-		delete: vi.fn(),
-	})),
+	WorkspaceEdit: vi.fn(function () {
+		return {
+			replace: vi.fn(),
+			insert: vi.fn(),
+			delete: vi.fn(),
+		}
+	}),
 	ViewColumn: {
 		One: 1,
 		Two: 2,

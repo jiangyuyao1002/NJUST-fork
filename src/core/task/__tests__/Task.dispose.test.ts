@@ -17,9 +17,11 @@ vi.mock("../../context-tracking/FileContextTracker")
 vi.mock("../../../integrations/editor/DiffViewProvider")
 vi.mock("../../tools/ToolRepetitionDetector")
 vi.mock("../../../api", () => ({
-	buildApiHandler: vi.fn(() => ({
-		getModel: () => ({ info: {}, id: "test-model" }),
-	})),
+	buildApiHandler: vi.fn(function () {
+		return {
+			getModel: () => ({ info: {}, id: "test-model" }),
+		}
+	}),
 }))
 vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
@@ -63,7 +65,7 @@ describe("Task dispose method", () => {
 	})
 
 	test("marks isDisposed and removes listeners", () => {
-		const listener1 = vi.fn(() => {})
+		const listener1 = vi.fn(function () {})
 		;(task as any).on("TaskStarted", listener1)
 		expect(task.listenerCount("TaskStarted")).toBe(1)
 
@@ -76,10 +78,10 @@ describe("Task dispose method", () => {
 	})
 
 	test("does not throw when removeAllListeners throws", () => {
-		task.removeAllListeners = vi.fn(() => {
+		task.removeAllListeners = vi.fn(function () {
 			throw new Error("Test error")
 		})
-		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(function () {})
 		expect(() => task.dispose()).not.toThrow()
 		expect(consoleErrorSpy).toHaveBeenCalled()
 		consoleErrorSpy.mockRestore()
@@ -106,15 +108,15 @@ describe("Task dispose method", () => {
 
 	test("removes all listeners during dispose", () => {
 		const listeners = {
-			TaskStarted: vi.fn(() => {}),
-			TaskAborted: vi.fn(() => {}),
-			TaskIdle: vi.fn((_taskId: string) => {}),
-			TaskActive: vi.fn((_taskId: string) => {}),
-			TaskAskResponded: vi.fn(() => {}),
-			Message: vi.fn((_data: { action: "created" | "updated"; message: any }) => {}),
-			TaskTokenUsageUpdated: vi.fn((_taskId: string, _tokenUsage: any) => {}),
-			TaskToolFailed: vi.fn((_taskId: string, _tool: any, _error: string) => {}),
-			TaskUnpaused: vi.fn(() => {}),
+			TaskStarted: vi.fn(function () {}),
+			TaskAborted: vi.fn(function () {}),
+			TaskIdle: vi.fn(function (_taskId: string) {}),
+			TaskActive: vi.fn(function (_taskId: string) {}),
+			TaskAskResponded: vi.fn(function () {}),
+			Message: vi.fn(function (_data: { action: "created" | "updated"; message: any }) {}),
+			TaskTokenUsageUpdated: vi.fn(function (_taskId: string, _tokenUsage: any) {}),
+			TaskToolFailed: vi.fn(function (_taskId: string, _tool: any, _error: string) {}),
+			TaskUnpaused: vi.fn(function () {}),
 		}
 		const taskAny = task as any
 		taskAny.on("TaskStarted", listeners.TaskStarted)

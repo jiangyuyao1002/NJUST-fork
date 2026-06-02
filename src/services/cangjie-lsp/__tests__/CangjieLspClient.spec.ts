@@ -69,22 +69,24 @@ vi.mock("vscode", () => ({
 		showInformationMessage: vi.fn().mockResolvedValue(undefined),
 	},
 	workspace: {
-		getConfiguration: vi.fn().mockImplementation(() => ({
-			get: vi.fn().mockImplementation((key: string, defaultValue?: unknown) => {
-				return mockConfigValues[key] !== undefined ? mockConfigValues[key] : defaultValue
-			}),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(function (key: string, defaultValue?: unknown) {
+					return mockConfigValues[key] !== undefined ? mockConfigValues[key] : defaultValue
+				}),
+			}
+		}),
 		get textDocuments() {
 			return mockTextDocuments
 		},
 		get workspaceFolders() {
 			return mockWorkspaceFolders
 		},
-		onDidOpenTextDocument: vi.fn().mockImplementation((cb: (doc: any) => void) => {
+		onDidOpenTextDocument: vi.fn(function (cb: (doc: any) => void) {
 			mockOpenDocCallbacks.push(cb)
 			return { dispose: vi.fn() }
 		}),
-		onDidChangeConfiguration: vi.fn().mockImplementation((cb: (e: any) => void) => {
+		onDidChangeConfiguration: vi.fn(function (cb: (e: any) => void) {
 			mockConfigChangeCallbacks.push(cb)
 			return { dispose: vi.fn() }
 		}),
@@ -96,10 +98,12 @@ vi.mock("vscode", () => ({
 		registerCommand: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
 	Uri: {
-		file: vi.fn().mockImplementation((fsPath: string) => ({
-			fsPath,
-			toString: () => fsPath,
-		})),
+		file: vi.fn(function (fsPath: string) {
+			return {
+				fsPath,
+				toString: () => fsPath,
+			}
+		}),
 		parse: vi.fn(),
 		joinPath: vi.fn(),
 	},
@@ -109,7 +113,9 @@ vi.mock("vscode", () => ({
 		Information: 2,
 		Hint: 3,
 	},
-	RelativePattern: vi.fn().mockImplementation((base: string, pattern: string) => ({ base, pattern })),
+	RelativePattern: vi.fn(function (base: string, pattern: string) {
+		return { base, pattern }
+	}),
 	CancellationError: class CancellationError extends Error {
 		constructor() {
 			super("Cancelled")
@@ -119,14 +125,14 @@ vi.mock("vscode", () => ({
 }))
 
 vi.mock("vscode-languageclient/node", () => ({
-	LanguageClient: vi.fn().mockImplementation((id, name, serverOptions, clientOptions) => {
+	LanguageClient: vi.fn(function (id, name, serverOptions, clientOptions) {
 		mockCapturedServerOptions.push(serverOptions)
 		mockCapturedClientOptions.push(clientOptions)
 		const instance = {
 			start: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn().mockResolvedValue(undefined),
 			isRunning: vi.fn().mockReturnValue(true),
-			onDidChangeState: vi.fn().mockImplementation((cb: (e: { newState: number }) => void) => {
+			onDidChangeState: vi.fn(function (cb: (e: { newState: number }) => void) {
 				mockStateChangeCallbacks.push(cb)
 				return { dispose: vi.fn() }
 			}),
@@ -174,7 +180,12 @@ vi.mock("../../../shared/error-utils", () => ({
 }))
 
 import * as vscode from "vscode"
-import { CangjieLspClient, detectCangjieHome, debounceMiddleware, filterFalsePackageDiagnostics } from "../CangjieLspClient"
+import {
+	CangjieLspClient,
+	detectCangjieHome,
+	debounceMiddleware,
+	filterFalsePackageDiagnostics,
+} from "../CangjieLspClient"
 
 function resetMocks() {
 	Object.keys(mockConfigValues).forEach((k) => delete mockConfigValues[k])
@@ -204,9 +215,7 @@ function setupConfig(overrides: Record<string, unknown> = {}) {
 	mockConfigValues["cangjieLsp.disableAutoImport"] =
 		overrides.disableAutoImport !== undefined ? overrides.disableAutoImport : false
 	mockConfigValues["cangjieLsp.suppressLspErrorsAfterCjpmSuccessMs"] =
-		overrides.suppressLspErrorsAfterCjpmSuccessMs !== undefined
-			? overrides.suppressLspErrorsAfterCjpmSuccessMs
-			: 0
+		overrides.suppressLspErrorsAfterCjpmSuccessMs !== undefined ? overrides.suppressLspErrorsAfterCjpmSuccessMs : 0
 }
 
 // ---------------------------------------------------------------------------
@@ -248,23 +257,17 @@ describe("detectCangjieHome", () => {
 	})
 
 	it("derives home from serverPath parent when runtime dir exists", () => {
-		mockExistsSync.mockImplementation((p: string) =>
-			p === "/sdk/bin/LSPServer" || p === "/sdk/runtime",
-		)
+		mockExistsSync.mockImplementation((p: string) => p === "/sdk/bin/LSPServer" || p === "/sdk/runtime")
 		expect(detectCangjieHome("/sdk/bin/LSPServer")).toBe("/sdk")
 	})
 
 	it("derives home from serverPath parent when lib dir exists", () => {
-		mockExistsSync.mockImplementation((p: string) =>
-			p === "/sdk/bin/LSPServer" || p === "/sdk/lib",
-		)
+		mockExistsSync.mockImplementation((p: string) => p === "/sdk/bin/LSPServer" || p === "/sdk/lib")
 		expect(detectCangjieHome("/sdk/bin/LSPServer")).toBe("/sdk")
 	})
 
 	it("derives home from serverPath grandparent when runtime dir exists there", () => {
-		mockExistsSync.mockImplementation((p: string) =>
-			p === "/sdk/tools/bin/LSPServer" || p === "/sdk/runtime",
-		)
+		mockExistsSync.mockImplementation((p: string) => p === "/sdk/tools/bin/LSPServer" || p === "/sdk/runtime")
 		expect(detectCangjieHome("/sdk/tools/bin/LSPServer")).toBe("/sdk")
 	})
 
@@ -286,9 +289,7 @@ describe("detectCangjieHome", () => {
 
 	it("prefers CANGJIE_HOME over serverPath", () => {
 		process.env.CANGJIE_HOME = "/env/cangjie"
-		mockExistsSync.mockImplementation((p: string) =>
-			p === "/env/cangjie" || p === "/cfg/runtime",
-		)
+		mockExistsSync.mockImplementation((p: string) => p === "/env/cangjie" || p === "/cfg/runtime")
 		expect(detectCangjieHome("/cfg/bin/LSPServer")).toBe("/env/cangjie")
 	})
 
@@ -304,10 +305,7 @@ describe("detectCangjieHome", () => {
 	it("finds well-known Windows path C: when bin exists", () => {
 		Object.defineProperty(process, "platform", { value: "win32" })
 		// Sequence: false for D:\cangjie, true for C:\cangjie, false for LOCALAPPDATA
-		mockExistsSync
-			.mockReturnValueOnce(false)
-			.mockReturnValueOnce(true)
-			.mockReturnValue(false)
+		mockExistsSync.mockReturnValueOnce(false).mockReturnValueOnce(true).mockReturnValue(false)
 		expect(detectCangjieHome()).toBe("C:\\cangjie")
 	})
 
@@ -385,7 +383,11 @@ describe("CangjieLspClient construction & state", () => {
 		// No .cj file open yet, callback should NOT be called
 		expect(cb).not.toHaveBeenCalled()
 		// Simulate opening a .cj file
-		const doc = { languageId: "cangjie", fileName: "main.cj", uri: { fsPath: "/proj/main.cj", toString: () => "/proj/main.cj" } }
+		const doc = {
+			languageId: "cangjie",
+			fileName: "main.cj",
+			uri: { fsPath: "/proj/main.cj", toString: () => "/proj/main.cj" },
+		}
 		mockOpenDocCallbacks.forEach((c) => c(doc))
 		expect(cb).toHaveBeenCalledTimes(1)
 	})
@@ -465,9 +467,7 @@ describe("CangjieLspClient start()", () => {
 
 	it("starts with configured serverPath when file exists", async () => {
 		mockConfigValues["cangjieLsp.serverPath"] = "/custom/LSPServer"
-		mockExistsSync.mockImplementation((p: string) =>
-			p === "/custom/LSPServer" || p === "/custom/runtime",
-		)
+		mockExistsSync.mockImplementation((p: string) => p === "/custom/LSPServer" || p === "/custom/runtime")
 		mockTextDocuments.push({
 			languageId: "cangjie",
 			fileName: "main.cj",
@@ -490,7 +490,7 @@ describe("CangjieLspClient start()", () => {
 		// Override the next LanguageClient instantiation to make start() reject
 		const { LanguageClient: LangClient } = await import("vscode-languageclient/node")
 		const mockedLangClient = vi.mocked(LangClient)
-		mockedLangClient.mockImplementationOnce((id, name, serverOptions, clientOptions) => {
+		mockedLangClient.mockImplementationOnce(function (id, name, serverOptions, clientOptions) {
 			mockCapturedServerOptions.push(serverOptions)
 			mockCapturedClientOptions.push(clientOptions)
 			const instance = {
@@ -518,7 +518,7 @@ describe("CangjieLspClient start()", () => {
 		})
 		const { LanguageClient: LangClient } = await import("vscode-languageclient/node")
 		const mockedLangClient = vi.mocked(LangClient)
-		mockedLangClient.mockImplementationOnce((id, name, serverOptions, clientOptions) => {
+		mockedLangClient.mockImplementationOnce(function (id, name, serverOptions, clientOptions) {
 			mockCapturedServerOptions.push(serverOptions)
 			mockCapturedClientOptions.push(clientOptions)
 			const instance = {
@@ -597,7 +597,9 @@ describe("CangjieLspClient stop() / dispose()", () => {
 		vi.advanceTimersByTime(4999)
 		await Promise.resolve()
 		let resolved = false
-		void disposePromise.then(() => { resolved = true })
+		void disposePromise.then(() => {
+			resolved = true
+		})
 		await Promise.resolve()
 		expect(resolved).toBe(false)
 
@@ -658,14 +660,14 @@ describe("CangjieLspClient scheduleAutoRestart", () => {
 		const { LanguageClient: LangClient } = await import("vscode-languageclient/node")
 		const mockedLangClient = vi.mocked(LangClient)
 		const originalImpl = mockedLangClient.getMockImplementation()
-		mockedLangClient.mockImplementation((id, name, serverOptions, clientOptions) => {
+		mockedLangClient.mockImplementation(function (id, name, serverOptions, clientOptions) {
 			mockCapturedServerOptions.push(serverOptions)
 			mockCapturedClientOptions.push(clientOptions)
 			const instance = {
 				start: vi.fn().mockRejectedValue(new Error("spawn failure")),
 				stop: vi.fn().mockResolvedValue(undefined),
 				isRunning: vi.fn().mockReturnValue(false),
-				onDidChangeState: vi.fn().mockImplementation((cb: (e: { newState: number }) => void) => {
+				onDidChangeState: vi.fn(function (cb: (e: { newState: number }) => void) {
 					mockStateChangeCallbacks.push(cb)
 					return { dispose: vi.fn() }
 				}),
@@ -680,17 +682,15 @@ describe("CangjieLspClient scheduleAutoRestart", () => {
 		;(client as any).scheduleAutoRestart()
 		expect(extAppendLine).toHaveBeenCalledWith(expect.stringContaining("Auto-restarting in 2s"))
 		await vi.advanceTimersByTimeAsync(3000)
-
 		;(client as any).scheduleAutoRestart()
 		expect(extAppendLine).toHaveBeenCalledWith(expect.stringContaining("Auto-restarting in 5s"))
 		await vi.advanceTimersByTimeAsync(6000)
-
 		;(client as any).scheduleAutoRestart()
 		expect(extAppendLine).toHaveBeenCalledWith(expect.stringContaining("Auto-restarting in 10s"))
 		await vi.advanceTimersByTimeAsync(11000)
 
 		// Restore original mock so subsequent tests aren't affected
-		mockedLangClient.mockImplementation(originalImpl ?? (() => ({} as any)))
+		mockedLangClient.mockImplementation(originalImpl ?? (() => ({}) as any))
 	})
 
 	it("stops auto-restarting after max attempts and shows manual restart button", async () => {
@@ -961,9 +961,7 @@ describe("filterFalsePackageDiagnostics", () => {
 	})
 
 	it("filters when real package is not default but LSP expects default", () => {
-		const diagnostics = [
-			{ message: "package name supposed to be 'default'", severity: 0 } as vscode.Diagnostic,
-		]
+		const diagnostics = [{ message: "package name supposed to be 'default'", severity: 0 } as vscode.Diagnostic]
 		const result = filterFalsePackageDiagnostics(diagnostics, "myPkg", {
 			fsPath: "/proj/main.cj",
 			toString: () => "/proj/main.cj",
@@ -980,9 +978,7 @@ describe("filterFalsePackageDiagnostics", () => {
 			getText: () => "package expectedPkg\n",
 		} as any)
 
-		const diagnostics = [
-			{ message: "package name supposed to be 'expectedPkg'", severity: 0 } as vscode.Diagnostic,
-		]
+		const diagnostics = [{ message: "package name supposed to be 'expectedPkg'", severity: 0 } as vscode.Diagnostic]
 		const result = filterFalsePackageDiagnostics(diagnostics, undefined, {
 			fsPath: "/proj/main.cj",
 			toString: () => "/proj/main.cj",
@@ -999,9 +995,7 @@ describe("filterFalsePackageDiagnostics", () => {
 			getText: () => "package myPkg\n",
 		} as any)
 
-		const diagnostics = [
-			{ message: "package name supposed to be 'default'", severity: 0 } as vscode.Diagnostic,
-		]
+		const diagnostics = [{ message: "package name supposed to be 'default'", severity: 0 } as vscode.Diagnostic]
 		const result = filterFalsePackageDiagnostics(diagnostics, "myPkg", {
 			fsPath: "/proj/main.cj",
 			toString: () => "/proj/main.cj",
@@ -1018,9 +1012,7 @@ describe("filterFalsePackageDiagnostics", () => {
 			getText: () => "package otherPkg\n",
 		} as any)
 
-		const diagnostics = [
-			{ message: "package name supposed to be 'expectedPkg'", severity: 0 } as vscode.Diagnostic,
-		]
+		const diagnostics = [{ message: "package name supposed to be 'expectedPkg'", severity: 0 } as vscode.Diagnostic]
 		const result = filterFalsePackageDiagnostics(diagnostics, undefined, {
 			fsPath: "/proj/main.cj",
 			toString: () => "/proj/main.cj",

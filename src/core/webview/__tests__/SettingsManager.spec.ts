@@ -15,7 +15,11 @@ describe("SettingsManager", () => {
 		contextProxy = {
 			setValue: vi.fn().mockResolvedValue(undefined),
 			getValue: vi.fn((key: string) => (key === "mode" ? "code" : undefined)),
-			getValues: vi.fn(() => ({ mode: "code" })),
+			getValues: vi.fn(function () {
+				return {
+					mode: "code",
+				}
+			}),
 			setValues: vi.fn().mockResolvedValue(undefined),
 		}
 		manager = new SettingsManager(contextProxy as any)

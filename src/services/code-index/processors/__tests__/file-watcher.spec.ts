@@ -18,9 +18,9 @@ vi.mock("../../../../../packages/telemetry/src/TelemetryService", () => ({
 // Mock dependencies
 vi.mock("../../cache-manager")
 vi.mock("../../../core/ignore/RooIgnoreController", () => ({
-	RooIgnoreController: vi.fn().mockImplementation(() => ({
-		validateAccess: vi.fn().mockReturnValue(true),
-	})),
+	RooIgnoreController: class {
+		validateAccess = vi.fn().mockReturnValue(true)
+	},
 }))
 vi.mock("ignore")
 vi.mock("../parser", () => ({
@@ -48,16 +48,24 @@ vi.mock("vscode", () => ({
 			readFile: vi.fn().mockResolvedValue(Buffer.from("test content")),
 		},
 	},
-	RelativePattern: vi.fn().mockImplementation((base, pattern) => ({ base, pattern })),
+	RelativePattern: vi.fn(function (base, pattern) {
+		return { base, pattern }
+	}),
 	Uri: {
-		file: vi.fn().mockImplementation((path) => ({ fsPath: path })),
+		file: vi.fn(function (path) {
+			return {
+				fsPath: path,
+			}
+		}),
 	},
-	EventEmitter: vi.fn().mockImplementation(() => ({
-		event: vi.fn(),
-		fire: vi.fn(),
-		dispose: vi.fn(),
-	})),
-	ExtensionContext: vi.fn(),
+	EventEmitter: vi.fn(function () {
+		return {
+			event: vi.fn(),
+			fire: vi.fn(),
+			dispose: vi.fn(),
+		}
+	}),
+	ExtensionContext: vi.fn(function () {}),
 }))
 
 describe("FileWatcher", () => {
@@ -83,15 +91,15 @@ describe("FileWatcher", () => {
 
 		// Create mock watcher
 		mockWatcher = {
-			onDidCreate: vi.fn().mockImplementation((handler) => {
+			onDidCreate: vi.fn(function (handler) {
 				mockOnDidCreate = handler
 				return { dispose: vi.fn() }
 			}),
-			onDidChange: vi.fn().mockImplementation((handler) => {
+			onDidChange: vi.fn(function (handler) {
 				mockOnDidChange = handler
 				return { dispose: vi.fn() }
 			}),
-			onDidDelete: vi.fn().mockImplementation((handler) => {
+			onDidDelete: vi.fn(function (handler) {
 				mockOnDidDelete = handler
 				return { dispose: vi.fn() }
 			}),
@@ -143,7 +151,7 @@ describe("FileWatcher", () => {
 
 			// Spy on the vector store to see which files are actually processed
 			const processedFiles: string[] = []
-			mockVectorStore.upsertPoints.mockImplementation(async (points: any[]) => {
+			mockVectorStore.upsertPoints.mockImplementation(async function (points: any[]) {
 				points.forEach((point) => {
 					if (point.payload?.file_path) {
 						processedFiles.push(point.payload.file_path)
@@ -181,7 +189,7 @@ describe("FileWatcher", () => {
 
 			// Track which files are processed
 			const processedFiles: string[] = []
-			mockVectorStore.upsertPoints.mockImplementation(async (points: any[]) => {
+			mockVectorStore.upsertPoints.mockImplementation(async function (points: any[]) {
 				points.forEach((point) => {
 					if (point.payload?.file_path) {
 						processedFiles.push(point.payload.file_path)
@@ -216,7 +224,7 @@ describe("FileWatcher", () => {
 
 			// Track which files are deleted
 			const deletedFiles: string[] = []
-			mockVectorStore.deletePointsByFilePath.mockImplementation(async (filePath: string) => {
+			mockVectorStore.deletePointsByFilePath.mockImplementation(async function (filePath: string) {
 				deletedFiles.push(filePath)
 			})
 
@@ -248,7 +256,7 @@ describe("FileWatcher", () => {
 
 			// Track which files are processed
 			const processedFiles: string[] = []
-			mockVectorStore.upsertPoints.mockImplementation(async (points: any[]) => {
+			mockVectorStore.upsertPoints.mockImplementation(async function (points: any[]) {
 				points.forEach((point) => {
 					if (point.payload?.file_path) {
 						processedFiles.push(point.payload.file_path)

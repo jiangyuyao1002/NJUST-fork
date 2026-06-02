@@ -47,7 +47,6 @@ vi.mock("fs/promises")
 
 import * as vscode from "vscode"
 
-
 import { SYSTEM_PROMPT } from "../system"
 import type { IMcpHubService } from "../../../services/mcp/interfaces/IMcpHubService"
 import { defaultModeSlug, modes } from "../../../shared/modes"
@@ -125,18 +124,22 @@ vi.mock("vscode", () => ({
 	workspace: {
 		workspaceFolders: [{ uri: { fsPath: "/test/path" } }],
 		getWorkspaceFolder: vi.fn().mockReturnValue({ uri: { fsPath: "/test/path" } }),
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn(),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(),
+			}
+		}),
 	},
 	window: {
 		activeTextEditor: undefined,
 	},
-	EventEmitter: vi.fn().mockImplementation(() => ({
-		event: vi.fn(),
-		fire: vi.fn(),
-		dispose: vi.fn(),
-	})),
+	EventEmitter: vi.fn(function () {
+		return {
+			event: vi.fn(),
+			fire: vi.fn(),
+			dispose: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("../../../utils/shell", () => ({
@@ -260,7 +263,9 @@ describe("addCustomInstructions", () => {
 		)
 
 		expect(prompt).not.toContain("Creating an MCP Server")
-		await expect(prompt).toMatchFileSnapshot("./__snapshots__/add-custom-instructions/mcp-server-creation-disabled.snap")
+		await expect(prompt).toMatchFileSnapshot(
+			"./__snapshots__/add-custom-instructions/mcp-server-creation-disabled.snap",
+		)
 	})
 
 	it("should prioritize mode-specific rules for code mode", async () => {
@@ -275,7 +280,9 @@ describe("addCustomInstructions", () => {
 
 	it("should prioritize mode-specific rules for architect mode", async () => {
 		const instructions = await addCustomInstructions("", "", "/test/path", modes[1].slug)
-		await expect(instructions).toMatchFileSnapshot("./__snapshots__/add-custom-instructions/architect-mode-rules.snap")
+		await expect(instructions).toMatchFileSnapshot(
+			"./__snapshots__/add-custom-instructions/architect-mode-rules.snap",
+		)
 	})
 
 	it("should prioritize mode-specific rules for test engineer mode", async () => {
@@ -294,14 +301,18 @@ describe("addCustomInstructions", () => {
 
 	it("should fall back to generic rules when mode-specific rules not found", async () => {
 		const instructions = await addCustomInstructions("", "", "/test/path", defaultModeSlug)
-		await expect(instructions).toMatchFileSnapshot("./__snapshots__/add-custom-instructions/generic-rules-fallback.snap")
+		await expect(instructions).toMatchFileSnapshot(
+			"./__snapshots__/add-custom-instructions/generic-rules-fallback.snap",
+		)
 	})
 
 	it("should include preferred language when provided", async () => {
 		const instructions = await addCustomInstructions("", "", "/test/path", defaultModeSlug, {
 			language: "es",
 		})
-		await expect(instructions).toMatchFileSnapshot("./__snapshots__/add-custom-instructions/with-preferred-language.snap")
+		await expect(instructions).toMatchFileSnapshot(
+			"./__snapshots__/add-custom-instructions/with-preferred-language.snap",
+		)
 	})
 
 	it("should include custom instructions when provided", async () => {
@@ -345,7 +356,9 @@ describe("addCustomInstructions", () => {
 
 	it("should handle empty mode-specific instructions", async () => {
 		const instructions = await addCustomInstructions("", "", "/test/path", defaultModeSlug)
-		await expect(instructions).toMatchFileSnapshot("./__snapshots__/add-custom-instructions/empty-mode-instructions.snap")
+		await expect(instructions).toMatchFileSnapshot(
+			"./__snapshots__/add-custom-instructions/empty-mode-instructions.snap",
+		)
 	})
 
 	it("should combine global and mode-specific instructions", async () => {

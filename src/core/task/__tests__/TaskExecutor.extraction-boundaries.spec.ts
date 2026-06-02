@@ -14,19 +14,16 @@ vi.mock("vscode", () => ({
 		showInformationMessage: vi.fn(),
 	},
 	Uri: {
-		file: vi.fn((fsPath: string) => ({ fsPath })),
+		file: vi.fn(function (fsPath: string) {
+			return {
+				fsPath,
+			}
+		}),
 	},
 }))
 
-import {
-	processTaskStreamChunk,
-	finalizePendingStreamingToolCalls,
-} from "../TaskStreamChunkProcessor"
-import {
-	handleAttemptApiRequestError,
-	handleEmptyAssistantResponse,
-	handleMidStreamFailure,
-} from "../TaskRetryHandler"
+import { processTaskStreamChunk, finalizePendingStreamingToolCalls } from "../TaskStreamChunkProcessor"
+import { handleAttemptApiRequestError, handleEmptyAssistantResponse, handleMidStreamFailure } from "../TaskRetryHandler"
 
 describe("TaskExecutor extraction boundaries", () => {
 	it("exposes stream chunk processing helpers", () => {

@@ -469,7 +469,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 				await fs.writeFile(headFile, "HEAD")
 				expect(await fileExistsAtPath(nestedGitDir)).toBe(true)
 
-				vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(({ args }) => {
+				vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(function ({ args }) {
 					const searchPattern = args[5]
 
 					if (searchPattern.includes(".git/HEAD")) {
@@ -519,7 +519,7 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 				await mainGit.add(".")
 				await mainGit.commit("Initial commit in main repo")
 
-				vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(() => {
+				vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(function () {
 					// Return empty array to simulate no nested git repos found
 					return Promise.resolve([])
 				})
@@ -1033,7 +1033,7 @@ describe("worktree path comparison", () => {
 			await mainGit.add("main.txt")
 			await mainGit.commit("Initial commit")
 
-			vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(() => {
+			vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(function () {
 				return Promise.resolve([])
 			})
 
@@ -1068,7 +1068,7 @@ describe("worktree path comparison", () => {
 			await mainGit.add("main.txt")
 			await mainGit.commit("Initial commit")
 
-			vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(() => {
+			vitest.spyOn(fileSearch, "executeRipgrep").mockImplementation(function () {
 				return Promise.resolve([])
 			})
 

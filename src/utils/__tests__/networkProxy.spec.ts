@@ -12,7 +12,11 @@ vi.mock("global-agent", () => ({
 vi.mock("vscode", () => ({
 	workspace: {
 		getConfiguration: vi.fn(),
-		onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidChangeConfiguration: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	ExtensionMode: {
 		Development: 2,
@@ -93,7 +97,7 @@ describe("networkProxy", () => {
 
 	describe("initializeNetworkProxy", () => {
 		it("should initialize without proxy when debugProxy.enabled is false", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return false
 				if (key === "debugProxy.serverUrl") return "http://127.0.0.1:8888"
 				return ""
@@ -107,7 +111,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should configure proxy environment variables when debugProxy.enabled is true", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return true
 				if (key === "debugProxy.serverUrl") return "http://localhost:8080"
 				return ""
@@ -122,7 +126,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should not modify TLS settings in debug mode by default", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return true
 				if (key === "debugProxy.serverUrl") return "http://localhost:8080"
 				if (key === "debugProxy.tlsInsecure") return false
@@ -136,7 +140,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should disable TLS verification when tlsInsecure is enabled (debug mode only)", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return true
 				if (key === "debugProxy.serverUrl") return "http://localhost:8080"
 				if (key === "debugProxy.tlsInsecure") return true
@@ -168,7 +172,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should not throw in non-debug mode if proxy deps are not installed", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return true
 				if (key === "debugProxy.serverUrl") return "http://localhost:8080"
 				return ""
@@ -194,7 +198,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should return correct config after initialization", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return true
 				if (key === "debugProxy.serverUrl") return "http://proxy.example.com:3128"
 				if (key === "debugProxy.tlsInsecure") return true
@@ -212,7 +216,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should trim whitespace from server URL", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.serverUrl") return "  http://proxy.example.com:3128  "
 				return ""
 			})
@@ -225,7 +229,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should return default URL for empty server URL", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.serverUrl") return "   "
 				return ""
 			})
@@ -240,7 +244,7 @@ describe("networkProxy", () => {
 
 	describe("isProxyEnabled", () => {
 		it("should return false when proxy is not enabled", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return false
 				return ""
 			})
@@ -252,7 +256,7 @@ describe("networkProxy", () => {
 		})
 
 		it("should return true when proxy is enabled in debug mode", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return true
 				if (key === "debugProxy.serverUrl") return "http://localhost:8080"
 				return ""
@@ -293,7 +297,7 @@ describe("networkProxy", () => {
 
 	describe("security", () => {
 		it("should not disable TLS verification unless tlsInsecure is enabled", () => {
-			mockConfig.get.mockImplementation((key: string) => {
+			mockConfig.get.mockImplementation(function (key: string) {
 				if (key === "debugProxy.enabled") return true
 				if (key === "debugProxy.serverUrl") return "http://localhost:8080"
 				if (key === "debugProxy.tlsInsecure") return false

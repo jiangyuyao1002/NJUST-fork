@@ -20,7 +20,7 @@ vitest.mock("@smithy/smithy-client", () => ({
 }))
 
 // Create a mock send function that we can reference
-const mockSend = vitest.fn().mockImplementation(async () => {
+const mockSend = vitest.fn(async function () {
 	return {
 		$metadata: {
 			httpStatusCode: 200,
@@ -44,30 +44,39 @@ const mockSend = vitest.fn().mockImplementation(async () => {
 // Mock AWS SDK modules
 vitest.mock("@aws-sdk/client-bedrock-runtime", () => {
 	return {
-		BedrockRuntimeClient: vitest.fn().mockImplementation(() => ({
-			send: mockSend,
-			config: { region: "us-east-1" },
-			middlewareStack: {
-				clone: () => ({ resolve: () => {} }),
-				use: () => {},
-			},
-		})),
-		ConverseStreamCommand: vitest.fn((params) => ({
-			...params,
-			input: params,
-			middlewareStack: {
-				clone: () => ({ resolve: () => {} }),
-				use: () => {},
-			},
-		})),
-		ConverseCommand: vitest.fn((params) => ({
-			...params,
-			input: params,
-			middlewareStack: {
-				clone: () => ({ resolve: () => {} }),
-				use: () => {},
-			},
-		})),
+		BedrockRuntimeClient: vitest.fn(function () {
+			return {
+				send: mockSend,
+				config: { region: "us-east-1" },
+
+				middlewareStack: {
+					clone: () => ({ resolve: () => {} }),
+					use: () => {},
+				},
+			}
+		}),
+		ConverseStreamCommand: vitest.fn(function (params) {
+			return {
+				...params,
+				input: params,
+
+				middlewareStack: {
+					clone: () => ({ resolve: () => {} }),
+					use: () => {},
+				},
+			}
+		}),
+		ConverseCommand: vitest.fn(function (params) {
+			return {
+				...params,
+				input: params,
+
+				middlewareStack: {
+					clone: () => ({ resolve: () => {} }),
+					use: () => {},
+				},
+			}
+		}),
 	}
 })
 
@@ -304,28 +313,28 @@ describe("AwsBedrockHandler with invokedModelId", () => {
 
 		// Mock the stream with a valid invokedModelId
 		mockSend.mockImplementationOnce(async () => {
-				return {
-					stream: createMockStream([
-						{
-							trace: {
-								promptRouter: {
-									invokedModelId:
-										"arn:aws:bedrock:us-east-1:123456789:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0",
-								},
+			return {
+				stream: createMockStream([
+					{
+						trace: {
+							promptRouter: {
+								invokedModelId:
+									"arn:aws:bedrock:us-east-1:123456789:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0",
 							},
 						},
-						{
-							contentBlockStart: {
-								start: { text: "test" },
-								contentBlockIndex: 0,
-							},
+					},
+					{
+						contentBlockStart: {
+							start: { text: "test" },
+							contentBlockIndex: 0,
 						},
-					]),
-				}
-			})
+					},
+				]),
+			}
+		})
 
 		// Mock getModel to throw an error when called with the model name
-		vitest.spyOn(handler, "getModel").mockImplementation((modelName?: string) => {
+		vitest.spyOn(handler, "getModel").mockImplementation(function (modelName?: string) {
 			if (modelName === "anthropic.claude-3-sonnet-20240229-v1:0") {
 				throw new Error("Test error during model lookup")
 			}

@@ -7,7 +7,7 @@ import { OpenAICompatibleEmbedder } from "../openai-compatible"
 
 // Mock the OpenAICompatibleEmbedder
 vi.mock("../openai-compatible", () => ({
-	OpenAICompatibleEmbedder: vi.fn(),
+	OpenAICompatibleEmbedder: vi.fn(function () {}),
 }))
 
 // Mock the TelemetryService
@@ -32,7 +32,9 @@ describe("VercelAiGatewayEmbedder", () => {
 			createEmbeddings: vi.fn(),
 			validateConfiguration: vi.fn(),
 		}
-		MockedOpenAICompatibleEmbedder.mockImplementation(() => mockOpenAICompatibleEmbedder)
+		MockedOpenAICompatibleEmbedder.mockImplementation(function () {
+			return mockOpenAICompatibleEmbedder
+		})
 	})
 
 	describe("constructor", () => {

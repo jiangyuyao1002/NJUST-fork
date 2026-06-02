@@ -82,7 +82,7 @@ describe("OpenAiNativeHandler MCP tool schema handling", () => {
 		// Mock the responses API call
 		const mockClient = {
 			responses: {
-				create: vi.fn().mockImplementation((body: any) => {
+				create: vi.fn(function (body: any) {
 					capturedRequestBody = body
 					return {
 						[Symbol.asyncIterator]: async function* () {
@@ -149,7 +149,7 @@ describe("OpenAiNativeHandler MCP tool schema handling", () => {
 		// Mock the responses API call
 		const mockClient = {
 			responses: {
-				create: vi.fn().mockImplementation((body: any) => {
+				create: vi.fn(function (body: any) {
 					capturedRequestBody = body
 					return {
 						[Symbol.asyncIterator]: async function* () {
@@ -218,7 +218,7 @@ describe("OpenAiNativeHandler MCP tool schema handling", () => {
 		// Mock the responses API call
 		const mockClient = {
 			responses: {
-				create: vi.fn().mockImplementation((body: any) => {
+				create: vi.fn(function (body: any) {
 					capturedRequestBody = body
 					return {
 						[Symbol.asyncIterator]: async function* () {
@@ -293,7 +293,7 @@ describe("OpenAiNativeHandler MCP tool schema handling", () => {
 
 		const mockClient = {
 			responses: {
-				create: vi.fn().mockImplementation(() => {
+				create: vi.fn(function () {
 					return {
 						[Symbol.asyncIterator]: async function* () {
 							// 1. Emit output_item.added with tool identity

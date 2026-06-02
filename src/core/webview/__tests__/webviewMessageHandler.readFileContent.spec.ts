@@ -43,7 +43,7 @@ vi.mock("../../../utils/globalContext")
 vi.mock("../../../utils/pathUtils", async () => {
 	const nodePath = await import("path")
 	return {
-		isPathOutsideWorkspace: vi.fn((filePath: string) => {
+		isPathOutsideWorkspace: vi.fn(function (filePath: string) {
 			const normalized = nodePath.resolve(filePath)
 			const workspaceRoot = nodePath.resolve("/mock/workspace")
 			if (normalized === workspaceRoot) return false
@@ -54,10 +54,12 @@ vi.mock("../../../utils/pathUtils", async () => {
 })
 
 vi.mock("../../mentions/resolveImageMentions", () => ({
-	resolveImageMentions: vi.fn(async ({ text, images }: { text: string; images?: string[] }) => ({
-		text,
-		images: [...(images ?? [])],
-	})),
+	resolveImageMentions: vi.fn(async function ({ text, images }: { text: string; images?: string[] }) {
+		return {
+			text,
+			images: [...(images ?? [])],
+		}
+	}),
 }))
 
 import { webviewMessageHandler } from "../webviewMessageHandler"

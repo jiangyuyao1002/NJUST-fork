@@ -42,7 +42,7 @@ describe("getSystemInfoSection", () => {
 	})
 
 	it("should fallback to platform and release when os-name throws error", () => {
-		mockOsName.mockImplementation(() => {
+		mockOsName.mockImplementation(function () {
 			throw new Error("Command failed with ENOENT: powershell")
 		})
 
@@ -55,7 +55,7 @@ describe("getSystemInfoSection", () => {
 	})
 
 	it("should handle Windows platform in fallback", () => {
-		mockOsName.mockImplementation(() => {
+		mockOsName.mockImplementation(function () {
 			throw new Error("Command failed with ENOENT: powershell")
 		})
 		vi.spyOn(os, "platform").mockReturnValue("win32" as any)

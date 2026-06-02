@@ -20,11 +20,11 @@ describe("Task.ask queued message drain", () => {
 		;(task as any).messageQueueService = new MessageQueueService()
 
 		// Minimal stubs used by ask()
-		;(task as any).addToClineMessages = vi.fn(async () => {})
-		;(task as any).saveClineMessages = vi.fn(async () => {})
-		;(task as any).updateClineMessage = vi.fn(async () => {})
-		;(task as any).cancelAutoApprovalTimeout = vi.fn(() => {})
-		;(task as any).checkpointSave = vi.fn(async () => {})
+		;(task as any).addToClineMessages = vi.fn(async function () {})
+		;(task as any).saveClineMessages = vi.fn(async function () {})
+		;(task as any).updateClineMessage = vi.fn(async function () {})
+		;(task as any).cancelAutoApprovalTimeout = vi.fn(function () {})
+		;(task as any).checkpointSave = vi.fn(async function () {})
 		;(task as any).emit = vi.fn()
 		;(task as any).hostRef = { deref: () => undefined }
 
@@ -49,11 +49,11 @@ describe("Task.ask queued message drain", () => {
 
 		const { MessageQueueService } = await import("../../message-queue/MessageQueueService")
 		;(task as any).messageQueueService = new MessageQueueService()
-		;(task as any).addToClineMessages = vi.fn(async () => {})
-		;(task as any).saveClineMessages = vi.fn(async () => {})
-		;(task as any).updateClineMessage = vi.fn(async () => {})
-		;(task as any).cancelAutoApprovalTimeout = vi.fn(() => {})
-		;(task as any).checkpointSave = vi.fn(async () => {})
+		;(task as any).addToClineMessages = vi.fn(async function () {})
+		;(task as any).saveClineMessages = vi.fn(async function () {})
+		;(task as any).updateClineMessage = vi.fn(async function () {})
+		;(task as any).cancelAutoApprovalTimeout = vi.fn(function () {})
+		;(task as any).checkpointSave = vi.fn(async function () {})
 		;(task as any).emit = vi.fn()
 		;(task as any).hostRef = { deref: () => undefined }
 

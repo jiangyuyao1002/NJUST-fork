@@ -11,7 +11,13 @@ vi.mock("vscode", () => ({
 		workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }],
 	},
 	ConfigurationTarget: { Global: 1 },
-	Uri: { file: vi.fn().mockImplementation((p: string) => ({ fsPath: p })) },
+	Uri: {
+		file: vi.fn(function (p: string) {
+			return {
+				fsPath: p,
+			}
+		}),
+	},
 }))
 
 vi.mock("../../../i18n", () => ({ t: (key: string) => key, changeLanguage: vi.fn() }))
@@ -66,15 +72,36 @@ describe("settingsMessageHandler", () => {
 
 	it("registers all expected settings handlers", () => {
 		const registeredTypes = [
-			"updateSettings", "updateCloudAgentSettings", "updateVSCodeSetting", "getVSCodeSetting",
-			"saveApiConfiguration", "upsertApiConfiguration", "renameApiConfiguration",
-			"loadApiConfiguration", "loadApiConfigurationById", "deleteApiConfiguration",
-			"getListApiConfiguration", "flushRouterModels", "requestRouterModels",
-			"requestOllamaModels", "requestLmStudioModels", "requestRooModels",
-			"requestOpenAiModels", "requestVsCodeLmModels", "importSettings", "exportSettings",
-			"resetState", "toggleApiConfigPin", "enhancementApiConfigId",
-			"lockApiConfigAcrossModes", "autoApprovalEnabled", "taskSyncEnabled",
-			"hasOpenedModeSelector", "debugSetting", "openAiCodexSignIn", "openAiCodexSignOut",
+			"updateSettings",
+			"updateCloudAgentSettings",
+			"updateVSCodeSetting",
+			"getVSCodeSetting",
+			"saveApiConfiguration",
+			"upsertApiConfiguration",
+			"renameApiConfiguration",
+			"loadApiConfiguration",
+			"loadApiConfigurationById",
+			"deleteApiConfiguration",
+			"getListApiConfiguration",
+			"flushRouterModels",
+			"requestRouterModels",
+			"requestOllamaModels",
+			"requestLmStudioModels",
+			"requestRooModels",
+			"requestOpenAiModels",
+			"requestVsCodeLmModels",
+			"importSettings",
+			"exportSettings",
+			"resetState",
+			"toggleApiConfigPin",
+			"enhancementApiConfigId",
+			"lockApiConfigAcrossModes",
+			"autoApprovalEnabled",
+			"taskSyncEnabled",
+			"hasOpenedModeSelector",
+			"debugSetting",
+			"openAiCodexSignIn",
+			"openAiCodexSignOut",
 			"requestOpenAiCodexRateLimits",
 		]
 		for (const type of registeredTypes) {
@@ -119,7 +146,9 @@ describe("settingsMessageHandler", () => {
 			apiConfiguration: { apiProvider: "openai" },
 		} as any)
 
-		expect(context.provider.providerSettingsManager.saveConfig).toHaveBeenCalledWith("my-config", { apiProvider: "openai" })
+		expect(context.provider.providerSettingsManager.saveConfig).toHaveBeenCalledWith("my-config", {
+			apiProvider: "openai",
+		})
 	})
 
 	it("saveApiConfiguration does nothing without text", async () => {

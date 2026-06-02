@@ -36,7 +36,7 @@ describe("OutputInterceptor", () => {
 		// Setup mock write stream with callback support for end()
 		mockWriteStream = {
 			write: vi.fn(),
-			end: vi.fn((callback?: () => void) => {
+			end: vi.fn(function (callback?: () => void) {
 				// Immediately call the callback to simulate stream flush completing
 				if (callback) callback()
 			}),

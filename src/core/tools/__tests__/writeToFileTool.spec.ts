@@ -14,7 +14,7 @@ vi.mock("path", async () => {
 	const originalPath = await vi.importActual("path")
 	return {
 		...originalPath,
-		resolve: vi.fn().mockImplementation((...args) => {
+		resolve: vi.fn(function (...args) {
 			// On Windows, use backslashes; on Unix, use forward slashes
 			const separator = process.platform === "win32" ? "\\" : "/"
 			return args.join(separator)
@@ -238,7 +238,7 @@ describe("writeToFileTool", () => {
 			partial: isPartial,
 		}
 
-		mockPushToolResult = vi.fn((result: ToolResponse) => {
+		mockPushToolResult = vi.fn(function (result: ToolResponse) {
 			toolResult = result
 		})
 

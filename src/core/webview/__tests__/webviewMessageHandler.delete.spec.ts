@@ -22,10 +22,12 @@ vi.mock("vscode", () => ({
 	},
 	workspace: {
 		workspaceFolders: undefined,
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn(),
-			update: vi.fn(),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(),
+				update: vi.fn(),
+			}
+		}),
 	},
 	ConfigurationTarget: {
 		Global: 1,
@@ -33,8 +35,16 @@ vi.mock("vscode", () => ({
 		WorkspaceFolder: 3,
 	},
 	Uri: {
-		parse: vi.fn((str) => ({ toString: () => str })),
-		file: vi.fn((path) => ({ fsPath: path })),
+		parse: vi.fn(function (str) {
+			return {
+				toString: () => str,
+			}
+		}),
+		file: vi.fn(function (path) {
+			return {
+				fsPath: path,
+			}
+		}),
 	},
 	env: {
 		openExternal: vi.fn(),
@@ -59,8 +69,8 @@ describe("webviewMessageHandler delete functionality", () => {
 		getCurrentTaskMock = {
 			clineMessages: [],
 			apiConversationHistory: [],
-			overwriteClineMessages: vi.fn(async () => {}),
-			overwriteApiConversationHistory: vi.fn(async () => {}),
+			overwriteClineMessages: vi.fn(async function () {}),
+			overwriteApiConversationHistory: vi.fn(async function () {}),
 			taskId: "test-task-id",
 		}
 		// Add messageManager using a real MessageManager instance (must be added after object creation
@@ -73,7 +83,7 @@ describe("webviewMessageHandler delete functionality", () => {
 			postMessageToWebview: vi.fn(),
 			contextProxy: {
 				getValue: vi.fn(),
-				setValue: vi.fn(async () => {}),
+				setValue: vi.fn(async function () {}),
 				globalStorageUri: { fsPath: "/test/path" },
 			},
 			log: vi.fn(),
