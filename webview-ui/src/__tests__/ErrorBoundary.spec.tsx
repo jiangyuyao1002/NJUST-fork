@@ -1,11 +1,18 @@
 import React from "react"
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import ErrorBoundary from "../components/ErrorBoundary"
+import { vscode } from "@src/utils/vscode"
 
 // Mock telemetry client
 vi.mock("@src/utils/TelemetryClient", () => ({
 	telemetryClient: {
 		capture: vi.fn(),
+	},
+}))
+
+vi.mock("@src/utils/vscode", () => ({
+	vscode: {
+		postMessage: vi.fn(),
 	},
 }))
 
@@ -52,7 +59,7 @@ describe("ErrorBoundary", () => {
 		expect(screen.getByText("Test Content")).toBeInTheDocument()
 	})
 
-	it("renders error UI when a child component throws", () => {
+	it("renders error UI when a child component throws", async () => {
 		vi.stubEnv("PKG_VERSION", "1.2.3")
 
 		// Using the React testing library's render method with an error boundary is tricky
@@ -66,22 +73,59 @@ describe("ErrorBoundary", () => {
 		)
 
 		// Verify error boundary elements are displayed - using partial matchers to account for version info
-		expect(screen.getByText(/errorBoundary.title/)).toBeInTheDocument()
+		await waitFor(() => {
+			expect(screen.getByText(/errorBoundary.title/)).toBeInTheDocument()
 
-		// Check for the GitHub link
-		const githubLink = screen.getByRole("link", { name: /errorBoundary.githubText/ })
-		expect(githubLink).toBeInTheDocument()
-		expect(githubLink).toHaveAttribute("href", "https://github.com/NJUST-AI/NJUST_AI/issues")
+			// Check for the GitHub link
+			const githubLink = screen.getByRole("link", { name: /errorBoundary.githubText/ })
+			expect(githubLink).toBeInTheDocument()
+			expect(githubLink).toHaveAttribute("href", "https://github.com/NJUST-AI/NJUST_AI/issues")
 
-		// Check for other error boundary elements
-		expect(screen.getByText(/errorBoundary.copyInstructions/)).toBeInTheDocument()
-		expect(screen.getByText(/errorBoundary.errorStack/)).toBeInTheDocument()
+			// Check for other error boundary elements
+			expect(screen.getByText(/errorBoundary.copyInstructions/)).toBeInTheDocument()
+			expect(screen.getByText(/errorBoundary.errorStack/)).toBeInTheDocument()
 
-		// In test environments, the componentStack might not always be available
-		// so we don't check for it to make the test more reliable
+			// The test error message should be included in the error display
+			expect(screen.getByText(/Test component error/)).toBeInTheDocument()
+		})
 
-		// The test error message should be included in the error display
-		expect(screen.getByText(/Test component error/)).toBeInTheDocument()
+		spy.mockRestore()
+	})
+
+	it("reports webviewError telemetry to the host when a child throws", async () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+		render(
+			<ErrorBoundary>
+				<ErrorThrower shouldThrow={true} message="Telemetry error" />
+			</ErrorBoundary>,
+		)
+
+		await waitFor(() => {
+			expect(vscode.postMessage).toHaveBeenCalledWith(
+				expect.objectContaining({
+					type: "webviewError",
+					text: expect.stringContaining("Telemetry error"),
+				}),
+			)
+		})
+		spy.mockRestore()
+	})
+
+	it("renders custom fallback UI when provided", async () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+		render(
+			<ErrorBoundary fallback={(error, _stack) => <div data-testid="custom-fallback">Fallback: {error}</div>}>
+				<ErrorThrower shouldThrow={true} message="Custom fallback error" />
+			</ErrorBoundary>,
+		)
+
+		await waitFor(() => {
+			expect(screen.getByTestId("custom-fallback")).toBeInTheDocument()
+			expect(screen.getByText(/Fallback:.*Custom fallback error/)).toBeInTheDocument()
+
+			// Default UI elements should not be present
+			expect(screen.queryByText(/errorBoundary.title/)).not.toBeInTheDocument()
+		})
 
 		spy.mockRestore()
 	})
