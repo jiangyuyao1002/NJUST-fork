@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("vscode", () => ({
 	workspace: {
-		createFileSystemWatcher: vi.fn(() => ({
-			onDidCreate: vi.fn(),
-			onDidChange: vi.fn(),
-			onDidDelete: vi.fn(),
-			dispose: vi.fn(),
-		})),
+		createFileSystemWatcher: vi.fn(function () {
+			return {
+				onDidCreate: vi.fn(),
+				onDidChange: vi.fn(),
+				onDidDelete: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	RelativePattern: vi.fn(),
 }))
@@ -66,7 +68,10 @@ describe("TaskExecutor", () => {
 
 		;(executor as any).checkSubtaskTokenBudget()
 
-		expect(logger.warn).toHaveBeenCalledWith("TaskExecutor", expect.stringContaining("approaching parent's remaining budget"))
+		expect(logger.warn).toHaveBeenCalledWith(
+			"TaskExecutor",
+			expect.stringContaining("approaching parent's remaining budget"),
+		)
 	})
 
 	it("uses default context window when model omits one", () => {

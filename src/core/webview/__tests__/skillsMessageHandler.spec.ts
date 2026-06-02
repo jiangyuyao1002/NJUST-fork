@@ -1,6 +1,5 @@
 // npx vitest run src/core/webview/__tests__/skillsMessageHandler.spec.ts
 
-
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { SkillMetadata, WebviewMessage } from "@njust-ai/types"
 import type { ClineProvider } from "../ClineProvider"
@@ -116,7 +115,7 @@ describe("skillsMessageHandler", () => {
 
 		it("handles errors and returns empty skills", async () => {
 			const provider = createMockProvider(true)
-			mockGetSkillsMetadata.mockImplementation(() => {
+			mockGetSkillsMetadata.mockImplementation(function () {
 				throw new Error("Test error")
 			})
 

@@ -47,7 +47,7 @@ description: Symlinked command
 			mockFs.readlink = vi.fn().mockResolvedValue("../shared/symlinked-command.md")
 
 			// Mock stat to return file for the resolved target
-			mockFs.stat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.stat = vi.fn(function (filePath: string) {
 				if (filePath.includes("commands")) {
 					return Promise.resolve({ isDirectory: () => true })
 				}
@@ -55,7 +55,7 @@ description: Symlinked command
 			})
 
 			// Mock readFile to succeed for resolved path
-			mockFs.readFile = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.readFile = vi.fn(function (filePath: string) {
 				if (filePath.toString().includes("symlinked-command.md")) {
 					return Promise.resolve(commandContent)
 				}
@@ -109,7 +109,7 @@ description: Symlinked command
 			mockFs.readlink = vi.fn().mockResolvedValue("../shared/actual-command.md")
 
 			// Mock lstat for symlink target type checking (lstat doesn't follow symlinks)
-			mockFs.lstat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.lstat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({ isDirectory: () => true })
@@ -123,7 +123,7 @@ description: Symlinked command
 			})
 
 			// Mock stat for directory checking
-			mockFs.stat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.stat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({ isDirectory: () => true })
@@ -136,7 +136,7 @@ description: Symlinked command
 			})
 
 			// Mock readFile for content
-			mockFs.readFile = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.readFile = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.toString().replace(/\\/g, "/")
 				if (normalizedPath.includes("regular.md")) {
 					return Promise.resolve(regularContent)
@@ -162,7 +162,7 @@ description: Symlinked command
 			const nestedContent = `# Nested Command from Symlinked Dir`
 
 			// Mock lstat for symlink target type checking (lstat doesn't follow symlinks)
-			mockFs.lstat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.lstat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands") || normalizedPath.includes("shared-commands")) {
 					return Promise.resolve({
@@ -179,7 +179,7 @@ description: Symlinked command
 			})
 
 			// First stat check for directory
-			mockFs.stat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.stat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands") || normalizedPath.includes("shared-commands")) {
 					return Promise.resolve({
@@ -196,7 +196,7 @@ description: Symlinked command
 			})
 
 			// First readdir returns a symlink to directory
-			mockFs.readdir = vi.fn().mockImplementation((dirPath: string) => {
+			mockFs.readdir = vi.fn(function (dirPath: string) {
 				const normalizedPath = dirPath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands") && !normalizedPath.includes("shared")) {
 					return Promise.resolve([
@@ -223,7 +223,7 @@ description: Symlinked command
 			mockFs.readlink = vi.fn().mockResolvedValue("/mock/shared-commands")
 
 			// Mock readFile for content
-			mockFs.readFile = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.readFile = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.toString().replace(/\\/g, "/")
 				if (normalizedPath.includes("nested.md")) {
 					return Promise.resolve(nestedContent)
@@ -245,7 +245,7 @@ description: Symlinked command
 		it("should handle cyclic symlinks gracefully (MAX_DEPTH protection)", async () => {
 			// Create a cyclic symlink scenario
 			// Mock lstat to return symlink for all targets (creating infinite loop)
-			mockFs.lstat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.lstat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({
@@ -262,7 +262,7 @@ description: Symlinked command
 				})
 			})
 
-			mockFs.stat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.stat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({
@@ -304,7 +304,7 @@ description: Symlinked command
 			const regularContent = `# Regular Command`
 
 			// Mock lstat for symlink target type checking
-			mockFs.lstat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.lstat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({
@@ -323,7 +323,7 @@ description: Symlinked command
 				})
 			})
 
-			mockFs.stat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.stat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({
@@ -360,7 +360,7 @@ description: Symlinked command
 			// Broken symlink points to nonexistent file
 			mockFs.readlink = vi.fn().mockResolvedValue("../nonexistent.md")
 
-			mockFs.readFile = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.readFile = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.toString().replace(/\\/g, "/")
 				if (normalizedPath.includes("regular.md")) {
 					return Promise.resolve(regularContent)
@@ -379,7 +379,7 @@ description: Symlinked command
 			const targetContent = `# Target File Content`
 
 			// Mock lstat for symlink target type checking (lstat doesn't follow symlinks)
-			mockFs.lstat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.lstat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({
@@ -396,7 +396,7 @@ description: Symlinked command
 				})
 			})
 
-			mockFs.stat = vi.fn().mockImplementation((filePath: string) => {
+			mockFs.stat = vi.fn(function (filePath: string) {
 				const normalizedPath = filePath.replace(/\\/g, "/")
 				if (normalizedPath.includes("commands")) {
 					return Promise.resolve({

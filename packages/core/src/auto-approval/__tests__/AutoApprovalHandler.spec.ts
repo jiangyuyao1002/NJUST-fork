@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import { GlobalState, ClineMessage } from "@njust-ai/types"
+import { GlobalState, ClineMessage, ClineAsk, ClineAskResponse } from "@njust-ai/types"
 
 import { getApiMetrics } from "../../shared/getApiMetrics.js"
 import { AutoApprovalHandler } from "../AutoApprovalHandler.js"
 
 describe("AutoApprovalHandler", () => {
 	let handler: AutoApprovalHandler
-	let mockAskForApproval: ReturnType<typeof vi.fn>
+	let mockAskForApproval: ReturnType<
+		typeof vi.fn<
+			(type: ClineAsk, data: string) => Promise<{ response: ClineAskResponse; text?: string; images?: string[] }>
+		>
+	>
 	let mockState: GlobalState
 
 	beforeEach(() => {
@@ -185,7 +189,13 @@ describe("AutoApprovalHandler", () => {
 
 		it("should not trigger just below max + epsilon from floating noise", async () => {
 			const messages: ClineMessage[] = [
-				{ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 5.00009 }), ts: 1000 },
+				{
+					type: "say",
+					say: "api_req_started",
+					id: "test-id",
+					text: JSON.stringify({ cost: 5.00009 }),
+					ts: 1000,
+				},
 			]
 			const result2 = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			expect(result2.requiresApproval).toBe(false)
@@ -248,10 +258,7 @@ describe("AutoApprovalHandler", () => {
 			const result = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 
 			expect(result.requiresApproval).toBe(false)
-			expect(handler.getApprovalState().currentCost).toBeCloseTo(
-				getApiMetrics(messages.slice(3)).totalCost,
-				5,
-			)
+			expect(handler.getApprovalState().currentCost).toBeCloseTo(getApiMetrics(messages.slice(3)).totalCost, 5)
 		})
 	})
 
@@ -268,7 +275,13 @@ describe("AutoApprovalHandler", () => {
 			expect(result.shouldProceed).toBe(true)
 			expect(result.requiresApproval).toBe(false)
 
-			messages.push({ type: "say", say: "api_req_started", id: "test-id", text: JSON.stringify({ cost: 1.0 }), ts: 1000 })
+			messages.push({
+				type: "say",
+				say: "api_req_started",
+				id: "test-id",
+				text: JSON.stringify({ cost: 1.0 }),
+				ts: 1000,
+			})
 			// Second: 1 + 1 = 2 <= 2
 			result = await handler.checkAutoApprovalLimits(mockState, messages, mockAskForApproval)
 			expect(result.shouldProceed).toBe(true)

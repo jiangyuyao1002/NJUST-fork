@@ -14,18 +14,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
  * - Output structure formatting
  */
 
-
 import { isBinaryFile } from "isbinaryfile"
 
 import { readFileTool } from "../ReadFileTool"
 import { toolResultCache } from "../helpers/ToolResultCache"
 import { formatResponse } from "../../prompts/responses"
-import {
-	validateImageForProcessing,
-	processImageFile,
-	isSupportedImageFormat,
-	
-} from "../helpers/imageHelpers"
+import { validateImageForProcessing, processImageFile, isSupportedImageFormat } from "../helpers/imageHelpers"
 import { extractTextFromFile, getSupportedBinaryFormats } from "../../../integrations/misc/extract-text"
 import { readWithIndentation, readWithSlice } from "../../../integrations/misc/indentation-reader"
 
@@ -49,7 +43,7 @@ vi.mock("isbinaryfile")
 
 vi.mock("../../../integrations/misc/extract-text", () => ({
 	extractTextFromFile: vi.fn(),
-	addLineNumbers: vi.fn().mockImplementation((text: string, startLine = 1) => {
+	addLineNumbers: vi.fn(function (text: string, startLine = 1) {
 		if (!text) return ""
 		const lines = text.split("\n")
 		return lines.map((line, i) => `${startLine + i} | ${line}`).join("\n")
@@ -68,10 +62,10 @@ vi.mock("../helpers/imageHelpers", () => ({
 	isSupportedImageFormat: vi.fn(),
 	validateImageForProcessing: vi.fn(),
 	processImageFile: vi.fn(),
-	ImageMemoryTracker: vi.fn().mockImplementation(() => ({
-		getTotalMemoryUsed: vi.fn().mockReturnValue(0),
-		addMemoryUsage: vi.fn(),
-	})),
+	ImageMemoryTracker: class {
+		getTotalMemoryUsed = vi.fn().mockReturnValue(0)
+		addMemoryUsage = vi.fn()
+	},
 }))
 
 vi.mock("../../prompts/responses", () => ({
@@ -89,7 +83,7 @@ vi.mock("../../prompts/responses", () => ({
 			(filePath: string) =>
 				`Access to ${filePath} is blocked by the .rooignore file settings. You must try to continue in the task without using this file, or ask the user to update the .rooignore file.`,
 		),
-		toolResult: vi.fn((text: string, images?: string[]) => {
+		toolResult: vi.fn(function (text: string, images?: string[]) {
 			if (images && images.length > 0) {
 				return [
 					{ type: "text", text },
@@ -102,7 +96,7 @@ vi.mock("../../prompts/responses", () => ({
 			}
 			return text
 		}),
-		imageBlocks: vi.fn((images?: string[]) => {
+		imageBlocks: vi.fn(function (images?: string[]) {
 			return images
 				? images.map((img) => {
 						const [header, data] = img.split(",")
@@ -552,7 +546,7 @@ describe("ReadFileTool", () => {
 			const callbacks = createMockCallbacks()
 
 			mockedFsReadFile.mockResolvedValue(Buffer.from("lots of content..."))
-			mockedReadWithSlice.mockImplementation((_content: string, offset: number) => {
+			mockedReadWithSlice.mockImplementation(function (_content: string, offset: number) {
 				if (offset === 0) {
 					return {
 						content: "1 | first chunk",

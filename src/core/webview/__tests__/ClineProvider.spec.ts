@@ -1,6 +1,5 @@
 // pnpm --filter njust-ai test core/webview/__tests__/ClineProvider.spec.ts
 
-
 import { describe, it, test, expect, vi, beforeEach, beforeAll, afterAll } from "vitest"
 import Anthropic from "@anthropic-ai/sdk"
 import * as fs from "fs/promises"
@@ -37,17 +36,19 @@ vi.mock("p-wait-for", () => ({
 }))
 
 vi.mock("fs", () => ({
-	watch: vi.fn(() => ({
-		on: vi.fn(),
-		close: vi.fn(),
-	})),
+	watch: vi.fn(function () {
+		return {
+			on: vi.fn(),
+			close: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("fs/promises", () => {
 	const mockFs = {
 		mkdir: vi.fn().mockResolvedValue(undefined),
 		writeFile: vi.fn().mockResolvedValue(undefined),
-		readFile: vi.fn().mockImplementation(async (filePath: string) => {
+		readFile: vi.fn(async function (filePath: string) {
 			if (String(filePath).includes("mcp")) {
 				return JSON.stringify({ mcpServers: {} })
 			}
@@ -130,30 +131,36 @@ vi.mock("delay", () => {
 // MCP-related modules are mocked once above (lines 87-109).
 
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
-	Client: vi.fn().mockImplementation(() => ({
-		connect: vi.fn().mockResolvedValue(undefined),
-		close: vi.fn().mockResolvedValue(undefined),
-		listTools: vi.fn().mockResolvedValue({ tools: [] }),
-		callTool: vi.fn().mockResolvedValue({ content: [] }),
-	})),
+	Client: vi.fn(function () {
+		return {
+			connect: vi.fn().mockResolvedValue(undefined),
+			close: vi.fn().mockResolvedValue(undefined),
+			listTools: vi.fn().mockResolvedValue({ tools: [] }),
+			callTool: vi.fn().mockResolvedValue({ content: [] }),
+		}
+	}),
 }))
 
 vi.mock("@modelcontextprotocol/sdk/client/stdio.js", () => ({
-	StdioClientTransport: vi.fn().mockImplementation(() => ({
-		connect: vi.fn().mockResolvedValue(undefined),
-		close: vi.fn().mockResolvedValue(undefined),
-	})),
+	StdioClientTransport: vi.fn(function () {
+		return {
+			connect: vi.fn().mockResolvedValue(undefined),
+			close: vi.fn().mockResolvedValue(undefined),
+		}
+	}),
 }))
 
 vi.mock("vscode", () => ({
 	ExtensionContext: vi.fn(),
 	OutputChannel: vi.fn(),
 	WebviewView: vi.fn(),
-	EventEmitter: vi.fn().mockImplementation(() => ({
-		event: vi.fn(),
-		fire: vi.fn(),
-		dispose: vi.fn(),
-	})),
+	EventEmitter: vi.fn(function () {
+		return {
+			event: vi.fn(),
+			fire: vi.fn(),
+			dispose: vi.fn(),
+		}
+	}),
 	Uri: {
 		joinPath: vi.fn(),
 		file: vi.fn(),
@@ -169,21 +176,47 @@ vi.mock("vscode", () => ({
 		showInformationMessage: vi.fn(),
 		showWarningMessage: vi.fn(),
 		showErrorMessage: vi.fn(),
-		createTextEditorDecorationType: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidChangeActiveTextEditor: vi.fn(() => ({ dispose: vi.fn() })),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidChangeActiveTextEditor: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	workspace: {
 		getConfiguration: vi.fn().mockReturnValue({
 			get: vi.fn().mockReturnValue([]),
 			update: vi.fn(),
 		}),
-		onDidChangeConfiguration: vi.fn().mockImplementation(() => ({
-			dispose: vi.fn(),
-		})),
-		onDidSaveTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidChangeTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidOpenTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidCloseTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidChangeConfiguration: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidSaveTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidChangeTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidOpenTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidCloseTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	env: {
 		uriScheme: "vscode",
@@ -214,33 +247,37 @@ vi.mock("../../prompts/system", () => ({
 
 vi.mock("../../../integrations/workspace/WorkspaceTracker", () => {
 	return {
-		default: vi.fn().mockImplementation(() => ({
-			initializeFilePaths: vi.fn(),
-			dispose: vi.fn(),
-		})),
+		default: vi.fn(function () {
+			return {
+				initializeFilePaths: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
 	}
 })
 
 vi.mock("../../task/Task", () => ({
-	Task: vi.fn().mockImplementation((options: any) => ({
-		api: undefined,
-		abortTask: vi.fn(),
-		handleWebviewAskResponse: vi.fn(),
-		clineMessages: [],
-		apiConversationHistory: [],
-		overwriteClineMessages: vi.fn(),
-		overwriteApiConversationHistory: vi.fn(),
-		getTaskNumber: vi.fn().mockReturnValue(0),
-		setTaskNumber: vi.fn(),
-		setParentTask: vi.fn(),
-		setRootTask: vi.fn(),
-		taskId: options?.historyItem?.id || "test-task-id",
-		emit: vi.fn(),
-	})),
+	Task: vi.fn(function (options: any) {
+		return {
+			api: undefined,
+			abortTask: vi.fn(),
+			handleWebviewAskResponse: vi.fn(),
+			clineMessages: [],
+			apiConversationHistory: [],
+			overwriteClineMessages: vi.fn(),
+			overwriteApiConversationHistory: vi.fn(),
+			getTaskNumber: vi.fn().mockReturnValue(0),
+			setTaskNumber: vi.fn(),
+			setParentTask: vi.fn(),
+			setRootTask: vi.fn(),
+			taskId: options?.historyItem?.id || "test-task-id",
+			emit: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("../../../integrations/misc/extract-text", () => ({
-	extractTextFromFile: vi.fn().mockImplementation(async (_filePath: string) => {
+	extractTextFromFile: vi.fn(async function (_filePath: string) {
 		const content = "const x = 1;\nconst y = 2;\nconst z = 3;"
 		const lines = content.split("\n")
 		return lines.map((line, index) => `${index + 1} | ${line}`).join("\n")
@@ -281,7 +318,7 @@ vi.mock("../../../shared/modes", () => ({
 		roleDefinition: "You are a code assistant",
 		groups: ["read", "edit"],
 	}),
-	getGroupName: vi.fn().mockImplementation((group: string) => {
+	getGroupName: vi.fn(function (group: string) {
 		// Return appropriate group names for different tool groups
 		switch (group) {
 			case "read":
@@ -311,7 +348,7 @@ vi.mock("../../../api", () => ({
 }))
 
 vi.mock("../../../integrations/misc/extract-text", () => ({
-	extractTextFromFile: vi.fn().mockImplementation(async (_filePath: string) => {
+	extractTextFromFile: vi.fn(async function (_filePath: string) {
 		const content = "const x = 1;\nconst y = 2;\nconst z = 3;"
 		const lines = content.split("\n")
 		return lines.map((line, index) => `${index + 1} | ${line}`).join("\n")
@@ -326,11 +363,13 @@ vi.mock("../../../api/providers/fetchers/modelCache", () => ({
 }))
 
 vi.mock("../diff/strategies/multi-search-replace", () => ({
-	MultiSearchReplaceDiffStrategy: vi.fn().mockImplementation(() => ({
-		getToolDescription: () => "test",
-		getName: () => "test-strategy",
-		applyDiff: vi.fn(),
-	})),
+	MultiSearchReplaceDiffStrategy: vi.fn(function () {
+		return {
+			getToolDescription: () => "test",
+			getName: () => "test-strategy",
+			applyDiff: vi.fn(),
+		}
+	}),
 }))
 
 // Cloud package removed - no mock needed
@@ -341,7 +380,7 @@ afterAll(() => {
 
 describe("ClineProvider", () => {
 	beforeAll(() => {
-		vi.mocked(Task).mockImplementation((options: any) => {
+		vi.mocked(Task).mockImplementation(function (options: any) {
 			const task: any = {
 				api: undefined,
 				abortTask: vi.fn(),
@@ -445,11 +484,15 @@ describe("ClineProvider", () => {
 				cspSource: "vscode-webview://test-csp-source",
 			},
 			visible: true,
-			onDidDispose: vi.fn().mockImplementation((callback) => {
+			onDidDispose: vi.fn(function (callback) {
 				callback()
 				return { dispose: vi.fn() }
 			}),
-			onDidChangeVisibility: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
+			onDidChangeVisibility: vi.fn(function () {
+				return {
+					dispose: vi.fn(),
+				}
+			}),
 		} as unknown as vscode.WebviewView
 
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))
@@ -1061,7 +1104,7 @@ describe("ClineProvider", () => {
 
 	test("customModePrompts defaults to empty object", async () => {
 		// Mock globalState.get to return undefined for customModePrompts
-		;(mockContext.globalState.get as any).mockImplementation((key: string) => {
+		;(mockContext.globalState.get as any).mockImplementation(function (key: string) {
 			if (key === "customModePrompts") {
 				return undefined
 			}
@@ -1094,7 +1137,7 @@ describe("ClineProvider", () => {
 				customInstructions: "Old instructions",
 			},
 		}
-		mockContext.globalState.get = vi.fn((key: string) => {
+		mockContext.globalState.get = vi.fn(function (key: string) {
 			if (key === "customModePrompts") {
 				return existingPrompts
 			}
@@ -1126,7 +1169,7 @@ describe("ClineProvider", () => {
 			...mockContext,
 			globalState: {
 				...mockContext.globalState,
-				get: vi.fn((key: string) => {
+				get: vi.fn(function (key: string) {
 					if (key === "mode") {
 						return "code"
 					} else if (key === "currentApiConfigName") {
@@ -1342,11 +1385,13 @@ describe("ClineProvider", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 			// Reset and setup mock
 			mockAddCustomInstructions.mockClear()
-			mockAddCustomInstructions.mockImplementation(
-				(modeInstructions: string, globalInstructions: string, _cwd: string) => {
-					return Promise.resolve(modeInstructions || globalInstructions || "")
-				},
-			)
+			mockAddCustomInstructions.mockImplementation(function (
+				modeInstructions: string,
+				globalInstructions: string,
+				_cwd: string,
+			) {
+				return Promise.resolve(modeInstructions || globalInstructions || "")
+			})
 		})
 
 		const getMessageHandler = () => {
@@ -1525,7 +1570,7 @@ describe("ClineProvider", () => {
 			// Mock the ContextProxy's getValue method to return the current config name
 			const contextProxy = (provider as any).contextProxy
 			const getValueSpy = vi.spyOn(contextProxy, "getValue")
-			getValueSpy.mockImplementation((key: any) => {
+			getValueSpy.mockImplementation(function (key: any) {
 				if (key === "currentApiConfigName") return "current-config"
 				return undefined
 			})
@@ -2119,7 +2164,11 @@ describe("Project MCP Settings", () => {
 		expect(mockedFs.mkdir).toHaveBeenCalledWith(".njust_ai", { recursive: true })
 
 		// Verify file was created with default content
-		expect(safeWriteJson).toHaveBeenCalledWith(path.join(".njust_ai", "mcp.json"), { mcpServers: {} }, { prettyPrint: true })
+		expect(safeWriteJson).toHaveBeenCalledWith(
+			path.join(".njust_ai", "mcp.json"),
+			{ mcpServers: {} },
+			{ prettyPrint: true },
+		)
 
 		// Check that openFile was called
 		expect(openFileSpy).toHaveBeenCalledWith(path.join(".njust_ai", "mcp.json"))
@@ -2241,7 +2290,7 @@ describe("getTelemetryProperties", () => {
 		// Setup basic mocks
 		mockContext = {
 			globalState: {
-				get: vi.fn().mockImplementation((key: string) => {
+				get: vi.fn(function (key: string) {
 					if (key === "mode") return "code"
 					if (key === "apiProvider") return "anthropic"
 					return undefined
@@ -2361,11 +2410,15 @@ describe("ClineProvider - Router Models", () => {
 				asWebviewUri: vi.fn(),
 			},
 			visible: true,
-			onDidDispose: vi.fn().mockImplementation((callback) => {
+			onDidDispose: vi.fn(function (callback) {
 				callback()
 				return { dispose: vi.fn() }
 			}),
-			onDidChangeVisibility: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
+			onDidChangeVisibility: vi.fn(function () {
+				return {
+					dispose: vi.fn(),
+				}
+			}),
 		} as unknown as vscode.WebviewView
 
 		if (!TelemetryService.hasInstance()) {
@@ -2730,11 +2783,15 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				asWebviewUri: vi.fn(),
 			},
 			visible: true,
-			onDidDispose: vi.fn().mockImplementation((callback) => {
+			onDidDispose: vi.fn(function (callback) {
 				callback()
 				return { dispose: vi.fn() }
 			}),
-			onDidChangeVisibility: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
+			onDidChangeVisibility: vi.fn(function () {
+				return {
+					dispose: vi.fn(),
+				}
+			}),
 		} as unknown as vscode.WebviewView
 
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))
@@ -3274,7 +3331,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 
 				// Mock cleanup tracking
 				const cleanupSpy = vi.fn()
-				mockCline.overwriteClineMessages = vi.fn().mockImplementation(() => {
+				mockCline.overwriteClineMessages = vi.fn(function () {
 					cleanupSpy()
 					throw new Error("Operation failed")
 				})
@@ -3321,7 +3378,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 
 				// Mock cleanup tracking
 				const cleanupSpy = vi.fn()
-				mockCline.overwriteClineMessages = vi.fn().mockImplementation(() => {
+				mockCline.overwriteClineMessages = vi.fn(function () {
 					cleanupSpy()
 					throw new Error("Delete operation failed")
 				})
@@ -3621,7 +3678,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 	describe("getTaskWithId", () => {
 		it("returns empty apiConversationHistory when file is missing", async () => {
 			const historyItem = { id: "missing-api-file-task", task: "test task", ts: Date.now() }
-			vi.mocked(mockContext.globalState.get).mockImplementation((key: string) => {
+			vi.mocked(mockContext.globalState.get).mockImplementation(function (key: string) {
 				if (key === "taskHistory") {
 					return [historyItem]
 				}
@@ -3639,7 +3696,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 
 		it("returns empty apiConversationHistory when file contains invalid JSON", async () => {
 			const historyItem = { id: "corrupt-api-task", task: "test task", ts: Date.now() }
-			vi.mocked(mockContext.globalState.get).mockImplementation((key: string) => {
+			vi.mocked(mockContext.globalState.get).mockImplementation(function (key: string) {
 				if (key === "taskHistory") {
 					return [historyItem]
 				}

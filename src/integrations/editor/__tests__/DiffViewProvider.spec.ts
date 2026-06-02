@@ -32,7 +32,11 @@ vi.mock("path", () => ({
 vi.mock("vscode", () => ({
 	workspace: {
 		applyEdit: vi.fn(),
-		onDidOpenTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidOpenTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 		openTextDocument: vi.fn().mockResolvedValue({
 			isDirty: false,
 			save: vi.fn().mockResolvedValue(undefined),
@@ -45,7 +49,11 @@ vi.mock("vscode", () => ({
 	window: {
 		createTextEditorDecorationType: vi.fn(),
 		showTextDocument: vi.fn(),
-		onDidChangeVisibleTextEditors: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidChangeVisibleTextEditors: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 		tabGroups: {
 			all: [],
 			close: vi.fn(),
@@ -64,10 +72,12 @@ vi.mock("vscode", () => ({
 		Information: 2,
 		Hint: 3,
 	},
-	WorkspaceEdit: vi.fn().mockImplementation(() => ({
-		replace: vi.fn(),
-		delete: vi.fn(),
-	})),
+	WorkspaceEdit: vi.fn(function () {
+		return {
+			replace: vi.fn(),
+			delete: vi.fn(),
+		}
+	}),
 	ViewColumn: {
 		Active: 1,
 		Beside: 2,
@@ -89,19 +99,31 @@ vi.mock("vscode", () => ({
 	},
 	TabInputTextDiff: class TabInputTextDiff {},
 	Uri: {
-		file: vi.fn((path) => ({ fsPath: path })),
-		parse: vi.fn((_uri) => ({ with: vi.fn(() => ({})) })),
+		file: vi.fn(function (path) {
+			return {
+				fsPath: path,
+			}
+		}),
+		parse: vi.fn(function (_uri) {
+			return {
+				with: vi.fn(function () {
+					return {}
+				}),
+			}
+		}),
 	},
 }))
 
 // Mock DecorationController
 vi.mock("../DecorationController", () => ({
-	DecorationController: vi.fn().mockImplementation(() => ({
-		setActiveLine: vi.fn(),
-		updateOverlayAfterLine: vi.fn(),
-		addLines: vi.fn(),
-		clear: vi.fn(),
-	})),
+	DecorationController: vi.fn(function () {
+		return {
+			setActiveLine: vi.fn(),
+			updateOverlayAfterLine: vi.fn(),
+			addLines: vi.fn(),
+			clear: vi.fn(),
+		}
+	}),
 }))
 
 describe("DiffViewProvider", () => {
@@ -116,7 +138,9 @@ describe("DiffViewProvider", () => {
 			replace: vi.fn(),
 			delete: vi.fn(),
 		}
-		vi.mocked(vscode.WorkspaceEdit).mockImplementation(() => mockWorkspaceEdit as any)
+		vi.mocked(vscode.WorkspaceEdit).mockImplementation(function () {
+			return mockWorkspaceEdit as any
+		})
 
 		// Create a mock Task instance
 		mockTask = {
@@ -206,21 +230,21 @@ describe("DiffViewProvider", () => {
 			const callOrder: string[] = []
 
 			// Mock showTextDocument to track when it's called
-			vi.mocked(vscode.window.showTextDocument).mockImplementation(async (uri, options) => {
+			vi.mocked(vscode.window.showTextDocument).mockImplementation(async function (uri, options) {
 				callOrder.push("showTextDocument")
 				expect(options).toEqual({ preview: false, viewColumn: vscode.ViewColumn.Active, preserveFocus: true })
 				return mockEditor as any
 			})
 
 			// Mock executeCommand to track when it's called
-			vi.mocked(vscode.commands.executeCommand).mockImplementation(async (command) => {
+			vi.mocked(vscode.commands.executeCommand).mockImplementation(async function (command) {
 				callOrder.push("executeCommand")
 				expect(command).toBe("vscode.diff")
 				return undefined
 			})
 
 			// Mock workspace.onDidOpenTextDocument to trigger immediately
-			vi.mocked(vscode.workspace.onDidOpenTextDocument).mockImplementation((callback) => {
+			vi.mocked(vscode.workspace.onDidOpenTextDocument).mockImplementation(function (callback) {
 				// Trigger the callback immediately with the document
 				setTimeout(() => {
 					callback({ uri: { fsPath: `${mockCwd}/test.md`, scheme: "file" } } as any)
@@ -339,7 +363,7 @@ describe("DiffViewProvider", () => {
 			})
 
 			const closedTabs: any[] = []
-			vi.mocked(vscode.window.tabGroups.close).mockImplementation((tab) => {
+			vi.mocked(vscode.window.tabGroups.close).mockImplementation(function (tab) {
 				closedTabs.push(tab)
 				return Promise.resolve(true)
 			})

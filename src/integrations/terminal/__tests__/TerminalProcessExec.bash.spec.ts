@@ -29,15 +29,15 @@ vi.mock("vscode", () => {
 		},
 		window: {
 			createTerminal: vi.fn(),
-			onDidStartTerminalShellExecution: vi.fn().mockImplementation((handler) => {
+			onDidStartTerminalShellExecution: vi.fn(function (handler) {
 				eventHandlers.startTerminalShellExecution = handler
 				return { dispose: vi.fn() }
 			}),
-			onDidEndTerminalShellExecution: vi.fn().mockImplementation((handler) => {
+			onDidEndTerminalShellExecution: vi.fn(function (handler) {
 				eventHandlers.endTerminalShellExecution = handler
 				return { dispose: vi.fn() }
 			}),
-			onDidCloseTerminal: vi.fn().mockImplementation((handler) => {
+			onDidCloseTerminal: vi.fn(function (handler) {
 				eventHandlers.closeTerminal = handler
 				return { dispose: vi.fn() }
 			}),
@@ -180,7 +180,7 @@ async function testTerminalCommand(
 		const { stream, exitCode } = createRealCommandStream(command)
 
 		// Configure the mock terminal to return our stream
-		mockTerminal.shellIntegration.executeCommand.mockImplementation(() => {
+		mockTerminal.shellIntegration.executeCommand.mockImplementation(function () {
 			return {
 				read: vi.fn().mockReturnValue(stream),
 			}
@@ -439,45 +439,45 @@ describe("TerminalProcess with Bash Command Output", () => {
 	it.skipIf(!runTerminalStressTests)(
 		`should execute 'yes AAA... | head -n ${1_000_000}' and verify lines of 'A's`,
 		async () => {
-		const TEST_LINES = 1_000_000
-		const expectedOutput = Array(TEST_LINES).fill("A".repeat(76)).join("\n") + "\n"
+			const TEST_LINES = 1_000_000
+			const expectedOutput = Array(TEST_LINES).fill("A".repeat(76)).join("\n") + "\n"
 
-		// This command will generate 1M lines with 76 'A's each.
-		const { executionTimeUs, capturedOutput } = await testTerminalCommand(
-			`yes "${"A".repeat(76)}" | head -n ${TEST_LINES}`,
-			expectedOutput,
-		)
+			// This command will generate 1M lines with 76 'A's each.
+			const { executionTimeUs, capturedOutput } = await testTerminalCommand(
+				`yes "${"A".repeat(76)}" | head -n ${TEST_LINES}`,
+				expectedOutput,
+			)
 
-		console.log(
-			`'yes "${"A".repeat(76)}" | head -n ${TEST_LINES}' execution time: ${executionTimeUs} microseconds (${executionTimeUs / 1000} milliseconds)`,
-		)
+			console.log(
+				`'yes "${"A".repeat(76)}" | head -n ${TEST_LINES}' execution time: ${executionTimeUs} microseconds (${executionTimeUs / 1000} milliseconds)`,
+			)
 
-		// Display a truncated output sample (first 3 lines and last 3 lines)
-		const lines = capturedOutput.split("\n")
-		const truncatedOutput =
-			lines.slice(0, 3).join("\n") +
-			`\n... (truncated ${lines.length - 6} lines) ...\n` +
-			lines.slice(Math.max(0, lines.length - 3), lines.length).join("\n")
+			// Display a truncated output sample (first 3 lines and last 3 lines)
+			const lines = capturedOutput.split("\n")
+			const truncatedOutput =
+				lines.slice(0, 3).join("\n") +
+				`\n... (truncated ${lines.length - 6} lines) ...\n` +
+				lines.slice(Math.max(0, lines.length - 3), lines.length).join("\n")
 
-		console.log("Output sample (first 3 lines):\n", truncatedOutput)
+			console.log("Output sample (first 3 lines):\n", truncatedOutput)
 
-		// Verify the output.
-		// Check if we have TEST_LINES lines (may have an empty line at the end).
-		expect(lines.length).toBeGreaterThanOrEqual(TEST_LINES)
+			// Verify the output.
+			// Check if we have TEST_LINES lines (may have an empty line at the end).
+			expect(lines.length).toBeGreaterThanOrEqual(TEST_LINES)
 
-		// Sample some lines to verify they contain 76 'A' characters.
-		// Sample indices at beginning, 1%, 10%, 50%, and end of the output.
-		const sampleIndices = [
-			0,
-			Math.floor(TEST_LINES * 0.01),
-			Math.floor(TEST_LINES * 0.1),
-			Math.floor(TEST_LINES * 0.5),
-			TEST_LINES - 1,
-		].filter((i) => i < lines.length)
+			// Sample some lines to verify they contain 76 'A' characters.
+			// Sample indices at beginning, 1%, 10%, 50%, and end of the output.
+			const sampleIndices = [
+				0,
+				Math.floor(TEST_LINES * 0.01),
+				Math.floor(TEST_LINES * 0.1),
+				Math.floor(TEST_LINES * 0.5),
+				TEST_LINES - 1,
+			].filter((i) => i < lines.length)
 
-		for (const index of sampleIndices) {
-			expect(lines[index]).toBe("A".repeat(76))
-		}
+			for (const index of sampleIndices) {
+				expect(lines[index]).toBe("A".repeat(76))
+			}
 		},
 	)
 })

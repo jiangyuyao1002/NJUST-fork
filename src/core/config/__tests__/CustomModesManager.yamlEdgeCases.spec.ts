@@ -8,7 +8,6 @@ import * as fs from "fs/promises"
 import * as yaml from "yaml"
 import * as vscode from "vscode"
 
-
 import { fileExistsAtPath } from "../../../utils/fs"
 import { getWorkspacePath } from "../../../utils/path"
 import { GlobalFileNames } from "../../../shared/globalFileNames"
@@ -43,7 +42,7 @@ describe("CustomModesManager - YAML Edge Cases", () => {
 
 	// Helper function to reduce duplication in fs.readFile mocks
 	const mockFsReadFile = (files: Record<string, string>) => {
-		;(fs.readFile as Mock).mockImplementation(async (path: string) => {
+		;(fs.readFile as Mock).mockImplementation(async function (path: string) {
 			if (files[path]) return files[path]
 			throw new Error("File not found")
 		})
@@ -67,11 +66,11 @@ describe("CustomModesManager - YAML Edge Cases", () => {
 		;(vscode.workspace as any).workspaceFolders = mockWorkspaceFolders
 		;(vscode.workspace.onDidSaveTextDocument as Mock).mockReturnValue({ dispose: vi.fn() })
 		;(getWorkspacePath as Mock).mockReturnValue("/mock/workspace")
-		;(fileExistsAtPath as Mock).mockImplementation(async (path: string) => {
+		;(fileExistsAtPath as Mock).mockImplementation(async function (path: string) {
 			return path === mockSettingsPath || path === mockRoomodes
 		})
 		;(fs.mkdir as Mock).mockResolvedValue(undefined)
-		;(fs.readFile as Mock).mockImplementation(async (path: string) => {
+		;(fs.readFile as Mock).mockImplementation(async function (path: string) {
 			if (path === mockSettingsPath) {
 				return yaml.stringify({ customModes: [] })
 			}

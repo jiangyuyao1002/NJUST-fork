@@ -3,7 +3,10 @@ import * as path from "path"
 import * as vscode from "vscode"
 
 import { CloudAgentOrchestrator, type ICloudAgentHost } from "../CloudAgentOrchestrator"
-import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../../../services/cloud-agent/applyCloudWorkspaceOps"
+import {
+	applyCloudWorkspaceOps,
+	applySingleCloudWorkspaceOp,
+} from "../../../services/cloud-agent/applyCloudWorkspaceOps"
 import { executeDeferredToolCall } from "../../../services/cloud-agent/executeDeferredToolCall"
 import { parseWorkspaceOps } from "../../../services/cloud-agent/parseWorkspaceOps"
 
@@ -47,8 +50,8 @@ const DEFAULT_CONFIG: Record<string, any> = {
 	"cloudAgent.deferredProtocol": true,
 	"cloudAgent.compileLoop.enabled": true,
 	"cloudAgent.compileLoop.maxRetries": 3,
-	"allowedCommands": [],
-	"deniedCommands": [],
+	allowedCommands: [],
+	deniedCommands: [],
 }
 
 function mockVscodeConfig(overrides: Record<string, any> = {}) {
@@ -87,7 +90,9 @@ const { mockClientInstance, CloudAgentClientMock } = vi.hoisted(() => {
 		compile: vi.fn().mockResolvedValue({ success: true, output: "" }),
 	}
 
-	const CloudAgentClientMock = vi.fn(() => mockClientInstance)
+	const CloudAgentClientMock = vi.fn(function () {
+		return mockClientInstance
+	})
 	CloudAgentClientMock.sendDeferredAbort = vi.fn().mockResolvedValue(undefined)
 
 	return { mockClientInstance, CloudAgentClientMock }
@@ -113,21 +118,30 @@ vi.mock("../../../services/cloud-agent/executeDeferredToolCall", () => ({
 }))
 
 vi.mock("../../../services/cloud-agent/ProfileStorageService", () => ({
-	getProfileStorageService: vi.fn(() => ({
-		getActiveProfile: vi.fn(() => ({
-			id: "test-profile",
-			name: "Test Profile",
-			protocolType: "rest",
-			serverUrl: "http://127.0.0.1:4000",
-			auth: { type: "api-key", apiKey: "test-api-key", deviceTokenSource: "global" },
-			createdAt: Date.now(),
-			updatedAt: Date.now(),
-		})),
-	})),
+	getProfileStorageService: vi.fn(function () {
+		return {
+			getActiveProfile: vi.fn(function () {
+				return {
+					id: "test-profile",
+					name: "Test Profile",
+					protocolType: "rest",
+					serverUrl: "http://127.0.0.1:4000",
+					auth: { type: "api-key", apiKey: "test-api-key", deviceTokenSource: "global" },
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
+				}
+			}),
+		}
+	}),
 }))
 
 vi.mock("../../../services/cloud-agent/parseWorkspaceOps", () => ({
-	parseWorkspaceOps: vi.fn(() => ({ operations: [], error: undefined })),
+	parseWorkspaceOps: vi.fn(function () {
+		return {
+			operations: [],
+			error: undefined,
+		}
+	}),
 }))
 
 vi.mock("../../../services/cloud-agent/buildCloudWorkspaceOpToolMessage", () => ({
@@ -192,10 +206,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("未配置 Cloud Agent Profile"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("未配置 Cloud Agent Profile"))
 			expect(mockClientInstance.connect).not.toHaveBeenCalled()
 		})
 
@@ -244,10 +255,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("ECONNREFUSED"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("ECONNREFUSED"))
 			expect(host.ask).toHaveBeenCalledWith("api_req_failed", expect.any(String))
 		})
 
@@ -271,14 +279,8 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"api_req_started",
-				expect.any(String),
-			)
-			expect(host.say).toHaveBeenCalledWith(
-				"api_req_finished",
-				expect.stringContaining("100"),
-			)
+			expect(host.say).toHaveBeenCalledWith("api_req_started", expect.any(String))
+			expect(host.say).toHaveBeenCalledWith("api_req_finished", expect.stringContaining("100"))
 			expect(mockClientInstance.disconnect).toHaveBeenCalledWith("test-task-id")
 		})
 
@@ -304,10 +306,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("cancelled or timed out"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("cancelled or timed out"))
 		})
 
 		it("skips workspace ops when applyRemoteWorkspaceOps is false", async () => {
@@ -328,10 +327,7 @@ describe("CloudAgentOrchestrator", () => {
 			await orch.run("hello")
 
 			expect(applyCloudWorkspaceOps).not.toHaveBeenCalled()
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("1 条"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("1 条"))
 		})
 
 		it("applies workspace ops when applyRemoteWorkspaceOps is true and confirm is false", async () => {
@@ -379,10 +375,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("workspace_ops 格式无效"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("workspace_ops 格式无效"))
 		})
 
 		it("skips compile loop when compileLoopEnabled is false", async () => {
@@ -414,10 +407,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("start failed"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("start failed"))
 			expect(host.ask).toHaveBeenCalledWith("api_req_failed", "start failed")
 		})
 
@@ -446,10 +436,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"completion_result",
-				expect.stringContaining("任务完成"),
-			)
+			expect(host.say).toHaveBeenCalledWith("completion_result", expect.stringContaining("任务完成"))
 		})
 
 		it("iterates pending → done with tool execution", async () => {
@@ -484,20 +471,16 @@ describe("CloudAgentOrchestrator", () => {
 				undefined,
 				undefined,
 			)
-			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
-				"run-1",
-				"test-task-id",
-				[{ call_id: "c1", content: "file content", is_error: false }],
-			)
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith("run-1", "test-task-id", [
+				{ call_id: "c1", content: "file content", is_error: false },
+			])
 		})
 
 		it("asks for approval before executing deferred write_file", async () => {
 			mockClientInstance.deferredStart.mockResolvedValueOnce({
 				run_id: "run-1",
 				status: "pending",
-				pending_tools: [
-					{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } },
-				],
+				pending_tools: [{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } }],
 			})
 			mockClientInstance.deferredResume.mockResolvedValueOnce({
 				run_id: "run-1",
@@ -514,11 +497,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.ask).toHaveBeenCalledWith(
-				"tool",
-				'{"tool":"write_file","path":"a.ts","content":"x"}',
-				false,
-			)
+			expect(host.ask).toHaveBeenCalledWith("tool", '{"tool":"write_file","path":"a.ts","content":"x"}', false)
 			expect(executeDeferredToolCall).toHaveBeenCalledWith(
 				"/test/workspace",
 				{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } },
@@ -533,9 +512,7 @@ describe("CloudAgentOrchestrator", () => {
 			mockClientInstance.deferredStart.mockResolvedValueOnce({
 				run_id: "run-1",
 				status: "pending",
-				pending_tools: [
-					{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } },
-				],
+				pending_tools: [{ call_id: "c1", tool: "write_file", arguments: { path: "a.ts", content: "x" } }],
 			})
 			mockClientInstance.deferredResume.mockResolvedValueOnce({
 				run_id: "run-1",
@@ -550,26 +527,20 @@ describe("CloudAgentOrchestrator", () => {
 			await orch.run("hello")
 
 			expect(executeDeferredToolCall).not.toHaveBeenCalled()
-			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
-				"run-1",
-				"test-task-id",
-				[
-					{
-						call_id: "c1",
-						content: "Deferred tool rejected by user: write_file",
-						is_error: true,
-					},
-				],
-			)
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith("run-1", "test-task-id", [
+				{
+					call_id: "c1",
+					content: "Deferred tool rejected by user: write_file",
+					is_error: true,
+				},
+			])
 		})
 
 		it("does not execute deferred execute_command when approval is rejected", async () => {
 			mockClientInstance.deferredStart.mockResolvedValueOnce({
 				run_id: "run-1",
 				status: "pending",
-				pending_tools: [
-					{ call_id: "c1", tool: "execute_command", arguments: { command: "npm test" } },
-				],
+				pending_tools: [{ call_id: "c1", tool: "execute_command", arguments: { command: "npm test" } }],
 			})
 			mockClientInstance.deferredResume.mockResolvedValueOnce({
 				run_id: "run-1",
@@ -585,17 +556,13 @@ describe("CloudAgentOrchestrator", () => {
 
 			expect(host.ask).toHaveBeenCalledWith("command", "npm test", false)
 			expect(executeDeferredToolCall).not.toHaveBeenCalled()
-			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
-				"run-1",
-				"test-task-id",
-				[
-					{
-						call_id: "c1",
-						content: "Deferred tool rejected by user: execute_command",
-						is_error: true,
-					},
-				],
-			)
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith("run-1", "test-task-id", [
+				{
+					call_id: "c1",
+					content: "Deferred tool rejected by user: execute_command",
+					is_error: true,
+				},
+			])
 		})
 
 		it("rejects deferred execute_command when .rooignore blocks it", async () => {
@@ -613,7 +580,7 @@ describe("CloudAgentOrchestrator", () => {
 			})
 			const rooIgnoreController = {
 				validateAccess: vi.fn(() => true),
-				validateCommand: vi.fn((cmd: string) => {
+				validateCommand: vi.fn(function (cmd: string) {
 					if (cmd.includes(".rooignore")) return ".rooignore/secret.txt"
 					return undefined
 				}),
@@ -626,17 +593,13 @@ describe("CloudAgentOrchestrator", () => {
 			expect(rooIgnoreController.validateCommand).toHaveBeenCalledWith("cat .rooignore/secret.txt")
 			expect(host.ask).not.toHaveBeenCalled()
 			expect(executeDeferredToolCall).not.toHaveBeenCalled()
-			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
-				"run-1",
-				"test-task-id",
-				[
-					{
-						call_id: "c1",
-						content: "Access denied by .rooignore: .rooignore/secret.txt",
-						is_error: true,
-					},
-				],
-			)
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith("run-1", "test-task-id", [
+				{
+					call_id: "c1",
+					content: "Access denied by .rooignore: .rooignore/secret.txt",
+					is_error: true,
+				},
+			])
 		})
 
 		it("rejects deferred write_file when .rooignore blocks it", async () => {
@@ -663,17 +626,13 @@ describe("CloudAgentOrchestrator", () => {
 
 			expect(host.ask).not.toHaveBeenCalled()
 			expect(executeDeferredToolCall).not.toHaveBeenCalled()
-			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith(
-				"run-1",
-				"test-task-id",
-				[
-					{
-						call_id: "c1",
-						content: "Access denied by .rooignore: .rooignore/blocked.txt",
-						is_error: true,
-					},
-				],
-			)
+			expect(mockClientInstance.deferredResume).toHaveBeenCalledWith("run-1", "test-task-id", [
+				{
+					call_id: "c1",
+					content: "Access denied by .rooignore: .rooignore/blocked.txt",
+					is_error: true,
+				},
+			])
 		})
 
 		it("reports tool execution error", async () => {
@@ -697,10 +656,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("permission denied"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("permission denied"))
 		})
 
 		it("breaks outer loop when abort is set during tool execution", async () => {
@@ -714,7 +670,7 @@ describe("CloudAgentOrchestrator", () => {
 			})
 			// First tool executes and sets abort
 			let callCount = 0
-			vi.mocked(executeDeferredToolCall).mockImplementation(async () => {
+			vi.mocked(executeDeferredToolCall).mockImplementation(async function () {
 				callCount++
 				if (callCount === 1) {
 					;(host as any).abort = true
@@ -743,10 +699,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("缺少 run_id"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("缺少 run_id"))
 			expect(CloudAgentClientMock.sendDeferredAbort).toHaveBeenCalled()
 		})
 
@@ -768,10 +721,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("server_revision 已变更"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("server_revision 已变更"))
 			expect(CloudAgentClientMock.sendDeferredAbort).toHaveBeenCalled()
 		})
 
@@ -794,10 +744,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("最大迭代次数"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("最大迭代次数"))
 			expect(CloudAgentClientMock.sendDeferredAbort).toHaveBeenCalled()
 		})
 
@@ -844,10 +791,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"completion_result",
-				expect.stringContaining("未成功"),
-			)
+			expect(host.say).toHaveBeenCalledWith("completion_result", expect.stringContaining("未成功"))
 		})
 
 		it("reports deferred resume error", async () => {
@@ -862,10 +806,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("resume failed"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("resume failed"))
 			expect(CloudAgentClientMock.sendDeferredAbort).toHaveBeenCalled()
 		})
 
@@ -912,10 +853,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("workspace_ops 无效"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("workspace_ops 无效"))
 		})
 
 		it("reports logs in deferred loop", async () => {
@@ -971,7 +909,7 @@ describe("CloudAgentOrchestrator", () => {
 				abort: false,
 			})
 			// Set abort to true after deferredStart returns
-			mockClientInstance.deferredResume.mockImplementation(async () => {
+			mockClientInstance.deferredResume.mockImplementation(async function () {
 				;(host as any).abort = true
 				return { run_id: "run-1", status: "done", ok: true }
 			})
@@ -1039,10 +977,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("编译失败"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译失败"))
 			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译通过"))
 		})
 
@@ -1066,10 +1001,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("最大重试次数"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("最大重试次数"))
 		})
 
 		it("reports local compile failure when compileLocal throws", async () => {
@@ -1091,10 +1023,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("本地编译失败"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("本地编译失败"))
 		})
 
 		it("stops when compileLocal is not configured", async () => {
@@ -1114,10 +1043,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("本地编译功能未配置"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("本地编译功能未配置"))
 		})
 
 		it("stops when fixResult has no workspace_ops", async () => {
@@ -1147,10 +1073,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("未返回修正代码"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("未返回修正代码"))
 		})
 
 		it("stops when fixResult has workspaceOpsParseError", async () => {
@@ -1181,10 +1104,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("workspace_ops 无效"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("workspace_ops 无效"))
 		})
 	})
 
@@ -1206,11 +1126,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.ask).toHaveBeenCalledWith(
-				"tool",
-				expect.any(String),
-				false,
-			)
+			expect(host.ask).toHaveBeenCalledWith("tool", expect.any(String), false)
 		})
 
 		it("skips op when user rejects", async () => {
@@ -1232,10 +1148,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("Skipped workspace op"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("Skipped workspace op"))
 		})
 
 		it("reports rooignore_error when access denied", async () => {
@@ -1258,10 +1171,7 @@ describe("CloudAgentOrchestrator", () => {
 			await orch.run("hello")
 
 			// With no rooIgnoreController, access is allowed
-			expect(host.say).not.toHaveBeenCalledWith(
-				"rooignore_error",
-				expect.any(String),
-			)
+			expect(host.say).not.toHaveBeenCalledWith("rooignore_error", expect.any(String))
 		})
 
 		it("reports applySingle failure", async () => {
@@ -1285,10 +1195,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"error",
-				expect.stringContaining("Workspace operation failed"),
-			)
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("Workspace operation failed"))
 		})
 
 		it("reports batch apply summary when confirm is false", async () => {
@@ -1312,10 +1219,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith(
-				"text",
-				expect.stringContaining("workspace_ops applied"),
-			)
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("workspace_ops applied"))
 		})
 	})
 })

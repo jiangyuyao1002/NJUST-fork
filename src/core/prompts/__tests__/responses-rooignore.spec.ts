@@ -15,12 +15,14 @@ vi.mock("vscode", () => {
 	const mockDisposable = { dispose: vi.fn() }
 	return {
 		workspace: {
-			createFileSystemWatcher: vi.fn(() => ({
-				onDidCreate: vi.fn(() => mockDisposable),
-				onDidChange: vi.fn(() => mockDisposable),
-				onDidDelete: vi.fn(() => mockDisposable),
-				dispose: vi.fn(),
-			})),
+			createFileSystemWatcher: vi.fn(function () {
+				return {
+					onDidCreate: vi.fn(() => mockDisposable),
+					onDidChange: vi.fn(() => mockDisposable),
+					onDidDelete: vi.fn(() => mockDisposable),
+					dispose: vi.fn(),
+				}
+			}),
 		},
 		RelativePattern: vi.fn(),
 	}
@@ -85,7 +87,7 @@ describe("RooIgnore Response Formatting", () => {
 			await controller.initialize()
 
 			// Mock validateAccess to control which files are ignored
-			controller.validateAccess = vi.fn().mockImplementation((filePath: string) => {
+			controller.validateAccess = vi.fn(function (filePath: string) {
 				// Only allow files not matching these patterns
 				return (
 					!filePath.includes("node_modules") &&
@@ -129,7 +131,7 @@ describe("RooIgnore Response Formatting", () => {
 			await controller.initialize()
 
 			// Mock validateAccess to control which files are ignored
-			controller.validateAccess = vi.fn().mockImplementation((filePath: string) => {
+			controller.validateAccess = vi.fn(function (filePath: string) {
 				// Only allow files not matching these patterns
 				return (
 					!filePath.includes("node_modules") &&

@@ -1,6 +1,5 @@
 // npx vitest run core/webview/__tests__/ClineProvider.lockApiConfig.spec.ts
 
-
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as vscode from "vscode"
 import { TelemetryService } from "@njust-ai/telemetry"
@@ -26,21 +25,47 @@ vi.mock("vscode", () => ({
 		showInformationMessage: vi.fn(),
 		showWarningMessage: vi.fn(),
 		showErrorMessage: vi.fn(),
-		createTextEditorDecorationType: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidChangeActiveTextEditor: vi.fn(() => ({ dispose: vi.fn() })),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidChangeActiveTextEditor: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	workspace: {
 		getConfiguration: vi.fn().mockReturnValue({
 			get: vi.fn().mockReturnValue([]),
 			update: vi.fn(),
 		}),
-		onDidChangeConfiguration: vi.fn().mockImplementation(() => ({
-			dispose: vi.fn(),
-		})),
-		onDidSaveTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidChangeTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidOpenTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidCloseTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidChangeConfiguration: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidSaveTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidChangeTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidOpenTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidCloseTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	env: {
 		uriScheme: "vscode",
@@ -56,26 +81,28 @@ vi.mock("vscode", () => ({
 }))
 
 vi.mock("../../task/Task", () => ({
-	Task: vi.fn().mockImplementation((options) => ({
-		taskId: options.taskId || "test-task-id",
-		saveClineMessages: vi.fn(),
-		clineMessages: [],
-		apiConversationHistory: [],
-		overwriteClineMessages: vi.fn(),
-		overwriteApiConversationHistory: vi.fn(),
-		abortTask: vi.fn(),
-		handleWebviewAskResponse: vi.fn(),
-		getTaskNumber: vi.fn().mockReturnValue(0),
-		setTaskNumber: vi.fn(),
-		setParentTask: vi.fn(),
-		setRootTask: vi.fn(),
-		emit: vi.fn(),
-		parentTask: options.parentTask,
-		updateApiConfiguration: vi.fn(),
-		setTaskApiConfigName: vi.fn(),
-		_taskApiConfigName: options.historyItem?.apiConfigName,
-		taskApiConfigName: options.historyItem?.apiConfigName,
-	})),
+	Task: vi.fn(function (options) {
+		return {
+			taskId: options.taskId || "test-task-id",
+			saveClineMessages: vi.fn(),
+			clineMessages: [],
+			apiConversationHistory: [],
+			overwriteClineMessages: vi.fn(),
+			overwriteApiConversationHistory: vi.fn(),
+			abortTask: vi.fn(),
+			handleWebviewAskResponse: vi.fn(),
+			getTaskNumber: vi.fn().mockReturnValue(0),
+			setTaskNumber: vi.fn(),
+			setParentTask: vi.fn(),
+			setRootTask: vi.fn(),
+			emit: vi.fn(),
+			parentTask: options.parentTask,
+			updateApiConfiguration: vi.fn(),
+			setTaskApiConfigName: vi.fn(),
+			_taskApiConfigName: options.historyItem?.apiConfigName,
+			taskApiConfigName: options.historyItem?.apiConfigName,
+		}
+	}),
 }))
 
 vi.mock("../../prompts/sections/custom-instructions")
@@ -98,17 +125,21 @@ vi.mock("../../../api", () => ({
 }))
 
 vi.mock("../../../integrations/workspace/WorkspaceTracker", () => ({
-	default: vi.fn().mockImplementation(() => ({
-		initializeFilePaths: vi.fn(),
-		dispose: vi.fn(),
-	})),
+	default: vi.fn(function () {
+		return {
+			initializeFilePaths: vi.fn(),
+			dispose: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("../../diff/strategies/multi-search-replace", () => ({
-	MultiSearchReplaceDiffStrategy: vi.fn().mockImplementation(() => ({
-		getName: () => "test-strategy",
-		applyDiff: vi.fn(),
-	})),
+	MultiSearchReplaceDiffStrategy: vi.fn(function () {
+		return {
+			getName: () => "test-strategy",
+			applyDiff: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("../../../shared/modes", () => {
@@ -147,7 +178,7 @@ vi.mock("../../../shared/modes", () => {
 
 	return {
 		modes: mockModes,
-		getAllModes: vi.fn((customModes?: Array<{ slug: string }>) => {
+		getAllModes: vi.fn(function (customModes?: Array<{ slug: string }>) {
 			if (!customModes?.length) {
 				return [...mockModes]
 			}
@@ -191,17 +222,19 @@ vi.mock("p-wait-for", () => ({
 }))
 
 vi.mock("fs", () => ({
-	watch: vi.fn(() => ({
-		on: vi.fn(),
-		close: vi.fn(),
-	})),
+	watch: vi.fn(function () {
+		return {
+			on: vi.fn(),
+			close: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("fs/promises", () => {
 	const mockFs = {
 		mkdir: vi.fn().mockResolvedValue(undefined),
 		writeFile: vi.fn().mockResolvedValue(undefined),
-		readFile: vi.fn().mockImplementation(async (filePath: string) => {
+		readFile: vi.fn(async function (filePath: string) {
 			if (String(filePath).includes("mcp")) {
 				return JSON.stringify({ mcpServers: {} })
 			}
@@ -262,7 +295,7 @@ describe("ClineProvider - Lock API Config Across Modes", () => {
 			extensionUri: {} as vscode.Uri,
 			globalState: {
 				get: vi.fn().mockImplementation((key: string) => globalState[key]),
-				update: vi.fn().mockImplementation((key: string, value: unknown) => {
+				update: vi.fn(function (key: string, value: unknown) {
 					globalState[key] = value
 					return Promise.resolve()
 				}),
@@ -270,20 +303,20 @@ describe("ClineProvider - Lock API Config Across Modes", () => {
 			},
 			secrets: {
 				get: vi.fn().mockImplementation((key: string) => secrets[key]),
-				store: vi.fn().mockImplementation((key: string, value: string | undefined) => {
+				store: vi.fn(function (key: string, value: string | undefined) {
 					secrets[key] = value
 					return Promise.resolve()
 				}),
-				delete: vi.fn().mockImplementation((key: string) => {
+				delete: vi.fn(function (key: string) {
 					delete secrets[key]
 					return Promise.resolve()
 				}),
 			},
 			workspaceState: {
-				get: vi.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+				get: vi.fn(function (key: string, defaultValue?: unknown) {
 					return key in workspaceState ? workspaceState[key] : defaultValue
 				}),
-				update: vi.fn().mockImplementation((key: string, value: unknown) => {
+				update: vi.fn(function (key: string, value: unknown) {
 					workspaceState[key] = value
 					return Promise.resolve()
 				}),
@@ -316,11 +349,15 @@ describe("ClineProvider - Lock API Config Across Modes", () => {
 				cspSource: "vscode-webview://test-csp-source",
 			},
 			visible: true,
-			onDidDispose: vi.fn().mockImplementation((callback) => {
+			onDidDispose: vi.fn(function (callback) {
 				callback()
 				return { dispose: vi.fn() }
 			}),
-			onDidChangeVisibility: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
+			onDidChangeVisibility: vi.fn(function () {
+				return {
+					dispose: vi.fn(),
+				}
+			}),
 		} as unknown as vscode.WebviewView
 
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))

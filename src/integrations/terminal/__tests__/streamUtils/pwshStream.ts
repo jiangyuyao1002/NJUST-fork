@@ -25,7 +25,8 @@ export function createPowerShellStream(command: string): CommandStream {
 			// This is the original approach that works on Windows
 			const escapedCommand = command.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
 			shellCommand = `pwsh -NoProfile -NonInteractive -Command "${escapedCommand}"`
-		}		console.log(`Executing PowerShell command on ${process.platform}: ${shellCommand}`)
+		}
+		console.log(`Executing PowerShell command on ${process.platform}: ${shellCommand}`)
 
 		realOutput = execSync(shellCommand, {
 			encoding: "utf8",

@@ -35,7 +35,7 @@ describe("file-search", () => {
 	describe("configuration integration", () => {
 		it("should read VSCode search configuration settings", async () => {
 			const mockSearchConfig = {
-				get: vi.fn((key: string) => {
+				get: vi.fn(function (key: string) {
 					if (key === "useIgnoreFiles") return false
 					if (key === "useGlobalIgnoreFiles") return false
 					if (key === "useParentIgnoreFiles") return false
@@ -46,7 +46,7 @@ describe("file-search", () => {
 				get: vi.fn(() => 10000),
 			}
 
-			;(vscode.workspace.getConfiguration as any).mockImplementation((section: string) => {
+			;(vscode.workspace.getConfiguration as any).mockImplementation(function (section: string) {
 				if (section === "search") return mockSearchConfig
 				if (section === "njust-ai") return mockRooConfig
 				return { get: vi.fn() }
@@ -62,13 +62,13 @@ describe("file-search", () => {
 		it("should read maximumIndexedFilesForFileSearch configuration", async () => {
 			const { Package } = await import("../../../shared/package")
 			const mockRooConfig = {
-				get: vi.fn((key: string, defaultValue: number) => {
+				get: vi.fn(function (key: string, defaultValue: number) {
 					if (key === "maximumIndexedFilesForFileSearch") return 50000
 					return defaultValue
 				}),
 			}
 
-			;(vscode.workspace.getConfiguration as any).mockImplementation((section: string) => {
+			;(vscode.workspace.getConfiguration as any).mockImplementation(function (section: string) {
 				if (section === Package.name) return mockRooConfig
 				return { get: vi.fn() }
 			})
@@ -86,7 +86,7 @@ describe("file-search", () => {
 				get: vi.fn((key: string, defaultValue: number) => defaultValue),
 			}
 
-			;(vscode.workspace.getConfiguration as any).mockImplementation((section: string) => {
+			;(vscode.workspace.getConfiguration as any).mockImplementation(function (section: string) {
 				if (section === Package.name) return mockRooConfig
 				return { get: vi.fn() }
 			})

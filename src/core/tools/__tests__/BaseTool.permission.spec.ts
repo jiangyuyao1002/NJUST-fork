@@ -10,11 +10,13 @@ vi.mock("../../security/metrics", async (importOriginal) => {
 	return {
 		...actual,
 		recordSecurityMetric: recordSecurityMetricMock,
-		startTraceSpan: vi.fn(() => ({
-			traceId: "test-trace",
-			spanId: "test-span",
-			end: vi.fn(),
-		})),
+		startTraceSpan: vi.fn(function () {
+			return {
+				traceId: "test-trace",
+				spanId: "test-span",
+				end: vi.fn(),
+			}
+		}),
 	}
 })
 

@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
 
-import * as actualFsPromises from "fs/promises"
+import type * as _actualFsPromises from "fs/promises"
 import * as fsSyncActual from "fs"
 import { Writable } from "stream"
 import * as path from "path"
@@ -18,11 +18,14 @@ vi.mock("../../shared/logger", () => ({
 	},
 }))
 
-const originalFsPromisesRename = actualFsPromises.rename
-const originalFsPromisesUnlink = actualFsPromises.unlink
-const originalFsPromisesWriteFile = actualFsPromises.writeFile
-const _originalFsPromisesAccess = actualFsPromises.access
-const _originalFsPromisesMkdir = actualFsPromises.mkdir
+const { originalFsPromisesRename, originalFsPromisesUnlink, originalFsPromisesWriteFile } = vi.hoisted(() => {
+	const actual = require("fs/promises")
+	return {
+		originalFsPromisesRename: actual.rename,
+		originalFsPromisesUnlink: actual.unlink,
+		originalFsPromisesWriteFile: actual.writeFile,
+	}
+})
 
 vi.mock("fs/promises", async () => {
 	const actual = await vi.importActual<typeof import("fs/promises")>("fs/promises")
@@ -58,7 +61,6 @@ vi.mock("fs", async () => {
 import * as fs from "fs/promises" // This will now be the mocked version
 
 describe("safeWriteJson", () => {
-
 	let tempDir: string
 	let currentTestFilePath: string
 
@@ -189,7 +191,7 @@ describe("safeWriteJson", () => {
 
 		// Mock rename to succeed on first call (filePath -> tempBackupFilePath)
 		// and fail on second call (tempNewFilePath -> filePath)
-		renameSpy.mockImplementation(async (oldPath, newPath) => {
+		renameSpy.mockImplementation(async function (oldPath, newPath) {
 			renameCallCount++
 			if (renameCallCount === 1) {
 				// First call: filePath -> tempBackupFilePath (should succeed)
@@ -325,7 +327,7 @@ describe("safeWriteJson", () => {
 
 		// Mock unlink to fail when deleting backup files
 		const unlinkSpy = vi.spyOn(fs, "unlink")
-		unlinkSpy.mockImplementation(async (filePath: any) => {
+		unlinkSpy.mockImplementation(async function (filePath: any) {
 			if (filePath.toString().includes(".bak_")) {
 				throw new Error("Backup deletion failed")
 			}
@@ -360,7 +362,7 @@ describe("safeWriteJson", () => {
 		// might be more relevant or adaptable here.
 
 		let renameCallCount = 0
-		renameSpy.mockImplementation(async (oldPath, newPath) => {
+		renameSpy.mockImplementation(async function (oldPath, newPath) {
 			renameCallCount++
 			if (renameCallCount === 2) {
 				// Second call: tempNewFilePath -> filePath (should fail)
@@ -456,7 +458,7 @@ describe("safeWriteJson", () => {
 		const renameSpy = vi.spyOn(fs, "rename")
 
 		let renameCallCount = 0
-		renameSpy.mockImplementation(async (oldPath, newPath) => {
+		renameSpy.mockImplementation(async function (oldPath, newPath) {
 			renameCallCount++
 			if (renameCallCount === 2) {
 				// Second call: tempNewFilePath -> filePath (fail)

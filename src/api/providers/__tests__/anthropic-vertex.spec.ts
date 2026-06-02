@@ -12,44 +12,46 @@ import { ApiStreamChunk } from "../../transform/stream"
 import { AnthropicVertexHandler } from "../anthropic-vertex"
 
 vitest.mock("@anthropic-ai/vertex-sdk", () => ({
-	AnthropicVertex: vitest.fn().mockImplementation(() => ({
-		messages: {
-			create: vitest.fn().mockImplementation(async (options) => {
-				if (!options.stream) {
+	AnthropicVertex: vitest.fn(function () {
+		return {
+			messages: {
+				create: vitest.fn(async function (options) {
+					if (!options.stream) {
+						return {
+							id: "test-completion",
+							content: [{ type: "text", text: "Test response" }],
+							role: "assistant",
+							model: options.model,
+							usage: {
+								input_tokens: 10,
+								output_tokens: 5,
+							},
+						}
+					}
 					return {
-						id: "test-completion",
-						content: [{ type: "text", text: "Test response" }],
-						role: "assistant",
-						model: options.model,
-						usage: {
-							input_tokens: 10,
-							output_tokens: 5,
+						async *[Symbol.asyncIterator]() {
+							yield {
+								type: "message_start",
+								message: {
+									usage: {
+										input_tokens: 10,
+										output_tokens: 5,
+									},
+								},
+							}
+							yield {
+								type: "content_block_start",
+								content_block: {
+									type: "text",
+									text: "Test response",
+								},
+							}
 						},
 					}
-				}
-				return {
-					async *[Symbol.asyncIterator]() {
-						yield {
-							type: "message_start",
-							message: {
-								usage: {
-									input_tokens: 10,
-									output_tokens: 5,
-								},
-							},
-						}
-						yield {
-							type: "content_block_start",
-							content_block: {
-								type: "text",
-								text: "Test response",
-							},
-						}
-					},
-				}
-			}),
-		},
-	})),
+				}),
+			},
+		}
+	}),
 }))
 
 describe("VertexHandler", () => {
@@ -621,7 +623,7 @@ describe("VertexHandler", () => {
 				vertexRegion: "us-central1",
 			})
 
-			const mockCreate = vitest.fn().mockImplementation(async (_options) => {
+			const mockCreate = vitest.fn(async function (_options) {
 				return {
 					async *[Symbol.asyncIterator]() {
 						yield {
@@ -703,7 +705,7 @@ describe("VertexHandler", () => {
 				vertexRegion: "us-central1",
 			})
 
-			const mockCreate = vitest.fn().mockImplementation(async (_options) => {
+			const mockCreate = vitest.fn(async function (_options) {
 				return {
 					async *[Symbol.asyncIterator]() {
 						yield {
@@ -1121,7 +1123,7 @@ describe("VertexHandler", () => {
 				modelMaxThinkingTokens: 4096,
 			})
 
-			const mockCreate = vitest.fn().mockImplementation(async (options) => {
+			const mockCreate = vitest.fn(async function (options) {
 				if (!options.stream) {
 					return {
 						id: "test-completion",

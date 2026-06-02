@@ -1,6 +1,5 @@
 // pnpm --filter njust-ai test core/webview/__tests__/ClineProvider.taskHistory.spec.ts
 
-
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest"
 import * as vscode from "vscode"
 import type { HistoryItem } from "@njust-ai/types"
@@ -78,19 +77,23 @@ vi.mock("@modelcontextprotocol/sdk/types.js", () => ({
 }))
 
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
-	Client: vi.fn().mockImplementation(() => ({
-		connect: vi.fn().mockResolvedValue(undefined),
-		close: vi.fn().mockResolvedValue(undefined),
-		listTools: vi.fn().mockResolvedValue({ tools: [] }),
-		callTool: vi.fn().mockResolvedValue({ content: [] }),
-	})),
+	Client: vi.fn(function () {
+		return {
+			connect: vi.fn().mockResolvedValue(undefined),
+			close: vi.fn().mockResolvedValue(undefined),
+			listTools: vi.fn().mockResolvedValue({ tools: [] }),
+			callTool: vi.fn().mockResolvedValue({ content: [] }),
+		}
+	}),
 }))
 
 vi.mock("@modelcontextprotocol/sdk/client/stdio.js", () => ({
-	StdioClientTransport: vi.fn().mockImplementation(() => ({
-		connect: vi.fn().mockResolvedValue(undefined),
-		close: vi.fn().mockResolvedValue(undefined),
-	})),
+	StdioClientTransport: vi.fn(function () {
+		return {
+			connect: vi.fn().mockResolvedValue(undefined),
+			close: vi.fn().mockResolvedValue(undefined),
+		}
+	}),
 }))
 
 vi.mock("vscode", () => ({
@@ -112,21 +115,47 @@ vi.mock("vscode", () => ({
 		showInformationMessage: vi.fn(),
 		showWarningMessage: vi.fn(),
 		showErrorMessage: vi.fn(),
-		createTextEditorDecorationType: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidChangeActiveTextEditor: vi.fn(() => ({ dispose: vi.fn() })),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidChangeActiveTextEditor: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	workspace: {
 		getConfiguration: vi.fn().mockReturnValue({
 			get: vi.fn().mockReturnValue([]),
 			update: vi.fn(),
 		}),
-		onDidChangeConfiguration: vi.fn().mockImplementation(() => ({
-			dispose: vi.fn(),
-		})),
-		onDidSaveTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidChangeTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidOpenTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidCloseTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidChangeConfiguration: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidSaveTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidChangeTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidOpenTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidCloseTextDocument: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	env: {
 		uriScheme: "vscode",
@@ -161,29 +190,33 @@ vi.mock("../../prompts/system", () => ({
 
 vi.mock("../../../integrations/workspace/WorkspaceTracker", () => {
 	return {
-		default: vi.fn().mockImplementation(() => ({
-			initializeFilePaths: vi.fn(),
-			dispose: vi.fn(),
-		})),
+		default: vi.fn(function () {
+			return {
+				initializeFilePaths: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
 	}
 })
 
 vi.mock("../../task/Task", () => ({
-	Task: vi.fn().mockImplementation((options: any) => ({
-		api: undefined,
-		abortTask: vi.fn(),
-		handleWebviewAskResponse: vi.fn(),
-		clineMessages: [],
-		apiConversationHistory: [],
-		overwriteClineMessages: vi.fn(),
-		overwriteApiConversationHistory: vi.fn(),
-		getTaskNumber: vi.fn().mockReturnValue(0),
-		setTaskNumber: vi.fn(),
-		setParentTask: vi.fn(),
-		setRootTask: vi.fn(),
-		taskId: options?.historyItem?.id || "test-task-id",
-		emit: vi.fn(),
-	})),
+	Task: vi.fn(function (options: any) {
+		return {
+			api: undefined,
+			abortTask: vi.fn(),
+			handleWebviewAskResponse: vi.fn(),
+			clineMessages: [],
+			apiConversationHistory: [],
+			overwriteClineMessages: vi.fn(),
+			overwriteApiConversationHistory: vi.fn(),
+			getTaskNumber: vi.fn().mockReturnValue(0),
+			setTaskNumber: vi.fn(),
+			setParentTask: vi.fn(),
+			setRootTask: vi.fn(),
+			taskId: options?.historyItem?.id || "test-task-id",
+			emit: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("../../../integrations/misc/extract-text", () => ({
@@ -209,10 +242,12 @@ vi.mock("../../../shared/modes", () => ({
 }))
 
 vi.mock("../diff/strategies/multi-search-replace", () => ({
-	MultiSearchReplaceDiffStrategy: vi.fn().mockImplementation(() => ({
-		getName: () => "test-strategy",
-		applyDiff: vi.fn(),
-	})),
+	MultiSearchReplaceDiffStrategy: vi.fn(function () {
+		return {
+			getName: () => "test-strategy",
+			applyDiff: vi.fn(),
+		}
+	}),
 }))
 
 afterAll(() => {
@@ -250,7 +285,7 @@ describe("ClineProvider Task History Synchronization", () => {
 			extensionUri: {} as vscode.Uri,
 			globalState: {
 				get: vi.fn().mockImplementation((key: string) => globalState[key]),
-				update: vi.fn().mockImplementation((key: string, value: any) => {
+				update: vi.fn(function (key: string, value: any) {
 					globalState[key] = value
 					if (key === "taskHistory") {
 						taskHistoryState = value
@@ -295,11 +330,15 @@ describe("ClineProvider Task History Synchronization", () => {
 				cspSource: "vscode-webview://test-csp-source",
 			},
 			visible: true,
-			onDidDispose: vi.fn().mockImplementation((callback) => {
+			onDidDispose: vi.fn(function (callback) {
 				callback()
 				return { dispose: vi.fn() }
 			}),
-			onDidChangeVisibility: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
+			onDidChangeVisibility: vi.fn(function () {
+				return {
+					dispose: vi.fn(),
+				}
+			}),
 		} as unknown as vscode.WebviewView
 
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))
@@ -449,7 +488,9 @@ describe("ClineProvider Task History Synchronization", () => {
 			expect(initialRecent).toContain("cache-seed")
 
 			// Prime cache and verify internal cache is set.
-			expect((provider.taskHistory as unknown as { _recentTasksCache?: string[] })._recentTasksCache).toEqual(initialRecent)
+			expect((provider.taskHistory as unknown as { _recentTasksCache?: string[] })._recentTasksCache).toEqual(
+				initialRecent,
+			)
 
 			await provider.updateTaskHistory(
 				createHistoryItem({
@@ -462,7 +503,9 @@ describe("ClineProvider Task History Synchronization", () => {
 			)
 
 			// Direct assertion for invalidation side-effect.
-			expect((provider.taskHistory as unknown as { _recentTasksCache?: string[] })._recentTasksCache).toBeUndefined()
+			expect(
+				(provider.taskHistory as unknown as { _recentTasksCache?: string[] })._recentTasksCache,
+			).toBeUndefined()
 
 			const recomputedRecent = provider.getRecentTasks()
 			expect(recomputedRecent).toContain("cache-new")
@@ -692,7 +735,7 @@ describe("ClineProvider Task History Synchronization", () => {
 			const { safeWriteJson } = await import("../../../utils/safeWriteJson")
 			const mockSafeWriteJson = vi.mocked(safeWriteJson)
 			let callCount = 0
-			mockSafeWriteJson.mockImplementation(async () => {
+			mockSafeWriteJson.mockImplementation(async function () {
 				callCount++
 				if (callCount === 1) {
 					throw new Error("simulated write failure")

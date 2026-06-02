@@ -23,14 +23,17 @@ describe("TerminalRegistry", () => {
 					name: "NJUST_AI",
 					processId: Promise.resolve(123),
 					creationOptions: {},
+
 					state: {
 						isInteractedWith: true,
 						shell: { id: "test-shell", executable: "/bin/bash", args: [] },
 					},
+
 					dispose: vi.fn(),
 					hide: vi.fn(),
 					show: vi.fn(),
 					sendText: vi.fn(),
+
 					shellIntegration: {
 						executeCommand: vi.fn(),
 					},

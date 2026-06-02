@@ -18,9 +18,11 @@ vi.mock("../../context-tracking/FileContextTracker")
 vi.mock("../../../integrations/editor/DiffViewProvider")
 vi.mock("../../tools/ToolRepetitionDetector")
 vi.mock("../../../api", () => ({
-	buildApiHandler: vi.fn(() => ({
-		getModel: () => ({ info: {}, id: "test-model" }),
-	})),
+	buildApiHandler: vi.fn(function () {
+		return {
+			getModel: () => ({ info: {}, id: "test-model" }),
+		}
+	}),
 }))
 
 vi.mock("@njust-ai/telemetry", () => ({
@@ -34,7 +36,11 @@ vi.mock("@njust-ai/telemetry", () => ({
 }))
 
 describe("Task.updateApiConfiguration", () => {
-	let mockProvider: { context: { globalStorageUri: { fsPath: string } }; getState: ReturnType<typeof vi.fn>; log: ReturnType<typeof vi.fn> }
+	let mockProvider: {
+		context: { globalStorageUri: { fsPath: string } }
+		getState: ReturnType<typeof vi.fn>
+		log: ReturnType<typeof vi.fn>
+	}
 	let task: Task
 
 	beforeEach(() => {

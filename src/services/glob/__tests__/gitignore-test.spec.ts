@@ -66,7 +66,7 @@ describe("list-files gitignore support", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// Ripgrep should respect .gitignore and only return src/index.ts
 						setTimeout(() => callback(`${path.join(tempDir, "src", "index.ts")}\n`), 10)
@@ -76,7 +76,7 @@ describe("list-files gitignore support", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -116,7 +116,7 @@ describe("list-files gitignore support", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback(""), 10)
 					}
@@ -125,7 +125,7 @@ describe("list-files gitignore support", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}

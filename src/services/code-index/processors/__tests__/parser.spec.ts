@@ -40,15 +40,17 @@ vi.mock("../../../tree-sitter/markdownParser")
 const mockLanguageParser = {
 	js: {
 		parser: {
-			parse: vi.fn((content: string) => ({
-				rootNode: {
-					text: content,
-					startPosition: { row: 0 },
-					endPosition: { row: content.split("\n").length - 1 },
-					children: [],
-					type: "program",
-				},
-			})),
+			parse: vi.fn(function (content: string) {
+				return {
+					rootNode: {
+						text: content,
+						startPosition: { row: 0 },
+						endPosition: { row: content.split("\n").length - 1 },
+						children: [],
+						type: "program",
+					},
+				}
+			}),
 		},
 		query: {
 			captures: vi.fn().mockReturnValue([]),

@@ -25,7 +25,12 @@ vi.mock("vscode", () => {
 				dispose: vi.fn(),
 			}),
 		},
-		RelativePattern: vi.fn().mockImplementation((base: string, pattern: string) => ({ base, pattern })),
+		RelativePattern: vi.fn(function (base: string, pattern: string) {
+			return {
+				base,
+				pattern,
+			}
+		}),
 	}
 })
 
@@ -72,7 +77,7 @@ describe("CodeIndexOrchestrator - error path cleanup gating", () => {
 			get state() {
 				return currentState
 			},
-			setSystemState: vi.fn().mockImplementation((state: string, _msg: string) => {
+			setSystemState: vi.fn(function (state: string, _msg: string) {
 				currentState = state
 			}),
 			reportFileQueueProgress: vi.fn(),
@@ -184,7 +189,7 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 			get state() {
 				return currentState
 			},
-			setSystemState: vi.fn().mockImplementation((state: string, _msg: string) => {
+			setSystemState: vi.fn(function (state: string, _msg: string) {
 				currentState = state
 			}),
 			reportFileQueueProgress: vi.fn(),
@@ -219,19 +224,23 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 
 	it("should abort indexing when stopIndexing() is called", async () => {
 		// Make scanner hang until aborted
-		scanner.scanDirectory.mockImplementation(
-			async (_dir: string, _onError?: any, _onBlocksIndexed?: any, _onFileParsed?: any, signal?: AbortSignal) => {
-				// Wait for abort signal
-				await new Promise<void>((resolve) => {
-					if (signal?.aborted) {
-						resolve()
-						return
-					}
-					signal?.addEventListener("abort", () => resolve())
-				})
-				return { stats: { processed: 0, skipped: 0 }, totalBlockCount: 0 }
-			},
-		)
+		scanner.scanDirectory.mockImplementation(async function (
+			_dir: string,
+			_onError?: any,
+			_onBlocksIndexed?: any,
+			_onFileParsed?: any,
+			signal?: AbortSignal,
+		) {
+			// Wait for abort signal
+			await new Promise<void>((resolve) => {
+				if (signal?.aborted) {
+					resolve()
+					return
+				}
+				signal?.addEventListener("abort", () => resolve())
+			})
+			return { stats: { processed: 0, skipped: 0 }, totalBlockCount: 0 }
+		})
 
 		const orchestrator = new CodeIndexOrchestrator(
 			configManager,
@@ -263,18 +272,22 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 
 	it("should set state to Standby after abort, not Error", async () => {
 		// Make scanner throw AbortError when signal is aborted
-		scanner.scanDirectory.mockImplementation(
-			async (_dir: string, _onError?: any, _onBlocksIndexed?: any, _onFileParsed?: any, signal?: AbortSignal) => {
-				await new Promise<void>((resolve) => {
-					if (signal?.aborted) {
-						resolve()
-						return
-					}
-					signal?.addEventListener("abort", () => resolve())
-				})
-				throw new DOMException("Indexing aborted", "AbortError")
-			},
-		)
+		scanner.scanDirectory.mockImplementation(async function (
+			_dir: string,
+			_onError?: any,
+			_onBlocksIndexed?: any,
+			_onFileParsed?: any,
+			signal?: AbortSignal,
+		) {
+			await new Promise<void>((resolve) => {
+				if (signal?.aborted) {
+					resolve()
+					return
+				}
+				signal?.addEventListener("abort", () => resolve())
+			})
+			throw new DOMException("Indexing aborted", "AbortError")
+		})
 
 		const orchestrator = new CodeIndexOrchestrator(
 			configManager,
@@ -301,18 +314,22 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 	})
 
 	it("should preserve partial index data after stop", async () => {
-		scanner.scanDirectory.mockImplementation(
-			async (_dir: string, _onError?: any, _onBlocksIndexed?: any, _onFileParsed?: any, signal?: AbortSignal) => {
-				await new Promise<void>((resolve) => {
-					if (signal?.aborted) {
-						resolve()
-						return
-					}
-					signal?.addEventListener("abort", () => resolve())
-				})
-				return { stats: { processed: 5, skipped: 0 }, totalBlockCount: 5 }
-			},
-		)
+		scanner.scanDirectory.mockImplementation(async function (
+			_dir: string,
+			_onError?: any,
+			_onBlocksIndexed?: any,
+			_onFileParsed?: any,
+			signal?: AbortSignal,
+		) {
+			await new Promise<void>((resolve) => {
+				if (signal?.aborted) {
+					resolve()
+					return
+				}
+				signal?.addEventListener("abort", () => resolve())
+			})
+			return { stats: { processed: 5, skipped: 0 }, totalBlockCount: 5 }
+		})
 
 		const orchestrator = new CodeIndexOrchestrator(
 			configManager,

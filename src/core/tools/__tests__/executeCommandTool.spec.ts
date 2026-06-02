@@ -14,7 +14,12 @@ vitest.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
 		instance: {
 			captureEvent: vitest.fn(),
-			startSpan: vitest.fn(() => ({ traceId: "t", spanId: "s" })),
+			startSpan: vitest.fn(function () {
+				return {
+					traceId: "t",
+					spanId: "s",
+				}
+			}),
 			endSpan: vitest.fn(),
 			captureTaskCompleted: vitest.fn(),
 		},
@@ -26,11 +31,13 @@ vitest.mock("../../security/metrics", async (importOriginal) => {
 	return {
 		...actual,
 		recordSecurityMetric: vitest.fn(),
-		startTraceSpan: vitest.fn(() => ({
-			traceId: "test-trace",
-			spanId: "test-span",
-			end: vitest.fn(),
-		})),
+		startTraceSpan: vitest.fn(function () {
+			return {
+				traceId: "test-trace",
+				spanId: "test-span",
+				end: vitest.fn(),
+			}
+		}),
 	}
 })
 
@@ -179,15 +186,11 @@ describe("executeCommandTool", () => {
 			mockToolUse.nativeArgs = { command: "echo test" }
 
 			// Execute directly via execute() to isolate tool logic from BaseTool.handle()
-			await executeCommandTool.execute(
-				{ command: "echo test" },
-				mockCline as unknown as Task,
-				{
-					askApproval: mockAskApproval as unknown as AskApproval,
-					handleError: mockHandleError as unknown as HandleError,
-					pushToolResult: mockPushToolResult as unknown as PushToolResult,
-				},
-			)
+			await executeCommandTool.execute({ command: "echo test" }, mockCline as unknown as Task, {
+				askApproval: mockAskApproval as unknown as AskApproval,
+				handleError: mockHandleError as unknown as HandleError,
+				pushToolResult: mockPushToolResult as unknown as PushToolResult,
+			})
 
 			// Verify
 			expect(mockPushToolResult).toHaveBeenCalled()

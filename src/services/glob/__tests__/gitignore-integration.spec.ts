@@ -65,7 +65,7 @@ describe("list-files gitignore integration", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// Simulate ripgrep output (files that are not gitignored)
 						const files =
@@ -79,7 +79,7 @@ describe("list-files gitignore integration", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -122,7 +122,7 @@ describe("list-files gitignore integration", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback(""), 10)
 					}
@@ -131,7 +131,7 @@ describe("list-files gitignore integration", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -169,7 +169,7 @@ describe("list-files gitignore integration", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// In non-recursive mode, ripgrep should now respect .gitignore
 						const files = [path.join(tempDir, "src"), path.join(tempDir, "allowed-dir")].join("\n") + "\n"
@@ -180,7 +180,7 @@ describe("list-files gitignore integration", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}

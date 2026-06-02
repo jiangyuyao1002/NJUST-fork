@@ -43,23 +43,27 @@ vi.mock("../../../utils/countTokens", () => ({
 
 vi.mock("../../../api", () => ({
 	ApiHandler: class {},
-	buildApiHandler: vi.fn().mockImplementation(() => ({
-		createMessage: vi.fn(),
-		getModel: vi.fn().mockReturnValue({ id: "mock-model", info: {} }),
-		countTokens: vi.fn().mockResolvedValue(0),
-		dispose: vi.fn(),
-	})),
+	buildApiHandler: vi.fn(function () {
+		return {
+			createMessage: vi.fn(),
+			getModel: vi.fn().mockReturnValue({ id: "mock-model", info: {} }),
+			countTokens: vi.fn().mockResolvedValue(0),
+			dispose: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("../../../services/rate-limiter/TokenBucketRateLimiter", () => ({
 	TokenBucketRateLimiter: {
-		getInstance: vi.fn(() => ({
-			wait: vi.fn().mockResolvedValue(0),
-			drain: vi.fn(),
-			reset: vi.fn(),
-			setConfig: vi.fn(),
-			getStats: vi.fn().mockReturnValue(null),
-		})),
+		getInstance: vi.fn(function () {
+			return {
+				wait: vi.fn().mockResolvedValue(0),
+				drain: vi.fn(),
+				reset: vi.fn(),
+				setConfig: vi.fn(),
+				getStats: vi.fn().mockReturnValue(null),
+			}
+		}),
 		resetInstance: vi.fn(),
 	},
 }))
@@ -83,48 +87,48 @@ vi.mock("../../../integrations/terminal/TerminalRegistry", () => ({
 
 vi.mock("../../ignore/RooIgnoreController", () => ({
 	LOCK_TEXT_SYMBOL: "\u{1F512}",
-	RooIgnoreController: vi.fn().mockImplementation(() => ({
-		rooIgnoreContent: undefined,
-		initialize: vi.fn().mockResolvedValue(undefined),
-		validateAccess: vi.fn().mockReturnValue(true),
-		validateCommand: vi.fn().mockReturnValue(undefined),
-		filterPaths: vi.fn().mockImplementation((paths: string[]) => paths),
-		dispose: vi.fn(),
-		getInstructions: vi.fn().mockReturnValue(undefined),
-	})),
+	RooIgnoreController: class {
+		rooIgnoreContent = undefined
+		initialize = vi.fn().mockResolvedValue(undefined)
+		validateAccess = vi.fn().mockReturnValue(true)
+		validateCommand = vi.fn().mockReturnValue(undefined)
+		filterPaths = vi.fn().mockImplementation((paths: string[]) => paths)
+		dispose = vi.fn()
+		getInstructions = vi.fn().mockReturnValue(undefined)
+	},
 }))
 
 vi.mock("../../context-tracking/FileContextTracker", () => ({
-	FileContextTracker: vi.fn().mockImplementation(() => ({
-		dispose: vi.fn(),
-		getFilesReadByRoo: vi.fn().mockResolvedValue([]),
-	})),
+	FileContextTracker: class {
+		dispose = vi.fn()
+		getFilesReadByRoo = vi.fn().mockResolvedValue([])
+	},
 }))
 
 vi.mock("../CangjieRuntimePolicy", () => ({
-	CangjieRuntimePolicy: vi.fn().mockImplementation(() => ({
-		dispose: vi.fn(),
-		getContextIntensity: vi.fn().mockReturnValue("compact"),
-		getRecentBuildRootCauses: vi.fn().mockReturnValue([]),
-		getRepairDirective: vi.fn().mockReturnValue(undefined),
-		getRecentBuildFailureOutput: vi.fn().mockReturnValue(undefined),
-		getRecentBuildCommand: vi.fn().mockReturnValue(undefined),
-		getCompileFailureRounds: vi.fn().mockReturnValue(0),
-		getStagnantFailureRounds: vi.fn().mockReturnValue(0),
-		getAttemptCompletionBlockReason: vi.fn().mockReturnValue(null),
-		hasCjpmProject: vi.fn().mockResolvedValue(false),
-		ensureProjectInitializedForWrite: vi.fn().mockResolvedValue(null),
-		validateCommandSurface: vi.fn().mockReturnValue(null),
-		validateProjectStructureForWrite: vi.fn().mockResolvedValue(null),
-		noteCorpusSearch: vi.fn(),
-		noteCorpusReadPath: vi.fn(),
-		noteLspEvidence: vi.fn(),
-		hasEvidenceForStdModule: vi.fn().mockReturnValue(false),
-		getMissingImportEvidence: vi.fn().mockReturnValue([]),
-		noteWriteApplied: vi.fn(),
-		notePathDeleted: vi.fn(),
-		noteBuildResult: vi.fn(),
-	})),
+	CangjieRuntimePolicy: class {
+		dispose = vi.fn()
+		getContextIntensity = vi.fn().mockReturnValue("compact")
+		getRecentBuildRootCauses = vi.fn().mockReturnValue([])
+		getRepairDirective = vi.fn().mockReturnValue(undefined)
+		getRecentBuildFailureOutput = vi.fn().mockReturnValue(undefined)
+		getRecentBuildCommand = vi.fn().mockReturnValue(undefined)
+		getCompileFailureRounds = vi.fn().mockReturnValue(0)
+		getStagnantFailureRounds = vi.fn().mockReturnValue(0)
+		getAttemptCompletionBlockReason = vi.fn().mockReturnValue(null)
+		hasCjpmProject = vi.fn().mockResolvedValue(false)
+		ensureProjectInitializedForWrite = vi.fn().mockResolvedValue(null)
+		validateCommandSurface = vi.fn().mockReturnValue(null)
+		validateProjectStructureForWrite = vi.fn().mockResolvedValue(null)
+		noteCorpusSearch = vi.fn()
+		noteCorpusReadPath = vi.fn()
+		noteLspEvidence = vi.fn()
+		hasEvidenceForStdModule = vi.fn().mockReturnValue(false)
+		getMissingImportEvidence = vi.fn().mockReturnValue([])
+		noteWriteApplied = vi.fn()
+		notePathDeleted = vi.fn()
+		noteBuildResult = vi.fn()
+	},
 }))
 
 import { createTestProvider } from "./testProviderFactory"
@@ -134,17 +138,21 @@ import { MultiSearchReplaceDiffStrategy } from "../../diff/strategies/multi-sear
 import { getLastGlobalApiRequestTime } from "../globalApiTiming"
 
 vi.mock("../../../services/cloud-agent/ProfileStorageService", () => ({
-	getProfileStorageService: vi.fn(() => ({
-		getActiveProfile: vi.fn(() => ({
-			id: "test-profile",
-			name: "Test Profile",
-			protocolType: "rest",
-			serverUrl: "http://127.0.0.1:4000",
-			auth: { type: "api-key", apiKey: "test-api-key", deviceTokenSource: "global" },
-			createdAt: Date.now(),
-			updatedAt: Date.now(),
-		})),
-	})),
+	getProfileStorageService: vi.fn(function () {
+		return {
+			getActiveProfile: vi.fn(function () {
+				return {
+					id: "test-profile",
+					name: "Test Profile",
+					protocolType: "rest",
+					serverUrl: "http://127.0.0.1:4000",
+					auth: { type: "api-key", apiKey: "test-api-key", deviceTokenSource: "global" },
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
+				}
+			}),
+		}
+	}),
 }))
 
 vi.mock("../../../services/mcp/McpServerManager", () => ({
@@ -157,9 +165,9 @@ vi.mock("../../../services/mcp/McpServerManager", () => ({
 }))
 
 vi.mock("../CloudAgentOrchestrator", () => ({
-	CloudAgentOrchestrator: vi.fn().mockImplementation(() => ({
-		run: vi.fn().mockResolvedValue(undefined),
-	})),
+	CloudAgentOrchestrator: class {
+		run = vi.fn().mockResolvedValue(undefined)
+	},
 }))
 
 import delay from "delay"
@@ -185,7 +193,7 @@ vi.mock("fs/promises", async (importOriginal) => {
 	const mockFunctions = {
 		mkdir: vi.fn().mockResolvedValue(undefined),
 		writeFile: vi.fn().mockResolvedValue(undefined),
-		readFile: vi.fn().mockImplementation((filePath) => {
+		readFile: vi.fn(function (filePath) {
 			if (filePath.includes("ui_messages.json")) {
 				return Promise.resolve(JSON.stringify(mockMessages))
 			}
@@ -264,7 +272,11 @@ vi.mock("vscode", () => {
 			tabGroups: {
 				all: [mockTabGroup],
 				close: vi.fn(),
-				onDidChangeTabs: vi.fn(() => ({ dispose: vi.fn() })),
+				onDidChangeTabs: vi.fn(function () {
+					return {
+						dispose: vi.fn(),
+					}
+				}),
 			},
 			showErrorMessage: vi.fn(),
 		},
@@ -276,17 +288,23 @@ vi.mock("vscode", () => {
 					index: 0,
 				},
 			],
-			createFileSystemWatcher: vi.fn(() => ({
-				onDidCreate: vi.fn(() => mockDisposable),
-				onDidDelete: vi.fn(() => mockDisposable),
-				onDidChange: vi.fn(() => mockDisposable),
-				dispose: vi.fn(),
-			})),
+			createFileSystemWatcher: vi.fn(function () {
+				return {
+					onDidCreate: vi.fn(() => mockDisposable),
+					onDidDelete: vi.fn(() => mockDisposable),
+					onDidChange: vi.fn(() => mockDisposable),
+					dispose: vi.fn(),
+				}
+			}),
 			fs: {
 				stat: vi.fn().mockResolvedValue({ type: 1 }), // FileType.File = 1
 			},
 			onDidSaveTextDocument: vi.fn(() => mockDisposable),
-			getConfiguration: vi.fn(() => ({ get: (key: string, defaultValue: any) => defaultValue })),
+			getConfiguration: vi.fn(function () {
+				return {
+					get: (key: string, defaultValue: any) => defaultValue,
+				}
+			}),
 		},
 		env: {
 			uriScheme: "vscode",
@@ -301,7 +319,7 @@ vi.mock("vscode", () => {
 })
 
 vi.mock("../../mentions", () => ({
-	parseMentions: vi.fn().mockImplementation((text) => {
+	parseMentions: vi.fn(function (text) {
 		return Promise.resolve({ text: `processed: ${text}`, mode: undefined, contentBlocks: [] })
 	}),
 	openMention: vi.fn(),
@@ -339,7 +357,7 @@ vi.mock("../../../utils/storage", () => ({
 }))
 
 vi.mock("../../../utils/fs", () => ({
-	fileExistsAtPath: vi.fn().mockImplementation((filePath) => {
+	fileExistsAtPath: vi.fn(function (filePath) {
 		return filePath.includes("ui_messages.json") || filePath.includes("api_conversation_history.json")
 	}),
 }))
@@ -361,7 +379,6 @@ const mockSystemPromptParts = {
 }
 
 describe("Cline", () => {
-
 	let mockProvider: any
 	let mockApiConfig: ProviderSettings
 	let mockOutputChannel: any
@@ -383,7 +400,7 @@ describe("Cline", () => {
 
 		mockExtensionContext = {
 			globalState: {
-				get: vi.fn().mockImplementation((key: keyof GlobalState) => {
+				get: vi.fn(function (key: keyof GlobalState) {
 					if (key === "taskHistory") {
 						return [
 							{
@@ -449,33 +466,37 @@ describe("Cline", () => {
 		mockProvider.postMessageToWebview = vi.fn().mockResolvedValue(undefined)
 		mockProvider.postStateToWebview = vi.fn().mockResolvedValue(undefined)
 		mockProvider.postStateToWebviewWithoutTaskHistory = vi.fn().mockResolvedValue(undefined)
-		mockProvider.getTaskWithId = vi.fn().mockImplementation(async (id) => ({
-			historyItem: {
-				id,
-				ts: Date.now(),
-				task: "historical task",
-				tokensIn: 100,
-				tokensOut: 200,
-				cacheWrites: 0,
-				cacheReads: 0,
-				totalCost: 0.001,
-			},
-			taskDirPath: "/mock/storage/path/tasks/123",
-			apiConversationHistoryFilePath: "/mock/storage/path/tasks/123/api_conversation_history.json",
-			uiMessagesFilePath: "/mock/storage/path/tasks/123/ui_messages.json",
-			apiConversationHistory: [
-				{
-					role: "user",
-					content: [{ type: "text", text: "historical task" }],
+		mockProvider.getTaskWithId = vi.fn(async function (id) {
+			return {
+				historyItem: {
+					id,
 					ts: Date.now(),
+					task: "historical task",
+					tokensIn: 100,
+					tokensOut: 200,
+					cacheWrites: 0,
+					cacheReads: 0,
+					totalCost: 0.001,
 				},
-				{
-					role: "assistant",
-					content: [{ type: "text", text: "I'll help you with that task." }],
-					ts: Date.now(),
-				},
-			],
-		}))
+
+				taskDirPath: "/mock/storage/path/tasks/123",
+				apiConversationHistoryFilePath: "/mock/storage/path/tasks/123/api_conversation_history.json",
+				uiMessagesFilePath: "/mock/storage/path/tasks/123/ui_messages.json",
+
+				apiConversationHistory: [
+					{
+						role: "user",
+						content: [{ type: "text", text: "historical task" }],
+						ts: Date.now(),
+					},
+					{
+						role: "assistant",
+						content: [{ type: "text", text: "I'll help you with that task." }],
+						ts: Date.now(),
+					},
+				],
+			}
+		})
 	})
 
 	describe("constructor", () => {
@@ -567,9 +588,9 @@ describe("Cline", () => {
 
 			// Mock lifecycle handler to make startTask reject immediately
 			const { TaskLifecycleHandler } = await import("../TaskLifecycleHandler")
-			const startTaskSpy = vi.spyOn(TaskLifecycleHandler.prototype, "startTask").mockRejectedValue(
-				new Error("simulated startTask failure"),
-			)
+			const startTaskSpy = vi
+				.spyOn(TaskLifecycleHandler.prototype, "startTask")
+				.mockRejectedValue(new Error("simulated startTask failure"))
 
 			new Task({
 				provider: mockProvider,
@@ -838,7 +859,7 @@ describe("Cline", () => {
 
 				let firstAttempt = true
 				cline.api = {
-					createMessage: vi.fn().mockImplementation(() => {
+					createMessage: vi.fn(function () {
 						if (firstAttempt) {
 							firstAttempt = false
 							return mockFailedStream
@@ -1017,7 +1038,7 @@ describe("Cline", () => {
 
 				let firstAttempt = true
 				cline.api = {
-					createMessage: vi.fn().mockImplementation(() => {
+					createMessage: vi.fn(function () {
 						if (firstAttempt) {
 							firstAttempt = false
 							return mockFailedStream
@@ -1378,7 +1399,6 @@ describe("Cline", () => {
 
 				// Verify no rate limiting was applied
 				expect(mockDelay).not.toHaveBeenCalled()
-
 			})
 
 			it("should share rate limiting across multiple subtasks", async () => {
@@ -1842,7 +1862,7 @@ describe("Cline", () => {
 				})
 
 				// Spy on console.error to verify error is logged
-				const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+				const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(function () {})
 
 				// Should log error but not throw
 				await task.submitUserMessage("test message")
@@ -1869,7 +1889,7 @@ describe("Cline", () => {
 			const emitSpy = vi.spyOn(task, "emit")
 
 			// Mock the dispose method to avoid actual cleanup
-			vi.spyOn(task, "dispose").mockImplementation(() => {})
+			vi.spyOn(task, "dispose").mockImplementation(function () {})
 
 			// Call abortTask
 			await task.abortTask()
@@ -1890,7 +1910,7 @@ describe("Cline", () => {
 			})
 
 			// Mock the dispose method to track cleanup
-			const disposeSpy = vi.spyOn(task, "dispose").mockImplementation(() => {})
+			const disposeSpy = vi.spyOn(task, "dispose").mockImplementation(function () {})
 
 			// Call abortTask
 			await task.abortTask()
@@ -1915,7 +1935,7 @@ describe("Cline", () => {
 			expect(typeof taskLike.abortTask).toBe("function")
 
 			// Mock the dispose method to avoid actual cleanup
-			vi.spyOn(task, "dispose").mockImplementation(() => {})
+			vi.spyOn(task, "dispose").mockImplementation(function () {})
 
 			// Call abortTask through interface
 			await taskLike.abortTask()
@@ -1934,18 +1954,20 @@ describe("Cline", () => {
 
 			// Mock dispose to throw an error
 			const mockError = new Error("Disposal failed")
-			vi.spyOn(task, "dispose").mockImplementation(() => {
+			vi.spyOn(task, "dispose").mockImplementation(function () {
 				throw mockError
 			})
 
 			// Spy on console.error to verify error is logged
-			const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+			const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(function () {})
 
 			// abortTask should not throw even if dispose fails
 			await expect(task.abortTask()).resolves.not.toThrow()
 
 			// Verify error was logged
-			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("[TaskLifecycleHandler] Error during task"))
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				expect.stringContaining("[TaskLifecycleHandler] Error during task"),
+			)
 
 			// Verify abort flag is still set
 			expect(task.abort).toBe(true)
@@ -1963,7 +1985,7 @@ describe("Cline", () => {
 				})
 
 				// Spy on console.error to verify error logging
-				const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+				const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(function () {})
 
 				// Spy on abortTask to verify it's NOT called for stream failures
 				const abortTaskSpy = vi.spyOn(task, "abortTask").mockResolvedValue(undefined)
@@ -2019,7 +2041,7 @@ describe("Cline", () => {
 				task.currentRequestAbortController = mockAbortController
 
 				// Spy on console.log
-				const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {})
+				const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(function () {})
 
 				// Call cancelCurrentRequest
 				task.cancelCurrentRequest()
@@ -2067,7 +2089,7 @@ describe("Cline", () => {
 				vi.spyOn(task.messageQueueService, "removeListener").mockImplementation(
 					() => task.messageQueueService as any,
 				)
-				vi.spyOn(task.messageQueueService, "dispose").mockImplementation(() => {})
+				vi.spyOn(task.messageQueueService, "dispose").mockImplementation(function () {})
 				vi.spyOn(task, "removeAllListeners").mockImplementation(() => task as any)
 
 				// Call the lifecycle handler's dispose directly to bypass the double isDisposed guard
@@ -2092,7 +2114,7 @@ describe("Cline", () => {
 			})
 
 			// Manually trigger start
-			const startTaskSpy = vi.spyOn(task as any, "startTask").mockImplementation(async () => {})
+			const startTaskSpy = vi.spyOn(task as any, "startTask").mockImplementation(async function () {})
 			task.start()
 
 			expect(startTaskSpy).toHaveBeenCalledTimes(1)
@@ -2105,7 +2127,7 @@ describe("Cline", () => {
 		it("should not call startTask if already started via constructor", () => {
 			// Create a task that starts immediately (startTask defaults to true)
 			// but mock startTask to prevent actual execution
-			const startTaskSpy = vi.spyOn(Task.prototype as any, "startTask").mockImplementation(async () => {})
+			const startTaskSpy = vi.spyOn(Task.prototype as any, "startTask").mockImplementation(async function () {})
 
 			const task = new Task({
 				provider: mockProvider,
@@ -2336,7 +2358,7 @@ describe("pushToolResultToUserContent", () => {
 		}
 
 		// Spy on console.warn to verify warning is logged
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {})
 
 		// Add first result - should succeed
 		const added1 = task.pushToolResultToUserContent(toolResult1)

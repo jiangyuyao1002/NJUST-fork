@@ -26,9 +26,11 @@ vi.mock("@aws-sdk/credential-providers", () => {
 })
 
 vi.mock("@aws-sdk/client-bedrock-runtime", () => ({
-	BedrockRuntimeClient: vi.fn().mockImplementation(() => ({
-		send: mockSend,
-	})),
+	BedrockRuntimeClient: vi.fn(function () {
+		return {
+			send: mockSend,
+		}
+	}),
 	ConverseStreamCommand: vi.fn(),
 	ConverseCommand: vi.fn(),
 }))
@@ -338,9 +340,7 @@ describe("AwsBedrockHandler Error Handling", () => {
 			}
 
 			// Should have yielded error chunks before throwing for non-throttling errors
-			expect(
-				chunks.some((chunk) => chunk.type === "text" && chunk.text?.includes("Some other error")),
-			).toBe(true)
+			expect(chunks.some((chunk) => chunk.type === "text" && chunk.text?.includes("Some other error"))).toBe(true)
 			expect(thrownError).toBeDefined()
 			expect(thrownError?.message).toContain("Some other error")
 			expect(mockCaptureException).toHaveBeenCalled()

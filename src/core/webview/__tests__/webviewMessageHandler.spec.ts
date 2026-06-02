@@ -104,7 +104,7 @@ vi.mock("vscode", () => {
 })
 
 vi.mock("../../../i18n", () => ({
-	t: vi.fn((key: string, args?: Record<string, unknown>) => {
+	t: vi.fn(function (key: string, args?: Record<string, unknown>) {
 		// For the delete confirmation with rules, we need to return the interpolated string
 		if (key === "common:confirmation.delete_custom_mode_with_rules" && args) {
 			return `Are you sure you want to delete this ${args.scope} mode?\n\nThis will also delete the associated rules folder at:\n${args.rulesFolderPath}`
@@ -156,10 +156,12 @@ vi.mock("../../../utils/path")
 vi.mock("../../../utils/globalContext")
 
 vi.mock("../../mentions/resolveImageMentions", () => ({
-	resolveImageMentions: vi.fn(async ({ text, images }: { text: string; images?: string[] }) => ({
-		text,
-		images: [...(images ?? []), "data:image/png;base64,from-mention"],
-	})),
+	resolveImageMentions: vi.fn(async function ({ text, images }: { text: string; images?: string[] }) {
+		return {
+			text,
+			images: [...(images ?? []), "data:image/png;base64,from-mention"],
+		}
+	}),
 }))
 
 import { resolveImageMentions } from "../../mentions/resolveImageMentions"
@@ -903,7 +905,9 @@ describe("webviewMessageHandler - requestCommands", () => {
 			]),
 		)
 
-		expect(commandMessage?.commands?.filter((command: Command) => command.name === "skill-slug-entry")).toHaveLength(1)
+		expect(
+			commandMessage?.commands?.filter((command: Command) => command.name === "skill-slug-entry"),
+		).toHaveLength(1)
 	})
 
 	it("adds skill-backed command entries without overriding existing command names", async () => {

@@ -63,8 +63,8 @@ describe("OpenAICompatibleEmbedder", () => {
 
 	beforeEach(() => {
 		vitest.clearAllMocks()
-		vitest.spyOn(console, "warn").mockImplementation(() => {})
-		vitest.spyOn(console, "error").mockImplementation(() => {})
+		vitest.spyOn(console, "warn").mockImplementation(function () {})
+		vitest.spyOn(console, "error").mockImplementation(function () {})
 
 		// Setup mock OpenAI instance
 		mockEmbeddingsCreate = vitest.fn()
@@ -74,7 +74,9 @@ describe("OpenAICompatibleEmbedder", () => {
 			},
 		}
 
-		MockedOpenAI.mockImplementation(() => mockOpenAIInstance)
+		MockedOpenAI.mockImplementation(function () {
+			return mockOpenAIInstance
+		})
 
 		// Reset global rate limit state to prevent interference between tests
 		const tempEmbedder = new OpenAICompatibleEmbedder(testBaseUrl, testApiKey, testModelId)
@@ -492,24 +494,24 @@ describe("OpenAICompatibleEmbedder", () => {
 					"Failed to create embeddings after 3 attempts: API connection failed",
 				)
 
-			expect(console.error).toHaveBeenCalledWith(
-				expect.stringContaining("[OpenAICompatibleEmbedder] OpenAI Compatible embedder error"),
-			)
-		})
+				expect(console.error).toHaveBeenCalledWith(
+					expect.stringContaining("[OpenAICompatibleEmbedder] OpenAI Compatible embedder error"),
+				)
+			})
 
-		it("should handle batch processing errors", async () => {
-			const testTexts = ["text1", "text2"]
-			const batchError = new Error("Batch processing failed")
+			it("should handle batch processing errors", async () => {
+				const testTexts = ["text1", "text2"]
+				const batchError = new Error("Batch processing failed")
 
-			mockEmbeddingsCreate.mockRejectedValue(batchError)
+				mockEmbeddingsCreate.mockRejectedValue(batchError)
 
-			await expect(embedder.createEmbeddings(testTexts)).rejects.toThrow(
-				"Failed to create embeddings after 3 attempts: Batch processing failed",
-			)
+				await expect(embedder.createEmbeddings(testTexts)).rejects.toThrow(
+					"Failed to create embeddings after 3 attempts: Batch processing failed",
+				)
 
-			expect(console.error).toHaveBeenCalledWith(
-				expect.stringContaining("[OpenAICompatibleEmbedder] OpenAI Compatible embedder error"),
-			)
+				expect(console.error).toHaveBeenCalledWith(
+					expect.stringContaining("[OpenAICompatibleEmbedder] OpenAI Compatible embedder error"),
+				)
 			})
 
 			it("should handle empty text arrays", async () => {
@@ -635,7 +637,7 @@ describe("OpenAICompatibleEmbedder", () => {
 				// Mock the methodRequest method which is called by post()
 				const mockMethodRequest = vi.fn()
 				const mockAPIPromise = {
-					then: vi.fn().mockImplementation((callback) => {
+					then: vi.fn(function (callback) {
 						return Promise.resolve(callback(mockApiResponse))
 					}),
 					catch: vi.fn(),
@@ -644,7 +646,7 @@ describe("OpenAICompatibleEmbedder", () => {
 				mockMethodRequest.mockReturnValue(mockAPIPromise)
 
 				// Replace the methodRequest method on the client
-				;(realOpenAI as any).post = vi.fn().mockImplementation((path, opts) => {
+				;(realOpenAI as any).post = vi.fn(function (path, opts) {
 					return mockMethodRequest("post", path, opts)
 				})
 

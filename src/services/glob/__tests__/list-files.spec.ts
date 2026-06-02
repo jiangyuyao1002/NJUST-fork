@@ -73,7 +73,7 @@ describe("list-files symlink support", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// Simulate some output to complete the process
 						setTimeout(() => callback("test-file.txt\n"), 10)
@@ -83,7 +83,7 @@ describe("list-files symlink support", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -121,7 +121,7 @@ describe("list-files symlink support", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback("test-file.txt\n"), 10)
 					}
@@ -130,7 +130,7 @@ describe("list-files symlink support", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -181,7 +181,7 @@ describe("list-files symlink support", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// Return many file paths to trigger the limit
 						// Note: ripgrep returns relative paths
@@ -206,7 +206,7 @@ describe("list-files symlink support", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -275,7 +275,7 @@ describe("hidden directory exclusion", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, _callback) => {
+				on: vi.fn(function (event, _callback) {
 					if (event === "data") {
 						// No files returned
 					}
@@ -284,7 +284,7 @@ describe("hidden directory exclusion", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 10)
 				}
@@ -330,7 +330,7 @@ describe("hidden directory exclusion", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, _callback) => {
+				on: vi.fn(function (event, _callback) {
 					if (event === "data") {
 						// No files returned
 					}
@@ -339,7 +339,7 @@ describe("hidden directory exclusion", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 10)
 				}
@@ -369,7 +369,7 @@ describe("hidden directory exclusion", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// Simulate files that should be found in .njust_ai/temp
 						// Note: ripgrep returns relative paths
@@ -383,7 +383,7 @@ describe("hidden directory exclusion", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -431,7 +431,7 @@ describe("buildRecursiveArgs edge cases", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback("file.txt\n"), 10)
 					}
@@ -440,7 +440,7 @@ describe("buildRecursiveArgs edge cases", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -465,7 +465,7 @@ describe("buildRecursiveArgs edge cases", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback("file.txt\n"), 10)
 					}
@@ -474,7 +474,7 @@ describe("buildRecursiveArgs edge cases", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -499,7 +499,7 @@ describe("buildRecursiveArgs edge cases", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback("file.txt\n"), 10)
 					}
@@ -508,7 +508,7 @@ describe("buildRecursiveArgs edge cases", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -533,7 +533,7 @@ describe("buildRecursiveArgs edge cases", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback("file.txt\n"), 10)
 					}
@@ -542,7 +542,7 @@ describe("buildRecursiveArgs edge cases", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}

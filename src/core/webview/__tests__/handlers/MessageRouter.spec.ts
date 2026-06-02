@@ -32,7 +32,7 @@ describe("MessageRouter", () => {
 	})
 
 	it("warns on unknown message type without throwing", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {})
 
 		await expect(router.route(context, { type: "unknownType" } as any)).resolves.not.toThrow()
 		expect(warnSpy).toHaveBeenCalledWith("[MessageRouter] Unknown message type: unknownType")

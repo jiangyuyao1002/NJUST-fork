@@ -41,12 +41,12 @@ describe("CodeIndexConfigManager", () => {
 	// Helper function to setup secret mocking
 	const setupSecretMocks = (secrets: Record<string, string>) => {
 		// Mock sync secret access
-		mockContextProxy.getSecret.mockImplementation((key: string) => {
+		mockContextProxy.getSecret.mockImplementation(function (key: string) {
 			return secrets[key] || undefined
 		})
 
 		// Mock refreshSecrets to update the getSecret mock with new values
-		mockContextProxy.refreshSecrets.mockImplementation(async () => {
+		mockContextProxy.refreshSecrets.mockImplementation(async function () {
 			// In real implementation, this would refresh from VSCode storage
 			// For tests, we just keep the existing mock behavior
 		})
@@ -153,7 +153,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderModelId: "text-embedding-3-large",
 				codebaseIndexOpenAiCompatibleBaseUrl: "https://api.example.com/v1",
 			}
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") return mockGlobalState
 				return undefined
 			})
@@ -191,7 +191,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexOpenAiCompatibleBaseUrl: "https://api.example.com/v1",
 				codebaseIndexEmbedderModelDimension: 1024,
 			}
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") return mockGlobalState
 				return undefined
 			})
@@ -229,7 +229,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexOpenAiCompatibleBaseUrl: "https://api.example.com/v1",
 				// modelDimension is not set
 			}
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") return mockGlobalState
 				return undefined
 			})
@@ -267,7 +267,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexOpenAiCompatibleBaseUrl: "https://api.example.com/v1",
 				codebaseIndexEmbedderModelDimension: "invalid-dimension", // Invalid type
 			}
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") return mockGlobalState
 				return undefined
 			})
@@ -352,7 +352,7 @@ describe("CodeIndexConfigManager", () => {
 
 		it("should NOT require restart when models have same dimensions", async () => {
 			// Mock both models to have same dimension
-			mockedGetModelDimension.mockImplementation((provider, modelId) => {
+			mockedGetModelDimension.mockImplementation(function (provider, modelId) {
 				if (modelId === "text-embedding-3-small" || modelId === "text-embedding-ada-002") {
 					return 1536
 				}
@@ -515,7 +515,7 @@ describe("CodeIndexConfigManager", () => {
 
 			it("should handle OpenAI Compatible configuration changes", async () => {
 				// Initial state
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -535,7 +535,7 @@ describe("CodeIndexConfigManager", () => {
 				await configManager.loadConfiguration()
 
 				// Change OpenAI Compatible base URL
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -554,7 +554,7 @@ describe("CodeIndexConfigManager", () => {
 
 			it("should handle OpenAI Compatible API key changes", async () => {
 				// Initial state
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -585,7 +585,7 @@ describe("CodeIndexConfigManager", () => {
 
 			it("should handle OpenAI Compatible modelDimension changes", async () => {
 				// Initial state with modelDimension
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -606,7 +606,7 @@ describe("CodeIndexConfigManager", () => {
 				await configManager.loadConfiguration()
 
 				// Change modelDimension
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -626,7 +626,7 @@ describe("CodeIndexConfigManager", () => {
 
 			it("should not require restart when modelDimension remains the same", async () => {
 				// Initial state with modelDimension
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -647,7 +647,7 @@ describe("CodeIndexConfigManager", () => {
 				await configManager.loadConfiguration()
 
 				// Keep modelDimension the same, change unrelated setting
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -668,7 +668,7 @@ describe("CodeIndexConfigManager", () => {
 
 			it("should require restart when modelDimension is added", async () => {
 				// Initial state without modelDimension
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -689,7 +689,7 @@ describe("CodeIndexConfigManager", () => {
 				await configManager.loadConfiguration()
 
 				// Add modelDimension
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -709,7 +709,7 @@ describe("CodeIndexConfigManager", () => {
 
 			it("should require restart when modelDimension is removed", async () => {
 				// Initial state with modelDimension
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -730,7 +730,7 @@ describe("CodeIndexConfigManager", () => {
 				await configManager.loadConfiguration()
 
 				// Remove modelDimension
-				mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+				mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexConfig") {
 						return {
 							codebaseIndexEnabled: true,
@@ -804,7 +804,7 @@ describe("CodeIndexConfigManager", () => {
 						codebaseIndexEmbedderModelId: "text-embedding-3-small",
 						codebaseIndexSearchMinScore: 0.8, // User setting
 					})
-					mockContextProxy.getSecret.mockImplementation((key: string) => {
+					mockContextProxy.getSecret.mockImplementation(function (key: string) {
 						if (key === "codeIndexOpenAiKey") return "test-key"
 						return undefined
 					})
@@ -815,7 +815,7 @@ describe("CodeIndexConfigManager", () => {
 
 				it("should fall back to model-specific threshold when user setting is undefined", async () => {
 					// Mock the model score threshold
-					mockedGetModelScoreThreshold.mockImplementation((provider, modelId) => {
+					mockedGetModelScoreThreshold.mockImplementation(function (provider, modelId) {
 						if (provider === "ollama" && modelId === "nomic-embed-code") {
 							return 0.15
 						}
@@ -843,7 +843,7 @@ describe("CodeIndexConfigManager", () => {
 						codebaseIndexEmbedderModelId: "unknown-model", // Model not in profiles
 						// No codebaseIndexSearchMinScore
 					})
-					mockContextProxy.getSecret.mockImplementation((key: string) => {
+					mockContextProxy.getSecret.mockImplementation(function (key: string) {
 						if (key === "codeIndexOpenAiKey") return "test-key"
 						return undefined
 					})
@@ -869,14 +869,14 @@ describe("CodeIndexConfigManager", () => {
 
 				it("should use model-specific threshold with openai-compatible provider", async () => {
 					// Mock the model score threshold
-					mockedGetModelScoreThreshold.mockImplementation((provider, modelId) => {
+					mockedGetModelScoreThreshold.mockImplementation(function (provider, modelId) {
 						if (provider === "openai-compatible" && modelId === "nomic-embed-code") {
 							return 0.15
 						}
 						return undefined
 					})
 
-					mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+					mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 						if (key === "codebaseIndexConfig") {
 							return {
 								codebaseIndexEnabled: true,
@@ -889,7 +889,7 @@ describe("CodeIndexConfigManager", () => {
 						}
 						return undefined
 					})
-					mockContextProxy.getSecret.mockImplementation((key: string) => {
+					mockContextProxy.getSecret.mockImplementation(function (key: string) {
 						if (key === "codebaseIndexOpenAiCompatibleApiKey") return "test-api-key"
 						return undefined
 					})
@@ -907,7 +907,7 @@ describe("CodeIndexConfigManager", () => {
 						// No modelId specified
 						// No codebaseIndexSearchMinScore
 					})
-					mockContextProxy.getSecret.mockImplementation((key: string) => {
+					mockContextProxy.getSecret.mockImplementation(function (key: string) {
 						if (key === "codeIndexOpenAiKey") return "test-key"
 						return undefined
 					})
@@ -919,7 +919,7 @@ describe("CodeIndexConfigManager", () => {
 
 				it("should handle priority correctly: user > model > default", async () => {
 					// Mock the model score threshold
-					mockedGetModelScoreThreshold.mockImplementation((provider, modelId) => {
+					mockedGetModelScoreThreshold.mockImplementation(function (provider, modelId) {
 						if (provider === "ollama" && modelId === "nomic-embed-code") {
 							return 0.15
 						}
@@ -1160,7 +1160,7 @@ describe("CodeIndexConfigManager", () => {
 		})
 
 		it("should validate OpenAI Compatible configuration correctly", async () => {
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") {
 					return {
 						codebaseIndexEnabled: true,
@@ -1181,7 +1181,7 @@ describe("CodeIndexConfigManager", () => {
 		})
 
 		it("should return false when OpenAI Compatible base URL is missing", async () => {
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") {
 					return {
 						codebaseIndexEnabled: true,
@@ -1201,7 +1201,7 @@ describe("CodeIndexConfigManager", () => {
 		})
 
 		it("should return false when OpenAI Compatible API key is missing", async () => {
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") {
 					return {
 						codebaseIndexEnabled: true,
@@ -1221,7 +1221,7 @@ describe("CodeIndexConfigManager", () => {
 		})
 
 		it("should validate Gemini configuration correctly", async () => {
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") {
 					return {
 						codebaseIndexEnabled: true,
@@ -1231,7 +1231,7 @@ describe("CodeIndexConfigManager", () => {
 				}
 				return undefined
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexGeminiApiKey") return "test-gemini-key"
 				return undefined
 			})
@@ -1241,7 +1241,7 @@ describe("CodeIndexConfigManager", () => {
 		})
 
 		it("should return false when Gemini API key is missing", async () => {
-			mockContextProxy.getGlobalState.mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexConfig") {
 					return {
 						codebaseIndexEnabled: true,
@@ -1251,7 +1251,7 @@ describe("CodeIndexConfigManager", () => {
 				}
 				return undefined
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codebaseIndexGeminiApiKey") return ""
 				return undefined
 			})
@@ -1410,7 +1410,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderProvider: "openai",
 				codebaseIndexQdrantUrl: "http://localhost:6333",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1428,7 +1428,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderProvider: "openai",
 				codebaseIndexQdrantUrl: "http://localhost:6333",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1448,7 +1448,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderProvider: "openai",
 				codebaseIndexQdrantUrl: "http://localhost:6333",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1466,7 +1466,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderProvider: "openai",
 				codebaseIndexQdrantUrl: "http://localhost:6333",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1563,7 +1563,7 @@ describe("CodeIndexConfigManager", () => {
 			}
 
 			mockContextProxy.getGlobalState.mockReturnValue(mockConfigValues)
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				if (key === "codeIndexQdrantApiKey") return "qdrant-key"
 				return undefined
@@ -1600,7 +1600,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderProvider: "openai",
 				codebaseIndexQdrantUrl: "http://localhost:6333",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1617,7 +1617,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderProvider: "openai",
 				codebaseIndexQdrantUrl: "http://localhost:6333",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1638,7 +1638,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEmbedderProvider: "openai",
 				codebaseIndexQdrantUrl: "http://localhost:6333",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1677,7 +1677,7 @@ describe("CodeIndexConfigManager", () => {
 				codebaseIndexEnabled: true,
 				codebaseIndexEmbedderProvider: "openai",
 			})
-			mockContextProxy.getSecret.mockImplementation((key: string) => {
+			mockContextProxy.getSecret.mockImplementation(function (key: string) {
 				if (key === "codeIndexOpenAiKey") return "test-key"
 				return undefined
 			})
@@ -1702,7 +1702,7 @@ describe("CodeIndexConfigManager", () => {
 					codebaseIndexEmbedderModelDimension: 2048, // Custom dimension should be ignored
 					codebaseIndexQdrantUrl: "http://localhost:6333",
 				})
-				mockContextProxy.getSecret.mockImplementation((key: string) => {
+				mockContextProxy.getSecret.mockImplementation(function (key: string) {
 					if (key === "codeIndexOpenAiKey") return "test-key"
 					return undefined
 				})
@@ -1726,7 +1726,7 @@ describe("CodeIndexConfigManager", () => {
 					codebaseIndexEmbedderModelDimension: 2048, // Custom dimension should be used
 					codebaseIndexQdrantUrl: "http://localhost:6333",
 				})
-				mockContextProxy.getSecret.mockImplementation((key: string) => {
+				mockContextProxy.getSecret.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexOpenAiCompatibleApiKey") return "test-key"
 					return undefined
 				})
@@ -1750,7 +1750,7 @@ describe("CodeIndexConfigManager", () => {
 					// No custom dimension set
 					codebaseIndexQdrantUrl: "http://localhost:6333",
 				})
-				mockContextProxy.getSecret.mockImplementation((key: string) => {
+				mockContextProxy.getSecret.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexOpenAiCompatibleApiKey") return "test-key"
 					return undefined
 				})
@@ -1774,7 +1774,7 @@ describe("CodeIndexConfigManager", () => {
 					// No modelId specified
 					codebaseIndexQdrantUrl: "http://localhost:6333",
 				})
-				mockContextProxy.getSecret.mockImplementation((key: string) => {
+				mockContextProxy.getSecret.mockImplementation(function (key: string) {
 					if (key === "codeIndexOpenAiKey") return "test-key"
 					return undefined
 				})
@@ -1799,7 +1799,7 @@ describe("CodeIndexConfigManager", () => {
 					codebaseIndexEmbedderModelDimension: 0, // Invalid dimension
 					codebaseIndexQdrantUrl: "http://localhost:6333",
 				})
-				mockContextProxy.getSecret.mockImplementation((key: string) => {
+				mockContextProxy.getSecret.mockImplementation(function (key: string) {
 					if (key === "codebaseIndexOpenAiCompatibleApiKey") return "test-key"
 					return undefined
 				})
@@ -1814,7 +1814,7 @@ describe("CodeIndexConfigManager", () => {
 			describe("OpenRouter provider dimension handling", () => {
 				it("should correctly handle OpenRouter mistral model dimensions across restarts", async () => {
 					// Mock getModelDimension to return correct dimensions for OpenRouter models
-					mockedGetModelDimension.mockImplementation((provider, modelId) => {
+					mockedGetModelDimension.mockImplementation(function (provider, modelId) {
 						if (provider === "openrouter") {
 							if (modelId === "mistralai/codestral-embed-2505") return 1536
 							if (modelId === "mistralai/mistral-embed-2312") return 1024
@@ -1830,7 +1830,7 @@ describe("CodeIndexConfigManager", () => {
 						codebaseIndexEmbedderModelId: "mistralai/codestral-embed-2505",
 						codebaseIndexQdrantUrl: "http://localhost:6333",
 					})
-					mockContextProxy.getSecret.mockImplementation((key: string) => {
+					mockContextProxy.getSecret.mockImplementation(function (key: string) {
 						if (key === "codebaseIndexOpenRouterApiKey") return "test-openrouter-key"
 						if (key === "codeIndexQdrantApiKey") return "test-qdrant-key"
 						return undefined
@@ -1854,7 +1854,7 @@ describe("CodeIndexConfigManager", () => {
 
 				it("should not require restart for OpenRouter when same model dimensions are used", async () => {
 					// Mock both models to have same dimension
-					mockedGetModelDimension.mockImplementation((provider, modelId) => {
+					mockedGetModelDimension.mockImplementation(function (provider, modelId) {
 						if (provider === "openrouter") {
 							if (modelId === "mistralai/codestral-embed-2505") return 1536
 							if (modelId === "openai/text-embedding-3-small") return 1536
@@ -1869,7 +1869,7 @@ describe("CodeIndexConfigManager", () => {
 						codebaseIndexEmbedderModelId: "mistralai/codestral-embed-2505",
 						codebaseIndexQdrantUrl: "http://localhost:6333",
 					})
-					mockContextProxy.getSecret.mockImplementation((key: string) => {
+					mockContextProxy.getSecret.mockImplementation(function (key: string) {
 						if (key === "codebaseIndexOpenRouterApiKey") return "test-key"
 						if (key === "codeIndexQdrantApiKey") return "test-key"
 						return undefined
@@ -1892,7 +1892,7 @@ describe("CodeIndexConfigManager", () => {
 
 				it("should require restart for OpenRouter when model dimensions change", async () => {
 					// Mock models with different dimensions
-					mockedGetModelDimension.mockImplementation((provider, modelId) => {
+					mockedGetModelDimension.mockImplementation(function (provider, modelId) {
 						if (provider === "openrouter") {
 							if (modelId === "mistralai/codestral-embed-2505") return 1536
 							if (modelId === "mistralai/mistral-embed-2312") return 1024
@@ -1907,7 +1907,7 @@ describe("CodeIndexConfigManager", () => {
 						codebaseIndexEmbedderModelId: "mistralai/codestral-embed-2505",
 						codebaseIndexQdrantUrl: "http://localhost:6333",
 					})
-					mockContextProxy.getSecret.mockImplementation((key: string) => {
+					mockContextProxy.getSecret.mockImplementation(function (key: string) {
 						if (key === "codebaseIndexOpenRouterApiKey") return "test-key"
 						if (key === "codeIndexQdrantApiKey") return "test-key"
 						return undefined

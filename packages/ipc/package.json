@@ -17,7 +17,6 @@
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",
 		"@types/node": "20.x",
-		"@types/node-ipc": "^9.2.3",
-		"vitest": "^3.2.3"
+		"@types/node-ipc": "^9.2.3"
 	}
 }

@@ -48,7 +48,7 @@ const ensureDirectoryExists = (path: string) => {
 }
 
 const mockFs = {
-	readFile: vi.fn().mockImplementation(async (filePath: string, _encoding?: string) => {
+	readFile: vi.fn(async function (filePath: string, _encoding?: string) {
 		// Return stored content if it exists
 		if (mockFiles.has(filePath)) {
 			return mockFiles.get(filePath)
@@ -85,7 +85,7 @@ const mockFs = {
 		throw error
 	}),
 
-	writeFile: vi.fn().mockImplementation(async (path: string, content: string) => {
+	writeFile: vi.fn(async function (path: string, content: string) {
 		// Ensure parent directory exists
 		const parentDir = path.split("/").slice(0, -1).join("/")
 		ensureDirectoryExists(parentDir)
@@ -93,7 +93,7 @@ const mockFs = {
 		return Promise.resolve()
 	}),
 
-	mkdir: vi.fn().mockImplementation(async (path: string, options?: { recursive?: boolean }) => {
+	mkdir: vi.fn(async function (path: string, options?: { recursive?: boolean }) {
 		// Always handle recursive creation
 		const parts = path.split("/")
 		let currentPath = ""
@@ -125,7 +125,7 @@ const mockFs = {
 		return Promise.resolve()
 	}),
 
-	access: vi.fn().mockImplementation(async (path: string) => {
+	access: vi.fn(async function (path: string) {
 		// Check if the path exists in either files or directories
 		if (mockFiles.has(path) || mockDirectories.has(path) || path.startsWith("/test")) {
 			return Promise.resolve()
@@ -135,7 +135,7 @@ const mockFs = {
 		throw error
 	}),
 
-	rename: vi.fn().mockImplementation(async (oldPath: string, newPath: string) => {
+	rename: vi.fn(async function (oldPath: string, newPath: string) {
 		// Check if the old file exists
 		if (mockFiles.has(oldPath)) {
 			// Copy content to new path

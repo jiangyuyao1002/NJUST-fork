@@ -69,7 +69,9 @@ describe("QdrantVectorStore", () => {
 		vitest.clearAllMocks()
 
 		// Mock QdrantClient constructor
-		;(QdrantClient as any).mockImplementation(() => mockQdrantClientInstance)
+		;(QdrantClient as any).mockImplementation(function () {
+			return mockQdrantClientInstance
+		})
 
 		// Mock crypto.createHash
 		;(createHash as any).mockReturnValue(mockCreateHashInstance)
@@ -724,8 +726,6 @@ describe("QdrantVectorStore", () => {
 					indexError.message,
 				)
 			}
-
-			
 		})
 
 		it("should throw vectorDimensionMismatch error when deleteCollection fails during recreation", async () => {
@@ -762,8 +762,6 @@ describe("QdrantVectorStore", () => {
 			// Should log both the warning and the critical error
 			expect(logger.warn).toHaveBeenCalledTimes(1)
 			expect(logger.error).toHaveBeenCalledTimes(2) // One for the critical error, one for the outer catch
-			
-			
 		})
 
 		it("should throw vectorDimensionMismatch error when createCollection fails during recreation", async () => {
@@ -808,8 +806,6 @@ describe("QdrantVectorStore", () => {
 			// Should log warning, critical error, and outer error
 			expect(logger.warn).toHaveBeenCalledTimes(1)
 			expect(logger.error).toHaveBeenCalledTimes(2)
-			
-			
 		})
 
 		it("should verify collection deletion before proceeding with recreation", async () => {
@@ -833,7 +829,6 @@ describe("QdrantVectorStore", () => {
 			mockQdrantClientInstance.deleteCollection.mockResolvedValue(true as any)
 			mockQdrantClientInstance.createCollection.mockResolvedValue(true as any)
 			mockQdrantClientInstance.createPayloadIndex.mockResolvedValue({} as any)
-			
 
 			const result = await vectorStore.initialize()
 
@@ -843,7 +838,6 @@ describe("QdrantVectorStore", () => {
 			expect(mockQdrantClientInstance.deleteCollection).toHaveBeenCalledTimes(1)
 			expect(mockQdrantClientInstance.createCollection).toHaveBeenCalledTimes(1)
 			expect(mockQdrantClientInstance.createPayloadIndex).toHaveBeenCalledTimes(9)
-			
 		})
 
 		it("should throw error if collection still exists after deletion attempt", async () => {
@@ -870,8 +864,6 @@ describe("QdrantVectorStore", () => {
 				} as any)
 
 			mockQdrantClientInstance.deleteCollection.mockResolvedValue(true as any)
-			
-			
 
 			let caughtError: any
 			try {
@@ -889,8 +881,6 @@ describe("QdrantVectorStore", () => {
 			expect(mockQdrantClientInstance.deleteCollection).toHaveBeenCalledTimes(1)
 			expect(mockQdrantClientInstance.createCollection).not.toHaveBeenCalled()
 			expect(mockQdrantClientInstance.createPayloadIndex).not.toHaveBeenCalled()
-			
-			
 		})
 
 		it("should handle dimension mismatch scenario from 2048 to 768 dimensions", async () => {
@@ -920,7 +910,6 @@ describe("QdrantVectorStore", () => {
 			mockQdrantClientInstance.deleteCollection.mockResolvedValue(true as any)
 			mockQdrantClientInstance.createCollection.mockResolvedValue(true as any)
 			mockQdrantClientInstance.createPayloadIndex.mockResolvedValue({} as any)
-			
 
 			const result = await newVectorStore.initialize()
 
@@ -940,7 +929,6 @@ describe("QdrantVectorStore", () => {
 				},
 			})
 			expect(mockQdrantClientInstance.createPayloadIndex).toHaveBeenCalledTimes(9)
-			
 		})
 
 		it("should provide detailed error context for different failure scenarios", async () => {
@@ -958,8 +946,6 @@ describe("QdrantVectorStore", () => {
 			// Test deletion failure with specific error message
 			const deleteError = new Error("Qdrant server unavailable")
 			mockQdrantClientInstance.deleteCollection.mockRejectedValue(deleteError)
-			
-			
 
 			let caughtError: any
 			try {
@@ -974,8 +960,6 @@ describe("QdrantVectorStore", () => {
 			expect(caughtError.message).toContain("Failed to delete existing collection with vector size")
 			expect(caughtError.message).toContain("Qdrant server unavailable")
 			expect(caughtError.cause).toBe(deleteError)
-			
-			
 		})
 	})
 
@@ -1009,7 +993,6 @@ describe("QdrantVectorStore", () => {
 	it("should return false and log warning for non-404 errors", async () => {
 		const genericError = new Error("Network error")
 		mockQdrantClientInstance.getCollection.mockRejectedValue(genericError)
-		
 
 		const result = await vectorStore.collectionExists()
 
@@ -1020,7 +1003,6 @@ describe("QdrantVectorStore", () => {
 			expect.stringContaining(`Warning during getCollectionInfo for "${expectedCollectionName}"`),
 			genericError.message,
 		)
-		
 	})
 	describe("deleteCollection", () => {
 		it("should delete collection when it exists", async () => {
@@ -1049,7 +1031,6 @@ describe("QdrantVectorStore", () => {
 			vitest.spyOn(vectorStore, "collectionExists").mockResolvedValue(true)
 			const deleteError = new Error("Deletion failed")
 			mockQdrantClientInstance.deleteCollection.mockRejectedValue(deleteError)
-			
 
 			await expect(vectorStore.deleteCollection()).rejects.toThrow(deleteError)
 
@@ -1060,7 +1041,6 @@ describe("QdrantVectorStore", () => {
 				`Failed to delete collection ${expectedCollectionName}:`,
 				deleteError,
 			)
-			
 		})
 	})
 
@@ -1233,13 +1213,11 @@ describe("QdrantVectorStore", () => {
 
 			const upsertError = new Error("Upsert failed")
 			mockQdrantClientInstance.upsert.mockRejectedValue(upsertError)
-			
 
 			await expect(vectorStore.upsertPoints(mockPoints)).rejects.toThrow(upsertError)
 
 			expect(mockQdrantClientInstance.upsert).toHaveBeenCalledTimes(1)
 			expect(logger.error).toHaveBeenCalledWith("QdrantVectorStore", "Failed to upsert points:", upsertError)
-			
 		})
 	})
 
@@ -1535,13 +1513,11 @@ describe("QdrantVectorStore", () => {
 			const queryVector = [0.1, 0.2, 0.3]
 			const queryError = new Error("Query failed")
 			mockQdrantClientInstance.query.mockRejectedValue(queryError)
-			
 
 			await expect(vectorStore.search(queryVector)).rejects.toThrow(queryError)
 
 			expect(mockQdrantClientInstance.query).toHaveBeenCalledTimes(1)
 			expect(logger.error).toHaveBeenCalledWith("QdrantVectorStore", "Failed to search points:", queryError)
-			
 		})
 
 		it("should use constants DEFAULT_MAX_SEARCH_RESULTS and DEFAULT_SEARCH_MIN_SCORE correctly", async () => {

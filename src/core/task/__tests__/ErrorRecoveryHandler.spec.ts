@@ -7,7 +7,7 @@ vi.mock("../../errors/apiErrorClassifier", () => ({
 }))
 
 vi.mock("../../errors/retryPersistence", () => ({
-	appendRetryEvent: vi.fn(async () => {}),
+	appendRetryEvent: vi.fn(async function () {}),
 }))
 
 vi.mock("../../context-management/reactiveCompact", () => ({
@@ -33,13 +33,17 @@ function createMockTask(overrides: Record<string, unknown> = {}) {
 		apiConversationHistory: [],
 		assistantMessageContent: [],
 		forceTaskState: vi.fn(),
-		handleContextWindowExceededError: vi.fn(async () => {}),
-		addToApiConversationHistory: vi.fn(async () => {}),
-		overwriteApiConversationHistory: vi.fn(async () => {}),
-		getTokenUsage: vi.fn(() => ({ contextTokens: 50000 })),
+		handleContextWindowExceededError: vi.fn(async function () {}),
+		addToApiConversationHistory: vi.fn(async function () {}),
+		overwriteApiConversationHistory: vi.fn(async function () {}),
+		getTokenUsage: vi.fn(function () {
+			return {
+				contextTokens: 50000,
+			}
+		}),
 		tokenUsageSnapshot: null,
 		tokenUsageSnapshotAt: 0,
-		say: vi.fn(async () => {}),
+		say: vi.fn(async function () {}),
 		api: { getModel: () => ({ id: "test-model", info: { contextWindow: 200000 } }) },
 		...overrides,
 	} as any
@@ -51,6 +55,7 @@ describe("ErrorRecoveryHandler", () => {
 	})
 
 	afterEach(() => {
+		vi.clearAllMocks()
 		vi.restoreAllMocks()
 	})
 
@@ -90,11 +95,7 @@ describe("ErrorRecoveryHandler", () => {
 	})
 
 	describe("handleApiError", () => {
-		async function handle(
-			errorKind: string,
-			retryAttempt = 0,
-			taskOverrides: Record<string, unknown> = {},
-		) {
+		async function handle(errorKind: string, retryAttempt = 0, taskOverrides: Record<string, unknown> = {}) {
 			const task = createMockTask(taskOverrides)
 			vi.mocked(classifyApiError).mockImplementation(() => errorKind as any)
 			const handler = new ErrorRecoveryHandler(task)

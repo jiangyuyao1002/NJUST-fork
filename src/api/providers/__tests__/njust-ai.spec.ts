@@ -13,50 +13,52 @@ const mockCreate = vitest.fn()
 vitest.mock("openai", () => {
 	return {
 		__esModule: true,
-		default: vitest.fn().mockImplementation(() => ({
-			chat: {
-				completions: {
-					create: mockCreate.mockImplementation(async (options) => {
-						if (!options.stream) {
-							return {
-								id: "test-completion",
-								choices: [
-									{
-										message: { role: "assistant", content: "Test response" },
-										finish_reason: "stop",
-										index: 0,
+		default: vitest.fn(function () {
+			return {
+				chat: {
+					completions: {
+						create: mockCreate.mockImplementation(async function (options) {
+							if (!options.stream) {
+								return {
+									id: "test-completion",
+									choices: [
+										{
+											message: { role: "assistant", content: "Test response" },
+											finish_reason: "stop",
+											index: 0,
+										},
+									],
+									usage: {
+										prompt_tokens: 10,
+										completion_tokens: 5,
+										total_tokens: 15,
 									},
-								],
-								usage: {
-									prompt_tokens: 10,
-									completion_tokens: 5,
-									total_tokens: 15,
+								}
+							}
+
+							return {
+								[Symbol.asyncIterator]: async function* () {
+									yield {
+										choices: [{ delta: { content: "Test response" }, index: 0 }],
+										usage: null,
+									}
+									yield {
+										choices: [{ delta: {}, index: 0 }],
+										usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+									}
 								},
 							}
-						}
-
-						return {
-							[Symbol.asyncIterator]: async function* () {
-								yield {
-									choices: [{ delta: { content: "Test response" }, index: 0 }],
-									usage: null,
-								}
-								yield {
-									choices: [{ delta: {}, index: 0 }],
-									usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-								}
-							},
-						}
-					}),
+						}),
+					},
 				},
-			},
-		})),
+			}
+		}),
 	}
 })
 
 // Mock i18n
 vitest.mock("../../../i18n", () => ({
-	t: vitest.fn((key: string) => {
+	t: vitest.fn(function (key: string) {
 		if (key === "common:errors.njust_ai.authenticationRequired") {
 			return "Authentication required for NJUST_AI Cloud"
 		}
@@ -68,7 +70,7 @@ vitest.mock("../../../i18n", () => ({
 vitest.mock("../../providers/fetchers/modelCache", () => ({
 	getModels: vitest.fn(),
 	flushModels: vitest.fn(),
-	getModelsFromCache: vitest.fn((provider: string) => {
+	getModelsFromCache: vitest.fn(function (provider: string) {
 		if (provider === "njust-ai") {
 			return {
 				"xai/grok-code-fast-1": {

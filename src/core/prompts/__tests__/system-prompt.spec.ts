@@ -135,11 +135,13 @@ vi.mock("vscode", () => ({
 	window: {
 		activeTextEditor: undefined,
 	},
-	EventEmitter: vi.fn().mockImplementation(() => ({
-		event: vi.fn(),
-		fire: vi.fn(),
-		dispose: vi.fn(),
-	})),
+	EventEmitter: vi.fn(function () {
+		return {
+			event: vi.fn(),
+			fire: vi.fn(),
+			dispose: vi.fn(),
+		}
+	}),
 }))
 
 vi.mock("../../../utils/shell", () => ({
@@ -301,11 +303,13 @@ describe("SYSTEM_PROMPT", () => {
 		vscode.window = {
 			activeTextEditor: undefined,
 		}
-		vscode.EventEmitter = vi.fn().mockImplementation(() => ({
-			event: vi.fn(),
-			fire: vi.fn(),
-			dispose: vi.fn(),
-		}))
+		vscode.EventEmitter = vi.fn(function () {
+			return {
+				event: vi.fn(),
+				fire: vi.fn(),
+				dispose: vi.fn(),
+			}
+		})
 
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
@@ -347,11 +351,13 @@ describe("SYSTEM_PROMPT", () => {
 		vscode.window = {
 			activeTextEditor: undefined,
 		}
-		vscode.EventEmitter = vi.fn().mockImplementation(() => ({
-			event: vi.fn(),
-			fire: vi.fn(),
-			dispose: vi.fn(),
-		}))
+		vscode.EventEmitter = vi.fn(function () {
+			return {
+				event: vi.fn(),
+				fire: vi.fn(),
+				dispose: vi.fn(),
+			}
+		})
 	})
 
 	it("should include custom mode role definition at top and instructions at bottom", async () => {

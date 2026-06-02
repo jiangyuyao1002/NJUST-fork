@@ -6,10 +6,7 @@ import { TaskStackManager } from "../core/webview/TaskStackManager"
 import type { Task } from "../core/task/Task"
 
 describe("TaskStackManager.pop() delegation awareness", () => {
-	function createMockHost(opts?: {
-		getTaskWithId?: any
-		updateTaskHistory?: any
-	}) {
+	function createMockHost(opts?: { getTaskWithId?: any; updateTaskHistory?: any }) {
 		return {
 			outputChannel: { appendLine: vi.fn() },
 			emit: vi.fn(),
@@ -267,7 +264,7 @@ describe("TaskStackManager.pop() delegation awareness", () => {
 			childIds: ["task-B"],
 		}
 
-		const getTaskWithId = vi.fn().mockImplementation(async (id: string) => {
+		const getTaskWithId = vi.fn(async function (id: string) {
 			if (id === "task-A") {
 				return { historyItem: { ...grandparentHistory } }
 			}

@@ -4,20 +4,24 @@ import type { ApiHandlerOptions } from "../../../shared/api"
 
 vi.mock("vscode", () => ({
 	workspace: {
-		createFileSystemWatcher: vi.fn(() => ({
-			onDidCreate: vi.fn(),
-			onDidChange: vi.fn(),
-			onDidDelete: vi.fn(),
-			dispose: vi.fn(),
-		})),
+		createFileSystemWatcher: vi.fn(function () {
+			return {
+				onDidCreate: vi.fn(),
+				onDidChange: vi.fn(),
+				onDidDelete: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	RelativePattern: vi.fn(),
 }))
 
 vi.mock("openai", () => ({
-	default: vi.fn(() => ({
-		chat: { completions: { create: vi.fn() } },
-	})),
+	default: vi.fn(function () {
+		return {
+			chat: { completions: { create: vi.fn() } },
+		}
+	}),
 }))
 
 vi.mock("../fetchers/modelCache", () => ({
@@ -85,19 +89,13 @@ describe("UnboundHandler", () => {
 			cacheWritesPrice: 0.1,
 			cacheReadsPrice: 0.05,
 		}
-		const metrics = (handler as any).processUsageMetrics(
-			{ prompt_tokens: 1000, completion_tokens: 500 },
-			modelInfo,
-		)
+		const metrics = (handler as any).processUsageMetrics({ prompt_tokens: 1000, completion_tokens: 500 }, modelInfo)
 		expect(metrics.totalCost).toBeGreaterThan(0)
 	})
 
 	it("processUsageMetrics returns zero cost without modelInfo", () => {
 		const handler = new UnboundHandler(makeOptions())
-		const metrics = (handler as any).processUsageMetrics(
-			{ prompt_tokens: 100, completion_tokens: 50 },
-			undefined,
-		)
+		const metrics = (handler as any).processUsageMetrics({ prompt_tokens: 100, completion_tokens: 50 }, undefined)
 		expect(metrics.totalCost).toBe(0)
 	})
 

@@ -74,7 +74,11 @@ vi.mock("vscode", () => {
 			tabGroups: {
 				all: [mockTabGroup],
 				close: vi.fn(),
-				onDidChangeTabs: vi.fn(() => ({ dispose: vi.fn() })),
+				onDidChangeTabs: vi.fn(function () {
+					return {
+						dispose: vi.fn(),
+					}
+				}),
 			},
 			showErrorMessage: vi.fn(),
 		},
@@ -86,17 +90,23 @@ vi.mock("vscode", () => {
 					index: 0,
 				},
 			],
-			createFileSystemWatcher: vi.fn(() => ({
-				onDidCreate: vi.fn(() => mockDisposable),
-				onDidDelete: vi.fn(() => mockDisposable),
-				onDidChange: vi.fn(() => mockDisposable),
-				dispose: vi.fn(),
-			})),
+			createFileSystemWatcher: vi.fn(function () {
+				return {
+					onDidCreate: vi.fn(() => mockDisposable),
+					onDidDelete: vi.fn(() => mockDisposable),
+					onDidChange: vi.fn(() => mockDisposable),
+					dispose: vi.fn(),
+				}
+			}),
 			fs: {
 				stat: vi.fn().mockResolvedValue({ type: 1 }),
 			},
 			onDidSaveTextDocument: vi.fn(() => mockDisposable),
-			getConfiguration: vi.fn(() => ({ get: (key: string, defaultValue: any) => defaultValue })),
+			getConfiguration: vi.fn(function () {
+				return {
+					get: (key: string, defaultValue: any) => defaultValue,
+				}
+			}),
 		},
 		env: {
 			uriScheme: "vscode",
@@ -111,7 +121,7 @@ vi.mock("vscode", () => {
 })
 
 vi.mock("../../mentions", () => ({
-	parseMentions: vi.fn().mockImplementation((text) => {
+	parseMentions: vi.fn(function (text) {
 		return Promise.resolve({ text: `processed: ${text}`, mode: undefined, contentBlocks: [] })
 	}),
 	openMention: vi.fn(),
@@ -230,7 +240,7 @@ describe("Grace Retry Error Handling", () => {
 			task.consecutiveNoAssistantMessagesCount = 5
 
 			// Mock dispose to prevent actual cleanup
-			vi.spyOn(task, "dispose").mockImplementation(() => {})
+			vi.spyOn(task, "dispose").mockImplementation(function () {})
 
 			await task.abortTask()
 
@@ -250,7 +260,7 @@ describe("Grace Retry Error Handling", () => {
 			task.consecutiveNoToolUseCount = 4
 
 			// Mock dispose to prevent actual cleanup
-			vi.spyOn(task, "dispose").mockImplementation(() => {})
+			vi.spyOn(task, "dispose").mockImplementation(function () {})
 
 			await task.abortTask()
 

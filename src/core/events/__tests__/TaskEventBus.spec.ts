@@ -4,8 +4,12 @@ import { describe, it, expect, vi } from "vitest"
 vi.mock("vscode", () => ({
 	Disposable: class {
 		private fn: () => void
-		constructor(fn: () => void) { this.fn = fn }
-		dispose() { this.fn() }
+		constructor(fn: () => void) {
+			this.fn = fn
+		}
+		dispose() {
+			this.fn()
+		}
 	},
 }))
 
@@ -64,9 +68,11 @@ describe("TaskEventBus", () => {
 	})
 
 	it("isolates listener errors — one failing listener does not block others", () => {
-		const bad = vi.fn(() => { throw new Error("boom") })
+		const bad = vi.fn(function () {
+			throw new Error("boom")
+		})
 		const good = vi.fn()
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+		const consoleSpy = vi.spyOn(console, "error").mockImplementation(function () {})
 		bus.on("task:tool-completed", bad)
 		bus.on("task:tool-completed", good)
 		bus.emit("task:tool-completed", { taskId: "t1" })
@@ -108,9 +114,15 @@ describe("TaskEventBus", () => {
 
 	it("all 9 event types deliver correctly", () => {
 		const events: TaskEventName[] = [
-			"task:started", "task:completed", "task:failed", "task:aborted",
-			"task:tool-executing", "task:tool-completed", "task:llm-response",
-			"task:tokens-updated", "task:llm-retry",
+			"task:started",
+			"task:completed",
+			"task:failed",
+			"task:aborted",
+			"task:tool-executing",
+			"task:tool-completed",
+			"task:llm-response",
+			"task:tokens-updated",
+			"task:llm-retry",
 		]
 		for (const evt of events) {
 			const listener = vi.fn()
@@ -135,7 +147,8 @@ describe("taskEventBus (global singleton)", () => {
 	})
 })
 
-vi.mock("../../../utils/debugLog", () => ({	debugLog: (...args: unknown[]) => console.debug(...args),
+vi.mock("../../../utils/debugLog", () => ({
+	debugLog: (...args: unknown[]) => console.debug(...args),
 }))
 
 describe("enableTaskEventBusDebugLogging", () => {
@@ -143,7 +156,7 @@ describe("enableTaskEventBusDebugLogging", () => {
 		// Cleanup previous state
 		taskEventBus.setMiddleware(undefined)
 
-		const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {})
+		const debugSpy = vi.spyOn(console, "debug").mockImplementation(function () {})
 		enableTaskEventBusDebugLogging()
 		taskEventBus.emit("task:started", { taskId: "debug-test" })
 		expect(debugSpy).toHaveBeenCalledWith("[TaskEventBus]", "task:started", { taskId: "debug-test" })

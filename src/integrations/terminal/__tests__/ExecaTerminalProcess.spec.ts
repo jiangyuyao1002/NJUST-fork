@@ -6,7 +6,7 @@ const mockPid = 12345
 
 vitest.mock("execa", () => {
 	const mockKill = vitest.fn()
-	const execa = vitest.fn((_options: any) => {
+	const execa = vitest.fn(function (_options: any) {
 		return (_template: TemplateStringsArray, ..._args: any[]) => ({
 			pid: mockPid,
 			iterable: (_opts: any) =>
@@ -140,9 +140,9 @@ describe("ExecaTerminalProcess", () => {
 
 		it("does not rewrite when shell is bash (Git Bash / WSL path)", () => {
 			Object.defineProperty(process, "platform", { value: "win32" })
-			expect(normalizeDotSlashCommandForWindowsShell("./bubble_sort", "C:\\Program Files\\Git\\bin\\bash.exe")).toBe(
-				"./bubble_sort",
-			)
+			expect(
+				normalizeDotSlashCommandForWindowsShell("./bubble_sort", "C:\\Program Files\\Git\\bin\\bash.exe"),
+			).toBe("./bubble_sort")
 			expect(normalizeDotSlashCommandForWindowsShell("./a", "C:\\Windows\\System32\\wsl.exe")).toBe("./a")
 		})
 	})

@@ -49,7 +49,11 @@ describe("ToolHookManager", () => {
 
 	it("short-circuits pre-compact hooks when a hook denies compaction", async () => {
 		const mgr = new ToolHookManager()
-		const after = vi.fn(async () => ({ allow: true }))
+		const after = vi.fn(async function () {
+			return {
+				allow: true,
+			}
+		})
 
 		mgr.registerPreCompactHook(async () => ({ allow: false, reason: "cache hot" }))
 		mgr.registerPreCompactHook(after)

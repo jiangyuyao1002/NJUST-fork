@@ -15,13 +15,15 @@ const mockCreate = vi.fn()
 
 // Mock OpenAI module
 vi.mock("openai", () => ({
-	default: vi.fn(() => ({
-		chat: {
-			completions: {
-				create: mockCreate,
+	default: vi.fn(function () {
+		return {
+			chat: {
+				completions: {
+					create: mockCreate,
+				},
 			},
-		},
-	})),
+		}
+	}),
 }))
 
 describe("FireworksHandler", () => {
@@ -30,32 +32,34 @@ describe("FireworksHandler", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		// Set up default mock implementation
-		mockCreate.mockImplementation(async () => ({
-			[Symbol.asyncIterator]: async function* () {
-				yield {
-					choices: [
-						{
-							delta: { content: "Test response" },
-							index: 0,
+		mockCreate.mockImplementation(async function () {
+			return {
+				[Symbol.asyncIterator]: async function* () {
+					yield {
+						choices: [
+							{
+								delta: { content: "Test response" },
+								index: 0,
+							},
+						],
+						usage: null,
+					}
+					yield {
+						choices: [
+							{
+								delta: {},
+								index: 0,
+							},
+						],
+						usage: {
+							prompt_tokens: 10,
+							completion_tokens: 5,
+							total_tokens: 15,
 						},
-					],
-					usage: null,
-				}
-				yield {
-					choices: [
-						{
-							delta: {},
-							index: 0,
-						},
-					],
-					usage: {
-						prompt_tokens: 10,
-						completion_tokens: 5,
-						total_tokens: 15,
-					},
-				}
-			},
-		}))
+					}
+				},
+			}
+		})
 		handler = new FireworksHandler({ fireworksApiKey: "test-key" })
 	})
 

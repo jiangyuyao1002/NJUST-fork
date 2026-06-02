@@ -37,7 +37,12 @@ vi.mock("vscode", () => {
 			getConfiguration: vi.fn().mockReturnValue({ get: vi.fn().mockReturnValue("") }),
 			createFileSystemWatcher: vi
 				.fn()
-				.mockReturnValue({ onDidCreate: vi.fn(), onDidChange: vi.fn(), onDidDelete: vi.fn(), dispose: vi.fn() }),
+				.mockReturnValue({
+					onDidCreate: vi.fn(),
+					onDidChange: vi.fn(),
+					onDidDelete: vi.fn(),
+					dispose: vi.fn(),
+				}),
 			onDidChangeWorkspaceFolders: vi.fn(),
 			onDidChangeConfiguration: vi.fn(),
 			onDidSaveTextDocument: vi.fn(),
@@ -86,10 +91,25 @@ vi.mock("vscode", () => {
 		ExtensionMode: { Production: 1 },
 		Uri: {
 			parse: vi.fn(),
-			file: vi.fn(() => ({ fsPath: "/test", with: vi.fn() })),
-			joinPath: vi.fn(() => ({ fsPath: "/test" })),
+			file: vi.fn(function () {
+				return {
+					fsPath: "/test",
+					with: vi.fn(),
+				}
+			}),
+			joinPath: vi.fn(function () {
+				return {
+					fsPath: "/test",
+				}
+			}),
 		},
-		EventEmitter: vi.fn().mockImplementation(() => ({ event: vi.fn(), fire: vi.fn(), dispose: vi.fn() })),
+		EventEmitter: vi.fn(function () {
+			return {
+				event: vi.fn(),
+				fire: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
 	}
 })
 
@@ -109,12 +129,14 @@ vi.mock("vscode-languageclient/node", () => ({
 const { mockAsyncFn, mockConstructor } = vi.hoisted(() => {
 	const mockAsyncFn = () => vi.fn().mockResolvedValue(undefined)
 	const mockConstructor = () =>
-		vi.fn().mockImplementation(() => ({
-			initialize: vi.fn().mockResolvedValue(undefined),
-			dispose: vi.fn(),
-			onCangjieActivated: vi.fn(),
-			start: vi.fn().mockResolvedValue(undefined),
-		}))
+		vi.fn(function () {
+			return {
+				initialize: vi.fn().mockResolvedValue(undefined),
+				dispose: vi.fn(),
+				onCangjieActivated: vi.fn(),
+				start: vi.fn().mockResolvedValue(undefined),
+			}
+		})
 	return { mockAsyncFn, mockConstructor }
 })
 vi.mock("../services/cangjie-lsp/CangjieLspClient", () => ({ CangjieLspClient: mockConstructor() }))
@@ -123,25 +145,54 @@ vi.mock("../services/cangjie-lsp/CjfmtFormatter", () => ({ CjfmtFormatter: mockC
 vi.mock("../services/cangjie-lsp/CjlintDiagnostics", () => ({ CjlintDiagnostics: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/CjpmTaskProvider", () => ({ CjpmTaskProvider: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/cangjieCommands", () => ({ registerCangjieCommands: vi.fn() }))
-vi.mock("../services/cangjie-lsp/cangjieGeneratedTestCleanup", () => ({ cleanupOrphanedTestFiles: mockAsyncFn(), initTestCleanup: mockAsyncFn() }))
+vi.mock("../services/cangjie-lsp/cangjieGeneratedTestCleanup", () => ({
+	cleanupOrphanedTestFiles: mockAsyncFn(),
+	initTestCleanup: mockAsyncFn(),
+}))
 vi.mock("../services/cangjie-lsp/CangjieCodeActionProvider", () => ({ CangjieCodeActionProvider: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/CangjieSdkSetup", () => ({ checkAndPromptSdkSetup: mockAsyncFn() }))
-vi.mock("../services/cangjie-lsp/cangjieToolUtils", () => ({ probeCangjieToolchain: mockAsyncFn(), invalidateCangjieToolEnvCache: vi.fn() }))
-vi.mock("../services/cangjie-lsp/CangjieDocumentSymbolProvider", () => ({ CangjieDocumentSymbolProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieFoldingRangeProvider", () => ({ CangjieFoldingRangeProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/cangjieToolUtils", () => ({
+	probeCangjieToolchain: mockAsyncFn(),
+	invalidateCangjieToolEnvCache: vi.fn(),
+}))
+vi.mock("../services/cangjie-lsp/CangjieDocumentSymbolProvider", () => ({
+	CangjieDocumentSymbolProvider: mockConstructor(),
+}))
+vi.mock("../services/cangjie-lsp/CangjieFoldingRangeProvider", () => ({
+	CangjieFoldingRangeProvider: mockConstructor(),
+}))
 vi.mock("../services/cangjie-lsp/CangjieHoverProvider", () => ({ CangjieHoverProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieTestCodeLensProvider", () => ({ CangjieTestCodeLensProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieDebugAdapterFactory", () => ({ CangjieDebugAdapterFactory: mockConstructor(), CangjieDebugConfigurationProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieTestCodeLensProvider", () => ({
+	CangjieTestCodeLensProvider: mockConstructor(),
+}))
+vi.mock("../services/cangjie-lsp/CangjieDebugAdapterFactory", () => ({
+	CangjieDebugAdapterFactory: mockConstructor(),
+	CangjieDebugConfigurationProvider: mockConstructor(),
+}))
 vi.mock("../services/cangjie-lsp/CangjieSymbolIndex", () => ({ CangjieSymbolIndex: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/CangjieDefinitionProvider", () => ({ CangjieDefinitionProvider: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/CangjieReferenceProvider", () => ({ CangjieReferenceProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieEnhancedRenameProvider", () => ({ CangjieEnhancedRenameProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieMacroProvider", () => ({ CangjieMacroCodeLensProvider: mockConstructor(), CangjieMacroHoverProvider: mockConstructor(), registerMacroCommands: vi.fn() }))
-vi.mock("../services/cangjie-lsp/CangjieSemanticTokensProvider", () => ({ CangjieSemanticTokensProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieEnhancedRenameProvider", () => ({
+	CangjieEnhancedRenameProvider: mockConstructor(),
+}))
+vi.mock("../services/cangjie-lsp/CangjieMacroProvider", () => ({
+	CangjieMacroCodeLensProvider: mockConstructor(),
+	CangjieMacroHoverProvider: mockConstructor(),
+	registerMacroCommands: vi.fn(),
+}))
+vi.mock("../services/cangjie-lsp/CangjieSemanticTokensProvider", () => ({
+	CangjieSemanticTokensProvider: mockConstructor(),
+}))
 vi.mock("../services/cangjie-lsp/CangjieInlayHintsProvider", () => ({ CangjieInlayHintsProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieCallHierarchyProvider", () => ({ CangjieCallHierarchyProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieTypeHierarchyProvider", () => ({ CangjieTypeHierarchyProvider: mockConstructor() }))
-vi.mock("../services/cangjie-lsp/CangjieWorkspaceSymbolProvider", () => ({ CangjieWorkspaceSymbolProvider: mockConstructor() }))
+vi.mock("../services/cangjie-lsp/CangjieCallHierarchyProvider", () => ({
+	CangjieCallHierarchyProvider: mockConstructor(),
+}))
+vi.mock("../services/cangjie-lsp/CangjieTypeHierarchyProvider", () => ({
+	CangjieTypeHierarchyProvider: mockConstructor(),
+}))
+vi.mock("../services/cangjie-lsp/CangjieWorkspaceSymbolProvider", () => ({
+	CangjieWorkspaceSymbolProvider: mockConstructor(),
+}))
 vi.mock("../services/cangjie-lsp/CangjieCompileGuard", () => ({ CangjieCompileGuard: mockConstructor() }))
 vi.mock("../services/cangjie-lsp/cangjieRulesHotReload", () => ({ registerCangjieRulesHotReload: vi.fn() }))
 vi.mock("../services/cangjie-lsp/cangjieDiagnosticModeSwitch", () => ({ cangjieDiagnosticModeSwitch: vi.fn() }))
@@ -149,15 +200,17 @@ vi.mock("../services/cangjie-lsp/CangjieLintConfig", () => ({ CangjieLintConfig:
 vi.mock("../services/cangjie-lsp/CangjieMetricsCollector", () => ({ CangjieMetricsCollector: mockConstructor() }))
 vi.mock("../services/cloud-agent/deviceToken", () => ({ setDeviceToken: vi.fn() }))
 vi.mock("../services/cloud-agent/ProfileStorageService", () => ({
-	ProfileStorageService: vi.fn().mockImplementation(() => ({
-		getProfiles: vi.fn(() => []),
-		getProfile: vi.fn(() => undefined),
-		getActiveProfile: vi.fn(() => undefined),
-		saveProfile: vi.fn().mockResolvedValue(undefined),
-		deleteProfile: vi.fn().mockResolvedValue(undefined),
-		setActiveProfileId: vi.fn().mockResolvedValue(undefined),
-		migrateFromLegacyConfig: vi.fn().mockResolvedValue(null),
-	})),
+	ProfileStorageService: vi.fn(function () {
+		return {
+			getProfiles: vi.fn(() => []),
+			getProfile: vi.fn(() => undefined),
+			getActiveProfile: vi.fn(() => undefined),
+			saveProfile: vi.fn().mockResolvedValue(undefined),
+			deleteProfile: vi.fn().mockResolvedValue(undefined),
+			setActiveProfileId: vi.fn().mockResolvedValue(undefined),
+			migrateFromLegacyConfig: vi.fn().mockResolvedValue(null),
+		}
+	}),
 	setProfileStorageService: vi.fn(),
 	getProfileStorageService: vi.fn(),
 }))
@@ -255,7 +308,9 @@ vi.mock("../core/config/autoImportSettings", () => ({
 }))
 
 vi.mock("../extension/api", () => ({
-	API: vi.fn().mockImplementation(() => ({})),
+	API: vi.fn(function () {
+		return {}
+	}),
 }))
 
 vi.mock("../activate", () => ({
@@ -263,9 +318,11 @@ vi.mock("../activate", () => ({
 	registerCommands: vi.fn(),
 	registerCodeActions: vi.fn(),
 	registerTerminalActions: vi.fn(),
-	CodeActionProvider: vi.fn().mockImplementation(() => ({
-		providedCodeActionKinds: [],
-	})),
+	CodeActionProvider: vi.fn(function () {
+		return {
+			providedCodeActionKinds: [],
+		}
+	}),
 }))
 
 vi.mock("../i18n", () => ({
@@ -289,7 +346,9 @@ vi.mock("../core/webview/ClineProvider", async () => {
 	}
 	return {
 		ClineProvider: Object.assign(
-			vi.fn().mockImplementation(() => mockInstance),
+			vi.fn(function () {
+				return mockInstance
+			}),
 			{
 				// Static method used by extension.ts
 				getVisibleInstance: vi.fn().mockReturnValue(mockInstance),

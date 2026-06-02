@@ -147,12 +147,9 @@ describe("generateImageTool", () => {
 				imageData: "data:image/png;base64,fakebase64data",
 			})
 
-			vi.mocked(OpenRouterHandler).mockImplementation(
-				() =>
-					({
-						generateImage: mockGenerateImage,
-					}) as any,
-			)
+			vi.mocked(OpenRouterHandler).mockImplementation(function () {
+				return { generateImage: mockGenerateImage } as any
+			})
 
 			await generateImageTool.handle(mockCline as Task, completeBlock as ToolUse<"generate_image">, {
 				askApproval: mockAskApproval,
@@ -191,12 +188,9 @@ describe("generateImageTool", () => {
 				imageData: "data:image/png;base64,fakebase64data",
 			})
 
-			vi.mocked(OpenRouterHandler).mockImplementation(
-				() =>
-					({
-						generateImage: mockGenerateImage,
-					}) as any,
-			)
+			vi.mocked(OpenRouterHandler).mockImplementation(function () {
+				return { generateImage: mockGenerateImage } as any
+			})
 
 			await generateImageTool.handle(mockCline as Task, completeBlock as ToolUse<"generate_image">, {
 				askApproval: mockAskApproval,
@@ -314,7 +308,10 @@ describe("generateImageTool", () => {
 			})
 
 			expect(mockCline.say).toHaveBeenCalledWith("error", expect.stringContaining("Unsupported image format"))
-			expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("Unsupported image format"), undefined)
+			expect(mockPushToolResult).toHaveBeenCalledWith(
+				expect.stringContaining("Unsupported image format"),
+				undefined,
+			)
 		})
 	})
 })

@@ -5,7 +5,18 @@ vi.mock("vscode", () => ({
 	window: { showErrorMessage: vi.fn(), showWarningMessage: vi.fn(), showInformationMessage: vi.fn() },
 	workspace: { workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }] },
 	env: { openExternal: vi.fn(), clipboard: { writeText: vi.fn() } },
-	Uri: { file: vi.fn().mockImplementation((p: string) => ({ fsPath: p })), parse: vi.fn().mockImplementation((u: string) => ({ scheme: u.split(":")[0] })) },
+	Uri: {
+		file: vi.fn(function (p: string) {
+			return {
+				fsPath: p,
+			}
+		}),
+		parse: vi.fn(function (u: string) {
+			return {
+				scheme: u.split(":")[0],
+			}
+		}),
+	},
 }))
 
 vi.mock("../../../integrations/misc/open-file", () => ({ openFile: vi.fn() }))
@@ -44,15 +55,19 @@ vi.mock("../../../utils/export", () => ({
 }))
 vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
 vi.mock("../../ignore/RooIgnoreController", () => ({
-	RooIgnoreController: vi.fn().mockImplementation(() => ({
-		initialize: vi.fn(),
-		filterPaths: vi.fn().mockImplementation((paths: string[]) => paths),
-		dispose: vi.fn(),
-	})),
+	RooIgnoreController: vi.fn(function () {
+		return {
+			initialize: vi.fn(),
+			filterPaths: vi.fn().mockImplementation((paths: string[]) => paths),
+			dispose: vi.fn(),
+		}
+	}),
 }))
 vi.mock("../../../utils/storage", () => ({ getTaskDirectoryPath: vi.fn().mockResolvedValue("/mock/task/dir") }))
 vi.mock("../../handlers/shared-utils", () => ({
-	resolveIncomingImages: vi.fn().mockImplementation((_ctx: any, data: any) => Promise.resolve({ text: data.text, images: data.images })),
+	resolveIncomingImages: vi
+		.fn()
+		.mockImplementation((_ctx: any, data: any) => Promise.resolve({ text: data.text, images: data.images })),
 }))
 
 import { registerChatHandlers } from "../../handlers/chatMessageHandler"
@@ -72,13 +87,33 @@ describe("chatMessageHandler", () => {
 
 	it("registers all expected chat handlers", () => {
 		const registeredTypes = [
-			"customInstructions", "askResponse", "terminalOperation", "selectImages",
-			"selectContextFiles", "openImage", "saveImage", "openFile", "readFileContent",
-			"openMention", "openExternal", "ttsEnabled", "ttsSpeed", "playTts", "stopTts",
-			"enhancePrompt", "transcribeAudio", "getSystemPrompt", "copySystemPrompt",
-			"searchCommits", "searchFiles", "insertTextIntoTextarea",
-			"showMdmAuthRequiredNotification", "dismissUpsell", "getDismissedUpsells",
-			"openMarkdownPreview", "downloadErrorDiagnostics",
+			"customInstructions",
+			"askResponse",
+			"terminalOperation",
+			"selectImages",
+			"selectContextFiles",
+			"openImage",
+			"saveImage",
+			"openFile",
+			"readFileContent",
+			"openMention",
+			"openExternal",
+			"ttsEnabled",
+			"ttsSpeed",
+			"playTts",
+			"stopTts",
+			"enhancePrompt",
+			"transcribeAudio",
+			"getSystemPrompt",
+			"copySystemPrompt",
+			"searchCommits",
+			"searchFiles",
+			"insertTextIntoTextarea",
+			"showMdmAuthRequiredNotification",
+			"dismissUpsell",
+			"getDismissedUpsells",
+			"openMarkdownPreview",
+			"downloadErrorDiagnostics",
 		]
 		for (const type of registeredTypes) {
 			const handler = vi.fn()
@@ -127,9 +162,7 @@ describe("chatMessageHandler", () => {
 	})
 
 	it("openFile does nothing without text", async () => {
-		await expect(
-			router.route(context, { type: "openFile" } as WebviewMessage),
-		).resolves.not.toThrow()
+		await expect(router.route(context, { type: "openFile" } as WebviewMessage)).resolves.not.toThrow()
 	})
 
 	it("readFileContent posts error when no path provided", async () => {
@@ -168,9 +201,7 @@ describe("chatMessageHandler", () => {
 	})
 
 	it("stopTts does not throw", async () => {
-		await expect(
-			router.route(context, { type: "stopTts" } as WebviewMessage),
-		).resolves.not.toThrow()
+		await expect(router.route(context, { type: "stopTts" } as WebviewMessage)).resolves.not.toThrow()
 	})
 
 	it("insertTextIntoTextarea posts message to webview", async () => {

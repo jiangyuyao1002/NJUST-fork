@@ -40,7 +40,7 @@ describe("PlanEngine", () => {
 		createdPrompts = []
 		provider = {
 			handleModeSwitch: vi.fn().mockResolvedValue(undefined),
-			createTask: vi.fn(async (message: string) => {
+			createTask: vi.fn(async function (message: string) {
 				createdPrompts.push(message)
 				const task = makeTask()
 				createdTasks.push(task)

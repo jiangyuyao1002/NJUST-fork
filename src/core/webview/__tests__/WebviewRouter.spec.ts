@@ -11,7 +11,12 @@ describe("WebviewRouter", () => {
 		postMessage = vi.fn().mockResolvedValue(true)
 		host = {
 			isDisposed: vi.fn(() => false),
-			getWebview: vi.fn(() => ({ postMessage }) as any),
+			getWebview: vi.fn(
+				() =>
+					({
+						postMessage,
+					}) as any,
+			),
 			buildState: vi.fn().mockResolvedValue({
 				clineMessages: ["message"],
 				taskHistory: ["history"],

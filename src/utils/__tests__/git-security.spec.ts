@@ -21,11 +21,11 @@ type ExecFunction = (
 	callback: (error: any, result?: { stdout: string; stderr: string }) => void,
 ) => void
 
-type PromisifiedExec = (command: string, options?: { cwd?: string }) => Promise<{ stdout: string; stderr: string }>
+type _PromisifiedExec = (command: string, options?: { cwd?: string }) => Promise<{ stdout: string; stderr: string }>
 
 // Mock util.promisify to bridge mocks
 vi.mock("util", () => ({
-	promisify: vi.fn((fn: ExecFunction): PromisifiedExec => {
+	promisify: vi.fn(function (fn: ExecFunction) {
 		return async (command: string, options?: { cwd?: string }) => {
 			return new Promise((resolve, reject) => {
 				fn(command, options || {}, (error, result) => {
@@ -49,7 +49,7 @@ const mockExecFile = vi.mocked(execFile)
 
 // Helper: set up exec mock for checkGitInstalled + checkGitRepo
 function setupExecMocks() {
-	mockExec.mockImplementation((command: string, options: any, callback: any) => {
+	mockExec.mockImplementation(function (command: string, options: any, callback: any) {
 		if (command === "git --version") {
 			callback(null, { stdout: "git version 2.39.2", stderr: "" })
 			return {} as any
@@ -70,7 +70,7 @@ describe("searchCommits security", () => {
 		vi.clearAllMocks()
 		setupExecMocks()
 		// execFile mock with default success for git log
-		mockExecFile.mockImplementation((...args: any[]) => {
+		mockExecFile.mockImplementation(function (...args: any[]) {
 			const callback = args[args.length - 1]
 			const cmd = args[0]
 			if (cmd === "git") {
@@ -127,7 +127,7 @@ describe("searchCommits security", () => {
 
 	it("passes hash fallback as separate argument to execFile", async () => {
 		let logCallCount = 0
-		mockExecFile.mockImplementation((...args: any[]) => {
+		mockExecFile.mockImplementation(function (...args: any[]) {
 			const callback = args[args.length - 1]
 			const cmd = args[0]
 			if (cmd === "git") {

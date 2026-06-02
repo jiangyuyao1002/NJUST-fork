@@ -8,9 +8,11 @@ import { migrateSettings } from "../migrateSettings"
 vi.mock("vscode", () => ({
 	window: {
 		showInformationMessage: vi.fn(),
-		createOutputChannel: vi.fn(() => ({
-			appendLine: vi.fn(),
-		})),
+		createOutputChannel: vi.fn(function () {
+			return {
+				appendLine: vi.fn(),
+			}
+		}),
 	},
 	commands: {
 		executeCommand: vi.fn(),
@@ -52,7 +54,7 @@ describe("migrateSettings", () => {
 		mockContext = {
 			globalState: {
 				get: vi.fn((key: string) => mockGlobalState.get(key)),
-				update: vi.fn(async (key: string, value: any) => {
+				update: vi.fn(async function (key: string, value: any) {
 					mockGlobalState.set(key, value)
 				}),
 			},

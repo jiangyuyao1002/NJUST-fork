@@ -9,7 +9,12 @@ vi.mock("@njust-ai/telemetry", () => ({
 		reportError: vi.fn(),
 		instance: {
 			captureEvent: vi.fn(),
-			startSpan: vi.fn(() => ({ traceId: "t", spanId: "s" })),
+			startSpan: vi.fn(function () {
+				return {
+					traceId: "t",
+					spanId: "s",
+				}
+			}),
 			endSpan: vi.fn(),
 			captureTaskCompleted: vi.fn(),
 		},
@@ -21,11 +26,13 @@ vi.mock("../../security/metrics", async (importOriginal) => {
 	return {
 		...actual,
 		recordSecurityMetric: vi.fn(),
-		startTraceSpan: vi.fn(() => ({
-			traceId: "test-trace",
-			spanId: "test-span",
-			end: vi.fn(),
-		})),
+		startTraceSpan: vi.fn(function () {
+			return {
+				traceId: "test-trace",
+				spanId: "test-span",
+				end: vi.fn(),
+			}
+		}),
 	}
 })
 

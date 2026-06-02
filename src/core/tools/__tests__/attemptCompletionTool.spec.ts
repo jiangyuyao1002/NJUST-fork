@@ -22,7 +22,12 @@ vi.mock("@njust-ai/telemetry", () => ({
 		instance: {
 			captureTaskCompleted: mockCaptureTaskCompleted,
 			captureEvent: vi.fn(),
-			startSpan: vi.fn(() => ({ traceId: "test-trace", spanId: "test-span" })),
+			startSpan: vi.fn(function () {
+				return {
+					traceId: "test-trace",
+					spanId: "test-span",
+				}
+			}),
 			endSpan: vi.fn(),
 		},
 	},
@@ -31,9 +36,11 @@ vi.mock("@njust-ai/telemetry", () => ({
 // Mock vscode module
 vi.mock("vscode", () => ({
 	workspace: {
-		getConfiguration: vi.fn(() => ({
-			get: vi.fn(),
-		})),
+		getConfiguration: vi.fn(function () {
+			return {
+				get: vi.fn(),
+			}
+		}),
 	},
 }))
 
@@ -64,14 +71,16 @@ describe("attemptCompletionTool", () => {
 		mockHandleError = vi.fn()
 		mockToolDescription = vi.fn()
 		mockAskFinishSubTaskApproval = vi.fn()
-		mockGetConfiguration = vi.fn(() => ({
-			get: vi.fn((key: string, defaultValue: any) => {
-				if (key === "preventCompletionWithOpenTodos") {
-					return defaultValue // Default to false unless overridden in test
-				}
-				return defaultValue
-			}),
-		}))
+		mockGetConfiguration = vi.fn(function () {
+			return {
+				get: vi.fn(function (key: string, defaultValue: any) {
+					if (key === "preventCompletionWithOpenTodos") {
+						return defaultValue // Default to false unless overridden in test
+					}
+					return defaultValue
+				}),
+			}
+		})
 
 		// Setup vscode mock
 		vi.mocked(vscode.workspace.getConfiguration).mockImplementation(mockGetConfiguration)
@@ -190,7 +199,7 @@ describe("attemptCompletionTool", () => {
 
 			// Enable the setting to prevent completion with open todos
 			mockGetConfiguration.mockReturnValue({
-				get: vi.fn((key: string, defaultValue: any) => {
+				get: vi.fn(function (key: string, defaultValue: any) {
 					if (key === "preventCompletionWithOpenTodos") {
 						return true // Setting is enabled
 					}
@@ -233,7 +242,7 @@ describe("attemptCompletionTool", () => {
 
 			// Enable the setting to prevent completion with open todos
 			mockGetConfiguration.mockReturnValue({
-				get: vi.fn((key: string, defaultValue: any) => {
+				get: vi.fn(function (key: string, defaultValue: any) {
 					if (key === "preventCompletionWithOpenTodos") {
 						return true // Setting is enabled
 					}
@@ -277,7 +286,7 @@ describe("attemptCompletionTool", () => {
 
 			// Enable the setting to prevent completion with open todos
 			mockGetConfiguration.mockReturnValue({
-				get: vi.fn((key: string, defaultValue: any) => {
+				get: vi.fn(function (key: string, defaultValue: any) {
 					if (key === "preventCompletionWithOpenTodos") {
 						return true // Setting is enabled
 					}
@@ -320,7 +329,7 @@ describe("attemptCompletionTool", () => {
 
 			// Ensure the setting is disabled (default behavior)
 			mockGetConfiguration.mockReturnValue({
-				get: vi.fn((key: string, defaultValue: any) => {
+				get: vi.fn(function (key: string, defaultValue: any) {
 					if (key === "preventCompletionWithOpenTodos") {
 						return false // Setting is disabled
 					}
@@ -363,7 +372,7 @@ describe("attemptCompletionTool", () => {
 
 			// Enable the setting
 			mockGetConfiguration.mockReturnValue({
-				get: vi.fn((key: string, defaultValue: any) => {
+				get: vi.fn(function (key: string, defaultValue: any) {
 					if (key === "preventCompletionWithOpenTodos") {
 						return true // Setting is enabled
 					}
@@ -407,7 +416,7 @@ describe("attemptCompletionTool", () => {
 
 			// Enable the setting
 			mockGetConfiguration.mockReturnValue({
-				get: vi.fn((key: string, defaultValue: any) => {
+				get: vi.fn(function (key: string, defaultValue: any) {
 					if (key === "preventCompletionWithOpenTodos") {
 						return true // Setting is enabled
 					}

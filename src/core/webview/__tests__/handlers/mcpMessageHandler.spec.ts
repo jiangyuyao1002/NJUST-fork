@@ -3,7 +3,10 @@ import type { WebviewMessage } from "@njust-ai/types"
 
 vi.mock("vscode", () => ({
 	window: { showErrorMessage: vi.fn(), showInformationMessage: vi.fn() },
-	workspace: { getConfiguration: vi.fn().mockReturnValue({ update: vi.fn() }), workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }] },
+	workspace: {
+		getConfiguration: vi.fn().mockReturnValue({ update: vi.fn() }),
+		workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }],
+	},
 	ConfigurationTarget: { Global: 1 },
 }))
 
@@ -11,9 +14,9 @@ vi.mock("../../../utils/fs", () => ({ fileExistsAtPath: vi.fn().mockResolvedValu
 vi.mock("../../../utils/safeWriteJson", () => ({ safeWriteJson: vi.fn().mockResolvedValue(undefined) }))
 vi.mock("../../../i18n", () => ({ t: (key: string) => key }))
 vi.mock("../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
-vi.mock("../../../integrations/misc/open-file", () => ({ openFile: vi.fn() }))
+vi.mock("../../../../integrations/misc/open-file", () => ({ openFile: vi.fn() }))
 
-import { openFile } from "../../../integrations/misc/open-file"
+import { openFile } from "../../../../integrations/misc/open-file"
 import { registerMcpHandlers } from "../../handlers/mcpMessageHandler"
 import { MessageRouter } from "../../handlers/MessageRouter"
 import { createMockContext } from "./helpers"
@@ -31,9 +34,18 @@ describe("mcpMessageHandler", () => {
 
 	it("registers all 12 MCP handlers", () => {
 		const registeredTypes = [
-			"allowedCommands", "deniedCommands", "openMcpSettings", "openProjectMcpSettings",
-			"deleteMcpServer", "restartMcpServer", "toggleToolAlwaysAllow", "toggleToolEnabledForPrompt",
-			"toggleMcpServer", "refreshAllMcpServers", "updateMcpTimeout", "testWebSearch",
+			"allowedCommands",
+			"deniedCommands",
+			"openMcpSettings",
+			"openProjectMcpSettings",
+			"deleteMcpServer",
+			"restartMcpServer",
+			"toggleToolAlwaysAllow",
+			"toggleToolEnabledForPrompt",
+			"toggleMcpServer",
+			"refreshAllMcpServers",
+			"updateMcpTimeout",
+			"testWebSearch",
 		]
 		for (const type of registeredTypes) {
 			const handler = vi.fn()

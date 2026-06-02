@@ -18,9 +18,11 @@ vi.mock("../../context-tracking/FileContextTracker")
 vi.mock("../../../integrations/editor/DiffViewProvider")
 vi.mock("../../tools/ToolRepetitionDetector")
 vi.mock("../../../api", () => ({
-	buildApiHandler: vi.fn(() => ({
-		getModel: () => ({ info: {}, id: "test-model" }),
-	})),
+	buildApiHandler: vi.fn(function () {
+		return {
+			getModel: () => ({ info: {}, id: "test-model" }),
+		}
+	}),
 }))
 
 // Mock TelemetryService
@@ -129,7 +131,7 @@ describe("Task token usage throttling", () => {
 		let callCount = 0
 
 		// Mock to return different token usage on each call
-		vi.mocked(taskMetadata).mockImplementation(async () => {
+		vi.mocked(taskMetadata).mockImplementation(async function () {
 			callCount++
 			return {
 				historyItem: {
@@ -266,7 +268,7 @@ describe("Task token usage throttling", () => {
 		let callCount = 0
 
 		// Mock to return different token usage on each call
-		vi.mocked(taskMetadata).mockImplementation(async () => {
+		vi.mocked(taskMetadata).mockImplementation(async function () {
 			callCount++
 			return {
 				historyItem: {

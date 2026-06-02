@@ -42,8 +42,8 @@ describe("OpenAICompatibleEmbedder - Global Rate Limiting", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		vi.useFakeTimers()
-		vi.spyOn(console, "warn").mockImplementation(() => {})
-		vi.spyOn(console, "error").mockImplementation(() => {})
+		vi.spyOn(console, "warn").mockImplementation(function () {})
+		vi.spyOn(console, "error").mockImplementation(function () {})
 
 		// Setup mock OpenAI instance
 		mockEmbeddingsCreate = vi.fn()
@@ -53,7 +53,9 @@ describe("OpenAICompatibleEmbedder - Global Rate Limiting", () => {
 			},
 		}
 
-		MockedOpenAI.mockImplementation(() => mockOpenAIInstance)
+		MockedOpenAI.mockImplementation(function () {
+			return mockOpenAIInstance
+		})
 
 		// Reset global rate limit state
 		const embedder = new OpenAICompatibleEmbedder(testBaseUrl, testApiKey, testModelId)

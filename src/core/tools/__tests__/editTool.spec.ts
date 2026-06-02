@@ -19,7 +19,7 @@ vi.mock("path", async () => {
 	const originalPath = await vi.importActual("path")
 	return {
 		...originalPath,
-		resolve: vi.fn().mockImplementation((...args) => {
+		resolve: vi.fn(function (...args) {
 			const separator = process.platform === "win32" ? "\\" : "/"
 			return args.join(separator)
 		}),
@@ -54,7 +54,12 @@ vi.mock("../../../utils/path", () => ({
 
 vi.mock("../../diff/stats", () => ({
 	sanitizeUnifiedDiff: vi.fn((diff: string) => diff),
-	computeDiffStats: vi.fn(() => ({ additions: 1, deletions: 1 })),
+	computeDiffStats: vi.fn(function () {
+		return {
+			additions: 1,
+			deletions: 1,
+		}
+	}),
 }))
 
 vi.mock("vscode", () => ({
@@ -214,7 +219,7 @@ describe("editTool", () => {
 			partial: isPartial,
 		}
 
-		mockPushToolResult = vi.fn((result: ToolResponse) => {
+		mockPushToolResult = vi.fn(function (result: ToolResponse) {
 			toolResult = result
 		})
 
@@ -366,7 +371,7 @@ describe("editTool", () => {
 			}
 
 			let capturedResult: ToolResponse | undefined
-			const localPushToolResult = vi.fn((result: ToolResponse) => {
+			const localPushToolResult = vi.fn(function (result: ToolResponse) {
 				capturedResult = result
 			})
 

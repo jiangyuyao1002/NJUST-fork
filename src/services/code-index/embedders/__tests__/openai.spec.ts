@@ -35,8 +35,8 @@ vitest.mock("../../../../i18n", () => ({
 
 // Mock console methods
 const consoleMocks = {
-	error: vitest.spyOn(console, "error").mockImplementation(() => {}),
-	warn: vitest.spyOn(console, "warn").mockImplementation(() => {}),
+	error: vitest.spyOn(console, "error").mockImplementation(function () {}),
+	warn: vitest.spyOn(console, "warn").mockImplementation(function () {}),
 }
 
 describe("OpenAiEmbedder", () => {
@@ -351,9 +351,9 @@ describe("OpenAiEmbedder", () => {
 					"Failed to create embeddings after 3 attempts: API connection failed",
 				)
 
-			expect(console.error).toHaveBeenCalledWith(
-				expect.stringContaining("[OpenAIEmbedder] OpenAI embedder error"),
-			)
+				expect(console.error).toHaveBeenCalledWith(
+					expect.stringContaining("[OpenAIEmbedder] OpenAI embedder error"),
+				)
 			})
 
 			it("should handle empty text arrays", async () => {

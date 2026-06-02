@@ -14,7 +14,11 @@ vi.mock("vscode", () => ({
 		}),
 	},
 	Uri: {
-		file: vi.fn((path) => ({ fsPath: path })),
+		file: vi.fn(function (path) {
+			return {
+				fsPath: path,
+			}
+		}),
 	},
 	env: {
 		uriScheme: "vscode",

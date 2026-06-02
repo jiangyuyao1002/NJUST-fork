@@ -54,17 +54,27 @@ vi.mock("vscode", () => ({
 		showInformationMessage: vi.fn(),
 		showWarningMessage: vi.fn(),
 		showErrorMessage: vi.fn(),
-		createTextEditorDecorationType: vi.fn(() => ({ dispose: vi.fn() })),
-		onDidChangeActiveTextEditor: vi.fn(() => ({ dispose: vi.fn() })),
+		createTextEditorDecorationType: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
+		onDidChangeActiveTextEditor: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	workspace: {
 		getConfiguration: vi.fn().mockReturnValue({
 			get: vi.fn().mockReturnValue([]),
 			update: vi.fn(),
 		}),
-		onDidChangeConfiguration: vi.fn().mockImplementation(() => ({
-			dispose: vi.fn(),
-		})),
+		onDidChangeConfiguration: vi.fn(function () {
+			return {
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	env: {
 		uriScheme: "vscode",
@@ -90,15 +100,17 @@ vi.mock("../../../api", () => ({
 
 vi.mock("../../../integrations/workspace/WorkspaceTracker", () => {
 	return {
-		default: vi.fn().mockImplementation(() => ({
-			initializeFilePaths: vi.fn(),
-			dispose: vi.fn(),
-		})),
+		default: vi.fn(function () {
+			return {
+				initializeFilePaths: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
 	}
 })
 
 vi.mock("../../task/Task", () => ({
-	Task: vi.fn().mockImplementation((options: TaskOptions) => {
+	Task: vi.fn(function (options: TaskOptions) {
 		const mockTask = {
 			api: undefined,
 			abortTask: vi.fn(),
@@ -190,11 +202,15 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 				asWebviewUri: vi.fn(),
 			},
 			visible: true,
-			onDidDispose: vi.fn().mockImplementation((callback: () => void) => {
+			onDidDispose: vi.fn(function (callback: () => void) {
 				callback()
 				return { dispose: vi.fn() }
 			}),
-			onDidChangeVisibility: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
+			onDidChangeVisibility: vi.fn(function () {
+				return {
+					dispose: vi.fn(),
+				}
+			}),
 		} as unknown as vscode.WebviewView
 
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))

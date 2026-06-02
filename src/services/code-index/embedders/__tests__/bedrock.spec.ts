@@ -7,12 +7,14 @@ import { MAX_ITEM_TOKENS, INITIAL_RETRY_DELAY_MS } from "../../constants"
 // Mock the AWS SDK
 vitest.mock("@aws-sdk/client-bedrock-runtime", () => {
 	return {
-		BedrockRuntimeClient: vitest.fn().mockImplementation(() => ({
-			send: vitest.fn(),
-		})),
-		InvokeModelCommand: vitest.fn().mockImplementation((input) => ({
-			input,
-		})),
+		BedrockRuntimeClient: vitest.fn(function () {
+			return {
+				send: vitest.fn(),
+			}
+		}),
+		InvokeModelCommand: vitest.fn().mockImplementation(function (input) {
+			return { input }
+		}),
 	}
 })
 vitest.mock("@aws-sdk/credential-providers", () => ({
@@ -73,9 +75,11 @@ describe("BedrockEmbedder", () => {
 
 		// Set up the mock implementation
 		const MockedBedrockRuntimeClient = BedrockRuntimeClient as any
-		MockedBedrockRuntimeClient.mockImplementation(() => ({
-			send: mockSend,
-		}))
+		MockedBedrockRuntimeClient.mockImplementation(function () {
+			return {
+				send: mockSend,
+			}
+		})
 
 		embedder = new BedrockEmbedder("us-east-1", "test-profile", "amazon.titan-embed-text-v2:0")
 	})
@@ -503,9 +507,9 @@ describe("BedrockEmbedder", () => {
 					"Failed to create embeddings after 3 attempts: API connection failed",
 				)
 
-			expect(console.error).toHaveBeenCalledWith(
-				expect.stringContaining("[BedrockEmbedder] Bedrock embedder error"),
-			)
+				expect(console.error).toHaveBeenCalledWith(
+					expect.stringContaining("[BedrockEmbedder] Bedrock embedder error"),
+				)
 			})
 
 			it("should handle empty text arrays", async () => {

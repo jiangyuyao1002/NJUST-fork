@@ -141,7 +141,7 @@ export const myConst = 42;
 
 	describe("resolveRelativePath", () => {
 		it("should resolve relative TypeScript imports", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				return p.includes("helper.ts")
 			})
 			statSyncMock.mockReturnValue({ isFile: () => true })
@@ -166,7 +166,7 @@ export const myConst = 42;
 
 	describe("resolveCppInclude", () => {
 		it("should resolve local includes", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				return p.includes("header.h")
 			})
 
@@ -176,7 +176,7 @@ export const myConst = 42;
 		})
 
 		it("should check include directories", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				// Only match the include directory path, not local or root paths
 				return p === "/project/include/header.h" || p.endsWith("\\include\\header.h")
 			})
@@ -189,7 +189,7 @@ export const myConst = 42;
 
 	describe("resolveJavaImport", () => {
 		it("should resolve Java imports to source files", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				return p.includes("MyClass.java")
 			})
 
@@ -200,7 +200,7 @@ export const myConst = 42;
 		})
 
 		it("should handle wildcard imports", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				// Match the directory path for wildcard import
 				const normalized = p.replace(/\\/g, "/")
 				return normalized.endsWith("com/example") && normalized.includes("src/main/java")
@@ -215,7 +215,7 @@ export const myConst = 42;
 
 	describe("resolvePythonImport", () => {
 		it("should resolve Python module imports", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				return p.includes("my_module.py")
 			})
 
@@ -226,7 +226,7 @@ export const myConst = 42;
 		})
 
 		it("should resolve Python package imports", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				const normalized = p.replace(/\\/g, "/")
 				return normalized.includes("my_package/__init__.py")
 			})
@@ -239,18 +239,21 @@ export const myConst = 42;
 
 	describe("resolveGoImport", () => {
 		it("should resolve Go package imports", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				return p.includes("mypackage") && !p.includes("/mypackage.")
 			})
 			statSyncMock.mockReturnValue({ isDirectory: () => true })
 
-			const imp: ImportResult = { raw: 'import "github.com/user/mypackage"', modulePath: "github.com/user/mypackage" }
+			const imp: ImportResult = {
+				raw: 'import "github.com/user/mypackage"',
+				modulePath: "github.com/user/mypackage",
+			}
 			const result = resolveGoImport(imp, "/project", "/project/src/main.go")
 			expect(result).not.toBeNull()
 		})
 
 		it("should check internal and pkg directories", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				const normalized = p.replace(/\\/g, "/")
 				// Only match internal directory, not root
 				return normalized.endsWith("internal/mypackage")
@@ -265,7 +268,7 @@ export const myConst = 42;
 
 	describe("resolveRustImport", () => {
 		it("should resolve Rust module imports", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				const normalized = p.replace(/\\/g, "/")
 				return normalized.endsWith("src/my_module.rs")
 			})
@@ -277,7 +280,7 @@ export const myConst = 42;
 		})
 
 		it("should resolve Rust directory modules", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				const normalized = p.replace(/\\/g, "/")
 				return normalized.endsWith("src/my_mod/mod.rs")
 			})
@@ -291,7 +294,7 @@ export const myConst = 42;
 
 	describe("resolveTsImport", () => {
 		it("should delegate to resolveRelativePath", () => {
-			existsSyncMock.mockImplementation((p: string) => {
+			existsSyncMock.mockImplementation(function (p: string) {
 				return p.includes("helper.ts")
 			})
 			statSyncMock.mockReturnValue({ isFile: () => true })

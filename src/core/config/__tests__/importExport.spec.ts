@@ -30,7 +30,11 @@ vi.mock("vscode", () => ({
 		showWarningMessage: vi.fn(),
 	},
 	Uri: {
-		file: vi.fn((filePath) => ({ fsPath: filePath })),
+		file: vi.fn(function (filePath) {
+			return {
+				fsPath: filePath,
+			}
+		}),
 	},
 }))
 
@@ -66,7 +70,7 @@ vi.mock("../../../utils/safeWriteJson")
 
 // Mock buildApiHandler to avoid issues with provider instantiation in tests
 vi.mock("../../../api", () => ({
-	buildApiHandler: vi.fn().mockImplementation((config) => {
+	buildApiHandler: vi.fn(function (config) {
 		// Return different model info based on the provider and model
 		const getModelInfo = () => {
 			if (config.apiProvider === "anthropic" && config.apiModelId === "claude-3-5-sonnet-20241022") {
@@ -740,7 +744,7 @@ describe("importExport", () => {
 				const showInfoMessageSpy = vi
 					.spyOn(vscode.window, "showInformationMessage")
 					.mockResolvedValue(undefined)
-				const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+				const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(function () {})
 
 				await importSettingsWithFeedback(
 					{
@@ -990,7 +994,7 @@ describe("importExport", () => {
 				}
 
 				const showWarningMessageSpy = vi.spyOn(vscode.window, "showWarningMessage").mockResolvedValue(undefined)
-				const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+				const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(function () {})
 
 				await importSettingsWithFeedback(
 					{
@@ -1848,7 +1852,7 @@ describe("importExport", () => {
 			}
 
 			// Mock getGlobalState to return undefined for model dimension
-			mockContextProxy.getGlobalState = vi.fn().mockImplementation((key: string) => {
+			mockContextProxy.getGlobalState = vi.fn(function (key: string) {
 				if (key === "codebaseIndexOpenAiCompatibleBaseUrl") {
 					return "https://api.example.com/v1"
 				}

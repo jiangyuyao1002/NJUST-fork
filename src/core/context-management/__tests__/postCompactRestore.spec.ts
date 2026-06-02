@@ -51,7 +51,7 @@ describe("postCompactRestore", () => {
 	})
 
 	it("gracefully handles unreadable files", () => {
-		mockReadFileSync.mockImplementation(() => {
+		mockReadFileSync.mockImplementation(function () {
 			throw new Error("ENOENT")
 		})
 		const input: ApiMessage[] = [{ role: "user", content: "x", ts: Date.now() }]
@@ -82,7 +82,12 @@ describe("postCompactRestore", () => {
 
 	it("restores active skills", () => {
 		const input: ApiMessage[] = [{ role: "user", content: "x", ts: Date.now() }]
-		const out = postCompactRestore(input, { activeSkills: [{ name: "skill-a", content: "skill-a content" }, { name: "skill-b", content: "skill-b content" }] })
+		const out = postCompactRestore(input, {
+			activeSkills: [
+				{ name: "skill-a", content: "skill-a content" },
+				{ name: "skill-b", content: "skill-b content" },
+			],
+		})
 		expect(out.length).toBe(input.length + 1)
 		const last = String(out[out.length - 1].content)
 		expect(last).toContain("Active Skill: skill-a")

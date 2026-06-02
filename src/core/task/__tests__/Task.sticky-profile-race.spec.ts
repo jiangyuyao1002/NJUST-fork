@@ -50,12 +50,20 @@ vi.mock("vscode", () => {
 			tabGroups: {
 				all: [mockTabGroup],
 				close: vi.fn(),
-				onDidChangeTabs: vi.fn(() => ({ dispose: vi.fn() })),
+				onDidChangeTabs: vi.fn(function () {
+					return {
+						dispose: vi.fn(),
+					}
+				}),
 			},
 			showErrorMessage: vi.fn(),
 		},
 		workspace: {
-			getConfiguration: vi.fn(() => ({ get: (_k: string, d: any) => d })),
+			getConfiguration: vi.fn(function () {
+				return {
+					get: (_k: string, d: any) => d,
+				}
+			}),
 			workspaceFolders: [
 				{
 					uri: { fsPath: "/mock/workspace/path" },
@@ -63,12 +71,14 @@ vi.mock("vscode", () => {
 					index: 0,
 				},
 			],
-			createFileSystemWatcher: vi.fn(() => ({
-				onDidCreate: vi.fn(() => mockDisposable),
-				onDidDelete: vi.fn(() => mockDisposable),
-				onDidChange: vi.fn(() => mockDisposable),
-				dispose: vi.fn(),
-			})),
+			createFileSystemWatcher: vi.fn(function () {
+				return {
+					onDidCreate: vi.fn(() => mockDisposable),
+					onDidDelete: vi.fn(() => mockDisposable),
+					onDidChange: vi.fn(() => mockDisposable),
+					dispose: vi.fn(),
+				}
+			}),
 			fs: {
 				stat: vi.fn().mockResolvedValue({ type: 1 }),
 			},

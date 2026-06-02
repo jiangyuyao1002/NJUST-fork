@@ -25,7 +25,7 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 		const stackPop = vi.fn().mockResolvedValue(undefined)
 		const createTask = vi.fn().mockResolvedValue({ taskId: "child-1", start: childStart })
 		const handleModeSwitch = vi.fn().mockResolvedValue(undefined)
-		const getTaskWithId = vi.fn().mockImplementation(async (id: string) => {
+		const getTaskWithId = vi.fn(async function (id: string) {
 			if (id === "parent-1") {
 				return {
 					historyItem: {
@@ -115,11 +115,11 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 		const parentTask = createDelegationParentStub()
 		const childStart = vi.fn(() => callOrder.push("child.start"))
 
-		const updateTaskHistory = vi.fn(async () => {
+		const updateTaskHistory = vi.fn(async function () {
 			callOrder.push("updateTaskHistory")
 		})
 		const stackPop = vi.fn().mockResolvedValue(undefined)
-		const createTask = vi.fn(async () => {
+		const createTask = vi.fn(async function () {
 			callOrder.push("createTask")
 			return { taskId: "child-1", start: childStart }
 		})

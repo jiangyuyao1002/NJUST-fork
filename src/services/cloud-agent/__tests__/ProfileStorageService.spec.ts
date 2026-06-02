@@ -13,11 +13,11 @@ vi.mock("vscode", () => ({
 function createMockMemento(initial: Record<string, unknown> = {}): vscode.Memento {
 	const store = new Map<string, unknown>(Object.entries(initial))
 	return {
-		get: vi.fn((key: string, defaultValue?: unknown) => {
+		get: vi.fn(function (key: string, defaultValue?: unknown) {
 			if (store.has(key)) return store.get(key)
 			return defaultValue
 		}),
-		update: vi.fn(async (key: string, value: unknown) => {
+		update: vi.fn(async function (key: string, value: unknown) {
 			if (value === undefined) {
 				store.delete(key)
 			} else {
@@ -172,7 +172,7 @@ describe("ProfileStorageService", () => {
 
 		it("creates migrated profile from legacy config", async () => {
 			vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-				get: vi.fn((key: string) => {
+				get: vi.fn(function (key: string) {
 					if (key === "cloudAgent.serverUrl") return "http://legacy.example.com"
 					if (key === "cloudAgent.apiKey") return "legacy-key"
 					return undefined
@@ -190,7 +190,7 @@ describe("ProfileStorageService", () => {
 		it("is idempotent — skips if already migrated", async () => {
 			// First migration
 			vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-				get: vi.fn((key: string) => {
+				get: vi.fn(function (key: string) {
 					if (key === "cloudAgent.serverUrl") return "http://legacy.example.com"
 					return undefined
 				}),

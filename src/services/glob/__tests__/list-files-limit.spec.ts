@@ -51,7 +51,7 @@ describe("listFiles limit handling for large projects", () => {
 		// Create a broad directory tree that would cause stack overflow without proper limits
 		let callCount = 0
 		const maxDepth = 100 // Simulate deep nesting
-		mockReaddir.mockImplementation(async () => {
+		mockReaddir.mockImplementation(async function () {
 			callCount++
 			if (callCount > maxDepth) {
 				return []
@@ -66,7 +66,7 @@ describe("listFiles limit handling for large projects", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// Return many files to simulate large project
 						const files =
@@ -81,7 +81,7 @@ describe("listFiles limit handling for large projects", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -142,7 +142,7 @@ describe("listFiles limit handling for large projects", () => {
 
 		// Mock directory structure
 		let directoriesScanned = 0
-		mockReaddir.mockImplementation(async (_dirPath: string) => {
+		mockReaddir.mockImplementation(async function (_dirPath: string) {
 			directoriesScanned++
 
 			// Root directory has many subdirectories
@@ -162,7 +162,7 @@ describe("listFiles limit handling for large projects", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						setTimeout(() => callback(""), 10)
 					}
@@ -171,7 +171,7 @@ describe("listFiles limit handling for large projects", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}
@@ -232,7 +232,7 @@ describe("listFiles limit handling for large projects", () => {
 		const mockSpawn = vi.mocked(childProcess.spawn)
 		const mockProcess = {
 			stdout: {
-				on: vi.fn((event, callback) => {
+				on: vi.fn(function (event, callback) {
 					if (event === "data") {
 						// Return 8 files
 						const files =
@@ -247,7 +247,7 @@ describe("listFiles limit handling for large projects", () => {
 			stderr: {
 				on: vi.fn(),
 			},
-			on: vi.fn((event, callback) => {
+			on: vi.fn(function (event, callback) {
 				if (event === "close") {
 					setTimeout(() => callback(0), 20)
 				}

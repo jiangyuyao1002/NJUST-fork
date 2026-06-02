@@ -6,12 +6,14 @@ import type { ApiHandlerOptions } from "../../../shared/api"
 
 vi.mock("vscode", () => ({
 	workspace: {
-		createFileSystemWatcher: vi.fn(() => ({
-			onDidCreate: vi.fn(),
-			onDidChange: vi.fn(),
-			onDidDelete: vi.fn(),
-			dispose: vi.fn(),
-		})),
+		createFileSystemWatcher: vi.fn(function () {
+			return {
+				onDidCreate: vi.fn(),
+				onDidChange: vi.fn(),
+				onDidDelete: vi.fn(),
+				dispose: vi.fn(),
+			}
+		}),
 	},
 	RelativePattern: vi.fn(),
 }))
@@ -145,7 +147,9 @@ describe("MimoTokenPlanHandler", () => {
 	})
 
 	it("throws when API key is not provided", () => {
-		expect(() => new MimoTokenPlanHandler(makeTokenPlanOptions({ mimoTokenPlanApiKey: undefined } as any))).toThrow()
+		expect(
+			() => new MimoTokenPlanHandler(makeTokenPlanOptions({ mimoTokenPlanApiKey: undefined } as any)),
+		).toThrow()
 	})
 })
 
