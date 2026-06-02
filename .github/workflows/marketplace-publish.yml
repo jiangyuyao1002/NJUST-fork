@@ -9,12 +9,38 @@ env:
   GIT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
 
 jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    if: >
+        ( github.event_name == 'pull_request' &&
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.base.ref == 'main' &&
+        contains(github.event.pull_request.title, 'Changeset version bump') ) ||
+        github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.GIT_REF }}
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+      - name: Scan for secrets
+        run: node scripts/check-secrets.mjs --all-files
+      - name: Lint
+        run: pnpm lint
+      - name: Check types
+        run: pnpm check-types
+      - name: Run unit tests
+        run: pnpm test
+
   publish-extension:
+    needs: quality-gate
     runs-on: ubuntu-latest
     permissions:
       contents: write # Required for pushing tags.
     if: >
         ( github.event_name == 'pull_request' &&
+        github.event.pull_request.merged == true &&
         github.event.pull_request.base.ref == 'main' &&
         contains(github.event.pull_request.title, 'Changeset version bump') ) ||
         github.event_name == 'workflow_dispatch'

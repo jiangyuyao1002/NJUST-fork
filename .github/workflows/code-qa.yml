@@ -69,6 +69,8 @@ jobs:
                       name: ubuntu-latest
                     - os: windows-latest
                       name: windows-latest
+                    - os: macos-latest
+                      name: macos-latest
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
