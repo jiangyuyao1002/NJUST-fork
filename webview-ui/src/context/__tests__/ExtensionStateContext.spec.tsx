@@ -400,3 +400,42 @@ describe("mergeExtensionState", () => {
 		})
 	})
 })
+
+describe("ExtensionStateContext message validation", () => {
+	it("ignores invalid workspaceUpdated messages", () => {
+		const WorkspaceComponent = () => {
+			const { filePaths, openedTabs } = useExtensionState()
+			return (
+				<div>
+					<div data-testid="file-paths">{JSON.stringify(filePaths)}</div>
+					<div data-testid="opened-tabs">{JSON.stringify(openedTabs)}</div>
+				</div>
+			)
+		}
+
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+		render(
+			<ExtensionStateContextProvider>
+				<WorkspaceComponent />
+			</ExtensionStateContextProvider>,
+		)
+
+		act(() => {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					data: {
+						type: "workspaceUpdated",
+						filePaths: "../../fake",
+						openedTabs: "bad",
+					},
+				}),
+			)
+		})
+
+		expect(JSON.parse(screen.getByTestId("file-paths").textContent!)).toEqual([])
+		expect(JSON.parse(screen.getByTestId("opened-tabs").textContent!)).toEqual([])
+
+		warn.mockRestore()
+	})
+})
