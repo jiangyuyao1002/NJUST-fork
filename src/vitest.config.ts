@@ -27,7 +27,7 @@ export default defineConfig({
 			provider: "v8",
 			reporter: ["json", "html", "text-summary"],
 			reportsDirectory: "../coverage/src",
-			include: ["src/core/**", "src/api/**", "src/services/**"],
+			include: ["src/core/**", "src/api/**", "src/services/**", "src/chat/**"],
 			exclude: [
 				"**/__tests__/**",
 				"**/__mocks__/**",

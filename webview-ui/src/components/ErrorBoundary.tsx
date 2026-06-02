@@ -1,12 +1,15 @@
 import React, { Component } from "react"
 import { withTranslation, WithTranslation } from "react-i18next"
 import { enhanceErrorWithSourceMaps } from "@src/utils/sourceMapUtils"
+import { vscode } from "@src/utils/vscode"
 
 type ErrorProps = {
 	children: React.ReactNode
+	fallback?: (error: string, componentStack: string | null) => React.ReactNode
 } & WithTranslation
 
 type ErrorState = {
+	hasError: boolean
 	error?: string
 	componentStack?: string | null
 	timestamp?: number
@@ -15,20 +18,12 @@ type ErrorState = {
 class ErrorBoundary extends Component<ErrorProps, ErrorState> {
 	constructor(props: ErrorProps) {
 		super(props)
-		this.state = {}
+		this.state = { hasError: false }
 	}
 
-	static getDerivedStateFromError(error: unknown) {
-		let errorMessage = ""
-
-		if (error instanceof Error) {
-			errorMessage = error.stack ?? error.message
-		} else {
-			errorMessage = `${error}`
-		}
-
+	static getDerivedStateFromError(_error: unknown) {
 		return {
-			error: errorMessage,
+			hasError: true,
 			timestamp: Date.now(),
 		}
 	}
@@ -36,18 +31,39 @@ class ErrorBoundary extends Component<ErrorProps, ErrorState> {
 	async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
 		const componentStack = errorInfo.componentStack || ""
 		const enhancedError = await enhanceErrorWithSourceMaps(error, componentStack)
+		const finalError = enhancedError.sourceMappedStack || enhancedError.stack || ""
+		const finalStack = enhancedError.sourceMappedComponentStack || componentStack
+
+		try {
+			vscode.postMessage({
+				type: "webviewError",
+				text: finalError,
+				context: finalStack,
+			})
+		} catch (e) {
+			console.error("Failed to report webviewError to host:", e)
+		}
 
 		this.setState({
-			error: enhancedError.sourceMappedStack || enhancedError.stack,
-			componentStack: enhancedError.sourceMappedComponentStack || componentStack,
+			hasError: true,
+			error: finalError,
+			componentStack: finalStack,
 		})
 	}
 
 	render() {
-		const { t } = this.props
+		const { t, fallback } = this.props
 
-		if (!this.state.error) {
+		if (this.state.hasError && !this.state.error) {
+			return null
+		}
+
+		if (!this.state.hasError) {
 			return this.props.children
+		}
+
+		if (fallback) {
+			return fallback(this.state.error as string, this.state.componentStack ?? null)
 		}
 
 		const errorDisplay = this.state.error
@@ -81,7 +97,7 @@ class ErrorBoundary extends Component<ErrorProps, ErrorState> {
 				)}
 				<div className="mt-4 flex gap-2">
 					<button
-						onClick={() => this.setState({ error: undefined, componentStack: undefined })}
+						onClick={() => this.setState({ hasError: false, error: undefined, componentStack: undefined })}
 						className="px-3 py-1.5 bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground rounded text-sm">
 						Retry
 					</button>

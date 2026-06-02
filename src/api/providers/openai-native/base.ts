@@ -88,6 +88,16 @@ export interface ResponsesClientLike {
 	}
 }
 
+/** Non-streaming response shape used in completePrompt */
+interface NonStreamingResponsesClient {
+	responses: {
+		create(
+			body: ResponsesRequestBody,
+			options?: { signal?: AbortSignal; headers?: Record<string, string> },
+		): Promise<{ output?: ResponsesOutputItem[]; text?: UnsafeAny }>
+	}
+}
+
 export interface ResponsesRequestBody {
 	model: string
 	input: ResponsesInputItem[]
@@ -105,7 +115,7 @@ export interface ResponsesRequestBody {
 		type: "function"
 		name: string
 		description?: string
-		parameters?: Record<string, UnsafeAny>
+		parameters?: Record<string, unknown>
 		strict?: boolean
 	}>
 	tool_choice?: OpenAI.Chat.ChatCompletionCreateParams["tool_choice"]
@@ -141,7 +151,7 @@ export const openAiErrorResponseSchema = z
 
 export const openAiResponsesStreamEventSchema = z.object({}).passthrough()
 
-export type Constructor<T = object> = new (...args: any[]) => T
+export type Constructor<T = object> = new (...args: unknown[]) => T
 
 export abstract class OpenAiNativeHandlerBase extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
@@ -183,10 +193,7 @@ export abstract class OpenAiNativeHandlerBase extends BaseProvider implements Si
 	abstract getPromptCacheRetention(model: OpenAiNativeModel): "24h" | undefined
 	abstract applyServiceTierPricing(info: ModelInfo, tier?: ServiceTier): ModelInfo
 
-	normalizeUsage(
-		usage: OpenAiUsageData | undefined,
-		model: OpenAiNativeModel,
-	): ApiStreamUsageChunk | undefined {
+	normalizeUsage(usage: OpenAiUsageData | undefined, model: OpenAiNativeModel): ApiStreamUsageChunk | undefined {
 		if (!usage) return undefined
 
 		const inputDetails = usage.input_tokens_details ?? usage.prompt_tokens_details
@@ -326,9 +333,12 @@ export abstract class OpenAiNativeHandlerBase extends BaseProvider implements Si
 				requestBody.prompt_cache_retention = promptCacheRetention
 			}
 
-			const response = await (this.client as Record<string, UnsafeAny>).responses.create(requestBody, {
-				signal: this.abortController.signal,
-			})
+			const response = await (this.client as unknown as NonStreamingResponsesClient).responses.create(
+				requestBody,
+				{
+					signal: this.abortController.signal,
+				},
+			)
 
 			if (response?.output && Array.isArray(response.output)) {
 				for (const outputItem of response.output) {

@@ -150,6 +150,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	extensionContext = context
 	process.on("unhandledRejection", (reason, _promise) => {
 		logger.error("Extension", "Unhandled promise rejection:", reason)
+		TelemetryService.reportError(
+			reason instanceof Error ? reason : new Error(String(reason)),
+			TelemetryEventName.UTILITY_ERROR,
+		)
+	})
+	process.on("uncaughtException", (error) => {
+		logger.error("Extension", "Uncaught exception:", error)
+		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 	})
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
 	context.subscriptions.push(outputChannel)
@@ -262,7 +270,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	setDeviceToken(deviceToken)
 
 	// Initialize Cloud Agent ProfileStorageService and migrate legacy config.
-	const { ProfileStorageService, setProfileStorageService } = await import("./services/cloud-agent/ProfileStorageService")
+	const { ProfileStorageService, setProfileStorageService } = await import(
+		"./services/cloud-agent/ProfileStorageService"
+	)
 	const profileStorage = new ProfileStorageService(context.globalState, context.workspaceState)
 	setProfileStorageService(profileStorage)
 	const migratedProfile = await profileStorage.migrateFromLegacyConfig()
@@ -756,10 +766,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const tmpDir = os.tmpdir()
 		const resolved = path.resolve(rawSocketPath)
 		const resolvedTmp = path.resolve(tmpDir)
-		if (
-			!rawSocketPath.includes("\0") &&
-			resolved.toLowerCase().startsWith(resolvedTmp.toLowerCase())
-		) {
+		if (!rawSocketPath.includes("\0") && resolved.toLowerCase().startsWith(resolvedTmp.toLowerCase())) {
 			socketPath = rawSocketPath
 		} else {
 			outputChannel.appendLine(

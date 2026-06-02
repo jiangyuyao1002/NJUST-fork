@@ -359,10 +359,10 @@ export async function presentAssistantMessage(cline: Task) {
 							const start = cline.currentStreamingContentIndex
 							const run: ToolUse[] = []
 							for (let i = start; i < cline.assistantMessageContent.length; i++) {
-								const b = cline.assistantMessageContent[i] as UnsafeAny as TypedBlock
+								const b = cline.assistantMessageContent[i] as unknown as TypedBlock
 								if (!b || b.type !== "tool_use") break
 								if (!b.id) break
-								const tb = b as UnsafeAny as ToolUse
+								const tb = b as unknown as ToolUse
 								if (!isConcurrencySafeToolUseBlock(tb)) break
 								if (streamingToolExecutor.shouldEagerExecute(cline, tb) !== "eager") break
 								run.push(tb)
@@ -1018,10 +1018,13 @@ export async function presentAssistantMessage(cline: Task) {
 												customToolArgs = customTool.parameters.parse(
 													block.nativeArgs || block.params || {},
 												)
-											} catch (parseParamsError: UnsafeAny) {
+											} catch (parseParamsError: unknown) {
 												const message = `Custom tool "${block.name}" argument validation failed: ${getErrorMessage(parseParamsError)}`
 												logger.error("PresentAssistantMessage", message)
-												TelemetryService.reportError(parseParamsError, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
+												TelemetryService.reportError(
+													parseParamsError,
+													TelemetryEventName.ASSISTANT_MESSAGE_ERROR,
+												)
 												cline.consecutiveMistakeCount++
 												await cline.say("error", message)
 												pushToolResult(formatResponse.toolError(message))
@@ -1042,10 +1045,13 @@ export async function presentAssistantMessage(cline: Task) {
 											pushToolResult(result)
 											cline.consecutiveMistakeCount = 0
 										}
-									} catch (executionError: UnsafeAny) {
+									} catch (executionError: unknown) {
 										cline.consecutiveMistakeCount++
 										cline.recordToolError("custom_tool", getErrorMessage(executionError))
-										TelemetryService.reportError(executionError, TelemetryEventName.ASSISTANT_MESSAGE_ERROR)
+										TelemetryService.reportError(
+											executionError,
+											TelemetryEventName.ASSISTANT_MESSAGE_ERROR,
+										)
 										await handleError(
 											`executing custom tool "${block.name}"`,
 											wrapAsError(executionError),

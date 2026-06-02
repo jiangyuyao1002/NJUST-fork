@@ -1,12 +1,15 @@
 import * as vscode from "vscode"
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import type { ClineMessage } from "@njust-ai/types"
+import { NJUST_AIEventName } from "@njust-ai/types"
+import type { Task } from "../core/task/Task"
+import { renderClineMessage } from "./message-renderer"
+import { logger } from "../shared/logger"
 
 interface SyncedTask {
 	taskId: string
 	source: "chat" | "webview"
 	chatStream?: vscode.ChatResponseStream
-	lastSyncedIndex: number
 }
 
 /**
@@ -16,7 +19,7 @@ interface SyncedTask {
  */
 export class ChatStateSync {
 	private syncedTasks: Map<string, SyncedTask> = new Map()
-	private pollIntervals: Map<string, ReturnType<typeof setInterval>> = new Map()
+	private taskCleanupFns: Map<string, () => void> = new Map()
 
 	constructor(
 		private readonly provider: ClineProvider,
@@ -32,10 +35,9 @@ export class ChatStateSync {
 			taskId,
 			source: "chat",
 			chatStream: stream,
-			lastSyncedIndex: 0,
 		})
 
-		this.startPolling(taskId)
+		this.subscribeToTask(taskId)
 		this.outputChannel.appendLine(`[ChatStateSync] Registered chat task: ${taskId}`)
 	}
 
@@ -47,7 +49,6 @@ export class ChatStateSync {
 		this.syncedTasks.set(taskId, {
 			taskId,
 			source: "webview",
-			lastSyncedIndex: 0,
 		})
 
 		this.outputChannel.appendLine(`[ChatStateSync] Registered webview task: ${taskId}`)
@@ -61,7 +62,7 @@ export class ChatStateSync {
 		const synced = this.syncedTasks.get(taskId)
 		if (synced) {
 			synced.chatStream = stream
-			this.startPolling(taskId)
+			this.subscribeToTask(taskId)
 		}
 	}
 
@@ -73,85 +74,98 @@ export class ChatStateSync {
 		if (!synced?.chatStream) return
 
 		try {
-			this.renderToChatStream(synced.chatStream, message)
-		} catch {
-			// Stream may have been disposed
+			renderClineMessage(synced.chatStream, message)
+		} catch (err) {
+			// Stream may have been disposed — warn but don't disrupt flow
+			logger.warn("ChatStateSync", `Failed to sync message for task ${taskId}:`, err)
 		}
 	}
 
-	private startPolling(taskId: string): void {
-		if (this.pollIntervals.has(taskId)) return
+	private subscribeToTask(taskId: string, retryCount = 0): void {
+		if (this.taskCleanupFns.has(taskId)) return
 
-		const interval = setInterval(() => {
-			const synced = this.syncedTasks.get(taskId)
-			if (!synced?.chatStream) {
-				this.stopPolling(taskId)
-				return
+		const currentTask = this.provider.getCurrentTask() as Task | undefined
+		if (!currentTask || currentTask.taskId !== taskId) {
+			// Task not yet available — retry with exponential backoff up to 5 times
+			if (retryCount < 5 && this.syncedTasks.has(taskId)) {
+				const delay = 200 * Math.pow(2, retryCount)
+				logger.warn(
+					"ChatStateSync",
+					`Task ${taskId} not ready. Retrying in ${delay}ms... (${retryCount + 1}/5)`,
+				)
+				const retryTimer = setTimeout(() => {
+					this.taskCleanupFns.delete(taskId)
+					this.subscribeToTask(taskId, retryCount + 1)
+				}, delay)
+				this.taskCleanupFns.set(taskId, () => clearTimeout(retryTimer))
+			} else if (retryCount >= 5) {
+				logger.warn(
+					"ChatStateSync",
+					`Failed to subscribe to task ${taskId} after 5 retries. Current task ID: ${currentTask?.taskId || "none"}`,
+				)
 			}
+			return
+		}
+
+		const synced = this.syncedTasks.get(taskId)
+		if (!synced?.chatStream) return
+
+		const onMessage = (data: { action: "created" | "updated"; message: ClineMessage }) => {
+			if (data?.action !== "created") return
+			const s = this.syncedTasks.get(taskId)
+			if (!s?.chatStream) return
 
 			try {
-				const currentTask = (this.provider as Record<string, UnsafeAny>).getCurrentTask?.()
-				if (!currentTask || currentTask.taskId !== taskId) return
-
-				const messages: ClineMessage[] = currentTask.clineMessages || []
-				for (let i = synced.lastSyncedIndex; i < messages.length; i++) {
-					this.renderToChatStream(synced.chatStream, messages[i]!)
-				}
-				synced.lastSyncedIndex = messages.length
-
-				if (currentTask.didFinishAbortingStream || currentTask.abandoned || currentTask.taskCompleted) {
-					this.stopPolling(taskId)
-				}
-			} catch {
-				this.stopPolling(taskId)
+				renderClineMessage(s.chatStream, data.message)
+			} catch (err) {
+				logger.warn("ChatStateSync", `Failed to render message for task ${taskId}:`, err)
 			}
-		}, 300)
-
-		this.pollIntervals.set(taskId, interval)
-	}
-
-	private stopPolling(taskId: string): void {
-		const interval = this.pollIntervals.get(taskId)
-		if (interval) {
-			clearInterval(interval)
-			this.pollIntervals.delete(taskId)
 		}
+
+		const onComplete = () => {
+			this.unsubscribeFromTask(taskId)
+		}
+
+		const onAbort = () => {
+			this.unsubscribeFromTask(taskId)
+		}
+
+		currentTask.on(NJUST_AIEventName.Message, onMessage)
+		currentTask.on(NJUST_AIEventName.TaskCompleted, onComplete)
+		currentTask.on(NJUST_AIEventName.TaskAborted, onAbort)
+
+		// Safety timer: catches didFinishAbortingStream / abandoned states
+		// that may not emit a corresponding event. Only checks flags, never polls messages.
+		const safetyTimer = setInterval(() => {
+			if (currentTask.didFinishAbortingStream || currentTask.abandoned || currentTask.taskCompleted) {
+				this.unsubscribeFromTask(taskId)
+			}
+		}, 3000)
+
+		this.taskCleanupFns.set(taskId, () => {
+			clearInterval(safetyTimer)
+			currentTask.off(NJUST_AIEventName.Message, onMessage)
+			currentTask.off(NJUST_AIEventName.TaskCompleted, onComplete)
+			currentTask.off(NJUST_AIEventName.TaskAborted, onAbort)
+		})
 	}
 
-	private renderToChatStream(stream: vscode.ChatResponseStream, msg: ClineMessage): void {
-		if (msg.type === "say") {
-			switch (msg.say) {
-				case "text":
-					if (msg.text) stream.markdown(msg.text)
-					break
-				case "tool":
-					if (msg.text) {
-						try {
-							const data = JSON.parse(msg.text)
-							stream.progress(`Tool: ${data.tool || "executing"}`)
-						} catch {
-							stream.progress("Executing tool...")
-						}
-					}
-					break
-				case "completion_result":
-					if (msg.text) stream.markdown(`\n---\n**Result:** ${msg.text}`)
-					break
-				case "error":
-					if (msg.text) stream.markdown(`\n**Error:** ${msg.text}`)
-					break
-			}
+	private unsubscribeFromTask(taskId: string): void {
+		const cleanup = this.taskCleanupFns.get(taskId)
+		if (cleanup) {
+			cleanup()
+			this.taskCleanupFns.delete(taskId)
 		}
 	}
 
 	unregisterTask(taskId: string): void {
-		this.stopPolling(taskId)
+		this.unsubscribeFromTask(taskId)
 		this.syncedTasks.delete(taskId)
 	}
 
 	dispose(): void {
-		for (const [taskId] of this.pollIntervals) {
-			this.stopPolling(taskId)
+		for (const [taskId] of this.taskCleanupFns) {
+			this.unsubscribeFromTask(taskId)
 		}
 		this.syncedTasks.clear()
 	}

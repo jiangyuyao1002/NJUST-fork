@@ -7,7 +7,13 @@ import type { ModeConfig, PromptComponent } from "./mode.js"
 import type { Experiments } from "./experiment.js"
 import type { ClineMessage, QueuedMessage } from "./message.js"
 import type { TodoItem } from "./todo.js"
-import type { CloudUserInfo, CloudOrganizationMembership, OrganizationAllowList, ShareVisibility, CloudAgentProfile } from "./cloud.js"
+import type {
+	CloudUserInfo,
+	CloudOrganizationMembership,
+	OrganizationAllowList,
+	ShareVisibility,
+	CloudAgentProfile,
+} from "./cloud.js"
 import type { SerializedCustomToolDefinition } from "./custom-tool.js"
 import type { GitCommit } from "./git.js"
 import type { McpServer } from "./mcp.js"
@@ -554,6 +560,7 @@ export interface WebviewMessage {
 		| "openSkillFile"
 		// Plan messages
 		| "planAction"
+		| "webviewError"
 	text?: string
 	taskId?: string
 	editedMessageContent?: string

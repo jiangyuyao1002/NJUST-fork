@@ -1,3 +1,5 @@
 export { ChatParticipantHandler } from "./ChatParticipantHandler"
 export { registerLMTools } from "./registerLMTools"
 export { ChatStateSync } from "./ChatStateSync"
+export { renderClineMessage } from "./message-renderer"
+export type { RenderSink } from "./message-renderer"

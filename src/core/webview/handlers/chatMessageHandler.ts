@@ -4,6 +4,8 @@ import * as fs from "fs/promises"
 import * as vscode from "vscode"
 
 import type { WebviewMessage, ProviderSettings } from "@njust-ai/types"
+import { TelemetryEventName } from "@njust-ai/types"
+import { TelemetryService } from "@njust-ai/telemetry"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../../utils/export"
 import { openFile } from "../../../integrations/misc/open-file"
 import { openImage, saveImage } from "../../../integrations/misc/image-handler"
@@ -56,6 +58,7 @@ export function registerChatHandlers(router: MessageRouter): void {
 	router.register("getDismissedUpsells", handleGetDismissedUpsells)
 	router.register("openMarkdownPreview", handleOpenMarkdownPreview)
 	router.register("downloadErrorDiagnostics", handleDownloadErrorDiagnostics)
+	router.register("webviewError", handleWebviewError)
 }
 
 async function handleCustomInstructions(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -64,9 +67,7 @@ async function handleCustomInstructions(context: MessageHandlerContext, message:
 
 async function handleAskResponse(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	const resolved = await resolveIncomingImages(context, { text: message.text, images: message.images })
-	context.provider
-		.getCurrentTask()
-		?.handleWebviewAskResponse(message.askResponse!, resolved.text, resolved.images)
+	context.provider.getCurrentTask()?.handleWebviewAskResponse(message.askResponse!, resolved.text, resolved.images)
 }
 
 function handleTerminalOperation(context: MessageHandlerContext, message: WebviewMessage): void {
@@ -303,11 +304,7 @@ async function handleTranscribeAudio(context: MessageHandlerContext, message: We
 		const { apiConfiguration, enhancementApiConfigId, listApiConfigMeta = [] } = state
 
 		let creds = getWhisperCredentialsFromProviderSettings(apiConfiguration)
-		if (
-			!creds &&
-			enhancementApiConfigId &&
-			listApiConfigMeta.some((m) => m.id === enhancementApiConfigId)
-		) {
+		if (!creds && enhancementApiConfigId && listApiConfigMeta.some((m) => m.id === enhancementApiConfigId)) {
 			try {
 				const { name: _n, ...profile } = await provider.providerSettingsManager.getProfile({
 					id: enhancementApiConfigId,
@@ -520,4 +517,16 @@ async function handleDownloadErrorDiagnostics(context: MessageHandlerContext, me
 		values: message.values,
 		log: (msg: string) => provider.log(msg),
 	})
+}
+
+async function handleWebviewError(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+	if (message.text) {
+		const error = new Error("Webview ErrorBoundary caught an error")
+		error.stack = `${error.message}\n${message.text}`
+		if (message.context) {
+			error.stack = `${error.stack}\n\nComponent Stack:\n${message.context}`
+		}
+		TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
+		context.provider.log(`[Webview ErrorBoundary]\nStack: ${message.text}\nContext: ${message.context || "none"}`)
+	}
 }

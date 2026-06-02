@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { useEvent } from "react-use"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 
 import { type ExtensionMessage } from "@njust-ai/types"
 
@@ -46,13 +47,8 @@ const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]
 }
 
 const App = () => {
-	const {
-		didHydrateState,
-		showWelcome,
-		shouldShowAnnouncement,
-		renderContext,
-		fontFamily,
-	} = useExtensionState()
+	const { t } = useTranslation()
+	const { didHydrateState, showWelcome, shouldShowAnnouncement, renderContext, fontFamily } = useExtensionState()
 
 	useEffect(() => {
 		if (fontFamily && fontFamily !== "serif") {
@@ -82,18 +78,15 @@ const App = () => {
 	const settingsRef = useRef<SettingsViewRef>(null)
 	const chatViewRef = useRef<ChatViewRef>(null)
 
-	const switchTab = useCallback(
-		(newTab: Tab) => {
-			setCurrentSection(undefined)
+	const switchTab = useCallback((newTab: Tab) => {
+		setCurrentSection(undefined)
 
-			if (settingsRef.current?.checkUnsaveChanges) {
-				settingsRef.current.checkUnsaveChanges(() => setTab(newTab))
-			} else {
-				setTab(newTab)
-			}
-		},
-		[],
-	)
+		if (settingsRef.current?.checkUnsaveChanges) {
+			settingsRef.current.checkUnsaveChanges(() => setTab(newTab))
+		} else {
+			setTab(newTab)
+		}
+	}, [])
 
 	const [currentSection, setCurrentSection] = useState<string | undefined>(undefined)
 
@@ -156,8 +149,6 @@ const App = () => {
 		}
 	}, [shouldShowAnnouncement, tab])
 
-
-
 	// Tell the extension that we are ready to receive messages.
 	useEffect(() => vscode.postMessage({ type: "webviewDidLaunch" }), [])
 
@@ -185,7 +176,6 @@ const App = () => {
 		}, [renderContext]),
 	)
 
-
 	if (!didHydrateState) {
 		return null
 	}
@@ -193,77 +183,115 @@ const App = () => {
 	// Do not conditionally load ChatView, it's expensive and there's state we
 	// don't want to lose (user input, disableInput, askResponse promise, etc.)
 	return showWelcome ? (
-		<WelcomeView />
+		<ErrorBoundary>
+			<WelcomeView />
+		</ErrorBoundary>
 	) : (
 		<>
-			{tab === "history" && <HistoryView onDone={() => switchTab("chat")} />}
+			{tab === "history" && (
+				<ErrorBoundary>
+					<HistoryView onDone={() => switchTab("chat")} />
+				</ErrorBoundary>
+			)}
 			{tab === "settings" && (
-				<SettingsView ref={settingsRef} onDone={() => setTab("chat")} targetSection={currentSection} />
+				<ErrorBoundary>
+					<SettingsView ref={settingsRef} onDone={() => setTab("chat")} targetSection={currentSection} />
+				</ErrorBoundary>
 			)}
-			<ChatView
-				ref={chatViewRef}
-				isHidden={tab !== "chat"}
-				showAnnouncement={showAnnouncement}
-				hideAnnouncement={() => setShowAnnouncement(false)}
-			/>
-			{deleteMessageDialogState.hasCheckpoint ? (
-				<MemoizedCheckpointRestoreDialog
-					open={deleteMessageDialogState.isOpen}
-					type="delete"
-					hasCheckpoint={deleteMessageDialogState.hasCheckpoint}
-					onOpenChange={(open: boolean) => setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: open }))}
-					onConfirm={(restoreCheckpoint: boolean) => {
-						vscode.postMessage({
-							type: "deleteMessageConfirm",
-							messageTs: deleteMessageDialogState.messageTs,
-							restoreCheckpoint,
-						})
-						setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: false }))
-					}}
+			<ErrorBoundary
+				fallback={(_error) => (
+					<div className="flex flex-col items-center justify-center h-full p-6 text-center">
+						<h2 className="text-lg font-bold mb-4">{t("common:errorBoundary.chatErrorTitle")}</h2>
+						<p className="mb-4 text-sm opacity-80">{t("common:errorBoundary.chatErrorMessage")}</p>
+						<button
+							onClick={() => vscode.postMessage({ type: "downloadErrorDiagnostics" })}
+							className="px-4 py-2 bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground rounded text-sm font-medium">
+							{t("common:errorBoundary.downloadDiagnostics")}
+						</button>
+						<p className="mt-4 text-xs opacity-60">{t("common:errorBoundary.reloadInstructions")}</p>
+					</div>
+				)}>
+				<ChatView
+					ref={chatViewRef}
+					isHidden={tab !== "chat"}
+					showAnnouncement={showAnnouncement}
+					hideAnnouncement={() => setShowAnnouncement(false)}
 				/>
-			) : (
-				<MemoizedDeleteMessageDialog
-					open={deleteMessageDialogState.isOpen}
-					onOpenChange={(open: boolean) => setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: open }))}
-					onConfirm={() => {
-						vscode.postMessage({
-							type: "deleteMessageConfirm",
-							messageTs: deleteMessageDialogState.messageTs,
-						})
-						setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: false }))
-					}}
-				/>
+			</ErrorBoundary>
+			{deleteMessageDialogState.isOpen && (
+				<ErrorBoundary>
+					{deleteMessageDialogState.hasCheckpoint ? (
+						<MemoizedCheckpointRestoreDialog
+							open={deleteMessageDialogState.isOpen}
+							type="delete"
+							hasCheckpoint={deleteMessageDialogState.hasCheckpoint}
+							onOpenChange={(open: boolean) =>
+								setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: open }))
+							}
+							onConfirm={(restoreCheckpoint: boolean) => {
+								vscode.postMessage({
+									type: "deleteMessageConfirm",
+									messageTs: deleteMessageDialogState.messageTs,
+									restoreCheckpoint,
+								})
+								setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: false }))
+							}}
+						/>
+					) : (
+						<MemoizedDeleteMessageDialog
+							open={deleteMessageDialogState.isOpen}
+							onOpenChange={(open: boolean) =>
+								setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: open }))
+							}
+							onConfirm={() => {
+								vscode.postMessage({
+									type: "deleteMessageConfirm",
+									messageTs: deleteMessageDialogState.messageTs,
+								})
+								setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: false }))
+							}}
+						/>
+					)}
+				</ErrorBoundary>
 			)}
-			{editMessageDialogState.hasCheckpoint ? (
-				<MemoizedCheckpointRestoreDialog
-					open={editMessageDialogState.isOpen}
-					type="edit"
-					hasCheckpoint={editMessageDialogState.hasCheckpoint}
-					onOpenChange={(open: boolean) => setEditMessageDialogState((prev) => ({ ...prev, isOpen: open }))}
-					onConfirm={(restoreCheckpoint: boolean) => {
-						vscode.postMessage({
-							type: "editMessageConfirm",
-							messageTs: editMessageDialogState.messageTs,
-							text: editMessageDialogState.text,
-							restoreCheckpoint,
-						})
-						setEditMessageDialogState((prev) => ({ ...prev, isOpen: false }))
-					}}
-				/>
-			) : (
-				<MemoizedEditMessageDialog
-					open={editMessageDialogState.isOpen}
-					onOpenChange={(open: boolean) => setEditMessageDialogState((prev) => ({ ...prev, isOpen: open }))}
-					onConfirm={() => {
-						vscode.postMessage({
-							type: "editMessageConfirm",
-							messageTs: editMessageDialogState.messageTs,
-							text: editMessageDialogState.text,
-							images: editMessageDialogState.images,
-						})
-						setEditMessageDialogState((prev) => ({ ...prev, isOpen: false }))
-					}}
-				/>
+			{editMessageDialogState.isOpen && (
+				<ErrorBoundary>
+					{editMessageDialogState.hasCheckpoint ? (
+						<MemoizedCheckpointRestoreDialog
+							open={editMessageDialogState.isOpen}
+							type="edit"
+							hasCheckpoint={editMessageDialogState.hasCheckpoint}
+							onOpenChange={(open: boolean) =>
+								setEditMessageDialogState((prev) => ({ ...prev, isOpen: open }))
+							}
+							onConfirm={(restoreCheckpoint: boolean) => {
+								vscode.postMessage({
+									type: "editMessageConfirm",
+									messageTs: editMessageDialogState.messageTs,
+									text: editMessageDialogState.text,
+									restoreCheckpoint,
+								})
+								setEditMessageDialogState((prev) => ({ ...prev, isOpen: false }))
+							}}
+						/>
+					) : (
+						<MemoizedEditMessageDialog
+							open={editMessageDialogState.isOpen}
+							onOpenChange={(open: boolean) =>
+								setEditMessageDialogState((prev) => ({ ...prev, isOpen: open }))
+							}
+							onConfirm={() => {
+								vscode.postMessage({
+									type: "editMessageConfirm",
+									messageTs: editMessageDialogState.messageTs,
+									text: editMessageDialogState.text,
+									images: editMessageDialogState.images,
+								})
+								setEditMessageDialogState((prev) => ({ ...prev, isOpen: false }))
+							}}
+						/>
+					)}
+				</ErrorBoundary>
 			)}
 		</>
 	)

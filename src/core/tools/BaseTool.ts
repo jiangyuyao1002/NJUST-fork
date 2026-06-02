@@ -5,7 +5,14 @@ import { type ZodSchema } from "zod"
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import type { PermissionRuleEngine } from "./permissions/PermissionRuleEngine"
 import { Task } from "../task/Task"
-import type { ToolUse, ToolResponse, HandleError, PushToolResult, AskApproval, NativeToolArgs } from "../../shared/tools"
+import type {
+	ToolUse,
+	ToolResponse,
+	HandleError,
+	PushToolResult,
+	AskApproval,
+	NativeToolArgs,
+} from "../../shared/tools"
 import { formatResponse } from "../prompts/responses"
 import type { ToolProgressStatus } from "@njust-ai/types"
 import { getToolResultBudget, truncateToolResult, estimateTokens } from "./toolResultBudget"
@@ -45,13 +52,6 @@ export interface ObservableInput<T = Record<string, UnsafeAny>> {
 	readonly original: T
 	/** Derived/computed fields for observers (UI, hooks, logs). */
 	readonly derived: Record<string, UnsafeAny>
-}
-
-/**
- * @deprecated Use RetryableError.isRetryable() instead.
- */
-function isRetryableToolError(error: UnsafeAny): boolean {
-	return RetryableError.isRetryable(error)
 }
 
 /**
@@ -407,318 +407,344 @@ export abstract class BaseTool<TName extends ToolName> {
 		)
 		try {
 			// Handle partial messages
-		if (block.partial) {
+			if (block.partial) {
+				try {
+					await this.handlePartial(task, block)
+					toolSpan.end("ok", { stage: "partial" })
+				} catch (error) {
+					if (error instanceof AskIgnoredError) {
+						toolSpan.end("ok", { stage: "partial_ignored" })
+						return
+					}
+					logger.error("BaseTool", "Error in handlePartial:", error)
+					TelemetryService.reportError(
+						error instanceof Error ? error : new Error(String(error)),
+						TelemetryEventName.UTILITY_ERROR,
+					)
+					await callbacks.handleError(
+						`handling partial ${this.name}`,
+						error instanceof Error ? error : new Error(String(error)),
+					)
+					toolSpan.end("error", { stage: "partial", error: getErrorMessage(error) })
+				}
+				return
+			}
+
+			// Native-only: obtain typed parameters from `nativeArgs`.
+			let params: ToolParams<TName>
 			try {
-				await this.handlePartial(task, block)
-				toolSpan.end("ok", { stage: "partial" })
+				if (block.nativeArgs !== undefined) {
+					// Native: typed args provided by NativeToolCallParser.
+					params = block.nativeArgs as ToolParams<TName>
+				} else {
+					// If legacy/XML markup was provided via params, surface a clear error.
+					const paramsText = (() => {
+						try {
+							return JSON.stringify(block.params ?? {})
+						} catch {
+							return ""
+						}
+					})()
+					if (paramsText.includes("<") && paramsText.includes(">")) {
+						throw new Error(
+							"XML tool calls are no longer supported. Use native tool calling (nativeArgs) instead.",
+						)
+					}
+					throw new Error("Tool call is missing native arguments (nativeArgs).")
+				}
 			} catch (error) {
-				if (error instanceof AskIgnoredError) {
-					toolSpan.end("ok", { stage: "partial_ignored" })
+				logger.error("BaseTool", "Error parsing parameters:", error)
+				TelemetryService.reportError(
+					error instanceof Error ? error : new Error(String(error)),
+					TelemetryEventName.UTILITY_ERROR,
+				)
+				const errorMessage = `Failed to parse ${this.name} parameters: ${getErrorMessage(error)}`
+				await callbacks.handleError(`parsing ${this.name} args`, new Error(errorMessage))
+				toolSpan.end("error", { stage: "parse", error: errorMessage })
+				// Note: handleError already emits a tool_result via formatResponse.toolError in the caller.
+				// Do NOT call pushToolResult here to avoid duplicate tool_result payloads.
+				return
+			}
+
+			// Validation pipeline: Zod schema → preprocessInput → business logic
+			// Step 1: Zod schema validation (structural)
+			if (this.inputSchema) {
+				const validator = createToolValidator(this.inputSchema)
+				const validation = validator.validate(params as Record<string, unknown>)
+				if (!validation.valid) {
+					callbacks.pushToolResult(
+						formatResponse.toolError(
+							validation.error || "Invalid tool input. Please check the tool parameters and try again.",
+						),
+					)
+					toolSpan.end("error", { stage: "schema", error: validation.error || "invalid_input" })
 					return
 				}
-				logger.error("BaseTool", "Error in handlePartial:", error)
-				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
-				await callbacks.handleError(
-					`handling partial ${this.name}`,
-					error instanceof Error ? error : new Error(String(error)),
-				)
-				toolSpan.end("error", { stage: "partial", error: getErrorMessage(error) })
 			}
-			return
-		}
 
-		// Native-only: obtain typed parameters from `nativeArgs`.
-		let params: ToolParams<TName>
-		try {
-			if (block.nativeArgs !== undefined) {
-				// Native: typed args provided by NativeToolCallParser.
-				params = block.nativeArgs as ToolParams<TName>
-			} else {
-				// If legacy/XML markup was provided via params, surface a clear error.
-				const paramsText = (() => {
-					try {
-						return JSON.stringify(block.params ?? {})
-					} catch {
-						return ""
-					}
-				})()
-				if (paramsText.includes("<") && paramsText.includes(">")) {
-					throw new Error(
-						"XML tool calls are no longer supported. Use native tool calling (nativeArgs) instead.",
-					)
-				}
-				throw new Error("Tool call is missing native arguments (nativeArgs).")
-			}
-		} catch (error) {
-			logger.error("BaseTool", "Error parsing parameters:", error)
-			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
-			const errorMessage = `Failed to parse ${this.name} parameters: ${getErrorMessage(error)}`
-			await callbacks.handleError(`parsing ${this.name} args`, new Error(errorMessage))
-			toolSpan.end("error", { stage: "parse", error: errorMessage })
-			// Note: handleError already emits a tool_result via formatResponse.toolError in the caller.
-			// Do NOT call pushToolResult here to avoid duplicate tool_result payloads.
-			return
-		}
+			// Step 2: Preprocess/normalize inputs (e.g., path normalization)
+			params = this.preprocessInput(params)
 
-		// Validation pipeline: Zod schema → preprocessInput → business logic
-		// Step 1: Zod schema validation (structural)
-		if (this.inputSchema) {
-			const validator = createToolValidator(this.inputSchema)
-			const validation = validator.validate(params as Record<string, unknown>)
+			// Step 3: Business logic validation (semantic)
+			const validation = this.validateInput(params)
 			if (!validation.valid) {
+				callbacks.pushToolResult(formatResponse.toolError(validation.error || "Invalid input parameters"))
+				toolSpan.end("error", { stage: "validate", error: validation.error || "invalid_input" })
+				return
+			}
+
+			// Build hook context (needed for both pre-hooks and permission denied hooks)
+			const hookManager = ToolHookManager.instance
+			const hookContext: ToolHookContext = {
+				taskId: task.taskId,
+				toolUseId: block.id ?? "",
+				cwd: task.cwd,
+			}
+
+			// ── Pre-hook execution (configurable order) ──────────────────
+			// When hookExecutionOrder === 'before-permission' (default, CC-aligned):
+			//   pre-hooks run BEFORE permission checks, allowing hooks to block
+			//   or modify input before the permission system sees it.
+			// When hookExecutionOrder === 'after-permission' (legacy):
+			//   pre-hooks run AFTER permission checks (original behavior).
+			if (hookManager.hookExecutionOrder === "before-permission") {
+				try {
+					const preResult = await hookManager.runPreHooks(
+						this.name,
+						params as Record<string, UnsafeAny>,
+						hookContext,
+					)
+					if (!preResult.allow) {
+						callbacks.pushToolResult(
+							formatResponse.toolError(
+								`Tool execution blocked by hook${preResult.reason ? `: ${preResult.reason}` : ""}`,
+							),
+						)
+						toolSpan.end("error", { stage: "pre_hook", blocked: true })
+						return
+					}
+					if (preResult.modifiedInput) {
+						params = preResult.modifiedInput as ToolParams<TName>
+					}
+				} catch (hookErr) {
+					logger.warn("BaseTool", "Pre-hook error (ignored):", hookErr)
+				}
+			}
+
+			const permissionContext = {
+				ruleEngine: (task as Task & { permissionRuleEngine?: PermissionRuleEngine }).permissionRuleEngine,
+			}
+			const isAllowed = await this.checkPermissions(
+				params as Record<string, UnsafeAny>,
+				callbacks,
+				permissionContext,
+			)
+			if (!isAllowed) {
+				callbacks.pushToolResult(formatResponse.toolError(`Permission denied for tool '${this.name}'.`))
+				toolSpan.end("error", { stage: "permission", denied: true })
+				// Run permission denied hooks for audit logging
+				try {
+					await hookManager.runPermissionDeniedHooks(
+						this.name,
+						params as Record<string, UnsafeAny>,
+						`Permission denied for tool '${this.name}'`,
+						hookContext,
+					)
+				} catch (hookErr) {
+					logger.warn("BaseTool", "PermissionDenied hook error (ignored):", hookErr)
+				}
+				return
+			}
+
+			// ── Pre-hook execution (after-permission mode) ───────────────
+			if (hookManager.hookExecutionOrder === "after-permission") {
+				try {
+					const preResult = await hookManager.runPreHooks(
+						this.name,
+						params as Record<string, UnsafeAny>,
+						hookContext,
+					)
+					if (!preResult.allow) {
+						callbacks.pushToolResult(
+							formatResponse.toolError(
+								`Tool execution blocked by hook${preResult.reason ? `: ${preResult.reason}` : ""}`,
+							),
+						)
+						toolSpan.end("error", { stage: "pre_hook", blocked: true })
+						return
+					}
+					if (preResult.modifiedInput) {
+						params = preResult.modifiedInput as ToolParams<TName>
+					}
+				} catch (hookErr) {
+					logger.warn("BaseTool", "Pre-hook error (ignored):", hookErr)
+				}
+			}
+
+			// Wrap pushToolResult with token budget truncation
+			// Some unit tests use minimal task mocks without api/getModel; fall back safely.
+			const contextWindow = task.api?.getModel?.()?.info?.contextWindow || 200_000
+			const { singleMax } = getToolResultBudget(contextWindow)
+			const originalPushToolResult = callbacks.pushToolResult
+			const cacheableReadOnly = this.isReadOnly(params as Record<string, UnsafeAny>)
+			const cacheKey = cacheableReadOnly ? toolResultCache.makeKey(this.name, params) : undefined
+			if (cacheKey) {
+				const cached = toolResultCache.get(cacheKey)
+				if (cached !== undefined) {
+					logger.info("BaseTool", `ToolCache hit tool=${this.name}`)
+					recordSecurityMetric("tool_cache_hit", { tool: this.name })
+					originalPushToolResult(cached)
+					toolSpan.end("ok", { stage: "cache", cacheHit: true })
+					return
+				}
+				logger.info("BaseTool", `ToolCache miss tool=${this.name}`)
+				recordSecurityMetric("tool_cache_miss", { tool: this.name })
+			}
+
+			if (callbacks.abortSignal?.aborted) {
 				callbacks.pushToolResult(
 					formatResponse.toolError(
-						validation.error || "Invalid tool input. Please check the tool parameters and try again.",
+						"Tool execution was cancelled (parallel batch aborted or sibling tool failed).",
 					),
+					{ isError: true },
 				)
-				toolSpan.end("error", { stage: "schema", error: validation.error || "invalid_input" })
+				toolSpan.end("error", { stage: "aborted", aborted: true })
 				return
 			}
-		}
 
-		// Step 2: Preprocess/normalize inputs (e.g., path normalization)
-		params = this.preprocessInput(params)
-
-		// Step 3: Business logic validation (semantic)
-		const validation = this.validateInput(params)
-		if (!validation.valid) {
-			callbacks.pushToolResult(formatResponse.toolError(validation.error || "Invalid input parameters"))
-			toolSpan.end("error", { stage: "validate", error: validation.error || "invalid_input" })
-			return
-		}
-
-		// Build hook context (needed for both pre-hooks and permission denied hooks)
-		const hookManager = ToolHookManager.instance
-		const hookContext: ToolHookContext = {
-			taskId: task.taskId,
-			toolUseId: block.id ?? "",
-			cwd: task.cwd,
-		}
-
-		// ── Pre-hook execution (configurable order) ──────────────────
-		// When hookExecutionOrder === 'before-permission' (default, CC-aligned):
-		//   pre-hooks run BEFORE permission checks, allowing hooks to block
-		//   or modify input before the permission system sees it.
-		// When hookExecutionOrder === 'after-permission' (legacy):
-		//   pre-hooks run AFTER permission checks (original behavior).
-		if (hookManager.hookExecutionOrder === "before-permission") {
-			try {
-				const preResult = await hookManager.runPreHooks(this.name, params as Record<string, UnsafeAny>, hookContext)
-				if (!preResult.allow) {
-					callbacks.pushToolResult(
-						formatResponse.toolError(
-							`Tool execution blocked by hook${preResult.reason ? `: ${preResult.reason}` : ""}`,
-						),
-					)
-					toolSpan.end("error", { stage: "pre_hook", blocked: true })
-					return
-				}
-				if (preResult.modifiedInput) {
-					params = preResult.modifiedInput as ToolParams<TName>
-				}
-			} catch (hookErr) {
-				logger.warn("BaseTool", "Pre-hook error (ignored):", hookErr)
-			}
-		}
-
-		const permissionContext = {
-			ruleEngine: (task as Task & { permissionRuleEngine?: PermissionRuleEngine }).permissionRuleEngine,
-		}
-		const isAllowed = await this.checkPermissions(params as Record<string, UnsafeAny>, callbacks, permissionContext)
-		if (!isAllowed) {
-			callbacks.pushToolResult(formatResponse.toolError(`Permission denied for tool '${this.name}'.`))
-			toolSpan.end("error", { stage: "permission", denied: true })
-			// Run permission denied hooks for audit logging
-			try {
-				await hookManager.runPermissionDeniedHooks(
-					this.name,
-					params as Record<string, UnsafeAny>,
-					`Permission denied for tool '${this.name}'`,
-					hookContext,
-				)
-			} catch (hookErr) {
-				logger.warn("BaseTool", "PermissionDenied hook error (ignored):", hookErr)
-			}
-			return
-		}
-
-		// ── Pre-hook execution (after-permission mode) ───────────────
-		if (hookManager.hookExecutionOrder === "after-permission") {
-			try {
-				const preResult = await hookManager.runPreHooks(this.name, params as Record<string, UnsafeAny>, hookContext)
-				if (!preResult.allow) {
-					callbacks.pushToolResult(
-						formatResponse.toolError(
-							`Tool execution blocked by hook${preResult.reason ? `: ${preResult.reason}` : ""}`,
-						),
-					)
-					toolSpan.end("error", { stage: "pre_hook", blocked: true })
-					return
-				}
-				if (preResult.modifiedInput) {
-					params = preResult.modifiedInput as ToolParams<TName>
-				}
-			} catch (hookErr) {
-				logger.warn("BaseTool", "Pre-hook error (ignored):", hookErr)
-			}
-		}
-
-		// Wrap pushToolResult with token budget truncation
-		// Some unit tests use minimal task mocks without api/getModel; fall back safely.
-		const contextWindow = task.api?.getModel?.()?.info?.contextWindow || 200_000
-		const { singleMax } = getToolResultBudget(contextWindow)
-		const originalPushToolResult = callbacks.pushToolResult
-		const cacheableReadOnly = this.isReadOnly(params as Record<string, UnsafeAny>)
-		const cacheKey = cacheableReadOnly ? toolResultCache.makeKey(this.name, params) : undefined
-		if (cacheKey) {
-			const cached = toolResultCache.get(cacheKey)
-			if (cached !== undefined) {
-				logger.info("BaseTool", `ToolCache hit tool=${this.name}`)
-				recordSecurityMetric("tool_cache_hit", { tool: this.name })
-				originalPushToolResult(cached)
-				toolSpan.end("ok", { stage: "cache", cacheHit: true })
-				return
-			}
-			logger.info("BaseTool", `ToolCache miss tool=${this.name}`)
-			recordSecurityMetric("tool_cache_miss", { tool: this.name })
-		}
-
-		if (callbacks.abortSignal?.aborted) {
-			callbacks.pushToolResult(
-				formatResponse.toolError(
-					"Tool execution was cancelled (parallel batch aborted or sibling tool failed).",
-				),
-				{ isError: true },
-			)
-			toolSpan.end("error", { stage: "aborted", aborted: true })
-			return
-		}
-
-		// Capture the last tool result for post-hooks
-		let capturedResult: ToolResponse | undefined
-		const toolUseId = block.id || callbacks.toolCallId || "UnsafeAny"
-		const pendingPersist: Promise<void>[] = []
-		const wrappedCallbacks: ToolCallbacks = {
-			...callbacks,
-			pushToolResult: (content, opts) => {
-				capturedResult = content
-				if (typeof content === "string" && content.length > 0) {
-					// Phase 1: Persist large results to disk (>100KB)
-					if (shouldPersistResult(content)) {
-						const persistPromise = persistToolResult(content, task.taskId, toolUseId, task.cwd)
-							.then((stored) => {
-								const message = formatStoredResultMessage(stored)
-								logger.info(
-									"BaseTool",
-									`ToolResultStorage: Persisted ${this.name} result (${stored.totalChars} chars) to ${stored.filePath}`,
-								)
-								if (cacheKey) {
-									toolResultCache.set(cacheKey, message)
-								}
-								originalPushToolResult(message, opts)
-							})
-							.catch((err) => {
-								// If persistence fails, fall back to token truncation
-								logger.error("BaseTool", "ToolResultStorage: Failed to persist result:", err)
-								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
-								const tokens = estimateTokens(content)
-								if (tokens > singleMax) {
-									const truncated = truncateToolResult(content, singleMax)
+			// Capture the last tool result for post-hooks
+			let capturedResult: ToolResponse | undefined
+			const toolUseId = block.id || callbacks.toolCallId || "UnsafeAny"
+			const pendingPersist: Promise<void>[] = []
+			const wrappedCallbacks: ToolCallbacks = {
+				...callbacks,
+				pushToolResult: (content, opts) => {
+					capturedResult = content
+					if (typeof content === "string" && content.length > 0) {
+						// Phase 1: Persist large results to disk (>100KB)
+						if (shouldPersistResult(content)) {
+							const persistPromise = persistToolResult(content, task.taskId, toolUseId, task.cwd)
+								.then((stored) => {
+									const message = formatStoredResultMessage(stored)
+									logger.info(
+										"BaseTool",
+										`ToolResultStorage: Persisted ${this.name} result (${stored.totalChars} chars) to ${stored.filePath}`,
+									)
 									if (cacheKey) {
-										toolResultCache.set(cacheKey, truncated)
+										toolResultCache.set(cacheKey, message)
 									}
-									originalPushToolResult(truncated, opts)
-								} else {
-									if (cacheKey) {
-										toolResultCache.set(cacheKey, content)
+									originalPushToolResult(message, opts)
+								})
+								.catch((err) => {
+									// If persistence fails, fall back to token truncation
+									logger.error("BaseTool", "ToolResultStorage: Failed to persist result:", err)
+									TelemetryService.reportError(
+										err instanceof Error ? err : new Error(String(err)),
+										TelemetryEventName.UTILITY_ERROR,
+									)
+									const tokens = estimateTokens(content)
+									if (tokens > singleMax) {
+										const truncated = truncateToolResult(content, singleMax)
+										if (cacheKey) {
+											toolResultCache.set(cacheKey, truncated)
+										}
+										originalPushToolResult(truncated, opts)
+									} else {
+										if (cacheKey) {
+											toolResultCache.set(cacheKey, content)
+										}
+										originalPushToolResult(content, opts)
 									}
-									originalPushToolResult(content, opts)
-								}
-							})
-						pendingPersist.push(persistPromise)
-						return
-					}
-
-					// Phase 2: Token budget truncation for medium results
-					const tokens = estimateTokens(content)
-					if (tokens > singleMax) {
-						const truncated = truncateToolResult(content, singleMax)
-						logger.info(
-							"BaseTool",
-							`ToolResultBudget: Truncated ${this.name} result: ${tokens} -> ~${singleMax} tokens`,
-						)
-						if (cacheKey) {
-							toolResultCache.set(cacheKey, truncated)
+								})
+							pendingPersist.push(persistPromise)
+							return
 						}
-						originalPushToolResult(truncated, opts)
-						return
+
+						// Phase 2: Token budget truncation for medium results
+						const tokens = estimateTokens(content)
+						if (tokens > singleMax) {
+							const truncated = truncateToolResult(content, singleMax)
+							logger.info(
+								"BaseTool",
+								`ToolResultBudget: Truncated ${this.name} result: ${tokens} -> ~${singleMax} tokens`,
+							)
+							if (cacheKey) {
+								toolResultCache.set(cacheKey, truncated)
+							}
+							originalPushToolResult(truncated, opts)
+							return
+						}
+						if (cacheKey) {
+							toolResultCache.set(cacheKey, content)
+						}
 					}
-					if (cacheKey) {
-						toolResultCache.set(cacheKey, content)
-					}
-				}
-				// For non-string (array with images) or small results, pass through
-				originalPushToolResult(content, opts)
-			},
-		}
+					// For non-string (array with images) or small results, pass through
+					originalPushToolResult(content, opts)
+				},
+			}
 
-		// Execute with typed parameters, wrapped in retry + hook handling
-		const retryable = this.isReadOnly(params as Record<string, UnsafeAny>)
-		const maxAttempts = retryable ? 3 : 1
-		let attempt = 0
-		let lastError: UnsafeAny
-		while (attempt < maxAttempts) {
-			attempt++
-			try {
-				await this.execute(params, task, wrappedCallbacks)
-
-				// Wait for any pending persistence operations to complete
-				if (pendingPersist.length > 0) {
-					await Promise.all(pendingPersist)
-				}
-
-				if (retryable && attempt > 1) {
-					logger.info("BaseTool", `ToolRetry: success tool=${this.name} attempts=${attempt}`)
-					recordSecurityMetric("tool_retry_success", { tool: this.name, attempts: attempt })
-				}
-
-				// Run post-hooks after successful execution
+			// Execute with typed parameters, wrapped in retry + hook handling
+			const retryable = this.isReadOnly(params as Record<string, UnsafeAny>)
+			const maxAttempts = retryable ? 3 : 1
+			let attempt = 0
+			let lastError: unknown
+			while (attempt < maxAttempts) {
+				attempt++
 				try {
-					await hookManager.runPostHooks(this.name, params as Record<string, UnsafeAny>, capturedResult, hookContext)
-				} catch (hookErr) {
-					logger.warn("BaseTool", "Post-hook error (ignored):", hookErr)
+					await this.execute(params, task, wrappedCallbacks)
+
+					// Wait for any pending persistence operations to complete
+					if (pendingPersist.length > 0) {
+						await Promise.all(pendingPersist)
+					}
+
+					if (retryable && attempt > 1) {
+						logger.info("BaseTool", `ToolRetry: success tool=${this.name} attempts=${attempt}`)
+						recordSecurityMetric("tool_retry_success", { tool: this.name, attempts: attempt })
+					}
+
+					// Run post-hooks after successful execution
+					try {
+						await hookManager.runPostHooks(
+							this.name,
+							params as Record<string, UnsafeAny>,
+							capturedResult,
+							hookContext,
+						)
+					} catch (hookErr) {
+						logger.warn("BaseTool", "Post-hook error (ignored):", hookErr)
+					}
+					toolSpan.end("ok", { stage: "execute", attempts: attempt })
+					return
+				} catch (error) {
+					lastError = error
+					if (!retryable || attempt >= maxAttempts || !RetryableError.isRetryable(error)) {
+						break
+					}
+					const backoff = 200 * 2 ** (attempt - 1)
+					const jitter = Math.floor(Math.random() * 75)
+					const waitMs = backoff + jitter
+					logger.warn("BaseTool", `ToolRetry: retry tool=${this.name} attempt=${attempt} waitMs=${waitMs}`)
+					recordSecurityMetric("tool_retry", { tool: this.name, attempt, waitMs })
+					await new Promise((resolve) => setTimeout(resolve, waitMs))
 				}
-				toolSpan.end("ok", { stage: "execute", attempts: attempt })
-				return
-			} catch (error) {
-				lastError = error
-				if (!retryable || attempt >= maxAttempts || !isRetryableToolError(error)) {
-					break
+			}
+			try {
+				if (pendingPersist.length > 0) {
+					await Promise.allSettled(pendingPersist)
 				}
-				const backoff = 200 * 2 ** (attempt - 1)
-				const jitter = Math.floor(Math.random() * 75)
-				const waitMs = backoff + jitter
-				logger.warn("BaseTool", `ToolRetry: retry tool=${this.name} attempt=${attempt} waitMs=${waitMs}`)
-				recordSecurityMetric("tool_retry", { tool: this.name, attempt, waitMs })
-				await new Promise((resolve) => setTimeout(resolve, waitMs))
+				// Run failure hooks
+				const error = lastError instanceof Error ? lastError : new Error(String(lastError))
+				await hookManager.runFailureHooks(this.name, params as Record<string, UnsafeAny>, error, hookContext)
+			} catch (hookErr) {
+				logger.warn("BaseTool", "Failure-hook error (ignored):", hookErr)
 			}
-		}
-		try {
-			if (pendingPersist.length > 0) {
-				await Promise.allSettled(pendingPersist)
-			}
-			// Run failure hooks
-			const error = lastError instanceof Error ? lastError : new Error(String(lastError))
-			await hookManager.runFailureHooks(this.name, params as Record<string, UnsafeAny>, error, hookContext)
-		} catch (hookErr) {
-			logger.warn("BaseTool", "Failure-hook error (ignored):", hookErr)
-		}
-		toolSpan.end("error", {
-			stage: "execute",
-			attempts: attempt,
-			error: getErrorMessage(lastError),
-		})
-		throw lastError instanceof Error ? lastError : new Error(String(lastError))
+			toolSpan.end("error", {
+				stage: "execute",
+				attempts: attempt,
+				error: getErrorMessage(lastError),
+			})
+			throw lastError instanceof Error ? lastError : new Error(String(lastError))
 		} finally {
 			const durationMs = Date.now() - toolStartAt
 			const memEnd = process.memoryUsage()
