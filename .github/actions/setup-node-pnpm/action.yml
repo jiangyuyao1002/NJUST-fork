@@ -47,9 +47,10 @@ runs:
           shell: bash
           env:
               INSTALL_ARGS: ${{ inputs.install-args }}
+              GITHUB_TOKEN: ${{ github.token }}
           run: |
               # Reject install-args containing shell metacharacters to prevent injection.
-              if printf '%s' "$INSTALL_ARGS" | grep -qP '[;&|`$(){}!<>]'; then
+              if printf '%s' "$INSTALL_ARGS" | grep -qE '[;&|`$(){}!<>]'; then
                 echo "::error::install-args contains disallowed shell characters"
                 exit 1
               fi
