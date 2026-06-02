@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { clineMessageSchema } from "@njust-ai/types"
 
 const unknownObjectSchema = z.record(z.string(), z.unknown())
 const optionalStringArraySchema = z.array(z.string()).optional()
@@ -8,13 +9,6 @@ const openedTabSchema = z.object({
 	isActive: z.boolean(),
 	path: z.string().optional(),
 })
-
-const clineMessageSchema = z
-	.object({
-		id: z.string(),
-		type: z.enum(["say", "ask"]),
-	})
-	.passthrough()
 
 const actionMessageSchema = z.object({
 	type: z.literal("action"),
@@ -89,9 +83,22 @@ const handledExtensionMessageSchema = z.discriminatedUnion("type", [
 
 export type ParsedExtensionStateMessage = z.infer<typeof handledExtensionMessageSchema>
 
-const handledMessageTypes = new Set(
-	handledExtensionMessageSchema.options.map((schema) => (schema.shape.type as z.ZodLiteral<string>).value),
-)
+const handledMessageTypes: Set<string> = new Set([
+	"state",
+	"action",
+	"theme",
+	"workspaceUpdated",
+	"commands",
+	"messageUpdated",
+	"skills",
+	"mcpServers",
+	"currentCheckpointUpdated",
+	"listApiConfig",
+	"routerModels",
+	"taskHistoryUpdated",
+	"taskHistoryItemUpdated",
+	"taskMetrics",
+])
 
 export function parseExtensionStateMessage(data: unknown): ParsedExtensionStateMessage | undefined {
 	if (!data || typeof data !== "object") {

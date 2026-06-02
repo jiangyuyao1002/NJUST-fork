@@ -5,7 +5,11 @@
 		"githubText": "我们的 GitHub Issues 页面",
 		"copyInstructions": "复制并粘贴以下错误信息，将其作为提交内容的一部分：",
 		"errorStack": "错误堆栈：",
-		"componentStack": "组件堆栈："
+		"componentStack": "组件堆栈：",
+		"chatErrorTitle": "聊天界面出错",
+		"chatErrorMessage": "发生了意外错误。为防止数据丢失，聊天界面已暂停。",
+		"downloadDiagnostics": "下载诊断信息",
+		"reloadInstructions": "请下载诊断信息后重新加载 VSCode 窗口。"
 	},
 	"answers": {
 		"yes": "是",

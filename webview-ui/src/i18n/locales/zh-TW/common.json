@@ -5,7 +5,11 @@
 		"githubText": "我們的 GitHub Issues 頁面",
 		"copyInstructions": "複製並貼上以下錯誤訊息，將其作為提交內容的一部分：",
 		"errorStack": "錯誤堆疊：",
-		"componentStack": "元件堆疊："
+		"componentStack": "元件堆疊：",
+		"chatErrorTitle": "聊天介面錯誤",
+		"chatErrorMessage": "發生意外錯誤。為防止資料遺失，聊天介面已暫停。",
+		"downloadDiagnostics": "下載診斷資訊",
+		"reloadInstructions": "請下載診斷資訊後重新載入 VSCode 視窗。"
 	},
 	"answers": {
 		"yes": "是",

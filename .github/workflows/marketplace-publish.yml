@@ -30,6 +30,8 @@ jobs:
         run: pnpm lint
       - name: Check types
         run: pnpm check-types
+      - name: Build types package
+        run: pnpm --filter @njust-ai/types build
       - name: Run unit tests
         run: pnpm test
 

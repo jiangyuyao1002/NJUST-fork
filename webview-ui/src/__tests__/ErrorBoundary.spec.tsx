@@ -16,6 +16,14 @@ vi.mock("@src/utils/vscode", () => ({
 	},
 }))
 
+vi.mock("../utils/sourceMapUtils", () => ({
+	enhanceErrorWithSourceMaps: async (error: Error, componentStack?: string) => ({
+		stack: error.stack || error.message,
+		sourceMappedStack: error.stack || error.message,
+		sourceMappedComponentStack: componentStack || "",
+	}),
+}))
+
 // Mock translation function
 vi.mock("react-i18next", () => {
 	const tFunction = (key: string) => key
@@ -127,6 +135,23 @@ describe("ErrorBoundary", () => {
 			expect(screen.queryByText(/errorBoundary.title/)).not.toBeInTheDocument()
 		})
 
+		spy.mockRestore()
+	})
+
+	it("resets error state when Retry button is clicked", async () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+		render(
+			<ErrorBoundary>
+				<ErrorThrower shouldThrow={true} message="Retry test error" />
+			</ErrorBoundary>,
+		)
+		await waitFor(() => {
+			expect(screen.getByText(/errorBoundary.errorStack/)).toBeInTheDocument()
+		})
+		screen.getByText("Retry").click()
+		await waitFor(() => {
+			expect(screen.getByText(/errorBoundary.errorStack/)).toBeInTheDocument()
+		})
 		spy.mockRestore()
 	})
 })

@@ -55,7 +55,14 @@ class ErrorBoundary extends Component<ErrorProps, ErrorState> {
 		const { t, fallback } = this.props
 
 		if (this.state.hasError && !this.state.error) {
-			return null
+			if (fallback) {
+				return fallback("Loading error details...", null)
+			}
+			return (
+				<div>
+					<p className="text-sm opacity-70">{t("errorBoundary.title")}...</p>
+				</div>
+			)
 		}
 
 		if (!this.state.hasError) {

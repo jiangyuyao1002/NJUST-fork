@@ -28,6 +28,14 @@ import { experimentDefault } from "@shared/experiments"
 
 import { parseExtensionStateMessage } from "./extensionMessageSchema"
 
+/*
+  Bridge between Zod loose schema output and ExtensionState types.
+  Schema validates structure at runtime; this narrows the type for consumers.
+ */
+function narrow<T>(value: unknown): T | undefined {
+	return value as T | undefined
+}
+
 import { vscode } from "@src/utils/vscode"
 import { convertTextMateToHljs } from "@src/utils/textMateToHljs"
 
@@ -330,7 +338,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 
 			switch (message.type) {
 				case "state": {
-					const newState = message.state as unknown as Partial<ExtensionState> | undefined
+					const newState = narrow<Partial<ExtensionState>>(message.state)
 					setState((prevState) => mergeExtensionState(prevState, newState ?? {}))
 					setShowWelcome(!checkExistKey(newState?.apiConfiguration))
 					setDidHydrateState(true)
@@ -379,13 +387,11 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					break
 				}
 				case "commands": {
-					setCommands((message.commands as unknown as Command[] | undefined) ?? [])
+					setCommands(narrow<Command[]>(message.commands) ?? [])
 					break
 				}
 				case "messageUpdated": {
-					const clineMessage = message.clineMessage as unknown as
-						| ExtensionState["clineMessages"][number]
-						| undefined
+					const clineMessage = narrow<ExtensionState["clineMessages"][number]>(message.clineMessage)
 					if (!clineMessage || typeof clineMessage.id !== "string") break
 					setState((prevState) => {
 						// worth noting it will never be possible for a more up-to-date message to be sent here or in normal messages post since the presentAssistantContent function uses lock
@@ -409,12 +415,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 				}
 				case "skills": {
 					if (message.skills) {
-						setSkills(message.skills as unknown as SkillMetadata[])
+						setSkills(narrow<SkillMetadata[]>(message.skills) ?? [])
 					}
 					break
 				}
 				case "mcpServers": {
-					setMcpServers((message.mcpServers as unknown as McpServer[] | undefined) ?? [])
+					setMcpServers(narrow<McpServer[]>(message.mcpServers) ?? [])
 					break
 				}
 				case "currentCheckpointUpdated": {
@@ -422,26 +428,24 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					break
 				}
 				case "listApiConfig": {
-					setListApiConfigMeta(
-						(message.listApiConfig as unknown as ProviderSettingsEntry[] | undefined) ?? [],
-					)
+					setListApiConfigMeta(narrow<ProviderSettingsEntry[]>(message.listApiConfig) ?? [])
 					break
 				}
 				case "routerModels": {
-					setExtensionRouterModels(message.routerModels as unknown as RouterModels | undefined)
+					setExtensionRouterModels(narrow<RouterModels>(message.routerModels))
 					break
 				}
 				case "taskHistoryUpdated": {
 					if (message.taskHistory !== undefined) {
 						setState((prevState) => ({
 							...prevState,
-							taskHistory: message.taskHistory as unknown as typeof prevState.taskHistory,
+							taskHistory: narrow<typeof prevState.taskHistory>(message.taskHistory) ?? [],
 						}))
 					}
 					break
 				}
 				case "taskHistoryItemUpdated": {
-					const item = message.taskHistoryItem as unknown as ExtensionState["taskHistory"][number] | undefined
+					const item = narrow<ExtensionState["taskHistory"][number]>(message.taskHistoryItem)
 					if (!item) {
 						break
 					}
@@ -467,7 +471,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 				}
 				case "taskMetrics": {
 					if (message.taskMetrics) {
-						const metrics = message.taskMetrics as unknown as TaskMetricsSnapshot
+						const metrics = narrow<TaskMetricsSnapshot>(message.taskMetrics)!
 						setLatestTaskMetrics(metrics)
 						setTaskMetricsHistory((prev) => [...prev.slice(-29), metrics])
 					}

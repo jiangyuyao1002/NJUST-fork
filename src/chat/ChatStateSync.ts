@@ -20,6 +20,7 @@ interface SyncedTask {
 export class ChatStateSync {
 	private syncedTasks: Map<string, SyncedTask> = new Map()
 	private taskCleanupFns: Map<string, () => void> = new Map()
+	private retryTimers: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
 	constructor(
 		private readonly provider: ClineProvider,
@@ -94,10 +95,10 @@ export class ChatStateSync {
 					`Task ${taskId} not ready. Retrying in ${delay}ms... (${retryCount + 1}/5)`,
 				)
 				const retryTimer = setTimeout(() => {
-					this.taskCleanupFns.delete(taskId)
+					this.retryTimers.delete(taskId)
 					this.subscribeToTask(taskId, retryCount + 1)
 				}, delay)
-				this.taskCleanupFns.set(taskId, () => clearTimeout(retryTimer))
+				this.retryTimers.set(taskId, retryTimer)
 			} else if (retryCount >= 5) {
 				logger.warn(
 					"ChatStateSync",
@@ -151,6 +152,11 @@ export class ChatStateSync {
 	}
 
 	private unsubscribeFromTask(taskId: string): void {
+		const retryTimer = this.retryTimers.get(taskId)
+		if (retryTimer) {
+			clearTimeout(retryTimer)
+			this.retryTimers.delete(taskId)
+		}
 		const cleanup = this.taskCleanupFns.get(taskId)
 		if (cleanup) {
 			cleanup()
@@ -164,6 +170,10 @@ export class ChatStateSync {
 	}
 
 	dispose(): void {
+		for (const [, timer] of this.retryTimers) {
+			clearTimeout(timer)
+		}
+		this.retryTimers.clear()
 		for (const [taskId] of this.taskCleanupFns) {
 			this.unsubscribeFromTask(taskId)
 		}

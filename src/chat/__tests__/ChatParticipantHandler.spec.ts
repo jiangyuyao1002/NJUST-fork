@@ -228,4 +228,91 @@ describe("ChatParticipantHandler", () => {
 
 		expect(task.listenerCount(NJUST_AIEventName.Message)).toBe(0)
 	})
+
+	it("should replay existing messages created before event subscription", async () => {
+		const task = new EventEmitter()
+		;(task as any).taskId = "task-race"
+		;(task as any).abortTask = vi.fn()
+		;(task as any).clineMessages = [
+			{ id: "m1", type: "say", say: "text", text: "Already here", ts: 1 },
+			{ id: "m2", type: "say", say: "text", text: "Also here", ts: 2 },
+		]
+
+		provider.createTask.mockResolvedValue(task)
+
+		const stream = { progress: vi.fn(), markdown: vi.fn() } as any
+		const token = { onCancellationRequested: vi.fn() } as any
+
+		const handleRequestPromise = (handler as any).handleRequest(
+			{ command: "code", prompt: "hello" },
+			{ history: [] },
+			stream,
+			token,
+		)
+
+		await vi.waitFor(() => expect(task.listenerCount(NJUST_AIEventName.Message)).toBe(1))
+
+		expect(renderClineMessage).toHaveBeenCalledTimes(2)
+
+		task.emit(NJUST_AIEventName.TaskCompleted)
+		await handleRequestPromise
+	})
+
+	it("should not treat different messages with the same timestamp as duplicates", async () => {
+		const task = new EventEmitter()
+		;(task as any).taskId = "task-same-ts"
+		;(task as any).abortTask = vi.fn()
+		;(task as any).clineMessages = [
+			{ id: "m1", type: "say", say: "text", text: "First", ts: 1 },
+			{ id: "m2", type: "say", say: "text", text: "Second", ts: 1 },
+		]
+
+		provider.createTask.mockResolvedValue(task)
+
+		const stream = { progress: vi.fn(), markdown: vi.fn() } as any
+		const token = { onCancellationRequested: vi.fn() } as any
+
+		const handleRequestPromise = (handler as any).handleRequest(
+			{ command: "code", prompt: "hello" },
+			{ history: [] },
+			stream,
+			token,
+		)
+
+		await vi.waitFor(() => expect(task.listenerCount(NJUST_AIEventName.Message)).toBe(1))
+
+		expect(renderClineMessage).toHaveBeenCalledTimes(2)
+
+		task.emit(NJUST_AIEventName.TaskCompleted)
+		await handleRequestPromise
+	})
+
+	it("should report EXTENSION_INIT_ERROR when createTask throws", async () => {
+		provider.createTask.mockRejectedValue(new Error("createTask failed"))
+		const stream = { progress: vi.fn(), markdown: vi.fn() } as any
+		const token = { onCancellationRequested: vi.fn() } as any
+		const result = await (handler as any).handleRequest(
+			{ command: "code", prompt: "hello" },
+			{ history: [] },
+			stream,
+			token,
+		)
+		expect(TelemetryService.reportError).toHaveBeenCalledWith(
+			expect.any(Error),
+			TelemetryEventName.EXTENSION_INIT_ERROR,
+		)
+		expect(result.metadata.command).toBe("code")
+	})
+
+	it("should provide followups for architect command", () => {
+		const result = (handler as any).provideFollowups({ metadata: { command: "architect" } }, {}, {})
+		expect(result).toHaveLength(1)
+		expect(result[0].command).toBe("code")
+	})
+
+	it("should provide followups for code command", () => {
+		const result = (handler as any).provideFollowups({ metadata: { command: "code" } }, {}, {})
+		expect(result).toHaveLength(2)
+		expect(result.map((f: any) => f.command)).toEqual(["ask", "debug"])
+	})
 })

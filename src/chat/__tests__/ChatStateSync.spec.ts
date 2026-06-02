@@ -22,9 +22,9 @@ describe("ChatStateSync", () => {
 	})
 
 	afterEach(() => {
+		sync.dispose()
 		vi.useRealTimers()
 		vi.clearAllMocks()
-		sync.dispose()
 	})
 
 	it("should retry up to 5 times with exponential backoff if task is not ready", () => {
@@ -109,5 +109,21 @@ describe("ChatStateSync", () => {
 		mockTask.emit(NJUST_AIEventName.Message, { action: "created", message })
 
 		expect(renderClineMessage).toHaveBeenCalledWith(mockStream, message)
+	})
+
+	it("should ignore messages with action 'updated'", () => {
+		const mockTask = new EventEmitter()
+		;(mockTask as any).taskId = "task-5"
+		provider.getCurrentTask.mockReturnValue(mockTask)
+
+		const mockStream = { progress: vi.fn(), markdown: vi.fn() } as any
+		sync.registerChatTask("task-5", mockStream)
+
+		mockTask.emit(NJUST_AIEventName.Message, {
+			action: "updated",
+			message: { type: "say", text: "updated message" },
+		})
+
+		expect(renderClineMessage).not.toHaveBeenCalled()
 	})
 })

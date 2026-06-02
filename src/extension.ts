@@ -158,6 +158,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	process.on("uncaughtException", (error) => {
 		logger.error("Extension", "Uncaught exception:", error)
 		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
+		// Re-throw to preserve Node.js default fatal behavior.
+		// VSCode extension host will log and deactivate the extension.
+		throw error
 	})
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
 	context.subscriptions.push(outputChannel)

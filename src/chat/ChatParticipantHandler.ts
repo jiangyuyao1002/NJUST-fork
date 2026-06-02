@@ -104,19 +104,14 @@ export class ChatParticipantHandler {
 	): Promise<void> {
 		return new Promise<void>((resolve) => {
 			let resolved = false
-
-			const cleanup = () => {
-				if (resolved) return
-				resolved = true
-				clearInterval(safetyTimer)
-				// Remove all event listeners to prevent leaks
-				task.off(NJUST_AIEventName.Message, onMessage)
-				task.off(NJUST_AIEventName.TaskCompleted, onComplete)
-				task.off(NJUST_AIEventName.TaskAborted, onAbort)
-			}
+			const renderedMessageIds = new Set<string>()
+			const getRenderKey = (message: ClineMessage) => message.id || `ts:${message.ts}`
 
 			const onMessage = (data: { action: "created" | "updated"; message: ClineMessage }) => {
 				if (resolved || data.action !== "created") return
+				const renderKey = getRenderKey(data.message)
+				if (renderedMessageIds.has(renderKey)) return
+				renderedMessageIds.add(renderKey)
 				try {
 					renderClineMessage(stream, data.message)
 				} catch (err) {
@@ -135,6 +130,25 @@ export class ChatParticipantHandler {
 				resolve()
 			}
 
+			// Safety timer: catches didFinishAbortingStream / abandoned states
+			// that may not emit a corresponding event.
+			const safetyTimer = setInterval(() => {
+				if (task.didFinishAbortingStream || task.abandoned) {
+					cleanup()
+					resolve()
+				}
+			}, 3000)
+
+			const cleanup = () => {
+				if (resolved) return
+				resolved = true
+				clearInterval(safetyTimer)
+				// Remove all event listeners to prevent leaks
+				task.off(NJUST_AIEventName.Message, onMessage)
+				task.off(NJUST_AIEventName.TaskCompleted, onComplete)
+				task.off(NJUST_AIEventName.TaskAborted, onAbort)
+			}
+
 			token.onCancellationRequested(() => {
 				void task.abortTask()
 				cleanup()
@@ -145,14 +159,18 @@ export class ChatParticipantHandler {
 			task.on(NJUST_AIEventName.TaskCompleted, onComplete)
 			task.on(NJUST_AIEventName.TaskAborted, onAbort)
 
-			// Safety timer: catches didFinishAbortingStream / abandoned states
-			// that may not emit a corresponding event.
-			const safetyTimer = setInterval(() => {
-				if (task.didFinishAbortingStream || task.abandoned) {
-					cleanup()
-					resolve()
+			// Replay messages emitted during task.start() before subscription
+			for (const existingMsg of task.clineMessages || []) {
+				if (resolved) break
+				const renderKey = getRenderKey(existingMsg)
+				if (renderedMessageIds.has(renderKey)) continue
+				renderedMessageIds.add(renderKey)
+				try {
+					renderClineMessage(stream, existingMsg)
+				} catch (err) {
+					logger.error("ChatParticipantHandler", "Error replaying message:", err)
 				}
-			}, 3000)
+			}
 
 			// Timeout fallback
 			setTimeout(

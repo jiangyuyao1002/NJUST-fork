@@ -25,9 +25,11 @@
 			"outputs": ["build/**"]
 		},
 		"vsix": {
+			"dependsOn": ["^build"],
 			"outputs": ["../bin/**"]
 		},
 		"vsix:nightly": {
+			"dependsOn": ["^build"],
 			"outputs": ["../../../bin/**"]
 		},
 		"watch:tsc": {
