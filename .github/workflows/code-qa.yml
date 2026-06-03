@@ -157,3 +157,38 @@ jobs:
               run: cd src && pnpm audit --audit-level=high
             - name: Run src package audit (critical)
               run: cd src && pnpm audit --audit-level=critical
+
+    circular-deps:
+        name: circular-dependency-guard
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Setup Node.js and pnpm
+              uses: ./.github/actions/setup-node-pnpm
+            - name: Check for circular dependencies between critical modules
+              run: pnpm check:circular
+
+    bundle-size:
+        name: bundle-size-check
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Setup Node.js and pnpm
+              uses: ./.github/actions/setup-node-pnpm
+            - name: Build extension bundle
+              run: pnpm --filter @njust-ai/vscode bundle
+            - name: Check bundle size
+              run: pnpm check:bundle-size
+
+    inheritance-health:
+        name: inheritance-health-check
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Setup Node.js and pnpm
+              uses: ./.github/actions/setup-node-pnpm
+            - name: Check inheritance health
+              run: pnpm check:inheritance

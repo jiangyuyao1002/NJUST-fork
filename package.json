@@ -29,6 +29,11 @@
 		"knip": "knip --include files",
 		"syncpack:lint": "node scripts/check-repo-hygiene.mjs && syncpack lint-semver-ranges",
 		"syncpack:report": "syncpack list-mismatches",
+		"check:circular": "node scripts/check-circular.mjs",
+		"docs:api": "typedoc",
+		"check:bundle-size": "node scripts/check-bundle-size.mjs",
+		"check:inheritance": "node scripts/check-inheritance.mjs",
+		"report:activation-perf": "node scripts/report-activation-perf.mjs",
 		"check-secrets": "node scripts/check-secrets.mjs --staged",
 		"evals": "dotenvx run -f packages/evals/.env.development packages/evals/.env.local -- docker compose -f packages/evals/docker-compose.yml --profile server --profile runner up --build --scale runner=0",
 		"npm:publish:types": "pnpm --filter @njust-ai/types npm:publish"
@@ -48,6 +53,7 @@
 		"husky": "^9.1.7",
 		"knip": "^5.44.4",
 		"lint-staged": "^17.0.5",
+		"madge": "^8.0.0",
 		"mkdirp": "^3.0.1",
 		"only-allow": "^1.2.1",
 		"ovsx": "0.10.4",
@@ -56,6 +62,8 @@
 		"syncpack": "13",
 		"tsx": "^4.19.3",
 		"turbo": "^2.9.14",
+		"typedoc": "^0.28.19",
+		"typedoc-plugin-markdown": "^4.12.0",
 		"typescript": "5.8.3",
 		"vitest": "^4.1.8"
 	},
