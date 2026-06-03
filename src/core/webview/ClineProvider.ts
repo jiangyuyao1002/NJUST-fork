@@ -1,9 +1,5 @@
-import os from "os"
-import * as path from "path"
-import fs from "fs/promises"
 import EventEmitter from "events"
 
-import axios from "axios"
 import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 
@@ -33,6 +29,8 @@ import {} from "@njust-ai/core/providers"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { Package } from "../../shared/package"
 
+import { BypassStatusBar } from "../../services/BypassStatusBar"
+import { computePermissionMode, getMergedCommandLists } from "./ClineProviderState"
 import { Mode } from "../../shared/modes"
 import { EMBEDDING_MODEL_PROFILES } from "../../shared/embeddingModels"
 import { ProfileValidator } from "../../shared/ProfileValidator"
@@ -88,13 +86,16 @@ import { WebviewContentProvider } from "./WebviewContentProvider"
 import { SettingsManager } from "./SettingsManager"
 import { TaskCoordinator } from "./TaskCoordinator"
 import { WebviewRouter } from "./WebviewRouter"
-import { getMergedCommandLists } from "./ClineProviderState"
 import {
-	buildWebviewState,
-	getState,
-	getTelemetryProperties,
-	type ClineProviderState,
-} from "./WebviewStateBuilder"
+	handleOpenRouterCallback as handleOpenRouterOAuth,
+	handleRequestyCallback as handleRequestyOAuth,
+} from "./OAuthCallbackHandler"
+import {
+	ensureMcpServersDirectoryExists as ensureMcpServersDir,
+	ensureSettingsDirectoryExists as ensureSettingsDir,
+} from "./providerPaths"
+
+import { buildWebviewState, getState, getTelemetryProperties, type ClineProviderState } from "./WebviewStateBuilder"
 import {
 	activateProviderProfileWithProvider,
 	deleteProviderProfileWithProvider,
@@ -112,9 +113,7 @@ import {
 import { TaskStackManager } from "./TaskStackManager"
 import { TaskHistoryService, type TaskHistoryHost } from "./TaskHistoryService"
 import type { TodoItem } from "@njust-ai/types"
-import { requestyDefaultModelId, openRouterDefaultModelId } from "@njust-ai/core/providers"
 import { TaskHistoryStore } from "../task-persistence"
-import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 
@@ -159,6 +158,7 @@ export class ClineProvider
 	public readonly taskHistory: TaskHistoryService
 	private readonly pendingEditManager: PendingEditManager
 	private readonly webviewContentProvider: WebviewContentProvider
+	private readonly bypassStatusBar: BypassStatusBar
 
 	/**
 	 * Monotonically increasing sequence number for clineMessages state pushes.
@@ -216,6 +216,7 @@ export class ClineProvider
 			getWebview: () => this.view?.webview,
 			buildState: () => this.getStateToPostToWebview(),
 		})
+		this.bypassStatusBar = new BypassStatusBar()
 
 		this.stack = new TaskStackManager({
 			outputChannel: this.outputChannel,
@@ -436,6 +437,7 @@ export class ClineProvider
 
 		this.messageRouter.dispose()
 		this.assistantPresentationSubscription.dispose()
+		this.bypassStatusBar.dispose()
 		this.clearWebviewResources()
 
 		while (this.disposables.length) {
@@ -793,92 +795,21 @@ export class ClineProvider
 	// MCP
 
 	async ensureMcpServersDirectoryExists(): Promise<string> {
-		// Get platform-specific application data directory
-		let mcpServersDir: string
-		if (process.platform === "win32") {
-			// Windows: %APPDATA%\NJUST_AI\MCP
-			mcpServersDir = path.join(os.homedir(), "AppData", "Roaming", "NJUST_AI", "MCP")
-		} else if (process.platform === "darwin") {
-			// macOS: ~/Documents/Cline/MCP
-			mcpServersDir = path.join(os.homedir(), "Documents", "Cline", "MCP")
-		} else {
-			// Linux: ~/.local/share/Cline/MCP
-			mcpServersDir = path.join(os.homedir(), ".local", "share", "NJUST_AI", "MCP")
-		}
-
-		try {
-			await fs.mkdir(mcpServersDir, { recursive: true })
-		} catch (_error) {
-			// Fallback to a relative path if directory creation fails
-			return path.join(os.homedir(), ".Njust-AI", "mcp")
-		}
-		return mcpServersDir
+		return ensureMcpServersDir()
 	}
 
 	async ensureSettingsDirectoryExists(): Promise<string> {
-		const { getSettingsDirectoryPath } = await import("../../utils/storage")
-		const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
-		return getSettingsDirectoryPath(globalStoragePath)
+		return ensureSettingsDir(this.contextProxy.globalStorageUri)
 	}
 
-	// OpenRouter
+	// OpenRouter / Requesty OAuth callbacks — delegated to OAuthCallbackHandler
 
 	async handleOpenRouterCallback(code: string) {
-		const { apiConfiguration, currentApiConfigName = "default" } = await this.getState()
-
-		let apiKey: string
-
-		try {
-			const baseUrl = apiConfiguration.openRouterBaseUrl || "https://openrouter.ai/api/v1"
-			// Extract the base domain for the auth endpoint.
-			const baseUrlDomain = baseUrl.match(/^(https?:\/\/[^/]+)/)?.[1] || "https://openrouter.ai"
-			const response = await axios.post(`${baseUrlDomain}/api/v1/auth/keys`, { code })
-
-			if (response.data?.key) {
-				apiKey = response.data.key
-			} else {
-				throw new Error("Invalid response from OpenRouter API")
-			}
-		} catch (error) {
-			this.log(
-				`Error exchanging code for API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-			)
-
-			throw error
-		}
-
-		const newConfiguration: ProviderSettings = {
-			...apiConfiguration,
-			apiProvider: "openrouter",
-			openRouterApiKey: apiKey,
-			openRouterModelId: apiConfiguration?.openRouterModelId || openRouterDefaultModelId,
-		}
-
-		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
+		return handleOpenRouterOAuth(this, code)
 	}
 
-	// Requesty
-
 	async handleRequestyCallback(code: string, baseUrl: string | null) {
-		const { apiConfiguration } = await this.getState()
-
-		const newConfiguration: ProviderSettings = {
-			...apiConfiguration,
-			apiProvider: "requesty",
-			requestyApiKey: code,
-			requestyModelId: apiConfiguration?.requestyModelId || requestyDefaultModelId,
-		}
-
-		// set baseUrl as undefined if we don't provide one
-		// or if it is the default requesty url
-		if (!baseUrl || baseUrl === REQUESTY_BASE_URL) {
-			newConfiguration.requestyBaseUrl = undefined
-		} else {
-			newConfiguration.requestyBaseUrl = baseUrl
-		}
-
-		const profileName = `Requesty (${new Date().toLocaleString()})`
-		await this.upsertProviderProfile(profileName, newConfiguration)
+		return handleRequestyOAuth(this, code, baseUrl)
 	}
 
 	// Task history
@@ -922,6 +853,9 @@ export class ClineProvider
 
 	async postStateToWebview() {
 		await this.webviewRouter.postState()
+		// Sync bypass status bar indicator with current permission mode
+		const state = await this.getState()
+		this.bypassStatusBar.update(computePermissionMode(state))
 	}
 
 	/**
@@ -1293,7 +1227,10 @@ export class ClineProvider
 			},
 		).catch(() => {
 			logger.error("ClineProvider", "cancelTask: Failed to abort task")
-			TelemetryService.reportError(new Error("cancelTask: Failed to abort task"), TelemetryEventName.WEBVIEW_ERROR)
+			TelemetryService.reportError(
+				new Error("cancelTask: Failed to abort task"),
+				TelemetryEventName.WEBVIEW_ERROR,
+			)
 		})
 
 		// Defensive safeguard: if current instance already changed, skip rehydrate
@@ -1471,4 +1408,3 @@ export class ClineProvider
 		}
 	}
 }
-

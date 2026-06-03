@@ -26,6 +26,7 @@ import { getErrorMessage } from "../../../shared/error-utils"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { clearOpenAiCodexAuthCache } from "../WebviewStateBuilder"
 import { getProfileStorageService } from "../../../services/cloud-agent/ProfileStorageService"
+import { confirmBypassTransition } from "../bypassGuard"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -82,13 +83,17 @@ async function handleUpdateSettings(context: MessageHandlerContext, message: Web
 			newValue = Array.isArray(commands)
 				? commands.filter((cmd: unknown) => typeof cmd === "string" && (cmd as string).trim().length > 0)
 				: []
-			await vscode.workspace.getConfiguration(Package.name).update("allowedCommands", newValue, vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("allowedCommands", newValue, vscode.ConfigurationTarget.Global)
 		} else if (key === "deniedCommands") {
 			const commands = value ?? []
 			newValue = Array.isArray(commands)
 				? commands.filter((cmd: unknown) => typeof cmd === "string" && (cmd as string).trim().length > 0)
 				: []
-			await vscode.workspace.getConfiguration(Package.name).update("deniedCommands", newValue, vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("deniedCommands", newValue, vscode.ConfigurationTarget.Global)
 		} else if (key === "ttsEnabled") {
 			newValue = value ?? true
 			const { setTtsEnabled } = await import("../../../utils/tts")
@@ -128,32 +133,61 @@ async function handleUpdateSettings(context: MessageHandlerContext, message: Web
 		} else if (key === "customSupportPrompts") {
 			if (!value) continue
 		} else if (key === "cloudAgentServerUrl") {
-			await vscode.workspace.getConfiguration(Package.name).update("cloudAgent.serverUrl", value, vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("cloudAgent.serverUrl", value, vscode.ConfigurationTarget.Global)
 			continue
 		} else if (key === "saveAllBeforeExecuteCommand") {
-			await vscode.workspace.getConfiguration(Package.name).update("saveAllBeforeExecuteCommand", value ?? true, vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("saveAllBeforeExecuteCommand", value ?? true, vscode.ConfigurationTarget.Global)
 			continue
 		} else if (key === "inlineCompletionEnabled") {
-			await vscode.workspace.getConfiguration(Package.name).update("inlineCompletion.enabled", value ?? true, vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("inlineCompletion.enabled", value ?? true, vscode.ConfigurationTarget.Global)
 			continue
 		} else if (key === "inlineCompletionTriggerDelayMs") {
 			const n = typeof value === "number" ? value : 300
-			await vscode.workspace.getConfiguration(Package.name).update("inlineCompletion.triggerDelayMs", Math.min(2000, Math.max(100, n)), vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update(
+					"inlineCompletion.triggerDelayMs",
+					Math.min(2000, Math.max(100, n)),
+					vscode.ConfigurationTarget.Global,
+				)
 			continue
 		} else if (key === "inlineCompletionMaxLines") {
 			const n = typeof value === "number" ? value : 10
-			await vscode.workspace.getConfiguration(Package.name).update("inlineCompletion.maxLines", Math.min(50, Math.max(1, n)), vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("inlineCompletion.maxLines", Math.min(50, Math.max(1, n)), vscode.ConfigurationTarget.Global)
 			continue
 		} else if (key === "inlineCompletionEnableCangjieEnhanced") {
-			await vscode.workspace.getConfiguration(Package.name).update("inlineCompletion.enableCangjieEnhanced", value ?? true, vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("inlineCompletion.enableCangjieEnhanced", value ?? true, vscode.ConfigurationTarget.Global)
 			continue
 		} else if (key === "inlineCompletionTriggerCommand") {
 			const s = typeof value === "string" ? value : "alt+\\"
-			await vscode.workspace.getConfiguration(Package.name).update("inlineCompletion.triggerCommand", s, vscode.ConfigurationTarget.Global)
+			await vscode.workspace
+				.getConfiguration(Package.name)
+				.update("inlineCompletion.triggerCommand", s, vscode.ConfigurationTarget.Global)
 			continue
 		}
 
 		await provider.contextProxy.setValue(key as keyof GlobalState, newValue)
+	}
+
+	// 检查是否进入 bypass 模式，若是则弹确认框（取消时自动回退）
+	const bypassOk = await confirmBypassTransition({
+		getValue: getGlobalState,
+		setValue: async (key, value) => provider.contextProxy.setValue(key, value),
+	})
+	if (!bypassOk) {
+		// 用户取消，设置已回退，重新广播回退后的状态
+		await provider.postStateToWebview()
+		return
 	}
 
 	await provider.postStateToWebview()
@@ -163,12 +197,30 @@ async function handleUpdateCloudAgentSettings(context: MessageHandlerContext, me
 	const { provider } = context
 	const config = vscode.workspace.getConfiguration(Package.name)
 	const msg = message as unknown as Record<string, unknown>
-	if (msg.serverUrl !== undefined) await config.update("cloudAgent.serverUrl", msg.serverUrl, vscode.ConfigurationTarget.Global)
-	if (msg.deferredProtocol !== undefined) await config.update("cloudAgent.deferredProtocol", msg.deferredProtocol, vscode.ConfigurationTarget.Global)
-	if (msg.applyRemoteWorkspaceOps !== undefined) await config.update("cloudAgent.applyRemoteWorkspaceOps", msg.applyRemoteWorkspaceOps, vscode.ConfigurationTarget.Global)
-	if (msg.confirmRemoteWorkspaceOps !== undefined) await config.update("cloudAgent.confirmRemoteWorkspaceOps", msg.confirmRemoteWorkspaceOps, vscode.ConfigurationTarget.Global)
-	if (msg.compileLoopEnabled !== undefined) await config.update("cloudAgent.compileLoop.enabled", msg.compileLoopEnabled, vscode.ConfigurationTarget.Global)
-	if (msg.compileLoopMaxRetries !== undefined) await config.update("cloudAgent.compileLoop.maxRetries", msg.compileLoopMaxRetries, vscode.ConfigurationTarget.Global)
+	if (msg.serverUrl !== undefined)
+		await config.update("cloudAgent.serverUrl", msg.serverUrl, vscode.ConfigurationTarget.Global)
+	if (msg.deferredProtocol !== undefined)
+		await config.update("cloudAgent.deferredProtocol", msg.deferredProtocol, vscode.ConfigurationTarget.Global)
+	if (msg.applyRemoteWorkspaceOps !== undefined)
+		await config.update(
+			"cloudAgent.applyRemoteWorkspaceOps",
+			msg.applyRemoteWorkspaceOps,
+			vscode.ConfigurationTarget.Global,
+		)
+	if (msg.confirmRemoteWorkspaceOps !== undefined)
+		await config.update(
+			"cloudAgent.confirmRemoteWorkspaceOps",
+			msg.confirmRemoteWorkspaceOps,
+			vscode.ConfigurationTarget.Global,
+		)
+	if (msg.compileLoopEnabled !== undefined)
+		await config.update("cloudAgent.compileLoop.enabled", msg.compileLoopEnabled, vscode.ConfigurationTarget.Global)
+	if (msg.compileLoopMaxRetries !== undefined)
+		await config.update(
+			"cloudAgent.compileLoop.maxRetries",
+			msg.compileLoopMaxRetries,
+			vscode.ConfigurationTarget.Global,
+		)
 	await provider.postStateToWebview()
 }
 
@@ -238,7 +290,9 @@ async function handleRenameApiConfiguration(context: MessageHandlerContext, mess
 			await provider.providerSettingsManager.deleteConfig(oldName)
 			await provider.activateProviderProfile({ name: newName })
 		} catch (error) {
-			provider.log(`Error rename api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+			provider.log(
+				`Error rename api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+			)
 			vscode.window.showErrorMessage(t("common:errors.rename_api_config"))
 		}
 	}
@@ -262,7 +316,9 @@ async function handleLoadApiConfigurationById(context: MessageHandlerContext, me
 		try {
 			await provider.activateProviderProfile({ id: message.text })
 		} catch (error) {
-			provider.log(`Error load api configuration by ID: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+			provider.log(
+				`Error load api configuration by ID: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+			)
 			vscode.window.showErrorMessage(t("common:errors.load_api_config"))
 		}
 	}
@@ -279,7 +335,9 @@ async function handleDeleteApiConfiguration(context: MessageHandlerContext, mess
 	if (answer !== t("common:answers.yes")) return
 
 	const oldName = message.text
-	const newName = (await provider.providerSettingsManager.listConfig()).filter((c: { name: string }) => c.name !== oldName)[0]?.name
+	const newName = (await provider.providerSettingsManager.listConfig()).filter(
+		(c: { name: string }) => c.name !== oldName,
+	)[0]?.name
 	if (!newName) {
 		vscode.window.showErrorMessage(t("common:errors.delete_api_config"))
 		return
@@ -319,10 +377,28 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 
 	const routerModels: Partial<Record<RouterName, ModelRecord>> = providerFilter
 		? {}
-		: { openrouter: {}, "vercel-ai-gateway": {}, litellm: {}, requesty: {}, unbound: {}, ollama: {}, lmstudio: {}, "njust-ai": {} }
+		: {
+				openrouter: {},
+				"vercel-ai-gateway": {},
+				litellm: {},
+				requesty: {},
+				unbound: {},
+				ollama: {},
+				lmstudio: {},
+				"njust-ai": {},
+			}
 
 	const getProviderModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
-		const oldProviders = ["openrouter", "requesty", "unbound", "vercel-ai-gateway", "litellm", "njust-ai", "ollama", "lmstudio"]
+		const oldProviders = [
+			"openrouter",
+			"requesty",
+			"unbound",
+			"vercel-ai-gateway",
+			"litellm",
+			"njust-ai",
+			"ollama",
+			"lmstudio",
+		]
 		if (oldProviders.includes(options.provider)) {
 			return getModels(options)
 		}
@@ -335,7 +411,9 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 	}
 
 	const safeGetModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
-		try { return await getProviderModels(options) } catch (error) {
+		try {
+			return await getProviderModels(options)
+		} catch (error) {
 			logger.error("SettingsMessageHandler", `Failed to fetch models for ${options.provider}:`, error)
 			TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
 			throw error
@@ -344,10 +422,20 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 
 	const candidates: { key: RouterName; options: GetModelsOptions }[] = [
 		{ key: "openrouter", options: { provider: "openrouter" } },
-		{ key: "requesty", options: { provider: "requesty", apiKey: apiConfiguration.requestyApiKey, baseUrl: apiConfiguration.requestyBaseUrl } },
+		{
+			key: "requesty",
+			options: {
+				provider: "requesty",
+				apiKey: apiConfiguration.requestyApiKey,
+				baseUrl: apiConfiguration.requestyBaseUrl,
+			},
+		},
 		{ key: "unbound", options: { provider: "unbound", apiKey: apiConfiguration.unboundApiKey } },
 		{ key: "vercel-ai-gateway", options: { provider: "vercel-ai-gateway" } },
-		{ key: "njust-ai", options: { provider: "njust-ai", baseUrl: process.env.NJUST_AI_PROVIDER_URL ?? "", apiKey: undefined } },
+		{
+			key: "njust-ai",
+			options: { provider: "njust-ai", baseUrl: process.env.NJUST_AI_PROVIDER_URL ?? "", apiKey: undefined },
+		},
 		{
 			key: "deepseek",
 			options: {
@@ -464,12 +552,13 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 		if (message?.values?.litellmApiKey || message?.values?.litellmBaseUrl) {
 			await flushModels({ provider: "litellm", apiKey: litellmApiKey, baseUrl: litellmBaseUrl }, true)
 		}
-		candidates.push({ key: "litellm", options: { provider: "litellm", apiKey: litellmApiKey, baseUrl: litellmBaseUrl } })
+		candidates.push({
+			key: "litellm",
+			options: { provider: "litellm", apiKey: litellmApiKey, baseUrl: litellmBaseUrl },
+		})
 	}
 
-	const modelFetchPromises = providerFilter
-		? candidates.filter(({ key }) => key === providerFilter)
-		: candidates
+	const modelFetchPromises = providerFilter ? candidates.filter(({ key }) => key === providerFilter) : candidates
 
 	if (shouldRefresh && providerFilter && modelFetchPromises.length > 0) {
 		await flushModels(modelFetchPromises[0]!.options, true)
@@ -490,7 +579,12 @@ async function handleRequestRouterModels(context: MessageHandlerContext, message
 			const errorMessage = result.reason instanceof Error ? result.reason.message : String(result.reason)
 			logger.error("SettingsMessageHandler", `Error fetching models for ${routerName}:`, result.reason)
 			routerModels[routerName] = {}
-			void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: false, error: errorMessage, values: { provider: routerName } })
+			void provider.postMessageToWebview({
+				type: "singleRouterModelFetchResponse",
+				success: false,
+				error: errorMessage,
+				values: { provider: routerName },
+			})
 		}
 	})
 
@@ -505,13 +599,19 @@ async function handleRequestOllamaModels(context: MessageHandlerContext, _messag
 	const { provider } = context
 	const { apiConfiguration: ollamaApiConfig } = await provider.getState()
 	try {
-		const ollamaOptions = { provider: "ollama" as const, baseUrl: ollamaApiConfig.ollamaBaseUrl, apiKey: ollamaApiConfig.ollamaApiKey }
+		const ollamaOptions = {
+			provider: "ollama" as const,
+			baseUrl: ollamaApiConfig.ollamaBaseUrl,
+			apiKey: ollamaApiConfig.ollamaApiKey,
+		}
 		await flushModels(ollamaOptions, true)
 		const ollamaModels = await getModels(ollamaOptions)
 		if (Object.keys(ollamaModels).length > 0) {
 			void provider.postMessageToWebview({ type: "ollamaModels", ollamaModels })
 		}
-	} catch (error) { debugLog("Ollama models fetch failed:", error) }
+	} catch (error) {
+		debugLog("Ollama models fetch failed:", error)
+	}
 }
 
 async function handleRequestLmStudioModels(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
@@ -524,26 +624,45 @@ async function handleRequestLmStudioModels(context: MessageHandlerContext, _mess
 		if (Object.keys(lmStudioModels).length > 0) {
 			void provider.postMessageToWebview({ type: "lmStudioModels", lmStudioModels })
 		}
-	} catch (error) { debugLog("LM Studio models fetch failed:", error) }
+	} catch (error) {
+		debugLog("LM Studio models fetch failed:", error)
+	}
 }
 
 async function handleRequestRooModels(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	try {
-		const rooOptions = { provider: "njust-ai" as const, baseUrl: process.env.NJUST_AI_PROVIDER_URL ?? "", apiKey: undefined }
+		const rooOptions = {
+			provider: "njust-ai" as const,
+			baseUrl: process.env.NJUST_AI_PROVIDER_URL ?? "",
+			apiKey: undefined,
+		}
 		await flushModels(rooOptions, true)
 		const rooModels = await getModels(rooOptions)
-		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: true, values: { provider: "njust-ai", models: rooModels } })
+		void provider.postMessageToWebview({
+			type: "singleRouterModelFetchResponse",
+			success: true,
+			values: { provider: "njust-ai", models: rooModels },
+		})
 	} catch (error) {
 		const errorMessage = getErrorMessage(error)
-		void provider.postMessageToWebview({ type: "singleRouterModelFetchResponse", success: false, error: errorMessage, values: { provider: "njust-ai" } })
+		void provider.postMessageToWebview({
+			type: "singleRouterModelFetchResponse",
+			success: false,
+			error: errorMessage,
+			values: { provider: "njust-ai" },
+		})
 	}
 }
 
 async function handleRequestOpenAiModels(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	if (message?.values?.baseUrl && message?.values?.apiKey) {
-		const openAiModels = await getOpenAiModels(message.values.baseUrl, message.values.apiKey, message.values.openAiHeaders)
+		const openAiModels = await getOpenAiModels(
+			message.values.baseUrl,
+			message.values.apiKey,
+			message.values.openAiHeaders,
+		)
 		void provider.postMessageToWebview({ type: "openAiModels", openAiModels })
 	}
 }
@@ -566,7 +685,10 @@ async function handleImportSettings(context: MessageHandlerContext, _message: We
 
 async function handleExportSettings(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { provider } = context
-	await exportSettings({ providerSettingsManager: provider.providerSettingsManager, contextProxy: provider.contextProxy })
+	await exportSettings({
+		providerSettingsManager: provider.providerSettingsManager,
+		contextProxy: provider.contextProxy,
+	})
 }
 
 async function handleResetState(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
@@ -602,11 +724,21 @@ async function handleLockApiConfigAcrossModes(context: MessageHandlerContext, me
 }
 
 async function handleAutoApprovalEnabled(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
-	const { updateGlobalState, provider } = context
+	const { updateGlobalState, getGlobalState, provider } = context
 	await updateGlobalState("autoApprovalEnabled", message.bool ?? false)
+
+	// 检查是否进入 bypass 模式
+	const bypassOk = await confirmBypassTransition({
+		getValue: getGlobalState,
+		setValue: async (key, value) => provider.contextProxy.setValue(key, value),
+	})
+	if (!bypassOk) {
+		await provider.postStateToWebview()
+		return
+	}
+
 	await provider.postStateToWebview()
 }
-
 
 async function handleTaskSyncEnabled(_context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	// no-op
@@ -620,7 +752,9 @@ async function handleHasOpenedModeSelector(context: MessageHandlerContext, messa
 
 async function handleDebugSetting(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	const { provider } = context
-	await vscode.workspace.getConfiguration(Package.name).update("debug", message.bool ?? false, vscode.ConfigurationTarget.Global)
+	await vscode.workspace
+		.getConfiguration(Package.name)
+		.update("debug", message.bool ?? false, vscode.ConfigurationTarget.Global)
 	await provider.postStateToWebview()
 }
 
@@ -663,13 +797,19 @@ async function handleOpenAiCodexSignOut(context: MessageHandlerContext, _message
 	}
 }
 
-async function handleRequestOpenAiCodexRateLimits(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
+async function handleRequestOpenAiCodexRateLimits(
+	context: MessageHandlerContext,
+	_message: WebviewMessage,
+): Promise<void> {
 	const { provider } = context
 	try {
 		const { openAiCodexOAuthManager } = await import("../../../integrations/openai-codex/oauth")
 		const accessToken = await openAiCodexOAuthManager.getAccessToken()
 		if (!accessToken) {
-			void provider.postMessageToWebview({ type: "openAiCodexRateLimits", error: "Not authenticated with OpenAI Codex" })
+			void provider.postMessageToWebview({
+				type: "openAiCodexRateLimits",
+				error: "Not authenticated with OpenAI Codex",
+			})
 			return
 		}
 		const accountId = await openAiCodexOAuthManager.getAccountId()
@@ -733,7 +873,10 @@ async function handleCloudAgentDeleteProfile(context: MessageHandlerContext, mes
 	}
 }
 
-async function handleCloudAgentSetActiveProfile(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+async function handleCloudAgentSetActiveProfile(
+	context: MessageHandlerContext,
+	message: WebviewMessage,
+): Promise<void> {
 	const { provider } = context
 	try {
 		const id = message.cloudAgentSetActiveProfile

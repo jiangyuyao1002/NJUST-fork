@@ -36,6 +36,16 @@ vi.mock("vscode", () => ({
 				dispose: vi.fn(),
 			}
 		}),
+		createStatusBarItem: vi.fn(() => ({
+			show: vi.fn(),
+			hide: vi.fn(),
+			dispose: vi.fn(),
+			text: "",
+			tooltip: "",
+			name: "",
+			command: "",
+			backgroundColor: undefined,
+		})),
 	},
 	workspace: {
 		getConfiguration: vi.fn().mockReturnValue({
@@ -79,6 +89,12 @@ vi.mock("vscode", () => ({
 		Test: 3,
 	},
 	version: "1.85.0",
+	StatusBarAlignment: { Left: 1, Right: 2 },
+	ThemeColor: class {
+		constructor(id) {
+			this.id = id
+		}
+	},
 }))
 
 // Create a counter for unique task IDs.

@@ -38,9 +38,25 @@ vi.mock("vscode", () => {
 				dispose: vi.fn(),
 			}),
 			onDidChangeActiveTextEditor: vi.fn(() => mockDisposable),
+			createStatusBarItem: vi.fn(() => ({
+				show: vi.fn(),
+				hide: vi.fn(),
+				dispose: vi.fn(),
+				text: "",
+				tooltip: "",
+				name: "",
+				command: "",
+				backgroundColor: undefined,
+			})),
 		},
 		Uri: {
 			file: vi.fn().mockReturnValue({ toString: () => "file://test" }),
+		},
+		StatusBarAlignment: { Left: 1, Right: 2 },
+		ThemeColor: class {
+			constructor(id) {
+				this.id = id
+			}
 		},
 	}
 })
