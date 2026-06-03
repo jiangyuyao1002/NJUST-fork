@@ -330,12 +330,15 @@ describe("runCode", () => {
 		setEditor("D:\\repo\\src\\Main.java", "java")
 		vi.mocked(fs.existsSync).mockImplementation((p) => {
 			if (p.toString().endsWith("build.gradle")) return true
-			if (p.toString().endsWith("gradlew")) return true
+			if (p.toString().endsWith("gradlew") || p.toString().endsWith("gradlew.bat")) return true
 			return false
 		})
 
 		await runActiveEditorCode(outputChannelMock)
-		expect(terminalMock.sendText).toHaveBeenCalledWith(expect.stringContaining("gradle run"))
+		// On Windows uses gradlew.bat, on Linux uses ./gradlew, without wrapper uses gradle
+		expect(terminalMock.sendText).toHaveBeenCalledWith(
+			expect.stringMatching(/(?:gradlew\.bat|\.\/gradlew|gradle) run/),
+		)
 	})
 
 	it("builds Java multi-file compile command", async () => {
