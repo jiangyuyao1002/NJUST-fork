@@ -177,6 +177,8 @@ jobs:
               uses: actions/checkout@v4
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
+            - name: Build @njust-ai/build package
+              run: pnpm --filter @njust-ai/build build
             - name: Build extension bundle
               run: pnpm --filter njust-ai bundle
             - name: Check bundle size
