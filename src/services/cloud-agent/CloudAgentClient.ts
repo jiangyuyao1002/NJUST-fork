@@ -59,8 +59,8 @@ function apiKeyHintFor401(status: number, bodySnippet: string): string {
 		return ""
 	}
 	return (
-		' Hint: set VS Code "njust-ai.cloudAgent.apiKey" (User settings) to match server CLOUD_AGENT_MOCK_API_KEY, ' +
-		"or set process env CLOUD_AGENT_MOCK_API_KEY / NJUST_CLOUD_AGENT_API_KEY for the extension host (e.g. Njust-AI/.env). " +
+		" Hint: 通过 Cloud Agent Profile 界面设置（已迁 SecretStorage），" +
+		"或 set process env CLOUD_AGENT_MOCK_API_KEY / NJUST_CLOUD_AGENT_API_KEY for the extension host (e.g. Njust-AI/.env). " +
 		"Workspace .vscode/settings.json only applies when that folder is the workspace root."
 	)
 }
@@ -80,7 +80,10 @@ export class CloudAgentClient {
 		const controller = new AbortController()
 		let timer: ReturnType<typeof setTimeout> | undefined
 		if (requestTimeoutMs && requestTimeoutMs > 0) {
-			timer = setTimeout(() => controller.abort(new DOMException("abort request timed out", "AbortError")), requestTimeoutMs)
+			timer = setTimeout(
+				() => controller.abort(new DOMException("abort request timed out", "AbortError")),
+				requestTimeoutMs,
+			)
 		}
 
 		// 从 Profile 构建临时适配器以生成认证头
@@ -142,11 +145,7 @@ export class CloudAgentClient {
 
 		// HTTPS 校验
 		const url = new URL(this.serverUrl)
-		if (
-			url.protocol !== "https:" &&
-			url.hostname !== "localhost" &&
-			url.hostname !== "127.0.0.1"
-		) {
+		if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
 			throw new Error("Cloud Agent requires HTTPS for non-localhost connections")
 		}
 
@@ -154,7 +153,7 @@ export class CloudAgentClient {
 		this.adapter = AdapterFactory.create(profile)
 
 		if (this.adapter.protocolType === "mcp") {
-			(this.adapter as McpProtocolAdapter).setCallbackHandler(this.createMcpCallbackHandler())
+			;(this.adapter as McpProtocolAdapter).setCallbackHandler(this.createMcpCallbackHandler())
 		}
 	}
 
@@ -166,7 +165,10 @@ export class CloudAgentClient {
 			onError: async (message) => this.callbacks.onError(message),
 			onToolExecute: (name, _args) => {
 				logger.info("CloudAgentClient", `MCP tool execution request: ${name}`)
-				return Promise.resolve({ content: `Tool ${name} execution not implemented in MCP legacy mode`, isError: true })
+				return Promise.resolve({
+					content: `Tool ${name} execution not implemented in MCP legacy mode`,
+					isError: true,
+				})
 			},
 		}
 	}
@@ -288,11 +290,7 @@ export class CloudAgentClient {
 				}
 			},
 			shouldRetryCloudAgent,
-			(info) =>
-				logger.warn(
-					"CloudAgentClient",
-					`connect retry #${info.attempt + 1} after ${info.delayMs}ms`,
-				),
+			(info) => logger.warn("CloudAgentClient", `connect retry #${info.attempt + 1} after ${info.delayMs}ms`),
 		)
 	}
 
@@ -328,9 +326,7 @@ export class CloudAgentClient {
 
 		// 2. 根据协议类型选择调用方式
 		if (this.adapter.protocolType === "mcp") {
-			data = await this.withMcpAdapter((mcpAdapter) =>
-				mcpAdapter.callTool(MCP_TOOLS.SUBMIT_TASK, body),
-			)
+			data = await this.withMcpAdapter((mcpAdapter) => mcpAdapter.callTool(MCP_TOOLS.SUBMIT_TASK, body))
 		} else {
 			// REST 路径（现有逻辑不变）
 			const endpoint = this.adapter.getEndpoint("run")
@@ -356,7 +352,9 @@ export class CloudAgentClient {
 					if (!resp.ok) {
 						const errText = await resp.text()
 						const slice = errText.slice(0, 500)
-						const err = new Error(`Cloud Agent error (HTTP ${resp.status}): ${slice}${apiKeyHintFor401(resp.status, slice)}`)
+						const err = new Error(
+							`Cloud Agent error (HTTP ${resp.status}): ${slice}${apiKeyHintFor401(resp.status, slice)}`,
+						)
 						;(err as Error & { status?: number }).status = resp.status
 						throw err
 					}
@@ -364,7 +362,8 @@ export class CloudAgentClient {
 					return this.parseUniversalResponse(resp)
 				},
 				shouldRetryCloudAgent,
-				(info) => logger.warn("CloudAgentClient", `submitTask retry #${info.attempt + 1} after ${info.delayMs}ms`),
+				(info) =>
+					logger.warn("CloudAgentClient", `submitTask retry #${info.attempt + 1} after ${info.delayMs}ms`),
 			)
 		}
 
@@ -519,7 +518,11 @@ export class CloudAgentClient {
 				}
 			},
 			shouldRetryCloudAgent,
-			(info) => logger.warn("CloudAgentClient", `fetchDeferred(${endpoint}) retry #${info.attempt + 1} after ${info.delayMs}ms`),
+			(info) =>
+				logger.warn(
+					"CloudAgentClient",
+					`fetchDeferred(${endpoint}) retry #${info.attempt + 1} after ${info.delayMs}ms`,
+				),
 		)
 	}
 
