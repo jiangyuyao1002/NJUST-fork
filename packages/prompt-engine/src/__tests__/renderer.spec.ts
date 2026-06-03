@@ -87,4 +87,53 @@ describe("prompt-engine renderer", () => {
 	it("counts CJK text more heavily than empty text", () => {
 		expect(estimatePromptTokens("仓颉语言")).toBeGreaterThan(estimatePromptTokens(""))
 	})
+
+	it("covers all CJK unicode ranges in token estimation", () => {
+		const common = estimatePromptTokens("仓") // U+4E00
+		const extA = estimatePromptTokens("㐀") // U+3400
+		const kana = estimatePromptTokens("あ") // U+3040
+		const hangul = estimatePromptTokens("가") // U+AC00
+
+		expect(common).toBeGreaterThan(0)
+		expect(extA).toBeGreaterThan(0)
+		expect(kana).toBeGreaterThan(0)
+		expect(hangul).toBeGreaterThan(0)
+	})
+
+	it("uses custom boundary when provided", () => {
+		const prompt = renderPrompt({
+			staticSections: [{ name: "a", text: "A" }],
+			dynamicSections: [{ name: "b", text: "B" }],
+			boundary: "|||",
+		})
+		expect(prompt.fullPrompt).toBe("A|||B")
+	})
+
+	it("does not trim text that fits within budget", () => {
+		// "ab" = 2 chars, tokens = ceil(2/3.5) = 1
+		// With maxTokens = 1, maxChars = floor(3.5) = 3
+		// "ab".length = 2 <= 3, so no trimming
+		const result = applyPromptBudget("ab", "Dynamic", 1)
+		expect(result.staticPart).toBe("ab")
+		expect(result.dynamicPart).toBe("[Dynamic prompt omitted due to token budget]")
+	})
+
+	it("filters empty strings from dynamic part array", () => {
+		const result = applyPromptBudget("Static", ["  ", "Valid", ""], 40)
+		expect(result.dynamicPart).toBe("Valid")
+	})
+
+	it("handles optional sections without priority", () => {
+		const result = renderPrompt({
+			staticSections: [{ name: "role", text: "Role", required: true }],
+			dynamicSections: [
+				{ name: "no-priority-1", text: "x".repeat(400) },
+				{ name: "no-priority-2", text: "y".repeat(400) },
+			],
+			maxPromptTokens: 4,
+		})
+		expect(result.retainedSectionNames.has("role")).toBe(true)
+		expect(result.retainedSectionNames.has("no-priority-1")).toBe(false)
+		expect(result.retainedSectionNames.has("no-priority-2")).toBe(false)
+	})
 })
