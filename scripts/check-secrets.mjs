@@ -35,10 +35,19 @@ const SECRET_PATTERNS = [
 const patterns = SECRET_PATTERNS
 
 const ALLOWLISTED_FINDINGS = [
-	{ file: /^\.njust-ai\/skills\/cangjie-full-docs\/libs_stdx\/logger\/logger_samples\/logger_sample\.md$/, name: "Password" },
+	{
+		file: /^\.njust-ai\/skills\/cangjie-full-docs\/libs_stdx\/logger\/logger_samples\/logger_sample\.md$/,
+		name: "Password",
+	},
 	{ file: /^CangjieCorpus-1\.0\.0\/libs\/stdx\/logger\/logger_samples\/logger_sample\.md$/, name: "Password" },
 	{ file: /^src\/utils\/__tests__\/git\.spec\.ts$/, name: "GitHub personal access token" },
 	{ file: /^webview-ui\/src\/i18n\/locales\/(?:en|zh-CN|zh-TW)\/settings\.json$/, name: "JSON API key" },
+	{
+		file: /^src\/core\/tools\/permissions\/__tests__\/BashCommandAnalyzer\.spec\.ts$/,
+		name: "GitHub personal access token",
+	},
+	{ file: /^src\/core\/tools\/permissions\/__tests__\/BashCommandAnalyzer\.spec\.ts$/, name: "AWS access key" },
+	{ file: /^src\/core\/tools\/permissions\/__tests__\/BashCommandAnalyzer\.spec\.ts$/, name: "Private key" },
 ]
 
 function normalizePath(file) {
@@ -72,12 +81,17 @@ async function main() {
 				}
 			}
 			for (const d of ["src", "packages", "apps", "scripts"]) {
-				try { walk(d) } catch {}
+				try {
+					walk(d)
+				} catch {}
 			}
 		}
 	} else if (isStaged) {
 		try {
-			const output = execSync("git diff --cached --name-only --diff-filter=ACMR", { encoding: "utf-8", stdio: "pipe" })
+			const output = execSync("git diff --cached --name-only --diff-filter=ACMR", {
+				encoding: "utf-8",
+				stdio: "pipe",
+			})
 			files.push(...output.trim().split("\n").filter(Boolean))
 		} catch {
 			console.log("Not a git repo; scanning all tracked files.")

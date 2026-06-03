@@ -39,16 +39,17 @@
 				"core/task/TaskResultAggregator.ts",
 				"core/task/TaskStack.ts",
 				"core/tools/helpers/ToolErrorClassifier.ts",
-			"core/tools/permissions/PermissionContext.ts",
-			"core/assistant-message/index.ts",
-			"core/message-queue/index.ts",
-			"core/security/index.ts",
-			"core/webview/WebviewHost.ts",
+				"core/tools/permissions/PermissionContext.ts",
+				"core/assistant-message/index.ts",
+				"core/message-queue/index.ts",
+				"core/security/index.ts",
+				"core/webview/WebviewHost.ts",
 				"services/marketplace/index.ts",
 				"services/mcp/McpHubConfigPersistence.ts",
 				"services/mcp/McpHubConnection.ts",
 				"services/mcp/transport/TransportFactory.ts",
-				"services/tree-sitter/cangjieSourceScanner.ts"
+				"services/tree-sitter/cangjieSourceScanner.ts",
+				"services/telemetry/PerformanceAggregator.ts"
 			]
 		},
 		"webview-ui": {

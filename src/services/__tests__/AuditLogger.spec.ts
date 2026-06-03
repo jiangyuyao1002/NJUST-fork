@@ -16,7 +16,16 @@ describe("AuditLogger", () => {
 
 	afterEach(async () => {
 		await logger.dispose()
-		fs.rmSync(tmpDir, { recursive: true, force: true })
+		// Windows: WriteStream.end() 回调可能在文件句柄完全释放前返回，
+		// 导致 fs.rmSync 抛出 ENOTEMPTY。重试最多 3 次，间隔 100ms。
+		for (let attempt = 0; attempt < 3; attempt++) {
+			try {
+				fs.rmSync(tmpDir, { recursive: true, force: true })
+				break
+			} catch {
+				if (attempt < 2) await new Promise((r) => setTimeout(r, 100))
+			}
+		}
 	})
 
 	function makeEntry(overrides: Partial<AuditEntry> = {}): AuditEntry {
