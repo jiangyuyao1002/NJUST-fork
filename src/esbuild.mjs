@@ -45,6 +45,26 @@ async function main() {
 	 */
 	const plugins = [
 		{
+			// Deduplicate pdf-parse: it ships 4 pdf.js versions via dynamic
+			// require(`./pdf.js/${options.version}/build/pdf.js`), but only
+			// v1.10.100 is ever used (hardcoded default). We intercept the
+			// pdf-parse.js source and replace the dynamic require with a
+			// static path to save ~6 MB in the bundle.
+			name: "deduplicate-pdf-parse",
+			setup(build) {
+				const KEEP_VERSION = "v1.10.100"
+				build.onLoad({ filter: /pdf-parse[/\\]lib[/\\]pdf-parse\.js$/ }, async (args) => {
+					const contents = await fs.promises.readFile(args.path, "utf-8")
+					// Replace the dynamic require template literal with a static path
+					const patched = contents.replace(
+						/require\(`\.\/pdf\.js\/\$\{options\.version\}\/build\/pdf\.js`\)/,
+						`require("./pdf.js/${KEEP_VERSION}/build/pdf.js")`,
+					)
+					return { contents: patched, loader: "js" }
+				})
+			},
+		},
+		{
 			name: "copyFiles",
 			setup(build) {
 				build.onEnd(() => {

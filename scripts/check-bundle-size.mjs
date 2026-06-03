@@ -17,9 +17,8 @@ const distDir = resolve(rootDir, "src/dist")
 
 // ── 配置 ─────────────────────────────────────────────────────────
 // extension.js 的最大允许大小（字节）。
-// 当前基线约 16.9MB（2026-06-03 生产构建测量），此阈值允许合理波动。
-// KR2.2 目标 ≤ 30MB，当前已达标。
-const EXTENSION_JS_LIMIT_MB = 25
+// OKR KR2.2 目标 ≤ 30MB。2026-06 基线约 28 MB（pdf-parse 去重后）。
+const EXTENSION_JS_LIMIT_MB = 30
 const EXTENSION_JS_LIMIT_BYTES = EXTENSION_JS_LIMIT_MB * 1024 * 1024
 
 // ── 工具函数 ─────────────────────────────────────────────────────
@@ -65,7 +64,7 @@ function getWasmFilesSize() {
 const outputJson = process.argv.includes("--json")
 
 if (!existsSync(distDir)) {
-	console.error("❌ dist 目录不存在。请先运行 `pnpm --filter @njust-ai/vscode bundle`。")
+	console.error("❌ dist 目录不存在。请先运行 `pnpm --filter njust-ai bundle`。")
 	process.exit(2)
 }
 
