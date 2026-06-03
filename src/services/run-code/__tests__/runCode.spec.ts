@@ -26,6 +26,23 @@ vi.mock("fs", () => ({
 	statSync: vi.fn(() => ({ isFile: () => true })),
 }))
 
+// Force win32 path behavior so Windows-style paths in tests work on all platforms
+vi.mock("path", async () => {
+	const actual = await vi.importActual<typeof import("path")>("path")
+	return {
+		...actual,
+		default: actual.win32,
+		basename: actual.win32.basename,
+		dirname: actual.win32.dirname,
+		extname: actual.win32.extname,
+		join: actual.win32.join,
+		parse: actual.win32.parse,
+		relative: actual.win32.relative,
+		resolve: actual.win32.resolve,
+		sep: "\\",
+	}
+})
+
 vi.mock("vscode", () => {
 	const mockWorkspaceFolders = [
 		{
