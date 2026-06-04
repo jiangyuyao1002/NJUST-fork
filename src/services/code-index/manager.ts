@@ -304,14 +304,6 @@ export class CodeIndexManager {
 		}
 	}
 
-	public tryCreateEmbedder(): import("./interfaces/embedder").IEmbedder | undefined {
-		try {
-			return this._serviceFactory?.createEmbedder()
-		} catch {
-			return undefined
-		}
-	}
-
 	/**
 	 * Cleans up the manager instance.
 	 */
@@ -472,7 +464,7 @@ export class CodeIndexManager {
 					TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 					// Re-throw the error so the caller knows validation failed
 					throw error
-				}
+			}
 			}
 		}
 	}

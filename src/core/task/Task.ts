@@ -186,9 +186,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 */
 	public cachedToolDefinitions?: { mode: string; tools: UnsafeAny[]; time: number }
 
-	public memrlEpisodicHints: string = ""
-	public memrlLtmRules: string = ""
-
 	/** Task mode. Async-initialized from provider state; falls back to defaultModeSlug. Access via getTaskMode() or taskMode getter after taskModeReady resolves. */
 	private _taskMode: string | undefined
 
@@ -1245,113 +1242,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	// Cloud Agent orchestration delegated to CloudAgentOrchestrator
 
-	/**
-	 * Strip noisy system-injected blocks (e.g. <environment_details>) from a
-	 * message string so only semantically useful text reaches the STM.
-	 * Also hard-truncates to 300 chars to keep per-turn signal tight.
-	 */
-	private static cleanMemrlText(text: string): string {
-		return text
-			.replace(/<environment_details>[\s\S]*?<\/environment_details>/g, "")
-			.replace(/\s+/g, " ")
-			.trim()
-			.slice(0, 300)
-	}
-
-	/**
-	 * Populate the MemRL STM for taskId from apiConversationHistory.
-	 * Captures both text blocks and tool_use names so coding tasks
-	 * (which may have zero text-only turns) still produce a non-empty summary.
-	 * Always seeds with the user intent as a guaranteed fallback.
-	 * Strips <environment_details> noise before storing.
-	 */
-	private populateMemrlStm(
-		memMgr: import("../../services/memory/memrl/MemoryManager").MemoryManager,
-		taskId: string,
-		intent: string,
-	): void {
-		const stm = memMgr.getStm(taskId)
-		// Seed with the intent so summarize() is never empty
-		stm.push("user", Task.cleanMemrlText(intent))
-		for (const msg of this.apiConversationHistory.slice(-20)) {
-			const parts: string[] = []
-			if (Array.isArray(msg.content)) {
-				for (const b of msg.content) {
-					if (b.type === "text") {
-						const cleaned = Task.cleanMemrlText(b.text)
-						if (cleaned) parts.push(cleaned)
-					} else if (b.type === "tool_use") {
-						parts.push(`[tool:${b.name}]`)
-					}
-				}
-			} else if (typeof msg.content === "string") {
-				const cleaned = Task.cleanMemrlText(msg.content)
-				if (cleaned) parts.push(cleaned)
-			}
-			const combined = parts.join(" ").trim()
-			if (combined) stm.push(msg.role as "user" | "assistant", combined)
-		}
-	}
-
-	/**
-	 * Compute a nuanced MemRL reward in [0, 1].
-	 * Completed tasks start at 1.0 and are penalised for tool failures and
-	 * consecutive mistakes; incomplete tasks get a small signal only.
-	 */
-	private computeMemrlReward(): number {
-		const toolEntries = Object.values(this.toolUsage)
-		const totalAttempts = toolEntries.reduce((s, t) => s + t.attempts, 0)
-		const totalFailures = toolEntries.reduce((s, t) => s + t.failures, 0)
-		const failurePenalty = totalAttempts > 0 ? (totalFailures / totalAttempts) * 0.3 : 0
-		const mistakePenalty = Math.min(this.consecutiveMistakeCount * 0.05, 0.25)
-		return this.taskCompleted
-			? Math.max(0.4, 1.0 - failurePenalty - mistakePenalty)
-			: Math.max(0.0, 0.1 - failurePenalty)
-	}
-
 	private async initiateCloudAgentLoop(userMessage: string, images?: string[]): Promise<void> {
 		const host = createCloudAgentHost(this as UnsafeAny as Parameters<typeof createCloudAgentHost>[0])
 		const { CloudAgentOrchestrator } = await import("./CloudAgentOrchestrator")
 		const orchestrator = new CloudAgentOrchestrator(host)
-
-		const memrlProv = this.hostRef.deref()
-		const memMgr = memrlProv?.getMemoryManager(this.cwd)
-		const memrlIntent = userMessage.slice(0, 500) || this.taskId
-		if (memMgr) {
-			const emb =
-				memrlProv && "getCurrentWorkspaceCodeIndexManager" in memrlProv
-					? (memrlProv as import("../../core/webview/ClineProvider").ClineProvider)
-							.getCurrentWorkspaceCodeIndexManager()
-							?.tryCreateEmbedder()
-					: undefined
-			memMgr.updateDependencies(this.api, emb)
-			try {
-				const { episodicHints, ltmRules } = await Promise.race([
-					memMgr.beforeRun(this.taskId, memrlIntent),
-					new Promise<{ episodicHints: string; ltmRules: string }>((_, rej) =>
-						setTimeout(() => rej(new Error("MemRL timeout")), 3000),
-					),
-				])
-				this.memrlEpisodicHints = episodicHints
-				this.memrlLtmRules = ltmRules
-				this.requestBuilder.clearCache()
-			} catch {
-				/* non-blocking */
-			}
-		}
-		try {
-			await orchestrator.run(userMessage, images)
-		} finally {
-			if (memMgr) {
-				this.populateMemrlStm(memMgr, this.taskId, memrlIntent)
-				memMgr.afterRun(
-					this.taskId,
-					memrlIntent,
-					memMgr.getStm(this.taskId).summarize(),
-					this.computeMemrlReward(),
-				)
-			}
-		}
+		await orchestrator.run(userMessage, images)
 	}
 
 	// Task Loop
@@ -1374,72 +1269,28 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			},
 		})
 
-		const memMgr2 = provider?.getMemoryManager(this.cwd)
-		logger.info("MemRL", `initiateTaskLoop cwd=${this.cwd} provider=${!!provider} memMgr=${!!memMgr2}`)
-		const memrlIntent2 =
-			userContent
-				.filter((b): b is { type: "text"; text: string } => b.type === "text" && "text" in b)
-				.map((b) => b.text)
-				.join(" ")
-				.trim()
-				.slice(0, 500) || this.taskId
-		if (memMgr2) {
-			const emb2 =
-				provider && "getCurrentWorkspaceCodeIndexManager" in provider
-					? (provider as import("../../core/webview/ClineProvider").ClineProvider)
-							.getCurrentWorkspaceCodeIndexManager()
-							?.tryCreateEmbedder()
-					: undefined
-			memMgr2.updateDependencies(this.api, emb2)
-			try {
-				const { episodicHints, ltmRules } = await Promise.race([
-					memMgr2.beforeRun(this.taskId, memrlIntent2),
-					new Promise<{ episodicHints: string; ltmRules: string }>((_, rej) =>
-						setTimeout(() => rej(new Error("MemRL timeout")), 3000),
-					),
-				])
-				this.memrlEpisodicHints = episodicHints
-				this.memrlLtmRules = ltmRules
-				this.requestBuilder.clearCache()
-			} catch {
-				/* non-blocking */
-			}
-		}
-
 		let nextUserContent = userContent
 		let includeFileDetails = true
 
 		this.emit(NJUST_AIEventName.TaskStarted)
 
-		try {
-			while (!this.abort && !this.taskCompleted) {
-				const didEndLoop = await this.recursivelyMakeClineRequests(nextUserContent, includeFileDetails)
-				includeFileDetails = false
+		while (!this.abort && !this.taskCompleted) {
+			const didEndLoop = await this.recursivelyMakeClineRequests(nextUserContent, includeFileDetails)
+			includeFileDetails = false
 
-				if (didEndLoop) {
-					// Only happens when max requests is hit and user denies
-					// resetting the count, or an unexpected error is caught.
-					break
-				}
-
-				if (this.taskCompleted) {
-					// attempt_completion was accepted — stop without
-					// re-prompting the model.
-					break
-				}
-
-				nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
+			if (didEndLoop) {
+				// Only happens when max requests is hit and user denies
+				// resetting the count, or an unexpected error is caught.
+				break
 			}
-		} finally {
-			if (memMgr2) {
-				this.populateMemrlStm(memMgr2, this.taskId, memrlIntent2)
-				memMgr2.afterRun(
-					this.taskId,
-					memrlIntent2,
-					memMgr2.getStm(this.taskId).summarize(),
-					this.computeMemrlReward(),
-				)
+
+			if (this.taskCompleted) {
+				// attempt_completion was accepted — stop without
+				// re-prompting the model.
+				break
 			}
+
+			nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
 		}
 	}
 
