@@ -35,10 +35,6 @@ export interface SystemPromptSettings {
 	enableTurnAwarePromptPruning?: boolean
 	/** Cross-session memory from a previous session, injected into the system prompt. */
 	sessionMemory?: SessionMemory
-	/** MemRL: episodic hints. */
-	memrlEpisodicHints?: string
-	/** MemRL: LTM rule cards. */
-	memrlLtmRules?: string
 	/**
 	 * Last user message文本（可选）——与 Ask/Architect 配合，用于检测仓颉相关问题并注入
 	 * Cangjie Dev 动态语料块，而无需切换模式。
