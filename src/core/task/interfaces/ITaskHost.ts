@@ -4,6 +4,7 @@ import { NJUST_AIEventName } from "@njust-ai/types"
 import type { IMcpHubClient } from "../../../services/mcp/interfaces/IMcpHubClient"
 import type { IMcpHubService } from "../../../services/mcp/interfaces/IMcpHubService"
 import type { SkillsManager } from "../../../services/skills/SkillsManager"
+import type { MemoryManager } from "../../../services/memory/memrl/MemoryManager"
 import type { ContextProxy } from "../../config/ContextProxy"
 
 import type { ITaskUINotifier } from "./ITaskUINotifier"
@@ -23,6 +24,8 @@ export interface ITaskHost extends IMcpHubClient, ITaskUINotifier {
 	getMcpHub(): IMcpHubService | undefined
 
 	getSkillsManager(): SkillsManager | undefined
+
+	getMemoryManager(cwd?: string): MemoryManager | undefined
 
 	delegateParentAndOpenChild(params: {
 		parentTaskId: string
