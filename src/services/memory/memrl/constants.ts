@@ -1,0 +1,15 @@
+export const MEMRL_PRIMARY_DIR = ".njust_ai/memories"
+export const MEMRL_ROO_DIR = ".roo/session-memories"
+export const EPISODIC_FILE = "episodic.json"
+export const LTM_FILE = "ltm_rules.json"
+export const SIM_THRESHOLD = 0.5
+export const TOP_K1 = 20
+export const LAMBDA = 0.3
+export const TOP_K2 = 5
+export const ALPHA = 0.1
+export const Q_INIT = 0.5
+export const LTM_DISTILL_INTERVAL = 10
+export const LTM_DISTILL_BATCH = 20
+export const LTM_MAX_RULES = 200
+export const STM_MAX_CHARS = 8_000
+export const STM_LRU_LIMIT = 2_000
