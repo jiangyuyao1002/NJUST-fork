@@ -1,5 +1,6 @@
 {
 	"name": "@njust-ai/vscode-e2e",
+	"version": "0.0.1",
 	"private": true,
 	"scripts": {
 		"lint": "eslint src --ext=ts --max-warnings=0",
@@ -15,7 +16,7 @@
 		"@njust-ai/mock-api-server": "workspace:^",
 		"@njust-ai/types": "workspace:^",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "20.x",
+		"@types/node": "^20.0",
 		"@types/vscode": "^1.95.0",
 		"@vscode/test-cli": "^0.0.11",
 		"@vscode/test-electron": "^2.4.0",

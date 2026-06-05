@@ -1,7 +1,7 @@
 {
 	"name": "@njust-ai/prompt-engine",
-	"description": "Pure prompt rendering engine for NJUST_AI.",
 	"version": "0.0.0",
+	"description": "Pure prompt rendering engine for NJUST_AI.",
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts"
@@ -16,7 +16,7 @@
 	"devDependencies": {
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",
-		"@types/node": "20.x",
+		"@types/node": "^20.0",
 		"@vitest/coverage-v8": "^4.1.8",
 		"vitest": "^4.1.8"
 	}

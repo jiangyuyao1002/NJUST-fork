@@ -55,7 +55,8 @@
 	},
 	"serverStatus": {
 		"retrying": "重試中...",
-		"retryConnection": "重試連線"
+		"retryConnection": "重試連線",
+		"toggleServer": "切換 {{serverName}} 伺服器"
 	},
 	"execution": {
 		"running": "執行中",

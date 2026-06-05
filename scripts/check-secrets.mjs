@@ -63,6 +63,14 @@ const ALLOWLISTED_FINDINGS = [
 	},
 	{ file: /^src\/core\/tools\/permissions\/__tests__\/BashCommandAnalyzer\.spec\.ts$/, name: "AWS access key" },
 	{ file: /^src\/core\/tools\/permissions\/__tests__\/BashCommandAnalyzer\.spec\.ts$/, name: "Private key" },
+	// Source files with property references that match "JSON API key" pattern (false positives)
+	{ file: /^apps\/cli\/src\/commands\/cli\/run\.ts$/, name: "JSON API key" },
+	{ file: /^src\/api\/providers\/qwen-code\.ts$/, name: "JSON API key" },
+	{ file: /^src\/core\/config\/ContextProxy\.ts$/, name: "JSON API key" },
+	{ file: /^src\/core\/webview\/handlers\/settingsMessageHandler\.ts$/, name: "JSON API key" },
+	{ file: /^src\/services\/code-index\/config-manager\.ts$/, name: "JSON API key" },
+	{ file: /^webview-ui\/src\/components\/modes\/ModesView\.tsx$/, name: "JSON API key" },
+	{ file: /^webview-ui\/src\/components\/settings\/ApiOptions\.tsx$/, name: "JSON API key" },
 ]
 
 function normalizePath(file) {
@@ -137,6 +145,18 @@ async function main() {
 			file.endsWith(".svg") ||
 			file.endsWith(".vsix") ||
 			file.match(/\.code-workspace$/)
+		) {
+			continue
+		}
+
+		// Skip test files and documentation/corpus (high false-positive rate)
+		const normalizedFile = normalizePath(file)
+		if (
+			normalizedFile.includes("__tests__/") ||
+			normalizedFile.includes("__fixtures__/") ||
+			/\.(?:spec|test)\.[cm]?[jt]sx?$/.test(normalizedFile) ||
+			normalizedFile.includes("CangjieCorpus") ||
+			normalizedFile.includes("bundled-cangjie-corpus")
 		) {
 			continue
 		}

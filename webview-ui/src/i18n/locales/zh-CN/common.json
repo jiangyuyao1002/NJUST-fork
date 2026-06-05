@@ -25,7 +25,8 @@
 	},
 	"ui": {
 		"search_placeholder": "搜索...",
-		"no_results": "未找到结果"
+		"no_results": "未找到结果",
+		"clearSearch": "清除搜索"
 	},
 	"mermaid": {
 		"loading": "生成 Mermaid 图表中...",

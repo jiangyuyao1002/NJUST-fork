@@ -54,7 +54,8 @@
 	},
 	"serverStatus": {
 		"retrying": "重试中...",
-		"retryConnection": "重试连接"
+		"retryConnection": "重试连接",
+		"toggleServer": "切换 {{serverName}} 服务器"
 	},
 	"refreshMCP": "刷新 MCP 服务器",
 	"execution": {

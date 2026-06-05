@@ -1,13 +1,10 @@
 {
 	"name": "@njust-ai/cli",
 	"version": "0.1.17",
-	"description": "NJUST_AI CLI - Run the NJUST_AI agent from the command line",
 	"private": true,
+	"description": "NJUST_AI CLI - Run the NJUST_AI agent from the command line",
 	"type": "module",
 	"main": "dist/index.js",
-	"bin": {
-		"njust-ai": "dist/index.js"
-	},
 	"scripts": {
 		"format": "prettier --write 'src/**/*.ts'",
 		"lint": "eslint src --ext .ts --max-warnings=0",
@@ -40,11 +37,14 @@
 	"devDependencies": {
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",
-		"@types/node": "20.x",
+		"@types/node": "^20.0",
 		"@types/react": "^19.1.6",
 		"ink-testing-library": "^4.0.0",
 		"rimraf": "^6.0.1",
 		"tsup": "^8.4.0",
 		"vitest": "^4.1.8"
+	},
+	"bin": {
+		"njust-ai": "dist/index.js"
 	}
 }

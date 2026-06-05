@@ -1,12 +1,6 @@
 {
 	"$schema": "https://unpkg.com/syncpack@latest/schema.json",
-	"sortAz": [
-		"dependencies",
-		"devDependencies",
-		"peerDependencies",
-		"resolutions",
-		"overrides"
-	],
+	"sortAz": ["dependencies", "devDependencies", "peerDependencies", "resolutions", "overrides"],
 	"sortFirst": [
 		"name",
 		"version",
@@ -31,10 +25,17 @@
 		},
 		{
 			"label": "All dependencies use caret ranges",
-			"range": "^"
+			"range": "^",
+			"dependencyTypes": ["prod", "dev"]
 		}
 	],
 	"versionGroups": [
+		{
+			"label": "Workspace packages use workspace protocol",
+			"dependencies": ["@njust-ai/*"],
+			"dependencyTypes": ["prod", "dev"],
+			"pinVersion": "workspace:^"
+		},
 		{
 			"label": "Ensure consistent TypeScript version across packages",
 			"dependencies": ["typescript"],

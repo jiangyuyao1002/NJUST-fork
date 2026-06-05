@@ -1,5 +1,6 @@
 {
 	"name": "@njust-ai/vscode-shim",
+	"version": "0.0.1",
 	"private": true,
 	"type": "module",
 	"exports": "./src/index.ts",
@@ -10,11 +11,11 @@
 		"test": "vitest run",
 		"clean": "rimraf .turbo"
 	},
+	"dependencies": {},
 	"devDependencies": {
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",
-		"@types/node": "20.x",
+		"@types/node": "^20.0",
 		"vitest": "^4.1.8"
-	},
-	"dependencies": {}
+	}
 }

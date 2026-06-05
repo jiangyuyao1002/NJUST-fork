@@ -1,7 +1,7 @@
 {
 	"name": "@njust-ai/core",
-	"description": "Platform agnostic core functionality for NJUST_AI.",
 	"version": "0.0.0",
+	"description": "Platform agnostic core functionality for NJUST_AI.",
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
@@ -33,12 +33,12 @@
 		"openai": "^5.12.2",
 		"shell-quote": "^1.8.2",
 		"uuid": "^11.1.0",
-		"zod": "3.25.76"
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",
-		"@types/node": "20.x",
+		"@types/node": "^20.0",
 		"@types/shell-quote": "^1.7.5",
 		"@types/uuid": "^10.0.0",
 		"vitest": "^4.1.8"

@@ -24,6 +24,7 @@
 				"core/agent/AgentFeatureIntegrations.ts",
 				"core/agent/AgentSummaryService.ts",
 				"core/agent/index.ts",
+				"core/agent/loadAgentsDir.ts",
 				"core/feature-flags/*",
 				"core/stream/*",
 				"services/memory/*",

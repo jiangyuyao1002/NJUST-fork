@@ -14,11 +14,11 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
+		"@njust-ai/evals": "workspace:^",
+		"@njust-ai/types": "workspace:^",
 		"@radix-ui/react-dialog": "^1.1.15",
 		"@radix-ui/react-navigation-menu": "^1.2.14",
 		"@radix-ui/react-slot": "^1.2.4",
-		"@njust-ai/evals": "workspace:^",
-		"@njust-ai/types": "workspace:^",
 		"@tanstack/react-query": "^5.90.20",
 		"@vercel/og": "^0.8.6",
 		"class-variance-authority": "^0.7.1",
@@ -43,13 +43,13 @@
 		"tailwind-merge": "^3.4.0",
 		"tailwindcss-animate": "^1.0.7",
 		"tldts": "^6.1.86",
-		"zod": "3.25.76"
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",
 		"@tailwindcss/typography": "^0.5.19",
-		"@types/node": "20.x",
+		"@types/node": "^20.0",
 		"@types/react": "^18.3.23",
 		"@types/react-dom": "^18.3.7",
 		"autoprefixer": "^10.4.23",

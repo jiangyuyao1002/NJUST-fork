@@ -1,8 +1,8 @@
 {
 	"name": "@njust-ai/vscode-nightly",
-	"description": "Nightly build for the NJUST_AI VSCode extension.",
+	"version": "0.0.1",
 	"private": true,
-	"packageManager": "pnpm@10.8.1",
+	"description": "Nightly build for the NJUST_AI VSCode extension.",
 	"scripts": {
 		"bundle:nightly": "node esbuild.mjs",
 		"vsix:nightly": "cd build && mkdirp ../../../bin && npx vsce package --no-dependencies --out ../../../bin",
@@ -10,5 +10,6 @@
 	},
 	"devDependencies": {
 		"@njust-ai/build": "workspace:^"
-	}
+	},
+	"packageManager": "pnpm@10.8.1"
 }

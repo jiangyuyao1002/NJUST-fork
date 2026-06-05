@@ -1,7 +1,7 @@
 {
 	"name": "@njust-ai/evals",
-	"description": "NJUST_AI evals.",
 	"version": "0.0.0",
+	"description": "NJUST_AI evals.",
 	"type": "module",
 	"exports": "./src/index.ts",
 	"scripts": {
@@ -40,12 +40,12 @@
 		"postgres": "^3.4.7",
 		"ps-tree": "^1.2.0",
 		"redis": "^5.5.5",
-		"zod": "3.25.76"
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",
-		"@types/node": "20.x",
+		"@types/node": "^20.0",
 		"@types/node-ipc": "^9.2.3",
 		"@types/ps-tree": "^1.1.6",
 		"drizzle-kit": "^0.31.1",
