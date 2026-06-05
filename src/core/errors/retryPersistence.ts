@@ -2,6 +2,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 
 import { getTaskDirectoryPath } from "../../utils/storage"
+import { safeWriteJson } from "../../utils/safeWriteJson"
 
 export type RetryEvent = {
 	taskId: string
@@ -36,7 +37,7 @@ export async function appendRetryEvent(globalStoragePath: string, event: RetryEv
 		events = events.slice(events.length - MAX_RETRY_EVENTS)
 	}
 
-	await fs.writeFile(file, JSON.stringify(events, null, 2), "utf8")
+	await safeWriteJson(file, events)
 }
 
 export async function readRetryEvents(globalStoragePath: string, taskId: string): Promise<RetryEvent[]> {

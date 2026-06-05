@@ -523,7 +523,7 @@ export class AwsBedrockHandler extends BaseProvider implements SingleCompletionH
 			...(useServiceTier && { service_tier: this.options.awsBedrockServiceTier }),
 		}
 
-		// Create AbortController with 10 minute timeout
+		// Create AbortController with configurable timeout (from VSCode settings, default 300s)
 		const controller = new AbortController()
 		let timeoutId: NodeJS.Timeout | undefined
 

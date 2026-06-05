@@ -20,7 +20,10 @@
 			"entry": ["extension.ts"],
 			"project": ["**/*.ts"],
 			"ignore": [
-				"core/agent/**",
+				"core/agent/agentContext.ts",
+				"core/agent/AgentFeatureIntegrations.ts",
+				"core/agent/AgentSummaryService.ts",
+				"core/agent/index.ts",
 				"core/feature-flags/*",
 				"core/stream/*",
 				"services/memory/*",

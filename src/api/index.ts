@@ -21,11 +21,20 @@ export interface FallbackProviderConfig {
 	fallbackConfig?: Partial<FallbackConfig>
 }
 
-export function buildApiHandler(configuration: ProviderSettings, fallbackOptions?: FallbackProviderConfig): ApiHandler {
-	const handler = createHandler(configuration)
+export interface ApiHandlerDependencies {
+	/** Callback to persist secrets to VS Code SecretStorage. */
+	storeSecret?: (key: string, value: string) => Promise<void>
+}
+
+export function buildApiHandler(
+	configuration: ProviderSettings,
+	fallbackOptions?: FallbackProviderConfig,
+	dependencies?: ApiHandlerDependencies,
+): ApiHandler {
+	const handler = createHandler(configuration, dependencies)
 
 	if (fallbackOptions?.fallbackProvider) {
-		const fallbackHandler = createHandler(fallbackOptions.fallbackProvider)
+		const fallbackHandler = createHandler(fallbackOptions.fallbackProvider, dependencies)
 		const primaryModelId = handler.getModel().id
 		const fallbackModelId = fallbackHandler.getModel().id
 
@@ -40,8 +49,11 @@ export function buildApiHandler(configuration: ProviderSettings, fallbackOptions
 	return handler
 }
 
-function createHandler(configuration: ProviderSettings): ApiHandler {
-	return providerRegistry.createHandler(configuration, { toolCallParser: defaultToolCallParser })
+function createHandler(configuration: ProviderSettings, dependencies?: ApiHandlerDependencies): ApiHandler {
+	return providerRegistry.createHandler(configuration, {
+		toolCallParser: defaultToolCallParser,
+		storeSecret: dependencies?.storeSecret,
+	})
 }
 
 /**

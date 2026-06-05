@@ -124,7 +124,7 @@ describe("searchReplaceTool", () => {
 			validateAccess: vi.fn().mockReturnValue(true),
 		}
 		mockCline.njust_aiProtectedController = {
-			isWriteProtected: vi.fn().mockReturnValue(false),
+			isWriteProtected: vi.fn().mockResolvedValue(false),
 		}
 		mockCline.diffViewProvider = {
 			editType: undefined,

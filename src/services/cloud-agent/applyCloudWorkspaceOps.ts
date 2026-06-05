@@ -32,15 +32,15 @@ export async function applySingleCloudWorkspaceOp(
 		if (!accessAllowed) {
 			return { path: op.path, ok: false, message: `Access denied by .rooignore: ${op.path}` }
 		}
-		const isWriteProtected = rooProtectedController?.isWriteProtected(op.path) || false
+		const isWriteProtected = (await rooProtectedController?.isWriteProtected(op.path)) || false
 		if (isWriteProtected) {
 			return { path: op.path, ok: false, message: `Write protected: ${op.path}` }
 		}
 		if (op.op === "write_file") {
-			const message = await execWriteFile(cwd, { path: op.path, content: op.content })
+			const message = await execWriteFile(cwd, { path: op.path, content: op.content }, rooProtectedController)
 			return { path: op.path, ok: true, message }
 		}
-		const message = await execApplyDiff(cwd, { path: op.path, diff: op.diff })
+		const message = await execApplyDiff(cwd, { path: op.path, diff: op.diff }, rooProtectedController)
 		return { path: op.path, ok: true, message }
 	} catch (e) {
 		const msg = getErrorMessage(e)

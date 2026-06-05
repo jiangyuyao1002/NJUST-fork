@@ -62,7 +62,7 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 			const [files, didHitLimit] = await listFiles(absolutePath, recursive || false, 200)
 			const { showRooIgnoredFiles = false } = (await task.providerRef.deref()?.getState()) ?? {}
 
-			const result = formatResponse.formatFilesList(
+			const result = await formatResponse.formatFilesList(
 				absolutePath,
 				files,
 				didHitLimit,

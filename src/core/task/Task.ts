@@ -28,6 +28,7 @@ import {
 	type CreateTaskOptions,
 	type ModelInfo,
 	type ClineApiReqCancelReason,
+	type SecretState,
 	NJUST_AIEventName,
 	TelemetryEventName,
 	TaskStatus,
@@ -521,6 +522,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}: TaskOptions) {
 		super()
 
+		// Multiple consumers (api.ts, TaskStackManager, ChatStateSync, etc.) register listeners
+		// across ~15 event types. Set a generous limit to avoid Node's default 10-listener warning.
+		this.setMaxListeners(50)
+
 		const host = hostOption ?? provider
 		if (!host) {
 			throw new Error("Task requires host (or legacy provider) option")
@@ -574,7 +579,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		})
 
 		this.apiConfiguration = apiConfiguration
-		this.api = buildApiHandler(this.apiConfiguration)
+		this.api = buildApiHandler(this.apiConfiguration, undefined, {
+			storeSecret: (key, value) =>
+				Promise.resolve(host.contextProxy.storeSecret(key as keyof SecretState, value)),
+		})
 		this.autoApprovalHandler = new AutoApprovalHandler()
 
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
@@ -618,7 +626,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.messageQueueStateChangedHandler = () => {
 			this.emit(NJUST_AIEventName.TaskUserMessage, this.taskId)
 			this.emit(NJUST_AIEventName.QueuedMessagesUpdated, this.taskId, this.messageQueueService.messages)
-			void this.refreshWebviewState()
+			void this.refreshWebviewState().catch((e) => logger.error("Task", "refreshWebviewState failed", e))
 		}
 
 		this.messageQueueService.on("stateChanged", this.messageQueueStateChangedHandler)
@@ -909,7 +917,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Use allowEmpty=true to ensure a checkpoint is recorded even if there are no file changes.
 		// Suppress the checkpoint_saved chat row for this particular checkpoint to keep the timeline clean.
 		if (askResponse === "messageResponse") {
-			void this.checkpointSave(false, true)
+			void this.checkpointSave(false, true).catch((e) => logger.error("Task", "checkpointSave failed", e))
 		}
 
 		// Mark the last follow-up question as answered
@@ -1012,7 +1020,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		tokenCountCache.clear()
 
 		this.apiConfiguration = newApiConfiguration
-		this.api = buildApiHandler(this.apiConfiguration)
+		const host = this.hostRef.deref()
+		this.api = buildApiHandler(this.apiConfiguration, undefined, {
+			storeSecret: host
+				? (key, value) => Promise.resolve(host.contextProxy.storeSecret(key as keyof SecretState, value))
+				: undefined,
+		})
 	}
 
 	public async submitUserMessage(

@@ -12,117 +12,117 @@ describe("RooProtectedController", () => {
 	})
 
 	describe("isWriteProtected", () => {
-		it("should protect .rooignore file", () => {
-			expect(controller.isWriteProtected(".rooignore")).toBe(true)
+		it("should protect .rooignore file", async () => {
+			expect(await controller.isWriteProtected(".rooignore")).toBe(true)
 		})
 
-		it("should protect files in .njust_ai directory", () => {
-			expect(controller.isWriteProtected(".njust_ai/config.json")).toBe(true)
-			expect(controller.isWriteProtected(".njust_ai/settings/user.json")).toBe(true)
-			expect(controller.isWriteProtected(".njust_ai/modes/custom.json")).toBe(true)
+		it("should protect files in .njust_ai directory", async () => {
+			expect(await controller.isWriteProtected(".njust_ai/config.json")).toBe(true)
+			expect(await controller.isWriteProtected(".njust_ai/settings/user.json")).toBe(true)
+			expect(await controller.isWriteProtected(".njust_ai/modes/custom.json")).toBe(true)
 		})
 
-		it("should protect .rooprotected file", () => {
-			expect(controller.isWriteProtected(".rooprotected")).toBe(true)
+		it("should protect .rooprotected file", async () => {
+			expect(await controller.isWriteProtected(".rooprotected")).toBe(true)
 		})
 
-		it("should protect .roomodes files", () => {
-			expect(controller.isWriteProtected(".roomodes")).toBe(true)
+		it("should protect .roomodes files", async () => {
+			expect(await controller.isWriteProtected(".roomodes")).toBe(true)
 		})
 
-		it("should protect .roorules* files", () => {
-			expect(controller.isWriteProtected(".roorules")).toBe(true)
-			expect(controller.isWriteProtected(".roorules.md")).toBe(true)
+		it("should protect .roorules* files", async () => {
+			expect(await controller.isWriteProtected(".roorules")).toBe(true)
+			expect(await controller.isWriteProtected(".roorules.md")).toBe(true)
 		})
 
-		it("should protect .clinerules* files", () => {
-			expect(controller.isWriteProtected(".clinerules")).toBe(true)
-			expect(controller.isWriteProtected(".clinerules.md")).toBe(true)
+		it("should protect .clinerules* files", async () => {
+			expect(await controller.isWriteProtected(".clinerules")).toBe(true)
+			expect(await controller.isWriteProtected(".clinerules.md")).toBe(true)
 		})
 
-		it("should protect files in .vscode directory", () => {
-			expect(controller.isWriteProtected(".vscode/settings.json")).toBe(true)
-			expect(controller.isWriteProtected(".vscode/launch.json")).toBe(true)
-			expect(controller.isWriteProtected(".vscode/tasks.json")).toBe(true)
+		it("should protect files in .vscode directory", async () => {
+			expect(await controller.isWriteProtected(".vscode/settings.json")).toBe(true)
+			expect(await controller.isWriteProtected(".vscode/launch.json")).toBe(true)
+			expect(await controller.isWriteProtected(".vscode/tasks.json")).toBe(true)
 		})
 
-		it("should protect .code-workspace files", () => {
-			expect(controller.isWriteProtected("myproject.code-workspace")).toBe(true)
-			expect(controller.isWriteProtected("pentest.code-workspace")).toBe(true)
-			expect(controller.isWriteProtected(".code-workspace")).toBe(true)
-			expect(controller.isWriteProtected("folder/workspace.code-workspace")).toBe(true)
+		it("should protect .code-workspace files", async () => {
+			expect(await controller.isWriteProtected("myproject.code-workspace")).toBe(true)
+			expect(await controller.isWriteProtected("pentest.code-workspace")).toBe(true)
+			expect(await controller.isWriteProtected(".code-workspace")).toBe(true)
+			expect(await controller.isWriteProtected("folder/workspace.code-workspace")).toBe(true)
 		})
 
-		it("should protect AGENTS.md file", () => {
-			expect(controller.isWriteProtected("AGENTS.md")).toBe(true)
+		it("should protect AGENTS.md file", async () => {
+			expect(await controller.isWriteProtected("AGENTS.md")).toBe(true)
 		})
 
-		it("should protect AGENT.md file", () => {
-			expect(controller.isWriteProtected("AGENT.md")).toBe(true)
+		it("should protect AGENT.md file", async () => {
+			expect(await controller.isWriteProtected("AGENT.md")).toBe(true)
 		})
 
-		it("should not protect other files starting with .njust_ai", () => {
-			expect(controller.isWriteProtected(".njust_aisettings")).toBe(false)
-			expect(controller.isWriteProtected(".njust_aiconfig")).toBe(false)
+		it("should not protect other files starting with .njust_ai", async () => {
+			expect(await controller.isWriteProtected(".njust_aisettings")).toBe(false)
+			expect(await controller.isWriteProtected(".njust_aiconfig")).toBe(false)
 		})
 
-		it("should not protect regular files", () => {
-			expect(controller.isWriteProtected("src/index.ts")).toBe(false)
-			expect(controller.isWriteProtected("package.json")).toBe(false)
-			expect(controller.isWriteProtected("README.md")).toBe(false)
+		it("should not protect regular files", async () => {
+			expect(await controller.isWriteProtected("src/index.ts")).toBe(false)
+			expect(await controller.isWriteProtected("package.json")).toBe(false)
+			expect(await controller.isWriteProtected("README.md")).toBe(false)
 		})
 
-		it("should not protect files that contain 'njust-ai' but don't start with .njust_ai", () => {
-			expect(controller.isWriteProtected("src/njust-ai-utils.ts")).toBe(false)
-			expect(controller.isWriteProtected("config/njust-ai.config.js")).toBe(false)
+		it("should not protect files that contain 'njust-ai' but don't start with .njust_ai", async () => {
+			expect(await controller.isWriteProtected("src/njust-ai-utils.ts")).toBe(false)
+			expect(await controller.isWriteProtected("config/njust-ai.config.js")).toBe(false)
 		})
 
-		it("should handle nested paths correctly", () => {
-			expect(controller.isWriteProtected(".njust_ai/config.json")).toBe(true) // .njust_ai/** matches at root
-			expect(controller.isWriteProtected("nested/.rooignore")).toBe(true) // .rooignore matches anywhere by default
-			expect(controller.isWriteProtected("nested/.roomodes")).toBe(true) // .roomodes matches anywhere by default
-			expect(controller.isWriteProtected("nested/.roorules.md")).toBe(true) // .roorules* matches anywhere by default
+		it("should handle nested paths correctly", async () => {
+			expect(await controller.isWriteProtected(".njust_ai/config.json")).toBe(true) // .njust_ai/** matches at root
+			expect(await controller.isWriteProtected("nested/.rooignore")).toBe(true) // .rooignore matches anywhere by default
+			expect(await controller.isWriteProtected("nested/.roomodes")).toBe(true) // .roomodes matches anywhere by default
+			expect(await controller.isWriteProtected("nested/.roorules.md")).toBe(true) // .roorules* matches anywhere by default
 		})
 
-		it("should handle absolute paths by converting to relative", () => {
+		it("should handle absolute paths by converting to relative", async () => {
 			const absolutePath = path.join(TEST_CWD, ".rooignore")
-			expect(controller.isWriteProtected(absolutePath)).toBe(true)
+			expect(await controller.isWriteProtected(absolutePath)).toBe(true)
 		})
 
-		it("should handle paths with different separators", () => {
-			expect(controller.isWriteProtected(".njust_ai\\config.json")).toBe(true)
-			expect(controller.isWriteProtected(".njust_ai/config.json")).toBe(true)
+		it("should handle paths with different separators", async () => {
+			expect(await controller.isWriteProtected(".njust_ai\\config.json")).toBe(true)
+			expect(await controller.isWriteProtected(".njust_ai/config.json")).toBe(true)
 		})
 
-		it("should not throw for absolute paths outside cwd", () => {
-			expect(controller.isWriteProtected("/tmp/comment-2-pr63.json")).toBe(false)
-			expect(controller.isWriteProtected("/etc/passwd")).toBe(false)
+		it("should not throw for absolute paths outside cwd", async () => {
+			expect(await controller.isWriteProtected("/tmp/comment-2-pr63.json")).toBe(false)
+			expect(await controller.isWriteProtected("/etc/passwd")).toBe(false)
 		})
 	})
 
 	describe("getProtectedFiles", () => {
-		it("should return set of protected files from a list", () => {
+		it("should return set of protected files from a list", async () => {
 			const files = ["src/index.ts", ".rooignore", "package.json", ".njust_ai/config.json", "README.md"]
 
-			const protectedFiles = controller.getProtectedFiles(files)
+			const protectedFiles = await controller.getProtectedFiles(files)
 
 			expect(protectedFiles).toEqual(new Set([".rooignore", ".njust_ai/config.json"]))
 		})
 
-		it("should return empty set when no files are protected", () => {
+		it("should return empty set when no files are protected", async () => {
 			const files = ["src/index.ts", "package.json", "README.md"]
 
-			const protectedFiles = controller.getProtectedFiles(files)
+			const protectedFiles = await controller.getProtectedFiles(files)
 
 			expect(protectedFiles).toEqual(new Set())
 		})
 	})
 
 	describe("annotatePathsWithProtection", () => {
-		it("should annotate paths with protection status", () => {
+		it("should annotate paths with protection status", async () => {
 			const files = ["src/index.ts", ".rooignore", ".njust_ai/config.json", "package.json"]
 
-			const annotated = controller.annotatePathsWithProtection(files)
+			const annotated = await controller.annotatePathsWithProtection(files)
 
 			expect(annotated).toEqual([
 				{ path: "src/index.ts", isProtected: false },

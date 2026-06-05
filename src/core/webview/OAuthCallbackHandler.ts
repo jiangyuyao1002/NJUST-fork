@@ -13,7 +13,11 @@ interface OAuthHost {
 	log(message: string): void
 }
 
-export async function handleOpenRouterCallback(host: OAuthHost, code: string): Promise<void> {
+export async function handleOpenRouterCallback(
+	host: OAuthHost,
+	code: string,
+	codeVerifier?: string,
+): Promise<void> {
 	const { apiConfiguration, currentApiConfigName = "default" } = await host.getState()
 
 	let apiKey: string
@@ -21,7 +25,14 @@ export async function handleOpenRouterCallback(host: OAuthHost, code: string): P
 	try {
 		const baseUrl = apiConfiguration.openRouterBaseUrl || "https://openrouter.ai/api/v1"
 		const baseUrlDomain = baseUrl.match(/^(https?:\/\/[^/]+)/)?.[1] || "https://openrouter.ai"
-		const response = await axios.post(`${baseUrlDomain}/api/v1/auth/keys`, { code })
+
+		// Include code_verifier for PKCE if available (best-effort; OpenRouter may ignore it)
+		const requestBody: Record<string, string> = { code }
+		if (codeVerifier) {
+			requestBody.code_verifier = codeVerifier
+		}
+
+		const response = await axios.post(`${baseUrlDomain}/api/v1/auth/keys`, requestBody)
 
 		if (response.data?.key) {
 			apiKey = response.data.key

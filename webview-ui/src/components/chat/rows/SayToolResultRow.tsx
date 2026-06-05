@@ -196,7 +196,7 @@ export const SayToolResultRow = ({
 
 				return (
 					<div style={headerStyle}>
-						<FileCode2 className="w-4 shrink-0" aria-label="Read command output icon" />
+						<FileCode2 className="w-4 shrink-0" aria-hidden="true" />
 						<span style={{ fontWeight: "bold" }}>{t("chat:readCommandOutput.title")}</span>
 						{infoText && (
 							<span

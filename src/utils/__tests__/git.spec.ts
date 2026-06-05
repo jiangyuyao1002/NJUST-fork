@@ -51,22 +51,25 @@ vitest.mock("vscode", () => ({
 }))
 
 // Mock util.promisify to return our own mock function
+// Handles both exec (command string) and execFile (file + args array) patterns
 vitest.mock("util", () => ({
 	promisify: vitest.fn(function (fn: ExecFunction) {
-		return async (command: string, options?: { cwd?: string }) => {
-			// Call the original mock to maintain the mock implementation
+		return async (...args: any[]) => {
 			return new Promise((resolve, reject) => {
-				fn(
-					command,
-					options || {},
-					(error: ExecException | null, result?: { stdout: string; stderr: string }) => {
-						if (error) {
-							reject(error)
-						} else {
-							resolve(result!)
-						}
-					},
-				)
+				const callback = (error: ExecException | null, result?: { stdout: string; stderr: string }) => {
+					if (error) {
+						reject(error)
+					} else {
+						resolve(result!)
+					}
+				}
+				if (Array.isArray(args[1])) {
+					// execFile pattern: pass through original args + callback
+					fn(...args, callback)
+				} else {
+					// exec pattern: fn(command, options, callback)
+					fn(args[0], args[1] || {}, callback)
+				}
 			})
 		}
 	}),
@@ -171,11 +174,8 @@ describe("git utils", () => {
 			})
 
 			// execFile mock for searchCommits git log call (now uses execFileAsync)
-			vitest.mocked(execFile).mockImplementation(function (...args: any[]) {
-				const callback = args[args.length - 1]
-				const cmd = args[0]
-				const cmdArgs = args[1] as string[]
-				if (cmd === "git" && cmdArgs[0] === "log") {
+			vitest.mocked(execFile).mockImplementation(function (file: string, cmdArgs: string[], options: any, callback: any) {
+				if (file === "git" && cmdArgs[0] === "log") {
 					callback(null, { stdout: mockCommitData, stderr: "" })
 					return {} as any
 				}
@@ -209,6 +209,7 @@ describe("git utils", () => {
 					"test",
 					"--regexp-ignore-case",
 				],
+				{ cwd },
 				expect.any(Function),
 			)
 		})
@@ -282,11 +283,8 @@ describe("git utils", () => {
 			// execFile mock for searchCommits git log calls (now uses execFileAsync)
 			let logCallIndex = 0
 			const logResponses = ["", mockCommitData]
-			vitest.mocked(execFile).mockImplementation(function (...args: any[]) {
-				const callback = args[args.length - 1]
-				const cmd = args[0]
-				const cmdArgs = args[1] as string[]
-				if (cmd === "git" && cmdArgs[0] === "log") {
+			vitest.mocked(execFile).mockImplementation(function (file: string, cmdArgs: string[], options: any, callback: any) {
+				if (file === "git" && cmdArgs[0] === "log") {
 					const response = logResponses[logCallIndex++] || ""
 					callback(null, { stdout: response, stderr: "" })
 					return {} as any
@@ -309,7 +307,7 @@ describe("git utils", () => {
 	describe("getCommitInfo", () => {
 		const mockCommitInfo = [
 			"abc123def456",
-			"abc123",
+			"abc123def",
 			"fix: test commit",
 			"John Doe",
 			"2024-01-06",
@@ -318,20 +316,27 @@ describe("git utils", () => {
 		const mockStats = "1 file changed, 2 insertions(+), 1 deletion(-)"
 		const mockDiff = "@@ -1,1 +1,2 @@\n-old line\n+new line"
 
+		it("should reject invalid commit hash", async () => {
+			const result = await getCommitInfo("; rm -rf /", cwd)
+			expect(result).toBe("Invalid commit hash: ; rm -rf /")
+		})
+
 		it("should return formatted commit info", async () => {
-			const responses = new Map([
+			const execResponses = new Map([
 				["git --version", { stdout: "git version 2.39.2", stderr: "" }],
 				["git rev-parse --git-dir", { stdout: ".git", stderr: "" }],
+			])
+			const execFileResponses = new Map([
 				[
-					'git show --format="%H%n%h%n%s%n%an%n%ad%n%b" --no-patch abc123',
+					"git show --format=%H%n%h%n%s%n%an%n%ad%n%b --no-patch abc123def",
 					{ stdout: mockCommitInfo, stderr: "" },
 				],
-				['git show --stat --format="" abc123', { stdout: mockStats, stderr: "" }],
-				['git show --format="" abc123', { stdout: mockDiff, stderr: "" }],
+				["git show --stat --format= abc123def", { stdout: mockStats, stderr: "" }],
+				["git show --format= abc123def", { stdout: mockDiff, stderr: "" }],
 			])
 
 			vitest.mocked(exec).mockImplementation(function (command: string, options: any, callback: any) {
-				for (const [cmd, response] of responses) {
+				for (const [cmd, response] of execResponses) {
 					if (command.startsWith(cmd)) {
 						callback(null, response)
 						return {} as any
@@ -341,8 +346,20 @@ describe("git utils", () => {
 				return {} as any
 			})
 
-			const result = await getCommitInfo("abc123", cwd)
-			expect(result).toContain("Commit: abc123")
+			vitest.mocked(execFile).mockImplementation(function (file: string, args: any, options: any, callback: any) {
+				const cmd = `${file} ${(args as string[]).join(" ")}`
+				for (const [key, response] of execFileResponses) {
+					if (cmd === key) {
+						callback(null, response)
+						return {} as any
+					}
+				}
+				callback(new Error("Unexpected command"))
+				return {} as any
+			})
+
+			const result = await getCommitInfo("abc123def", cwd)
+			expect(result).toContain("Commit: abc123def")
 			expect(result).toContain("Author: John Doe")
 			expect(result).toContain("Files Changed:")
 			expect(result).toContain("Full Changes:")
@@ -359,7 +376,7 @@ describe("git utils", () => {
 				return {} as any
 			})
 
-			const result = await getCommitInfo("abc123", cwd)
+			const result = await getCommitInfo("abc123def", cwd)
 			expect(result).toBe("Git is not installed")
 		})
 
@@ -383,7 +400,7 @@ describe("git utils", () => {
 				}
 			})
 
-			const result = await getCommitInfo("abc123", cwd)
+			const result = await getCommitInfo("abc123def", cwd)
 			expect(result).toBe("Not a git repository")
 		})
 	})

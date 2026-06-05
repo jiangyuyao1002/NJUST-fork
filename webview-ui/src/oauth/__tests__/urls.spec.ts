@@ -23,18 +23,26 @@ describe("urls", () => {
 	})
 
 	describe("getOpenRouterAuthUrl", () => {
-		it("generates correct OpenRouter auth URL with default scheme", () => {
-			const result = getOpenRouterAuthUrl()
-			expect(decodeURIComponent(result)).toContain(
+		it("generates correct OpenRouter auth URL with default scheme", async () => {
+			const result = await getOpenRouterAuthUrl()
+			expect(decodeURIComponent(result.url)).toContain(
 				"https://openrouter.ai/auth?callback_url=vscode://njust-ai.roo-code/openrouter",
 			)
+			expect(result.state).toBeTruthy()
+			expect(result.state.length).toBeGreaterThanOrEqual(16)
 		})
 
-		it("generates correct OpenRouter auth URL with custom scheme", () => {
-			const result = getOpenRouterAuthUrl("vscode-insiders")
-			expect(decodeURIComponent(result)).toContain(
+		it("generates correct OpenRouter auth URL with custom scheme", async () => {
+			const result = await getOpenRouterAuthUrl("vscode-insiders")
+			expect(decodeURIComponent(result.url)).toContain(
 				"https://openrouter.ai/auth?callback_url=vscode-insiders://njust-ai.roo-code/openrouter",
 			)
+			expect(result.state).toBeTruthy()
+		})
+
+		it("includes state parameter in callback URL", async () => {
+			const result = await getOpenRouterAuthUrl()
+			expect(decodeURIComponent(result.url)).toContain(`state=${result.state}`)
 		})
 	})
 

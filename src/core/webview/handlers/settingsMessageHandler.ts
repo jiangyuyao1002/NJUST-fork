@@ -66,6 +66,7 @@ export function registerSettingsHandlers(router: MessageRouter): void {
 	router.register("cloudAgentSaveProfile", handleCloudAgentSaveProfile)
 	router.register("cloudAgentDeleteProfile", handleCloudAgentDeleteProfile)
 	router.register("cloudAgentSetActiveProfile", handleCloudAgentSetActiveProfile)
+	router.register("openRouterOAuthState", handleOpenRouterOAuthState)
 }
 
 async function handleUpdateSettings(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -124,6 +125,22 @@ async function handleUpdateSettings(context: MessageHandlerContext, message: Web
 			newValue = value ?? true
 			const mcpHub = provider.getMcpHub()
 			if (mcpHub) await mcpHub.handleMcpEnabledChange(newValue as boolean)
+		} else if (key === "telemetrySetting") {
+			const setting = (value ?? "unset") as string
+			const isOptedIn = setting !== "disabled"
+			const previousSetting = getGlobalState("telemetrySetting") ?? "unset"
+			const wasPreviouslyOptedIn = previousSetting !== "disabled"
+			if (setting !== previousSetting && TelemetryService.hasInstance()) {
+				// Turning OFF: fire event BEFORE disabling (so emit() is not blocked)
+				if (wasPreviouslyOptedIn && !isOptedIn) {
+					TelemetryService.instance.captureTelemetrySettingsChanged(previousSetting as string, setting)
+				}
+				TelemetryService.instance.updateTelemetryState(isOptedIn)
+				// Turning ON: fire event AFTER enabling (so emit() can pass the guard)
+				if (!wasPreviouslyOptedIn && isOptedIn) {
+					TelemetryService.instance.captureTelemetrySettingsChanged(previousSetting as string, setting)
+				}
+			}
 		} else if (key === "experiments") {
 			if (!value) continue
 			newValue = {
@@ -887,5 +904,27 @@ async function handleCloudAgentSetActiveProfile(
 	} catch (error) {
 		logger.error("SettingsMessageHandler", "Failed to set active profile:", error)
 		vscode.window.showErrorMessage(`设置活跃 Profile 失败: ${getErrorMessage(error)}`)
+	}
+}
+
+/**
+ * Persist OAuth state + PKCE code verifier from webview so that the URI callback
+ * handler can verify the state parameter (CSRF protection) and pass the code
+ * verifier to the token exchange endpoint (PKCE).
+ */
+function handleOpenRouterOAuthState(
+	context: MessageHandlerContext,
+	message: WebviewMessage,
+): void {
+	const { provider } = context
+	const state = message.state
+	const codeVerifier = message.codeVerifier
+	if (typeof state === "string" && state.length > 0) {
+		provider.pendingOAuthState = {
+			state,
+			codeVerifier: typeof codeVerifier === "string" ? codeVerifier : undefined,
+		}
+	} else {
+		logger.warn("SettingsMessageHandler", "Received openRouterOAuthState with empty or missing state field")
 	}
 }

@@ -120,7 +120,7 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 			}
 		}
 
-		const isWriteProtected = task.rooProtectedController?.isWriteProtected(relPath) || false
+		const isWriteProtected = (await task.rooProtectedController?.isWriteProtected(relPath)) || false
 
 		// Use shared utility for backwards compatibility logic
 		const imageProvider = getImageGenerationProvider(

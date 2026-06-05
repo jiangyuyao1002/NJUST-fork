@@ -35,7 +35,7 @@
 		"check:inheritance": "node scripts/check-inheritance.mjs",
 		"report:activation-perf": "node scripts/report-activation-perf.mjs",
 		"check-secrets": "node scripts/check-secrets.mjs --staged",
-		"evals": "dotenvx run -f packages/evals/.env.development packages/evals/.env.local -- docker compose -f packages/evals/docker-compose.yml --profile server --profile runner up --build --scale runner=0",
+		"evals": "node scripts/ensure-dev-env.mjs && dotenvx run -f packages/evals/.env.development packages/evals/.env.local -- docker compose -f packages/evals/docker-compose.yml --profile server --profile runner up --build --scale runner=0",
 		"npm:publish:types": "pnpm --filter @njust-ai/types npm:publish"
 	},
 	"devDependencies": {
@@ -144,7 +144,14 @@
 			"protobufjs": ">=7.5.8",
 			"@types/react": "^18.3.23",
 			"@types/react-dom": "^18.3.5",
-			"zod": "3.25.76"
+			"zod": "3.25.76",
+			"shell-quote": ">=1.7.3",
+			"cookie": ">=0.7.0",
+			"cross-spawn": ">=7.0.5",
+			"nanoid": ">=3.3.8",
+			"fast-xml-parser": ">=4.4.1",
+			"http-errors": ">=2.0.0",
+			"express": ">=4.19.2"
 		}
 	}
 }

@@ -18,6 +18,7 @@
 
 import type { ClassifierStrategy, ClassifierContext, ClassifyResult } from "./ClassifierStrategy"
 import { logger } from "../../../shared/logger"
+import { detectSecretsInContent } from "@njust-ai/core/security"
 
 export type RiskLevel = "safe" | "medium" | "dangerous" | "forbidden"
 
@@ -313,32 +314,6 @@ export class BashCommandAnalyzer {
 	}
 }
 
-// ── Secrets detection ────────────────────────────────────────────────
-
-const SECRET_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
-	{ pattern: /-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/, reason: "Private key detected" },
-	{ pattern: /AKIA[0-9A-Z]{16}/, reason: "AWS Access Key ID detected" },
-	{ pattern: /ghp_[a-zA-Z0-9]{36}/, reason: "GitHub personal access token detected" },
-	{ pattern: /gho_[a-zA-Z0-9]{36}/, reason: "GitHub OAuth token detected" },
-	{ pattern: /ghs_[a-zA-Z0-9]{36}/, reason: "GitHub server-to-server token detected" },
-	{ pattern: /xox[baprs]-[0-9]{10,13}-[0-9]{10,13}(-[a-zA-Z0-9]{24})?/, reason: "Slack token detected" },
-	{ pattern: /eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*/, reason: "JWT token detected" },
-	{ pattern: /api[_-]?key\s*[:=]\s*["']?[a-zA-Z0-9_\-]{16,}["']?/i, reason: "API key detected" },
-	{ pattern: /password\s*[:=]\s*["'][^"']{8,}["']/i, reason: "Hard-coded password detected" },
-	{ pattern: /secret\s*[:=]\s*["'][^"']{8,}["']/i, reason: "Hard-coded secret detected" },
-	{ pattern: /token\s*[:=]\s*["'][^"']{8,}["']/i, reason: "Hard-coded token detected" },
-]
-
-function detectSecrets(content: string): { found: boolean; reasons: string[] } {
-	const reasons: string[] = []
-	for (const { pattern, reason } of SECRET_PATTERNS) {
-		if (pattern.test(content)) {
-			reasons.push(reason)
-		}
-	}
-	return { found: reasons.length > 0, reasons }
-}
-
 // ── ClassifierStrategy implementation ────────────────────────────────
 
 /**
@@ -349,10 +324,23 @@ function detectSecrets(content: string): { found: boolean; reasons: string[] } {
  *
  * Activates for:
  *   - `execute_command` with a string `command` parameter
- *   - `write_to_file` with a string `content` parameter (secrets detection)
+ *   - All write tools with content parameters (secrets detection):
+ *     `write_to_file`, `edit_file`, `edit`, `apply_diff`,
+ *     `search_replace`, `apply_patch`
  *
  * All other tools pass through with a neutral "allow" result.
  */
+
+/** Map tool names to the input field that contains content being written. */
+const WRITE_TOOL_CONTENT_FIELD: Record<string, string> = {
+	write_to_file: "content",
+	edit_file: "new_string",
+	edit: "new_string",
+	apply_diff: "diff",
+	search_replace: "new_string",
+	apply_patch: "patch",
+}
+
 export class StaticPatternClassifier implements ClassifierStrategy {
 	readonly name = "static-pattern"
 	readonly confidence = "high" as const
@@ -377,12 +365,13 @@ export class StaticPatternClassifier implements ClassifierStrategy {
 			}
 		}
 
-		if (toolName === "write_to_file" && typeof input.content === "string") {
-			const secretCheck = detectSecrets(input.content)
+		const contentField = WRITE_TOOL_CONTENT_FIELD[toolName]
+		if (contentField && typeof input[contentField] === "string") {
+			const secretCheck = detectSecretsInContent(input[contentField] as string)
 			if (secretCheck.found) {
 				return {
 					action: "deny",
-					reason: `Secrets detected in file content: ${secretCheck.reasons.join("; ")}`,
+					reason: `Secrets detected in ${toolName} content: ${secretCheck.reasons.join("; ")}`,
 					confidence: 0.95,
 					metadata: { secretPatterns: secretCheck.reasons.length },
 				}

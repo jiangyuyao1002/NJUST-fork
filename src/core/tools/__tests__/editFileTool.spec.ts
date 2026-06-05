@@ -126,7 +126,7 @@ describe("editFileTool", () => {
 			validateAccess: vi.fn().mockReturnValue(true),
 		}
 		mockTask.rooProtectedController = {
-			isWriteProtected: vi.fn().mockReturnValue(false),
+			isWriteProtected: vi.fn().mockResolvedValue(false),
 		}
 		mockTask.cangjieRuntimePolicy = {
 			noteWriteApplied: vi.fn(),

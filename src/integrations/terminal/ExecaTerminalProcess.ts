@@ -1,8 +1,8 @@
 import { execa, ExecaError } from "execa"
-import psTree from "ps-tree"
 import process from "process"
 
 import { logger } from "../../shared/logger"
+import { getProcessTree } from "../../utils/processTree"
 
 import type { RooTerminal } from "./types"
 import { BaseTerminal } from "./BaseTerminal"
@@ -68,7 +68,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 			if (this.pid) {
 				this.pidUpdatePromise = new Promise<void>((resolve) => {
 					setTimeout(() => {
-						psTree(this.pid!, (err, children) => {
+						getProcessTree(this.pid!, (err, children) => {
 							if (!err && children.length > 0) {
 								// Update PID to the first child (the actual command)
 								const actualPid = parseInt(children[0]!.PID)
@@ -172,19 +172,27 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 
 		// Function to perform the kill operations
 		const performKill = () => {
-			// Try to kill using the subprocess object
+			// Try to kill using the subprocess object: SIGTERM first, SIGKILL after 5s grace
 			if (this.subprocess) {
 				try {
-					this.subprocess.kill("SIGTERM"); setTimeout(() => { try { this.subprocess?.kill("SIGKILL") } catch {} }, 5_000); this.subprocess.kill("SIGKILL")
+					this.subprocess.kill("SIGTERM")
+					const timer = setTimeout(() => {
+						try { this.subprocess?.kill("SIGKILL") } catch {}
+					}, 5_000)
+					timer.unref() // Don't block Node.js exit
 				} catch (e) {
 					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill subprocess: ${getErrorMessage(e)}`)
 				}
 			}
 
-			// Kill the stored PID (which should be the actual command after our update)
+			// Kill the stored PID: SIGTERM first, SIGKILL after 5s grace
 			if (this.pid) {
 				try {
-					process.kill(this.pid, "SIGKILL")
+					process.kill(this.pid, "SIGTERM")
+					const timer = setTimeout(() => {
+						try { process.kill(this.pid!, "SIGKILL") } catch {}
+					}, 5_000)
+					timer.unref()
 				} catch (e) {
 					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill process ${this.pid}: ${getErrorMessage(e)}`)
 				}
@@ -201,7 +209,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 		// Continue with the rest of the abort logic
 		if (this.pid) {
 			// Also check for any child processes
-			psTree(this.pid, (err, children) => {
+			getProcessTree(this.pid, (err, children) => {
 				if (!err) {
 					const pids = children.map((p) => parseInt(p.PID))
 

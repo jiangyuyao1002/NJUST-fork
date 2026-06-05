@@ -98,7 +98,7 @@ export class AuditLogger {
 		fs.mkdirSync(this.baseDir, { recursive: true })
 
 		const filePath = path.join(this.baseDir, `events-${date}.ndjson`)
-		this.currentStream = fs.createWriteStream(filePath, { flags: "a" })
+		this.currentStream = fs.createWriteStream(filePath, { flags: "a", mode: 0o600 })
 		this.currentStream.on("error", (err) => {
 			logger.error("AuditLogger", "Write stream error:", err)
 		})

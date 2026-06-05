@@ -4,6 +4,7 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 import { Download, Upload, TriangleAlert } from "lucide-react"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 
+import { type TelemetrySetting } from "@njust-ai/types"
 import { Package } from "@shared/package"
 
 import { vscode } from "@/utils/vscode"
@@ -17,9 +18,18 @@ import { SearchableSetting } from "./SearchableSetting"
 type AboutProps = HTMLAttributes<HTMLDivElement> & {
 	debug?: boolean
 	setDebug?: (debug: boolean) => void
+	telemetrySetting?: TelemetrySetting
+	setTelemetrySetting?: (setting: TelemetrySetting) => void
 }
 
-export const About = ({ debug, setDebug, className, ...props }: AboutProps) => {
+export const About = ({
+	debug,
+	setDebug,
+	telemetrySetting,
+	setTelemetrySetting,
+	className,
+	...props
+}: AboutProps) => {
 	const { t } = useAppTranslation()
 
 	return (
@@ -50,6 +60,27 @@ export const About = ({ debug, setDebug, className, ...props }: AboutProps) => {
 						</VSCodeCheckbox>
 						<p className="text-vscode-descriptionForeground text-sm mt-0">
 							{t("settings:about.debugMode.description")}
+						</p>
+					</SearchableSetting>
+				</Section>
+			)}
+
+			{setTelemetrySetting && (
+				<Section className="space-y-0">
+					<SearchableSetting
+						settingId="about-telemetry"
+						section="about"
+						label={t("settings:footer.telemetry.label")}>
+						<VSCodeCheckbox
+							checked={telemetrySetting === "enabled" || telemetrySetting === "unset"}
+							onChange={(e: any) => {
+								const checked = e.target.checked === true
+								setTelemetrySetting(checked ? "enabled" : "disabled")
+							}}>
+							{t("settings:footer.telemetry.label")}
+						</VSCodeCheckbox>
+						<p className="text-vscode-descriptionForeground text-sm mt-0">
+							{t("settings:footer.telemetry.description")}
 						</p>
 					</SearchableSetting>
 				</Section>

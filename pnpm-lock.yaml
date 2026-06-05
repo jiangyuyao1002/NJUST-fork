@@ -78,6 +78,13 @@ overrides:
   '@types/react': ^18.3.23
   '@types/react-dom': ^18.3.5
   zod: 3.25.76
+  shell-quote: '>=1.7.3'
+  cookie: '>=0.7.0'
+  cross-spawn: '>=7.0.5'
+  nanoid: '>=3.3.8'
+  fast-xml-parser: '>=4.4.1'
+  http-errors: '>=2.0.0'
+  express: '>=4.19.2'
 
 importers:
 
@@ -189,7 +196,7 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
       cross-spawn:
-        specifier: ^7.0.6
+        specifier: '>=7.0.5'
         version: 7.0.6
       execa:
         specifier: ^9.5.2
@@ -627,7 +634,7 @@ importers:
         specifier: ^5.12.2
         version: 5.12.2(ws@8.20.1)(zod@3.25.76)
       shell-quote:
-        specifier: ^1.8.2
+        specifier: '>=1.7.3'
         version: 1.8.3
       uuid:
         specifier: 11.1.1
@@ -1012,9 +1019,6 @@ importers:
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
-      ps-tree:
-        specifier: ^1.2.0
-        version: 1.2.0
       reconnecting-eventsource:
         specifier: ^1.6.4
         version: 1.6.4
@@ -1037,7 +1041,7 @@ importers:
         specifier: ^12.0.0
         version: 12.0.0
       shell-quote:
-        specifier: ^1.8.2
+        specifier: '>=1.7.3'
         version: 1.8.3
       simple-git:
         specifier: ^3.36.0
@@ -1139,9 +1143,6 @@ importers:
       '@types/proper-lockfile':
         specifier: ^4.1.4
         version: 4.1.4
-      '@types/ps-tree':
-        specifier: ^1.1.6
-        version: 1.1.6
       '@types/semver-compare':
         specifier: ^1.0.3
         version: 1.0.3
@@ -1374,8 +1375,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.2
       shell-quote:
-        specifier: ^1.8.2
-        version: 1.8.2
+        specifier: '>=1.7.3'
+        version: 1.8.3
       shiki:
         specifier: ^3.2.1
         version: 3.4.1
@@ -6554,7 +6555,7 @@ packages:
     resolution: {integrity: sha512-5Kb34ipNX694DH48vN9irak1Qx30nb0PLYHXfJgw4YEjiC3ZEmZJhwOp+VfiCYwFzvFTdB9QkArYS5kXa2cx2A==}
     engines: {node: '>= 16'}
     peerDependencies:
-      express: '>= 4.11'
+      express: '>=4.19.2'
 
   express@5.2.1:
     resolution: {integrity: sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==}
@@ -9694,10 +9695,6 @@ packages:
   shebang-regex@3.0.0:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
-
-  shell-quote@1.8.2:
-    resolution: {integrity: sha512-AzqKpGKjrj7EM6rKVQEPpB288oCfnrEIuyoT9cyF4nmGa7V8Zk6f7RRqYisX8X9m+Q7bd632aZW4ky7EhbQztA==}
-    engines: {node: '>= 0.4'}
 
   shell-quote@1.8.3:
     resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
@@ -20257,8 +20254,6 @@ snapshots:
       shebang-regex: 3.0.0
 
   shebang-regex@3.0.0: {}
-
-  shell-quote@1.8.2: {}
 
   shell-quote@1.8.3: {}
 

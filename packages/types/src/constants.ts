@@ -1,1 +1,1 @@
-export const DEFAULT_CLOUD_AGENT_URL = "http://120.79.250.232:8765"
+export const DEFAULT_CLOUD_AGENT_URL = ""

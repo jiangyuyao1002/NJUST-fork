@@ -46,7 +46,7 @@
 		"serverUrl": {
 			"title": "服务器地址",
 			"description": "输入Cloud Agent服务器的REST地址",
-			"placeholder": "http://120.79.250.232:8765"
+			"placeholder": "https://your-server:port"
 		}
 	},
 	"tools": {

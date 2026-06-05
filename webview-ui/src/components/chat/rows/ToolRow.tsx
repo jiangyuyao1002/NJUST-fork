@@ -118,7 +118,7 @@ export const ToolRow = ({
 				return (
 					<>
 						<div style={headerStyle}>
-							<FileDiff className="w-4 shrink-0" aria-label="Batch diff icon" />
+							<FileDiff className="w-4 shrink-0" aria-hidden="true" />
 							<span style={{ fontWeight: "bold" }}>
 								{t("chat:fileOperations.wantsToApplyBatchChanges")}
 							</span>
@@ -234,7 +234,7 @@ export const ToolRow = ({
 				return (
 					<>
 						<div style={headerStyle}>
-							<Eye className="w-4 shrink-0" aria-label="View files icon" />
+							<Eye className="w-4 shrink-0" aria-hidden="true" />
 							<span style={{ fontWeight: "bold" }}>
 								{t("chat:fileOperations.wantsToReadMultiple")}
 							</span>
@@ -253,7 +253,7 @@ export const ToolRow = ({
 			return (
 				<>
 					<div style={headerStyle}>
-						<FileCode2 className="w-4 shrink-0" aria-label="Read file icon" />
+						<FileCode2 className="w-4 shrink-0" aria-hidden="true" />
 						<span style={{ fontWeight: "bold" }}>
 							{message.type === "ask"
 								? tool.isOutsideWorkspace
@@ -367,7 +367,7 @@ export const ToolRow = ({
 			return (
 				<>
 					<div style={headerStyle}>
-						<ListTree className="w-4 shrink-0" aria-label="List files icon" />
+						<ListTree className="w-4 shrink-0" aria-hidden="true" />
 						<span style={{ fontWeight: "bold" }}>
 							{message.type === "ask"
 								? tool.isOutsideWorkspace
@@ -393,7 +393,7 @@ export const ToolRow = ({
 			return (
 				<>
 					<div style={headerStyle}>
-						<FolderTree className="w-4 shrink-0" aria-label="Folder tree icon" />
+						<FolderTree className="w-4 shrink-0" aria-hidden="true" />
 						<span style={{ fontWeight: "bold" }}>
 							{message.type === "ask"
 								? tool.isOutsideWorkspace
@@ -459,7 +459,7 @@ export const ToolRow = ({
 			return (
 				<>
 					<div style={headerStyle}>
-						<PocketKnife className="w-4 shrink-0" aria-label="Switch mode icon" />
+						<PocketKnife className="w-4 shrink-0" aria-hidden="true" />
 						<span style={{ fontWeight: "bold" }}>
 							{message.type === "ask" ? (
 								<>

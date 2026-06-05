@@ -55,7 +55,8 @@
 	},
 	"serverStatus": {
 		"retrying": "Retrying...",
-		"retryConnection": "Retry Connection"
+		"retryConnection": "Retry Connection",
+		"toggleServer": "Toggle {{serverName}} server"
 	},
 	"execution": {
 		"running": "Running",

@@ -301,7 +301,7 @@ async function publish() {
 		console.log("\n🚀 Step 5: Publishing to npm...")
 
 		try {
-			execSync("npm publish", {
+			execSync("npm publish --provenance --access public", {
 				cwd: npmDir,
 				stdio: "inherit",
 			})

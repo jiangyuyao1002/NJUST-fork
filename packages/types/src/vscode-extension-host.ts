@@ -275,6 +275,7 @@ export type ExtensionState = Pick<
 	| "enablePersistentRetry"
 	| "disabledTools"
 	| "enableStreamingToolExecution"
+	| "telemetrySetting"
 > & {
 	lockApiConfigAcrossModes?: boolean
 	version: string
@@ -561,6 +562,8 @@ export interface WebviewMessage {
 		// Plan messages
 		| "planAction"
 		| "webviewError"
+		// OAuth state storage
+		| "openRouterOAuthState"
 	text?: string
 	taskId?: string
 	editedMessageContent?: string
@@ -615,6 +618,8 @@ export interface WebviewMessage {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	settings?: any
 	url?: string // For openExternal
+	state?: string // For OAuth state parameter (openRouterOAuthState)
+	codeVerifier?: string // For OAuth PKCE code_verifier (openRouterOAuthState)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	config?: Record<string, any>
 	visibility?: ShareVisibility // For share visibility

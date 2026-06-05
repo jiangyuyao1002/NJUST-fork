@@ -632,10 +632,17 @@ export class ContextProxy {
 	}
 
 	private secretRefreshInterval: ReturnType<typeof setInterval> | undefined
+	private isDisposed = false
 
 	dispose(): void {
+		if (this.isDisposed) {
+			return
+		}
+		this.isDisposed = true
 		if (this.secretRefreshInterval) {
 			clearInterval(this.secretRefreshInterval)
+			this.secretRefreshInterval = undefined
 		}
+		ContextProxy._instance = null
 	}
 }

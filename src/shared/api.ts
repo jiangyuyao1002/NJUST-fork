@@ -16,6 +16,11 @@ export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider"> & {
 	/** Injected by {@link createHandler} in api/index (native tool-call parsing). */
 	toolCallParser?: import("../api/interfaces/IToolCallParser").IToolCallParser
 	/**
+	 * Optional callback to persist secrets back to VS Code SecretStorage.
+	 * Used by providers that need to write back refreshed credentials (e.g. Qwen OAuth).
+	 */
+	storeSecret?: (key: string, value: string) => Promise<void>
+	/**
 	 * When true and using OpenAI Responses API models that support reasoning summaries,
 	 * include reasoning.summary: "auto" so the API returns summaries (we already parse
 	 * and surface them). Defaults to true; set to false to disable summaries.

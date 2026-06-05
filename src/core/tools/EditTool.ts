@@ -105,7 +105,7 @@ export class EditTool extends BaseTool<"edit"> {
 			}
 
 			// Check if file is write-protected
-			const isWriteProtected = task.rooProtectedController?.isWriteProtected(relPath) || false
+			const isWriteProtected = (await task.rooProtectedController?.isWriteProtected(relPath)) || false
 
 			const absolutePath = path.resolve(task.cwd, relPath)
 			if (absolutePath.toLowerCase().endsWith(".cj") && task.taskMode === "cangjie") {

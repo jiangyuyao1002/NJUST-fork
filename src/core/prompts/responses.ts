@@ -139,14 +139,14 @@ If you require additional information from the user, use the ask_followup_questi
 		return formatImagesIntoBlocks(images)
 	},
 
-	formatFilesList: (
+	formatFilesList: async (
 		absolutePath: string,
 		files: string[],
 		didHitLimit: boolean,
 		rooIgnoreController: RooIgnoreController | undefined,
 		showRooIgnoredFiles: boolean,
 		rooProtectedController?: RooProtectedController,
-	): string => {
+	): Promise<string> => {
 		const sorted = files
 			.map((file) => {
 				// convert absolute path to relative path
@@ -195,7 +195,7 @@ If you require additional information from the user, use the ask_followup_questi
 					rooIgnoreParsed.push(LOCK_TEXT_SYMBOL + " " + filePath)
 				} else {
 					// Check if file is write-protected (only for non-ignored files)
-					const isWriteProtected = rooProtectedController?.isWriteProtected(absoluteFilePath) || false
+					const isWriteProtected = (await rooProtectedController?.isWriteProtected(absoluteFilePath)) || false
 					if (isWriteProtected) {
 						rooIgnoreParsed.push("🛡️ " + filePath)
 					} else {

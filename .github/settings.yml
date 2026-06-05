@@ -1,0 +1,29 @@
+# GitHub Repository Settings (requires https://github.com/apps/settings probot app)
+# Install the "Repository Settings" GitHub App to enable declarative branch protection.
+
+branches:
+  - name: main
+    protection:
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+      required_status_checks:
+        strict: true
+        contexts:
+          # Code QA — core quality gates
+          - lint
+          - typecheck
+          - "platform-unit-test (ubuntu-latest)"
+          - "platform-unit-test (windows-latest)"
+          - "platform-unit-test (macos-latest)"
+          - circular-dependency-guard
+          - check-secrets
+          - bundle-size-check
+          # Security
+          - "Analyze (javascript-typescript)"
+      enforce_admins: false
+      restrictions: null
+      required_linear_history: false
+      allow_force_pushes: false
+      allow_deletions: false

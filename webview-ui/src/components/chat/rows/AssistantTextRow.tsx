@@ -69,7 +69,7 @@ export const AssistantTextRow = ({
 	return (
 		<div className="group">
 			<div style={headerStyle}>
-				<MessageCircle className="w-4 shrink-0" aria-label="Speech bubble icon" />
+				<MessageCircle className="w-4 shrink-0" aria-hidden="true" />
 				<span style={{ fontWeight: "bold" }}>{t("chat:text.rooSaid")}</span>
 				<div style={{ flexGrow: 1 }} />
 				<OpenMarkdownPreviewButton markdown={message.text} />

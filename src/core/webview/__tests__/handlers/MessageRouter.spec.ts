@@ -40,6 +40,23 @@ describe("MessageRouter", () => {
 		warnSpy.mockRestore()
 	})
 
+	it("rejects malformed messages (null, non-object, missing type)", async () => {
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {})
+
+		await expect(router.route(context, null as any)).resolves.not.toThrow()
+		await expect(router.route(context, undefined as any)).resolves.not.toThrow()
+		await expect(router.route(context, "string" as any)).resolves.not.toThrow()
+		await expect(router.route(context, { noType: true } as any)).resolves.not.toThrow()
+		await expect(router.route(context, { type: 123 } as any)).resolves.not.toThrow()
+
+		// All should have been rejected with the malformed message warning
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining("Rejected malformed webview message"),
+		)
+
+		warnSpy.mockRestore()
+	})
+
 	it("overwrites handler on duplicate registration", async () => {
 		const handler1 = vi.fn().mockResolvedValue(undefined)
 		const handler2 = vi.fn().mockResolvedValue(undefined)

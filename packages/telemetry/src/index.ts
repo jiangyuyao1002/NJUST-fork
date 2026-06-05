@@ -79,6 +79,7 @@ export class TelemetryService {
 	private otelApi: any = undefined
 	private tracer: any = undefined
 	private spanStore = new Map<string, any>()
+	private optedIn: boolean | undefined = undefined // undefined = unset (default allows collection)
 
 	static get instance(): TelemetryService {
 		if (!TelemetryService._instance) {
@@ -187,6 +188,9 @@ export class TelemetryService {
 	// ─── Core capture ────────────────────────────────────────────────
 
 	private emit(name: string, properties?: Record<string, any>): void {
+		// Block all telemetry when user explicitly opted out
+		if (this.optedIn === false) return
+
 		const safe = sanitize(properties)
 
 		// File batcher (always available when configured)
@@ -344,7 +348,27 @@ export class TelemetryService {
 		})
 	}
 
-	updateTelemetryState(_isOptedIn: boolean): void {
-		// Reserved for future GDPR consent toggling
+	updateTelemetryState(isOptedIn: boolean): void {
+		const wasBlocked = this.optedIn === false
+		this.optedIn = isOptedIn
+
+		if (!isOptedIn) {
+			// Flush pending events before stopping collection
+			if (this.batcher) {
+				this.batcher.flush()
+			}
+			// End all active OTel spans
+			for (const [, span] of this.spanStore) {
+				try {
+					span.end()
+				} catch {
+					/* no-op */
+				}
+			}
+			this.spanStore.clear()
+		} else if (wasBlocked && this.batcher) {
+			// Restart batcher after re-opt-in
+			this.batcher.start()
+		}
 	}
 }

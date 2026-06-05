@@ -132,9 +132,12 @@
   "unlockApiConfigAcrossModes": "此工作区所有模式的 API 配置已锁定（点击解锁）",
   "enhancePrompt": "增强提示词",
   "addImages": "添加图片到消息",
+  "addFiles": "添加文件",
+  "uploadDocument": "上传文档",
   "sendMessage": "发送消息",
   "pressToSend": "按 {{keyCombination}} 发送",
   "stopTts": "停止文本转语音",
+  "openMarkdownPreview": "在预览中打开 Markdown",
   "voiceInput": {
     "start": "语音输入",
     "stop": "停止录音",
@@ -171,6 +174,7 @@
     "settings": "模式设置",
     "description": "专门定制Roo行为的角色。",
     "searchPlaceholder": "搜索模式...",
+    "searchAriaLabel": "搜索模式",
     "noResults": "未找到结果"
   },
   "errorReadingFile": "读取文件时出错",
@@ -341,6 +345,7 @@
     "none": "无",
     "description": "无需请求权限即可执行这些操作。仅对您完全信任的操作启用此功能。",
     "selectOptionsFirst": "请至少选择以下一个选项以启用自动批准",
+    "selectAll": "全选",
     "toggleAriaLabel": "切换自动批准",
     "disabledAriaLabel": "自动批准已禁用 - 请先选择选项",
     "triggerLabelOff": "自动批准已关闭",
@@ -472,11 +477,26 @@
     "description": "在云端运行远程代理，随时随地访问任务，与他人协作等更多功能。",
     "joinWaitlist": "注册获取最新更新。"
   },
+  "cloudAgent": {
+    "toolBadge": "工具",
+    "toolError": "工具错误",
+    "executingTool": "正在执行工具",
+    "details": "详情",
+    "previewPlaceholder": "处理中...",
+    "headerTitle": "云端代理",
+    "stepsBadge_one": "{{count}} 个步骤",
+    "stepsBadge_other": "{{count}} 个步骤",
+    "technicalDetailTitle": "技术详情"
+  },
   "command": {
     "triggerDescription": "触发 {{name}} 命令"
   },
   "editMessage": {
-    "placeholder": "编辑消息..."
+    "placeholder": "编辑消息...",
+    "ariaLabel": "编辑消息"
+  },
+  "deleteMessage": {
+    "ariaLabel": "删除消息"
   },
   "slashCommands": {
     "tooltip": "管理斜杠命令",
@@ -540,5 +560,9 @@
     "title": "安全模式已激活",
     "description": "所有操作已设置为自动批准，无需确认",
     "dismiss": "关闭警告"
+  },
+  "apiConfigSelector": {
+    "pinnedConfigurations": "已固定的配置",
+    "allConfigurations": "所有配置"
   }
 }

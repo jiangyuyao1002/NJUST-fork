@@ -122,7 +122,7 @@ describe("editTool", () => {
 			validateAccess: vi.fn().mockReturnValue(true),
 		}
 		mockTask.njust_aiProtectedController = {
-			isWriteProtected: vi.fn().mockReturnValue(false),
+			isWriteProtected: vi.fn().mockResolvedValue(false),
 		}
 		mockTask.diffViewProvider = {
 			editType: undefined,

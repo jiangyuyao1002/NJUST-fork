@@ -158,7 +158,7 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			}
 
 			// Check if file is write-protected
-			const isWriteProtected = task.rooProtectedController?.isWriteProtected(relPath) || false
+			const isWriteProtected = (await task.rooProtectedController?.isWriteProtected(relPath)) || false
 
 			const absolutePath = path.resolve(task.cwd, relPath)
 			const fileExists = await fileExistsAtPath(absolutePath)

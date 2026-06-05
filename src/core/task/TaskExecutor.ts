@@ -390,9 +390,13 @@ export class TaskExecutor {
 
 		const shouldIncludeTools = allTools.length > 0
 
+		h.currentRequestAbortController = new AbortController()
+		const abortSignal = h.currentRequestAbortController.signal
+
 		const metadata: ApiHandlerCreateMessageMetadata = {
 			mode: mode,
 			taskId: h.taskId,
+			signal: abortSignal,
 			suppressPreviousResponseId: h.skipPrevResponseIdOnce,
 			...(shouldIncludeTools
 				? {
@@ -409,8 +413,6 @@ export class TaskExecutor {
 		}
 
 		h._rateLimitAlreadyWaitedForThisRequest = false
-		h.currentRequestAbortController = new AbortController()
-		const abortSignal = h.currentRequestAbortController.signal
 		h.skipPrevResponseIdOnce = false
 
 		// Apply proactive rate limiting before the API call

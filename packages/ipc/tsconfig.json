@@ -1,6 +1,7 @@
 {
 	"extends": "@njust-ai/config-typescript/base.json",
 	"compilerOptions": {
+		"outDir": "dist",
 		"types": ["vitest/globals"]
 	},
 	"include": ["src"],

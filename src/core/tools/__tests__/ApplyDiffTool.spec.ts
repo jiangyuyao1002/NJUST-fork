@@ -111,7 +111,7 @@ function createTask(overrides: Record<string, any> = {}) {
 			}),
 		},
 		rooProtectedController: {
-			isWriteProtected: () => false,
+			isWriteProtected: async () => false,
 		},
 		rooIgnoreController: {},
 		processQueuedMessages: vi.fn(),

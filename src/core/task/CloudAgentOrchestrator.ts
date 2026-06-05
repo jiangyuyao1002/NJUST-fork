@@ -7,7 +7,7 @@ import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../../servi
 import { buildCloudWorkspaceOpToolMessage } from "../../services/cloud-agent/buildCloudWorkspaceOpToolMessage"
 import { CloudAgentClient } from "../../services/cloud-agent/CloudAgentClient"
 import { executeDeferredToolCall } from "../../services/cloud-agent/executeDeferredToolCall"
-import { CLOUD_AGENT_DEFERRED_MAX_ITERATIONS, CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX } from "../../services/cloud-agent/deferredConstants"
+import { CLOUD_AGENT_DEFERRED_MAX_ITERATIONS, CLOUD_AGENT_DEFERRED_MAX_DURATION_MS, CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX } from "../../services/cloud-agent/deferredConstants"
 import { parseWorkspaceOps } from "../../services/cloud-agent/parseWorkspaceOps"
 import { getProfileStorageService } from "../../services/cloud-agent/ProfileStorageService"
 import type {
@@ -244,7 +244,23 @@ export class CloudAgentOrchestrator {
 		lastServerRevision = deferredResp.server_revision
 
 		let iteration = 0
+		const loopStartTime = Date.now()
 		while (deferredResp.status === "pending" && iteration < maxIterations && !this.host.abort) {
+			// Wall-clock upper limit check: break if the deferred loop has run too long.
+			if (Date.now() - loopStartTime > CLOUD_AGENT_DEFERRED_MAX_DURATION_MS) {
+				const elapsedSec = Math.round((Date.now() - loopStartTime) / 1000)
+				await this.host.say(
+					"error",
+					`[Deferred] 达到最大运行时长 (${elapsedSec}s > ${CLOUD_AGENT_DEFERRED_MAX_DURATION_MS / 1000}s)，已中止 Cloud Agent 会话。`,
+				)
+				await CloudAgentClient.sendDeferredAbort(
+					profile,
+					this.host.taskId,
+					lastNotifiedRunId,
+					behavior.requestTimeoutMs > 0 ? behavior.requestTimeoutMs : undefined,
+				)
+				break
+			}
 			iteration++
 
 			if (deferredResp.text) await this.host.say("text", deferredResp.text)
@@ -510,7 +526,7 @@ export class CloudAgentOrchestrator {
 				return { call_id: call.call_id, content: `Access denied by .rooignore: ${op.path}`, is_error: true }
 			}
 
-			const isWriteProtected = this.host.rooProtectedController?.isWriteProtected(op.path) || false
+			const isWriteProtected = (await this.host.rooProtectedController?.isWriteProtected(op.path)) || false
 			const toolJson = await buildCloudWorkspaceOpToolMessage(this.host.cwd, op, { isWriteProtected })
 			const askResult = await this.host.ask("tool", toolJson, false)
 			if (askResult.text) {
@@ -690,7 +706,7 @@ export class CloudAgentOrchestrator {
 					await this.host.say("rooignore_error", op.path)
 					continue
 				}
-				const isWriteProtected = this.host.rooProtectedController?.isWriteProtected(op.path) || false
+				const isWriteProtected = (await this.host.rooProtectedController?.isWriteProtected(op.path)) || false
 				const toolJson = await buildCloudWorkspaceOpToolMessage(this.host.cwd, op, { isWriteProtected })
 
 				let response: ClineAskResponse

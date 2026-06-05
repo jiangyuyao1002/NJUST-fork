@@ -100,7 +100,7 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				const isWriteProtected = rooProtectedController?.isWriteProtected(writePath) || false
+				const isWriteProtected = (await rooProtectedController?.isWriteProtected(writePath)) || false
 				if (isWriteProtected) {
 					return {
 						call_id: call.call_id,
@@ -108,7 +108,7 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				content = await execWriteFile(cwd, { path: writePath, content: expectString(args, "content") })
+				content = await execWriteFile(cwd, { path: writePath, content: expectString(args, "content") }, rooProtectedController)
 				break
 			}
 
@@ -122,7 +122,7 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				const isWriteProtected = rooProtectedController?.isWriteProtected(diffPath) || false
+				const isWriteProtected = (await rooProtectedController?.isWriteProtected(diffPath)) || false
 				if (isWriteProtected) {
 					return {
 						call_id: call.call_id,
@@ -130,7 +130,7 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				content = await execApplyDiff(cwd, { path: diffPath, diff: expectString(args, "diff") })
+				content = await execApplyDiff(cwd, { path: diffPath, diff: expectString(args, "diff") }, rooProtectedController)
 				break
 			}
 

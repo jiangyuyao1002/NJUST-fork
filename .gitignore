@@ -107,3 +107,8 @@ devflow/
 # Local analysis outputs and credentials
 .scannerwork/
 sonar-project.properties
+
+# Code review reports (contain internal IPs, architecture details, security findings)
+CODE_REVIEW_REPORT.md
+INTEGRATED_CODE_REVIEW_REPORT.md
+.mavis/plans/industrial-review/INDUSTRIAL_CODE_REVIEW.md

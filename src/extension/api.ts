@@ -45,6 +45,8 @@ export class API extends EventEmitter<NJUST_AIEvents> implements NJUST_AIAPI {
 		enableLogging = false,
 	) {
 		super()
+		// External API consumers register various event listeners. Increase limit to avoid warnings.
+		this.setMaxListeners(30)
 
 		this.outputChannel = outputChannel
 		this.sidebarProvider = provider

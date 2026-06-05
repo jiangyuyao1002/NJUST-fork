@@ -84,7 +84,7 @@ describe("ListFilesTool", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		listFilesMock.mockResolvedValue([["src/index.ts"], false])
-		formatFilesListMock.mockReturnValue("src/index.ts")
+		formatFilesListMock.mockResolvedValue("src/index.ts")
 		isPathOutsideWorkspaceMock.mockReturnValue(false)
 		isPathUnderBundledCangjieCorpusMock.mockReturnValue(false)
 		isPathPotentiallyUnderCangjieCorpusMock.mockReturnValue(false)

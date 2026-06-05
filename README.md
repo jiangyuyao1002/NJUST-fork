@@ -3,6 +3,8 @@
 
 > 基于 [NJUST_AI](https://github.com/NJUST-AI/NJUST_AI) 定制的 AI 编程助手 VS Code 扩展，面向 NJUST 内部使用。
 
+> **Attribution**: Originally based on [Roo Code](https://github.com/RooVetGit/Roo-Code) (Apache-2.0 License). This project includes modifications made by the NJUST_AI team.
+
 ## 项目概述
 
 NJUST_AI 是一个运行在 VS Code / Cursor 中的 AI 编程助手扩展。它在活动栏提供 Webview 侧栏界面（也可弹出为编辑器标签页），通过消息管道与 **Extension Host** 进程通信，实现多轮 AI 对话、工作区文件读写、终端命令执行、语义代码检索等功能。扩展内建**仓颉（Cangjie）编程语言**的全栈工具链（LSP、`cjpm` 任务、调试器、格式化/静态检查、测试 CodeLens 等），支持 **Cloud Agent** 远程推理协议与 **MCP**（Model Context Protocol）工具生态。

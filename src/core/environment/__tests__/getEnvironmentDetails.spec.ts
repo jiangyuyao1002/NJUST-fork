@@ -129,7 +129,7 @@ describe("getEnvironmentDetails", () => {
 		})
 		;(isToolAllowedForMode as Mock).mockReturnValue(true)
 		;(listFiles as Mock).mockResolvedValue([["file1.ts", "file2.ts"], false])
-		;(formatResponse.formatFilesList as Mock).mockReturnValue("file1.ts\nfile2.ts")
+		;(formatResponse.formatFilesList as Mock).mockResolvedValue("file1.ts\nfile2.ts")
 		;(arePathsEqual as Mock).mockReturnValue(false)
 		;(Terminal.compressTerminalOutput as Mock).mockImplementation((output: string) => output)
 		;(TerminalRegistry.getTerminals as Mock).mockReturnValue([])

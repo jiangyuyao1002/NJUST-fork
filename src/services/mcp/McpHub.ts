@@ -11,7 +11,6 @@ import {
 	ListResourceTemplatesResultSchema,
 	ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js"
-import chokidar, { FSWatcher } from "chokidar"
 import delay from "delay"
 import deepEqual from "fast-deep-equal"
 import { z } from "zod"
@@ -59,6 +58,12 @@ import {
 	toggleToolEnabledForPromptWithHub,
 	updateServerToolListWithHub,
 } from "./McpHubToolPermissions"
+import {
+	McpSettingsSchema,
+	ServerConfigSchema,
+	validateServerConfig as validateServerConfigStandalone,
+} from "./McpHubConfigSchema"
+import { McpHubFileWatcherManager } from "./McpHubFileWatcherManager"
 
 // Discriminated union for connection states
 export type ConnectedMcpConnection = {
@@ -108,95 +113,14 @@ export enum DisableReason {
 	SERVER_DISABLED = "serverDisabled",
 }
 
-// Base configuration schema for common settings
-const BaseConfigSchema = z.object({
-	disabled: z.boolean().optional(),
-	timeout: z.number().min(1).max(3600).optional().default(60),
-	alwaysAllow: z.array(z.string()).default([]),
-	watchPaths: z.array(z.string()).optional(), // paths to watch for changes and restart server
-	disabledTools: z.array(z.string()).default([]),
-})
-
-// Custom error messages for better user feedback
-const typeErrorMessage = "Server type must be 'stdio', 'sse', or 'streamable-http'"
-const stdioFieldsErrorMessage =
-	"For 'stdio' type servers, you must provide a 'command' field and can optionally include 'args' and 'env'"
-const sseFieldsErrorMessage =
-	"For 'sse' type servers, you must provide a 'url' field and can optionally include 'headers'"
-const streamableHttpFieldsErrorMessage =
-	"For 'streamable-http' type servers, you must provide a 'url' field and can optionally include 'headers'"
-const mixedFieldsErrorMessage =
-	"Cannot mix 'stdio' and ('sse' or 'streamable-http') fields. For 'stdio' use 'command', 'args', and 'env'. For 'sse'/'streamable-http' use 'url' and 'headers'"
-const missingFieldsErrorMessage =
-	"Server configuration must include either 'command' (for stdio) or 'url' (for sse/streamable-http) and a corresponding 'type' if 'url' is used."
-
-// Helper function to create a refined schema with better error messages
-const createServerTypeSchema = () => {
-	return z.union([
-		// Stdio config (has command field)
-		BaseConfigSchema.extend({
-			type: z.enum(["stdio"]).optional(),
-			command: z.string().min(1, "Command cannot be empty"),
-			args: z.array(z.string()).optional(),
-			cwd: z.string().default(() => vscode.workspace.workspaceFolders?.at(0)?.uri.fsPath ?? process.cwd()),
-			env: z.record(z.string()).optional(),
-			// Ensure no SSE fields are present
-			url: z.undefined().optional(),
-			headers: z.undefined().optional(),
-		})
-			.transform((data) => ({
-				...data,
-				type: "stdio" as const,
-			}))
-			.refine((data) => data.type === undefined || data.type === "stdio", { message: typeErrorMessage }),
-		// SSE config (has url field)
-		BaseConfigSchema.extend({
-			type: z.enum(["sse"]).optional(),
-			url: z.string().url("URL must be a valid URL format"),
-			headers: z.record(z.string()).optional(),
-			// Ensure no stdio fields are present
-			command: z.undefined().optional(),
-			args: z.undefined().optional(),
-			env: z.undefined().optional(),
-		})
-			.transform((data) => ({
-				...data,
-				type: "sse" as const,
-			}))
-			.refine((data) => data.type === undefined || data.type === "sse", { message: typeErrorMessage }),
-		// StreamableHTTP config (has url field)
-		BaseConfigSchema.extend({
-			type: z.enum(["streamable-http"]).optional(),
-			url: z.string().url("URL must be a valid URL format"),
-			headers: z.record(z.string()).optional(),
-			// Ensure no stdio fields are present
-			command: z.undefined().optional(),
-			args: z.undefined().optional(),
-			env: z.undefined().optional(),
-		})
-			.transform((data) => ({
-				...data,
-				type: "streamable-http" as const,
-			}))
-			.refine((data) => data.type === undefined || data.type === "streamable-http", {
-				message: typeErrorMessage,
-			}),
-	])
-}
-
-// Server configuration schema with automatic type inference and validation
-export const ServerConfigSchema = createServerTypeSchema()
-
-// Settings schema
-const McpSettingsSchema = z.object({
-	mcpServers: z.record(ServerConfigSchema),
-})
+// Re-export for backward compatibility
+export { ServerConfigSchema } from "./McpHubConfigSchema"
 
 export class McpHub implements IMcpHubService {
 	private providerRef: WeakRef<IMcpHubClient>
 	private disposables: vscode.Disposable[] = []
 	private settingsWatcher?: vscode.FileSystemWatcher
-	private fileWatchers: Map<string, FSWatcher[]> = new Map()
+	private fileWatcherManager = new McpHubFileWatcherManager()
 	private projectMcpWatcher?: vscode.FileSystemWatcher
 	private isDisposed: boolean = false
 	connections: McpConnection[] = []
@@ -259,63 +183,7 @@ export class McpHub implements IMcpHubService {
 	 * @throws Error if the configuration is invalid
 	 */
 	private validateServerConfig(config: UnsafeAny, serverName?: string): z.infer<typeof ServerConfigSchema> {
-		// Detect configuration issues before validation
-		const hasStdioFields = config.command !== undefined
-		const hasUrlFields = config.url !== undefined // Covers sse and streamable-http
-
-		// Check for mixed fields (stdio vs url-based)
-		if (hasStdioFields && hasUrlFields) {
-			throw new Error(mixedFieldsErrorMessage)
-		}
-
-		// Infer type for stdio if not provided
-		if (!config.type && hasStdioFields) {
-			config.type = "stdio"
-		}
-
-		// For url-based configs, type must be provided by the user
-		if (hasUrlFields && !config.type) {
-			throw new Error("Configuration with 'url' must explicitly specify 'type' as 'sse' or 'streamable-http'.")
-		}
-
-		// Validate type if provided
-		if (config.type && !["stdio", "sse", "streamable-http"].includes(config.type)) {
-			throw new Error(typeErrorMessage)
-		}
-
-		// Check for type/field mismatch
-		if (config.type === "stdio" && !hasStdioFields) {
-			throw new Error(stdioFieldsErrorMessage)
-		}
-		if (config.type === "sse" && !hasUrlFields) {
-			throw new Error(sseFieldsErrorMessage)
-		}
-		if (config.type === "streamable-http" && !hasUrlFields) {
-			throw new Error(streamableHttpFieldsErrorMessage)
-		}
-
-		// If neither command nor url is present (type alone is not enough)
-		if (!hasStdioFields && !hasUrlFields) {
-			throw new Error(missingFieldsErrorMessage)
-		}
-
-		// Validate the config against the schema
-		try {
-			return ServerConfigSchema.parse(config)
-		} catch (validationError) {
-			if (validationError instanceof z.ZodError) {
-				// Extract and format validation errors
-				const errorMessages = validationError.errors
-					.map((err) => `${err.path.join(".")}: ${err.message}`)
-					.join("; ")
-				throw new Error(
-					serverName
-						? `Invalid configuration for server "${serverName}": ${errorMessages}`
-						: `Invalid server configuration: ${errorMessages}`,
-				)
-			}
-			throw validationError
-		}
+		return validateServerConfigStandalone(config as Record<string, unknown>, serverName)
 	}
 
 	/**
@@ -648,7 +516,11 @@ export class McpHub implements IMcpHubService {
 		try {
 			await fs.access(projectMcpPath)
 			return projectMcpPath
-		} catch {
+		} catch (error) {
+			// ENOENT (file not found) is expected — project config may not exist yet
+			if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+				logger.warn("McpHub", `Unexpected error accessing project MCP config at ${projectMcpPath}:`, error)
+			}
 			return null
 		}
 	}
@@ -788,12 +660,12 @@ export class McpHub implements IMcpHubService {
 				ListResourceTemplatesResultSchema,
 			)
 			return response?.resourceTemplates || []
-		} catch {
+		} catch (error) {
+			logger.warn("McpHub", `Failed to fetch resource templates from ${serverName}:`, error)
+			TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			return []
 		}
 	}
-
-	// ── Runtime hot-reload ────────────────────────────────────────────
 
 	/**
 	 * Refresh the tool list for one or all connected MCP servers without
@@ -955,75 +827,17 @@ export class McpHub implements IMcpHubService {
 		config: z.infer<typeof ServerConfigSchema>,
 		source: "global" | "project" = "global",
 	) {
-		// Initialize an empty array for this server if it doesn't exist
-		if (!this.fileWatchers.has(name)) {
-			this.fileWatchers.set(name, [])
-		}
-
-		const watchers = this.fileWatchers.get(name) || []
-
-		// Only stdio type has args
-		if (config.type === "stdio") {
-			// Setup watchers for custom watchPaths if defined
-			if (config.watchPaths && config.watchPaths.length > 0) {
-				const watchPathsWatcher = chokidar.watch(config.watchPaths, {
-					ignoreInitial: true,
-					awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-				})
-
-				watchPathsWatcher.on("change", async (changedPath) => {
-					try {
-						// Pass the source from the config to restartConnection
-						await this.restartConnection(name, source)
-					} catch (error) {
-						logger.error("McpHub", `Failed to restart server ${name} after change in ${changedPath}:`, error)
-						TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
-					}
-				})
-
-				watchers.push(watchPathsWatcher)
-			}
-
-			// Also setup the fallback build/index.js watcher if applicable
-			const filePath = config.args?.find((arg: string) => arg.includes("build/index.js"))
-			if (filePath) {
-				// we use chokidar instead of onDidSaveTextDocument because it doesn't require the file to be open in the editor
-				const indexJsWatcher = chokidar.watch(filePath, {
-					ignoreInitial: true,
-					awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-				})
-
-				indexJsWatcher.on("change", async () => {
-					try {
-						// Pass the source from the config to restartConnection
-						await this.restartConnection(name, source)
-					} catch (error) {
-						logger.error("McpHub", `Failed to restart server ${name} after change in ${filePath}:`, error)
-						TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
-					}
-				})
-
-				watchers.push(indexJsWatcher)
-			}
-
-			// Update the fileWatchers map with all watchers for this server
-			if (watchers.length > 0) {
-				this.fileWatchers.set(name, watchers)
-			}
-		}
+		this.fileWatcherManager.setupFileWatcher(name, config, source, (serverName, src) =>
+			this.restartConnection(serverName, src),
+		)
 	}
 
 	private removeAllFileWatchers() {
-		this.fileWatchers.forEach((watchers) => watchers.forEach((watcher) => watcher.close()))
-		this.fileWatchers.clear()
+		this.fileWatcherManager.removeAll()
 	}
 
 	private removeFileWatchersForServer(serverName: string) {
-		const watchers = this.fileWatchers.get(serverName)
-		if (watchers) {
-			watchers.forEach((watcher) => watcher.close())
-			this.fileWatchers.delete(serverName)
-		}
+		this.fileWatcherManager.removeForServer(serverName)
 	}
 
 	private setProgrammaticUpdateFlag(): void {
@@ -1167,8 +981,9 @@ export class McpHub implements IMcpHubService {
 				const projectContent = await fs.readFile(projectMcpPath, "utf-8")
 				const projectConfig = JSON.parse(projectContent)
 				projectServerOrder = Object.keys(projectConfig.mcpServers || {})
-			} catch {
-				// Silently continue with empty project server order
+			} catch (error) {
+				logger.warn("McpHub", "Error reading project MCP config for server ordering:", error)
+				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			}
 		}
 

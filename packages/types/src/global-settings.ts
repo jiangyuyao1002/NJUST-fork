@@ -249,6 +249,14 @@ export const globalSettingsSchema = z.object({
 	serpApiEngine: z.enum(["bing", "google", "baidu", "yandex", "yahoo", "duckduckgo"]).optional(),
 	webSearchApiKey: z.string().optional(),
 	enableStreamingToolExecution: z.boolean().optional(),
+
+	/**
+	 * User preference for telemetry collection.
+	 * - "unset": default state on first install (telemetry runs but user hasn't explicitly consented)
+	 * - "enabled": user explicitly opted in
+	 * - "disabled": user explicitly opted out (stops all telemetry collection)
+	 */
+	telemetrySetting: z.enum(["enabled", "disabled", "unset"]).optional(),
 })
 
 export type GlobalSettings = z.infer<typeof globalSettingsSchema>
@@ -300,6 +308,7 @@ export const SECRET_STATE_KEYS = [
 	"fireworksApiKey",
 	"vercelAiGatewayApiKey",
 	"basetenApiKey",
+	"qwenCodeOauthCreds",
 ] as const
 
 // Global secrets that are part of GlobalSettings (not ProviderSettings)

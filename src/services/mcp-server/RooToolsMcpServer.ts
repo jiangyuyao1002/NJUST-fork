@@ -15,6 +15,7 @@ import {
 	execApplyDiff,
 } from "./tool-executors"
 import { getErrorMessage } from "../../shared/error-utils"
+import type { RooProtectedController } from "../../core/protect/RooProtectedController"
 
 // ── Token-bucket rate limiter (no external deps) ──────────────────────────
 
@@ -50,6 +51,7 @@ interface RooToolsMcpServerOptions {
 	authToken?: string
 	allowedCommands?: string[]
 	deniedCommands?: string[]
+	protectedController?: RooProtectedController
 }
 
 export class RooToolsMcpServer {
@@ -104,7 +106,7 @@ export class RooToolsMcpServer {
 			},
 			async (params) => {
 				try {
-					const result = await execWriteFile(this.cwd, params)
+					const result = await execWriteFile(this.cwd, params, this.options.protectedController)
 					return { content: [{ type: "text" as const, text: result }] }
 				} catch (e: unknown) {
 					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }
@@ -179,7 +181,7 @@ export class RooToolsMcpServer {
 			},
 			async (params) => {
 				try {
-					const result = await execApplyDiff(this.cwd, params)
+					const result = await execApplyDiff(this.cwd, params, this.options.protectedController)
 					return { content: [{ type: "text" as const, text: result }] }
 				} catch (e: unknown) {
 					return { content: [{ type: "text" as const, text: `Error: ${getErrorMessage(e)}` }], isError: true }

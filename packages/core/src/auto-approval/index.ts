@@ -199,4 +199,4 @@ export async function checkAutoApproval({
 }
 
 export { AutoApprovalHandler } from "./AutoApprovalHandler.js"
-export { getCommandDecision, getSingleCommandDecision } from "./commands.js"
+export { containsDangerousSubstitution, getCommandDecision, getSingleCommandDecision } from "./commands.js"

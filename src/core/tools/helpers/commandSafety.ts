@@ -7,6 +7,8 @@
  */
 
 import { analyzeBashCommand, type BashAnalysisResult, type RiskLevel } from "../permissions/BashCommandAnalyzer"
+import { containsDangerousSubstitution } from "@njust-ai/core/auto-approval"
+import { unescapeHtmlEntities } from "../../../utils/text-normalization"
 
 // ── SQL destructive patterns ─────────────────────────────────────────
 
@@ -67,7 +69,8 @@ export interface CommandSafetyResult {
  * to the user (e.g., warning banner, blocking confirmation dialog).
  */
 export function checkCommandSafety(command: string): CommandSafetyResult {
-	const trimmed = command.trim()
+	// Unescape HTML entities first so that &amp;&amp; etc. are caught by safety checks
+	const trimmed = unescapeHtmlEntities(command).trim()
 	if (!trimmed) {
 		return {
 			safe: true,
@@ -106,6 +109,12 @@ export function checkCommandSafety(command: string): CommandSafetyResult {
 			extraReasons.push(`[ENV] ${reason}`)
 			risk = riskMax(risk, "medium")
 		}
+	}
+
+	// Unified dangerous shell substitution detection (was previously only in auto-approval)
+	if (containsDangerousSubstitution(trimmed)) {
+		extraReasons.push("[Shell] Dangerous parameter substitution or process substitution detected")
+		risk = riskMax(risk, "dangerous")
 	}
 
 	const allReasons = [...shellAnalysis.reasons, ...extraReasons]

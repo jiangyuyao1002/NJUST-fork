@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Checkbox } from "vscrui"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 
@@ -6,8 +6,9 @@ import { type ProviderSettings, type OrganizationAllowList, type RouterModels } 
 import { openRouterDefaultModelId } from "@njust-ai/core/providers"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
-import { getOpenRouterAuthUrl } from "@src/oauth/urls"
+import { getOpenRouterAuthUrl, type OAuthUrlResult } from "@src/oauth/urls"
 import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
+import { vscode } from "@src/utils/vscode"
 
 import { inputEventTransform } from "../transforms"
 
@@ -37,6 +38,26 @@ export const OpenRouter = ({
 	const { t } = useAppTranslation()
 
 	const [openRouterBaseUrlSelected, setOpenRouterBaseUrlSelected] = useState(!!apiConfiguration?.openRouterBaseUrl)
+	const [oauthUrl, setOauthUrl] = useState<string>("")
+
+	// Generate OAuth URL with state + PKCE on mount (async)
+	useEffect(() => {
+		let cancelled = false
+		getOpenRouterAuthUrl(uriScheme).then((result: OAuthUrlResult) => {
+			if (!cancelled) {
+				setOauthUrl(result.url)
+				// Send state + codeVerifier to extension for callback verification
+				vscode.postMessage({
+					type: "openRouterOAuthState",
+					state: result.state,
+					codeVerifier: result.codeVerifier,
+				})
+			}
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [uriScheme])
 
 	const handleInputChange = useCallback(
 		<K extends keyof ProviderSettings, E>(
@@ -71,7 +92,10 @@ export const OpenRouter = ({
 				{t("settings:providers.apiKeyStorageNotice")}
 			</div>
 			{!apiConfiguration?.openRouterApiKey && (
-				<VSCodeButtonLink href={getOpenRouterAuthUrl(uriScheme)} style={{ width: "100%" }} appearance="primary">
+				<VSCodeButtonLink
+					href={oauthUrl || "#"}
+					style={{ width: "100%", opacity: oauthUrl ? 1 : 0.5, pointerEvents: oauthUrl ? "auto" : "none" }}
+					appearance="primary">
 					{t("settings:providers.getOpenRouterApiKey")}
 				</VSCodeButtonLink>
 			)}

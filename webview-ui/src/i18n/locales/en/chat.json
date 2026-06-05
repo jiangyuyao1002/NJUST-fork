@@ -121,7 +121,11 @@
   },
   "enqueueMessage": "Add message to queue (will be sent after current task completes)",
   "editMessage": {
-    "placeholder": "Edit your message..."
+    "placeholder": "Edit your message...",
+    "ariaLabel": "Edit message"
+  },
+  "deleteMessage": {
+    "ariaLabel": "Delete message"
   },
   "scrollToBottom": "Scroll to bottom of chat",
   "about": "Your AI-powered Cangjie language development assistant",
@@ -164,13 +168,17 @@
     "settings": "Mode Settings",
     "description": "Specialized personas that tailor Njust-AI's behavior.",
     "searchPlaceholder": "Search modes...",
+    "searchAriaLabel": "Search modes",
     "noResults": "No results found"
   },
   "enhancePromptDescription": "The 'Enhance Prompt' button helps improve your prompt by providing additional context, clarification, or rephrasing. Try typing a prompt in here and clicking the button again to see how it works.",
   "addImages": "Add images to message",
+  "addFiles": "Add files",
+  "uploadDocument": "Upload document",
   "sendMessage": "Send message",
   "pressToSend": "Press {{keyCombination}} to send",
   "stopTts": "Stop text-to-speech",
+  "openMarkdownPreview": "Open markdown in preview",
   "voiceInput": {
     "start": "Voice input",
     "stop": "Stop recording",
@@ -394,6 +402,7 @@
     "none": "None",
     "description": "Run these actions without asking for permission. Only enable for actions you fully trust.",
     "selectOptionsFirst": "Select at least one option below to enable auto-approval",
+    "selectAll": "Select all",
     "toggleAriaLabel": "Toggle auto-approval",
     "disabledAriaLabel": "Auto-approval disabled - select options first",
     "triggerLabelOff": "Auto-approve off",
@@ -462,6 +471,17 @@
   "versionIndicator": {
     "ariaLabel": "Version {{version}} - Click to view release notes"
   },
+  "cloudAgent": {
+    "toolBadge": "Tool",
+    "toolError": "Tool error",
+    "executingTool": "Executing tool",
+    "details": "Details",
+    "previewPlaceholder": "Processing...",
+    "headerTitle": "Cloud Agent",
+    "stepsBadge_one": "{{count}} step",
+    "stepsBadge_other": "{{count}} steps",
+    "technicalDetailTitle": "Technical Details"
+  },
   "command": {
     "triggerDescription": "Trigger the {{name}} command"
   },
@@ -527,5 +547,9 @@
     "title": "Security Mode Active",
     "description": "All operations auto-approved — no confirmation for any action",
     "dismiss": "Dismiss"
+  },
+  "apiConfigSelector": {
+    "pinnedConfigurations": "Pinned configurations",
+    "allConfigurations": "All configurations"
   }
 }

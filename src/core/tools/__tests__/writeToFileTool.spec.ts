@@ -140,7 +140,7 @@ describe("writeToFileTool", () => {
 			validateAccess: vi.fn().mockReturnValue(true),
 		}
 		mockCline.rooProtectedController = {
-			isWriteProtected: vi.fn().mockReturnValue(false),
+			isWriteProtected: vi.fn().mockResolvedValue(false),
 		}
 		mockCline.cangjieRuntimePolicy = {
 			noteWriteApplied: vi.fn(),

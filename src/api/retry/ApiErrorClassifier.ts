@@ -80,7 +80,6 @@ function categoryForApiErrorKind(kind: ApiErrorKind): ApiErrorCategory {
 		case "server_error":
 		case "capacity":
 		case "model_overloaded":
-		case "model_unavailable":
 			return ApiErrorCategory.ServerError
 		case "network_error":
 		case "stale_connection":

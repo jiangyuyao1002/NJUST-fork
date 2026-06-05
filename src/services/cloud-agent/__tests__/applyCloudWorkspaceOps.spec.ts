@@ -90,7 +90,7 @@ describe("applyCloudWorkspaceOps", () => {
 
 	it("rejects write-protected ops even without per-op confirmation", async () => {
 		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "cloud-ws-"))
-		const rooProtectedController = { isWriteProtected: vi.fn(() => true) }
+		const rooProtectedController = { isWriteProtected: vi.fn(async () => true) }
 
 		const r = await applyCloudWorkspaceOps(
 			tmpDir,

@@ -26,6 +26,7 @@ export async function readTaskMessages({
 	const filePath = path.join(taskDir, GlobalFileNames.uiMessages)
 	const fileExists = await fileExistsAtPath(filePath)
 
+	let messages: ClineMessage[] = []
 	if (fileExists) {
 		try {
 			const parsedData = JSON.parse(await fs.readFile(filePath, "utf8"))
@@ -35,7 +36,7 @@ export async function readTaskMessages({
 				)
 				return []
 			}
-			return parsedData
+			messages = parsedData
 		} catch (error) {
 			logger.warn("TaskMessages", 
 				`[readTaskMessages] Failed to parse ${filePath} for task ${taskId}, returning empty: ${getErrorMessage(error)}`,
@@ -45,7 +46,29 @@ export async function readTaskMessages({
 		}
 	}
 
-	return []
+	// Merge incremental .append file if it exists (crash recovery: prevents silent data loss
+	// when the extension crashes between base file write and append file write)
+	const appendFilePath = filePath + ".append"
+	if (await fileExistsAtPath(appendFilePath)) {
+		try {
+			const appendData = await fs.readFile(appendFilePath, "utf8")
+			for (const line of appendData.split("\n")) {
+				const trimmed = line.trim()
+				if (trimmed) {
+					const parsed = JSON.parse(trimmed)
+					if (Array.isArray(parsed)) {
+						messages = messages.concat(parsed)
+					}
+				}
+			}
+		} catch (error) {
+			logger.warn("TaskMessages",
+				`[readTaskMessages] Failed to parse append file for task ${taskId}: ${getErrorMessage(error)}`,
+			)
+		}
+	}
+
+	return messages
 }
 
 export type SaveTaskMessagesOptions = {

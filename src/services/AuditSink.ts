@@ -12,6 +12,7 @@
 import type { AuditLogger } from "./AuditLogger"
 import type { AuditEntry } from "./AuditLogger"
 import { ToolHookManager } from "../core/tools/ToolHookManager"
+import { redactApiSecrets } from "../utils/redactApiSecrets"
 
 export class AuditSink {
 	private hookManager: ToolHookManager
@@ -120,8 +121,8 @@ export class AuditSink {
 	}
 }
 
-/** Truncate tool input to a short summary (avoid logging large payloads). */
+/** Truncate tool input to a short summary (avoid logging large payloads). Redacts secrets before truncation. */
 function summarizeInput(input: Record<string, unknown>): string {
-	const json = JSON.stringify(input)
+	const json = redactApiSecrets(JSON.stringify(input))
 	return json.length > 300 ? json.slice(0, 300) + "…" : json
 }

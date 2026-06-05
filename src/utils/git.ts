@@ -286,6 +286,11 @@ export async function searchCommits(query: string, cwd: string): Promise<GitComm
 }
 
 export async function getCommitInfo(hash: string, cwd: string): Promise<string> {
+	// Validate hash is a valid hex string to prevent command injection
+	if (!/^[a-fA-F0-9]{7,64}$/.test(hash)) {
+		return `Invalid commit hash: ${hash}`
+	}
+
 	try {
 		const isInstalled = await checkGitInstalled()
 		if (!isInstalled) {
@@ -297,15 +302,17 @@ export async function getCommitInfo(hash: string, cwd: string): Promise<string> 
 			return "Not a git repository"
 		}
 
-		// Get commit info, stats, and diff separately
-		const { stdout: info } = await execAsync(`git show --format="%H%n%h%n%s%n%an%n%ad%n%b" --no-patch ${hash}`, {
-			cwd,
-		})
+		// Get commit info, stats, and diff separately using execFile to avoid shell injection
+		const { stdout: info } = await execFileAsync(
+			"git",
+			["show", "--format=%H%n%h%n%s%n%an%n%ad%n%b", "--no-patch", hash],
+			{ cwd },
+		)
 		const [fullHash, shortHash, subject, author, date, body] = info.trim().split("\n")
 
-		const { stdout: stats } = await execAsync(`git show --stat --format="" ${hash}`, { cwd })
+		const { stdout: stats } = await execFileAsync("git", ["show", "--stat", "--format=", hash], { cwd })
 
-		const { stdout: diff } = await execAsync(`git show --format="" ${hash}`, { cwd })
+		const { stdout: diff } = await execFileAsync("git", ["show", "--format=", hash], { cwd })
 
 		const summary = [
 			`Commit: ${shortHash} (${fullHash})`,

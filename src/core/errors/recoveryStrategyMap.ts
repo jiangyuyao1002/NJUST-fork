@@ -63,8 +63,6 @@ export function mapErrorToRecoveryAction(kind: ApiErrorKind, retryAttempt: numbe
 			// Timeout: 1st immediate, 2nd reduce max_tokens to 60%, 3rd trigger model fallback
 			if (retryAttempt < 3) return "timeout_degrade"
 			return "model_fallback"
-		case "model_unavailable":
-			return retryAttempt < 3 ? "backoff_retry" : "none"
 		case "auth_error":
 			return "none" // Auth errors should not be retried; notify user
 

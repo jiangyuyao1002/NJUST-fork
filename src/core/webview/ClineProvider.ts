@@ -154,6 +154,9 @@ export class ClineProvider
 	private currentWorkspacePath: string | undefined
 	private _disposed = false
 
+	/** Pending OAuth state for CSRF + PKCE verification (set by webview, consumed by URI callback). */
+	public pendingOAuthState?: { state: string; codeVerifier?: string }
+
 	public readonly taskHistoryStore: TaskHistoryStore
 	public readonly taskHistory: TaskHistoryService
 	private readonly pendingEditManager: PendingEditManager
@@ -203,6 +206,9 @@ export class ClineProvider
 		public readonly contextProxy: ContextProxy,
 	) {
 		super()
+		// Multiple consumers register TaskCreated and other events on this provider.
+		// Set a generous limit to avoid Node's default 10-listener warning.
+		this.setMaxListeners(30)
 		this.currentWorkspacePath = getWorkspacePath()
 		this.messageRouter = new WebviewMessageRouter(this)
 		this.pendingEditManager = new PendingEditManager({ log: (msg) => this.log(msg) })
@@ -804,8 +810,8 @@ export class ClineProvider
 
 	// OpenRouter / Requesty OAuth callbacks — delegated to OAuthCallbackHandler
 
-	async handleOpenRouterCallback(code: string) {
-		return handleOpenRouterOAuth(this, code)
+	async handleOpenRouterCallback(code: string, codeVerifier?: string) {
+		return handleOpenRouterOAuth(this, code, codeVerifier)
 	}
 
 	async handleRequestyCallback(code: string, baseUrl: string | null) {

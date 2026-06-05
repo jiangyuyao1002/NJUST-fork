@@ -256,7 +256,7 @@ export const ChatRowContent = ({
 					isCommandExecuting ? (
 						<ProgressIndicator />
 					) : (
-						<TerminalSquare className="size-4" aria-label="Terminal icon" />
+						<TerminalSquare className="size-4" aria-hidden="true" />
 					),
 					<span style={{ color: normalColor, fontWeight: "bold" }}>
 						{t("chat:commandExecution.running")}
@@ -344,7 +344,7 @@ export const ChatRowContent = ({
 				]
 			case "followup":
 				return [
-					<MessageCircleQuestionMark className="w-4 shrink-0" aria-label="Question icon" />,
+					<MessageCircleQuestionMark className="w-4 shrink-0" aria-hidden="true" />,
 					<span style={{ color: normalColor, fontWeight: "bold" }}>{t("chat:questions.hasQuestion")}</span>,
 				]
 			default:

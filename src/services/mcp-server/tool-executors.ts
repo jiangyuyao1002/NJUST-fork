@@ -10,6 +10,7 @@ import { filterSensitiveEnv } from "../../utils/env"
 import { getCommandDecision } from "../../core/auto-approval"
 import { detectCangjieHome } from "../cangjie-lsp/cangjieToolUtils"
 import type { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
+import type { RooProtectedController } from "../../core/protect/RooProtectedController"
 
 function extractFirstCommandToken(command: string): string {
 	const trimmed = command.trim()
@@ -124,8 +125,15 @@ export interface WriteFileParams {
 	content: string
 }
 
-export async function execWriteFile(cwd: string, params: WriteFileParams): Promise<string> {
+export async function execWriteFile(
+	cwd: string,
+	params: WriteFileParams,
+	protectedController?: RooProtectedController,
+): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
+	if (protectedController && (await protectedController.isWriteProtected(params.path))) {
+		throw new Error(`File is write-protected: ${params.path}`)
+	}
 
 	const isNew = !(await fileExistsAtPath(absPath))
 	if (isNew) {
@@ -305,8 +313,15 @@ export interface ApplyDiffParams {
 	diff: string
 }
 
-export async function execApplyDiff(cwd: string, params: ApplyDiffParams): Promise<string> {
+export async function execApplyDiff(
+	cwd: string,
+	params: ApplyDiffParams,
+	protectedController?: RooProtectedController,
+): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
+	if (protectedController && (await protectedController.isWriteProtected(params.path))) {
+		throw new Error(`File is write-protected: ${params.path}`)
+	}
 
 	if (!(await fileExistsAtPath(absPath))) {
 		throw new Error(`File not found: ${params.path}`)

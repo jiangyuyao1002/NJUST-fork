@@ -25,7 +25,7 @@ import { z } from "zod"
 
 const PORT = 4000
 /** 与历史默认服务端一致；本地 mock 接受任意非空 Device-Token，不要求匹配此值 */
-const MOCK_EXPECTED_API_KEY = process.env.CLOUD_AGENT_MOCK_API_KEY || "X-20060507012610261002"
+const MOCK_EXPECTED_API_KEY = process.env.CLOUD_AGENT_MOCK_API_KEY || ""
 const transports = new Map()
 
 function log(tag, msg) {
@@ -222,7 +222,7 @@ function handleHealth(req, res) {
  */
 function checkRestAuth(req, res) {
 	const apiKey = req.headers["x-api-key"]
-	if (apiKey && apiKey !== MOCK_EXPECTED_API_KEY) {
+	if (MOCK_EXPECTED_API_KEY && apiKey && apiKey !== MOCK_EXPECTED_API_KEY) {
 		res.writeHead(401, { "Content-Type": "application/json" })
 		res.end(JSON.stringify({ error: "Invalid X-API-Key" }))
 		return false

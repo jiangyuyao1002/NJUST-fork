@@ -4,7 +4,6 @@ export type ApiErrorKind =
 	| "context_window_exceeded"
 	| "rate_limit"
 	| "auth_error"
-	| "model_unavailable"
 	| "capacity"
 	| "server_error"
 	| "network_error"

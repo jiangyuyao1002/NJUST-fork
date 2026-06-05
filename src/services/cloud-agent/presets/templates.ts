@@ -32,7 +32,7 @@ function builtIn(
 export const NJUST_STANDARD_PROFILE: CloudAgentProfile = builtIn(
 	"njust-ai-standard",
 	"标准配置 (NJUST AI CJ)",
-	"http://120.79.250.232:8765",
+	"",
 	{
 		type: "api-key",
 		deviceTokenSource: "global",

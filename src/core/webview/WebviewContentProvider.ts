@@ -35,8 +35,14 @@ export class WebviewContentProvider {
 			const portFilePath = path.resolve(__dirname, "../../.vite-port")
 
 			if (fs.existsSync(portFilePath)) {
-				localPort = fs.readFileSync(portFilePath, "utf8").trim()
-				logger.info("WebviewContentProvider", `Using Vite server port from ${portFilePath}: ${localPort}`)
+				const raw = fs.readFileSync(portFilePath, "utf8").trim()
+				const portNum = parseInt(raw, 10)
+				if (Number.isInteger(portNum) && portNum >= 1 && portNum <= 65535 && String(portNum) === raw) {
+					localPort = raw
+					logger.info("WebviewContentProvider", `Using Vite server port from ${portFilePath}: ${localPort}`)
+				} else {
+					logger.warn("WebviewContentProvider", `Invalid port in ${portFilePath}: "${raw}", using default: ${localPort}`)
+				}
 			} else {
 				logger.info("WebviewContentProvider", `Port file not found at ${portFilePath}, using default port: ${localPort}`,
 				)
@@ -93,11 +99,11 @@ export class WebviewContentProvider {
 		const csp = [
 			"default-src 'none'",
 			`font-src ${webview.cspSource} data:`,
-			`style-src ${webview.cspSource} 'unsafe-inline' http://${localServerUrl} http://0.0.0.0:${localPort}`,
+			`style-src ${webview.cspSource} 'unsafe-inline' http://${localServerUrl}`,
 			`img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:`,
 			`media-src ${webview.cspSource} blob:`,
-			`script-src 'unsafe-eval' ${webview.cspSource} http://${localServerUrl} http://0.0.0.0:${localPort} 'nonce-${nonce}'`,
-			`connect-src ${webview.cspSource} ${openRouterDomain} ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort}`,
+			`script-src 'unsafe-eval' ${webview.cspSource} http://${localServerUrl} 'nonce-${nonce}'`,
+			`connect-src ${webview.cspSource} ${openRouterDomain} ws://${localServerUrl} http://${localServerUrl}`,
 		]
 
 		return /*html*/ `

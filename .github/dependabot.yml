@@ -1,75 +1,252 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
+# Dependabot configuration for NJUST_AI Roo-Code monorepo
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
+
+# Shared group definitions to reduce PR noise
+# Groups batch related dependency updates into a single PR per directory
+
 updates:
+  # ─── Root ────────────────────────────────────────────────
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "@typescript-eslint/*"
+      build-tools:
+        patterns:
+          - "esbuild*"
+          - "vite*"
+          - "rollup*"
+          - "@rollup/*"
+          - "turbo"
+      testing:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+          - "mocha*"
+          - "@testing-library/*"
+          - "jsdom"
+      ai-sdks:
+        patterns:
+          - "@anthropic-ai/*"
+          - "openai"
+          - "ai"
+          - "@ai-sdk/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+
+  # ─── Extension (src) ────────────────────────────────────
   - package-ecosystem: "npm"
     directory: "/src"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "@typescript-eslint/*"
+      ai-sdks:
+        patterns:
+          - "@anthropic-ai/*"
+          - "openai"
+          - "ai"
+          - "@ai-sdk/*"
+
+  # ─── Webview UI ─────────────────────────────────────────
   - package-ecosystem: "npm"
     directory: "/webview-ui"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "@typescript-eslint/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      ui:
+        patterns:
+          - "@radix-ui/*"
+          - "tailwindcss*"
+          - "class-variance-authority"
+          - "lucide-react"
+      testing:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "jsdom"
+
+  # ─── Packages ───────────────────────────────────────────
   - package-ecosystem: "npm"
     directory: "/packages/core"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "vitest*"
+          - "@vitest/*"
+
   - package-ecosystem: "npm"
     directory: "/packages/types"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "vitest*"
+
   - package-ecosystem: "npm"
     directory: "/packages/evals"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "vitest*"
+
   - package-ecosystem: "npm"
     directory: "/packages/ipc"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+
   - package-ecosystem: "npm"
     directory: "/packages/telemetry"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+
   - package-ecosystem: "npm"
     directory: "/packages/prompt-engine"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "vitest*"
+
   - package-ecosystem: "npm"
     directory: "/packages/build"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+
   - package-ecosystem: "npm"
     directory: "/packages/vscode-shim"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "vitest*"
+
   - package-ecosystem: "npm"
     directory: "/packages/mock-api-server"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+
+  # ─── Apps ───────────────────────────────────────────────
   - package-ecosystem: "npm"
     directory: "/apps/cli"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+
   - package-ecosystem: "npm"
     directory: "/apps/vscode-e2e"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "mocha*"
+          - "@vscode/*"
+
   - package-ecosystem: "npm"
     directory: "/apps/web-Njust-AI"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+      next-js:
+        patterns:
+          - "next"
+          - "@next/*"
+
   - package-ecosystem: "npm"
     directory: "/apps/web-evals"
     schedule:
       interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+
+  # ─── GitHub Actions ─────────────────────────────────────
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"

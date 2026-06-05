@@ -84,7 +84,7 @@ export const UserFeedbackRow = ({
 				<User
 					className="w-4 shrink-0"
 					style={isCloudAgentUi ? { color: "var(--ca-blue)" } : undefined}
-					aria-label="User icon"
+					aria-hidden="true"
 				/>
 				<span
 					className={cn(isCloudAgentUi ? "ca-user-title" : undefined)}
@@ -136,20 +136,22 @@ export const UserFeedbackRow = ({
 							<div
 								className="cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
 								style={{ visibility: isStreaming ? "hidden" : "visible" }}
+								aria-label={t("chat:editMessage.ariaLabel")}
 								onClick={(e) => {
 									e.stopPropagation()
 									handleEditClick()
 								}}>
-								<Edit className="w-4 shrink-0" aria-label="Edit message icon" />
+								<Edit className="w-4 shrink-0" aria-hidden="true" />
 							</div>
 							<div
 								className="cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
 								style={{ visibility: isStreaming ? "hidden" : "visible" }}
+								aria-label={t("chat:deleteMessage.ariaLabel")}
 								onClick={(e) => {
 									e.stopPropagation()
 									vscode.postMessage({ type: "deleteMessage", value: message.ts })
 								}}>
-								<Trash2 className="w-4 shrink-0" aria-label="Delete message icon" />
+								<Trash2 className="w-4 shrink-0" aria-hidden="true" />
 							</div>
 						</div>
 					</div>

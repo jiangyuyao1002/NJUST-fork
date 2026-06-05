@@ -323,7 +323,6 @@ describe("McpProtocolAdapter", () => {
 			onReasoning: vi.fn(),
 			onDone: vi.fn(),
 			onError: vi.fn(),
-			onToolExecute: vi.fn(),
 		}
 		adapter.setCallbackHandler(handler)
 
@@ -333,7 +332,8 @@ describe("McpProtocolAdapter", () => {
 		const mockClient = vi.mocked(Client).mock.results[0]?.value
 
 		expect(mockClient?.setNotificationHandler).toHaveBeenCalledTimes(3)
-		expect(mockClient?.setRequestHandler).toHaveBeenCalledTimes(1)
+		// SECURITY: cloudagent/executeTool handler removed (P0-12)
+		expect(mockClient?.setRequestHandler).toHaveBeenCalledTimes(0)
 
 		expect(mockClient?.setNotificationHandler).toHaveBeenCalledWith(
 			expect.objectContaining({ method: "notifications/cloudagent/text" }),
@@ -345,10 +345,6 @@ describe("McpProtocolAdapter", () => {
 		)
 		expect(mockClient?.setNotificationHandler).toHaveBeenCalledWith(
 			expect.objectContaining({ method: "notifications/cloudagent/done" }),
-			expect.any(Function),
-		)
-		expect(mockClient?.setRequestHandler).toHaveBeenCalledWith(
-			expect.objectContaining({ method: "cloudagent/executeTool" }),
 			expect.any(Function),
 		)
 	})
@@ -409,7 +405,6 @@ describe("McpProtocolAdapter", () => {
 			onText: vi.fn().mockRejectedValue(new Error("boom")),
 			onReasoning: vi.fn().mockRejectedValue(new Error("boom")),
 			onDone: vi.fn().mockRejectedValue(new Error("boom")),
-			onToolExecute: vi.fn().mockRejectedValue(new Error("boom")),
 		}
 		adapter.setCallbackHandler(handler)
 		await adapter.connect()
@@ -417,24 +412,17 @@ describe("McpProtocolAdapter", () => {
 		const textHandler = notificationHandlers["notifications/cloudagent/text"]
 		const reasoningHandler = notificationHandlers["notifications/cloudagent/reasoning"]
 		const doneHandler = notificationHandlers["notifications/cloudagent/done"]
-		const executeHandler = requestHandlers["cloudagent/executeTool"]
 
 		expect(textHandler).toBeDefined()
 		expect(reasoningHandler).toBeDefined()
 		expect(doneHandler).toBeDefined()
-		expect(executeHandler).toBeDefined()
 
 		await expect(textHandler({ params: { content: "hello" } })).resolves.toBeUndefined()
 		await expect(reasoningHandler({ params: { content: "reasoning" } })).resolves.toBeUndefined()
 		await expect(doneHandler({ params: { summary: "done" } })).resolves.toBeUndefined()
 
-		const executeResult = await executeHandler({ params: { name: "read_file", arguments: {} } })
-		expect(executeResult).toBeDefined()
-		expect(executeResult.isError).toBe(true)
-
 		expect(handler.onText).toHaveBeenCalledWith("hello")
 		expect(handler.onReasoning).toHaveBeenCalledWith("reasoning")
 		expect(handler.onDone).toHaveBeenCalledWith("done")
-		expect(handler.onToolExecute).toHaveBeenCalledWith("read_file", {})
 	})
 })

@@ -19,8 +19,8 @@ vitest.mock("execa", () => {
 	return { execa, ExecaError: class extends Error {} }
 })
 
-vitest.mock("ps-tree", () => ({
-	default: vitest.fn((_: number, cb: any) => cb(null, [])),
+vitest.mock("../../../utils/processTree", () => ({
+	getProcessTree: vitest.fn((_: number, cb: any) => cb(null, [])),
 }))
 
 import { execa } from "execa"

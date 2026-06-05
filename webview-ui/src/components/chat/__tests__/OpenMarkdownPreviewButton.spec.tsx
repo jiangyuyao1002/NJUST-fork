@@ -15,6 +15,12 @@ vi.mock("@src/utils/vscode", () => ({
 	},
 }))
 
+vi.mock("@src/i18n/TranslationContext", () => ({
+	useAppTranslation: () => ({
+		t: (key: string) => key,
+	}),
+}))
+
 describe("OpenMarkdownPreviewButton", () => {
 	const complex = "# One\n## Two"
 	const simple = "Just text"
@@ -29,7 +35,7 @@ describe("OpenMarkdownPreviewButton", () => {
 				<OpenMarkdownPreviewButton markdown={simple} />
 			</TooltipProvider>,
 		)
-		expect(screen.queryByLabelText("Open markdown in preview")).toBeNull()
+		expect(screen.queryByLabelText("chat:openMarkdownPreview")).toBeNull()
 	})
 
 	it("renders when markdown has 2+ headings", () => {
@@ -38,7 +44,7 @@ describe("OpenMarkdownPreviewButton", () => {
 				<OpenMarkdownPreviewButton markdown={complex} />
 			</TooltipProvider>,
 		)
-		expect(screen.getByLabelText("Open markdown in preview")).toBeInTheDocument()
+		expect(screen.getByLabelText("chat:openMarkdownPreview")).toBeInTheDocument()
 	})
 
 	it("posts message on click", () => {
@@ -47,7 +53,7 @@ describe("OpenMarkdownPreviewButton", () => {
 				<OpenMarkdownPreviewButton markdown={complex} />
 			</TooltipProvider>,
 		)
-		fireEvent.click(screen.getByLabelText("Open markdown in preview"))
+		fireEvent.click(screen.getByLabelText("chat:openMarkdownPreview"))
 		expect(postMessageMock).toHaveBeenCalledWith({ type: "openMarkdownPreview", text: complex })
 	})
 })

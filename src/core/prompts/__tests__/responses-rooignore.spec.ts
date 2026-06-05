@@ -106,7 +106,7 @@ describe("RooIgnore Response Formatting", () => {
 			]
 
 			// Format with controller
-			const result = formatResponse.formatFilesList(TEST_CWD, files, false, controller as any, true)
+			const result = await formatResponse.formatFilesList(TEST_CWD, files, false, controller as any, true)
 
 			// Should contain each file
 			expect(result).toContain("src/app.ts")
@@ -150,7 +150,7 @@ describe("RooIgnore Response Formatting", () => {
 			]
 
 			// Format with controller and showRooIgnoredFiles = false
-			const result = formatResponse.formatFilesList(
+			const result = await formatResponse.formatFilesList(
 				TEST_CWD,
 				files,
 				false,
@@ -182,7 +182,7 @@ describe("RooIgnore Response Formatting", () => {
 			await controller.initialize()
 
 			// Format with controller and truncation flag
-			const result = formatResponse.formatFilesList(
+			const result = await formatResponse.formatFilesList(
 				TEST_CWD,
 				["file1.txt", "file2.txt"],
 				true, // didHitLimit = true
@@ -204,7 +204,7 @@ describe("RooIgnore Response Formatting", () => {
 			await controller.initialize()
 
 			// Format with empty files array
-			const result = formatResponse.formatFilesList(TEST_CWD, [], false, controller as any, true)
+			const result = await formatResponse.formatFilesList(TEST_CWD, [], false, controller as any, true)
 
 			// Should show "No files found"
 			expect(result).toBe("No files found.")

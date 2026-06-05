@@ -18,6 +18,10 @@ registerChatHandlers(router)
 registerModeHandlers(router)
 
 export const webviewMessageHandler = async (provider: ClineProvider, message: WebviewMessage) => {
+	if (!message || typeof message !== "object") {
+		throw new Error("Invalid webview message: expected non-null object")
+	}
+
 	const context: MessageHandlerContext = {
 		provider,
 		getGlobalState: <K extends keyof GlobalState>(key: K) => provider.contextProxy.getValue(key),

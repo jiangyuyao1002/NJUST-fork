@@ -43,7 +43,7 @@ describe("executeDeferredToolCall security", () => {
 
 	function createRooProtectedController(isWriteProtected: (path: string) => boolean): RooProtectedController {
 		return {
-			isWriteProtected: vi.fn(isWriteProtected),
+			isWriteProtected: vi.fn(async (path: string) => isWriteProtected(path)),
 		} as unknown as RooProtectedController
 	}
 

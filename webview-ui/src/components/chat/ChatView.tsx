@@ -318,7 +318,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setSendingDisabled(isPartial)
 							setClineAsk("tool")
 							setEnableButtons(!isPartial)
-							const tool = JSON.parse(lastMessage.text || "{}") as ClineSayTool
+							let tool: ClineSayTool
+							try {
+								tool = JSON.parse(lastMessage.text || "{}") as ClineSayTool
+							} catch {
+								tool = {} as ClineSayTool
+							}
 							switch (tool.tool) {
 								case "editedExistingFile":
 								case "appliedDiff":
@@ -573,10 +578,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				lastApiReqStarted.text !== undefined &&
 				lastApiReqStarted.say === "api_req_started"
 			) {
-				const cost = JSON.parse(lastApiReqStarted.text).cost
+				try {
+					const cost = JSON.parse(lastApiReqStarted.text).cost
 
-				if (cost === undefined) {
-					return true // API request has not finished yet.
+					if (cost === undefined) {
+						return true // API request has not finished yet.
+					}
+				} catch {
+					// Malformed JSON — skip cost check
 				}
 			}
 		}

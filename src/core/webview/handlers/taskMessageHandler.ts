@@ -100,11 +100,15 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 	}
 	try {
 		const target = currentCline.clineMessages[messageIndex]
+		if (!target) {
+			await vscode.window.showErrorMessage(t("common:errors.message.message_not_found", { messageTs }))
+			return
+		}
 		if (restoreCheckpoint) {
 			const cps = currentCline.clineMessages.filter((m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs)
 			if (cps[0]?.text) {
 				await handleCheckpointRestoreOperation({
-					provider, currentCline, messageTs: target!.ts!, messageIndex,
+					provider, currentCline, messageTs: target.ts!, messageIndex,
 					checkpoint: { hash: cps[0].text }, operation: "delete",
 				})
 			} else { vscode.window.showWarningMessage("No checkpoint found before this message") }
@@ -114,7 +118,7 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 				const m = currentCline.clineMessages[i]
 				if (m?.checkpoint && m.ts) saved.set(m.ts, m.checkpoint)
 			}
-			await currentCline.messageManager.rewindToTimestamp(target!.ts!, { includeTargetMessage: false })
+			await currentCline.messageManager.rewindToTimestamp(target.ts!, { includeTargetMessage: false })
 			for (const [ts, cp] of saved) {
 				const idx = currentCline.clineMessages.findIndex((m: ClineMessage) => m.ts === ts)
 				if (idx !== -1) currentCline.clineMessages[idx]!.checkpoint = cp
@@ -155,11 +159,15 @@ async function doEditConfirm(context: MessageHandlerContext, messageTs: number, 
 	}
 	try {
 		const target = currentCline.clineMessages[messageIndex]
+		if (!target) {
+			await vscode.window.showErrorMessage(t("common:errors.message.message_not_found", { messageTs }))
+			return
+		}
 		if (restoreCheckpoint) {
 			const cps = currentCline.clineMessages.filter((m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs)
 			if (cps[0]?.text) {
 				await handleCheckpointRestoreOperation({
-					provider, currentCline, messageTs: target!.ts!, messageIndex,
+					provider, currentCline, messageTs: target.ts!, messageIndex,
 					checkpoint: { hash: cps[0].text }, operation: "edit",
 					editData: { editedContent, images, apiConversationHistoryIndex },
 				})
@@ -269,15 +277,18 @@ function handleExportCurrentTask(context: MessageHandlerContext, _message: Webvi
 }
 
 function handleShowTaskWithId(context: MessageHandlerContext, message: WebviewMessage): void {
-	void context.provider.showTaskWithId(message.text!)
+	if (!message.text) return
+	void context.provider.showTaskWithId(message.text)
 }
 
 function handleCondenseTaskContextRequest(context: MessageHandlerContext, message: WebviewMessage): void {
-	void context.provider.condenseTaskContext(message.text!)
+	if (!message.text) return
+	void context.provider.condenseTaskContext(message.text)
 }
 
 function handleDeleteTaskWithId(context: MessageHandlerContext, message: WebviewMessage): void {
-	void context.provider.deleteTaskWithId(message.text!)
+	if (!message.text) return
+	void context.provider.deleteTaskWithId(message.text)
 }
 
 async function handleDeleteMultipleTasksWithIds(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -301,7 +312,8 @@ async function handleDeleteMultipleTasksWithIds(context: MessageHandlerContext, 
 }
 
 function handleExportTaskWithId(context: MessageHandlerContext, message: WebviewMessage): void {
-	void context.provider.exportTaskWithId(message.text!)
+	if (!message.text) return
+	void context.provider.exportTaskWithId(message.text)
 }
 
 async function handleGetTaskWithAggregatedCosts(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {

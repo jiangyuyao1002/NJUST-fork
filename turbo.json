@@ -33,6 +33,7 @@
 			"outputs": ["../../../bin/**"]
 		},
 		"watch:tsc": {
+			"dependsOn": ["@njust-ai/types#build"],
 			"cache": false
 		}
 	}

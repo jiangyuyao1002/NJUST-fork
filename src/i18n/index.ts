@@ -1,12 +1,14 @@
-import i18next from "./setup"
+import i18next, { translationsReady } from "./setup"
 
 /**
- * Initialize i18next with the specified language
+ * Initialize i18next with the specified language.
+ * Awaits translation file loading before switching language.
  *
  * @param language The language code to use
  */
-export function initializeI18n(language: string): void {
-	void i18next.changeLanguage(language)
+export async function initializeI18n(language: string): Promise<void> {
+	await translationsReady
+	await i18next.changeLanguage(language)
 }
 
 /**

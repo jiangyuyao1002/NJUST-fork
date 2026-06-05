@@ -39,10 +39,17 @@ export class StdioTransportStrategy implements ITransportStrategy {
 			}
 		}
 
+		// Validate config.cwd for basic safety (no null bytes, no obviously malicious paths)
+		const cwd = config.cwd ? String(config.cwd) : undefined
+		if (cwd && cwd.includes("\0")) {
+			logger.warn("McpHub", `stdio "${name}" cwd contains null bytes, ignoring`)
+		}
+		const safeCwd = cwd && !cwd.includes("\0") ? cwd : undefined
+
 		const transport = new StdioClientTransport({
 			command,
 			args,
-			cwd: config.cwd,
+			cwd: safeCwd,
 			env,
 			stderr: "pipe",
 		})

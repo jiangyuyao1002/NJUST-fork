@@ -421,6 +421,40 @@ describe("StaticPatternClassifier", () => {
 		})
 	})
 
+	// 14b. Other write tools with secret content → deny
+	describe("classifySync: all write tools detect secrets", () => {
+		const writeToolCases: Array<{ toolName: string; field: string; secretValue: string }> = [
+			{ toolName: "edit_file", field: "new_string", secretValue: "AKIAIOSFODNN7EXAMPLE" },
+			{ toolName: "edit", field: "new_string", secretValue: "sk-abcdefghijklmnopqrstuvwxyz1234" },
+			{ toolName: "apply_diff", field: "diff", secretValue: "+ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij" },
+			{ toolName: "search_replace", field: "new_string", secretValue: "-----BEGIN PRIVATE KEY-----" },
+			{ toolName: "apply_patch", field: "patch", secretValue: "+password = 'supersecretpassword1'" },
+		]
+
+		for (const { toolName, field, secretValue } of writeToolCases) {
+			it(`${toolName}: denies when ${field} contains secrets`, () => {
+				const result = classifier.classifySync(
+					toolName,
+					{ [field]: secretValue },
+					{ ...baseContext, toolName },
+				)
+				expect(result.action).toBe("deny")
+				expect(result.confidence).toBe(0.95)
+				expect(result.reason).toContain(`Secrets detected in ${toolName}`)
+			})
+		}
+
+		it("allows write tools with clean content", () => {
+			const result = classifier.classifySync(
+				"edit",
+				{ new_string: "const greeting = 'hello world';" },
+				{ ...baseContext, toolName: "edit" },
+			)
+			expect(result.action).toBe("allow")
+			expect(result.confidence).toBe(0.3)
+		})
+	})
+
 	// 15. Unrelated tool → low-confidence allow
 	describe("classifySync: unrelated tool", () => {
 		it("returns low-confidence allow for unknown tool", () => {

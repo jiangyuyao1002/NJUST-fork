@@ -247,7 +247,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 				const [files, didHitLimit] = await listFiles(cline.cwd, true, maxFiles)
 				const { showRooIgnoredFiles = false } = state ?? {}
 
-				const result = formatResponse.formatFilesList(
+				const result = await formatResponse.formatFilesList(
 					cline.cwd,
 					files,
 					didHitLimit,

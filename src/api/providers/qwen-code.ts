@@ -21,6 +21,7 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 const QWEN_OAUTH_BASE_URL = "https://chat.qwen.ai"
 const QWEN_OAUTH_TOKEN_ENDPOINT = `${QWEN_OAUTH_BASE_URL}/api/v1/oauth2/token`
 const QWEN_OAUTH_CLIENT_ID = "f0304373b74a44d2b584a3fb70ca9e56"
+const QWEN_SECRET_KEY = "qwenCodeOauthCreds"
 const QWEN_DIR = ".qwen"
 const QWEN_CREDENTIAL_FILENAME = "oauth_creds.json"
 
@@ -94,14 +95,36 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 	}
 
 	private async loadCachedQwenCredentials(): Promise<QwenOAuthCredentials> {
+		// 1. Prefer SecretStorage (via options.qwenCodeOauthCreds)
+		if (this.options.qwenCodeOauthCreds) {
+			try {
+				return qwenOAuthCredentialsSchema.parse(JSON.parse(this.options.qwenCodeOauthCreds))
+			} catch {
+				logger.warn("QwenCode", "Failed to parse credentials from SecretStorage, falling back to file")
+			}
+		}
+
+		// 2. Fall back to file-based credentials (migration path)
 		try {
 			const keyFile = getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)
 			const credsStr = await fs.readFile(keyFile, "utf-8")
-			return qwenOAuthCredentialsSchema.parse(JSON.parse(credsStr))
+			const creds = qwenOAuthCredentialsSchema.parse(JSON.parse(credsStr))
+
+			// Migrate: persist to SecretStorage on first read from file
+			if (this.options.storeSecret) {
+				try {
+					await this.options.storeSecret(QWEN_SECRET_KEY, JSON.stringify(creds))
+					logger.info("QwenCode", "Migrated OAuth credentials from file to SecretStorage")
+				} catch {
+					logger.warn("QwenCode", "Failed to migrate credentials to SecretStorage")
+				}
+			}
+
+			return creds
 		} catch (error) {
 			logger.error(
 				"QwenCode",
-				`Error reading or parsing credentials file at ${getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)}`,
+				`Error reading or parsing credentials from SecretStorage or file at ${getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)}`,
 			)
 			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
 			throw new Error(`Failed to load Qwen OAuth credentials: ${error}`)
@@ -169,10 +192,20 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			expiry_date: Date.now() + tokenData.expires_in * 1000,
 		}
 
+		// Persist refreshed credentials to SecretStorage (preferred)
+		if (this.options.storeSecret) {
+			try {
+				await this.options.storeSecret(QWEN_SECRET_KEY, JSON.stringify(newCredentials))
+			} catch (error) {
+				logger.error("QwenCode", "Failed to save refreshed credentials to SecretStorage:", error)
+				TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
+			}
+		}
+
+		// Also persist to file as secondary cache (backward compatibility)
 		const filePath = getQwenCachedCredentialPath(this.options.qwenCodeOauthPath)
 		try {
 			await fs.writeFile(filePath, JSON.stringify(newCredentials, null, 2), { mode: 0o600 })
-			// Restrict file permissions on Unix-like systems (owner read/write only)
 			if (process.platform !== "win32") {
 				try {
 					await fs.chmod(filePath, 0o600)
@@ -181,9 +214,8 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 				}
 			}
 		} catch (error) {
-			logger.error("QwenCode", "Failed to save refreshed credentials:", error)
+			logger.error("QwenCode", "Failed to save refreshed credentials to file:", error)
 			TelemetryService.reportError(error, TelemetryEventName.API_PROVIDER_ERROR)
-			// Continue with the refreshed token in memory even if file write fails
 		}
 
 		return newCredentials

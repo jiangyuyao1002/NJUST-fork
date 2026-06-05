@@ -14,22 +14,37 @@ import { readFileSync } from "fs"
 import { execSync } from "child_process"
 import { createInterface } from "readline"
 
-// Patterns that indicate potential secrets
+// Patterns that indicate potential secrets.
+// SINGLE SOURCE OF TRUTH (runtime): packages/core/src/security/secretPatterns.ts
+// This list MUST stay in sync with the TypeScript module above.
+// A Vitest test in packages/core enforces this invariant.
 const SECRET_PATTERNS = [
-	// API keys and tokens
+	// Private keys
+	{ pattern: /-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/, name: "Private key" },
+	// Cloud provider keys
+	{ pattern: /AKIA[0-9A-Z]{16}/, name: "AWS access key" },
+	// GitHub tokens
+	{ pattern: /ghp_[a-zA-Z0-9]{36}/, name: "GitHub personal access token" },
+	{ pattern: /gho_[a-zA-Z0-9]{36}/, name: "GitHub OAuth token" },
+	{ pattern: /ghs_[a-zA-Z0-9]{36}/, name: "GitHub server-to-server token" },
+	{ pattern: /github_pat_[a-zA-Z0-9]{22,}/, name: "GitHub PAT" },
+	// OpenAI / xAI
 	{ pattern: /sk-[a-zA-Z0-9]{20,}/, name: "OpenAI API key (sk-...)" },
 	{ pattern: /pk-[a-zA-Z0-9]{20,}/, name: "OpenAI public key (pk-...)" },
 	{ pattern: /xai-[a-zA-Z0-9]{20,}/, name: "xAI API key" },
-	{ pattern: /ant-api[a-zA-Z0-9\-_]{20,}/i, name: "Anthropic API key" },
-	{ pattern: /ghp_[a-zA-Z0-9]{36,}/, name: "GitHub personal access token" },
-	{ pattern: /gho_[a-zA-Z0-9]{36,}/, name: "GitHub OAuth token" },
-	{ pattern: /github_pat_[a-zA-Z0-9]{22,}/, name: "GitHub PAT" },
-	{ pattern: /AKIA[0-9A-Z]{16}/, name: "AWS access key" },
-	{ pattern: /["']password["']\s*:?\s*["'][^"']{6,}["']/i, name: "Password" },
-	{ pattern: /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/, name: "Private key" },
-	{ pattern: /"api[Kk]ey"\s*:\s*"[^"]{8,}"/, name: "JSON API key" },
-	// .env files with secrets (skip if they're .env.sample)
-	{ pattern: /^[A-Z_]+=/, fileName: /\.env$/, name: "Environment variable in .env file" },
+	// Anthropic
+	{ pattern: /ant-api[a-zA-Z0-9_-]{20,}/i, name: "Anthropic API key" },
+	// Slack
+	{ pattern: /xox[baprs]-[0-9]{10,13}-[0-9]{10,13}(-[a-zA-Z0-9]{24})?/, name: "Slack token" },
+	// JWT
+	{ pattern: /eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*/, name: "JWT token" },
+	// Generic key-value patterns
+	{ pattern: /api[_-]?key\s*[:=]\s*["']?[a-zA-Z0-9_-]{16,}["']?/i, name: "JSON API key" },
+	{ pattern: /password\s*[:=]\s*["'][^"']{8,}["']/i, name: "Password" },
+	{ pattern: /secret\s*[:=]\s*["'][^"']{8,}["']/i, name: "Hard-coded secret" },
+	{ pattern: /token\s*[:=]\s*["'][^"']{8,}["']/i, name: "Hard-coded token" },
+	// .env files with secrets (fileName guard applied below)
+	{ pattern: /^[A-Z_]+=/m, fileName: /\.env$/, name: "Environment variable in .env file" },
 ]
 
 const patterns = SECRET_PATTERNS

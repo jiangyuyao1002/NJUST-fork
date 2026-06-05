@@ -23,6 +23,8 @@ export type IProviderRegistrationOptions = {
 
 export type IProviderRegistryDependencies = {
 	toolCallParser?: IToolCallParser
+	/** Optional callback to persist secrets to VS Code SecretStorage. */
+	storeSecret?: (key: string, value: string) => Promise<void>
 }
 
 /**
@@ -96,6 +98,7 @@ export class ProviderRegistry {
 		const options: ApiHandlerOptions = {
 			...optionsBase,
 			toolCallParser: dependencies.toolCallParser ?? this.dependencies.toolCallParser,
+			storeSecret: dependencies.storeSecret ?? this.dependencies.storeSecret,
 		}
 
 		if (apiProvider && isRetiredProvider(apiProvider)) {

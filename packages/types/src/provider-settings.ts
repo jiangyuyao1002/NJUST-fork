@@ -373,6 +373,7 @@ const fireworksSchema = apiModelIdProviderModelSchema.extend({
 
 const qwenCodeSchema = apiModelIdProviderModelSchema.extend({
 	qwenCodeOauthPath: z.string().optional(),
+	qwenCodeOauthCreds: z.string().optional(),
 })
 
 const rooSchema = apiModelIdProviderModelSchema.extend({

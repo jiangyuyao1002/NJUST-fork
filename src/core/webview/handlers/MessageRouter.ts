@@ -20,6 +20,11 @@ export class MessageRouter {
 	}
 
 	async route(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+		if (!message || typeof message !== "object" || !message.type) {
+			logger.warn("MessageRouter", "Rejected malformed webview message")
+			return
+		}
+
 		const handler = this.handlers.get(message.type)
 		if (handler) {
 			await handler(context, message)

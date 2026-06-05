@@ -281,7 +281,7 @@ const ServerRow = ({ server, alwaysAllowMcp }: { server: McpServer; alwaysAllowM
 							})
 						}}
 						size="medium"
-						aria-label={`Toggle ${server.name} server`}
+						aria-label={t("mcp:serverStatus.toggleServer", { serverName: server.name })}
 					/>
 				</div>
 			</div>

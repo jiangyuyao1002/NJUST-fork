@@ -1,3 +1,4 @@
+import * as path from "path"
 import { z } from "zod"
 
 import type { WorkspaceOp } from "./types"
@@ -9,21 +10,26 @@ export const WORKSPACE_OPS_MAX_COUNT = 50
 export const WORKSPACE_OPS_MAX_PATH_LEN = 4096
 export const WORKSPACE_OPS_MAX_BODY_CHARS = 1_000_000
 
+/** Validate that a workspace op path is safe: no null bytes, no traversal, no absolute paths. */
+function isPathSafe(p: string): boolean {
+	if (p.includes("\0")) return false // null byte injection
+	if (p.includes("..")) return false // path traversal
+	if (path.isAbsolute(p)) return false // absolute path escape
+	if (/%2e%2e/i.test(p)) return false // URL-encoded traversal
+	return true
+}
+
+const safePathMessage = "Invalid path: absolute paths, '..' traversal, null bytes, and encoded traversal are blocked"
+
 const writeFileOpSchema = z.object({
 	op: z.literal("write_file"),
-	path: z.string().max(WORKSPACE_OPS_MAX_PATH_LEN).refine(
-		(p) => !p.includes(".."),
-		"Path traversal not allowed: '..' sequences are blocked for security",
-	),
+	path: z.string().max(WORKSPACE_OPS_MAX_PATH_LEN).refine(isPathSafe, safePathMessage),
 	content: z.string().max(WORKSPACE_OPS_MAX_BODY_CHARS),
 })
 
 const applyDiffOpSchema = z.object({
 	op: z.literal("apply_diff"),
-	path: z.string().max(WORKSPACE_OPS_MAX_PATH_LEN).refine(
-		(p) => !p.includes(".."),
-		"Path traversal not allowed: '..' sequences are blocked for security",
-	),
+	path: z.string().max(WORKSPACE_OPS_MAX_PATH_LEN).refine(isPathSafe, safePathMessage),
 	diff: z.string().max(WORKSPACE_OPS_MAX_BODY_CHARS),
 })
 

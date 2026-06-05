@@ -56,4 +56,34 @@ describe("parseWorkspaceOps", () => {
 		expect(r.operations).toEqual([])
 		expect(r.error).toBeDefined()
 	})
+
+	it("rejects absolute paths", () => {
+		const r = parseWorkspaceOps({
+			workspace_ops: {
+				operations: [{ op: "write_file", path: "/etc/passwd", content: "evil" }],
+			},
+		})
+		expect(r.operations).toEqual([])
+		expect(r.error).toBeDefined()
+	})
+
+	it("rejects paths with null bytes", () => {
+		const r = parseWorkspaceOps({
+			workspace_ops: {
+				operations: [{ op: "write_file", path: "safe.txt\0/../../etc/passwd", content: "evil" }],
+			},
+		})
+		expect(r.operations).toEqual([])
+		expect(r.error).toBeDefined()
+	})
+
+	it("rejects URL-encoded traversal", () => {
+		const r = parseWorkspaceOps({
+			workspace_ops: {
+				operations: [{ op: "apply_diff", path: "%2e%2e/etc/shadow", diff: "x" }],
+			},
+		})
+		expect(r.operations).toEqual([])
+		expect(r.error).toBeDefined()
+	})
 })

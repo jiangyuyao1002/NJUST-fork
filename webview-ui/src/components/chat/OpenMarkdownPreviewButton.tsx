@@ -3,6 +3,7 @@ import { SquareArrowOutUpRight } from "lucide-react"
 
 import { vscode } from "@src/utils/vscode"
 import { hasComplexMarkdown } from "@src/utils/markdown"
+import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { StandardTooltip } from "@src/components/ui"
 
 interface OpenMarkdownPreviewButtonProps {
@@ -11,6 +12,8 @@ interface OpenMarkdownPreviewButtonProps {
 }
 
 export const OpenMarkdownPreviewButton = memo(({ markdown, className }: OpenMarkdownPreviewButtonProps) => {
+	const { t } = useAppTranslation()
+
 	if (!hasComplexMarkdown(markdown)) {
 		return null
 	}
@@ -30,7 +33,7 @@ export const OpenMarkdownPreviewButton = memo(({ markdown, className }: OpenMark
 			<button
 				onClick={handleClick}
 				className={`opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${className ?? ""}`}
-				aria-label="Open markdown in preview">
+				aria-label={t("chat:openMarkdownPreview")}>
 				<SquareArrowOutUpRight className="w-4 h-4" />
 			</button>
 		</StandardTooltip>

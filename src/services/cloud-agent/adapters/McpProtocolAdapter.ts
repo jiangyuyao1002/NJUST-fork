@@ -22,7 +22,8 @@ export interface McpCallbackHandler {
 	onReasoning?: (content: string) => Promise<void>
 	onDone?: (summary: string) => Promise<void>
 	onError?: (message: string) => Promise<void>
-	onToolExecute?: (name: string, args: Record<string, unknown>) => Promise<{ content: string; isError?: boolean }>
+	// SECURITY: onToolExecute removed — cloudagent/executeTool allowed arbitrary
+	// remote tool execution with no whitelist. See integrated code review P0-12.
 }
 
 /**
@@ -138,33 +139,9 @@ export class McpProtocolAdapter implements IProtocolAdapter {
 			},
 		)
 
-		client.setRequestHandler(
-			{ method: "cloudagent/executeTool" } as UnsafeAny,
-			async (request: UnsafeAny) => {
-				const req = request as { params?: { name?: string; arguments?: Record<string, unknown> } }
-				const toolName = req?.params?.name ?? ""
-				const toolArgs = req?.params?.arguments ?? {}
-				if (this.callbackHandler?.onToolExecute) {
-					try {
-						const result = await this.callbackHandler.onToolExecute(toolName, toolArgs)
-						return {
-							content: [{ type: "text" as const, text: result.content }],
-							isError: result.isError,
-						}
-					} catch (e) {
-						logger.warn("McpProtocolAdapter", `onToolExecute handler error: ${getErrorMessage(e)}`)
-						return {
-							content: [{ type: "text" as const, text: getErrorMessage(e) }],
-							isError: true,
-						}
-					}
-				}
-				return {
-					content: [{ type: "text" as const, text: "No tool executor registered" }],
-					isError: true,
-				}
-			},
-		)
+		// SECURITY: cloudagent/executeTool handler removed (P0-12).
+		// Previously allowed remote MCP servers to trigger arbitrary tool execution
+		// on the client with no whitelist. Re-enable only with strict tool allowlist.
 	}
 
 	/** 关闭 MCP 连接。 */

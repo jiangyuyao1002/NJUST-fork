@@ -21,6 +21,9 @@ import { McpProtocolAdapter, MCP_TOOLS } from "./adapters/McpProtocolAdapter"
 import type { McpCallbackHandler } from "./adapters/McpProtocolAdapter"
 import { normalizeServerUrl } from "./urlUtils"
 
+/** Maximum response body size (50 MB) before rejecting to avoid loading pathological payloads into memory. */
+const MAX_RESPONSE_BODY_BYTES = 50 * 1024 * 1024
+
 const CLOUD_AGENT_RETRY_OPTIONS: Partial<ApiRetryOptions> = {
 	maxAttempts: 3,
 	baseDelayMs: 2_000,
@@ -163,13 +166,6 @@ export class CloudAgentClient {
 			onReasoning: async (content) => this.callbacks.onReasoning(content),
 			onDone: async (summary) => this.callbacks.onDone(summary),
 			onError: async (message) => this.callbacks.onError(message),
-			onToolExecute: (name, _args) => {
-				logger.info("CloudAgentClient", `MCP tool execution request: ${name}`)
-				return Promise.resolve({
-					content: `Tool ${name} execution not implemented in MCP legacy mode`,
-					isError: true,
-				})
-			},
 		}
 	}
 
@@ -216,6 +212,16 @@ export class CloudAgentClient {
 	}
 
 	private async parseUniversalResponse(resp: Response): Promise<UniversalTaskResponse> {
+		// Pre-check Content-Length to reject pathologically large bodies before loading into memory.
+		const contentLength = resp.headers.get("content-length")
+		if (contentLength) {
+			const len = Number(contentLength)
+			if (Number.isFinite(len) && len > MAX_RESPONSE_BODY_BYTES) {
+				throw new Error(
+					`Cloud Agent: response body too large (${(len / 1024 / 1024).toFixed(1)} MB exceeds ${MAX_RESPONSE_BODY_BYTES / 1024 / 1024} MB limit)`,
+				)
+			}
+		}
 		const text = await resp.text()
 		let parsed: unknown
 		try {
@@ -445,6 +451,15 @@ export class CloudAgentClient {
 					throw err
 				}
 
+				const clHeader = resp.headers.get("content-length")
+				if (clHeader) {
+					const clLen = Number(clHeader)
+					if (Number.isFinite(clLen) && clLen > MAX_RESPONSE_BODY_BYTES) {
+						throw new Error(
+							`Cloud Agent: compile response body too large (${(clLen / 1024 / 1024).toFixed(1)} MB exceeds ${MAX_RESPONSE_BODY_BYTES / 1024 / 1024} MB limit)`,
+						)
+					}
+				}
 				const text = await resp.text()
 				let data: CloudCompileResponse
 				try {

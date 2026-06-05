@@ -90,7 +90,8 @@ export default defineConfig(({ mode }) => {
 		tailwindcss(),
 		persistPortPlugin(),
 		wasmPlugin(),
-		sourcemapPlugin(),
+		// Only include sourcemap plugin when generating source maps (non-production builds)
+		...(mode !== "production" ? [sourcemapPlugin()] : []),
 	]
 
 	return {
@@ -106,8 +107,8 @@ export default defineConfig(({ mode }) => {
 			outDir,
 			emptyOutDir: true,
 			reportCompressedSize: false,
-			// Generate complete source maps with original TypeScript sources
-			sourcemap: true,
+			// Skip source maps in production to save ~22 MB (mermaid-bundle.js.map alone is 11 MB)
+			sourcemap: mode !== "production",
 			// Ensure source maps are properly included in the build
 			minify: mode === "production" ? "esbuild" : false,
 			// Use a single combined CSS bundle so all webviews share styles

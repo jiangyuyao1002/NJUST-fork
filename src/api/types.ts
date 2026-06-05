@@ -55,6 +55,12 @@ export interface ApiHandlerCreateMessageMetadata {
 	 * Only applies to providers that support function calling restrictions (e.g., Gemini).
 	 */
 	allowedFunctionNames?: string[]
+	/**
+	 * Optional AbortSignal for cancelling the underlying HTTP connection.
+	 * Without this, aborting a stream only breaks the consumer loop but
+	 * the TCP connection stays open until timeout.
+	 */
+	signal?: AbortSignal
 }
 
 export interface ApiHandler {

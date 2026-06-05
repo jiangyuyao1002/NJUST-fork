@@ -10,6 +10,7 @@ exports[`packages/core public API snapshot > exports match expected surface 1`] 
   "FlagStore",
   "MemoryPrefetcher",
   "MessageQueueService",
+  "SECRET_PATTERNS",
   "Shared",
   "SkillPrefetcher",
   "assertPublicIp",
@@ -21,6 +22,7 @@ exports[`packages/core public API snapshot > exports match expected surface 1`] 
   "consolidateTokenUsage",
   "customToolRegistry",
   "debugLog",
+  "detectSecretsInContent",
   "formatNative",
   "globalMemoryPrefetcher",
   "globalSkillPrefetcher",
@@ -43,6 +45,7 @@ exports[`packages/core public API snapshot > namespace exports contain expected 
 [
   "AutoApprovalHandler",
   "checkAutoApproval",
+  "containsDangerousSubstitution",
   "getCommandDecision",
   "getSingleCommandDecision",
 ]

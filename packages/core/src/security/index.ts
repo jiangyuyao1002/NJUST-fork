@@ -2,3 +2,5 @@ export { assertSafeOutboundUrl, guardedFetch, assertPublicIp } from "./networkGu
 export { assessCommandRisk } from "./commandRisk.js"
 export type { CommandRiskReport } from "./commandRisk.js"
 export { recordSecurityMetric, startTraceSpan } from "./metrics.js"
+export { SECRET_PATTERNS, detectSecretsInContent } from "./secretPatterns.js"
+export type { SecretPattern } from "./secretPatterns.js"

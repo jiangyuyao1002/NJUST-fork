@@ -205,20 +205,26 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 						},
 						// Prompt caching is now GA — no special beta header needed.
 						// Pass remaining betas (e.g. fine-grained-tool-streaming, context-1m) if any.
-						betas && betas.length > 0 ? { headers: { "anthropic-beta": betas.join(",") } } : undefined,
+						{
+							...(betas && betas.length > 0 ? { headers: { "anthropic-beta": betas.join(",") } } : {}),
+							...(metadata?.signal ? { signal: metadata.signal } : {}),
+						},
 					)
 					break
 				}
 				default: {
-					stream = await this.client.messages.create({
-						model: modelId,
-						max_tokens: maxTokens ?? ANTHROPIC_DEFAULT_MAX_TOKENS,
-						temperature,
-						system: systemBlocksNoCache,
-						messages: sanitizedMessages,
-						stream: true,
-						...nativeToolParams,
-					}) as UnsafeAny
+					stream = await this.client.messages.create(
+						{
+							model: modelId,
+							max_tokens: maxTokens ?? ANTHROPIC_DEFAULT_MAX_TOKENS,
+							temperature,
+							system: systemBlocksNoCache,
+							messages: sanitizedMessages,
+							stream: true,
+							...nativeToolParams,
+						},
+						metadata?.signal ? { signal: metadata.signal } : undefined,
+					) as UnsafeAny
 					break
 				}
 			}

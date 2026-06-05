@@ -36,6 +36,7 @@ import {
 	type Language,
 	type ProviderSettings,
 	type ExperimentId,
+	type TelemetrySetting,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	ImageGenerationProvider,
 } from "@njust-ai/types"
@@ -217,6 +218,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		includeCurrentTime,
 		includeCurrentCost,
 		maxGitStatusFiles,
+		telemetrySetting,
 	} = cachedState
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
@@ -312,6 +314,17 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 			setChangeDetected(true)
 			return { ...prevState, debug }
+		})
+	}, [])
+
+	const setTelemetrySetting = useCallback((setting: TelemetrySetting) => {
+		setCachedState((prevState) => {
+			if (prevState.telemetrySetting === setting) {
+				return prevState
+			}
+
+			setChangeDetected(true)
+			return { ...prevState, telemetrySetting: setting }
 		})
 	}, [])
 
@@ -435,6 +448,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					inlineCompletionMaxLines: inlineCompletionMaxLines ?? 10,
 					inlineCompletionEnableCangjieEnhanced: inlineCompletionEnableCangjieEnhanced ?? true,
 					inlineCompletionTriggerCommand: inlineCompletionTriggerCommand ?? "alt+\\",
+					telemetrySetting: telemetrySetting ?? "unset",
 				},
 			})
 
@@ -964,7 +978,12 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 						{/* About Section */}
 						{renderTab === "about" && (
-							<About debug={cachedState.debug} setDebug={setDebug} />
+							<About
+								debug={cachedState.debug}
+								setDebug={setDebug}
+								telemetrySetting={telemetrySetting}
+								setTelemetrySetting={setTelemetrySetting}
+							/>
 						)}
 					</SearchIndexProvider>
 				</TabContent>
