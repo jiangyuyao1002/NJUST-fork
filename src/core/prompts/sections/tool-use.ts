@@ -22,7 +22,7 @@ COMMON MISTAKES TO AVOID
 
 TOOL SELECTION GUIDE
 - Read a file -> use read_file (not grep or execute_command)
-- Edit an existing file -> use the edit tool (preferred) or the appropriate patching tool available to you
+- Edit an existing file -> use the edit tool (preferred) or apply_patch for multi-file patches
 - Create a new file -> use write_to_file
 - Search code -> use grep or search_files
 - List directory -> use list_files (not execute_command with ls/dir)
