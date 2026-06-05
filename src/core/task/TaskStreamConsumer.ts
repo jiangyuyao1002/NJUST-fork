@@ -533,7 +533,11 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 	const { assistantMessage, reasoningMessage, pendingGroundingSources } = consumptionResult
 
 	if (t.abort || t.abandoned) {
-		t.stateMachine.force(TaskState.ERROR)
+		// Only force ERROR if not already in a terminal state, avoiding
+		// the COMPLETED -> ERROR unsafe transition race condition.
+		if (t.stateMachine.state !== TaskState.COMPLETED) {
+			t.stateMachine.force(TaskState.ERROR)
+		}
 		throw new TaskAbortedError(t.taskId, t.instanceId)
 	}
 
@@ -722,7 +726,11 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 				await pWaitFor(() => t.userMessageContentReady || t.abort || t.abandoned || t.taskCompleted)
 
 				if (t.abort || t.abandoned) {
-					t.stateMachine.force(TaskState.ERROR)
+					// Only force ERROR if not already in a terminal state, avoiding
+					// the COMPLETED -> ERROR unsafe transition race condition.
+					if (t.stateMachine.state !== TaskState.COMPLETED) {
+						t.stateMachine.force(TaskState.ERROR)
+					}
 					throw new TaskAbortedError(t.taskId, t.instanceId)
 				}
 			} else {

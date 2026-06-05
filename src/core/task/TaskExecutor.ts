@@ -14,12 +14,7 @@ import type OpenAI from "openai"
 import type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 export type { TaskExecutorHost } from "./interfaces/ITaskExecutorHost"
 
-import type {
-	ClineMessage,
-	ClineApiReqInfo,
-	ContextCondense,
-	ContextTruncation,
-} from "@njust-ai/types"
+import type { ClineMessage, ClineApiReqInfo, ContextCondense, ContextTruncation } from "@njust-ai/types"
 import {
 	DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT,
 	getApiProtocol,
@@ -60,12 +55,7 @@ import { BackpressureController } from "../stream/BackpressureController"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { handleAttemptApiRequestError } from "./TaskRetryHandler"
-import {
-	consumeApiStream,
-	finalizeStreamResponse,
-	type StackItem,
-	type FinalizeToolUseFn,
-} from "./TaskStreamConsumer"
+import { consumeApiStream, finalizeStreamResponse, type StackItem, type FinalizeToolUseFn } from "./TaskStreamConsumer"
 import { findLastIndex } from "../../shared/array"
 
 // ── Host interface ───────────────────────────────────────────────────────
@@ -523,7 +513,11 @@ export class TaskExecutor {
 			t._savedMessagesForCurrentRequest = false
 
 			if (t.abort) {
-				t.stateMachine.force(TaskState.ERROR)
+				// Only force ERROR if not already in a terminal state, avoiding
+				// the COMPLETED -> ERROR unsafe transition race condition.
+				if (t.stateMachine.state !== TaskState.COMPLETED) {
+					t.stateMachine.force(TaskState.ERROR)
+				}
 				throw new TaskAbortedError(t.taskId, t.instanceId)
 			}
 
