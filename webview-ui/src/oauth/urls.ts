@@ -1,4 +1,5 @@
 import { Package } from "@shared/package"
+import { toRequestyServiceUrl } from "@shared/utils/requesty"
 
 export function getCallbackUrl(provider: string, uriScheme?: string) {
 	return encodeURIComponent(`${uriScheme || "vscode"}://${Package.publisher}.${Package.name}/${provider}`)
@@ -62,6 +63,19 @@ export async function getOpenRouterAuthUrl(uriScheme?: string): Promise<OAuthUrl
 	return { url, state, codeVerifier: pkce?.verifier }
 }
 
-export function getRequestyAuthUrl(uriScheme?: string) {
-	return `https://app.requesty.ai/oauth/authorize?callback_url=${getCallbackUrl("requesty", uriScheme)}`
+export async function getRequestyAuthUrl(uriScheme?: string, baseUrl?: string): Promise<OAuthUrlResult> {
+	const state = generateRandomState()
+
+	const callbackBase = `${uriScheme || "vscode"}://${Package.publisher}.${Package.name}/requesty`
+	const callbackWithState = encodeURIComponent(`${callbackBase}?state=${state}`)
+
+	// Use toRequestyServiceUrl to correctly handle router→app subdomain transformation,
+	// then extract origin to get a clean base for the OAuth authorize endpoint.
+	// e.g. https://router.example.com/v1 → https://app.example.com/oauth/authorize
+	const serviceUrl = toRequestyServiceUrl(baseUrl, "app")
+	const authOrigin = new URL(serviceUrl).origin
+
+	const url = `${authOrigin}/oauth/authorize?callback_url=${callbackWithState}`
+
+	return { url, state }
 }

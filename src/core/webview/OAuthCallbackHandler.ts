@@ -13,11 +13,7 @@ interface OAuthHost {
 	log(message: string): void
 }
 
-export async function handleOpenRouterCallback(
-	host: OAuthHost,
-	code: string,
-	codeVerifier?: string,
-): Promise<void> {
+export async function handleOpenRouterCallback(host: OAuthHost, code: string, codeVerifier?: string): Promise<void> {
 	const { apiConfiguration, currentApiConfigName = "default" } = await host.getState()
 
 	let apiKey: string
@@ -67,6 +63,16 @@ export async function handleRequestyCallback(host: OAuthHost, code: string, base
 	if (!baseUrl || baseUrl === REQUESTY_BASE_URL) {
 		newConfiguration.requestyBaseUrl = undefined
 	} else {
+		// Validate baseUrl protocol. The baseUrl comes from user-configured settings
+		// (the user's self-hosted Requesty instance), so hostname and IP restrictions
+		// are intentionally NOT applied — the trust boundary is the user's explicit
+		// configuration action. Only protocol is restricted to prevent file://, etc.
+		// On validation failure, ABORT the OAuth flow entirely rather than silently
+		// falling back to the official service.
+		const parsed = new URL(baseUrl)
+		if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+			throw new Error(`Requesty OAuth aborted: disallowed protocol ${parsed.protocol}`)
+		}
 		newConfiguration.requestyBaseUrl = baseUrl
 	}
 

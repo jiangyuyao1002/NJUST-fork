@@ -912,19 +912,27 @@ async function handleCloudAgentSetActiveProfile(
  * handler can verify the state parameter (CSRF protection) and pass the code
  * verifier to the token exchange endpoint (PKCE).
  */
-function handleOpenRouterOAuthState(
-	context: MessageHandlerContext,
-	message: WebviewMessage,
-): void {
+function handleOpenRouterOAuthState(context: MessageHandlerContext, message: WebviewMessage): void {
 	const { provider } = context
 	const state = message.state
 	const codeVerifier = message.codeVerifier
-	if (typeof state === "string" && state.length > 0) {
+	const oauthProvider = message.oauthProvider
+	if (
+		typeof state === "string" &&
+		state.length > 0 &&
+		(oauthProvider === "openrouter" || oauthProvider === "requesty")
+	) {
 		provider.pendingOAuthState = {
 			state,
 			codeVerifier: typeof codeVerifier === "string" ? codeVerifier : undefined,
+			provider: oauthProvider,
+			expectedBaseUrl: typeof message.oauthBaseUrl === "string" ? message.oauthBaseUrl : undefined,
+			createdAt: Date.now(),
 		}
 	} else {
-		logger.warn("SettingsMessageHandler", "Received openRouterOAuthState with empty or missing state field")
+		logger.warn(
+			"SettingsMessageHandler",
+			"Received openRouterOAuthState with empty/missing state or invalid provider field",
+		)
 	}
 }

@@ -155,7 +155,13 @@ export class ClineProvider
 	private _disposed = false
 
 	/** Pending OAuth state for CSRF + PKCE verification (set by webview, consumed by URI callback). */
-	public pendingOAuthState?: { state: string; codeVerifier?: string }
+	public pendingOAuthState?: {
+		state: string
+		codeVerifier?: string
+		provider: "openrouter" | "requesty"
+		expectedBaseUrl?: string
+		createdAt: number
+	}
 
 	public readonly taskHistoryStore: TaskHistoryStore
 	public readonly taskHistory: TaskHistoryService

@@ -219,6 +219,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		includeCurrentCost,
 		maxGitStatusFiles,
 		telemetrySetting,
+		enhancementApiConfigId,
 	} = cachedState
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
@@ -449,6 +450,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					inlineCompletionEnableCangjieEnhanced: inlineCompletionEnableCangjieEnhanced ?? true,
 					inlineCompletionTriggerCommand: inlineCompletionTriggerCommand ?? "alt+\\",
 					telemetrySetting: telemetrySetting ?? "unset",
+					enhancementApiConfigId: enhancementApiConfigId ?? "",
 				},
 			})
 
@@ -936,6 +938,10 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								includeTaskHistoryInEnhance={includeTaskHistoryInEnhance}
 								setIncludeTaskHistoryInEnhance={(value) =>
 									setCachedStateField("includeTaskHistoryInEnhance", value)
+								}
+								enhancementApiConfigId={enhancementApiConfigId}
+								setEnhancementApiConfigId={(value) =>
+									setCachedStateField("enhancementApiConfigId", value)
 								}
 							/>
 						)}

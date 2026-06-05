@@ -10,6 +10,9 @@ export class StreamableHttpTransportStrategy implements ITransportStrategy {
 		config: Record<string, UnsafeAny>,
 		callbacks: TransportCallbacks,
 	): Promise<StreamableHTTPClientTransport> {
+		// MCP server URLs are user-configured — the user explicitly trusts these endpoints.
+		// SSRF guards are intentionally NOT applied here (see SseTransportStrategy for rationale).
+
 		const transport = new StreamableHTTPClientTransport(new URL(config.url), {
 			requestInit: {
 				headers: config.headers,

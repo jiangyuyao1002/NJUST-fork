@@ -111,10 +111,10 @@ export class DeepSeekHandler extends OpenAiHandler {
 
 		let stream
 		try {
-			stream = await this.client.chat.completions.create(
-				requestOptions,
-				isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
-			)
+			stream = await this.client.chat.completions.create(requestOptions, {
+				...(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}),
+				...(metadata?.signal ? { signal: metadata.signal } : {}),
+			})
 		} catch (error) {
 			throw handleOpenAIError(error, "DeepSeek")
 		}

@@ -51,6 +51,7 @@ export const OpenRouter = ({
 					type: "openRouterOAuthState",
 					state: result.state,
 					codeVerifier: result.codeVerifier,
+					oauthProvider: "openrouter",
 				})
 			}
 		})

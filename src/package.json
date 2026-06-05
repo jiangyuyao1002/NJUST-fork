@@ -4,7 +4,7 @@
 	"description": "AI-powered coding assistant for NJUST",
 	"main": "./dist/extension.js",
 	"scripts": {
-		"lint": "eslint . --ext=ts --max-warnings=200",
+		"lint": "eslint . --ext=ts --max-warnings=50",
 		"check-types": "tsc --noEmit",
 		"test": "vitest run",
 		"format": "prettier --write .",
@@ -1236,7 +1236,7 @@
 				},
 				"njust-ai.mcpServer.enabled": {
 					"type": "boolean",
-					"default": true,
+					"default": false,
 					"description": "Enable the built-in MCP Tools Server, allowing external agents to call internal tools (read/write files, execute commands, search, etc.) via the MCP protocol over HTTP."
 				},
 				"njust-ai.mcpServer.port": {

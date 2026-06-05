@@ -57,7 +57,8 @@ export default [
 			"@typescript-eslint/no-explicit-any": "off",
 		},
 	},
-	// TSX components: event handlers and third-party integrations legitimately use any
+	// TSX components: no-explicit-any kept off due to 687+ existing usages in untyped
+	// third-party integrations. Will be progressively tightened via dedicated PRs.
 	{
 		files: ["src/**/*.tsx"],
 		rules: {

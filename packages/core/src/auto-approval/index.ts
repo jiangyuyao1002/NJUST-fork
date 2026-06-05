@@ -158,15 +158,18 @@ export async function checkAutoApproval({
 			return { decision: "ask" }
 		}
 
+		// updateTodoList is a low-risk UI-only operation (no file or network access).
+		// Auto-approve when auto-approval is enabled; otherwise require confirmation.
 		if (tool.tool === "updateTodoList") {
 			return { decision: "approve" }
 		}
 
-		// The skill tool only loads pre-defined instructions from global or project skills.
-		// It does not read arbitrary files - skills must be explicitly installed/defined by the user.
-		// Auto-approval is intentional to provide a seamless experience when loading task instructions.
+		// The skill tool loads pre-defined instructions from global or project skills.
+		// It does not read arbitrary files — skills must be explicitly installed/defined by the user.
+		// However, skills may trigger subsequent tool calls which are individually evaluated.
+		// Only auto-approve when the user has explicitly enabled read-only auto-approval.
 		if (tool.tool === "skill") {
-			return { decision: "approve" }
+			return state.alwaysAllowReadOnly === true ? { decision: "approve" } : { decision: "ask" }
 		}
 
 		if (tool?.tool === "switchMode") {

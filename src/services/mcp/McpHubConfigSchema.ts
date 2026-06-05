@@ -45,7 +45,12 @@ const createServerTypeSchema = () => {
 		// SSE config (has url field)
 		BaseConfigSchema.extend({
 			type: z.enum(["sse"]).optional(),
-			url: z.string().url("URL must be a valid URL format"),
+			url: z
+				.string()
+				.url("URL must be a valid URL format")
+				.refine((url) => url.startsWith("http://") || url.startsWith("https://"), {
+					message: "SSE server URL must use http:// or https:// protocol",
+				}),
 			headers: z.record(z.string()).optional(),
 			// Ensure no stdio fields are present
 			command: z.undefined().optional(),
@@ -60,7 +65,12 @@ const createServerTypeSchema = () => {
 		// StreamableHTTP config (has url field)
 		BaseConfigSchema.extend({
 			type: z.enum(["streamable-http"]).optional(),
-			url: z.string().url("URL must be a valid URL format"),
+			url: z
+				.string()
+				.url("URL must be a valid URL format")
+				.refine((url) => url.startsWith("http://") || url.startsWith("https://"), {
+					message: "Streamable HTTP server URL must use http:// or https:// protocol",
+				}),
 			headers: z.record(z.string()).optional(),
 			// Ensure no stdio fields are present
 			command: z.undefined().optional(),

@@ -11,8 +11,7 @@ import { Button } from "@src/components/ui"
 import { inputEventTransform } from "../transforms"
 import { ModelPicker } from "../ModelPicker"
 import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
-import { getCallbackUrl } from "@/oauth/urls"
-import { toRequestyServiceUrl } from "@shared/utils/requesty"
+import { getRequestyAuthUrl, type OAuthUrlResult } from "@/oauth/urls"
 
 type RequestyProps = {
 	apiConfiguration: ProviderSettings
@@ -37,6 +36,27 @@ export const Requesty = ({
 	const { t } = useAppTranslation()
 
 	const [requestyEndpointSelected, setRequestyEndpointSelected] = useState(!!apiConfiguration.requestyBaseUrl)
+	const [oauthUrl, setOauthUrl] = useState<string>("")
+
+	// Generate OAuth URL with CSRF state on mount (async)
+	useEffect(() => {
+		let cancelled = false
+		getRequestyAuthUrl(uriScheme, apiConfiguration.requestyBaseUrl).then((result: OAuthUrlResult) => {
+			if (!cancelled) {
+				setOauthUrl(result.url)
+				// Send state to extension for callback CSRF verification
+				vscode.postMessage({
+					type: "openRouterOAuthState",
+					state: result.state,
+					oauthProvider: "requesty",
+					oauthBaseUrl: apiConfiguration.requestyBaseUrl,
+				})
+			}
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [uriScheme, apiConfiguration.requestyBaseUrl])
 
 	// This ensures that the "Use custom URL" checkbox is hidden when the user deletes the URL.
 	useEffect(() => {
@@ -53,15 +73,6 @@ export const Requesty = ({
 			},
 		[setApiConfigurationField],
 	)
-
-	const getApiKeyUrl = () => {
-		const callbackUrl = getCallbackUrl("requesty", uriScheme)
-		const baseUrl = toRequestyServiceUrl(apiConfiguration.requestyBaseUrl, "app")
-
-		const authUrl = new URL(`oauth/authorize?callback_url=${callbackUrl}`, baseUrl)
-
-		return authUrl.toString()
-	}
 
 	return (
 		<>
@@ -85,7 +96,7 @@ export const Requesty = ({
 				{t("settings:providers.apiKeyStorageNotice")}
 			</div>
 			<a
-				href={getApiKeyUrl()}
+				href={oauthUrl || "#"}
 				target="_blank"
 				rel="noopener noreferrer"
 				className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 rounded-md px-3 w-full"
@@ -94,6 +105,8 @@ export const Requesty = ({
 					textDecoration: "none",
 					color: "var(--vscode-button-foreground)",
 					backgroundColor: "var(--vscode-button-background)",
+					opacity: oauthUrl ? 1 : 0.5,
+					pointerEvents: oauthUrl ? "auto" : "none",
 				}}>
 				{t("settings:providers.getRequestyApiKey")}
 			</a>

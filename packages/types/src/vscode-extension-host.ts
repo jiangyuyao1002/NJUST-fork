@@ -620,6 +620,8 @@ export interface WebviewMessage {
 	url?: string // For openExternal
 	state?: string // For OAuth state parameter (openRouterOAuthState)
 	codeVerifier?: string // For OAuth PKCE code_verifier (openRouterOAuthState)
+	oauthProvider?: "openrouter" | "requesty" // Which provider initiated the OAuth flow
+	oauthBaseUrl?: string // The base URL configured at OAuth initiation (for callback binding)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	config?: Record<string, any>
 	visibility?: ShareVisibility // For share visibility

@@ -171,6 +171,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 			maxOutputTokens,
 			temperature: temperatureConfig,
 			...(tools.length > 0 ? { tools } : {}),
+			...(metadata?.signal ? { abortSignal: metadata.signal } : {}),
 		}
 
 		// Handle allowedFunctionNames for mode-restricted tool access.

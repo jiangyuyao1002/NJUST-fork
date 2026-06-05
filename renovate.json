@@ -2,5 +2,45 @@
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": ["config:recommended"],
 	"forkProcessing": "enabled",
-	"ignoreDeps": ["@vscode/vsce"]
+	"ignoreDeps": ["@vscode/vsce"],
+	"schedule": ["before 5am on Monday"],
+	"prConcurrentLimit": 10,
+	"prHourlyLimit": 4,
+	"stabilityDays": 3,
+	"rangeStrategy": "bump",
+	"packageRules": [
+		{
+			"description": "Group @types/* updates",
+			"matchPackagePatterns": ["^@types/"],
+			"groupName": "type definitions",
+			"automerge": true,
+			"matchUpdateTypes": ["patch", "minor"]
+		},
+		{
+			"description": "Group ESLint related updates",
+			"matchPackagePatterns": ["^eslint", "^@typescript-eslint/", "^@eslint/"],
+			"groupName": "eslint"
+		},
+		{
+			"description": "Group Vitest related updates",
+			"matchPackagePatterns": ["^vitest", "^@vitest/", "^vite$"],
+			"groupName": "vitest"
+		},
+		{
+			"description": "Auto-merge patch updates for well-tested packages",
+			"matchUpdateTypes": ["patch"],
+			"automerge": true,
+			"matchPackagePatterns": ["^@njust-ai/", "^zod$", "^axios$"]
+		},
+		{
+			"description": "Group React and Radix UI updates",
+			"matchPackagePatterns": ["^react", "^@radix-ui/", "^@vscode/webview-ui-toolkit"],
+			"groupName": "react-ui"
+		},
+		{
+			"description": "Group MCP SDK updates",
+			"matchPackagePatterns": ["^@modelcontextprotocol/"],
+			"groupName": "mcp-sdk"
+		}
+	]
 }

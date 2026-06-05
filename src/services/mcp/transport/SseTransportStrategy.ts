@@ -11,6 +11,12 @@ export class SseTransportStrategy implements ITransportStrategy {
 		config: Record<string, UnsafeAny>,
 		callbacks: TransportCallbacks,
 	): Promise<SSEClientTransport> {
+		// MCP server URLs are user-configured — the user explicitly trusts these endpoints.
+		// SSRF guards (assertSafeOutboundUrl) are intentionally NOT applied here, as they
+		// would block legitimate local MCP servers (localhost, private network addresses).
+		// NOTE: The configuration schema validates URL format only, not protocol or hostname.
+		// The trust boundary is the user's explicit configuration action.
+
 		const sseOptions = {
 			requestInit: {
 				headers: config.headers,

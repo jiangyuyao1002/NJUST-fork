@@ -2,19 +2,18 @@ import { Anthropic } from "@anthropic-ai/sdk"
 
 import type { ApiHandler, ApiHandlerCreateMessageMetadata, SingleCompletionHandler } from "../types"
 import type { ApiStream, ApiStreamChunk } from "../transform/stream"
-import {
-	analyzeErrorForRetry,
-	ApiErrorCategory,
-} from "./ApiErrorClassifier"
-import {
-	computeBackoffMs,
-	delayMs,
-	DEFAULT_API_RETRY_OPTIONS,
-	type ApiRetryOptions,
-} from "./ApiRetryStrategy"
+import { analyzeErrorForRetry, ApiErrorCategory } from "./ApiErrorClassifier"
+import { computeBackoffMs, delayMs, DEFAULT_API_RETRY_OPTIONS, type ApiRetryOptions } from "./ApiRetryStrategy"
 import { taskEventBus } from "../../core/events/TaskEventBus"
 
 export type RetryWrapperOptions = Partial<ApiRetryOptions>
+
+/**
+ * Symbol marker to prevent double-retry when both wrapApiHandler (Proxy)
+ * and BaseProvider.withRetry() are on the same call path.
+ * When set on a handler instance, withRetry() in BaseProvider becomes a passthrough.
+ */
+export const RETRY_WRAPPER_APPLIED = Symbol("retryWrapperApplied")
 
 /**
  * Wraps an AsyncGenerator so that failures on the *first* `next()` call
@@ -88,6 +87,10 @@ export function wrapApiHandler(
 	handler: ApiHandler & Partial<SingleCompletionHandler>,
 	retryConfig?: RetryWrapperOptions,
 ): ApiHandler & Partial<SingleCompletionHandler> {
+	// Mark handler so BaseProvider.withRetry() can detect the outer wrapper
+	// and skip its own retry loop (preventing N×N double-retry amplification).
+	;(handler as unknown as Record<symbol, boolean>)[RETRY_WRAPPER_APPLIED] = true
+
 	const providerName = handler.constructor.name
 
 	return new Proxy(handler, {

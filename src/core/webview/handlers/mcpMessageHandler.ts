@@ -34,7 +34,9 @@ async function handleAllowedCommands(context: MessageHandlerContext, message: We
 		? commands.filter((cmd: UnsafeAny) => typeof cmd === "string" && (cmd as string).trim().length > 0)
 		: []
 	await updateGlobalState("allowedCommands", validCommands)
-	await vscode.workspace.getConfiguration(Package.name).update("allowedCommands", validCommands, vscode.ConfigurationTarget.Global)
+	await vscode.workspace
+		.getConfiguration(Package.name)
+		.update("allowedCommands", validCommands, vscode.ConfigurationTarget.Global)
 }
 
 async function handleDeniedCommands(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -44,7 +46,9 @@ async function handleDeniedCommands(context: MessageHandlerContext, message: Web
 		? commands.filter((cmd: UnsafeAny) => typeof cmd === "string" && (cmd as string).trim().length > 0)
 		: []
 	await updateGlobalState("deniedCommands", validCommands)
-	await vscode.workspace.getConfiguration(Package.name).update("deniedCommands", validCommands, vscode.ConfigurationTarget.Global)
+	await vscode.workspace
+		.getConfiguration(Package.name)
+		.update("deniedCommands", validCommands, vscode.ConfigurationTarget.Global)
 }
 
 async function handleOpenMcpSettings(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
@@ -55,7 +59,8 @@ async function handleOpenMcpSettings(context: MessageHandlerContext, _message: W
 async function handleOpenProjectMcpSettings(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { getCurrentCwd } = context
 	if (!vscode.workspace.workspaceFolders?.length) {
-		vscode.window.showErrorMessage(t("common:errors.no_workspace")); return
+		vscode.window.showErrorMessage(t("common:errors.no_workspace"))
+		return
 	}
 	const workspaceFolder = getCurrentCwd()
 	const rooDir = path.join(workspaceFolder, NJUST_AI_CONFIG_DIR)
@@ -89,34 +94,61 @@ async function handleRestartMcpServer(context: MessageHandlerContext, message: W
 	try {
 		await provider.getMcpHub()?.restartConnection(message.text!, message.source as "global" | "project")
 	} catch (error) {
-		provider.log(`Failed to retry connection for ${message.text}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		provider.log(
+			`Failed to retry connection for ${message.text}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 	}
 }
 
 async function handleToggleToolAlwaysAllow(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	try {
-		await provider.getMcpHub()?.toggleToolAlwaysAllow(message.serverName!, message.source as "global" | "project", message.toolName!, Boolean(message.alwaysAllow))
+		await provider
+			.getMcpHub()
+			?.toggleToolAlwaysAllow(
+				message.serverName!,
+				message.source as "global" | "project",
+				message.toolName!,
+				Boolean(message.alwaysAllow),
+			)
 	} catch (error) {
-		provider.log(`Failed to toggle auto-approve for tool ${message.toolName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		provider.log(
+			`Failed to toggle auto-approve for tool ${message.toolName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 	}
 }
 
-async function handleToggleToolEnabledForPrompt(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+async function handleToggleToolEnabledForPrompt(
+	context: MessageHandlerContext,
+	message: WebviewMessage,
+): Promise<void> {
 	const { provider } = context
 	try {
-		await provider.getMcpHub()?.toggleToolEnabledForPrompt(message.serverName!, message.source as "global" | "project", message.toolName!, Boolean(message.isEnabled))
+		await provider
+			.getMcpHub()
+			?.toggleToolEnabledForPrompt(
+				message.serverName!,
+				message.source as "global" | "project",
+				message.toolName!,
+				Boolean(message.isEnabled),
+			)
 	} catch (error) {
-		provider.log(`Failed to toggle enabled for prompt for tool ${message.toolName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		provider.log(
+			`Failed to toggle enabled for prompt for tool ${message.toolName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 	}
 }
 
 async function handleToggleMcpServer(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	try {
-		await provider.getMcpHub()?.toggleServerDisabled(message.serverName!, message.disabled!, message.source as "global" | "project")
+		await provider
+			.getMcpHub()
+			?.toggleServerDisabled(message.serverName!, message.disabled!, message.source as "global" | "project")
 	} catch (error) {
-		provider.log(`Failed to toggle MCP server ${message.serverName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+		provider.log(
+			`Failed to toggle MCP server ${message.serverName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+		)
 	}
 }
 
@@ -128,10 +160,15 @@ async function handleRefreshAllMcpServers(context: MessageHandlerContext, _messa
 async function handleUpdateMcpTimeout(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	if (message.serverName && typeof message.timeout === "number") {
+		const clampedTimeout = Math.max(1, Math.min(3600, message.timeout))
 		try {
-			await provider.getMcpHub()?.updateServerTimeout(message.serverName, message.timeout, message.source as "global" | "project")
+			await provider
+				.getMcpHub()
+				?.updateServerTimeout(message.serverName, clampedTimeout, message.source as "global" | "project")
 		} catch (error) {
-			provider.log(`Failed to update timeout for ${message.serverName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+			provider.log(
+				`Failed to update timeout for ${message.serverName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+			)
 			vscode.window.showErrorMessage(t("common:errors.update_server_timeout"))
 		}
 	}
@@ -147,8 +184,14 @@ async function handleTestWebSearch(context: MessageHandlerContext, _message: Web
 		const { createSearchProvider } = await import("../../../services/web-search/WebSearchProvider")
 		const searchProvider = createSearchProvider(providerName as UnsafeAny, apiKey, serpApiEngine as UnsafeAny)
 		await searchProvider.search("test", 1)
-		await provider.postMessageToWebview({ type: "webSearchStatus", text: JSON.stringify({ status: "ok", provider: providerName }) })
+		await provider.postMessageToWebview({
+			type: "webSearchStatus",
+			text: JSON.stringify({ status: "ok", provider: providerName }),
+		})
 	} catch (error) {
-		await provider.postMessageToWebview({ type: "webSearchStatus", text: JSON.stringify({ status: "error", message: getErrorMessage(error) }) })
+		await provider.postMessageToWebview({
+			type: "webSearchStatus",
+			text: JSON.stringify({ status: "error", message: getErrorMessage(error) }),
+		})
 	}
 }

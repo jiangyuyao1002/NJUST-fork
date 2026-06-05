@@ -117,7 +117,9 @@ export class DoubaoHandler extends OpenAiHandler {
 
 		let stream
 		try {
-			stream = await this.client.chat.completions.create(requestOptions)
+			stream = await this.client.chat.completions.create(requestOptions, {
+				...(metadata?.signal ? { signal: metadata.signal } : {}),
+			})
 		} catch (error) {
 			throw handleOpenAIError(error, "Doubao")
 		}

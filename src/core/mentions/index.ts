@@ -20,6 +20,7 @@ import { getCommand, type Command } from "../../services/command/commands"
 import { buildSkillResult, resolveSkillContentForMode, type SkillLookup } from "../../services/skills/skillInvocation"
 import type { SkillContent } from "../../shared/skills"
 import { getErrorMessage } from "../../shared/error-utils"
+import { isPathOutsideWorkspace } from "../../utils/pathUtils"
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function openMention(cwd: string, mention?: string): Promise<void> {
@@ -31,6 +32,10 @@ export async function openMention(cwd: string, mention?: string): Promise<void> 
 		// Slice off the leading slash and unescape any spaces in the path
 		const relPath = unescapeSpaces(mention.slice(1))
 		const absPath = path.resolve(cwd, relPath)
+		if (isPathOutsideWorkspace(absPath)) {
+			vscode.window.showErrorMessage(`Access denied: path "${mention}" escapes workspace boundary.`)
+			return
+		}
 		if (mention.endsWith("/")) {
 			vscode.commands.executeCommand("revealInExplorer", vscode.Uri.file(absPath))
 		} else {
@@ -367,8 +372,7 @@ async function getFileOrFolderContentWithMetadata(
 								totalContentBytes += formatted.length
 								fileReadResults.push(formatted)
 							}
-						} catch {
-						}
+						} catch {}
 					}
 				} else if (entry.isDirectory()) {
 					folderListing += `${linePrefix}${displayName}/\n`

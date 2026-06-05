@@ -5,7 +5,12 @@ import { z } from "zod"
 
 import delay from "delay"
 
-import { CommandExecutionStatus, DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE, PersistedCommandOutput, TelemetryEventName } from "@njust-ai/types"
+import {
+	CommandExecutionStatus,
+	DEFAULT_TERMINAL_OUTPUT_PREVIEW_SIZE,
+	PersistedCommandOutput,
+	TelemetryEventName,
+} from "@njust-ai/types"
 import { TelemetryService } from "@njust-ai/telemetry"
 
 import { Task } from "../task/Task"
@@ -53,9 +58,7 @@ export function resolveAgentTimeoutMs(timeoutSeconds: number | null | undefined)
 	// from malicious or malformed commands. User settings can extend but not
 	// reduce below the floor.
 	if (process.env.NJUST_AI_CLI_RUNTIME === "1") {
-		return requestedAgentTimeout > 0
-			? Math.max(requestedAgentTimeout, MIN_CLI_TIMEOUT_MS)
-			: MIN_CLI_TIMEOUT_MS
+		return requestedAgentTimeout > 0 ? Math.max(requestedAgentTimeout, MIN_CLI_TIMEOUT_MS) : MIN_CLI_TIMEOUT_MS
 	}
 	return requestedAgentTimeout
 }
@@ -84,7 +87,6 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 		const { handleError, pushToolResult, askApproval, reportProgress } = callbacks
 
 		try {
-
 			const canonicalCommand = unescapeHtmlEntities(command)
 			await reportProgress?.({ icon: "terminal", text: "Preparing command execution" })
 
@@ -120,7 +122,9 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			task.consecutiveMistakeCount = 0
 
 			const safetyCheck = checkCommandSafety(canonicalCommand)
-			const isBypassMode = (task as Task & { permissionRuleEngine?: { getMode(): string } }).permissionRuleEngine?.getMode?.() === "bypass"
+			const isBypassMode =
+				(task as Task & { permissionRuleEngine?: { getMode(): string } }).permissionRuleEngine?.getMode?.() ===
+				"bypass"
 
 			// Always block forbidden commands, even in bypass mode
 			if (safetyCheck.riskLevel === "forbidden") {
@@ -135,7 +139,11 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			}
 
 			if (safetyCheck.requiresConfirmation && !isBypassMode) {
-				logger.warn("ExecuteCommandTool", "execute_command: high-risk pattern; user must approve in UI:", canonicalCommand)
+				logger.warn(
+					"ExecuteCommandTool",
+					"execute_command: high-risk pattern; user must approve in UI:",
+					canonicalCommand,
+				)
 				recordSecurityMetric("execute_command_high_risk", {
 					cmd: canonicalCommand.slice(0, 240),
 					riskLevel: safetyCheck.riskLevel,
@@ -144,9 +152,10 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			}
 
 			await reportProgress?.({ icon: "terminal", text: "Waiting for command approval" } as UnsafeAny)
-			const approvalMessage = safetyCheck.requiresConfirmation && !isBypassMode
-				? `[High risk] This command may destroy data. Confirm to run:\n${canonicalCommand}\n\nReasons: ${safetyCheck.reasons.join("; ")}`
-				: canonicalCommand
+			const approvalMessage =
+				safetyCheck.requiresConfirmation && !isBypassMode
+					? `[High risk] This command may destroy data. Confirm to run:\n${canonicalCommand}\n\nReasons: ${safetyCheck.reasons.join("; ")}`
+					: canonicalCommand
 
 			if (!isBypassMode) {
 				const didApprove = await askApproval("command", approvalMessage)
@@ -180,9 +189,10 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				.get<string[]>("commandTimeoutAllowlist", [])
 
 			// Check if command matches any prefix in the allowlist
-			const isCommandAllowlisted = commandTimeoutAllowlist.some((prefix) =>
-				canonicalCommand.startsWith(prefix.trim()),
-			)
+			const isCommandAllowlisted = commandTimeoutAllowlist.some((prefix) => {
+				const trimmed = prefix.trim()
+				return canonicalCommand === trimmed || canonicalCommand.startsWith(trimmed + " ")
+			})
 
 			// Convert seconds to milliseconds for internal use, but skip timeout if command is allowlisted
 			const commandExecutionTimeout = isCommandAllowlisted ? 0 : commandExecutionTimeoutSeconds * 1000
@@ -299,10 +309,7 @@ export async function executeCommandInTerminal(
 		return [false, `Working directory '${workingDir}' does not exist.`]
 	}
 
-	const resolvedCommand = normalizeDotSlashCommandForWindowsShell(
-		command.trim(),
-		BaseTerminal.getExecaShellPath(),
-	)
+	const resolvedCommand = normalizeDotSlashCommandForWindowsShell(command.trim(), BaseTerminal.getExecaShellPath())
 
 	let message: { text?: string; images?: string[] } | undefined
 	let runInBackground = false

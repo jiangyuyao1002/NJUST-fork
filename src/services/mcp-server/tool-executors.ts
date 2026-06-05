@@ -218,11 +218,7 @@ export async function execCommand(
 	// - Longest prefix match for allow/deny lists
 	// - Conflict resolution between allowed and denied commands
 	if (allowedCommands?.length || deniedCommands?.length) {
-		const decision = getCommandDecision(
-			params.command,
-			allowedCommands ?? [],
-			deniedCommands ?? [],
-		)
+		const decision = getCommandDecision(params.command, allowedCommands ?? [], deniedCommands ?? [])
 
 		if (decision === "auto_deny") {
 			throw new Error(`Command denied by policy: ${params.command}`)
@@ -252,16 +248,12 @@ export async function execCommand(
 	// Dangerous patterns are allowed but flagged in the result.
 	const safetyCheck = checkCommandSafety(params.command)
 	if (safetyCheck.riskLevel === "forbidden") {
-		throw new Error(
-			`Command blocked for safety: ${safetyCheck.reasons.join("; ")}`,
-		)
+		throw new Error(`Command blocked for safety: ${safetyCheck.reasons.join("; ")}`)
 	}
 	const safetyWarning =
-		safetyCheck.riskLevel === "dangerous"
-			? `\n[Safety warning] ${safetyCheck.reasons.join("; ")}`
-			: ""
+		safetyCheck.riskLevel === "dangerous" ? `\n[Safety warning] ${safetyCheck.reasons.join("; ")}` : ""
 
-	const timeoutMs = (params.timeout ?? 30) * 1000
+	const timeoutMs = Math.max(1, Math.min(300, params.timeout ?? 30)) * 1000
 
 	return new Promise<string>((resolve, reject) => {
 		const isWindows = process.platform === "win32"
@@ -286,7 +278,7 @@ export async function execCommand(
 
 		const timer = setTimeout(() => {
 			proc.kill("SIGTERM")
-			reject(new Error(`Command timed out after ${params.timeout ?? 30}s`))
+			reject(new Error(`Command timed out after ${Math.round(timeoutMs / 1000)}s`))
 		}, timeoutMs)
 
 		proc.on("close", (code) => {

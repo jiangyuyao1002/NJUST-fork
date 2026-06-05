@@ -9,6 +9,7 @@ import { countTokensDetailed, type TokenCountResult } from "../../utils/countTok
 import { isMcpTool } from "../../utils/mcp-name"
 import { computeBackoffMs, delayMs, DEFAULT_API_RETRY_OPTIONS, type ApiRetryOptions } from "../retry/ApiRetryStrategy"
 import { analyzeErrorForRetry } from "../retry/ApiErrorClassifier"
+import { RETRY_WRAPPER_APPLIED } from "../retry/ApiRetryWrapper"
 import { taskEventBus } from "../../core/events/TaskEventBus"
 
 export const CONTENT_CHUNK_TYPES: ReadonlySet<string> = new Set([
@@ -93,9 +94,10 @@ export abstract class BaseProvider implements ApiHandler {
 				function: {
 					...tool.function,
 					strict: useStrict && !isMcp,
-					parameters: useStrict && !isMcp
-						? this.convertToolSchemaForOpenAI(tool.function.parameters)
-						: tool.function.parameters,
+					parameters:
+						useStrict && !isMcp
+							? this.convertToolSchemaForOpenAI(tool.function.parameters)
+							: tool.function.parameters,
 				},
 			} as TTool
 		})
@@ -172,7 +174,7 @@ export abstract class BaseProvider implements ApiHandler {
 	/**
 	 * Override when {@link hasNativeTokenCounting} is true; return undefined to fall back to tiktoken.
 	 */
-		// eslint-disable-next-line @typescript-eslint/require-await
+	// eslint-disable-next-line @typescript-eslint/require-await
 	protected async countTokensNative(
 		_content: Anthropic.Messages.ContentBlockParam[],
 	): Promise<number | TokenCountResult | undefined> {
@@ -232,6 +234,12 @@ export abstract class BaseProvider implements ApiHandler {
 		retryConfig?: Partial<ApiRetryOptions>,
 		context?: { taskId?: string; provider?: string },
 	): Promise<T> {
+		// When wrapApiHandler Proxy already wraps this handler, skip the inner
+		// retry loop to prevent N×N double-retry amplification.
+		if ((this as unknown as Record<symbol, boolean>)[RETRY_WRAPPER_APPLIED]) {
+			return operation()
+		}
+
 		const config = { ...DEFAULT_API_RETRY_OPTIONS, ...retryConfig }
 		let lastError: unknown
 

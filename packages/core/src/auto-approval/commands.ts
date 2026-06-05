@@ -92,6 +92,18 @@ export function containsDangerousSubstitution(source: string): boolean {
  * @param prefixes - List of prefix patterns to search through
  * @returns The longest matching prefix, or null if no match found
  */
+/**
+ * Check if a command matches a prefix with proper token boundary.
+ * Prevents "git" from matching "gitlab" by requiring the character
+ * after the prefix to be a shell whitespace or end-of-string.
+ */
+function matchesCommandPrefix(command: string, prefix: string): boolean {
+	if (command === prefix) return true
+	if (!command.startsWith(prefix)) return false
+	const next = command[prefix.length]
+	return next === " " || next === "\t" || next === "\n" || next === "\r"
+}
+
 export function findLongestPrefixMatch(command: string, prefixes: string[]): string | null {
 	if (!command || !prefixes?.length) {
 		return null
@@ -103,7 +115,7 @@ export function findLongestPrefixMatch(command: string, prefixes: string[]): str
 	for (const prefix of prefixes) {
 		const lowerPrefix = prefix.toLowerCase()
 		// Handle wildcard "*" - it matches any command
-		if (lowerPrefix === "*" || trimmedCommand.startsWith(lowerPrefix)) {
+		if (lowerPrefix === "*" || matchesCommandPrefix(trimmedCommand, lowerPrefix)) {
 			if (!longestMatch || lowerPrefix.length > longestMatch.length) {
 				longestMatch = lowerPrefix
 			}
@@ -145,7 +157,7 @@ export function isAutoApprovedSingleCommand(
 		return allowedCommands.some((prefix) => {
 			const lowerPrefix = prefix.toLowerCase()
 			// Handle wildcard "*" - it matches any command
-			return lowerPrefix === "*" || trimmedCommand.startsWith(lowerPrefix)
+			return lowerPrefix === "*" || matchesCommandPrefix(trimmedCommand, lowerPrefix)
 		})
 	}
 

@@ -563,16 +563,22 @@ describe("SettingsView - Allowed Commands", () => {
 		const addButton = within(content).getByTestId("add-command-button")
 		fireEvent.click(addButton)
 
-		// Verify command was added
+		// Verify command was added to the cached state (visible in DOM)
 		expect(within(content).getByText("npm test")).toBeInTheDocument()
 
-		// Verify VSCode message was sent
-		expect(vscode.postMessage).toHaveBeenCalledWith({
-			type: "updateSettings",
-			updatedSettings: {
-				allowedCommands: ["npm test"],
-			},
-		})
+		// Changes are batched in cachedState — click Save to persist
+		const saveButton = screen.getByTestId("save-button")
+		fireEvent.click(saveButton)
+
+		// Verify VSCode batch message includes the updated allowedCommands
+		expect(vscode.postMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "updateSettings",
+				updatedSettings: expect.objectContaining({
+					allowedCommands: ["npm test"],
+				}),
+			}),
+		)
 	})
 
 	it("removes command from the list", () => {
@@ -597,16 +603,22 @@ describe("SettingsView - Allowed Commands", () => {
 		const removeButton = within(content).getByTestId("remove-command-0")
 		fireEvent.click(removeButton)
 
-		// Verify command was removed
+		// Verify command was removed from the cached state (not in DOM)
 		expect(within(content).queryByText("npm test")).not.toBeInTheDocument()
 
-		// Verify VSCode message was sent
-		expect(vscode.postMessage).toHaveBeenLastCalledWith({
-			type: "updateSettings",
-			updatedSettings: {
-				allowedCommands: [],
-			},
-		})
+		// Changes are batched in cachedState — click Save to persist
+		const saveButton = screen.getByTestId("save-button")
+		fireEvent.click(saveButton)
+
+		// Verify VSCode batch message includes the updated allowedCommands
+		expect(vscode.postMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "updateSettings",
+				updatedSettings: expect.objectContaining({
+					allowedCommands: [],
+				}),
+			}),
+		)
 	})
 
 	describe("SettingsView - Tab Navigation", () => {
