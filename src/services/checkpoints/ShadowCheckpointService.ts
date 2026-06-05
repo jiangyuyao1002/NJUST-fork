@@ -34,19 +34,10 @@ function createSanitizedGit(baseDir: string): SimpleGit {
 
 	// Copy all environment variables except git-specific ones
 	for (const [key, value] of Object.entries(process.env)) {
-		// Skip git environment variables that would override repository location
-		if (
-			key === "GIT_DIR" ||
-			key === "GIT_WORK_TREE" ||
-			key === "GIT_INDEX_FILE" ||
-			key === "GIT_OBJECT_DIRECTORY" ||
-			key === "GIT_ALTERNATE_OBJECT_DIRECTORIES" ||
-			key === "GIT_CEILING_DIRECTORIES" ||
-			key === "GIT_TEMPLATE_DIR" ||
-			key === "GIT_ASKPASS" ||
-			key === "GIT_EDITOR" ||
-			key === "EDITOR"
-		) {
+		// Skip all GIT_ environment variables that could interfere with checkpoint operations.
+		// This includes GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, GIT_CONFIG_COUNT, etc.
+		// Using a prefix match ensures we catch all git-related vars (matching test behavior).
+		if (key.startsWith("GIT_") || key === "EDITOR") {
 			removedVars.push(`${key}=${value}`)
 			continue
 		}
@@ -59,7 +50,8 @@ function createSanitizedGit(baseDir: string): SimpleGit {
 
 	// Log which git env vars were removed (helps with debugging Dev Container issues)
 	if (removedVars.length > 0) {
-		logger.info("ShadowCheckpointService", 
+		logger.info(
+			"ShadowCheckpointService",
 			`[createSanitizedGit] Removed git environment variables for checkpoint isolation: ${removedVars.join(", ")}`,
 		)
 	}
@@ -236,9 +228,7 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 			// Exclude files larger than 100MB to prevent shadow git from ballooning
 			await git.raw(["add", ".", "--ignore-errors"])
 		} catch (error) {
-			this.log(
-				`[${this.constructor.name}#stageAll] failed to add files to git: ${getErrorMessage(error)}`,
-			)
+			this.log(`[${this.constructor.name}#stageAll] failed to add files to git: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -425,10 +415,10 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 				? await this.git.show([`${to}:${relPath}`]).catch(() => "")
 				: await fs.readFile(absPath, "utf8").catch(() => "")
 
-				// Skip binary files — they produce garbage diffs when read as UTF-8
-				if (before.includes(" ") || after.includes(" ")) continue
+			// Skip binary files — they produce garbage diffs when read as UTF-8
+			if (before.includes(" ") || after.includes(" ")) continue
 
-							result.push({ paths: { relative: relPath, absolute: absPath }, content: { before, after } })
+			result.push({ paths: { relative: relPath, absolute: absPath }, content: { before, after } })
 		}
 
 		return result
@@ -493,7 +483,10 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 		if (success) {
 			logger.info("ShadowCheckpointService", `[${this.name}#deleteTask.${taskId}] deleted branch ${branchName}`)
 		} else {
-			logger.error("ShadowCheckpointService", `[${this.name}#deleteTask.${taskId}] failed to delete branch ${branchName}`)
+			logger.error(
+				"ShadowCheckpointService",
+				`[${this.name}#deleteTask.${taskId}] failed to delete branch ${branchName}`,
+			)
 		}
 	}
 
@@ -501,7 +494,10 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 		const branches = await git.branchLocal()
 
 		if (!branches.all.includes(branchName)) {
-			logger.error("ShadowCheckpointService", `[${this.constructor.name}#deleteBranch] branch ${branchName} does not exist`)
+			logger.error(
+				"ShadowCheckpointService",
+				`[${this.constructor.name}#deleteBranch] branch ${branchName} does not exist`,
+			)
 			return false
 		}
 
@@ -528,7 +524,8 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 				await git.branch(["-D", branchName])
 				return true
 			} catch (error) {
-				logger.error("ShadowCheckpointService", 
+				logger.error(
+					"ShadowCheckpointService",
 					`[${this.constructor.name}#deleteBranch] failed to delete branch ${branchName}: ${getErrorMessage(error)}`,
 				)
 
