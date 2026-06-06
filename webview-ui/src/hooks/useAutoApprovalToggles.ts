@@ -7,6 +7,7 @@ import { useExtensionState } from "@src/context/ExtensionStateContext"
  */
 export function useAutoApprovalToggles() {
 	const {
+		alwaysAllowAll,
 		alwaysAllowReadOnly,
 		alwaysAllowReadOnlyOutsideWorkspace,
 		alwaysAllowWrite,
@@ -22,6 +23,7 @@ export function useAutoApprovalToggles() {
 
 	const toggles = useMemo(
 		() => ({
+			alwaysAllowAll,
 			alwaysAllowReadOnly,
 			alwaysAllowReadOnlyOutsideWorkspace,
 			alwaysAllowWrite,
@@ -35,6 +37,7 @@ export function useAutoApprovalToggles() {
 			saveAllBeforeExecuteCommand,
 		}),
 		[
+			alwaysAllowAll,
 			alwaysAllowReadOnly,
 			alwaysAllowReadOnlyOutsideWorkspace,
 			alwaysAllowWrite,

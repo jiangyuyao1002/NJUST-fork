@@ -18,6 +18,7 @@ import { isLegacyReadFileParams, type ClineSayTool } from "@njust-ai/types"
 
 import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { Task } from "../task/Task"
+import { AskIgnoredError } from "../task/AskIgnoredError"
 import { formatResponse } from "../prompts/responses"
 import { RecordSource } from "../context-tracking/FileContextTrackerTypes"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
@@ -65,9 +66,28 @@ const BLOCKED_DEVICE_PATHS = new Set([
  * These can appear as bare names or with extensions (e.g., CON.txt).
  */
 const BLOCKED_WINDOWS_DEVICES = new Set([
-	"con", "prn", "aux", "nul",
-	"com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
-	"lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+	"con",
+	"prn",
+	"aux",
+	"nul",
+	"com1",
+	"com2",
+	"com3",
+	"com4",
+	"com5",
+	"com6",
+	"com7",
+	"com8",
+	"com9",
+	"lpt1",
+	"lpt2",
+	"lpt3",
+	"lpt4",
+	"lpt5",
+	"lpt6",
+	"lpt7",
+	"lpt8",
+	"lpt9",
 ])
 
 /**
@@ -127,7 +147,9 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
 	override isPartialArgsStable(partial: Record<string, UnsafeAny>): boolean {
 		return typeof partial.path === "string" && (partial.path as string).length > 0
 	}
@@ -183,7 +205,9 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 		if (isBlockedDevicePath(filePath)) {
 			task.consecutiveMistakeCount++
 			task.recordToolError("read_file")
-			pushToolResult(`Error: Reading device or special file "${filePath}" is blocked for safety. These files can cause infinite reads or system hangs.`)
+			pushToolResult(
+				`Error: Reading device or special file "${filePath}" is blocked for safety. These files can cause infinite reads or system hangs.`,
+			)
 			return
 		}
 
@@ -329,6 +353,11 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 
 			this.buildAndPushResult(task, fileResults, pushToolResult, resultCacheKey)
 		} catch (error) {
+			// Re-throw internal control-flow signals so BaseTool.handle() can process them
+			if (error instanceof AskIgnoredError) {
+				throw error
+			}
+
 			const relPath = filePath || "UnsafeAny"
 			const errorMsg = getErrorMessage(error)
 
@@ -692,7 +721,12 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 	/**
 	 * Build and push the final result to the tool output.
 	 */
-	private buildAndPushResult(task: Task, fileResults: FileResult[], pushToolResult: PushToolResult, cacheKey?: string): void {
+	private buildAndPushResult(
+		task: Task,
+		fileResults: FileResult[],
+		pushToolResult: PushToolResult,
+		cacheKey?: string,
+	): void {
 		const finalResult = fileResults
 			.filter((r) => r.nativeContent)
 			.map((r) => r.nativeContent)
@@ -750,7 +784,12 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 	getReadFileToolDescription(blockName: string, nativeArgs: ReadFileParams): string
 	getReadFileToolDescription(blockName: string, second: UnsafeAny): string {
 		// If native typed args were provided
-		if (second && typeof second === "object" && "path" in second && typeof (second as Record<string, UnsafeAny>).path === "string") {
+		if (
+			second &&
+			typeof second === "object" &&
+			"path" in second &&
+			typeof (second as Record<string, UnsafeAny>).path === "string"
+		) {
 			return `[${blockName} for '${(second as Record<string, UnsafeAny>).path}']`
 		}
 

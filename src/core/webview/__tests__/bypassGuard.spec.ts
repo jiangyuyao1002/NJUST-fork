@@ -21,6 +21,7 @@ function makeDeps(allTrue: boolean) {
 	const store = new Map<string, unknown>()
 	if (allTrue) {
 		store.set("autoApprovalEnabled", true)
+		store.set("alwaysAllowAll", true)
 		store.set("alwaysAllowExecute", true)
 		store.set("alwaysAllowWrite", true)
 		store.set("alwaysAllowWriteOutsideWorkspace", true)
@@ -69,10 +70,11 @@ describe("bypassGuard", () => {
 		const result = await confirmBypassTransition(deps)
 
 		expect(result).toBe(false)
-		// 所有 10 个 bypass key 都应被设为 false
-		expect(deps.setValue).toHaveBeenCalledTimes(10)
+		// 所有 11 个 bypass key 都应被设为 false
+		expect(deps.setValue).toHaveBeenCalledTimes(11)
 		const revertedKeys = deps.setValue.mock.calls.map((call) => call[0])
 		expect(revertedKeys).toContain("autoApprovalEnabled")
+		expect(revertedKeys).toContain("alwaysAllowAll")
 		expect(revertedKeys).toContain("alwaysAllowExecute")
 		expect(revertedKeys).toContain("alwaysAllowWrite")
 		expect(revertedKeys).toContain("alwaysAllowMcp")

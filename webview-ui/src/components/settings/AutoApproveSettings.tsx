@@ -18,6 +18,7 @@ import { useAutoApprovalState } from "@/hooks/useAutoApprovalState"
 import { useAutoApprovalToggles } from "@/hooks/useAutoApprovalToggles"
 
 type AutoApproveSettingsProps = HTMLAttributes<HTMLDivElement> & {
+	alwaysAllowAll?: boolean
 	alwaysAllowReadOnly?: boolean
 	alwaysAllowReadOnlyOutsideWorkspace?: boolean
 	alwaysAllowWrite?: boolean
@@ -35,8 +36,10 @@ type AutoApproveSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	allowedMaxCost?: number | undefined
 	deniedCommands?: string[]
 	autoApprovalEnabled?: boolean
+	currentMode?: string
 	setAutoApprovalEnabled?: (value: boolean) => void
 	setCachedStateField: SetCachedStateField<
+		| "alwaysAllowAll"
 		| "alwaysAllowReadOnly"
 		| "alwaysAllowReadOnlyOutsideWorkspace"
 		| "alwaysAllowWrite"
@@ -57,6 +60,7 @@ type AutoApproveSettingsProps = HTMLAttributes<HTMLDivElement> & {
 }
 
 export const AutoApproveSettings = ({
+	alwaysAllowAll,
 	alwaysAllowReadOnly,
 	alwaysAllowReadOnlyOutsideWorkspace,
 	alwaysAllowWrite,
@@ -74,6 +78,7 @@ export const AutoApproveSettings = ({
 	allowedMaxCost,
 	deniedCommands,
 	autoApprovalEnabled,
+	currentMode,
 	setAutoApprovalEnabled,
 	setCachedStateField,
 	...props
@@ -152,6 +157,7 @@ export const AutoApproveSettings = ({
 					</SearchableSetting>
 
 					<AutoApproveToggle
+						alwaysAllowAll={alwaysAllowAll}
 						alwaysAllowReadOnly={alwaysAllowReadOnly}
 						alwaysAllowWrite={alwaysAllowWrite}
 						alwaysAllowMcp={alwaysAllowMcp}
@@ -160,6 +166,7 @@ export const AutoApproveSettings = ({
 						alwaysAllowExecute={alwaysAllowExecute}
 						saveAllBeforeExecuteCommand={saveAllBeforeExecuteCommand}
 						alwaysAllowFollowupQuestions={alwaysAllowFollowupQuestions}
+						currentMode={currentMode}
 						onToggle={(key, value) => setCachedStateField(key, value)}
 					/>
 

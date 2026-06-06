@@ -17,6 +17,7 @@ vi.mock("@/i18n/TranslationContext", () => {
 describe("AutoApproveToggle", () => {
 	const mockOnToggle = vi.fn()
 	const initialProps = {
+		alwaysAllowAll: false,
 		alwaysAllowReadOnly: true,
 		alwaysAllowWrite: false,
 		alwaysAllowMcp: false,
@@ -25,6 +26,7 @@ describe("AutoApproveToggle", () => {
 		alwaysAllowExecute: true,
 		saveAllBeforeExecuteCommand: true,
 		alwaysAllowFollowupQuestions: false,
+		currentMode: "code",
 		onToggle: mockOnToggle,
 	}
 
@@ -87,5 +89,34 @@ describe("AutoApproveToggle", () => {
 			"aria-pressed",
 			"true",
 		)
+	})
+
+	test("hides alwaysAllowAll button when currentMode is not in the allowed list", () => {
+		render(
+			<TranslationProvider>
+				<AutoApproveToggle {...initialProps} currentMode="ask" />
+			</TranslationProvider>,
+		)
+
+		expect(screen.queryByTestId(autoApproveSettingsConfig.alwaysAllowAll.testId)).not.toBeInTheDocument()
+		// Other toggles should still render.
+		expect(screen.getByTestId(autoApproveSettingsConfig.alwaysAllowReadOnly.testId)).toBeInTheDocument()
+	})
+
+	test("disables sub-toggles when alwaysAllowAll is true", () => {
+		render(
+			<TranslationProvider>
+				<AutoApproveToggle {...initialProps} alwaysAllowAll={true} />
+			</TranslationProvider>,
+		)
+
+		const allButton = screen.getByTestId(autoApproveSettingsConfig.alwaysAllowAll.testId)
+		expect(allButton).not.toBeDisabled()
+
+		const readOnlyButton = screen.getByTestId(autoApproveSettingsConfig.alwaysAllowReadOnly.testId)
+		expect(readOnlyButton).toBeDisabled()
+
+		const executeButton = screen.getByTestId(autoApproveSettingsConfig.alwaysAllowExecute.testId)
+		expect(executeButton).toBeDisabled()
 	})
 })

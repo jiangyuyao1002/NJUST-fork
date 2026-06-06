@@ -68,6 +68,12 @@ export const DEFAULT_AUTO_CONDENSE_CONTEXT_PERCENT = 70
 export const DEFAULT_MAX_OPEN_TABS_CONTEXT = 10
 
 /**
+ * Modes that are allowed to enable the `alwaysAllowAll` master toggle.
+ * In other modes the toggle is hidden and the core logic ignores it.
+ */
+export const ALWAYS_ALLOW_ALL_MODES = ["code", "debug", "cangjie", "orchestrator"] as const
+
+/**
  * Minimum checkpoint timeout in seconds.
  */
 export const MIN_CHECKPOINT_TIMEOUT_SECONDS = 10
@@ -104,6 +110,7 @@ export const globalSettingsSchema = z.object({
 	customCondensingPrompt: z.string().optional(),
 
 	autoApprovalEnabled: z.boolean().optional(),
+	alwaysAllowAll: z.boolean().optional(),
 	alwaysAllowReadOnly: z.boolean().optional(),
 	alwaysAllowReadOnlyOutsideWorkspace: z.boolean().optional(),
 	alwaysAllowWrite: z.boolean().optional(),

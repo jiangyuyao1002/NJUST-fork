@@ -9,6 +9,7 @@ import { logger } from "../../shared/logger"
 /** bypass 进入确认所需的全部 auto-approval 相关 key */
 const BYPASS_KEYS: (keyof GlobalState)[] = [
 	"autoApprovalEnabled",
+	"alwaysAllowAll",
 	"alwaysAllowExecute",
 	"alwaysAllowWrite",
 	"alwaysAllowWriteOutsideWorkspace",
@@ -66,6 +67,7 @@ export async function confirmBypassTransition(deps: BypassGuardDeps): Promise<bo
 function collectBypassState(deps: BypassGuardDeps): Parameters<typeof computePermissionMode>[0] {
 	return {
 		autoApprovalEnabled: deps.getValue("autoApprovalEnabled") as boolean | undefined,
+		alwaysAllowAll: deps.getValue("alwaysAllowAll") as boolean | undefined,
 		alwaysAllowExecute: deps.getValue("alwaysAllowExecute") as boolean | undefined,
 		alwaysAllowWrite: deps.getValue("alwaysAllowWrite") as boolean | undefined,
 		alwaysAllowWriteOutsideWorkspace: deps.getValue("alwaysAllowWriteOutsideWorkspace") as boolean | undefined,

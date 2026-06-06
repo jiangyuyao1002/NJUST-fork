@@ -62,6 +62,7 @@ export interface IWebviewStateHost {
 }
 
 const STATE_FIELD_DEFAULTS = {
+	alwaysAllowAll: false,
 	alwaysAllowReadOnly: false,
 	alwaysAllowReadOnlyOutsideWorkspace: false,
 	alwaysAllowWrite: false,
@@ -157,22 +158,22 @@ export function clearOpenAiCodexAuthCache(): void {
 	cachedOpenAiCodexAuthPromise = undefined
 }
 
-function resolveCodebaseIndexConfig(source: { codebaseIndexConfig?: CodebaseIndexConfig }): ClineProviderState["codebaseIndexConfig"] {
+function resolveCodebaseIndexConfig(source: {
+	codebaseIndexConfig?: CodebaseIndexConfig
+}): ClineProviderState["codebaseIndexConfig"] {
 	return {
 		codebaseIndexEnabled: source.codebaseIndexConfig?.codebaseIndexEnabled ?? false,
 		codebaseIndexQdrantUrl: source.codebaseIndexConfig?.codebaseIndexQdrantUrl ?? "http://localhost:6333",
 		codebaseIndexEmbedderProvider: source.codebaseIndexConfig?.codebaseIndexEmbedderProvider ?? "openai",
 		codebaseIndexEmbedderBaseUrl: source.codebaseIndexConfig?.codebaseIndexEmbedderBaseUrl ?? "",
 		codebaseIndexEmbedderModelId: source.codebaseIndexConfig?.codebaseIndexEmbedderModelId ?? "",
-		codebaseIndexEmbedderModelDimension:
-			source.codebaseIndexConfig?.codebaseIndexEmbedderModelDimension ?? 1536,
+		codebaseIndexEmbedderModelDimension: source.codebaseIndexConfig?.codebaseIndexEmbedderModelDimension ?? 1536,
 		codebaseIndexOpenAiCompatibleBaseUrl: source.codebaseIndexConfig?.codebaseIndexOpenAiCompatibleBaseUrl,
 		codebaseIndexSearchMaxResults: source.codebaseIndexConfig?.codebaseIndexSearchMaxResults,
 		codebaseIndexSearchMinScore: source.codebaseIndexConfig?.codebaseIndexSearchMinScore,
 		codebaseIndexBedrockRegion: source.codebaseIndexConfig?.codebaseIndexBedrockRegion,
 		codebaseIndexBedrockProfile: source.codebaseIndexConfig?.codebaseIndexBedrockProfile,
-		codebaseIndexOpenRouterSpecificProvider:
-			source.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
+		codebaseIndexOpenRouterSpecificProvider: source.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
 	}
 }
 
@@ -181,9 +182,7 @@ export async function getState(host: IWebviewStateHost): Promise<ClineProviderSt
 	const customModes = await host.customModesManager.getCustomModes()
 
 	const apiProvider: ProviderName =
-		stateValues.apiProvider && !isRetiredProvider(stateValues.apiProvider)
-			? stateValues.apiProvider
-			: "anthropic"
+		stateValues.apiProvider && !isRetiredProvider(stateValues.apiProvider) ? stateValues.apiProvider : "anthropic"
 
 	const providerSettings = host.contextProxy.getProviderSettings()
 

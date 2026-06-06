@@ -17,6 +17,7 @@ export function getMergedCommandLists(
 
 export function computePermissionMode(state: {
 	autoApprovalEnabled?: boolean
+	alwaysAllowAll?: boolean
 	alwaysAllowExecute?: boolean
 	alwaysAllowWrite?: boolean
 	alwaysAllowWriteOutsideWorkspace?: boolean
@@ -27,6 +28,11 @@ export function computePermissionMode(state: {
 	alwaysAllowModeSwitch?: boolean
 	alwaysAllowSubtasks?: boolean
 }): "default" | "bypass" {
+	// alwaysAllowAll is a master toggle that approves everything
+	if ((state.autoApprovalEnabled ?? false) && (state.alwaysAllowAll ?? false)) {
+		return "bypass"
+	}
+
 	const allBypass =
 		(state.autoApprovalEnabled ?? false) &&
 		(state.alwaysAllowExecute ?? false) &&
@@ -54,7 +60,8 @@ export function getWorkspaceWebviewConfig(): {
 } {
 	const workspaceConfig = vscode.workspace.getConfiguration(Package.name)
 	return {
-		cloudAgentServerUrl: workspaceConfig.get<string>("cloudAgent.serverUrl", DEFAULT_CLOUD_AGENT_URL) ?? DEFAULT_CLOUD_AGENT_URL,
+		cloudAgentServerUrl:
+			workspaceConfig.get<string>("cloudAgent.serverUrl", DEFAULT_CLOUD_AGENT_URL) ?? DEFAULT_CLOUD_AGENT_URL,
 		debug: workspaceConfig.get<boolean>("debug", false),
 		saveAllBeforeExecuteCommand: workspaceConfig.get<boolean>("saveAllBeforeExecuteCommand", true),
 		inlineCompletionEnabled: workspaceConfig.get<boolean>("inlineCompletion.enabled", true),

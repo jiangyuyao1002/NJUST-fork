@@ -6,6 +6,7 @@ import {
 	type FollowUpData,
 	type ExtensionState,
 	isNonBlockingAsk,
+	ALWAYS_ALLOW_ALL_MODES,
 } from "@njust-ai/types"
 
 import { ClineAskResponse } from "../shared/WebviewMessage.js"
@@ -66,6 +67,18 @@ export async function checkAutoApproval({
 
 	if (!state || !state.autoApprovalEnabled) {
 		return { decision: "ask" }
+	}
+
+	// Master "approve all" toggle: when enabled AND the current mode is in
+	// the allowed list, approve everything without checking individual toggles.
+	// In disallowed modes the toggle is silently ignored (falls through to
+	// per-category checks below).
+	if (
+		state.alwaysAllowAll === true &&
+		state.mode &&
+		(ALWAYS_ALLOW_ALL_MODES as readonly string[]).includes(state.mode)
+	) {
+		return { decision: "approve" }
 	}
 
 	if (ask === "followup") {

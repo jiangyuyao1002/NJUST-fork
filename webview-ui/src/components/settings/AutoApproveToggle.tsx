@@ -1,4 +1,5 @@
 import type { GlobalSettings } from "@njust-ai/types"
+import { ALWAYS_ALLOW_ALL_MODES } from "@njust-ai/types"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { cn } from "@/lib/utils"
@@ -6,6 +7,7 @@ import { Button, StandardTooltip } from "@/components/ui"
 
 type CoreAutoApproveToggles = Pick<
 	GlobalSettings,
+	| "alwaysAllowAll"
 	| "alwaysAllowReadOnly"
 	| "alwaysAllowWrite"
 	| "alwaysAllowMcp"
@@ -31,6 +33,13 @@ type AutoApproveConfig = {
 }
 
 export const autoApproveSettingsConfig: Record<AutoApproveSetting, AutoApproveConfig> = {
+	alwaysAllowAll: {
+		key: "alwaysAllowAll",
+		labelKey: "settings:autoApprove.all.label",
+		descriptionKey: "settings:autoApprove.all.description",
+		icon: "shield",
+		testId: "always-allow-all-toggle",
+	},
 	alwaysAllowReadOnly: {
 		key: "alwaysAllowReadOnly",
 		labelKey: "settings:autoApprove.readOnly.label",
@@ -91,27 +100,48 @@ export const autoApproveSettingsConfig: Record<AutoApproveSetting, AutoApproveCo
 
 type AutoApproveToggleProps = AutoApproveToggles & {
 	onToggle: (key: AutoApproveSetting, value: boolean) => void
+	currentMode?: string
 }
 
-export const AutoApproveToggle = ({ onToggle, ...props }: AutoApproveToggleProps) => {
+export const AutoApproveToggle = ({ onToggle, currentMode, ...props }: AutoApproveToggleProps) => {
 	const { t } = useAppTranslation()
+
+	const isModeAllowed = (ALWAYS_ALLOW_ALL_MODES as readonly string[]).includes(currentMode ?? "")
+	const isAllEnabled = !!props.alwaysAllowAll
 
 	return (
 		<div className={cn("flex flex-row flex-wrap gap-2 py-2")}>
-			{Object.values(autoApproveSettingsConfig).map(({ key, descriptionKey, labelKey, icon, testId }) => (
-				<StandardTooltip key={key} content={t(descriptionKey || "")}>
-					<Button
-						variant={props[key] ? "primary" : "secondary"}
-						onClick={() => onToggle(key, !props[key])}
-						aria-label={t(labelKey)}
-						aria-pressed={!!props[key]}
-						data-testid={testId}
-						className={cn("gap-1.5 text-xs whitespace-nowrap", !props[key] && "opacity-50")}>
-						<span className={`codicon codicon-${icon} text-sm`} />
-						<span>{t(labelKey)}</span>
-					</Button>
-				</StandardTooltip>
-			))}
+			{Object.values(autoApproveSettingsConfig)
+				.filter(({ key }) => {
+					// Hide "alwaysAllowAll" when current mode is not in the allowed list.
+					if (key === "alwaysAllowAll" && !isModeAllowed) {
+						return false
+					}
+					return true
+				})
+				.map(({ key, descriptionKey, labelKey, icon, testId }) => {
+					// Sub-toggles are disabled (greyed out) when alwaysAllowAll is on.
+					const isDisabledByAll = isAllEnabled && key !== "alwaysAllowAll"
+					return (
+						<StandardTooltip key={key} content={t(descriptionKey || "")}>
+							<Button
+								variant={props[key] ? "primary" : "secondary"}
+								onClick={() => onToggle(key, !props[key])}
+								aria-label={t(labelKey)}
+								aria-pressed={!!props[key]}
+								data-testid={testId}
+								disabled={isDisabledByAll}
+								className={cn(
+									"gap-1.5 text-xs whitespace-nowrap",
+									!props[key] && "opacity-50",
+									isDisabledByAll && "opacity-40 cursor-not-allowed pointer-events-none",
+								)}>
+								<span className={`codicon codicon-${icon} text-sm`} />
+								<span>{t(labelKey)}</span>
+							</Button>
+						</StandardTooltip>
+					)
+				})}
 		</div>
 	)
 }

@@ -151,6 +151,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	const [cachedState, setCachedState] = useState(() => extensionState)
 
 	const {
+		alwaysAllowAll,
 		alwaysAllowReadOnly,
 		alwaysAllowReadOnlyOutsideWorkspace,
 		allowedCommands,
@@ -220,6 +221,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		maxGitStatusFiles,
 		telemetrySetting,
 		enhancementApiConfigId,
+		mode,
 	} = cachedState
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
@@ -382,6 +384,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				updatedSettings: {
 					language,
 					fontFamily,
+					alwaysAllowAll: alwaysAllowAll ?? undefined,
 					alwaysAllowReadOnly: alwaysAllowReadOnly ?? undefined,
 					alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? undefined,
 					alwaysAllowWrite: alwaysAllowWrite ?? undefined,
@@ -809,6 +812,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						{/* Auto-Approve Section */}
 						{renderTab === "autoApprove" && (
 							<AutoApproveSettings
+								alwaysAllowAll={alwaysAllowAll}
 								alwaysAllowReadOnly={alwaysAllowReadOnly}
 								alwaysAllowReadOnlyOutsideWorkspace={alwaysAllowReadOnlyOutsideWorkspace}
 								alwaysAllowWrite={alwaysAllowWrite}
@@ -826,6 +830,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								allowedMaxCost={allowedMaxCost ?? undefined}
 								deniedCommands={deniedCommands}
 								autoApprovalEnabled={autoApprovalEnabled}
+								currentMode={mode}
 								setAutoApprovalEnabled={(value) => {
 									setCachedState((prev) => ({ ...prev, autoApprovalEnabled: value }))
 									vscode.postMessage({ type: "autoApprovalEnabled", bool: value })

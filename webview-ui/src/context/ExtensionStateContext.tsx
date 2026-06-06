@@ -68,6 +68,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setApiConfiguration: (config: ProviderSettings) => void
 	setCustomInstructions: (value?: string) => void
 	setAlwaysAllowReadOnly: (value: boolean) => void
+	setAlwaysAllowAll: (value: boolean) => void
 	setAlwaysAllowReadOnlyOutsideWorkspace: (value: boolean) => void
 	setAlwaysAllowWrite: (value: boolean) => void
 	setAlwaysAllowWriteOutsideWorkspace: (value: boolean) => void
@@ -528,6 +529,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			setApiConfiguration,
 			setCustomInstructions: (value) => setState((prevState) => ({ ...prevState, customInstructions: value })),
 			setAlwaysAllowReadOnly: (value) => setState((prevState) => ({ ...prevState, alwaysAllowReadOnly: value })),
+			setAlwaysAllowAll: (value) => setState((prevState) => ({ ...prevState, alwaysAllowAll: value })),
 			setAlwaysAllowReadOnlyOutsideWorkspace: (value) =>
 				setState((prevState) => ({ ...prevState, alwaysAllowReadOnlyOutsideWorkspace: value })),
 			setAlwaysAllowWrite: (value) => setState((prevState) => ({ ...prevState, alwaysAllowWrite: value })),

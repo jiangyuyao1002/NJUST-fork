@@ -1,5 +1,6 @@
 import React from "react"
 import { ListChecks, LayoutList, Settings, CheckCheck, X } from "lucide-react"
+import { ALWAYS_ALLOW_ALL_MODES } from "@njust-ai/types"
 
 import { vscode } from "@/utils/vscode"
 
@@ -30,7 +31,9 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 
 	const {
 		autoApprovalEnabled,
+		mode,
 		setAutoApprovalEnabled,
+		setAlwaysAllowAll,
 		setAlwaysAllowReadOnly,
 		setAlwaysAllowReadOnlyOutsideWorkspace,
 		setAlwaysAllowWrite,
@@ -47,11 +50,17 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 
 	const toggles = useAutoApprovalToggles()
 
+	const isModeAllowed = (ALWAYS_ALLOW_ALL_MODES as readonly string[]).includes(mode ?? "")
+	const isAllEnabled = !!toggles.alwaysAllowAll
+
 	const onAutoApproveToggle = React.useCallback(
 		(key: AutoApproveSetting, value: boolean) => {
 			vscode.postMessage({ type: "updateSettings", updatedSettings: { [key]: value } })
 
 			switch (key) {
+				case "alwaysAllowAll":
+					setAlwaysAllowAll(value)
+					break
 				case "alwaysAllowReadOnly":
 					setAlwaysAllowReadOnly(value)
 					break
@@ -83,6 +92,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 		},
 		[
 			autoApprovalEnabled,
+			setAlwaysAllowAll,
 			setAlwaysAllowReadOnly,
 			setAlwaysAllowWrite,
 			setAlwaysAllowExecute,
@@ -95,8 +105,11 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 	)
 
 	const handleSelectAll = React.useCallback(() => {
+		const toggleKeys = Object.keys(autoApproveSettingsConfig)
+		// Only include alwaysAllowAll when the current mode is allowed.
+		const filteredKeys = isModeAllowed ? toggleKeys : toggleKeys.filter((k) => k !== "alwaysAllowAll")
 		const updatedSettings = {
-			...Object.fromEntries(Object.keys(autoApproveSettingsConfig).map((key) => [key, true])),
+			...Object.fromEntries(filteredKeys.map((key) => [key, true])),
 			alwaysAllowReadOnlyOutsideWorkspace: true,
 			alwaysAllowWriteOutsideWorkspace: true,
 			alwaysAllowWriteProtected: true,
@@ -105,6 +118,9 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 
 		vscode.postMessage({ type: "updateSettings", updatedSettings })
 
+		if (isModeAllowed) {
+			setAlwaysAllowAll(true)
+		}
 		setAlwaysAllowReadOnly(true)
 		setAlwaysAllowReadOnlyOutsideWorkspace(true)
 		setAlwaysAllowWrite(true)
@@ -124,7 +140,9 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 		}
 	}, [
 		autoApprovalEnabled,
+		isModeAllowed,
 		setAllowedCommands,
+		setAlwaysAllowAll,
 		setAlwaysAllowExecute,
 		setAlwaysAllowFollowupQuestions,
 		setAlwaysAllowMcp,
@@ -149,6 +167,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 
 		vscode.postMessage({ type: "updateSettings", updatedSettings })
 
+		setAlwaysAllowAll(false)
 		setAlwaysAllowReadOnly(false)
 		setAlwaysAllowReadOnlyOutsideWorkspace(false)
 		setAlwaysAllowWrite(false)
@@ -161,6 +180,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 		setSaveAllBeforeExecuteCommand(false)
 		setAlwaysAllowFollowupQuestions(false)
 	}, [
+		setAlwaysAllowAll,
 		setAlwaysAllowExecute,
 		setAlwaysAllowFollowupQuestions,
 		setAlwaysAllowMcp,
@@ -187,16 +207,26 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 		vscode.postMessage({ type: "autoApprovalEnabled", bool: newValue })
 	}, [autoApprovalEnabled, setAutoApprovalEnabled])
 
-	// Calculate enabled and total counts as separate properties
-	const settingsArray = Object.values(autoApproveSettingsConfig)
+	// Calculate enabled and total counts as separate properties.
+	// When the mode doesn't allow alwaysAllowAll, exclude it from counts.
+	const settingsArray = Object.values(autoApproveSettingsConfig).filter(
+		({ key }) => key !== "alwaysAllowAll" || isModeAllowed,
+	)
+
+	// Filter toggles to match settingsArray (exclude alwaysAllowAll when mode is not allowed).
+	const effectiveToggles = React.useMemo(() => {
+		if (isModeAllowed) return toggles
+		const { alwaysAllowAll: _ignored, ...rest } = toggles
+		return rest
+	}, [toggles, isModeAllowed])
 
 	const enabledCount = React.useMemo(() => {
-		return Object.values(toggles).filter((value) => !!value).length
-	}, [toggles])
+		return Object.values(effectiveToggles).filter((value) => !!value).length
+	}, [effectiveToggles])
 
 	const totalCount = React.useMemo(() => {
-		return Object.keys(toggles).length
-	}, [toggles])
+		return Object.keys(effectiveToggles).length
+	}, [effectiveToggles])
 
 	const { effectiveAutoApprovalEnabled } = useAutoApprovalState(toggles, autoApprovalEnabled)
 
@@ -273,6 +303,8 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 					<div className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-x-2 gap-y-2 p-3">
 						{settingsArray.map(({ key, labelKey, descriptionKey, icon }) => {
 							const isEnabled = toggles[key]
+							// Sub-toggles are disabled when alwaysAllowAll is on.
+							const isDisabledByAll = isAllEnabled && key !== "alwaysAllowAll"
 							return (
 								<StandardTooltip key={key} content={t(descriptionKey)}>
 									<Button
@@ -284,8 +316,9 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 											!effectiveAutoApprovalEnabled &&
 												"opacity-50 cursor-not-allowed hover:opacity-50",
 											!isEnabled && "bg-vscode-button-background/15",
+											isDisabledByAll && "opacity-40 cursor-not-allowed pointer-events-none",
 										)}
-										disabled={!effectiveAutoApprovalEnabled}
+										disabled={!effectiveAutoApprovalEnabled || isDisabledByAll}
 										data-testid={`auto-approve-${key}`}>
 										<span className={`codicon codicon-${icon} text-sm flex-shrink-0`} />
 										<span className="flex-1 truncate">{t(labelKey)}</span>

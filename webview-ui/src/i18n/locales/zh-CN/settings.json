@@ -225,6 +225,10 @@
 		"enabled": "自动批准已启用",
 		"toggleAriaLabel": "切换自动批准",
 		"disabledAriaLabel": "自动批准已禁用 - 请先选择选项",
+		"all": {
+			"label": "全部批准",
+			"description": "自动批准所有操作，包括读取、写入、执行命令、MCP、模式切换和子任务，无需任何用户确认。请谨慎使用。"
+		},
 		"readOnly": {
 			"label": "读取",
 			"description": "启用后，Njust-AI 将自动浏览目录和读取文件内容，无需人工确认。",

@@ -39,6 +39,8 @@ vi.mock("@/components/ui", () => ({
 const createState = () =>
 	({
 		autoApprovalEnabled: true,
+		mode: "code",
+		alwaysAllowAll: false,
 		alwaysAllowReadOnly: false,
 		alwaysAllowReadOnlyOutsideWorkspace: false,
 		alwaysAllowWrite: false,
@@ -52,6 +54,7 @@ const createState = () =>
 		saveAllBeforeExecuteCommand: false,
 		allowedCommands: [],
 		setAutoApprovalEnabled: vi.fn(),
+		setAlwaysAllowAll: vi.fn(),
 		setAlwaysAllowReadOnly: vi.fn(),
 		setAlwaysAllowReadOnlyOutsideWorkspace: vi.fn(),
 		setAlwaysAllowWrite: vi.fn(),
@@ -64,7 +67,7 @@ const createState = () =>
 		setAlwaysAllowFollowupQuestions: vi.fn(),
 		setSaveAllBeforeExecuteCommand: vi.fn(),
 		setAllowedCommands: vi.fn(),
-	} as any)
+	}) as any
 
 const renderDropdown = (state = createState()) => {
 	render(
@@ -91,12 +94,14 @@ describe("AutoApproveDropdown", () => {
 		expect(vscode.postMessage).toHaveBeenCalledWith({
 			type: "updateSettings",
 			updatedSettings: expect.objectContaining({
+				alwaysAllowAll: true,
 				alwaysAllowReadOnlyOutsideWorkspace: true,
 				alwaysAllowWriteOutsideWorkspace: true,
 				alwaysAllowWriteProtected: true,
 				allowedCommands: ["*"],
 			}),
 		})
+		expect(state.setAlwaysAllowAll).toHaveBeenCalledWith(true)
 		expect(state.setAlwaysAllowReadOnlyOutsideWorkspace).toHaveBeenCalledWith(true)
 		expect(state.setAlwaysAllowWriteOutsideWorkspace).toHaveBeenCalledWith(true)
 		expect(state.setAlwaysAllowWriteProtected).toHaveBeenCalledWith(true)
@@ -106,6 +111,7 @@ describe("AutoApproveDropdown", () => {
 	it("disables bypass-relevant subsettings when selecting no auto-approval options", () => {
 		const state = {
 			...createState(),
+			alwaysAllowAll: true,
 			alwaysAllowReadOnly: true,
 			alwaysAllowReadOnlyOutsideWorkspace: true,
 			alwaysAllowWrite: true,
@@ -127,11 +133,13 @@ describe("AutoApproveDropdown", () => {
 		expect(vscode.postMessage).toHaveBeenCalledWith({
 			type: "updateSettings",
 			updatedSettings: expect.objectContaining({
+				alwaysAllowAll: false,
 				alwaysAllowReadOnlyOutsideWorkspace: false,
 				alwaysAllowWriteOutsideWorkspace: false,
 				alwaysAllowWriteProtected: false,
 			}),
 		})
+		expect(state.setAlwaysAllowAll).toHaveBeenCalledWith(false)
 		expect(state.setAlwaysAllowReadOnlyOutsideWorkspace).toHaveBeenCalledWith(false)
 		expect(state.setAlwaysAllowWriteOutsideWorkspace).toHaveBeenCalledWith(false)
 		expect(state.setAlwaysAllowWriteProtected).toHaveBeenCalledWith(false)
@@ -154,5 +162,49 @@ describe("AutoApproveDropdown", () => {
 		})
 
 		expect(screen.queryByText("chat:autoApprove.triggerLabelAll")).not.toBeInTheDocument()
+	})
+
+	it("hides alwaysAllowAll button when mode is not in the allowed list", () => {
+		renderDropdown({
+			...createState(),
+			mode: "ask",
+		})
+
+		expect(screen.queryByTestId("auto-approve-alwaysAllowAll")).not.toBeInTheDocument()
+	})
+
+	it("disables sub-toggle buttons when alwaysAllowAll is enabled", () => {
+		renderDropdown({
+			...createState(),
+			alwaysAllowAll: true,
+		})
+
+		// The alwaysAllowAll button itself should NOT be disabled.
+		const allButton = screen.getByTestId("auto-approve-alwaysAllowAll")
+		expect(allButton).not.toBeDisabled()
+
+		// Other toggle buttons should be disabled.
+		const readOnlyButton = screen.getByTestId("auto-approve-alwaysAllowReadOnly")
+		expect(readOnlyButton).toBeDisabled()
+
+		const executeButton = screen.getByTestId("auto-approve-alwaysAllowExecute")
+		expect(executeButton).toBeDisabled()
+	})
+
+	it("does not set alwaysAllowAll when selecting all in a disallowed mode", () => {
+		const state = {
+			...createState(),
+			mode: "ask",
+		}
+
+		renderDropdown(state)
+
+		fireEvent.click(screen.getByText("chat:autoApprove.all"))
+
+		// alwaysAllowAll setter should NOT be called when mode is not allowed.
+		expect(state.setAlwaysAllowAll).not.toHaveBeenCalled()
+		// But sub-toggles should still be set.
+		expect(state.setAlwaysAllowReadOnly).toHaveBeenCalledWith(true)
+		expect(state.setAlwaysAllowExecute).toHaveBeenCalledWith(true)
 	})
 })
