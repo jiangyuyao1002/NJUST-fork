@@ -28,6 +28,8 @@
 				"core/feature-flags/*",
 				"core/stream/*",
 				"services/memory/*",
+				"services/memory/memrl/*",
+				"core/prompts/sections/memrl-memory.ts",
 				"services/rate-limiter/*",
 				"api/transform/BaseFormatConverter.ts",
 				"core/config/ModeConfigService.ts",
