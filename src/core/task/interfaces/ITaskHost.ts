@@ -24,6 +24,8 @@ export interface ITaskHost extends IMcpHubClient, ITaskUINotifier {
 
 	getSkillsManager(): SkillsManager | undefined
 
+	getMemoryManager?(cwd: string): import("../../../services/memory/memrl").MemoryManager | undefined
+
 	delegateParentAndOpenChild(params: {
 		parentTaskId: string
 		message: string
@@ -55,8 +57,4 @@ export interface ITaskHost extends IMcpHubClient, ITaskUINotifier {
 
 	off(
 		event: NJUST_AIEventName.ProviderProfileChanged,
-		listener: (config: { name: string; provider?: string }) => void | Promise<void>,
-	): void
-
-	compileLocal?(cwd: string): Promise<{ success: boolean; output: string }>
-}
+		listener: (config: { name: string; provider?: string }) => void | Prom

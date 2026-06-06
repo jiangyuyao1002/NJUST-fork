@@ -999,6 +999,20 @@ export class ClineProvider
 		return CodeIndexManager.getInstance(this.context)
 	}
 
+	private _memoryManager?: import("../../services/memory/memrl").MemoryManager
+
+	getMemoryManager(cwd: string): import("../../services/memory/memrl").MemoryManager | undefined {
+		if (!this._memoryManager) {
+			try {
+				const { MemoryManager } = require("../../services/memory/memrl")
+				this._memoryManager = new MemoryManager(cwd)
+			} catch {
+				return undefined
+			}
+		}
+		return this._memoryManager
+	}
+
 	/**
 	 * Updates the code index status subscription to listen to the current workspace manager
 	 */

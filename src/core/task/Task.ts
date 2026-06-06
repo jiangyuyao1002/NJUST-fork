@@ -372,6 +372,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	didToolFailInCurrentTurn = false
 	didCompleteReadingStream = false
 	private _started = false
+
+	// MemRL memory hints (populated by beforeRun, consumed in system prompt)
+	memrlEpisodicHints: string = ""
+	memrlLtmRules: string = ""
 	// No streaming parser is required.
 	assistantMessageParser?: undefined
 	private providerProfileChangeListener?: (config: { name: string; provider?: string }) => void
@@ -1285,6 +1289,34 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		let nextUserContent = userContent
 		let includeFileDetails = true
 
+		// ── MemRL: beforeRun ─────────────────────────────────────────────────
+		const memrlProvider = this.hostRef.deref()
+		const memoryManager = memrlProvider?.getMemoryManager?.(this.cwd)
+		const userText = userContent
+			.filter((b): b is Anthropic.TextBlockParam => b.type === "text")
+			.map((b) => b.text)
+			.join(" ")
+		const memrlIntent = userText.slice(0, 500) || this.taskId
+		if (memoryManager) {
+			const embedder =
+				memrlProvider && "getCurrentWorkspaceCodeIndexManager" in memrlProvider
+					? (
+							memrlProvider as import("../webview/ClineProvider").ClineProvider
+						)
+							.getCurrentWorkspaceCodeIndexManager()
+							?.tryCreateEmbedder()
+					: undefined
+			memoryManager.updateDependencies(this.api, embedder)
+			try {
+				const { episodicHints, ltmRules } = await memoryManager.beforeRun(this.taskId, memrlIntent)
+				this.memrlEpisodicHints = episodicHints
+				this.memrlLtmRules = ltmRules
+			} catch {
+				// non-fatal
+			}
+		}
+		// ────────────────────────────────────────────────────────────────────
+
 		this.emit(NJUST_AIEventName.TaskStarted)
 
 		while (!this.abort && !this.taskCompleted) {
@@ -1305,6 +1337,29 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
 		}
+
+		// ── MemRL: afterRun (fire-and-forget) ────────────────────────────────
+		const memrlProvider2 = this.hostRef.deref()
+		const memoryManager2 = memrlProvider2?.getMemoryManager?.(this.cwd)
+		if (memoryManager2) {
+			const embedder2 =
+				memrlProvider2 && "getCurrentWorkspaceCodeIndexManager" in memrlProvider2
+					? (
+							memrlProvider2 as import("../webview/ClineProvider").ClineProvider
+						)
+							.getCurrentWorkspaceCodeIndexManager()
+							?.tryCreateEmbedder()
+					: undefined
+			memoryManager2.updateDependencies(this.api, embedder2)
+			const summary = this.clineMessages
+				.filter((m) => m.type === "say" && m.say === "text")
+				.map((m) => m.text ?? "")
+				.join(" ")
+				.trim()
+				.slice(0, 500) || this.taskId
+			void memoryManager2.afterRun(this.taskId, memrlIntent ?? summary, summary, 0.5)
+		}
+		// ────────────────────────────────────────────────────────────────────
 	}
 
 	public async recursivelyMakeClineRequests(
