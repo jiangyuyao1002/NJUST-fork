@@ -1,5 +1,11 @@
 import { render, screen, act } from "@/utils/test-utils"
 
+vi.mock("@src/utils/vscode", () => ({
+	vscode: {
+		postMessage: vi.fn(),
+	},
+}))
+
 import {
 	type ProviderSettings,
 	type ExperimentId,
@@ -9,6 +15,7 @@ import {
 } from "@njust-ai/types"
 
 import { ExtensionStateContextProvider, useExtensionState, mergeExtensionState } from "../ExtensionStateContext"
+import { vscode } from "@src/utils/vscode"
 
 const TestComponent = () => {
 	const { allowedCommands, setAllowedCommands, soundEnabled, showRooIgnoredFiles, setShowRooIgnoredFiles } =
@@ -437,5 +444,101 @@ describe("ExtensionStateContext message validation", () => {
 		expect(JSON.parse(screen.getByTestId("opened-tabs").textContent!)).toEqual([])
 
 		warn.mockRestore()
+	})
+})
+
+describe("setMode Force Bypass cleanup", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	const ModeBypassTestComponent = () => {
+		const { mode, alwaysAllowAll, setMode, setAlwaysAllowAll } = useExtensionState()
+		return (
+			<div>
+				<div data-testid="mode">{mode}</div>
+				<div data-testid="always-allow-all">{JSON.stringify(alwaysAllowAll)}</div>
+				<button
+					data-testid="setup"
+					onClick={() => {
+						setAlwaysAllowAll(true)
+					}}>
+					Setup
+				</button>
+				<button
+					data-testid="set-mode-architect"
+					onClick={() => {
+						setMode("architect")
+					}}>
+					Set Architect
+				</button>
+				<button
+					data-testid="set-mode-code"
+					onClick={() => {
+						setMode("code")
+					}}>
+					Set Code
+				</button>
+			</div>
+		)
+	}
+
+	it("posts updateSettings(alwaysAllowAll:false) and clears local state when setMode is called with a restricted mode", () => {
+		render(
+			<ExtensionStateContextProvider>
+				<ModeBypassTestComponent />
+			</ExtensionStateContextProvider>,
+		)
+
+		// First enable bypass
+		act(() => {
+			screen.getByTestId("setup").click()
+		})
+		expect(JSON.parse(screen.getByTestId("always-allow-all").textContent!)).toBe(true)
+
+		// Switch to "architect" (NOT in ALWAYS_ALLOW_ALL_MODES)
+		act(() => {
+			screen.getByTestId("set-mode-architect").click()
+		})
+
+		// AlwaysAllowAll must now be false
+		expect(JSON.parse(screen.getByTestId("always-allow-all").textContent!)).toBe(false)
+
+		// Verify postMessage was called with the bypass clear message
+		expect(vscode.postMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "updateSettings",
+				updatedSettings: expect.objectContaining({ alwaysAllowAll: false }),
+			}),
+		)
+	})
+
+	it("keeps alwaysAllowAll enabled when setMode is called with an allowed mode", () => {
+		render(
+			<ExtensionStateContextProvider>
+				<ModeBypassTestComponent />
+			</ExtensionStateContextProvider>,
+		)
+
+		act(() => {
+			screen.getByTestId("setup").click()
+		})
+		expect(JSON.parse(screen.getByTestId("always-allow-all").textContent!)).toBe(true)
+
+		// Switch to "code" (IN ALWAYS_ALLOW_ALL_MODES)
+		act(() => {
+			screen.getByTestId("set-mode-code").click()
+		})
+
+		// Bypass should still be enabled
+		expect(JSON.parse(screen.getByTestId("always-allow-all").textContent!)).toBe(true)
+
+		// Should NOT have posted a clear message
+		expect(vscode.postMessage).not.toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "updateSettings",
+				updatedSettings: expect.objectContaining({ alwaysAllowAll: false }),
+			}),
+		)
 	})
 })

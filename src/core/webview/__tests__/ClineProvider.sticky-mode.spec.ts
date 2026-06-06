@@ -484,6 +484,50 @@ describe("ClineProvider - Sticky Mode", () => {
 				}),
 			)
 		})
+
+		it("should clear alwaysAllowAll when switching to a restricted mode", async () => {
+			// Enable bypass in the persisted state
+			vi.spyOn(provider as any, "getGlobalState").mockImplementation((key: string) => {
+				if (key === "alwaysAllowAll") return true
+				return undefined
+			})
+
+			const setValueSpy = vi.spyOn(provider.contextProxy, "setValue").mockResolvedValue(undefined)
+
+			// architect is NOT in ALWAYS_ALLOW_ALL_MODES [code, debug, cangjie, orchestrator]
+			await provider.handleModeSwitch("architect")
+
+			expect(setValueSpy).toHaveBeenCalledWith("alwaysAllowAll", false)
+		})
+
+		it("should NOT clear alwaysAllowAll when switching to an allowed mode", async () => {
+			vi.spyOn(provider as any, "getGlobalState").mockImplementation((key: string) => {
+				if (key === "alwaysAllowAll") return true
+				return undefined
+			})
+
+			const setValueSpy = vi.spyOn(provider.contextProxy, "setValue").mockResolvedValue(undefined)
+
+			// "code" IS in ALWAYS_ALLOW_ALL_MODES
+			await provider.handleModeSwitch("code")
+
+			const bypassClearCall = setValueSpy.mock.calls.find((call) => call[0] === "alwaysAllowAll")
+			expect(bypassClearCall).toBeUndefined()
+		})
+
+		it("should NOT call setValue when alwaysAllowAll is already false", async () => {
+			vi.spyOn(provider as any, "getGlobalState").mockImplementation((key: string) => {
+				if (key === "alwaysAllowAll") return false // already disabled
+				return undefined
+			})
+
+			const setValueSpy = vi.spyOn(provider.contextProxy, "setValue").mockResolvedValue(undefined)
+
+			await provider.handleModeSwitch("architect")
+
+			const bypassClearCall = setValueSpy.mock.calls.find((call) => call[0] === "alwaysAllowAll")
+			expect(bypassClearCall).toBeUndefined()
+		})
 	})
 
 	describe("createTaskWithHistoryItem", () => {
