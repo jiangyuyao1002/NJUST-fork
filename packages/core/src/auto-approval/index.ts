@@ -18,6 +18,19 @@ import { getCommandDecision } from "./commands.js"
 import { classifyBashCommand } from "./bashClassifier.js"
 import { matchPatternRules, type PatternRule } from "./patternRules.js"
 
+/**
+ * Commands that ALWAYS require user confirmation, even when Force Bypass
+ * (alwaysAllowAll) is active.  Covers destructive deletions and VCS commits.
+ */
+const ALWAYS_REQUIRE_CONFIRM_PATTERNS: RegExp[] = [
+	/\brm\b/i,
+	/\brmdir\b/i,
+	/\brd\b/i,
+	/\bRemove-Item\b/i,
+	/\bdel(?=\s|"|')/i,
+	/\bgit\s+commit\b/i,
+]
+
 // We have auto-approval actions for different categories.
 export type AutoApprovalState =
 	| "alwaysAllowReadOnly"
@@ -73,11 +86,17 @@ export async function checkAutoApproval({
 	// the allowed list, approve everything without checking individual toggles.
 	// In disallowed modes the toggle is silently ignored (falls through to
 	// per-category checks below).
+	//
+	// Exception: delete and commit commands ALWAYS require user confirmation,
+	// even when bypass is active.
 	if (
 		state.alwaysAllowAll === true &&
 		state.mode &&
 		(ALWAYS_ALLOW_ALL_MODES as readonly string[]).includes(state.mode)
 	) {
+		if (ask === "command" && text && ALWAYS_REQUIRE_CONFIRM_PATTERNS.some((p) => p.test(text))) {
+			return { decision: "ask" }
+		}
 		return { decision: "approve" }
 	}
 
