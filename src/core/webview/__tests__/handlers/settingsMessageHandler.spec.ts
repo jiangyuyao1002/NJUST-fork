@@ -39,6 +39,9 @@ vi.mock("../../../integrations/terminal/Terminal", () => ({
 		setExecaShellPath: vi.fn(),
 	},
 }))
+vi.mock("../../bypassGuard", () => ({
+	confirmBypassTransition: vi.fn(),
+}))
 vi.mock("../../../api/providers/openai", () => ({ getOpenAiModels: vi.fn() }))
 vi.mock("../../../api/providers/vscode-lm", () => ({ getVsCodeLmModels: vi.fn() }))
 vi.mock("../../../api/providers/fetchers/modelCache", () => ({
@@ -58,6 +61,7 @@ vi.mock("../../config/importExport", () => ({
 import { registerSettingsHandlers } from "../../handlers/settingsMessageHandler"
 import { MessageRouter } from "../../handlers/MessageRouter"
 import { createMockContext } from "./helpers"
+import { confirmBypassTransition } from "../../bypassGuard"
 
 describe("settingsMessageHandler", () => {
 	let router: MessageRouter
@@ -231,5 +235,59 @@ describe("settingsMessageHandler", () => {
 		await router.route(context, { type: "hasOpenedModeSelector", bool: true } as any)
 
 		expect(context.updateGlobalState).toHaveBeenCalledWith("hasOpenedModeSelector", true)
+	})
+})
+
+describe("settingsMessageHandler — P0 bypass-exit guard", () => {
+	let router: MessageRouter
+	let context: ReturnType<typeof createMockContext>
+
+	beforeEach(() => {
+		vi.clearAllMocks()
+		router = new MessageRouter()
+		context = createMockContext()
+		registerSettingsHandlers(router)
+	})
+
+	it("skips confirmBypassTransition when only alwaysAllowAll is set to false", async () => {
+		await router.route(context, {
+			type: "updateSettings",
+			updatedSettings: { alwaysAllowAll: false },
+		} as any)
+
+		expect(confirmBypassTransition).not.toHaveBeenCalled()
+		expect(context.provider.postStateToWebview).toHaveBeenCalledOnce()
+	})
+
+	it("skips confirmBypassTransition when alwaysAllowAll:false is sent alongside all other toggles true", async () => {
+		;(context.getGlobalState as any).mockImplementation((key: string) => {
+			if (key === "autoApprovalEnabled") return true
+			if (key === "alwaysAllowExecute") return true
+			if (key === "alwaysAllowWrite") return true
+			if (key === "alwaysAllowReadOnly") return true
+			if (key === "alwaysAllowMcp") return true
+			if (key === "alwaysAllowModeSwitch") return true
+			if (key === "alwaysAllowSubtasks") return true
+			return undefined
+		})
+
+		await router.route(context, {
+			type: "updateSettings",
+			updatedSettings: { alwaysAllowAll: false },
+		} as any)
+
+		expect(confirmBypassTransition).not.toHaveBeenCalled()
+		expect(context.provider.postStateToWebview).toHaveBeenCalledOnce()
+	})
+
+	it("calls confirmBypassTransition when entering bypass mode (alwaysAllowAll:true)", async () => {
+		vi.mocked(confirmBypassTransition).mockResolvedValue(true)
+
+		await router.route(context, {
+			type: "updateSettings",
+			updatedSettings: { alwaysAllowAll: true },
+		} as any)
+
+		expect(confirmBypassTransition).toHaveBeenCalledOnce()
 	})
 })

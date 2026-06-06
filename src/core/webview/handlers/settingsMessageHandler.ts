@@ -196,6 +196,19 @@ async function handleUpdateSettings(context: MessageHandlerContext, message: Web
 		await provider.contextProxy.setValue(key as keyof GlobalState, newValue)
 	}
 
+	// Explicit exit from Force Bypass (alwaysAllowAll → false): skip the bypass
+	// confirmation dialog entirely.  Without this guard, switching from an allowed
+	// mode to a restricted mode would trigger a misleading bypass-confirmation
+	// modal because the remaining fine-grained toggles may still be enabled.
+	if (
+		message.updatedSettings &&
+		"alwaysAllowAll" in message.updatedSettings &&
+		message.updatedSettings.alwaysAllowAll === false
+	) {
+		await provider.postStateToWebview()
+		return
+	}
+
 	// 检查是否进入 bypass 模式，若是则弹确认框（取消时自动回退）
 	const bypassOk = await confirmBypassTransition({
 		getValue: getGlobalState,
