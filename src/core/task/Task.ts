@@ -191,6 +191,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	public memrlEpisodicHints: string = ""
 	/** MemRL: learned LTM rule cards retrieved before this task run, injected into system prompt. */
 	public memrlLtmRules: string = ""
+	/** MemRL: intent captured at task start, reused when persisting the episode. */
+	public memrlIntent: string = ""
+	/** MemRL: guard so the episode is persisted exactly once per task. */
+	private memrlPersisted = false
 
 	/** Task mode. Async-initialized from provider state; falls back to defaultModeSlug. Access via getTaskMode() or taskMode getter after taskModeReady resolves. */
 	private _taskMode: string | undefined
@@ -1186,6 +1190,25 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 *  state via attempt_completion acceptance. */
 	public markTaskCompleted(): void {
 		this.taskCompleted = true
+		// attempt_completion does NOT end the task — it stays open awaiting the
+		// user — so persist the successful episode now (reward 1.0). The loop's
+		// finally would otherwise only fire much later, on dispose.
+		this.persistMemrlEpisode()
+	}
+
+	/**
+	 * MemRL: persist the current task as an episodic memory exactly once.
+	 * Called on completion (markTaskCompleted, reward 1.0) and as a fallback when
+	 * the task loop unwinds on abort/error (reward 0.0). Idempotent per task.
+	 */
+	private persistMemrlEpisode(): void {
+		if (this.memrlPersisted) return
+		const memoryManager = this.hostRef.deref()?.getMemoryManager(this.cwd)
+		if (!memoryManager) return
+		this.memrlPersisted = true
+		const stm = memoryManager.getStm(this.taskId)
+		const reward = this.taskCompleted ? 1.0 : 0.0
+		memoryManager.afterRun(this.taskId, this.memrlIntent || this.taskId, stm.summarize(), reward)
 	}
 
 	/** Return a Promise that resolves when background switch is requested */
@@ -1269,6 +1292,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const memrlProvider = this.hostRef.deref()
 		const memoryManager = memrlProvider?.getMemoryManager(this.cwd)
 		const memrlIntent = userMessage.slice(0, 500) || this.taskId
+		this.memrlIntent = memrlIntent
+		this.memrlPersisted = false
 		if (memoryManager) {
 			memoryManager.updateDependencies(this.api)
 			try {
@@ -1284,12 +1309,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		try {
 			await orchestrator.run(userMessage, images)
 		} finally {
-			// MemRL: afterRun — guaranteed even on abort/error
-			if (memoryManager) {
-				const stm = memoryManager.getStm(this.taskId)
-				const reward = this.taskCompleted ? 1.0 : 0.0
-				memoryManager.afterRun(this.taskId, memrlIntent, stm.summarize(), reward)
-			}
+			// MemRL: persist episode (once) — fallback for abort/error.
+			this.persistMemrlEpisode()
 		}
 	}
 
@@ -1323,6 +1344,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				.join(" ")
 				.trim()
 				.slice(0, 500) || this.taskId
+		this.memrlIntent = memrlIntent
+		this.memrlPersisted = false
 		if (memoryManager) {
 			memoryManager.updateDependencies(this.api)
 			try {
@@ -1361,12 +1384,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
 			}
 		} finally {
-			// MemRL: afterRun — persist episode + update Q, guaranteed even on abort/error.
-			if (memoryManager) {
-				const stm = memoryManager.getStm(this.taskId)
-				const reward = this.taskCompleted ? 1.0 : 0.0
-				memoryManager.afterRun(this.taskId, memrlIntent, stm.summarize(), reward)
-			}
+			// MemRL: persist episode (once) on task unwind — fallback for abort/error.
+			this.persistMemrlEpisode()
 		}
 	}
 
