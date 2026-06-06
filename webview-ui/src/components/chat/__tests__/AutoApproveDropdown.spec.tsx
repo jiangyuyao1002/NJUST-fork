@@ -28,8 +28,8 @@ vi.mock("@/components/ui", () => ({
 		<button {...props}>{children}</button>
 	),
 	StandardTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	ToggleSwitch: ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
-		<button role="switch" aria-checked={checked} onClick={onChange} />
+	ToggleSwitch: ({ checked, onChange, ...props }: { checked: boolean; onChange: () => void }) => (
+		<button role="switch" aria-checked={checked} onClick={onChange} {...props} />
 	),
 	Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
 		<button {...props}>{children}</button>
@@ -84,7 +84,7 @@ describe("AutoApproveDropdown", () => {
 		vi.clearAllMocks()
 	})
 
-	it("enables bypass-relevant subsettings when selecting all auto-approval options", () => {
+	it("enables all fine-grained toggles when selecting all", () => {
 		const state = createState()
 
 		renderDropdown(state)
@@ -94,21 +94,22 @@ describe("AutoApproveDropdown", () => {
 		expect(vscode.postMessage).toHaveBeenCalledWith({
 			type: "updateSettings",
 			updatedSettings: expect.objectContaining({
-				alwaysAllowAll: true,
 				alwaysAllowReadOnlyOutsideWorkspace: true,
 				alwaysAllowWriteOutsideWorkspace: true,
 				alwaysAllowWriteProtected: true,
 				allowedCommands: ["*"],
 			}),
 		})
-		expect(state.setAlwaysAllowAll).toHaveBeenCalledWith(true)
+		// Force Bypass should NOT be set by "Select All".
+		expect(state.setAlwaysAllowAll).not.toHaveBeenCalled()
+		// Fine-grained toggles should be set.
 		expect(state.setAlwaysAllowReadOnlyOutsideWorkspace).toHaveBeenCalledWith(true)
 		expect(state.setAlwaysAllowWriteOutsideWorkspace).toHaveBeenCalledWith(true)
 		expect(state.setAlwaysAllowWriteProtected).toHaveBeenCalledWith(true)
 		expect(state.setAllowedCommands).toHaveBeenCalledWith(["*"])
 	})
 
-	it("disables bypass-relevant subsettings when selecting no auto-approval options", () => {
+	it("disables all toggles including bypass when selecting none", () => {
 		const state = {
 			...createState(),
 			alwaysAllowAll: true,
@@ -145,45 +146,31 @@ describe("AutoApproveDropdown", () => {
 		expect(state.setAlwaysAllowWriteProtected).toHaveBeenCalledWith(false)
 	})
 
-	it("does not show the all-enabled label when bypass-relevant subsettings are disabled", () => {
-		renderDropdown({
-			...createState(),
-			alwaysAllowReadOnly: true,
-			alwaysAllowReadOnlyOutsideWorkspace: false,
-			alwaysAllowWrite: true,
-			alwaysAllowWriteOutsideWorkspace: false,
-			alwaysAllowWriteProtected: false,
-			alwaysAllowExecute: true,
-			alwaysAllowMcp: true,
-			alwaysAllowModeSwitch: true,
-			alwaysAllowSubtasks: true,
-			alwaysAllowFollowupQuestions: true,
-			saveAllBeforeExecuteCommand: true,
-		})
-
-		expect(screen.queryByText("chat:autoApprove.triggerLabelAll")).not.toBeInTheDocument()
-	})
-
-	it("hides alwaysAllowAll button when mode is not in the allowed list", () => {
+	it("hides Force Bypass section when mode is not in the allowed list", () => {
 		renderDropdown({
 			...createState(),
 			mode: "ask",
 		})
 
-		expect(screen.queryByTestId("auto-approve-alwaysAllowAll")).not.toBeInTheDocument()
+		expect(screen.queryByTestId("force-bypass-section")).not.toBeInTheDocument()
 	})
 
-	it("disables sub-toggle buttons when alwaysAllowAll is enabled", () => {
+	it("shows Force Bypass section when mode is allowed", () => {
+		renderDropdown({
+			...createState(),
+			mode: "code",
+		})
+
+		expect(screen.getByTestId("force-bypass-section")).toBeInTheDocument()
+	})
+
+	it("disables all fine-grained toggle buttons when Force Bypass is enabled", () => {
 		renderDropdown({
 			...createState(),
 			alwaysAllowAll: true,
 		})
 
-		// The alwaysAllowAll button itself should NOT be disabled.
-		const allButton = screen.getByTestId("auto-approve-alwaysAllowAll")
-		expect(allButton).not.toBeDisabled()
-
-		// Other toggle buttons should be disabled.
+		// Fine-grained toggle buttons should be disabled.
 		const readOnlyButton = screen.getByTestId("auto-approve-alwaysAllowReadOnly")
 		expect(readOnlyButton).toBeDisabled()
 
@@ -191,20 +178,18 @@ describe("AutoApproveDropdown", () => {
 		expect(executeButton).toBeDisabled()
 	})
 
-	it("does not set alwaysAllowAll when selecting all in a disallowed mode", () => {
-		const state = {
-			...createState(),
-			mode: "ask",
-		}
+	it("toggles Force Bypass via the switch", () => {
+		const state = createState()
 
 		renderDropdown(state)
 
-		fireEvent.click(screen.getByText("chat:autoApprove.all"))
+		const bypassToggle = screen.getByTestId("force-bypass-toggle")
+		fireEvent.click(bypassToggle)
 
-		// alwaysAllowAll setter should NOT be called when mode is not allowed.
-		expect(state.setAlwaysAllowAll).not.toHaveBeenCalled()
-		// But sub-toggles should still be set.
-		expect(state.setAlwaysAllowReadOnly).toHaveBeenCalledWith(true)
-		expect(state.setAlwaysAllowExecute).toHaveBeenCalledWith(true)
+		expect(state.setAlwaysAllowAll).toHaveBeenCalledWith(true)
+		expect(vscode.postMessage).toHaveBeenCalledWith({
+			type: "updateSettings",
+			updatedSettings: { alwaysAllowAll: true },
+		})
 	})
 })

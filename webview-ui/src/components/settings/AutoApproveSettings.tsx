@@ -2,6 +2,7 @@ import { HTMLAttributes, useState } from "react"
 import { X } from "lucide-react"
 import { Trans } from "react-i18next"
 import { Package } from "@shared/package"
+import { ALWAYS_ALLOW_ALL_MODES } from "@njust-ai/types"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
@@ -91,6 +92,8 @@ export const AutoApproveSettings = ({
 
 	const { effectiveAutoApprovalEnabled } = useAutoApprovalState(toggles, autoApprovalEnabled)
 
+	const isModeAllowed = (ALWAYS_ALLOW_ALL_MODES as readonly string[]).includes(currentMode ?? "")
+
 	const handleAddCommand = () => {
 		const currentCommands = allowedCommands ?? []
 
@@ -156,8 +159,25 @@ export const AutoApproveSettings = ({
 						</div>
 					</SearchableSetting>
 
+					{/* Force Bypass — only visible in allowed modes */}
+					{isModeAllowed && (
+						<SearchableSetting
+							settingId="auto-approve-force-bypass"
+							section="autoApprove"
+							label={t("settings:autoApprove.all.label")}>
+							<VSCodeCheckbox
+								checked={alwaysAllowAll}
+								onChange={(e: any) => setCachedStateField("alwaysAllowAll", e.target.checked)}
+								data-testid="force-bypass-checkbox">
+								<span className="font-medium">{t("settings:autoApprove.all.label")}</span>
+							</VSCodeCheckbox>
+							<div className="text-vscode-descriptionForeground text-sm mt-1">
+								<p>{t("settings:autoApprove.all.description")}</p>
+							</div>
+						</SearchableSetting>
+					)}
+
 					<AutoApproveToggle
-						alwaysAllowAll={alwaysAllowAll}
 						alwaysAllowReadOnly={alwaysAllowReadOnly}
 						alwaysAllowWrite={alwaysAllowWrite}
 						alwaysAllowMcp={alwaysAllowMcp}
@@ -166,7 +186,7 @@ export const AutoApproveSettings = ({
 						alwaysAllowExecute={alwaysAllowExecute}
 						saveAllBeforeExecuteCommand={saveAllBeforeExecuteCommand}
 						alwaysAllowFollowupQuestions={alwaysAllowFollowupQuestions}
-						currentMode={currentMode}
+						disabled={!!alwaysAllowAll}
 						onToggle={(key, value) => setCachedStateField(key, value)}
 					/>
 

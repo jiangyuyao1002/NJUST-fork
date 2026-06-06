@@ -17,7 +17,6 @@ vi.mock("@/i18n/TranslationContext", () => {
 describe("AutoApproveToggle", () => {
 	const mockOnToggle = vi.fn()
 	const initialProps = {
-		alwaysAllowAll: false,
 		alwaysAllowReadOnly: true,
 		alwaysAllowWrite: false,
 		alwaysAllowMcp: false,
@@ -26,7 +25,6 @@ describe("AutoApproveToggle", () => {
 		alwaysAllowExecute: true,
 		saveAllBeforeExecuteCommand: true,
 		alwaysAllowFollowupQuestions: false,
-		currentMode: "code",
 		onToggle: mockOnToggle,
 	}
 
@@ -45,7 +43,10 @@ describe("AutoApproveToggle", () => {
 			const button = screen.getByTestId(config.testId)
 			expect(button).toBeInTheDocument()
 			expect(button).toHaveAttribute("aria-label", config.labelKey)
-			expect(button).toHaveAttribute("aria-pressed", String(initialProps[config.key]))
+			expect(button).toHaveAttribute(
+				"aria-pressed",
+				String(initialProps[config.key as keyof typeof initialProps]),
+			)
 		})
 	})
 
@@ -91,32 +92,30 @@ describe("AutoApproveToggle", () => {
 		)
 	})
 
-	test("hides alwaysAllowAll button when currentMode is not in the allowed list", () => {
+	test("disables all toggles when disabled prop is true", () => {
 		render(
 			<TranslationProvider>
-				<AutoApproveToggle {...initialProps} currentMode="ask" />
+				<AutoApproveToggle {...initialProps} disabled={true} />
 			</TranslationProvider>,
 		)
 
-		expect(screen.queryByTestId(autoApproveSettingsConfig.alwaysAllowAll.testId)).not.toBeInTheDocument()
-		// Other toggles should still render.
-		expect(screen.getByTestId(autoApproveSettingsConfig.alwaysAllowReadOnly.testId)).toBeInTheDocument()
+		Object.values(autoApproveSettingsConfig).forEach((config) => {
+			const button = screen.getByTestId(config.testId)
+			expect(button).toBeDisabled()
+		})
 	})
 
-	test("disables sub-toggles when alwaysAllowAll is true", () => {
+	test("renders exactly 8 fine-grained toggles (no alwaysAllowAll)", () => {
 		render(
 			<TranslationProvider>
-				<AutoApproveToggle {...initialProps} alwaysAllowAll={true} />
+				<AutoApproveToggle {...initialProps} />
 			</TranslationProvider>,
 		)
 
-		const allButton = screen.getByTestId(autoApproveSettingsConfig.alwaysAllowAll.testId)
-		expect(allButton).not.toBeDisabled()
+		// alwaysAllowAll is NOT in the config anymore.
+		expect(screen.queryByTestId("always-allow-all-toggle")).not.toBeInTheDocument()
 
-		const readOnlyButton = screen.getByTestId(autoApproveSettingsConfig.alwaysAllowReadOnly.testId)
-		expect(readOnlyButton).toBeDisabled()
-
-		const executeButton = screen.getByTestId(autoApproveSettingsConfig.alwaysAllowExecute.testId)
-		expect(executeButton).toBeDisabled()
+		// All 8 fine-grained toggles should be present.
+		expect(Object.keys(autoApproveSettingsConfig)).toHaveLength(8)
 	})
 })

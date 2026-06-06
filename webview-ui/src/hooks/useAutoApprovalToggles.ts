@@ -2,17 +2,15 @@ import { useMemo } from "react"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 
 /**
- * Custom hook that creates and returns the auto-approval toggles object
- * This encapsulates the logic for creating the toggles object from extension state
+ * Custom hook that creates and returns the auto-approval toggles object.
+ * Contains exactly the 8 fine-grained categories shown in the UI grid.
+ * Force Bypass (alwaysAllowAll) and workspace-level sub-settings are
+ * managed separately and are NOT part of this hook.
  */
 export function useAutoApprovalToggles() {
 	const {
-		alwaysAllowAll,
 		alwaysAllowReadOnly,
-		alwaysAllowReadOnlyOutsideWorkspace,
 		alwaysAllowWrite,
-		alwaysAllowWriteOutsideWorkspace,
-		alwaysAllowWriteProtected,
 		alwaysAllowExecute,
 		alwaysAllowMcp,
 		alwaysAllowModeSwitch,
@@ -23,12 +21,8 @@ export function useAutoApprovalToggles() {
 
 	const toggles = useMemo(
 		() => ({
-			alwaysAllowAll,
 			alwaysAllowReadOnly,
-			alwaysAllowReadOnlyOutsideWorkspace,
 			alwaysAllowWrite,
-			alwaysAllowWriteOutsideWorkspace,
-			alwaysAllowWriteProtected,
 			alwaysAllowExecute,
 			alwaysAllowMcp,
 			alwaysAllowModeSwitch,
@@ -37,12 +31,8 @@ export function useAutoApprovalToggles() {
 			saveAllBeforeExecuteCommand,
 		}),
 		[
-			alwaysAllowAll,
 			alwaysAllowReadOnly,
-			alwaysAllowReadOnlyOutsideWorkspace,
 			alwaysAllowWrite,
-			alwaysAllowWriteOutsideWorkspace,
-			alwaysAllowWriteProtected,
 			alwaysAllowExecute,
 			alwaysAllowMcp,
 			alwaysAllowModeSwitch,
