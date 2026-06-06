@@ -17,6 +17,7 @@ import {
 	RouterModels,
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
+	ALWAYS_ALLOW_ALL_MODES,
 } from "@njust-ai/types"
 
 import { findLastIndex } from "@shared/array"
@@ -571,7 +572,16 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			setCurrentApiConfigName: (value) =>
 				setState((prevState) => ({ ...prevState, currentApiConfigName: value })),
 			setListApiConfigMeta,
-			setMode: (value: Mode) => setState((prevState) => ({ ...prevState, mode: value })),
+			setMode: (value: Mode) =>
+				setState((prevState) => {
+					// When switching to a mode that doesn't support Force Bypass, disable it.
+					const isModeAllowed = (ALWAYS_ALLOW_ALL_MODES as readonly string[]).includes(value)
+					if (!isModeAllowed && prevState.alwaysAllowAll) {
+						vscode.postMessage({ type: "updateSettings", updatedSettings: { alwaysAllowAll: false } })
+						return { ...prevState, mode: value, alwaysAllowAll: false }
+					}
+					return { ...prevState, mode: value }
+				}),
 			setCustomModePrompts: (value) => setState((prevState) => ({ ...prevState, customModePrompts: value })),
 			setCustomSupportPrompts: (value) =>
 				setState((prevState) => ({ ...prevState, customSupportPrompts: value })),

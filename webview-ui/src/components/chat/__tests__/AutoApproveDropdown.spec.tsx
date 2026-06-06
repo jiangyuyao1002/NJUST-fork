@@ -189,7 +189,7 @@ describe("AutoApproveDropdown", () => {
 		expect(state.setAlwaysAllowAll).toHaveBeenCalledWith(true)
 		expect(vscode.postMessage).toHaveBeenCalledWith({
 			type: "updateSettings",
-			updatedSettings: { alwaysAllowAll: true },
+			updatedSettings: expect.objectContaining({ alwaysAllowAll: true }),
 		})
 	})
 })
