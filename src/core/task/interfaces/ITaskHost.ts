@@ -24,6 +24,8 @@ export interface ITaskHost extends IMcpHubClient, ITaskUINotifier {
 
 	getSkillsManager(): SkillsManager | undefined
 
+	getMemoryManager?(cwd: string): import("../../../services/memory/memrl").MemoryManager | undefined
+
 	delegateParentAndOpenChild(params: {
 		parentTaskId: string
 		message: string
