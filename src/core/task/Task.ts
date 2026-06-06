@@ -112,6 +112,7 @@ import { TaskExecutor, type TaskExecutorHost } from "./TaskExecutor"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
 import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
 import { getErrorMessage } from "../../shared/error-utils"
+import type { ClineProvider } from "../webview/ClineProvider"
 import {
 	addToApiConversationHistoryWithTask,
 	addToClineMessagesWithTask,
@@ -1298,14 +1299,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			.join(" ")
 		const memrlIntent = userText.slice(0, 500) || this.taskId
 		if (memoryManager) {
-			const embedder =
+			const clineProvider =
 				memrlProvider && "getCurrentWorkspaceCodeIndexManager" in memrlProvider
-					? (
-							memrlProvider as import("../webview/ClineProvider").ClineProvider
-						)
-							.getCurrentWorkspaceCodeIndexManager()
-							?.tryCreateEmbedder()
+					? (memrlProvider as ClineProvider)
 					: undefined
+			const embedder = clineProvider?.getCurrentWorkspaceCodeIndexManager()?.tryCreateEmbedder()
 			memoryManager.updateDependencies(this.api, embedder)
 			try {
 				const { episodicHints, ltmRules } = await memoryManager.beforeRun(this.taskId, memrlIntent)
@@ -1342,14 +1340,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const memrlProvider2 = this.hostRef.deref()
 		const memoryManager2 = memrlProvider2?.getMemoryManager?.(this.cwd)
 		if (memoryManager2) {
-			const embedder2 =
+			const clineProvider2 =
 				memrlProvider2 && "getCurrentWorkspaceCodeIndexManager" in memrlProvider2
-					? (
-							memrlProvider2 as import("../webview/ClineProvider").ClineProvider
-						)
-							.getCurrentWorkspaceCodeIndexManager()
-							?.tryCreateEmbedder()
+					? (memrlProvider2 as ClineProvider)
 					: undefined
+			const embedder2 = clineProvider2?.getCurrentWorkspaceCodeIndexManager()?.tryCreateEmbedder()
 			memoryManager2.updateDependencies(this.api, embedder2)
 			const summary = this.clineMessages
 				.filter((m) => m.type === "say" && m.say === "text")

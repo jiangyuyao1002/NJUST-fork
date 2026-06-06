@@ -116,6 +116,7 @@ import type { TodoItem } from "@njust-ai/types"
 import { TaskHistoryStore } from "../task-persistence"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { MemoryManager } from "../../services/memory/memrl"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -999,16 +1000,11 @@ export class ClineProvider
 		return CodeIndexManager.getInstance(this.context)
 	}
 
-	private _memoryManager?: import("../../services/memory/memrl").MemoryManager
+	private _memoryManager?: MemoryManager
 
-	getMemoryManager(cwd: string): import("../../services/memory/memrl").MemoryManager | undefined {
+	public getMemoryManager(cwd: string): MemoryManager | undefined {
 		if (!this._memoryManager) {
-			try {
-				const { MemoryManager } = require("../../services/memory/memrl")
-				this._memoryManager = new MemoryManager(cwd)
-			} catch {
-				return undefined
-			}
+			this._memoryManager = new MemoryManager(cwd)
 		}
 		return this._memoryManager
 	}
