@@ -2,10 +2,7 @@ import * as vscode from "vscode"
 import pWaitFor from "p-wait-for"
 import crypto from "crypto"
 
-import {
-	type ContextCondense,
-	TelemetryEventName,
-} from "@njust-ai/types"
+import { type ContextCondense, TelemetryEventName } from "@njust-ai/types"
 import { Package } from "../../shared/package"
 import { defaultModeSlug } from "../../shared/modes"
 
@@ -139,9 +136,7 @@ export class TaskRequestBuilder {
 		return await (async () => {
 			const mcpServers = mcpHub?.getServers() ?? []
 			const mcpToolNames = mcpServers
-				.flatMap((server) =>
-					(server.tools ?? []).map((tool) => `${server.name}:${tool.name}`),
-				)
+				.flatMap((server) => (server.tools ?? []).map((tool) => `${server.name}:${tool.name}`))
 				.sort()
 			const mcpToolsHash = crypto.createHash("sha256").update(mcpToolNames.join("|")).digest("hex").slice(0, 12)
 			const instructionHash = crypto
@@ -169,7 +164,11 @@ export class TaskRequestBuilder {
 			})
 			const cacheKey = `${mode ?? defaultModeSlug}:${staticKey}`
 			const now = Date.now()
-			if (this.systemPromptPartsCache && this.systemPromptPartsCache.key === cacheKey && now - this.systemPromptPartsCache.time < 30_000) {
+			if (
+				this.systemPromptPartsCache &&
+				this.systemPromptPartsCache.key === cacheKey &&
+				now - this.systemPromptPartsCache.time < 30_000
+			) {
 				return this.systemPromptPartsCache.parts
 			}
 			const provider = this.task.providerRef.deref()
@@ -214,8 +213,11 @@ export class TaskRequestBuilder {
 					contextWindow: modelInfo?.contextWindow,
 					taskId: this.task.taskId,
 					turnIndex: Math.max(0, this.task.apiConversationHistory.length - 1),
-					enableTurnAwarePromptPruning: (state as Record<string, UnsafeAny>)?.enableTurnAwarePromptPruning ?? true,
+					enableTurnAwarePromptPruning:
+						(state as Record<string, UnsafeAny>)?.enableTurnAwarePromptPruning ?? true,
 					lastUserMessageForCangjieHint: lastUserForCangjie,
+					memrlEpisodicHints: this.task.memrlEpisodicHints,
+					memrlLtmRules: this.task.memrlLtmRules,
 				},
 				undefined, // todoList
 				this.task.api.getModel().id,
@@ -369,23 +371,25 @@ export class TaskRequestBuilder {
 				// runs I/O-heavy operations (skills discovery, Cangjie context,
 				// rules loading, modes section, custom instructions) and caches
 				// the result for 30 seconds.
-				const results = await Promise.allSettled([
-					this.getSystemPromptParts(),
-				])
+				const results = await Promise.allSettled([this.getSystemPromptParts()])
 
 				const elapsed = Date.now() - startTime
 				const failures = results.filter((r) => r.status === "rejected")
 				if (failures.length > 0) {
-			logger.warn("TaskRequestBuilder",
-					`System prompt data prefetched in ${elapsed}ms with ${failures.length} failure(s)`,
-					failures.map((f) => (f as PromiseRejectedResult).reason),
-				)
+					logger.warn(
+						"TaskRequestBuilder",
+						`System prompt data prefetched in ${elapsed}ms with ${failures.length} failure(s)`,
+						failures.map((f) => (f as PromiseRejectedResult).reason),
+					)
 				} else {
 					logger.info("TaskRequestBuilder", `System prompt data prefetched in ${elapsed}ms`)
 				}
 			} catch (error) {
 				logger.warn("TaskRequestBuilder", "System prompt prefetch failed:", error)
-				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+				TelemetryService.reportError(
+					error instanceof Error ? error : new Error(String(error)),
+					TelemetryEventName.UTILITY_ERROR,
+				)
 			}
 		})().finally(() => {
 			this.prefetchInFlight = undefined
@@ -409,7 +413,10 @@ export class TaskRequestBuilder {
 			return await this.task.fileContextTracker.getFilesReadByRoo()
 		} catch (error) {
 			logger.error("TaskRequestBuilder", `Failed to get files read by Njust-AI:`, error)
-			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+			TelemetryService.reportError(
+				error instanceof Error ? error : new Error(String(error)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 			return undefined
 		}
 	}

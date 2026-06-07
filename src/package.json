@@ -937,6 +937,21 @@
 		"configuration": {
 			"title": "%configuration.title%",
 			"properties": {
+				"njust-ai.memrl.embeddingApiKey": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "API key for the MemRL memory embedding model (OpenAI-compatible). If empty, falls back to the `MEMRL_EMBED_API_KEY` environment variable; if that is also empty, memory retrieval is disabled (tasks still run)."
+				},
+				"njust-ai.memrl.embeddingBaseUrl": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "Base URL for the MemRL memory embedding API (OpenAI-compatible). Empty = use `MEMRL_EMBED_BASE_URL` env var, else default `https://api.siliconflow.cn/v1`."
+				},
+				"njust-ai.memrl.embeddingModel": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "Model id for MemRL memory embeddings. Empty = use `MEMRL_EMBED_MODEL` env var, else default `BAAI/bge-m3`. ⚠️ Changing the model invalidates previously stored memory vectors (they are auto-rebuilt on next run)."
+				},
 				"njust-ai.allowedCommands": {
 					"type": "array",
 					"items": {

@@ -13,6 +13,7 @@ import { CodeIndexManager } from "../../services/code-index/manager"
 import { SkillsManager } from "../../services/skills/SkillsManager"
 
 import { buildBudgetedSessionMemoryPrompt } from "../condense/sessionMemoryCompact"
+import { getMemrlMemorySection } from "./sections/memrl-memory"
 import type { SystemPromptSettings } from "./types"
 import {
 	getRulesSection,
@@ -331,17 +332,22 @@ HOW TO USE:
 	const cangjieText = cangjieContextSection ? `\n${cangjieContextSection}` : ""
 	const multiFileText = multiFileContextSection ? `\n${multiFileContextSection}` : ""
 	const outputEfficiencyText = getOutputEfficiencySection()
-	const sessionMemoryText = settings?.sessionMemory
-		? buildBudgetedSessionMemoryPrompt(settings.sessionMemory)
-		: ""
+	const sessionMemoryText = settings?.sessionMemory ? buildBudgetedSessionMemoryPrompt(settings.sessionMemory) : ""
+	const memrlMemoryText = getMemrlMemorySection(settings?.memrlEpisodicHints ?? "", settings?.memrlLtmRules ?? "")
 	const rulesText = getRulesSection(cwd, settings)
 	const systemInfoText = getSystemInfoSection(cwd)
 	const objectiveText = getObjectiveSection()
-	const customInstructionsText = await addCustomInstructions(effectiveBaseInstructions, globalCustomInstructions || "", cwd, mode, {
-		language: language ?? "en",
-		rooIgnoreInstructions,
-		settings,
-	})
+	const customInstructionsText = await addCustomInstructions(
+		effectiveBaseInstructions,
+		globalCustomInstructions || "",
+		cwd,
+		mode,
+		{
+			language: language ?? "en",
+			rooIgnoreInstructions,
+			settings,
+		},
+	)
 
 	// Define section budgets with priorities for trimming
 	const sectionEntries: { name: string; text: string; priority: number; required: boolean }[] = [
@@ -360,6 +366,7 @@ HOW TO USE:
 		{ name: "customInstructions", text: customInstructionsText, priority: 2, required: false },
 		{ name: "outputEfficiency", text: outputEfficiencyText, priority: 1, required: false },
 		{ name: "sessionMemory", text: sessionMemoryText, priority: 2, required: false },
+		{ name: "memrlMemory", text: memrlMemoryText, priority: 2, required: false },
 	]
 
 	// Build SectionBudget array and apply trimming
@@ -382,12 +389,21 @@ HOW TO USE:
 		return entry.text
 	}
 
-	const staticPart = [sec("roleDefinition"), sec("formatting"), sec("toolDescriptions"), sec("outputEfficiency"), sec("capabilitiesSection") + sec("webSearchSection"), sec("modesSection")]
+	const staticPart = [
+		sec("roleDefinition"),
+		sec("formatting"),
+		sec("toolDescriptions"),
+		sec("outputEfficiency"),
+		sec("capabilitiesSection") + sec("webSearchSection"),
+		sec("modesSection"),
+	]
 		.filter(Boolean)
 		.join("\n\n")
 
 	// Priority order: objective/system/customInstructions first so applySystemPromptBudget does not truncate mode workflow or task goal from the tail of a single blob.
-	const skillsCangjieMulti = [sec("skillsSection"), sec("cangjieContext"), sec("multiFileContext")].filter(Boolean).join("")
+	const skillsCangjieMulti = [sec("skillsSection"), sec("cangjieContext"), sec("multiFileContext")]
+		.filter(Boolean)
+		.join("")
 	const dynamicSegments = [
 		sec("objective"),
 		sec("systemInfo"),
@@ -395,6 +411,7 @@ HOW TO USE:
 		skillsCangjieMulti,
 		sec("rulesSection"),
 		sec("sessionMemory"),
+		sec("memrlMemory"),
 	].filter((s) => s.length > 0)
 
 	const renderedPrompt = renderPrompt({
@@ -500,10 +517,21 @@ export async function SYSTEM_PROMPT_PARTS(
 	}
 	const cfg = positionalToConfig(
 		contextOrCfg as vscode.ExtensionContext,
-		cwd!, supportsComputerUse!, mcpHub, diffStrategy,
-		mode, customModePrompts, customModes, globalCustomInstructions,
-		experiments, language, rooIgnoreInstructions, settings,
-		todoList, modelId, skillsManager,
+		cwd!,
+		supportsComputerUse!,
+		mcpHub,
+		diffStrategy,
+		mode,
+		customModePrompts,
+		customModes,
+		globalCustomInstructions,
+		experiments,
+		language,
+		rooIgnoreInstructions,
+		settings,
+		todoList,
+		modelId,
+		skillsManager,
 	)
 	return generatePrompt(cfg)
 }
@@ -548,10 +576,21 @@ export async function SYSTEM_PROMPT(
 ): Promise<string> {
 	const parts = await SYSTEM_PROMPT_PARTS(
 		contextOrCfg as UnsafeAny,
-		cwd as UnsafeAny, supportsComputerUse as UnsafeAny, mcpHub, diffStrategy,
-		mode, customModePrompts, customModes, globalCustomInstructions,
-		experiments, language, rooIgnoreInstructions, settings,
-		todoList, modelId, skillsManager,
+		cwd as UnsafeAny,
+		supportsComputerUse as UnsafeAny,
+		mcpHub,
+		diffStrategy,
+		mode,
+		customModePrompts,
+		customModes,
+		globalCustomInstructions,
+		experiments,
+		language,
+		rooIgnoreInstructions,
+		settings,
+		todoList,
+		modelId,
+		skillsManager,
 	)
 	return parts.fullPrompt
 }

@@ -187,6 +187,17 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 */
 	public cachedToolDefinitions?: { mode: string; tools: UnsafeAny[]; time: number }
 
+	/** MemRL: episodic hints retrieved before this task run, injected into system prompt. */
+	public memrlEpisodicHints: string = ""
+	/** MemRL: learned LTM rule cards retrieved before this task run, injected into system prompt. */
+	public memrlLtmRules: string = ""
+	/** MemRL: intent captured at task start, reused when persisting the episode. */
+	public memrlIntent: string = ""
+	/** MemRL: guard so the episode is persisted exactly once per task. */
+	private memrlPersisted = false
+	/** MemRL: set when the agent invokes attempt_completion (its own success signal). */
+	private completionAttempted = false
+
 	/** Task mode. Async-initialized from provider state; falls back to defaultModeSlug. Access via getTaskMode() or taskMode getter after taskModeReady resolves. */
 	private _taskMode: string | undefined
 
@@ -1181,6 +1192,38 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 *  state via attempt_completion acceptance. */
 	public markTaskCompleted(): void {
 		this.taskCompleted = true
+		// attempt_completion does NOT end the task — it stays open awaiting the
+		// user — so persist the successful episode now (reward 1.0). The loop's
+		// finally would otherwise only fire much later, on dispose.
+		this.persistMemrlEpisode()
+	}
+
+	/**
+	 * MemRL: the agent invoked attempt_completion (declared the task done). This is
+	 * the success signal we reward on — independent of whether the user clicks the
+	 * approval button (which is a separate UX gate that often never fires).
+	 */
+	public markAttemptedCompletion(): void {
+		this.completionAttempted = true
+		// Persist the episode the moment the agent declares completion — don't wait
+		// for the user's approval button or task dispose (which often never happen).
+		this.persistMemrlEpisode()
+	}
+
+	/**
+	 * MemRL: persist the current task as an episodic memory exactly once.
+	 * Called on completion (markTaskCompleted, reward 1.0) and as a fallback when
+	 * the task loop unwinds on abort/error (reward 0.0). Idempotent per task.
+	 */
+	private persistMemrlEpisode(): void {
+		if (this.memrlPersisted) return
+		const memoryManager = this.hostRef.deref()?.getMemoryManager(this.cwd)
+		if (!memoryManager) return
+		this.memrlPersisted = true
+		const stm = memoryManager.getStm(this.taskId)
+		// Success = the agent reached attempt_completion OR the user accepted it.
+		const reward = this.taskCompleted || this.completionAttempted ? 1.0 : 0.0
+		memoryManager.afterRun(this.taskId, this.memrlIntent || this.taskId, stm.summarize(), reward)
 	}
 
 	/** Return a Promise that resolves when background switch is requested */
@@ -1259,7 +1302,32 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const host = createCloudAgentHost(this as UnsafeAny as Parameters<typeof createCloudAgentHost>[0])
 		const { CloudAgentOrchestrator } = await import("./CloudAgentOrchestrator")
 		const orchestrator = new CloudAgentOrchestrator(host)
-		await orchestrator.run(userMessage, images)
+
+		// MemRL: inject dependencies and retrieve hints before running
+		const memrlProvider = this.hostRef.deref()
+		const memoryManager = memrlProvider?.getMemoryManager(this.cwd)
+		const memrlIntent = userMessage.slice(0, 500) || this.taskId
+		this.memrlIntent = memrlIntent
+		this.memrlPersisted = false
+		this.completionAttempted = false
+		if (memoryManager) {
+			memoryManager.updateDependencies(this.api)
+			try {
+				const { episodicHints, ltmRules } = await memoryManager.beforeRun(this.taskId, memrlIntent)
+				this.memrlEpisodicHints = episodicHints
+				this.memrlLtmRules = ltmRules
+				this.requestBuilder["systemPromptPartsCache"] = undefined
+			} catch {
+				/* non-blocking */
+			}
+		}
+
+		try {
+			await orchestrator.run(userMessage, images)
+		} finally {
+			// MemRL: persist episode (once) — fallback for abort/error.
+			this.persistMemrlEpisode()
+		}
 	}
 
 	// Task Loop
@@ -1282,28 +1350,59 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			},
 		})
 
+		// MemRL: inject dependencies then retrieve episodic hints + LTM rules before the loop.
+		// Intent is extracted from userContent (apiConversationHistory is still empty here).
+		const memoryManager = provider?.getMemoryManager(this.cwd)
+		const memrlIntent =
+			userContent
+				.filter((b): b is { type: "text"; text: string } => b.type === "text" && "text" in b)
+				.map((b) => b.text)
+				.join(" ")
+				.trim()
+				.slice(0, 500) || this.taskId
+		this.memrlIntent = memrlIntent
+		this.memrlPersisted = false
+		this.completionAttempted = false
+		if (memoryManager) {
+			memoryManager.updateDependencies(this.api)
+			try {
+				const { episodicHints, ltmRules } = await memoryManager.beforeRun(this.taskId, memrlIntent)
+				this.memrlEpisodicHints = episodicHints
+				this.memrlLtmRules = ltmRules
+				// Invalidate the cached system prompt so the new hints are injected.
+				this.requestBuilder["systemPromptPartsCache"] = undefined
+			} catch {
+				// Non-blocking: failures must not prevent task execution.
+			}
+		}
+
 		let nextUserContent = userContent
 		let includeFileDetails = true
 
 		this.emit(NJUST_AIEventName.TaskStarted)
 
-		while (!this.abort && !this.taskCompleted) {
-			const didEndLoop = await this.recursivelyMakeClineRequests(nextUserContent, includeFileDetails)
-			includeFileDetails = false
+		try {
+			while (!this.abort && !this.taskCompleted) {
+				const didEndLoop = await this.recursivelyMakeClineRequests(nextUserContent, includeFileDetails)
+				includeFileDetails = false
 
-			if (didEndLoop) {
-				// Only happens when max requests is hit and user denies
-				// resetting the count, or an unexpected error is caught.
-				break
+				if (didEndLoop) {
+					// Only happens when max requests is hit and user denies
+					// resetting the count, or an unexpected error is caught.
+					break
+				}
+
+				if (this.taskCompleted) {
+					// attempt_completion was accepted — stop without
+					// re-prompting the model.
+					break
+				}
+
+				nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
 			}
-
-			if (this.taskCompleted) {
-				// attempt_completion was accepted — stop without
-				// re-prompting the model.
-				break
-			}
-
-			nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
+		} finally {
+			// MemRL: persist episode (once) on task unwind — fallback for abort/error.
+			this.persistMemrlEpisode()
 		}
 	}
 

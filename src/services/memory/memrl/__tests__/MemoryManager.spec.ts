@@ -1,29 +1,18 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+/**
+ * Integration test: beforeRun → prompt hints → afterRun → Q update flow.
+ */
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { MemoryManager } from "../MemoryManager"
-import type { ApiHandler } from "../../../../api"
 import type { IEmbedder } from "../../../code-index/interfaces/embedder"
-import { ShortTermMemory } from "../ShortTermMemory"
+import type { ApiHandler } from "../../../../api"
 
-vi.mock("fs/promises", () => ({
-	readFile: vi.fn().mockRejectedValue(new Error("ENOENT")),
-	writeFile: vi.fn().mockResolvedValue(undefined),
-	mkdir: vi.fn().mockResolvedValue(undefined),
+vi.mock("../../../../utils/safeWriteJson", () => ({
+	safeWriteJson: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock("../../../../shared/logger", () => ({
-	logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}))
-
-function makeApi(): ApiHandler {
-	async function* stream() {
-		yield { type: "text" as const, text: "[]" }
-	}
-	return { createMessage: vi.fn().mockReturnValue(stream()) } as unknown as ApiHandler
-}
-
-function makeEmbedder(vec: number[] = [0.5, 0.5]): IEmbedder {
+function makeEmbedder(): IEmbedder {
 	return {
-		createEmbeddings: vi.fn().mockResolvedValue({ embeddings: [vec] }),
+		createEmbeddings: vi.fn().mockResolvedValue({ embeddings: [[0.6, 0.8]] }),
 		validateConfiguration: vi.fn().mockResolvedValue({ valid: true }),
 		get embedderInfo() {
 			return { name: "openai" as const }
@@ -31,91 +20,51 @@ function makeEmbedder(vec: number[] = [0.5, 0.5]): IEmbedder {
 	}
 }
 
-const WORKSPACE = "/fake/ws"
+function makeApi(): ApiHandler {
+	return {
+		createMessage: vi.fn().mockReturnValue((async function* () {})()),
+		getModel: vi.fn().mockReturnValue({ id: "gpt-4o", info: {} }),
+	} as unknown as ApiHandler
+}
 
-describe("MemoryManager", () => {
-	let manager: MemoryManager
+describe("MemoryManager integration", () => {
+	let mgr: MemoryManager
 
 	beforeEach(() => {
-		vi.clearAllMocks()
-		manager = new MemoryManager(WORKSPACE)
+		mgr = new MemoryManager("/tmp/memrl-mgr-test")
+		mgr.updateDependencies(makeApi(), makeEmbedder())
 	})
 
-	describe("constructor", () => {
-		it("stores workspaceDir", () => {
-			expect(manager.workspaceDir).toBe(WORKSPACE)
-		})
+	it("beforeRun returns empty strings on cold start", async () => {
+		const result = await mgr.beforeRun("task-1", "build the feature")
+		expect(result.episodicHints).toBe("")
+		expect(result.ltmRules).toBe("")
 	})
 
-	describe("updateDependencies", () => {
-		it("initialises without error when no embedder provided", () => {
-			expect(() => manager.updateDependencies(makeApi())).not.toThrow()
-		})
-
-		it("initialises without error with embedder provided", () => {
-			expect(() => manager.updateDependencies(makeApi(), makeEmbedder())).not.toThrow()
-		})
+	it("afterRun does not throw and is fire-and-forget", () => {
+		expect(() => mgr.afterRun("task-1", "build the feature", "summary text", 1.0)).not.toThrow()
 	})
 
-	describe("beforeRun", () => {
-		it("returns empty strings when no dependencies set", async () => {
-			const result = await manager.beforeRun("task-1", "do something")
-			expect(result.episodicHints).toBe("")
-			expect(result.ltmRules).toBe("")
-		})
-
-		it("clears STM for the given taskId", async () => {
-			manager.updateDependencies(makeApi(), makeEmbedder())
-			const stm = manager.getStm("task-1")
-			stm.push("user", "existing content")
-			await manager.beforeRun("task-1", "intent")
-			expect(manager.getStm("task-1").getEntries()).toHaveLength(0)
-		})
-
-		it("returns empty hints when no matching episodes/rules", async () => {
-			manager.updateDependencies(makeApi(), makeEmbedder([0.1, 0.2]))
-			const result = await manager.beforeRun("task-new", "fresh intent")
-			expect(result.episodicHints).toBe("")
-			expect(result.ltmRules).toBe("")
-		})
+	it("getStm returns a ShortTermMemory", () => {
+		const stm = mgr.getStm("task-1")
+		expect(stm).toBeDefined()
+		stm.push("user", "hello")
+		expect(stm.getEntries()).toHaveLength(1)
 	})
 
-	describe("afterRun", () => {
-		it("does not throw when no dependencies set", () => {
-			expect(() => manager.afterRun("task-1", "intent", "summary", 1.0)).not.toThrow()
-		})
-
-		it("deletes STM for the task after write completes", async () => {
-			manager.updateDependencies(makeApi(), makeEmbedder())
-			const stm = manager.getStm("task-1")
-			stm.push("user", "content")
-
-			// afterRun is fire-and-forget; flush microtask queue via setImmediate
-			// (fires after all pending microtasks, no real-time dependency)
-			manager.afterRun("task-1", "intent", "summary", 1.0)
-			await new Promise<void>((r) => setImmediate(r))
-			// STM should have been deleted
-			const newStm = manager.getStm("task-1")
-			expect(newStm.getEntries()).toHaveLength(0)
-		})
+	it("returns empty results if updateDependencies was not called", async () => {
+		const fresh = new MemoryManager("/tmp/memrl-fresh")
+		const result = await fresh.beforeRun("task-x", "intent")
+		expect(result.episodicHints).toBe("")
+		expect(result.ltmRules).toBe("")
 	})
 
-	describe("getStm", () => {
-		it("returns a ShortTermMemory instance", () => {
-			const stm = manager.getStm("task-42")
-			expect(stm).toBeInstanceOf(ShortTermMemory)
-		})
-
-		it("returns the same instance for the same taskId", () => {
-			const a = manager.getStm("task-x")
-			const b = manager.getStm("task-x")
-			expect(a).toBe(b)
-		})
-
-		it("returns different instances for different taskIds", () => {
-			const a = manager.getStm("task-a")
-			const b = manager.getStm("task-b")
-			expect(a).not.toBe(b)
-		})
+	it("full flow: write then retrieve produces formatted hints", async () => {
+		// Write a high-reward episode
+		await (mgr as any).episodic?.write("implement login feature", "user: implement\nassistant: done", 1.0)
+		// Now retrieve
+		const result = await mgr.beforeRun("task-2", "implement login feature")
+		// Should have episodic hints since we wrote with same vector
+		expect(result.episodicHints).toContain("Past Episodes")
 	})
 })

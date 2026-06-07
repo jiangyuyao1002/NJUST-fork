@@ -99,6 +99,7 @@ describe("attemptCompletionTool", () => {
 			apiConfiguration: { apiProvider: "test" } as any,
 			api: { getModel: vi.fn().mockReturnValue({ id: "test-model", info: {} }) } as any,
 			markTaskCompleted: vi.fn(),
+			markAttemptedCompletion: vi.fn(),
 		}
 	})
 

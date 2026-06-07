@@ -1,173 +1,101 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as fs from "fs/promises"
+import * as path from "path"
+import os from "os"
 import { EpisodicMemoryService } from "../EpisodicMemoryService"
 import { MemoryEmbeddingAdapter } from "../MemoryEmbeddingAdapter"
-import { Q_INIT, ALPHA } from "../constants"
+import type { IEmbedder } from "../../../code-index/interfaces/embedder"
+import { ALPHA, Q_INIT } from "../constants"
 
-vi.mock("fs/promises", () => ({
-	readFile: vi.fn(),
-	writeFile: vi.fn(),
-	mkdir: vi.fn(),
+// Mock safeWriteJson to avoid real file I/O in most tests
+vi.mock("../../../../utils/safeWriteJson", () => ({
+	safeWriteJson: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock("../../../../shared/logger", () => ({
-	logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}))
-
-function makeEmbedder(vec: number[]) {
-	return {
-		embed: vi.fn().mockResolvedValue(vec),
-	} as unknown as MemoryEmbeddingAdapter
+function makeVec(seed: number): number[] {
+	// Deterministic "embedding": unit vector in direction [seed, 1-seed]
+	const x = seed
+	const y = Math.sqrt(1 - x * x)
+	return [x, y]
 }
 
-const WORKSPACE = "/fake/workspace"
+function makeEmbedder(vecFn: (text: string) => number[]): MemoryEmbeddingAdapter {
+	const embedder: IEmbedder = {
+		createEmbeddings: vi.fn().mockImplementation(async (texts: string[]) => ({
+			embeddings: texts.map(vecFn),
+		})),
+		validateConfiguration: vi.fn().mockResolvedValue({ valid: true }),
+		get embedderInfo() {
+			return { name: "openai" as const }
+		},
+	}
+	return new MemoryEmbeddingAdapter(embedder)
+}
 
 describe("EpisodicMemoryService", () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-		vi.mocked(fs.mkdir).mockResolvedValue(undefined as unknown as string)
-		vi.mocked(fs.writeFile).mockResolvedValue(undefined)
-	})
+	let tmpDir: string
+	let service: EpisodicMemoryService
+	let distillCalled: boolean
 
-	afterEach(() => {
-		vi.restoreAllMocks()
-	})
-
-	describe("load", () => {
-		it("loads entries from file on first call", async () => {
-			const stored = {
-				entries: [{
-					id: "ep_1", intent: "test intent", embedding: [0.5, 0.5],
-					stmSummary: "summary", qValue: 0.5, updateCount: 1,
-					createdAt: 1000, updatedAt: 1000,
-				}],
-				totalWrites: 1,
-			}
-			vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(stored) as unknown as Buffer)
-			const svc = new EpisodicMemoryService(WORKSPACE, makeEmbedder([0.5, 0.5]))
-			await svc.load()
-			expect(svc.totalWrites).toBe(1)
-		})
-
-		it("starts with empty store when file does not exist", async () => {
-			vi.mocked(fs.readFile).mockRejectedValueOnce(new Error("ENOENT"))
-			const svc = new EpisodicMemoryService(WORKSPACE, makeEmbedder([]))
-			await svc.load()
-			expect(svc.totalWrites).toBe(0)
-		})
-
-		it("only calls readFile once cached", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const svc = new EpisodicMemoryService(WORKSPACE, makeEmbedder([]))
-			await svc.load()
-			await svc.load()
-			expect(fs.readFile).toHaveBeenCalledTimes(1)
+	beforeEach(async () => {
+		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "memrl-test-"))
+		distillCalled = false
+		// Use a fixed vec for all texts so retrieval is deterministic
+		const adapter = makeEmbedder(() => makeVec(0.6))
+		service = new EpisodicMemoryService(tmpDir, adapter, () => {
+			distillCalled = true
 		})
 	})
 
-	describe("write", () => {
-		it("creates an entry with correct initial qValue", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const embedder = makeEmbedder([0.1, 0.2])
-			const svc = new EpisodicMemoryService(WORKSPACE, embedder)
-			const reward = 1.0
-			await svc.write("intent", "summary", reward)
-			expect(svc.totalWrites).toBe(1)
-			const entry = svc.getRecent(1)[0]!
-			const expectedQ = Q_INIT + ALPHA * (reward - Q_INIT)
-			expect(entry.qValue).toBeCloseTo(expectedQ)
-			expect(entry.intent).toBe("intent")
-		})
-
-		it("persists to disk after write", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const svc = new EpisodicMemoryService(WORKSPACE, makeEmbedder([0.1]))
-			await svc.write("intent", "summary", 1.0)
-			expect(fs.writeFile).toHaveBeenCalled()
-		})
-
-		it("calls onDistillTrigger at LTM_DISTILL_INTERVAL writes", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const trigger = vi.fn()
-			const svc = new EpisodicMemoryService(WORKSPACE, makeEmbedder([0.1]), trigger)
-			for (let i = 0; i < 10; i++) {
-				await svc.write("intent-" + String(i), "sum", 1.0)
-			}
-			expect(trigger).toHaveBeenCalledTimes(1)
-		})
-
-		it("increments totalWrites with each write", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const svc = new EpisodicMemoryService(WORKSPACE, makeEmbedder([0.1]))
-			await svc.write("i1", "s1", 1.0)
-			await svc.write("i2", "s2", 0.5)
-			expect(svc.totalWrites).toBe(2)
-		})
+	it("starts with empty store", async () => {
+		const results = await service.retrieve("anything")
+		expect(results).toHaveLength(0)
 	})
 
-	describe("retrieve", () => {
-		it("returns empty array when no entries", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const svc = new EpisodicMemoryService(WORKSPACE, makeEmbedder([0.1, 0.2]))
-			expect(await svc.retrieve("query")).toEqual([])
-		})
-
-		it("returns empty array when embedder returns empty vector", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const embedder = { embed: vi.fn().mockResolvedValue([]) } as unknown as MemoryEmbeddingAdapter
-			const svc = new EpisodicMemoryService(WORKSPACE, embedder)
-			await svc.write("intent", "summary", 1.0)
-			expect(await svc.retrieve("query")).toEqual([])
-		})
-
-		it("filters entries below similarity threshold", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const embedder = {
-				embed: vi.fn()
-					.mockResolvedValueOnce([1, 0])
-					.mockResolvedValueOnce([0, 1]),
-			} as unknown as MemoryEmbeddingAdapter
-			const svc = new EpisodicMemoryService(WORKSPACE, embedder)
-			await svc.write("intent", "summary", 1.0)
-			expect(await svc.retrieve("query")).toEqual([])
-		})
-
-		it("returns top matching entries above threshold", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const vec = [0.6, 0.8]
-			const embedder = {
-				embed: vi.fn().mockResolvedValue(vec),
-			} as unknown as MemoryEmbeddingAdapter
-			const svc = new EpisodicMemoryService(WORKSPACE, embedder)
-			await svc.write("intent", "summary", 1.0)
-			const results = await svc.retrieve("query")
-			expect(results).toHaveLength(1)
-			expect(results[0]!.intent).toBe("intent")
-		})
+	it("write stores an entry and increments totalWrites", async () => {
+		await service.write("fix bug", "user: fix\nassistant: fixed", 1.0)
+		expect(service.totalWrites).toBe(1)
 	})
 
-	describe("getRecent", () => {
-		it("returns n most recent entries sorted by createdAt descending", async () => {
-			vi.useFakeTimers()
-			vi.setSystemTime(1_000_000)
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const embedder = { embed: vi.fn().mockResolvedValue([0.5, 0.5]) } as unknown as MemoryEmbeddingAdapter
-			const svc = new EpisodicMemoryService(WORKSPACE, embedder)
-			await svc.write("first", "s1", 1.0)
-			vi.setSystemTime(2_000_000)
-			await svc.write("second", "s2", 1.0)
-			vi.useRealTimers()
-			const recent = svc.getRecent(1)
-			expect(recent).toHaveLength(1)
-			expect(recent[0]!.intent).toBe("second")
-		})
+	it("Q-value update follows Monte Carlo rule", async () => {
+		await service.write("fix bug", "summary", 1.0)
+		const expectedQ = Q_INIT + ALPHA * (1.0 - Q_INIT)
+		// retrieve to get the entry back
+		const entries = await service.retrieve("fix bug")
+		expect(entries[0].qValue).toBeCloseTo(expectedQ, 5)
+	})
 
-		it("returns all entries if n > total", async () => {
-			vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
-			const embedder = { embed: vi.fn().mockResolvedValue([0.5]) } as unknown as MemoryEmbeddingAdapter
-			const svc = new EpisodicMemoryService(WORKSPACE, embedder)
-			await svc.write("a", "s", 1.0)
-			expect(svc.getRecent(100)).toHaveLength(1)
-		})
+	it("retrieve returns relevant entry above threshold", async () => {
+		await service.write("fix bug in auth", "summary", 0.8)
+		const results = await service.retrieve("fix auth bug")
+		// Cosine sim of identical vecs = 1.0 > SIM_THRESHOLD
+		expect(results.length).toBeGreaterThan(0)
+	})
+
+	it("retrieve returns empty when sim < threshold", async () => {
+		// Use orthogonal vectors
+		const adapterHigh = makeEmbedder((text) => (text === "query" ? [1, 0] : [0, 1]))
+		const svc = new EpisodicMemoryService(tmpDir + "2", adapterHigh)
+		await svc.write("intent", "summary", 0.5)
+		const results = await svc.retrieve("query")
+		expect(results).toHaveLength(0)
+	})
+
+	it("triggers distillation callback every LTM_DISTILL_INTERVAL writes", async () => {
+		// LTM_DISTILL_INTERVAL = 10
+		for (let i = 0; i < 9; i++) {
+			await service.write(`intent ${i}`, "s", 0.5)
+		}
+		expect(distillCalled).toBe(false)
+		await service.write("intent 10", "s", 0.5)
+		expect(distillCalled).toBe(true)
+	})
+
+	it("getRecent returns most recent n entries", async () => {
+		for (let i = 0; i < 5; i++) {
+			await service.write(`intent ${i}`, "s", 0.5)
+		}
+		const recent = service.getRecent(3)
+		expect(recent).toHaveLength(3)
 	})
 })

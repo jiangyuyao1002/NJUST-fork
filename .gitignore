@@ -24,6 +24,12 @@ AGENTS.local.md
 .test_env
 .vscode-test/
 
+# Local debug launch config (may contain secrets like MEMRL_EMBED_API_KEY)
+.vscode/launch.json
+
+# Local ripgrep binary copied from VSCode install (dev-only workaround)
+.rg/
+
 # Docs - ignore all except examples, adr, baseline, runbooks
 docs/*
 !docs/examples/
@@ -112,6 +118,7 @@ sonar-project.properties
 CODE_REVIEW_REPORT.md
 INTEGRATED_CODE_REVIEW_REPORT.md
 .mavis/plans/industrial-review/INDUSTRIAL_CODE_REVIEW.md
+.claude/
 
 # Windows reserved device name (cannot be deleted)
 nul

@@ -1,7 +1,18 @@
+/**
+ * LongTermMemoryService
+ *
+ * Manages RuleCard-based long-term memory.
+ * LLM distillation converts recent episodic episodes into reusable rules.
+ * Dual-write: .njust_ai/memories/ + .roo/session-memories/
+ */
+
 import * as fs from "fs/promises"
 import * as path from "path"
+import { safeWriteJson } from "../../../utils/safeWriteJson"
+import { logger } from "../../../shared/logger"
 import type { ApiHandler } from "../../../api"
 import { MemoryEmbeddingAdapter } from "./MemoryEmbeddingAdapter"
+import { currentEmbedFingerprint } from "./memory-embedder"
 import type { EpisodicEntry } from "./EpisodicMemoryService"
 import {
 	LAMBDA,
@@ -14,131 +25,245 @@ import {
 	TOP_K1,
 	TOP_K2,
 } from "./constants"
+
 export interface RuleCard {
 	id: string
 	topic: string
 	rule: string
 	examples: string[]
+	/** Confidence ∈ [0, 1] — updated via usage feedback */
 	confidence: number
 	useCount: number
 	createdAt: number
 	updatedAt: number
+	/** Embedding of topic+rule for retrieval */
 	embedding: number[]
 }
+
+interface LtmStore {
+	rules: RuleCard[]
+	/** Embedding-model fingerprint of the vectors stored here (see memory-embedder). */
+	embedFingerprint?: string
+}
+
 export class LongTermMemoryService {
-	private store: { rules: RuleCard[] } = { rules: [] }
+	private store: LtmStore = { rules: [] }
 	private loaded = false
+
 	constructor(
 		private readonly workspaceDir: string,
 		private readonly embedder: MemoryEmbeddingAdapter,
 		private readonly api: ApiHandler,
 	) {}
-	private get primaryPath() {
+
+	// ── Persistence ────────────────────────────────────────────────────────────
+
+	private get primaryPath(): string {
 		return path.join(this.workspaceDir, MEMRL_PRIMARY_DIR, LTM_FILE)
 	}
-	private get rooPath() {
+
+	private get rooPath(): string {
 		return path.join(this.workspaceDir, MEMRL_ROO_DIR, LTM_FILE)
 	}
+
 	async load(): Promise<void> {
 		if (this.loaded) return
+		const current = currentEmbedFingerprint()
 		try {
-			this.store = JSON.parse(await fs.readFile(this.primaryPath, "utf-8"))
+			const raw = await fs.readFile(this.primaryPath, "utf-8")
+			const parsed = JSON.parse(raw) as LtmStore
+			if (parsed.embedFingerprint === current) {
+				this.store = parsed
+			} else {
+				// Embedding model changed (or legacy un-fingerprinted store): RuleCard
+				// embeddings are incompatible. Discard rather than mix vector spaces.
+				logger.warn(
+					"MemRL",
+					`LTM store embedding model changed (${parsed.embedFingerprint ?? "unknown"} → ${current}); resetting store`,
+				)
+				this.store = { rules: [], embedFingerprint: current }
+			}
 		} catch {
-			this.store = { rules: [] }
+			this.store = { rules: [], embedFingerprint: current }
 		}
+		this.store.embedFingerprint = current
 		this.loaded = true
 	}
-	private async persist() {
-		const json = JSON.stringify(this.store)
-		await fs.mkdir(path.dirname(this.primaryPath), { recursive: true })
-		await fs.writeFile(this.primaryPath, json, "utf-8")
-		await fs.mkdir(path.dirname(this.rooPath), { recursive: true }).catch(() => {})
-		await fs.writeFile(this.rooPath, json, "utf-8").catch(() => {})
+
+	private async persist(): Promise<void> {
+		await safeWriteJson(this.primaryPath, this.store)
+		await safeWriteJson(this.rooPath, this.store).catch(() => {
+			/* best-effort mirror */
+		})
 	}
-	async distill(eps: EpisodicEntry[]): Promise<void> {
+
+	// ── Distillation (fire-and-forget from MemoryManager) ─────────────────────
+
+	/**
+	 * LLM-based distillation of recent episodic entries into RuleCards.
+	 * This is called fire-and-forget; errors are silently swallowed.
+	 */
+	async distill(recentEpisodes: EpisodicEntry[]): Promise<void> {
 		await this.load()
-		if (!eps.length) return
-		const prompt =
-			`Extract up to 5 rules as JSON array [{topic,rule,examples:string[],confidence}] from:\n\n` +
-			eps
-				.slice(0, LTM_DISTILL_BATCH)
-				.map((e, i) => `${i + 1}. Intent:${e.intent}\nSummary:${e.stmSummary}\nQ:${e.qValue.toFixed(2)}`)
-				.join("\n\n")
+
+		if (recentEpisodes.length === 0) return
+
+		const episodeSummaries = recentEpisodes
+			.slice(0, LTM_DISTILL_BATCH)
+			.map(
+				(e, i) =>
+					`Episode ${i + 1}:\nIntent: ${e.intent}\nSummary: ${e.stmSummary}\nQ-value: ${e.qValue.toFixed(3)}`,
+			)
+			.join("\n\n")
+
+		const prompt = `You are a memory distillation system. Analyze these agent episodes and extract generalizable rules.
+
+${episodeSummaries}
+
+Extract up to 5 distinct RuleCards from these episodes. Each RuleCard should capture a reusable strategy or lesson.
+Respond with a JSON array only (no markdown), each element having:
+- topic: string (short topic label, ≤ 10 words)
+- rule: string (the actionable rule, 1-2 sentences)
+- examples: string[] (1-2 short examples from the episodes)
+- confidence: number (0.0-1.0, based on how consistently the rule appears)
+
+Focus on high-Q episodes (Q ≥ 0.6) as positive examples.`
+
 		try {
-			let txt = ""
-			const stream = this.api.createMessage("Output only valid JSON arrays.", [
+			let fullText = ""
+			const stream = this.api.createMessage("You are a precise JSON generator. Output only valid JSON arrays.", [
 				{ role: "user", content: [{ type: "text", text: prompt }] },
 			])
-			for await (const c of stream) if (c.type === "text") txt += c.text
-			const m = txt.match(/\[[\s\S]*\]/)
-			if (!m) return
-			for (const r of JSON.parse(m[0]) as Array<{
+
+			for await (const chunk of stream) {
+				if (chunk.type === "text") {
+					fullText += chunk.text
+				}
+			}
+
+			// Parse LLM response
+			const jsonMatch = fullText.match(/\[[\s\S]*\]/)
+			if (!jsonMatch) return
+
+			const extracted = JSON.parse(jsonMatch[0]) as Array<{
 				topic: string
 				rule: string
 				examples: string[]
 				confidence: number
-			}>) {
-				if (r.topic && r.rule) await this.upsertRule(r)
+			}>
+
+			for (const raw of extracted) {
+				if (!raw.topic || !raw.rule) continue
+				await this.upsertRule(raw)
 			}
+
+			// Prune if over limit
 			if (this.store.rules.length > LTM_MAX_RULES) {
+				// Keep highest-confidence rules
 				this.store.rules.sort((a, b) => b.confidence - a.confidence)
 				this.store.rules = this.store.rules.slice(0, LTM_MAX_RULES)
 			}
+
 			await this.persist()
-		} catch {}
+		} catch {
+			// Silently swallow — distillation is best-effort
+		}
 	}
-	private async upsertRule(r: { topic: string; rule: string; examples: string[]; confidence: number }) {
-		const emb = await this.embedder.embed(`${r.topic}: ${r.rule}`)
-		for (const ex of this.store.rules) {
-			if (MemoryEmbeddingAdapter.cosineSim(emb, ex.embedding) >= 0.85) {
-				ex.confidence = Math.max(ex.confidence, r.confidence)
-				ex.updatedAt = Date.now()
+
+	private async upsertRule(raw: {
+		topic: string
+		rule: string
+		examples: string[]
+		confidence: number
+	}): Promise<void> {
+		const text = `${raw.topic}: ${raw.rule}`
+		const embedding = await this.embedder.embed(text)
+
+		// Check for near-duplicate (sim ≥ 0.85)
+		for (const existing of this.store.rules) {
+			const sim = MemoryEmbeddingAdapter.cosineSim(embedding, existing.embedding)
+			if (sim >= 0.85) {
+				// Merge: take higher confidence, union examples
+				existing.confidence = Math.max(existing.confidence, raw.confidence)
+				const newExamples = raw.examples.filter((ex) => !existing.examples.includes(ex))
+				existing.examples = [...existing.examples, ...newExamples].slice(0, 4)
+				existing.updatedAt = Date.now()
 				return
 			}
 		}
+
+		// New rule
 		const now = Date.now()
 		this.store.rules.push({
 			id: `ltm_${now}_${Math.random().toString(36).slice(2, 8)}`,
-			topic: r.topic,
-			rule: r.rule,
-			examples: (r.examples ?? []).slice(0, 4),
-			confidence: Math.max(0, Math.min(1, r.confidence)),
+			topic: raw.topic,
+			rule: raw.rule,
+			examples: (raw.examples ?? []).slice(0, 4),
+			confidence: Math.max(0, Math.min(1, raw.confidence)),
 			useCount: 0,
 			createdAt: now,
 			updatedAt: now,
-			embedding: emb,
+			embedding,
 		})
 	}
-	async retrieve(q: string): Promise<RuleCard[]> {
+
+	// ── Retrieval ──────────────────────────────────────────────────────────────
+
+	/**
+	 * Two-phase retrieval for LTM rules (same algorithm as episodic).
+	 */
+	async retrieve(queryIntent: string): Promise<RuleCard[]> {
 		await this.load()
-		if (!this.store.rules.length) return []
-		const qv = await this.embedder.embed(q)
-		if (!qv.length) return []
-		const cands = this.store.rules
-			.map((r) => ({ r, sim: MemoryEmbeddingAdapter.cosineSim(qv, r.embedding) }))
+		if (this.store.rules.length === 0) return []
+
+		const queryVec = await this.embedder.embed(queryIntent)
+		if (queryVec.length === 0) return []
+
+		// Phase A
+		const withSim = this.store.rules
+			.map((rule) => ({
+				rule,
+				sim: MemoryEmbeddingAdapter.cosineSim(queryVec, rule.embedding),
+			}))
 			.filter((x) => x.sim >= SIM_THRESHOLD)
 			.sort((a, b) => b.sim - a.sim)
 			.slice(0, TOP_K1)
-		if (!cands.length) return []
-		const sH = MemoryEmbeddingAdapter.zScore(cands.map((x) => x.sim)),
-			qH = MemoryEmbeddingAdapter.zScore(cands.map((x) => x.r.confidence))
-		return cands
-			.map((x, i) => ({ r: x.r, score: (1 - LAMBDA) * (sH[i] ?? 0) + LAMBDA * (qH[i] ?? 0) }))
-			.sort((a, b) => b.score - a.score)
-			.slice(0, TOP_K2)
-			.map((x) => x.r)
+
+		if (withSim.length === 0) return []
+
+		// Phase B: use confidence as Q-proxy
+		const sims = withSim.map((x) => x.sim)
+		const qVals = withSim.map((x) => x.rule.confidence)
+
+		const simHat = MemoryEmbeddingAdapter.zScore(sims)
+		const qHat = MemoryEmbeddingAdapter.zScore(qVals)
+
+		const scored = withSim.map((x, i) => ({
+			rule: x.rule,
+			score: (1 - LAMBDA) * (simHat[i] ?? 0) + LAMBDA * (qHat[i] ?? 0),
+		}))
+
+		scored.sort((a, b) => b.score - a.score)
+
+		return scored.slice(0, TOP_K2).map((x) => x.rule)
 	}
-	async markUsed(ids: string[]): Promise<void> {
+
+	/** Increment useCount for retrieved rules. */
+	async markUsed(ruleIds: string[]): Promise<void> {
 		await this.load()
 		let changed = false
-		for (const r of this.store.rules)
-			if (ids.includes(r.id)) {
-				r.useCount++
-				r.updatedAt = Date.now()
+		for (const rule of this.store.rules) {
+			if (ruleIds.includes(rule.id)) {
+				rule.useCount++
+				rule.updatedAt = Date.now()
 				changed = true
 			}
-		if (changed) await this.persist()
+		}
+		if (changed) {
+			await this.persist()
+		}
 	}
+
 	getRules(): readonly RuleCard[] {
 		return this.store.rules
 	}
