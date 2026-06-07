@@ -3,7 +3,7 @@
 // Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 import * as vscode from "vscode"
 
-import { matchCjcErrorPattern } from "../../../../services/cangjie-lsp/CangjieErrorAnalyzer"
+import { getCangjiePromptServices } from "../cangjie-context"
 import {
 	COMMON_ERROR_TABLE_TEMPLATE,
 	CORE_PROJECT_TEMPLATE,
@@ -69,7 +69,7 @@ export function buildContextualCodingRules(
 			.filter(Boolean)
 		const categoriesPresent = new Set<string>()
 		for (const msg of errorMessages) {
-			const pattern = matchCjcErrorPattern(msg)
+			const pattern = getCangjiePromptServices().getCangjieErrorAnalyzer().matchCjcErrorPattern(msg)
 			if (pattern) categoriesPresent.add(pattern.category)
 		}
 

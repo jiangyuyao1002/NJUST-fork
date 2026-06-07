@@ -5,8 +5,8 @@ import * as vscode from "vscode"
 import * as path from "path"
 import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
-import { CangjieSymbolIndex, type SymbolEntry } from "../../../../services/cangjie-lsp/CangjieSymbolIndex"
-import { CJC_ERROR_PATTERNS } from "../../../../services/cangjie-lsp/CangjieErrorAnalyzer"
+import { getCangjiePromptServices } from "../cangjie-context"
+import type { SymbolEntry } from "../../../../services/interfaces/ICangjiePromptServices"
 import { normalizeDiagnosticCode as _normalizeDiagnosticCode } from "../CangjieErrorAnalyzer"
 import { extractImports as _extractImports } from "../CangjieImportParser"
 import {
@@ -23,9 +23,11 @@ import { normalizeDiagnosticMessageForAggregation } from "./diagnosticHandling"
 const LEARNED_FIXES_MAX_SECTION_CHARS = 4000
 const normalizeDiagnosticCode = _normalizeDiagnosticCode
 
-const LEARNED_FIX_CATEGORY_LEXICON: Set<string> = (() => {
+let _lexiconCache: Set<string> | undefined
+function getLearnedFixCategoryLexicon(): Set<string> {
+	if (_lexiconCache) return _lexiconCache
 	const s = new Set<string>()
-	for (const p of CJC_ERROR_PATTERNS) {
+	for (const p of getCangjiePromptServices().getCangjieErrorAnalyzer().CJC_ERROR_PATTERNS) {
 		for (const part of p.category.split(/[/／、,，\s]+/)) {
 			const w = part.trim().toLowerCase()
 			if (w.length >= 2) s.add(w)
@@ -36,8 +38,9 @@ const LEARNED_FIX_CATEGORY_LEXICON: Set<string> = (() => {
 			if (word.length > 4 && /^[a-z][a-z-]+$/.test(word)) s.add(word)
 		}
 	}
+	_lexiconCache = s
 	return s
-})()
+}
 
 const STYLE_FEW_SHOT_MAX_CHARS = 2200
 const STYLE_SNIPPET_LINES = 16
@@ -60,7 +63,7 @@ export async function buildCangjieStyleFewShotSection(
 	diagnostics: vscode.Diagnostic[],
 	cjpmRawHash: string,
 ): Promise<string | null> {
-	const idx = CangjieSymbolIndex.getInstance()
+	const idx = getCangjiePromptServices().getCangjieSymbolIndex()
 	if (!idx || idx.symbolCount === 0) return null
 	const learnedData = loadLearnedFixes(cwd)
 	const learnedMtime = getLearnedFixesFileMtime(cwd)
@@ -214,7 +217,7 @@ export function countLearnedFixLexiconOverlap(normalizedErrorPattern: string, no
 	const msgTok = new Set(normalizedMessage.split(" ").filter((t) => t.length > 1))
 	let n = 0
 	for (const t of epTok) {
-		if (LEARNED_FIX_CATEGORY_LEXICON.has(t) && msgTok.has(t)) n++
+		if (getLearnedFixCategoryLexicon().has(t) && msgTok.has(t)) n++
 	}
 	return n
 }
@@ -306,7 +309,7 @@ export function learnedPatternMatchesDiagnostics(p: LearnedFixPattern, diagnosti
 			msg.includes(epHead) ||
 			ep.includes(msgHead) ||
 			kw > 0 ||
-			[...LEARNED_FIX_CATEGORY_LEXICON].some((w) => w.length >= 2 && ep.includes(w) && msg.includes(w))
+			[...getLearnedFixCategoryLexicon()].some((w) => w.length >= 2 && ep.includes(w) && msg.includes(w))
 		if (!roughSub) return false
 		let threshold = hasExplicitCode ? 0.75 : 0.82
 		threshold -= Math.min(4, kw) * 0.05

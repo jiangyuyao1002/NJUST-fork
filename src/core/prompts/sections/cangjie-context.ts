@@ -5,10 +5,9 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 
-import { parseCangjieDefinitions } from "../../../services/tree-sitter/cangjieParser"
-import { CangjieSymbolIndex } from "../../../services/cangjie-lsp/CangjieSymbolIndex"
-import { formatCompileHistoryPromptSection } from "../../../services/cangjie-lsp/cangjieCompileHistory"
 import type { CangjieContextIntensity } from "../../task/CangjieRuntimePolicy"
+import type { ICangjiePromptServices } from "../../../services/interfaces/ICangjiePromptServices"
+import { CangjiePromptServices } from "../../../services/CangjiePromptServices"
 import {
 	DEFAULT_CANGJIE_CONTEXT_TOKEN_BUDGET,
 	estimateCangjieContextTokensForTest,
@@ -95,6 +94,21 @@ import {
 	buildStructuredEditingContext,
 	invalidateStructuredEditingContextCache,
 } from "./cangjieContext/structuredEditingContext"
+
+let _cangjieServices: ICangjiePromptServices | undefined
+
+export function setCangjiePromptServices(services: ICangjiePromptServices): void {
+	_cangjieServices = services
+}
+
+export function getCangjiePromptServices(): ICangjiePromptServices {
+	if (!_cangjieServices) {
+		// Lazy-init with default implementation so module-level code that calls
+		// getCangjiePromptServices() during import does not crash.
+		_cangjieServices = new CangjiePromptServices()
+	}
+	return _cangjieServices
+}
 
 export { bumpCangjieL3TtlConfigCache }
 export { detectCangjieRelevanceForAuxiliaryModes, getCangjieSystemPromptCacheKeySuffix, userMessageSuggestsCangjie }
@@ -207,7 +221,7 @@ export async function getCangjieContextSection(
 		// Symbol scanning, import analysis, and doc mapping are only performed
 		// when a cjpm.toml project exists, to keep context lightweight otherwise.
 		if (projectInfo && includeHeavyContext) {
-			const idx = CangjieSymbolIndex.getInstance()
+			const idx = getCangjiePromptServices().getCangjieSymbolIndex()
 			const importsHash = simpleHash([...imports].sort().join("|"))
 			const learnedFixesMtime = getLearnedFixesFileMtime(cwd)
 			const heavyContextKey = [
@@ -267,7 +281,11 @@ export async function getCangjieContextSection(
 				: []
 
 		if (includeHeavyContext) {
-			addPrioritized(prioritized, 95, formatCompileHistoryPromptSection(cwd))
+			addPrioritized(
+				prioritized,
+				95,
+				getCangjiePromptServices().getCangjieCompileHistory().formatCompileHistoryPromptSection(cwd),
+			)
 		}
 
 		if (recentBuildRootCauses.length > 0) {
@@ -339,7 +357,7 @@ export async function getCangjieContextSection(
 							content: c,
 							lines: c.split("\n"),
 							imports: _extractImports(c),
-							defs: parseCangjieDefinitions(c),
+							defs: getCangjiePromptServices().getCangjieParser().parseCangjieDefinitions(c),
 							diagnosticsByFile: diagSnapshot.byFile,
 						}
 					})()
@@ -432,6 +450,10 @@ export {
 	buildCompileErrorCorpusSearch,
 	buildAutoCorpusQueries,
 }
+// Barrel re-exports for downstream consumers:
+// - activate/CodeActionProvider.ts uses matchCjcErrorPattern
+// - core/task/CangjieRuntimePolicy.ts uses getMatchingCjcPatternsByCategory
+// TODO: migrate these consumers to use ICangjiePromptServices, then remove this block.
 export {
 	CJC_ERROR_PATTERNS,
 	STDLIB_DOC_MAP,

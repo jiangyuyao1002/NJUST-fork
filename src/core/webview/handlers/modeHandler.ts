@@ -6,7 +6,6 @@ import * as vscode from "vscode"
 import { NJUST_AI_CONFIG_DIR, type Command, type WebviewMessage } from "@njust-ai/types"
 import { type Mode, defaultModeSlug } from "../../../shared/modes"
 import { customToolRegistry } from "@njust-ai/core"
-import { getRooDirectoriesForCwd } from "../../../services/njust-ai-config/index.js"
 import { openFile } from "../../../integrations/misc/open-file"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { getWorkspacePath } from "../../../utils/path"
@@ -89,7 +88,7 @@ async function handleOpenKeyboardShortcuts(_context: MessageHandlerContext, mess
 async function handleRefreshCustomTools(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { provider, getCurrentCwd } = context
 	try {
-		const toolDirs = getRooDirectoriesForCwd(getCurrentCwd()).map((dir) => path.join(dir, "tools"))
+		const toolDirs = provider.getRooDirectoriesForCwd(getCurrentCwd()).map((dir) => path.join(dir, "tools"))
 		await customToolRegistry.loadFromDirectories(toolDirs)
 		await provider.postMessageToWebview({
 			type: "customToolsResult",
@@ -205,15 +204,30 @@ async function handleExportMode(context: MessageHandlerContext, message: Webview
 					void provider.postMessageToWebview({ type: "exportModeResult", success: true, slug: message.slug })
 					vscode.window.showInformationMessage(t("common:info.mode_exported", { mode: message.slug }))
 				} else {
-					void provider.postMessageToWebview({ type: "exportModeResult", success: false, error: "Export cancelled", slug: message.slug })
+					void provider.postMessageToWebview({
+						type: "exportModeResult",
+						success: false,
+						error: "Export cancelled",
+						slug: message.slug,
+					})
 				}
 			} else {
-				void provider.postMessageToWebview({ type: "exportModeResult", success: false, error: result.error, slug: message.slug })
+				void provider.postMessageToWebview({
+					type: "exportModeResult",
+					success: false,
+					error: result.error,
+					slug: message.slug,
+				})
 			}
 		} catch (error) {
 			const errorMessage = getErrorMessage(error)
 			provider.log(`Failed to export mode ${message.slug}: ${errorMessage}`)
-			void provider.postMessageToWebview({ type: "exportModeResult", success: false, error: errorMessage, slug: message.slug })
+			void provider.postMessageToWebview({
+				type: "exportModeResult",
+				success: false,
+				error: errorMessage,
+				slug: message.slug,
+			})
 		}
 	}
 }
@@ -244,7 +258,10 @@ async function handleImportMode(context: MessageHandlerContext, message: Webview
 		if (fileUri?.[0]) {
 			await updateGlobalState("lastModeImportPath", fileUri[0].fsPath)
 			const yamlContent = await fs.readFile(fileUri[0].fsPath, "utf-8")
-			const result = await provider.customModesManager.importModeWithRules(yamlContent, message.source || "project")
+			const result = await provider.customModesManager.importModeWithRules(
+				yamlContent,
+				message.source || "project",
+			)
 
 			if (result.success) {
 				const customModes = await provider.customModesManager.getCustomModes()
@@ -442,7 +459,12 @@ async function handleCreateCommand(context: MessageHandlerContext, message: Webv
 			commandName = "new-command"
 			let counter = 1
 			let fp = path.join(commandsDir, `${commandName}.md`)
-			while (await fs.access(fp).then(() => true).catch(() => false)) {
+			while (
+				await fs
+					.access(fp)
+					.then(() => true)
+					.catch(() => false)
+			) {
 				commandName = `new-command-${counter}`
 				fp = path.join(commandsDir, `${commandName}.md`)
 				counter++
@@ -450,7 +472,12 @@ async function handleCreateCommand(context: MessageHandlerContext, message: Webv
 		}
 
 		const filePath = path.join(commandsDir, `${commandName}.md`)
-		if (await fs.access(filePath).then(() => true).catch(() => false)) {
+		if (
+			await fs
+				.access(filePath)
+				.then(() => true)
+				.catch(() => false)
+		) {
 			vscode.window.showErrorMessage(t("common:errors.command_already_exists", { commandName }))
 			return
 		}

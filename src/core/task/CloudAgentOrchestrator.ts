@@ -3,17 +3,6 @@ import * as path from "path"
 import * as vscode from "vscode"
 import { Package } from "../../shared/package"
 import type { ClineAskResponse } from "../../shared/WebviewMessage"
-import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../../services/cloud-agent/applyCloudWorkspaceOps"
-import { buildCloudWorkspaceOpToolMessage } from "../../services/cloud-agent/buildCloudWorkspaceOpToolMessage"
-import { CloudAgentClient } from "../../services/cloud-agent/CloudAgentClient"
-import { executeDeferredToolCall } from "../../services/cloud-agent/executeDeferredToolCall"
-import {
-	CLOUD_AGENT_DEFERRED_MAX_ITERATIONS,
-	CLOUD_AGENT_DEFERRED_MAX_DURATION_MS,
-	CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX,
-} from "../../services/cloud-agent/deferredConstants"
-import { parseWorkspaceOps } from "../../services/cloud-agent/parseWorkspaceOps"
-import { getProfileStorageService } from "../../services/cloud-agent/ProfileStorageService"
 import type {
 	CloudAgentCallbacks,
 	CloudRunResult,
@@ -23,6 +12,8 @@ import type {
 	WorkspaceOp,
 } from "../../services/cloud-agent/types"
 import type { CloudAgentProfile } from "../../services/cloud-agent/types/profile"
+import type { ICloudAgentClient, ICloudAgentService } from "../../services/cloud-agent/interfaces/ICloudAgentService"
+import { CloudAgentService } from "../../services/cloud-agent/CloudAgentService"
 import { allowRooIgnorePathAccess } from "../ignore/RooIgnoreController"
 import { AskIgnoredError } from "./AskIgnoredError"
 import { NJUST_AIEventName } from "@njust-ai/types"
@@ -85,11 +76,14 @@ function makeClientOptions(profile: CloudAgentProfile, signal: AbortSignal, requ
  * full Task surface area.
  */
 export class CloudAgentOrchestrator {
-	constructor(private readonly host: ICloudAgentHost) {}
+	constructor(
+		private readonly host: ICloudAgentHost,
+		private readonly service: ICloudAgentService = new CloudAgentService(),
+	) {}
 
 	async run(userMessage: string, images?: string[]): Promise<void> {
 		// 1. 从 ProfileStorageService 获取活跃 Profile
-		const profile = getProfileStorageService().getActiveProfile()
+		const profile = this.service.getActiveProfile()
 		if (!profile) {
 			await this.host.say("error", t("errors.cloud_agent.profile_not_configured"))
 			return
@@ -102,7 +96,7 @@ export class CloudAgentOrchestrator {
 		const requestAbort = new AbortController()
 		this.host.setCurrentRequestAbortController(requestAbort)
 
-		const client = new CloudAgentClient(
+		const client = this.service.createClient(
 			callbacks,
 			makeClientOptions(profile, requestAbort.signal, behavior.requestTimeoutMs),
 		)
@@ -131,7 +125,7 @@ export class CloudAgentOrchestrator {
 	// ── Legacy single-shot /v1/run ──────────────────────────────────────
 
 	private async runLegacy(
-		client: CloudAgentClient,
+		client: ICloudAgentClient,
 		profile: CloudAgentProfile,
 		behavior: BehaviorConfig,
 		callbacks: CloudAgentCallbacks,
@@ -208,14 +202,14 @@ export class CloudAgentOrchestrator {
 	// ── Deferred protocol loop ──────────────────────────────────────────
 
 	private async runDeferredLoop(
-		client: CloudAgentClient,
+		client: ICloudAgentClient,
 		profile: CloudAgentProfile,
 		behavior: BehaviorConfig,
 		callbacks: CloudAgentCallbacks,
 		userMessage: string,
 		images?: string[],
 	): Promise<void> {
-		const maxIterations = CLOUD_AGENT_DEFERRED_MAX_ITERATIONS
+		const maxIterations = this.service.deferredConstants.maxIterations
 		let hadWorkspaceOpsForCompile = false
 		let lastNotifiedRunId: string | undefined
 		let lastServerRevision: string | undefined
@@ -228,7 +222,7 @@ export class CloudAgentOrchestrator {
 
 		let deferredResp: DeferredResponse
 		try {
-			const startClient = new CloudAgentClient(
+			const startClient = this.service.createClient(
 				makeCallbacks(this.host),
 				makeClientOptions(profile, startAbort.signal, behavior.requestTimeoutMs),
 			)
@@ -258,16 +252,16 @@ export class CloudAgentOrchestrator {
 		const loopStartTime = Date.now()
 		while (deferredResp.status === "pending" && iteration < maxIterations && !this.host.abort) {
 			// Wall-clock upper limit check: break if the deferred loop has run too long.
-			if (Date.now() - loopStartTime > CLOUD_AGENT_DEFERRED_MAX_DURATION_MS) {
+			if (Date.now() - loopStartTime > this.service.deferredConstants.maxDurationMs) {
 				const elapsedSec = Math.round((Date.now() - loopStartTime) / 1000)
 				await this.host.say(
 					"error",
 					t("errors.cloud_agent.max_duration_reached", {
 						elapsed: elapsedSec,
-						max: CLOUD_AGENT_DEFERRED_MAX_DURATION_MS / 1000,
+						max: this.service.deferredConstants.maxDurationMs / 1000,
 					}),
 				)
-				await CloudAgentClient.sendDeferredAbort(
+				await this.service.sendDeferredAbort(
 					profile,
 					this.host.taskId,
 					lastNotifiedRunId,
@@ -283,7 +277,7 @@ export class CloudAgentOrchestrator {
 				await this.host.say("text", log)
 			}
 
-			const parsed = parseWorkspaceOps(deferredResp)
+			const parsed = this.service.parseWorkspaceOps(deferredResp)
 			const { operations: ops, error: workspaceOpsParseError } = parsed
 			if (workspaceOpsParseError) {
 				await this.host.say(
@@ -317,7 +311,7 @@ export class CloudAgentOrchestrator {
 					}
 					continue
 				}
-				const result = await executeDeferredToolCall(
+				const result = await this.service.executeDeferredToolCall(
 					this.host.cwd,
 					call,
 					behavior.allowedCommands,
@@ -348,7 +342,7 @@ export class CloudAgentOrchestrator {
 				const msg = t("errors.cloud_agent.missing_run_id")
 				await this.host.say("error", msg)
 				await this.host.ask("api_req_failed", msg)
-				await CloudAgentClient.sendDeferredAbort(
+				await this.service.sendDeferredAbort(
 					profile,
 					this.host.taskId,
 					lastNotifiedRunId,
@@ -366,7 +360,7 @@ export class CloudAgentOrchestrator {
 			this.host.setCurrentRequestAbortController(resumeAbort)
 
 			try {
-				const resumeClient = new CloudAgentClient(
+				const resumeClient = this.service.createClient(
 					makeCallbacks(this.host),
 					makeClientOptions(profile, resumeAbort.signal, behavior.requestTimeoutMs),
 				)
@@ -380,7 +374,7 @@ export class CloudAgentOrchestrator {
 							new: nextRev,
 						}),
 					)
-					await CloudAgentClient.sendDeferredAbort(
+					await this.service.sendDeferredAbort(
 						profile,
 						this.host.taskId,
 						deferredResp.run_id,
@@ -412,21 +406,21 @@ export class CloudAgentOrchestrator {
 			} catch (error) {
 				if (this.host.abort) break
 				const status = (error as Error & { status?: number }).status
-				if (status === 404 && sessionRecoveries < CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX) {
+				if (status === 404 && sessionRecoveries < this.service.deferredConstants.sessionRecoveryMax) {
 					sessionRecoveries++
 					await this.host.say(
 						"text",
 						t("info.cloud_agent.session_expired", {
 							runId: runIdForResume.slice(0, 8),
 							current: sessionRecoveries,
-							max: CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX,
+							max: this.service.deferredConstants.sessionRecoveryMax,
 						}),
 					)
 
 					const restartAbort = new AbortController()
 					this.host.setCurrentRequestAbortController(restartAbort)
 					try {
-						const restartClient = new CloudAgentClient(
+						const restartClient = this.service.createClient(
 							makeCallbacks(this.host),
 							makeClientOptions(profile, restartAbort.signal, behavior.requestTimeoutMs),
 						)
@@ -463,7 +457,7 @@ export class CloudAgentOrchestrator {
 				await this.host.say("error", `Cloud Agent deferred/resume error: ${msg}`)
 				await this.host.ask("api_req_failed", msg)
 				if (status !== 404) {
-					await CloudAgentClient.sendDeferredAbort(
+					await this.service.sendDeferredAbort(
 						profile,
 						this.host.taskId,
 						runIdForResume,
@@ -478,7 +472,7 @@ export class CloudAgentOrchestrator {
 
 		if (iteration >= maxIterations && deferredResp.status === "pending") {
 			await this.host.say("error", t("errors.cloud_agent.max_iterations_reached", { max: maxIterations }))
-			await CloudAgentClient.sendDeferredAbort(
+			await this.service.sendDeferredAbort(
 				profile,
 				this.host.taskId,
 				lastNotifiedRunId,
@@ -496,7 +490,7 @@ export class CloudAgentOrchestrator {
 				await this.host.say("text", deferredResp.memory_summary)
 			}
 
-			const finalParsed = parseWorkspaceOps(deferredResp)
+			const finalParsed = this.service.parseWorkspaceOps(deferredResp)
 			if (finalParsed.error) {
 				await this.host.say(
 					"text",
@@ -565,7 +559,9 @@ export class CloudAgentOrchestrator {
 			}
 
 			const isWriteProtected = (await this.host.rooProtectedController?.isWriteProtected(op.path)) || false
-			const toolJson = await buildCloudWorkspaceOpToolMessage(this.host.cwd, op, { isWriteProtected })
+			const toolJson = await this.service.buildCloudWorkspaceOpToolMessage(this.host.cwd, op, {
+				isWriteProtected,
+			})
 			const askResult = await this.host.ask("tool", toolJson, false)
 			if (askResult.text) {
 				await this.host.say("user_feedback", askResult.text, askResult.images)
@@ -679,7 +675,7 @@ export class CloudAgentOrchestrator {
 
 			let fixResult: CloudRunResult
 			try {
-				const fixClient = new CloudAgentClient(
+				const fixClient = this.service.createClient(
 					callbacks,
 					makeClientOptions(profile, fixAbort.signal, behavior.requestTimeoutMs),
 				)
@@ -748,7 +744,9 @@ export class CloudAgentOrchestrator {
 					continue
 				}
 				const isWriteProtected = (await this.host.rooProtectedController?.isWriteProtected(op.path)) || false
-				const toolJson = await buildCloudWorkspaceOpToolMessage(this.host.cwd, op, { isWriteProtected })
+				const toolJson = await this.service.buildCloudWorkspaceOpToolMessage(this.host.cwd, op, {
+					isWriteProtected,
+				})
 
 				let response: ClineAskResponse
 				try {
@@ -767,7 +765,7 @@ export class CloudAgentOrchestrator {
 					continue
 				}
 
-				const single = await applySingleCloudWorkspaceOp(
+				const single = await this.service.applySingleCloudWorkspaceOp(
 					this.host.cwd,
 					op,
 					this.host.rooIgnoreController,
@@ -780,7 +778,7 @@ export class CloudAgentOrchestrator {
 				}
 			}
 		} else {
-			const applied = await applyCloudWorkspaceOps(
+			const applied = await this.service.applyCloudWorkspaceOps(
 				this.host.cwd,
 				ops,
 				() => this.host.abort,

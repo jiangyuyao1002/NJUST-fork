@@ -5,8 +5,7 @@ import * as fs from "fs"
 import * as path from "path"
 import { parse as parseToml } from "smol-toml"
 
-import { getCjpmTreeSummaryForPrompt } from "../../../../services/cangjie-lsp/cjpmTreeForPrompt"
-import { CangjieSymbolIndex } from "../../../../services/cangjie-lsp/CangjieSymbolIndex"
+import { getCangjiePromptServices } from "../cangjie-context"
 import { logger } from "../../../../shared/logger"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
@@ -61,7 +60,7 @@ export async function verifyPackageDeclarations(
 	const mismatches: string[] = []
 	const MAX_CHECKS = 50
 	let checked = 0
-	const symbolIndex = CangjieSymbolIndex.getInstance()
+	const symbolIndex = getCangjiePromptServices().getCangjieSymbolIndex()
 
 	async function walk(node: PackageNode): Promise<void> {
 		if (checked >= MAX_CHECKS) return
@@ -131,7 +130,7 @@ export async function verifyPackageDeclarations(
 export async function buildWorkspaceSymbolSummary(info: CjpmProjectInfo, cwd: string): Promise<string | null> {
 	if (!info.isWorkspace || !info.members || info.members.length === 0) return null
 
-	const symbolIndex = CangjieSymbolIndex.getInstance()
+	const symbolIndex = getCangjiePromptServices().getCangjieSymbolIndex()
 	if (!symbolIndex || symbolIndex.symbolCount === 0) return null
 
 	const MAX_SYMBOLS_PER_MODULE = 20
@@ -692,7 +691,7 @@ export async function getCjpmTreeSection(cwd: string): Promise<string | null> {
 			return cachedCjpmTree.result
 		}
 
-		const summary = await getCjpmTreeSummaryForPrompt(cwd)
+		const summary = await getCangjiePromptServices().getCjpmTreeForPrompt().getCjpmTreeSummaryForPrompt(cwd)
 		const result = summary || null
 		cachedCjpmTree = { result, cwd, tomlMtime, lockMtime, fetchedAt: now }
 		return result

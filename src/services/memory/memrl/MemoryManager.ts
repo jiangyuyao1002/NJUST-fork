@@ -150,4 +150,8 @@ export class MemoryManager {
 		)
 		return `### Learned Rules\n${lines.join("\n\n")}`
 	}
+
+	dispose(): void {
+		// No-op for now — MemRL services clean up via their own lifecycle
+	}
 }

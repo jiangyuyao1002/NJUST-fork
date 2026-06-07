@@ -1,5 +1,6 @@
 import { VectorStoreSearchResult } from "./vector-store"
 import * as vscode from "vscode"
+import type { ContextProxy } from "../../../core/config/ContextProxy"
 
 /**
  * Interface for the code index manager
@@ -10,8 +11,10 @@ export interface ICodeIndexManager {
 	 */
 	onProgressUpdate: vscode.Event<{
 		systemStatus: IndexingState
-		fileStatuses: Record<string, string>
-		message?: string
+		message: string
+		processedItems: number
+		totalItems: number
+		currentItemUnit: string
 	}>
 
 	/**
@@ -30,9 +33,9 @@ export interface ICodeIndexManager {
 	readonly isFeatureConfigured: boolean
 
 	/**
-	 * Loads configuration from storage
+	 * Whether indexing is enabled for the current workspace
 	 */
-	loadConfiguration(): Promise<void>
+	readonly isWorkspaceEnabled: boolean
 
 	/**
 	 * Starts the indexing process
@@ -67,6 +70,31 @@ export interface ICodeIndexManager {
 	 * @returns Current status information
 	 */
 	getCurrentStatus(): { systemStatus: IndexingState; fileStatuses: Record<string, string>; message?: string }
+
+	/**
+	 * Whether the manager has been initialized
+	 */
+	readonly isInitialized: boolean
+
+	/**
+	 * Initializes the manager with configuration
+	 */
+	initialize(contextProxy: ContextProxy): Promise<{ requiresRestart: boolean }>
+
+	/**
+	 * Enables or disables indexing for the current workspace
+	 */
+	setWorkspaceEnabled(enabled: boolean): Promise<void>
+
+	/**
+	 * Sets the auto-enable default for new workspaces
+	 */
+	setAutoEnableDefault(enabled: boolean): Promise<void>
+
+	/**
+	 * Handles settings changes and recreates services if needed
+	 */
+	handleSettingsChange(): Promise<void>
 
 	/**
 	 * Disposes of resources used by the manager

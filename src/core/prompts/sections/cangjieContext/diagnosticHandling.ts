@@ -4,8 +4,7 @@
 import * as vscode from "vscode"
 import * as path from "path"
 
-import { CangjieSymbolIndex } from "../../../../services/cangjie-lsp/CangjieSymbolIndex"
-import { traceDiagnosticRootCause } from "../../../../services/cangjie-lsp/cangjieDiagnosticRootCause"
+import { getCangjiePromptServices } from "../cangjie-context"
 import {
 	normalizeDiagnosticCode as _normalizeDiagnosticCode,
 	resolveCjcPatternForDiagnostic as _resolveCjcPatternForDiagnostic,
@@ -183,7 +182,7 @@ export function sampleCangjieDiagnostics(
 const CONVERSION_HINT_MSG_RE = /mismatch|不匹配|类型|type|expected|需要/
 
 export function buildConversionHintByMessage(diagnostics: vscode.Diagnostic[]): Map<string, string | undefined> {
-	const idx = CangjieSymbolIndex.getInstance()
+	const idx = getCangjiePromptServices().getCangjieSymbolIndex()
 	const map = new Map<string, string | undefined>()
 	if (!idx) return map
 	for (const d of diagnostics) {
@@ -231,7 +230,9 @@ export function buildDiagnosticAugmentationLines(
 	const seen = new Set<string>()
 	for (const d of diagnostics) {
 		const uri = DIAGNOSTIC_URI_MAP.get(d)
-		const root = traceDiagnosticRootCause(d, uri, cwd, diagnosticsByFile)
+		const root = getCangjiePromptServices()
+			.getCangjieDiagnosticRootCause()
+			.traceDiagnosticRootCause(d, uri, cwd, diagnosticsByFile)
 		if (root && !seen.has(root)) {
 			seen.add(root)
 			lines.push(`- ${root}`)

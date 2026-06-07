@@ -29,7 +29,6 @@ import {} from "@njust-ai/core/providers"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { Package } from "../../shared/package"
 
-import { BypassStatusBar } from "../../services/BypassStatusBar"
 import { computePermissionMode, getMergedCommandLists } from "./ClineProviderState"
 import { Mode } from "../../shared/modes"
 import { EMBEDDING_MODEL_PROFILES } from "../../shared/embeddingModels"
@@ -41,14 +40,16 @@ import { DiffViewProvider } from "../../integrations/editor/DiffViewProvider"
 import { getTheme } from "../../integrations/theme/getTheme"
 import WorkspaceTracker from "../../integrations/workspace/WorkspaceTracker"
 
-import { McpServerManager } from "../../services/mcp/McpServerManager"
 import type { IMcpHubService } from "../../services/mcp/interfaces/IMcpHubService"
 
-import { CodeIndexManager } from "../../services/code-index/manager"
-
-import type { IndexProgressUpdate } from "../../services/code-index/interfaces/manager"
-import { SkillsManager } from "../../services/skills/SkillsManager"
-import { MemoryManager } from "../../services/memory/memrl/MemoryManager"
+import type { ICodeIndexManager, IndexProgressUpdate } from "../../services/code-index/interfaces/manager"
+import type { ISkillsManager } from "../../services/skills/interfaces/ISkillsManager"
+import type { IMemoryManager } from "../../services/memory/interfaces/IMemoryManager"
+import type { IBypassStatusBar } from "../../services/interfaces/IBypassStatusBar"
+import type { IClineProviderServices } from "../../services/interfaces/IClineProviderServices"
+import type { IProfileStorageService } from "../../services/interfaces/IProfileStorageService"
+import type { ICangjiePromptServices } from "../../services/interfaces/ICangjiePromptServices"
+import { DefaultClineProviderServices } from "../../services/DefaultClineProviderServices"
 
 import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
 import { getWorkspacePath } from "../../utils/path"
@@ -146,11 +147,11 @@ export class ClineProvider
 	public view?: vscode.WebviewView | vscode.WebviewPanel
 	public readonly stack: TaskStackManager
 	private codeIndexStatusSubscription?: vscode.Disposable
-	private codeIndexManager?: CodeIndexManager
+	private codeIndexManager?: ICodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
 	public mcpHub?: IMcpHubService // Must be public to satisfy IWebviewStateHost
-	protected skillsManager?: SkillsManager
-	private _memoryManager?: MemoryManager
+	protected skillsManager?: ISkillsManager
+	private _memoryManager?: IMemoryManager
 	private taskCreationCallback: (task: Task) => void
 	private readonly assistantPresentationSubscription: DisposableLike
 	private currentWorkspacePath: string | undefined
@@ -169,7 +170,7 @@ export class ClineProvider
 	public readonly taskHistory: TaskHistoryService
 	private readonly pendingEditManager: PendingEditManager
 	private readonly webviewContentProvider: WebviewContentProvider
-	private readonly bypassStatusBar: BypassStatusBar
+	private readonly bypassStatusBar: IBypassStatusBar
 
 	/**
 	 * Monotonically increasing sequence number for clineMessages state pushes.
@@ -207,11 +208,14 @@ export class ClineProvider
 		return this.context.extension?.packageJSON
 	}
 
+	private readonly services: IClineProviderServices
+
 	constructor(
 		readonly context: vscode.ExtensionContext,
 		private readonly outputChannel: vscode.OutputChannel,
 		public readonly renderContext: "sidebar" | "editor" = "sidebar",
 		public readonly contextProxy: ContextProxy,
+		services?: IClineProviderServices,
 	) {
 		super()
 		// Multiple consumers register TaskCreated and other events on this provider.
@@ -230,7 +234,8 @@ export class ClineProvider
 			getWebview: () => this.view?.webview,
 			buildState: () => this.getStateToPostToWebview(),
 		})
-		this.bypassStatusBar = new BypassStatusBar()
+		this.services = services ?? new DefaultClineProviderServices()
+		this.bypassStatusBar = this.services.createBypassStatusBar()
 
 		this.stack = new TaskStackManager({
 			outputChannel: this.outputChannel,
@@ -307,7 +312,8 @@ export class ClineProvider
 		})
 
 		// Initialize MCP Hub through the singleton manager
-		McpServerManager.getInstance(this.context, this)
+		this.services
+			.getMcpHub(this.context, this)
 			.then((hub) => {
 				this.mcpHub = hub
 				if (this.mcpHub) {
@@ -332,7 +338,7 @@ export class ClineProvider
 		)
 
 		// Initialize Skills Manager for skill discovery
-		this.skillsManager = new SkillsManager(this)
+		this.skillsManager = this.services.createSkillsManager(this)
 		this.skillsManager.initialize().catch((error) => {
 			this.log(`Failed to initialize Skills Manager: ${error}`)
 		})
@@ -451,7 +457,6 @@ export class ClineProvider
 
 		this.messageRouter.dispose()
 		this.assistantPresentationSubscription.dispose()
-		this.bypassStatusBar.dispose()
 		this.clearWebviewResources()
 
 		while (this.disposables.length) {
@@ -466,8 +471,6 @@ export class ClineProvider
 		this._workspaceTracker = undefined
 		await this.mcpHub?.unregisterClient()
 		this.mcpHub = undefined
-		await this.skillsManager?.dispose()
-		this.skillsManager = undefined
 		this.customModesManager?.dispose()
 		this.taskHistoryStore.dispose()
 		this.taskHistory.flushGlobalStateWriteThrough()
@@ -478,7 +481,8 @@ export class ClineProvider
 		// Clean up any event listeners attached to this provider
 		this.removeAllListeners()
 
-		McpServerManager.unregisterProvider(this)
+		this.services.unregisterMcpProvider(this)
+		await this.services.dispose()
 	}
 
 	public static getVisibleInstance(): ClineProvider | undefined {
@@ -989,7 +993,7 @@ export class ClineProvider
 		return this.context.extension.packageJSON.version ?? "1.0.0"
 	}
 
-	public getSkillsManager(): SkillsManager | undefined {
+	public getSkillsManager(): ISkillsManager | undefined {
 		return this.skillsManager
 	}
 
@@ -997,7 +1001,7 @@ export class ClineProvider
 	 * Lazily initialise and return the MemRL MemoryManager.
 	 * @param cwd - Explicit workspace path (preferred). Falls back to getWorkspacePath().
 	 */
-	public getMemoryManager(cwd?: string): MemoryManager | undefined {
+	public getMemoryManager(cwd?: string): IMemoryManager | undefined {
 		const resolvedCwd = cwd || getWorkspacePath()
 		if (!resolvedCwd) return undefined
 		// Re-create if the workspace path changed
@@ -1005,7 +1009,7 @@ export class ClineProvider
 			!this._memoryManager ||
 			(this._memoryManager as unknown as { workspaceDir: string }).workspaceDir !== resolvedCwd
 		) {
-			this._memoryManager = new MemoryManager(resolvedCwd)
+			this._memoryManager = this.services.createMemoryManager(resolvedCwd)
 		}
 		return this._memoryManager
 	}
@@ -1014,8 +1018,47 @@ export class ClineProvider
 	 * Gets the CodeIndexManager for the current active workspace
 	 * @returns CodeIndexManager instance for the current workspace or the default one
 	 */
-	public getCurrentWorkspaceCodeIndexManager(): CodeIndexManager | undefined {
-		return CodeIndexManager.getInstance(this.context)
+	public getCurrentWorkspaceCodeIndexManager(): ICodeIndexManager | undefined {
+		return this.services.getCodeIndexManager(this.context)
+	}
+
+	/**
+	 * Gets all active CodeIndexManager instances across workspaces
+	 */
+	public getAllCodeIndexManagers(): ICodeIndexManager[] {
+		return this.services.getAllCodeIndexManagers()
+	}
+
+	/**
+	 * Gets the Cangjie prompt services
+	 */
+	public getCangjiePromptServices(): ICangjiePromptServices {
+		return this.services.getCangjiePromptServices()
+	}
+
+	/**
+	 * Gets the ProfileStorageService for Cloud Agent profile management
+	 */
+	public getProfileStorageService(): IProfileStorageService {
+		return this.services.getProfileStorageService()
+	}
+
+	/**
+	 * Gets NJUST-AI directories for the current workspace
+	 */
+	public getRooDirectoriesForCwd(cwd: string): string[] {
+		return this.services.getRooDirectoriesForCwd(cwd)
+	}
+
+	/**
+	 * Search workspace files
+	 */
+	public searchWorkspaceFiles(
+		query: string,
+		workspacePath: string,
+		limit?: number,
+	): Promise<{ path: string; type: "file" | "folder"; label?: string }[]> {
+		return this.services.searchWorkspaceFiles(query, workspacePath, limit)
 	}
 
 	/**

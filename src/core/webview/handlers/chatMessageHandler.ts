@@ -11,7 +11,6 @@ import { openFile } from "../../../integrations/misc/open-file"
 import { openImage, saveImage } from "../../../integrations/misc/image-handler"
 import { selectImages } from "../../../integrations/misc/process-images"
 import { selectContextFiles } from "../../../integrations/misc/select-context-files"
-import { searchWorkspaceFiles } from "../../../services/search/file-search"
 import { playTts, setTtsEnabled, setTtsSpeed, stopTts } from "../../../utils/tts"
 import { searchCommits } from "../../../utils/git"
 import { openMention } from "../../mentions"
@@ -406,7 +405,7 @@ async function handleSearchFiles(context: MessageHandlerContext, message: Webvie
 		return
 	}
 	try {
-		const results = await searchWorkspaceFiles(message.query || "", workspacePath, 20)
+		const results = await provider.searchWorkspaceFiles(message.query || "", workspacePath, 20)
 
 		const currentTask = provider.getCurrentTask()
 		let rooIgnoreController = currentTask?.rooIgnoreController

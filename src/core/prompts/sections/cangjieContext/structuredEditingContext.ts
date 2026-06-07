@@ -4,11 +4,8 @@
 import * as vscode from "vscode"
 import * as path from "path"
 
-import {
-	parseCangjieDefinitions,
-	computeCangjieSignature,
-	type CangjieDef,
-} from "../../../../services/tree-sitter/cangjieParser"
+import { getCangjiePromptServices } from "../cangjie-context"
+import type { CangjieDef } from "../../../../services/interfaces/ICangjiePromptServices"
 import { extractImports as _extractImports } from "../CangjieImportParser"
 import { getErrorFixDirectiveForDiagnostic as _getErrorFixDirectiveForDiagnostic } from "../CangjieErrorAnalyzer"
 import type { StructuredEditingContextPreparse } from "../CangjieSymbolExtractor"
@@ -91,7 +88,7 @@ export async function buildStructuredEditingContext(pre?: StructuredEditingConte
 	const cursorLine = position.line
 	const content = doc.getText()
 	const usePre = pre !== undefined && pre.content === content
-	const defs = usePre ? pre.defs : parseCangjieDefinitions(content)
+	const defs = usePre ? pre.defs : getCangjiePromptServices().getCangjieParser().parseCangjieDefinitions(content)
 	const imports = usePre ? pre.imports : _extractImports(content)
 	const lines = usePre ? pre.lines : content.split("\n")
 
@@ -116,7 +113,7 @@ export async function buildStructuredEditingContext(pre?: StructuredEditingConte
 
 	if (enclosing.length > 0) {
 		const innermost = enclosing[0]!
-		const sig = computeCangjieSignature(lines, innermost)
+		const sig = getCangjiePromptServices().getCangjieParser().computeCangjieSignature(lines, innermost)
 		if (enclosing.length > 1) {
 			const outermost = enclosing[enclosing.length - 1]!
 			parts.push(
@@ -133,7 +130,9 @@ export async function buildStructuredEditingContext(pre?: StructuredEditingConte
 				)
 				if (memberDefs.length > 0) {
 					const memberSummaries = memberDefs.slice(0, 8).map((m: CangjieDef) => {
-						const memberSig = computeCangjieSignature(lines, m)
+						const memberSig = getCangjiePromptServices()
+							.getCangjieParser()
+							.computeCangjieSignature(lines, m)
 						return `  - ${m.kind} ${m.name}: ${memberSig}`
 					})
 					parts.push(`${outermost.kind} ${outermost.name} 的成员:\n${memberSummaries.join("\n")}`)

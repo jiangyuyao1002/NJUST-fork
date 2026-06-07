@@ -25,7 +25,6 @@ import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { clearOpenAiCodexAuthCache } from "../WebviewStateBuilder"
-import { getProfileStorageService } from "../../../services/cloud-agent/ProfileStorageService"
 import { confirmBypassTransition } from "../bypassGuard"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
@@ -858,7 +857,7 @@ async function handleRequestOpenAiCodexRateLimits(
 async function handleCloudAgentGetProfiles(context: MessageHandlerContext, _message: WebviewMessage): Promise<void> {
 	const { provider } = context
 	try {
-		const storage = getProfileStorageService()
+		const storage = provider.getProfileStorageService()
 		const profiles = storage.getProfiles()
 		const activeProfile = storage.getActiveProfile()
 		await provider.postMessageToWebview({
@@ -878,10 +877,11 @@ async function handleCloudAgentGetProfiles(context: MessageHandlerContext, _mess
 }
 
 async function handleCloudAgentSaveProfile(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+	const { provider } = context
 	try {
 		const profile = message.cloudAgentSaveProfile
 		if (profile) {
-			await getProfileStorageService().saveProfile(profile)
+			await provider.getProfileStorageService().saveProfile(profile)
 			await handleCloudAgentGetProfiles(context, message)
 		}
 	} catch (error) {
@@ -891,10 +891,11 @@ async function handleCloudAgentSaveProfile(context: MessageHandlerContext, messa
 }
 
 async function handleCloudAgentDeleteProfile(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+	const { provider } = context
 	try {
 		const id = message.cloudAgentDeleteProfile
 		if (id) {
-			await getProfileStorageService().deleteProfile(id)
+			await provider.getProfileStorageService().deleteProfile(id)
 			await handleCloudAgentGetProfiles(context, message)
 		}
 	} catch (error) {
@@ -911,7 +912,7 @@ async function handleCloudAgentSetActiveProfile(
 	try {
 		const id = message.cloudAgentSetActiveProfile
 		if (id) {
-			await getProfileStorageService().setActiveProfileId(id)
+			await provider.getProfileStorageService().setActiveProfileId(id)
 			await provider.postStateToWebview()
 		}
 	} catch (error) {

@@ -10,7 +10,9 @@ import { isEmpty } from "../../utils/object"
 
 import type { IMcpHubService } from "../../services/mcp/interfaces/IMcpHubService"
 import { CodeIndexManager } from "../../services/code-index/manager"
-import { SkillsManager } from "../../services/skills/SkillsManager"
+import type { ISkillsManager } from "../../services/skills/interfaces/ISkillsManager"
+import { CangjiePromptServices } from "../../services/CangjiePromptServices"
+import type { ICangjiePromptServices } from "../../services/interfaces/ICangjiePromptServices"
 
 import { buildBudgetedSessionMemoryPrompt } from "../condense/sessionMemoryCompact"
 import { getMemrlMemorySection } from "./sections/memrl-memory"
@@ -33,6 +35,7 @@ import {
 	DEFAULT_CANGJIE_CONTEXT_TOKEN_BUDGET,
 	detectCangjieRelevanceForAuxiliaryModes,
 	getCangjieContextSection,
+	setCangjiePromptServices,
 } from "./sections/cangjie-context"
 import { Package } from "../../shared/package"
 import { getMultiFileContextSection } from "./sections/multi-file-context"
@@ -140,7 +143,8 @@ export interface SystemPromptConfig {
 	settings?: SystemPromptSettings
 	todoList?: TodoItem[]
 	modelId?: string
-	skillsManager?: SkillsManager
+	skillsManager?: ISkillsManager
+	cangjieServices?: ICangjiePromptServices
 }
 
 async function generatePrompt(cfg: SystemPromptConfig): Promise<SystemPromptParts>
@@ -161,7 +165,7 @@ async function generatePrompt(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
-	skillsManager?: SkillsManager,
+	skillsManager?: ISkillsManager,
 ): Promise<SystemPromptParts>
 async function generatePrompt(
 	contextOrCfg: vscode.ExtensionContext | SystemPromptConfig,
@@ -179,7 +183,7 @@ async function generatePrompt(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
-	skillsManager?: SkillsManager,
+	skillsManager?: ISkillsManager,
 ): Promise<SystemPromptParts> {
 	const cfg: SystemPromptConfig =
 		"context" in contextOrCfg && "cwd" in contextOrCfg && "mode" in contextOrCfg
@@ -264,6 +268,7 @@ async function generatePromptImpl(cfg: SystemPromptConfig): Promise<SystemPrompt
 	if (trimCangjieBlockOnFollowup) {
 		cangjieTokenBudget = Math.max(800, Math.floor(cangjieTokenBudget * 0.65))
 	}
+	setCangjiePromptServices(cfg.cangjieServices ?? new CangjiePromptServices())
 	const cangjieContextSection = await getCangjieContextSection(
 		cwd,
 		mode as string,
@@ -450,7 +455,7 @@ function positionalToConfig(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
-	skillsManager?: SkillsManager,
+	skillsManager?: ISkillsManager,
 ): SystemPromptConfig {
 	const promptComponent = getPromptComponent(customModePrompts, mode)
 	const currentMode = getModeBySlug(mode, customModes) || modes.find((m) => m.slug === mode) || modes[0]
@@ -492,7 +497,7 @@ export async function SYSTEM_PROMPT_PARTS(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
-	skillsManager?: SkillsManager,
+	skillsManager?: ISkillsManager,
 ): Promise<SystemPromptParts>
 export async function SYSTEM_PROMPT_PARTS(
 	contextOrCfg: vscode.ExtensionContext | SystemPromptConfig,
@@ -510,7 +515,7 @@ export async function SYSTEM_PROMPT_PARTS(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
-	skillsManager?: SkillsManager,
+	skillsManager?: ISkillsManager,
 ): Promise<SystemPromptParts> {
 	if ("context" in contextOrCfg && "cwd" in contextOrCfg && "mode" in contextOrCfg) {
 		return generatePrompt(contextOrCfg as SystemPromptConfig)
@@ -554,7 +559,7 @@ export async function SYSTEM_PROMPT(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
-	skillsManager?: SkillsManager,
+	skillsManager?: ISkillsManager,
 ): Promise<string>
 export async function SYSTEM_PROMPT(
 	contextOrCfg: vscode.ExtensionContext | SystemPromptConfig,
@@ -572,7 +577,7 @@ export async function SYSTEM_PROMPT(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
-	skillsManager?: SkillsManager,
+	skillsManager?: ISkillsManager,
 ): Promise<string> {
 	const parts = await SYSTEM_PROMPT_PARTS(
 		contextOrCfg as UnsafeAny,

@@ -9,10 +9,9 @@ vi.mock("../../ignore/RooIgnoreController")
 
 import { webviewMessageHandler } from "../webviewMessageHandler"
 import type { ClineProvider } from "../ClineProvider"
-import { searchWorkspaceFiles } from "../../../services/search/file-search"
 import { RooIgnoreController } from "../../ignore/RooIgnoreController"
 
-const mockSearchWorkspaceFiles = searchWorkspaceFiles as Mock<typeof searchWorkspaceFiles>
+const mockSearchWorkspaceFiles = vi.fn()
 
 vi.mock("vscode", () => ({
 	window: {
@@ -38,7 +37,9 @@ describe("webviewMessageHandler - searchFiles with RooIgnore filtering", () => {
 
 		// Override the filterPaths method on the prototype
 		;(RooIgnoreController.prototype as unknown as Record<string, Mock>).filterPaths = mockFilterPaths
-		;(RooIgnoreController.prototype as unknown as Record<string, Mock>).initialize = vi.fn().mockResolvedValue(undefined)
+		;(RooIgnoreController.prototype as unknown as Record<string, Mock>).initialize = vi
+			.fn()
+			.mockResolvedValue(undefined)
 		;(RooIgnoreController.prototype as unknown as Record<string, Mock>).dispose = mockDispose
 
 		// Create mock ClineProvider
@@ -46,6 +47,7 @@ describe("webviewMessageHandler - searchFiles with RooIgnore filtering", () => {
 			getState: vi.fn(),
 			postMessageToWebview: vi.fn(),
 			getCurrentTask: vi.fn(),
+			searchWorkspaceFiles: mockSearchWorkspaceFiles,
 			cwd: "/mock/workspace",
 		} as unknown as ClineProvider
 	})
