@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import os from "os"
+import path from "path"
+import * as fs from "fs/promises"
 import { LongTermMemoryService } from "../LongTermMemoryService"
 import { MemoryEmbeddingAdapter } from "../MemoryEmbeddingAdapter"
 import type { IEmbedder } from "../../../code-index/interfaces/embedder"
@@ -31,8 +34,10 @@ function makeApi(responseJson: string): ApiHandler {
 
 describe("LongTermMemoryService", () => {
 	let svc: LongTermMemoryService
+	let tmpDir: string
 
-	beforeEach(() => {
+	beforeEach(async () => {
+		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "memrl-ltm-"))
 		const ruleJson = JSON.stringify([
 			{
 				topic: "Testing strategy",
@@ -41,7 +46,11 @@ describe("LongTermMemoryService", () => {
 				confidence: 0.9,
 			},
 		])
-		svc = new LongTermMemoryService("/tmp/ltm-test", makeEmbedder(), makeApi(ruleJson))
+		svc = new LongTermMemoryService(tmpDir, makeEmbedder(), makeApi(ruleJson))
+	})
+
+	afterEach(async () => {
+		await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {})
 	})
 
 	it("starts with no rules", () => {

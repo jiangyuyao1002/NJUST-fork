@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
 import os from "os"
@@ -45,6 +45,10 @@ describe("EpisodicMemoryService", () => {
 		service = new EpisodicMemoryService(tmpDir, adapter, () => {
 			distillCalled = true
 		})
+	})
+
+	afterEach(async () => {
+		await fs.rm(tmpDir, { recursive: true, force: true })
 	})
 
 	it("starts with empty store", async () => {

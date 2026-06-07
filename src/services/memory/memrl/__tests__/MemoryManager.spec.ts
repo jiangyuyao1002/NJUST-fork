@@ -1,7 +1,10 @@
 /**
  * Integration test: beforeRun → prompt hints → afterRun → Q update flow.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import os from "os"
+import path from "path"
+import * as fs from "fs/promises"
 import { MemoryManager } from "../MemoryManager"
 import type { IEmbedder } from "../../../code-index/interfaces/embedder"
 import type { ApiHandler } from "../../../../api"
@@ -29,10 +32,16 @@ function makeApi(): ApiHandler {
 
 describe("MemoryManager integration", () => {
 	let mgr: MemoryManager
+	let tmpDir: string
 
-	beforeEach(() => {
-		mgr = new MemoryManager("/tmp/memrl-mgr-test")
+	beforeEach(async () => {
+		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "memrl-mgr-"))
+		mgr = new MemoryManager(tmpDir)
 		mgr.updateDependencies(makeApi(), makeEmbedder())
+	})
+
+	afterEach(async () => {
+		await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {})
 	})
 
 	it("beforeRun returns empty strings on cold start", async () => {
@@ -53,7 +62,8 @@ describe("MemoryManager integration", () => {
 	})
 
 	it("returns empty results if updateDependencies was not called", async () => {
-		const fresh = new MemoryManager("/tmp/memrl-fresh")
+		const freshDir = path.join(os.tmpdir(), `memrl-fresh-${Date.now()}`)
+		const fresh = new MemoryManager(freshDir)
 		const result = await fresh.beforeRun("task-x", "intent")
 		expect(result.episodicHints).toBe("")
 		expect(result.ltmRules).toBe("")

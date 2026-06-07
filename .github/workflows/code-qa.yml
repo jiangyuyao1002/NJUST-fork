@@ -83,6 +83,8 @@ jobs:
               run: pnpm --filter @njust-ai/types build
             - name: Run unit tests
               run: pnpm test
+              env:
+                NODE_OPTIONS: "--max-old-space-size=4096"
 
     e2e-test:
         name: e2e-test
@@ -126,6 +128,8 @@ jobs:
               run: pnpm --filter @njust-ai/types build
             - name: Run ${{ matrix.name }} tests with coverage
               run: ${{ matrix.command }}
+              env:
+                NODE_OPTIONS: "--max-old-space-size=4096"
             - name: Upload ${{ matrix.name }} coverage to Codecov
               uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
               with:
