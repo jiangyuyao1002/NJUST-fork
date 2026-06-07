@@ -4,6 +4,7 @@ import { promisify } from "util"
 import type { CangjieLspState, CangjieLspClient } from "./CangjieLspClient"
 import type { CangjieCompileGuard } from "./CangjieCompileGuard"
 import { resolveCangjieToolPath, buildCangjieToolEnv, CJC_CONFIG_KEY } from "./cangjieToolUtils"
+import { t } from "../../i18n"
 
 const execFileAsync = promisify(execFile)
 const LSP_OUTPUT_COMMAND = "njust-ai.cangjieShowLspOutput"
@@ -40,9 +41,7 @@ export class CangjieLspStatusBar implements vscode.Disposable {
 			}),
 		)
 
-		this.disposables.push(
-			lspClient.onStateChange((state, message) => this.updateLspState(state, message)),
-		)
+		this.disposables.push(lspClient.onStateChange((state, message) => this.updateLspState(state, message)))
 
 		this.disposables.push(
 			vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -68,8 +67,8 @@ export class CangjieLspStatusBar implements vscode.Disposable {
 		this.compileGuardUnsub = guard.onCompile((ev) => {
 			if (ev.status === "start") {
 				this.compilePhase = "busy"
-				this.compileItem.text = "$(sync~spin) 仓颉 编译中..."
-				this.compileItem.tooltip = "保存后自动编译进行中，点击查看输出"
+				this.compileItem.text = `$(sync~spin) ${t("status.cangjie_lsp.compile_compiling")}`
+				this.compileItem.tooltip = t("tooltips.cangjie_lsp.compile_in_progress")
 				this.compileItem.backgroundColor = undefined
 				this.compileItem.show()
 				return
@@ -77,23 +76,27 @@ export class CangjieLspStatusBar implements vscode.Disposable {
 			this.compilePhase = "idle"
 			const sec = ev.durationMs != null ? (ev.durationMs / 1000).toFixed(1) : "?"
 			if (ev.success) {
-				const mode = ev.incremental ? "增量" : "全量"
-				let tip = `最近编译：${sec}s（${mode}）`
-				if (ev.incremental && ev.lastFullBuildMs && ev.durationMs != null && ev.lastFullBuildMs > ev.durationMs) {
+				const mode = ev.incremental ? t("status.cangjie_lsp.incremental") : t("status.cangjie_lsp.full")
+				let tip = t("tooltips.cangjie_lsp.last_compile", { sec, mode })
+				if (
+					ev.incremental &&
+					ev.lastFullBuildMs &&
+					ev.durationMs != null &&
+					ev.lastFullBuildMs > ev.durationMs
+				) {
 					const fullSec = (ev.lastFullBuildMs / 1000).toFixed(1)
 					const savePct = Math.round(((ev.lastFullBuildMs - ev.durationMs) / ev.lastFullBuildMs) * 100)
-					tip += `\n对比近期全量约 ${fullSec}s，约节省 ${savePct}%`
+					tip += t("tooltips.cangjie_lsp.incremental_savings", { fullSec, savePct })
 				}
-				this.compileItem.text =
-					ev.incremental
-						? `$(check) 仓颉 ${sec}s（增量）`
-						: `$(check) 仓颉 ${sec}s（全量）`
+				this.compileItem.text = ev.incremental
+					? `$(check) Cangjie ${sec}s (${t("status.cangjie_lsp.incremental")})`
+					: `$(check) Cangjie ${sec}s (${t("status.cangjie_lsp.full")})`
 				this.compileItem.tooltip = tip
 				this.compileItem.backgroundColor = undefined
 			} else {
 				const n = ev.errorCount ?? 0
-				this.compileItem.text = `$(error) 仓颉 ${n} error${n === 1 ? "" : "s"} · ${sec}s`
-				this.compileItem.tooltip = "编译失败，点击查看输出与详情"
+				this.compileItem.text = `$(error) Cangjie ${n} error${n === 1 ? "" : "s"} · ${sec}s`
+				this.compileItem.tooltip = t("tooltips.cangjie_lsp.compile_failed")
 				this.compileItem.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground")
 			}
 			this.updateVisibility(vscode.window.activeTextEditor)
@@ -103,8 +106,8 @@ export class CangjieLspStatusBar implements vscode.Disposable {
 
 	private resetCompileStatus(): void {
 		this.compilePhase = "idle"
-		this.compileItem.text = "$(tools) 仓颉 编译"
-		this.compileItem.tooltip = "保存 .cj 后自动编译；点击查看输出"
+		this.compileItem.text = `$(tools) ${t("status.cangjie_lsp.compile_idle")}`
+		this.compileItem.tooltip = t("tooltips.cangjie_lsp.compile_idle")
 		this.compileItem.backgroundColor = undefined
 	}
 
@@ -136,33 +139,37 @@ export class CangjieLspStatusBar implements vscode.Disposable {
 
 		switch (state) {
 			case "idle":
-				this.lspItem.text = "$(circle-outline) 仓颉 LSP"
-				this.lspItem.tooltip = `仓颉语言服务待命中（等待打开 .cj 文件）${versionSuffix}`
+				this.lspItem.text = "$(circle-outline) Cangjie LSP"
+				this.lspItem.tooltip = t("tooltips.cangjie_lsp.lsp_idle", { version: versionSuffix })
 				this.lspItem.backgroundColor = undefined
 				break
 			case "starting":
-				this.lspItem.text = "$(sync~spin) 仓颉 LSP"
-				this.lspItem.tooltip = `仓颉语言服务启动中…${versionSuffix}`
+				this.lspItem.text = "$(sync~spin) Cangjie LSP"
+				this.lspItem.tooltip = t("tooltips.cangjie_lsp.lsp_starting", { version: versionSuffix })
 				this.lspItem.backgroundColor = undefined
 				break
 			case "running":
-				this.lspItem.text = this.sdkVersion ? `$(check) 仓颉 ${this.sdkVersion}` : "$(check) 仓颉 LSP"
-				this.lspItem.tooltip = `仓颉语言服务运行中${versionSuffix}`
+				this.lspItem.text = this.sdkVersion ? `$(check) Cangjie ${this.sdkVersion}` : "$(check) Cangjie LSP"
+				this.lspItem.tooltip = t("tooltips.cangjie_lsp.lsp_running", { version: versionSuffix })
 				this.lspItem.backgroundColor = undefined
 				break
 			case "warning":
-				this.lspItem.text = "$(warning) 仓颉 LSP"
-				this.lspItem.tooltip = message ? `仓颉 LSP 警告: ${message}${versionSuffix}` : `仓颉语言服务异常${versionSuffix}`
+				this.lspItem.text = "$(warning) Cangjie LSP"
+				this.lspItem.tooltip = message
+					? t("tooltips.cangjie_lsp.lsp_warning", { message, version: versionSuffix })
+					: t("tooltips.cangjie_lsp.lsp_abnormal", { version: versionSuffix })
 				this.lspItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground")
 				break
 			case "error":
-				this.lspItem.text = "$(error) 仓颉 LSP"
-				this.lspItem.tooltip = message ? `仓颉 LSP 错误: ${message}${versionSuffix}` : `仓颉语言服务启动失败${versionSuffix}`
+				this.lspItem.text = "$(error) Cangjie LSP"
+				this.lspItem.tooltip = message
+					? t("tooltips.cangjie_lsp.lsp_error", { message, version: versionSuffix })
+					: t("tooltips.cangjie_lsp.lsp_start_failed", { version: versionSuffix })
 				this.lspItem.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground")
 				break
 			case "stopped":
-				this.lspItem.text = "$(circle-slash) 仓颉 LSP"
-				this.lspItem.tooltip = `仓颉语言服务已停止${versionSuffix}`
+				this.lspItem.text = "$(circle-slash) Cangjie LSP"
+				this.lspItem.tooltip = t("tooltips.cangjie_lsp.lsp_stopped", { version: versionSuffix })
 				this.lspItem.backgroundColor = undefined
 				break
 		}

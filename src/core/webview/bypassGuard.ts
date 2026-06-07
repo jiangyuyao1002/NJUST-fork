@@ -54,12 +54,12 @@ export async function confirmBypassTransition(deps: BypassGuardDeps): Promise<bo
 	)
 
 	if (confirmed) {
-		logger.info("BypassGuard", "用户确认进入 bypass 模式")
+		logger.info("BypassGuard", "User confirmed bypass mode")
 		return true
 	}
 
 	// 用户取消 → 回退所有 bypass 相关设置
-	logger.info("BypassGuard", "用户取消 bypass 模式，回退设置")
+	logger.info("BypassGuard", "User cancelled bypass mode, reverting settings")
 	await revertBypassSettings(deps)
 	return false
 }

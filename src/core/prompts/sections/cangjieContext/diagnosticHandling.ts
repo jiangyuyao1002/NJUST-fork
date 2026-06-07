@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 import * as vscode from "vscode"
 import * as path from "path"
 
@@ -55,9 +58,7 @@ export function diagnosticTypeFingerprint(message: string): string {
 	}
 	const prim = message.match(/\b(Int\d+|UInt\d+|Float\d+|Bool|String)\b/gi)
 	if (prim?.length) {
-		return [...new Set(prim.map((x) => x.toLowerCase()))]
-			.slice(0, 6)
-			.join("|")
+		return [...new Set(prim.map((x) => x.toLowerCase()))].slice(0, 6).join("|")
 	}
 	return ""
 }
@@ -160,7 +161,8 @@ export function sampleCangjieDiagnostics(
 			sampled.push(rep)
 		} else {
 			const lines = [...new Set(group.map((g) => g.range.start.line + 1))].sort((a, b) => a - b)
-			const lineHint = lines.length > 0 ? ` @ line ${lines.slice(0, 8).join(", ")}${lines.length > 8 ? ", ..." : ""}` : ""
+			const lineHint =
+				lines.length > 0 ? ` @ line ${lines.slice(0, 8).join(", ")}${lines.length > 8 ? ", ..." : ""}` : ""
 			const clone = new vscode.Diagnostic(rep.range, `${rep.message} (×${group.length}${lineHint})`, rep.severity)
 			clone.code = rep.code
 			clone.source = rep.source
@@ -204,9 +206,7 @@ export function mapDiagnosticsToDocContext(
 		const pattern = resolveCjcPatternForDiagnostic(diag)
 		if (pattern && !matchedCategories.has(pattern.category)) {
 			matchedCategories.add(pattern.category)
-			const docPathsStr = pattern.docPaths
-				.map((p) => path.join(docsBase, p).replace(/\\/g, "/"))
-				.join(", ")
+			const docPathsStr = pattern.docPaths.map((p) => path.join(docsBase, p).replace(/\\/g, "/")).join(", ")
 			const codeStr = normalizeDiagnosticCode(diag)
 			const codeNote = codeStr ? ` (code: ${codeStr})` : ""
 			let line = `- **${pattern.category}**${codeNote}: ${pattern.suggestion}\n  参考文档: ${docPathsStr}`

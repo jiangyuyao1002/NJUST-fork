@@ -372,7 +372,9 @@ async function getFileOrFolderContentWithMetadata(
 								totalContentBytes += formatted.length
 								fileReadResults.push(formatted)
 							}
-						} catch {}
+						} catch {
+							// File read failed — skip this file in folder content listing
+						}
 					}
 				} else if (entry.isDirectory()) {
 					folderListing += `${linePrefix}${displayName}/\n`

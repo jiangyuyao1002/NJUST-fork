@@ -6,6 +6,8 @@ const execFileAsync = promisify(execFile)
 
 let sharedTreeCache: { cwd: string; result: string; ts: number } | undefined
 
+// Agent-facing dependency tree prompt section — intentionally kept in Chinese (not i18n'd)
+
 /**
  * Run `cjpm tree` and format a concise prompt section (shared cache, no VS Code OutputChannel).
  * Used by prompt context and may be called from {@link CangjieCompileGuard.getCjpmTreeSummary}.
@@ -24,15 +26,11 @@ export async function getCjpmTreeSummaryForPrompt(cwd: string): Promise<string> 
 
 	let tree: string | null = null
 	try {
-		const { stdout, stderr } = await execFileAsync(
-			cjpmPath,
-			["tree", "-V", "--depth", "3"],
-			{
-				timeout: 15_000,
-				cwd,
-				env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
-			},
-		)
+		const { stdout, stderr } = await execFileAsync(cjpmPath, ["tree", "-V", "--depth", "3"], {
+			timeout: 15_000,
+			cwd,
+			env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
+		})
 		const output = (stdout + stderr).trim()
 		tree = output.length > 0 ? output : null
 	} catch {

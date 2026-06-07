@@ -53,10 +53,7 @@ export const KNOWN_STD_MODULES = new Set([
 /**
  * Basic modules that are too common / trivial to trigger search gate warnings.
  */
-export const SEARCH_GATE_EXEMPT_MODULES = new Set([
-	"std.core",
-	"std.console",
-])
+export const SEARCH_GATE_EXEMPT_MODULES = new Set(["std.core", "std.console"])
 
 /**
  * Infer the expected `package` declaration from a file's relative path within a cjpm project.
@@ -99,6 +96,8 @@ export function extractStdImports(content: string): string[] {
 /**
  * Lightweight pre-write checks for `.cj` files. All checks are O(1) regex-based
  * (no compiler invocation). Errors block the write; warnings are appended to tool_result.
+ * Note: All error/warning strings below are agent-facing (embedded in tool_result sent to the AI),
+ * intentionally kept in Chinese as the Cangjie LLM responds better to Chinese technical feedback.
  */
 export function cangjiePreflightCheck(
 	content: string,
@@ -142,9 +141,7 @@ export function cangjiePreflightCheck(
 			"s",
 		)
 		if (bodyRegex.test(content)) {
-			errors.push(
-				`struct ${name} 不能直接自引用（值类型无限递归）。改用 class 或 ?${name}（Option）包装。`,
-			)
+			errors.push(`struct ${name} 不能直接自引用（值类型无限递归）。改用 class 或 ?${name}（Option）包装。`)
 		}
 	}
 
@@ -166,6 +163,8 @@ export function cangjiePreflightCheck(
 /**
  * Build a search gate warning for .cj files that use std.* modules
  * not previously searched via search_files in the current session.
+ * Note: The returned warning is agent-facing (embedded in tool_result sent to the AI),
+ * intentionally kept in Chinese.
  */
 export function buildSearchGateWarning(
 	content: string,
@@ -174,10 +173,7 @@ export function buildSearchGateWarning(
 ): string | null {
 	const usedModules = extractStdImports(content)
 	const unsearched = usedModules.filter(
-		(m) =>
-			!searchHistory.has(m) &&
-			!criticalSignatureModules.has(m) &&
-			!SEARCH_GATE_EXEMPT_MODULES.has(m),
+		(m) => !searchHistory.has(m) && !criticalSignatureModules.has(m) && !SEARCH_GATE_EXEMPT_MODULES.has(m),
 	)
 
 	if (unsearched.length === 0) return null

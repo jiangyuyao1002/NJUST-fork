@@ -7,6 +7,7 @@ import { Package } from "../../shared/package"
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
+import { t } from "../../i18n"
 
 /**
  * Provides a DebugAdapterDescriptor for the "cangjie" debug type.
@@ -30,9 +31,10 @@ function findCangjieExecutableInTarget(workspaceRoot: string): string | undefine
 		return undefined
 	}
 
-	const preferred = process.platform === "win32"
-		? [path.join(targetDir, "output.exe"), path.join(targetDir, "output")]
-		: [path.join(targetDir, "output")]
+	const preferred =
+		process.platform === "win32"
+			? [path.join(targetDir, "output.exe"), path.join(targetDir, "output")]
+			: [path.join(targetDir, "output")]
 	for (const p of preferred) {
 		try {
 			if (fs.existsSync(p) && fs.statSync(p).isFile()) return p
@@ -64,7 +66,9 @@ function findCangjieExecutableInTarget(workspaceRoot: string): string | undefine
 					try {
 						const s = fs.statSync(full, { throwIfNoEntry: true } as UnsafeAny)
 						if ((s.mode & 0o111) === 0) continue
-					} catch { continue }
+					} catch {
+						continue
+					}
 					return full
 				}
 			}
@@ -99,22 +103,22 @@ export class CangjieDebugAdapterFactory implements vscode.DebugAdapterDescriptor
 	): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
 		const cangjieHome = detectCangjieHome()
 		if (!cangjieHome) {
-			vscode.window.showErrorMessage("未找到 CANGJIE_HOME。请配置仓颉 SDK 路径以使用调试功能。")
+			vscode.window.showErrorMessage(t("errors.cangjie_lsp.cangjie_home_not_found"))
 			return undefined
 		}
 
 		const debuggerPath = this.resolveDebuggerPath(cangjieHome)
 		if (!debuggerPath) {
-			vscode.window.showErrorMessage(
-				`未在 SDK 中找到调试器。请确认仓颉 SDK 包含 cjdb 工具。(CANGJIE_HOME=${cangjieHome})`,
-			)
+			vscode.window.showErrorMessage(t("errors.cangjie_lsp.debugger_not_found", { cangjieHome }))
 			return undefined
 		}
 
 		this.activeSession = session
 		this.startHotReloadWatcher(session)
 
-		const args = (session.configuration.debuggerArgs as string[] || []).filter((a) => typeof a === "string" && /^--[a-zA-Z][a-zA-Z0-9._-]*(?:[=:].+)?$/.test(a))
+		const args = ((session.configuration.debuggerArgs as string[]) || []).filter(
+			(a) => typeof a === "string" && /^--[a-zA-Z][a-zA-Z0-9._-]*(?:[=:].+)?$/.test(a),
+		)
 		return new vscode.DebugAdapterExecutable(debuggerPath, ["--dap", ...args])
 	}
 
@@ -179,10 +183,7 @@ export class CangjieDebugAdapterFactory implements vscode.DebugAdapterDescriptor
 
 	private resolveDebuggerPath(cangjieHome: string): string | undefined {
 		const exeName = process.platform === "win32" ? "cjdb.exe" : "cjdb"
-		const candidates = [
-			path.join(cangjieHome, "tools", "bin", exeName),
-			path.join(cangjieHome, "bin", exeName),
-		]
+		const candidates = [path.join(cangjieHome, "tools", "bin", exeName), path.join(cangjieHome, "bin", exeName)]
 		return candidates.find((p) => fs.existsSync(p))
 	}
 
@@ -205,7 +206,7 @@ export class CangjieDebugConfigurationProvider implements vscode.DebugConfigurat
 			const editor = vscode.window.activeTextEditor
 			if (editor && editor.document.languageId === "cangjie") {
 				config.type = "cangjie"
-				config.name = "调试仓颉程序"
+				config.name = t("info.cangjie_lsp.debug_cangjie_program")
 				config.request = "launch"
 				config.program = "${workspaceFolder}/target/output"
 				config.cwd = "${workspaceFolder}"
@@ -214,9 +215,9 @@ export class CangjieDebugConfigurationProvider implements vscode.DebugConfigurat
 		}
 
 		if (!config.program) {
-			return vscode.window.showInformationMessage("请在 launch.json 中配置 program 路径").then(
-				() => undefined,
-			)
+			return vscode.window
+				.showInformationMessage(t("info.cangjie_lsp.configure_program_path"))
+				.then(() => undefined)
 		}
 
 		const ws = folder?.uri.fsPath
@@ -229,15 +230,17 @@ export class CangjieDebugConfigurationProvider implements vscode.DebugConfigurat
 				const rel = path.relative(ws, found).replace(/\\/g, "/")
 				config.program = "${workspaceFolder}/" + rel
 			} else {
+				const useDebugBuildBtn = t("buttons.cangjie_lsp.use_cjpm_build_debug")
+				const stillLaunchBtn = t("buttons.cangjie_lsp.still_launch")
 				return vscode.window
 					.showWarningMessage(
-						"未在 target/ 下找到可执行文件。可使用带调试信息的构建任务 cjpm: build (debug)，或先执行 cjpm build。",
-						"使用 cjpm: build (debug)",
-						"仍继续启动",
+						t("warnings.cangjie_lsp.executable_not_found_in_target"),
+						useDebugBuildBtn,
+						stillLaunchBtn,
 					)
 					.then((choice) => {
 						if (choice === undefined) return undefined
-						if (choice === "使用 cjpm: build (debug)") {
+						if (choice === useDebugBuildBtn) {
 							config.preLaunchTask = "cjpm: build (debug)"
 						}
 						config.cwd = config.cwd || folder?.uri.fsPath || "${workspaceFolder}"
@@ -259,7 +262,7 @@ export class CangjieDebugConfigurationProvider implements vscode.DebugConfigurat
 			{
 				type: "cangjie",
 				request: "launch",
-				name: "调试仓颉程序",
+				name: t("info.cangjie_lsp.debug_cangjie_program"),
 				program: "${workspaceFolder}/target/output",
 				args: [],
 				cwd: "${workspaceFolder}",
@@ -268,7 +271,7 @@ export class CangjieDebugConfigurationProvider implements vscode.DebugConfigurat
 			{
 				type: "cangjie",
 				request: "launch",
-				name: "调试仓颉测试",
+				name: t("info.cangjie_lsp.debug_cangjie_test"),
 				program: "${workspaceFolder}/target/output",
 				args: ["--test"],
 				cwd: "${workspaceFolder}",

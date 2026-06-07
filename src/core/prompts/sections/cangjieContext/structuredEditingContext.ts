@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 import * as vscode from "vscode"
 import * as path from "path"
 
@@ -46,11 +49,9 @@ export async function fetchHoverAtPosition(
 		return hoverMemo.value
 	}
 	try {
-		const task = vscode.commands.executeCommand(
-			"vscode.executeHoverProvider",
-			document.uri,
-			position,
-		) as Thenable<vscode.Hover[] | undefined>
+		const task = vscode.commands.executeCommand("vscode.executeHoverProvider", document.uri, position) as Thenable<
+			vscode.Hover[] | undefined
+		>
 
 		const hovers = await Promise.race([
 			task,
@@ -107,8 +108,11 @@ export async function buildStructuredEditingContext(pre?: StructuredEditingConte
 
 	// Current function/class context
 	const enclosing = defs
-		.filter((d: CangjieDef) => d.startLine <= cursorLine && d.endLine >= cursorLine && d.kind !== "import" && d.kind !== "package")
-		.sort((a: CangjieDef, b: CangjieDef) => (b.startLine - a.startLine))
+		.filter(
+			(d: CangjieDef) =>
+				d.startLine <= cursorLine && d.endLine >= cursorLine && d.kind !== "import" && d.kind !== "package",
+		)
+		.sort((a: CangjieDef, b: CangjieDef) => b.startLine - a.startLine)
 
 	if (enclosing.length > 0) {
 		const innermost = enclosing[0]!
@@ -160,10 +164,13 @@ export async function buildStructuredEditingContext(pre?: StructuredEditingConte
 	const diags = fileDiags ?? vscode.languages.getDiagnostics(doc.uri)
 	const errors = diags.filter((d) => d.severity === vscode.DiagnosticSeverity.Error)
 	if (errors.length > 0) {
-		const errorSummary = errors.slice(0, 5).map((d) => {
-			const directive = getErrorFixDirectiveForDiagnostic(d)
-			return `  - 第 ${d.range.start.line + 1} 行: ${d.message}\n    建议: ${directive}`
-		}).join("\n")
+		const errorSummary = errors
+			.slice(0, 5)
+			.map((d) => {
+				const directive = getErrorFixDirectiveForDiagnostic(d)
+				return `  - 第 ${d.range.start.line + 1} 行: ${d.message}\n    建议: ${directive}`
+			})
+			.join("\n")
 		parts.push(`当前文件错误:\n${errorSummary}`)
 	}
 

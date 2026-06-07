@@ -7,6 +7,7 @@ import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
 import type { CangjieLintConfig } from "./CangjieLintConfig"
 import { getErrorMessage } from "../../shared/error-utils"
+import { safeUnlink } from "./safeUnlink"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
 
@@ -93,11 +94,11 @@ export class CjlintDiagnostics implements vscode.Disposable {
 			const tmpReport = path.join(os.tmpdir(), `cjlint_single_${Date.now()}`)
 
 			try {
-				await execFileAsync(
-					cjlintPath,
-					["-f", filePath, "-r", "json", "-o", tmpReport],
-					{ timeout: 30_000, cwd, env: buildCangjieToolEnv() as NodeJS.ProcessEnv },
-				)
+				await execFileAsync(cjlintPath, ["-f", filePath, "-r", "json", "-o", tmpReport], {
+					timeout: 30_000,
+					cwd,
+					env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
+				})
 			} catch {
 				// cjlint may exit with non-zero when issues are found
 			}
@@ -107,11 +108,11 @@ export class CjlintDiagnostics implements vscode.Disposable {
 
 			if (fs.existsSync(reportPath)) {
 				this.parseReport(reportPath, cwd, allDiagnostics)
-				try { fs.unlinkSync(reportPath) } catch {}
+				safeUnlink(reportPath)
 			} else if (fs.existsSync(tmpReport)) {
 				this.parseReport(tmpReport, cwd, allDiagnostics)
 			}
-			try { fs.unlinkSync(tmpReport) } catch {}
+			safeUnlink(tmpReport)
 
 			const normalized = path.resolve(filePath)
 			if (this.lintConfig?.isFileExcluded(normalized)) {
@@ -168,11 +169,11 @@ export class CjlintDiagnostics implements vscode.Disposable {
 				const tmpReport = path.join(os.tmpdir(), `cjlint_report_${Date.now()}`)
 
 				try {
-					await execFileAsync(
-						cjlintPath,
-						["-f", targetDir, "-r", "json", "-o", tmpReport],
-						{ timeout: 60_000, cwd: folder.uri.fsPath, env: buildCangjieToolEnv() as NodeJS.ProcessEnv },
-					)
+					await execFileAsync(cjlintPath, ["-f", targetDir, "-r", "json", "-o", tmpReport], {
+						timeout: 60_000,
+						cwd: folder.uri.fsPath,
+						env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
+					})
 				} catch {
 					// cjlint may exit with non-zero when issues are found
 				}
@@ -187,8 +188,8 @@ export class CjlintDiagnostics implements vscode.Disposable {
 
 				this.parseReport(reportPath, folder.uri.fsPath, allDiagnostics)
 
-				try { fs.unlinkSync(reportPath) } catch {}
-				try { fs.unlinkSync(tmpReport) } catch {}
+				safeUnlink(reportPath)
+				safeUnlink(tmpReport)
 			}
 
 			for (const [filePath, diagnostics] of allDiagnostics) {
@@ -252,15 +253,15 @@ export class CjlintDiagnostics implements vscode.Disposable {
 			const content = fs.readFileSync(reportPath, "utf-8")
 			const data = JSON.parse(content)
 
-			const entries: CjlintEntry[] = Array.isArray(data) ? data : (data.defects || data.results || data.issues || [])
+			const entries: CjlintEntry[] = Array.isArray(data)
+				? data
+				: data.defects || data.results || data.issues || []
 
 			for (const entry of entries) {
 				const filePath = entry.file || entry.path
 				if (!filePath) continue
 
-				const absolutePath = path.isAbsolute(filePath)
-					? filePath
-					: path.resolve(workspaceRoot, filePath)
+				const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(workspaceRoot, filePath)
 
 				const line = Math.max(0, Number(entry.line || 1) - 1)
 				const col = Math.max(0, Number(entry.colum || entry.column || 1) - 1)
@@ -270,11 +271,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 				const severity = this.mapSeverity(entry.severity || entry.level)
 
 				const range = new vscode.Range(line, col, line, col + 1)
-				const diagnostic = new vscode.Diagnostic(
-					range,
-					ruleId ? `[${ruleId}] ${message}` : message,
-					severity,
-				)
+				const diagnostic = new vscode.Diagnostic(range, ruleId ? `[${ruleId}] ${message}` : message, severity)
 				diagnostic.source = "cjlint"
 
 				if (!allDiagnostics.has(absolutePath)) {

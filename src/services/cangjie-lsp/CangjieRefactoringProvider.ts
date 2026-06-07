@@ -2,10 +2,8 @@ import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
 import type { CangjieSymbolIndex } from "./CangjieSymbolIndex"
-import {
-	parseCangjieDefinitions,
-	type CangjieDef,
-} from "../tree-sitter/cangjieParser"
+import { parseCangjieDefinitions, type CangjieDef } from "../tree-sitter/cangjieParser"
+import { t } from "../../i18n"
 
 /**
  * Provides refactoring code actions for Cangjie files:
@@ -13,10 +11,7 @@ import {
  *  - Move File: move a .cj file and update package declarations + imports
  */
 export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
-	static readonly providedCodeActionKinds = [
-		vscode.CodeActionKind.RefactorExtract,
-		vscode.CodeActionKind.Refactor,
-	]
+	static readonly providedCodeActionKinds = [vscode.CodeActionKind.RefactorExtract, vscode.CodeActionKind.Refactor]
 
 	constructor(private readonly index: CangjieSymbolIndex) {}
 
@@ -53,16 +48,14 @@ export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
 		if (!selectedText.trim()) return
 
 		const funcName = await vscode.window.showInputBox({
-			prompt: "新函数名",
+			prompt: t("info.cangjie_lsp.new_function_name_prompt"),
 			value: "extractedFunction",
-			validateInput: (v) => (/^[a-z_]\w*$/i.test(v) ? null : "请输入合法的仓颉标识符"),
+			validateInput: (v) => (/^[a-z_]\w*$/i.test(v) ? null : t("errors.cangjie_lsp.invalid_identifier")),
 		})
 		if (!funcName) return
 
 		const freeVars = this.detectFreeVariables(document, range, selectedText)
-		const paramList = freeVars.length > 0
-			? freeVars.map((v) => `${v.name}: ${v.inferredType}`).join(", ")
-			: ""
+		const paramList = freeVars.length > 0 ? freeVars.map((v) => `${v.name}: ${v.inferredType}`).join(", ") : ""
 		const argList = freeVars.map((v) => v.name).join(", ")
 
 		const indent = document.lineAt(range.start.line).text.match(/^(\s*)/)?.[1] ?? ""
@@ -78,19 +71,18 @@ export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
 		const content = document.getText()
 		const defs = parseCangjieDefinitions(content)
 		const enclosing = defs
-			.filter((d: CangjieDef) =>
-				d.startLine <= range.start.line &&
-				d.endLine >= range.end.line &&
-				["class", "struct", "interface", "extend"].includes(d.kind),
+			.filter(
+				(d: CangjieDef) =>
+					d.startLine <= range.start.line &&
+					d.endLine >= range.end.line &&
+					["class", "struct", "interface", "extend"].includes(d.kind),
 			)
 			.sort((a: CangjieDef, b: CangjieDef) => b.startLine - a.startLine)
 
 		const edit = new vscode.WorkspaceEdit()
 		edit.replace(document.uri, range, callSite)
 
-		const insertionLine = enclosing.length > 0
-			? enclosing[0]!.endLine
-			: range.end.line + 2
+		const insertionLine = enclosing.length > 0 ? enclosing[0]!.endLine : range.end.line + 2
 		const insertPos = new vscode.Position(Math.min(insertionLine, document.lineCount), 0)
 		edit.insert(document.uri, insertPos, funcDef)
 
@@ -108,7 +100,7 @@ export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
 		const relSource = path.relative(workspaceFolder.uri.fsPath, sourceUri.fsPath).replace(/\\/g, "/")
 
 		const targetPath = await vscode.window.showInputBox({
-			prompt: "目标路径（相对于工作区根目录）",
+			prompt: t("info.cangjie_lsp.target_path_prompt"),
 			value: relSource,
 		})
 		if (!targetPath || targetPath === relSource) return
@@ -154,18 +146,11 @@ export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
 		return dir.replace(/\//g, ".")
 	}
 
-	private async updateImportReferences(
-		workspaceRoot: string,
-		oldPackage: string,
-		newPackage: string,
-	): Promise<void> {
+	private async updateImportReferences(workspaceRoot: string, oldPackage: string, newPackage: string): Promise<void> {
 		const files = await vscode.workspace.findFiles("**/*.cj", "**/target/**", 500)
 		const edit = new vscode.WorkspaceEdit()
 
-		const oldImportPattern = new RegExp(
-			`(import\\s+)${oldPackage.replace(/\./g, "\\.")}(\\.\\*?)`,
-			"g",
-		)
+		const oldImportPattern = new RegExp(`(import\\s+)${oldPackage.replace(/\./g, "\\.")}(\\.\\*?)`, "g")
 
 		for (const uri of files) {
 			try {
@@ -210,19 +195,50 @@ export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
 		}
 
 		const keywords = new Set([
-			"let", "var", "if", "else", "for", "while", "match", "case",
-			"return", "import", "package", "func", "class", "struct",
-			"interface", "enum", "in", "true", "false", "this", "super",
-			"public", "private", "protected", "static", "open", "override",
-			"abstract", "sealed", "spawn", "try", "catch", "finally",
-			"throw", "break", "continue", "mut", "init", "extend",
+			"let",
+			"var",
+			"if",
+			"else",
+			"for",
+			"while",
+			"match",
+			"case",
+			"return",
+			"import",
+			"package",
+			"func",
+			"class",
+			"struct",
+			"interface",
+			"enum",
+			"in",
+			"true",
+			"false",
+			"this",
+			"super",
+			"public",
+			"private",
+			"protected",
+			"static",
+			"open",
+			"override",
+			"abstract",
+			"sealed",
+			"spawn",
+			"try",
+			"catch",
+			"finally",
+			"throw",
+			"break",
+			"continue",
+			"mut",
+			"init",
+			"extend",
 		])
 
 		const declRe = /(?:let|var)\s+([a-z_]\w*)\s*(?::\s*(\w[\w<>?,\s]*))?/g
 		const contextStart = Math.max(0, range.start.line - 30)
-		const contextText = document.getText(
-			new vscode.Range(contextStart, 0, range.start.line, 0),
-		)
+		const contextText = document.getText(new vscode.Range(contextStart, 0, range.start.line, 0))
 
 		const declared = new Map<string, string>()
 		while ((m = declRe.exec(contextText)) !== null) {

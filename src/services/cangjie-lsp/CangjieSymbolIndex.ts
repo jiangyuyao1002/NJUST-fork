@@ -304,6 +304,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 
 	private rebuildConversionEdges(): void {
 		this.conversionEdgeMap.clear()
+		// Agent-facing quick-fix hints — intentionally kept in Chinese (shown in AI compile-fix context)
 		const builtIn: Array<[string, string, string]> = [
 			["int32", "int64", "快速修复: 使用 `.toInt64()` 或 `Int64(...)`"],
 			["uint32", "uint64", "快速修复: 使用 `.toUInt64()` 或 `UInt64(...)`"],

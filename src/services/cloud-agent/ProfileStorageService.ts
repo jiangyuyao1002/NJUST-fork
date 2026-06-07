@@ -4,6 +4,7 @@ import type { CloudAgentProfile } from "./types/profile"
 import type { CloudAgentAuthConfig } from "@njust-ai/types"
 import { BUILT_IN_PROFILES, createFromTemplate, CUSTOM_REST_PROFILE } from "./presets/templates"
 import { logger } from "../../shared/logger"
+import { t } from "../../i18n"
 
 const GLOBAL_STATE_PROFILES_KEY = "cloudAgent.profiles"
 const GLOBAL_STATE_ACTIVE_KEY = "cloudAgent.activeProfileId"
@@ -193,8 +194,8 @@ export class ProfileStorageService {
 		const now = Date.now()
 		const migrated: CloudAgentProfile = {
 			id: MIGRATED_ID,
-			name: "迁移配置",
-			description: "从旧版配置自动迁移",
+			name: t("templates.profile.migrated_name"),
+			description: t("templates.profile.migrated_description"),
 			protocolType: "rest",
 			serverUrl,
 			auth: {
@@ -248,7 +249,7 @@ export function setProfileStorageService(s: ProfileStorageService): void {
 
 export function getProfileStorageService(): ProfileStorageService {
 	if (!_instance) {
-		throw new Error("ProfileStorageService 尚未初始化。请确保 extension.ts 中先调用 setProfileStorageService()。")
+		throw new Error(t("errors.cloud_agent.not_initialized"))
 	}
 	return _instance
 }

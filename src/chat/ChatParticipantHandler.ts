@@ -94,7 +94,9 @@ export class ChatParticipantHandler {
 			const message = getErrorMessage(error)
 			try {
 				stream.markdown(`**Error:** ${message}`)
-			} catch {}
+			} catch {
+				// stream.markdown() failure during error display — outer outputChannel will still log
+			}
 			this.outputChannel.appendLine(`[ChatParticipant] Error: ${message}`)
 			TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 			return { metadata: { command } }

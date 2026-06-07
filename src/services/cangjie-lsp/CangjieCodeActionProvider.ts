@@ -1,9 +1,14 @@
 import * as vscode from "vscode"
 import { inferCangjiePackageFromSrcLayout } from "./cangjieSourceLayout"
+import { t } from "../../i18n"
 
 interface QuickFixPattern {
 	pattern: RegExp
-	createFix: (document: vscode.TextDocument, diagnostic: vscode.Diagnostic, match: RegExpMatchArray) => vscode.CodeAction | undefined
+	createFix: (
+		document: vscode.TextDocument,
+		diagnostic: vscode.Diagnostic,
+		match: RegExpMatchArray,
+	) => vscode.CodeAction | undefined
 }
 
 const STDLIB_IMPORT_HINTS: Record<string, string> = {
@@ -48,7 +53,9 @@ function findLetDeclarationForSymbol(
 			// Check the "let" is outside a comment or string by verifying the prefix
 			const prefixBeforeLet = lineText.substring(0, lineText.indexOf("let")).trim()
 			const cleanPrefix = prefixBeforeLet.replace(/\/\/.*$/m, "").trim()
-			const letIdx = cleanPrefix ? lineText.indexOf("let", lineText.indexOf(cleanPrefix) + cleanPrefix.length) : lineText.indexOf("let")
+			const letIdx = cleanPrefix
+				? lineText.indexOf("let", lineText.indexOf(cleanPrefix) + cleanPrefix.length)
+				: lineText.indexOf("let")
 			if (letIdx === -1) return null
 			return { line: lineIdx, letStart: letIdx }
 		}
@@ -82,13 +89,10 @@ function inferReturnValue(returnType: string | null): string {
 	// Fallback: type constructor with default fields
 	const baseName = returnType.replace(/<.*/, "").trim()
 	if (baseName && /^[A-Z]/.test(baseName)) return `${baseName}()`
-	return "throw Exception(\"Not implemented\")"
+	return 'throw Exception("Not implemented")'
 }
 
-function extractFunctionReturnType(
-	document: vscode.TextDocument,
-	beforeBraceLine: number,
-): string | null {
+function extractFunctionReturnType(document: vscode.TextDocument, beforeBraceLine: number): string | null {
 	for (let i = beforeBraceLine; i >= Math.max(0, beforeBraceLine - 5); i--) {
 		const line = document.lineAt(i).text
 		const m = line.match(/\)\s*:\s*(\S[\s\S]*?)\s*(?:\{|$)/)
@@ -103,7 +107,7 @@ function inferMatchDefaultValue(document: vscode.TextDocument, matchLine: number
 		if (/\bmatch\b/.test(line)) {
 			const trimmed = line.trim()
 			if (/=\s*$/.test(trimmed) || /\breturn\b/.test(line)) {
-			return `throw Exception("Unhandled case")`
+				return `throw Exception("Unhandled case")`
 			}
 			break
 		}
@@ -132,6 +136,8 @@ function findInsertPosition(document: vscode.TextDocument): vscode.Position {
 	return new vscode.Position(0, 0)
 }
 
+// Regex patterns match Cangjie compiler error messages (which may be in Chinese).
+// Chinese in patterns is intentional — not i18n'd.
 const QUICK_FIX_PATTERNS: QuickFixPattern[] = [
 	{
 		pattern: /(?:undeclared|cannot find|not found|未找到符号|unresolved)\b.*?\b(\w+)/i,
@@ -147,10 +153,11 @@ const QUICK_FIX_PATTERNS: QuickFixPattern[] = [
 
 			const existingText = document.getText()
 			// Word-boundary check: import pkg. or import pkg{ or import pkg\n
-				if (new RegExp(`import\\s+${pkg.replace(/\./g, "\\.")}(?:\\s|\\{|$|\\*)`, "m").test(existingText)) return undefined
+			if (new RegExp(`import\\s+${pkg.replace(/\./g, "\\.")}(?:\\s|\\{|$|\\*)`, "m").test(existingText))
+				return undefined
 
 			const action = new vscode.CodeAction(
-				`添加 import ${pkg}.*`,
+				t("code_actions.cangjie_lsp.add_import", { pkg }),
 				vscode.CodeActionKind.QuickFix,
 			)
 			action.diagnostics = [diagnostic]
@@ -169,16 +176,12 @@ const QUICK_FIX_PATTERNS: QuickFixPattern[] = [
 			if (!pos) return undefined
 
 			const action = new vscode.CodeAction(
-				`将 let 改为 var`,
+				t("code_actions.cangjie_lsp.let_to_var"),
 				vscode.CodeActionKind.QuickFix,
 			)
 			action.diagnostics = [diagnostic]
 			const edit = new vscode.WorkspaceEdit()
-			edit.replace(
-				document.uri,
-				new vscode.Range(pos.line, pos.letStart, pos.line, pos.letStart + 3),
-				"var",
-			)
+			edit.replace(document.uri, new vscode.Range(pos.line, pos.letStart, pos.line, pos.letStart + 3), "var")
 			action.edit = edit
 			return action
 		},
@@ -193,20 +196,14 @@ const QUICK_FIX_PATTERNS: QuickFixPattern[] = [
 				if (lineText.trim() === "}") {
 					const indent = lineText.match(/^(\s*)/)?.[1] || ""
 					const defaultValue = inferMatchDefaultValue(document, matchLine)
-					const label = defaultValue === "()"
-						? `添加 case _ => 通配分支`
-						: `添加 case _ => 通配分支（需检查返回值）`
-					const action = new vscode.CodeAction(
-						label,
-						vscode.CodeActionKind.QuickFix,
-					)
+					const label =
+						defaultValue === "()"
+							? t("code_actions.cangjie_lsp.add_wildcard_case")
+							: t("code_actions.cangjie_lsp.add_wildcard_case_check_return")
+					const action = new vscode.CodeAction(label, vscode.CodeActionKind.QuickFix)
 					action.diagnostics = [diagnostic]
 					const edit = new vscode.WorkspaceEdit()
-					edit.insert(
-						document.uri,
-						new vscode.Position(i, 0),
-						`${indent}\tcase _ => ${defaultValue}\n`,
-					)
+					edit.insert(document.uri, new vscode.Position(i, 0), `${indent}\tcase _ => ${defaultValue}\n`)
 					action.edit = edit
 					return action
 				}
@@ -226,20 +223,13 @@ const QUICK_FIX_PATTERNS: QuickFixPattern[] = [
 					const returnType = extractFunctionReturnType(document, i)
 					const returnVal = inferReturnValue(returnType)
 					const label = returnType
-						? `在函数末尾添加 return (返回类型: ${returnType})`
-						: `在函数末尾添加 return`
-					const action = new vscode.CodeAction(
-						label,
-						vscode.CodeActionKind.QuickFix,
-					)
+						? t("code_actions.cangjie_lsp.add_return_typed", { returnType })
+						: t("code_actions.cangjie_lsp.add_return")
+					const action = new vscode.CodeAction(label, vscode.CodeActionKind.QuickFix)
 					action.diagnostics = [diagnostic]
 					const edit = new vscode.WorkspaceEdit()
 					if (returnVal) {
-						edit.insert(
-							document.uri,
-							new vscode.Position(i, 0),
-							`${indent}\treturn ${returnVal}\n`,
-						)
+						edit.insert(document.uri, new vscode.Position(i, 0), `${indent}\treturn ${returnVal}\n`)
 					}
 					action.edit = edit
 					return action
@@ -259,13 +249,14 @@ const QUICK_FIX_PATTERNS: QuickFixPattern[] = [
 
 			const existingText = document.getText()
 			// Word-boundary check: import pkg. or import pkg{ or import pkg\n
-				if (new RegExp(`import\\s+${pkg.replace(/\./g, "\\.")}(?:\\s|\\{|$|\\*)`, "m").test(existingText)) return undefined
+			if (new RegExp(`import\\s+${pkg.replace(/\./g, "\\.")}(?:\\s|\\{|$|\\*)`, "m").test(existingText))
+				return undefined
 
 			const importLine = `import ${pkg}.*\n`
 			const pos = findInsertPosition(document)
 
 			const action = new vscode.CodeAction(
-				`添加 import ${pkg}.*`,
+				t("code_actions.cangjie_lsp.add_import", { pkg }),
 				vscode.CodeActionKind.QuickFix,
 			)
 			action.diagnostics = [diagnostic]
@@ -287,12 +278,18 @@ const QUICK_FIX_PATTERNS: QuickFixPattern[] = [
 			for (let i = 0; i < Math.min(10, document.lineCount); i++) {
 				const l = document.lineAt(i).text.trim()
 				if (!l || l.startsWith("//") || l.startsWith("/*") || l.startsWith("*")) continue
-				if (l.startsWith("package ")) { hasPackage = true; break }
+				if (l.startsWith("package ")) {
+					hasPackage = true
+					break
+				}
 				if (l.startsWith("import") || l.startsWith("class") || l.startsWith("func")) break
 			}
 			if (hasPackage) return undefined
 
-			const action = new vscode.CodeAction(`添加 package ${pkg}`, vscode.CodeActionKind.QuickFix)
+			const action = new vscode.CodeAction(
+				t("code_actions.cangjie_lsp.add_package", { pkg }),
+				vscode.CodeActionKind.QuickFix,
+			)
 			action.diagnostics = [diagnostic]
 			const edit = new vscode.WorkspaceEdit()
 			edit.insert(document.uri, new vscode.Position(0, 0), `package ${pkg}\n\n`)

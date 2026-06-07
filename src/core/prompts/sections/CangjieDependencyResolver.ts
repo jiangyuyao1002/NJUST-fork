@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 import * as path from "path"
 import * as fs from "fs"
 
@@ -51,7 +54,9 @@ export function isNonTrivialImportMapping(prefix: string): boolean {
 	return !(prefix === "std.core" || prefix.startsWith("std.core."))
 }
 
-export function mapImportsToDocPaths(imports: string[]): Array<{ prefix: string; summary: string; docPaths: string[] }> {
+export function mapImportsToDocPaths(
+	imports: string[],
+): Array<{ prefix: string; summary: string; docPaths: string[] }> {
 	const results: Array<{ prefix: string; summary: string; docPaths: string[] }> = []
 	const seen = new Set<string>()
 
@@ -82,18 +87,14 @@ export function resolveImportToDirectory(
 		if (memberMatch) {
 			const memberCwd = path.join(cwd, memberMatch.path)
 			const subPath = segments.slice(1).join(path.sep)
-			const candidate = subPath
-				? path.join(memberCwd, "src", subPath)
-				: path.join(memberCwd, "src")
+			const candidate = subPath ? path.join(memberCwd, "src", subPath) : path.join(memberCwd, "src")
 			if (fs.existsSync(candidate)) return candidate
 		}
 	}
 
 	if (rootName && segments[0] === rootName) {
 		const subPath = segments.slice(1).join(path.sep)
-		const candidate = subPath
-			? path.join(cwd, srcDir, subPath)
-			: path.join(cwd, srcDir)
+		const candidate = subPath ? path.join(cwd, srcDir, subPath) : path.join(cwd, srcDir)
 		if (fs.existsSync(candidate)) return candidate
 	}
 
@@ -131,10 +132,7 @@ export function formatSymbolEntries(symbols: SymbolEntry[], cwd: string): string
 
 	for (const [file, syms] of grouped) {
 		for (const sym of syms) {
-			const vis =
-				sym.visibility && sym.visibility !== "internal"
-					? `${sym.visibility} `
-					: ""
+			const vis = sym.visibility && sym.visibility !== "internal" ? `${sym.visibility} ` : ""
 			const sig = sym.signature ? `: \`${sym.signature}\`` : ""
 			const tp = sym.typeParams ? ` ${sym.typeParams}` : ""
 			lines.push(`- ${vis}${sym.kind}${tp} **${sym.name}**${sig} _(${file}:${sym.startLine + 1})_`)

@@ -130,7 +130,10 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				try {
 					await Promise.race([this.subprocess, kill])
 				} catch (error) {
-					logger.info("ExecaTerminalProcess", `[ExecaTerminalProcess#run] subprocess termination error: ${getErrorMessage(error)}`)
+					logger.info(
+						"ExecaTerminalProcess",
+						`[ExecaTerminalProcess#run] subprocess termination error: ${getErrorMessage(error)}`,
+					)
 				}
 
 				if (timeoutId) {
@@ -141,12 +144,21 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 			this.emit("shell_execution_complete", { exitCode: 0 })
 		} catch (error) {
 			if (error instanceof ExecaError) {
-				logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#run] shell execution error: ${error.message}`)
+				logger.error(
+					"ExecaTerminalProcess",
+					`[ExecaTerminalProcess#run] shell execution error: ${error.message}`,
+				)
 				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 				this.emit("shell_execution_complete", { exitCode: error.exitCode ?? 0, signalName: error.signal })
 			} else {
-				logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#run] shell execution error: ${getErrorMessage(error)}`)
-				TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
+				logger.error(
+					"ExecaTerminalProcess",
+					`[ExecaTerminalProcess#run] shell execution error: ${getErrorMessage(error)}`,
+				)
+				TelemetryService.reportError(
+					error instanceof Error ? error : new Error(getErrorMessage(error)),
+					TelemetryEventName.UTILITY_ERROR,
+				)
 
 				this.emit("shell_execution_complete", { exitCode: 1 })
 			}
@@ -177,11 +189,18 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				try {
 					this.subprocess.kill("SIGTERM")
 					const timer = setTimeout(() => {
-						try { this.subprocess?.kill("SIGKILL") } catch {}
+						try {
+							this.subprocess?.kill("SIGKILL")
+						} catch {
+							/* Process may have already exited */
+						}
 					}, 5_000)
 					timer.unref() // Don't block Node.js exit
 				} catch (e) {
-					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill subprocess: ${getErrorMessage(e)}`)
+					logger.warn(
+						"ExecaTerminalProcess",
+						`[ExecaTerminalProcess#abort] Failed to kill subprocess: ${getErrorMessage(e)}`,
+					)
 				}
 			}
 
@@ -190,11 +209,18 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				try {
 					process.kill(this.pid, "SIGTERM")
 					const timer = setTimeout(() => {
-						try { process.kill(this.pid!, "SIGKILL") } catch {}
+						try {
+							process.kill(this.pid!, "SIGKILL")
+						} catch {
+							/* Process may have already exited */
+						}
 					}, 5_000)
 					timer.unref()
 				} catch (e) {
-					logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to kill process ${this.pid}: ${getErrorMessage(e)}`)
+					logger.warn(
+						"ExecaTerminalProcess",
+						`[ExecaTerminalProcess#abort] Failed to kill process ${this.pid}: ${getErrorMessage(e)}`,
+					)
 				}
 			}
 		}
@@ -217,13 +243,25 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 						try {
 							process.kill(pid, "SIGKILL")
 						} catch (e) {
-							logger.warn("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to send SIGKILL to child PID ${pid}: ${getErrorMessage(e)}`)
-							TelemetryService.reportError(e instanceof Error ? e : new Error(getErrorMessage(e)), TelemetryEventName.UTILITY_ERROR)
+							logger.warn(
+								"ExecaTerminalProcess",
+								`[ExecaTerminalProcess#abort] Failed to send SIGKILL to child PID ${pid}: ${getErrorMessage(e)}`,
+							)
+							TelemetryService.reportError(
+								e instanceof Error ? e : new Error(getErrorMessage(e)),
+								TelemetryEventName.UTILITY_ERROR,
+							)
 						}
 					}
 				} else {
-					logger.error("ExecaTerminalProcess", `[ExecaTerminalProcess#abort] Failed to get process tree for PID ${this.pid}: ${getErrorMessage(err)}`)
-					TelemetryService.reportError(err instanceof Error ? err : new Error(getErrorMessage(err)), TelemetryEventName.UTILITY_ERROR)
+					logger.error(
+						"ExecaTerminalProcess",
+						`[ExecaTerminalProcess#abort] Failed to get process tree for PID ${this.pid}: ${getErrorMessage(err)}`,
+					)
+					TelemetryService.reportError(
+						err instanceof Error ? err : new Error(getErrorMessage(err)),
+						TelemetryEventName.UTILITY_ERROR,
+					)
 				}
 			})
 		}

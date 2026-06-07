@@ -7,6 +7,7 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
 import { getErrorMessage } from "../../shared/error-utils"
+import { safeUnlink } from "./safeUnlink"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
 
@@ -38,22 +39,18 @@ export function cleanupStaleCjfmtTempFiles(log?: vscode.OutputChannel): void {
 	}
 }
 
-export class CjfmtFormatter implements vscode.DocumentFormattingEditProvider, vscode.DocumentRangeFormattingEditProvider, vscode.Disposable {
+export class CjfmtFormatter
+	implements vscode.DocumentFormattingEditProvider, vscode.DocumentRangeFormattingEditProvider, vscode.Disposable
+{
 	private disposables: vscode.Disposable[] = []
 
 	constructor(private readonly outputChannel: vscode.OutputChannel) {
 		cleanupStaleCjfmtTempFiles(outputChannel)
 		this.disposables.push(
-			vscode.languages.registerDocumentFormattingEditProvider(
-				{ language: "cangjie", scheme: "file" },
-				this,
-			),
+			vscode.languages.registerDocumentFormattingEditProvider({ language: "cangjie", scheme: "file" }, this),
 		)
 		this.disposables.push(
-			vscode.languages.registerDocumentRangeFormattingEditProvider(
-				{ language: "cangjie", scheme: "file" },
-				this,
-			),
+			vscode.languages.registerDocumentRangeFormattingEditProvider({ language: "cangjie", scheme: "file" }, this),
 		)
 	}
 
@@ -82,7 +79,9 @@ export class CjfmtFormatter implements vscode.DocumentFormattingEditProvider, vs
 		const t0 = Date.now()
 		const cjfmtPath = resolveCangjieToolPath("cjfmt", "cangjieTools.cjfmtPath")
 		if (!cjfmtPath) {
-			this.outputChannel.appendLine("[CjFmt] cjfmt not found. Set njust-ai.cangjieTools.cjfmtPath or CANGJIE_HOME.")
+			this.outputChannel.appendLine(
+				"[CjFmt] cjfmt not found. Set njust-ai.cangjieTools.cjfmtPath or CANGJIE_HOME.",
+			)
 			return []
 		}
 
@@ -118,10 +117,7 @@ export class CjfmtFormatter implements vscode.DocumentFormattingEditProvider, vs
 
 			if (formattedContent === originalContent) return []
 
-			const fullRange = new vscode.Range(
-				document.positionAt(0),
-				document.positionAt(originalContent.length),
-			)
+			const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(originalContent.length))
 
 			this.outputChannel.appendLine(
 				`[Perf] cjfmt formatted ${path.basename(document.fileName)} in ${Date.now() - t0}ms`,
@@ -135,8 +131,8 @@ export class CjfmtFormatter implements vscode.DocumentFormattingEditProvider, vs
 			vscode.window.showErrorMessage(`Cangjie format failed: ${message}`)
 			return []
 		} finally {
-			try { fs.unlinkSync(tmpInput) } catch {}
-			try { fs.unlinkSync(tmpOutput) } catch {}
+			safeUnlink(tmpInput)
+			safeUnlink(tmpOutput)
 		}
 	}
 

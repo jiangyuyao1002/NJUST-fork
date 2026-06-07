@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 /**
  * Default max tokens (~chars/4) for the dynamic Cangjie context block.
  *
@@ -92,7 +95,6 @@ export function estimateCangjieContextTokensForTest(text: string): number {
 	return estimateContextTokens(text)
 }
 
-
 export interface PrioritizedCangjieSection {
 	priority: number
 	content: string
@@ -137,8 +139,8 @@ export function buildMandatoryCorpusFooter(docsBase: string | null | undefined, 
 	const corpusRootPosix = docsBase.replace(/\\/g, "/")
 	return (
 		`## 语料检索（强制）\n` +
-			`内置语料根（**read_file** / **search_files** 须使用此绝对路径或其子路径）：\`${corpusRootPosix}\`。\n` +
-			`动笔前检索 \`${corpusRootPosix}/manual/source_zh_cn/\` 与 \`${corpusRootPosix}/libs/\`；完整流程见模式说明「主动式语料检索」。`
+		`内置语料根（**read_file** / **search_files** 须使用此绝对路径或其子路径）：\`${corpusRootPosix}\`。\n` +
+		`动笔前检索 \`${corpusRootPosix}/manual/source_zh_cn/\` 与 \`${corpusRootPosix}/libs/\`；完整流程见模式说明「主动式语料检索」。`
 	)
 }
 
@@ -154,8 +156,7 @@ export function packSectionsWithTokenBudget(
 	const pool = Math.max(0, budgetTokens - reserve)
 	const errN = packOpts?.rawErrorCount ?? 0
 	const totalD = packOpts?.totalDiagnosticCount ?? 0
-	const density =
-		totalD > 0 ? Math.min(1, errN / Math.max(10, totalD * 0.4)) : Math.min(1, errN / 6)
+	const density = totalD > 0 ? Math.min(1, errN / Math.max(10, totalD * 0.4)) : Math.min(1, errN / 6)
 	const highFrac = Math.min(0.3, Math.max(0.15, 0.15 + 0.15 * density))
 	let highPriorityReserve = Math.floor(pool * highFrac)
 	const diagFloor = packOpts?.diagnosticSectionMinTokens ?? 0

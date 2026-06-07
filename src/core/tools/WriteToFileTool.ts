@@ -81,7 +81,9 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 		// Guard against excessive file sizes (5 MB limit)
 		const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 		if (Buffer.byteLength(newContent, "utf8") > MAX_FILE_SIZE_BYTES) {
-			pushToolResult(formatResponse.toolError(`Content exceeds maximum file size of ${MAX_FILE_SIZE_BYTES} bytes.`))
+			pushToolResult(
+				formatResponse.toolError(`Content exceeds maximum file size of ${MAX_FILE_SIZE_BYTES} bytes.`),
+			)
 			return
 		}
 
@@ -158,6 +160,8 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			if (!preflight.pass) {
 				task.consecutiveMistakeCount++
 				task.didToolFailInCurrentTurn = true
+				// Agent-facing: preflight errors are embedded in tool_result sent to the AI,
+				// intentionally kept in Chinese as the Cangjie LLM responds better to Chinese technical feedback.
 				const errorMsg =
 					`仓颉代码预检失败，文件未写入：\n` +
 					preflight.errors.map((e) => `- ${e}`).join("\n") +

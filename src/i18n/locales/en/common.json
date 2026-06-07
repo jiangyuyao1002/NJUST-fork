@@ -152,7 +152,27 @@
 		"set_active_profile_failed": "Failed to set active Profile: {{error}}",
 		"latex_compile_failed": "LaTeX compilation failed. Please install MiKTeX or TeX Live, or add MiKTeX bin to system PATH. You can also set njust-ai.latex.latexmkPath in settings. See output panel for details.",
 		"latex_error_log": "[LaTeX] Error: {{msg}}",
-		"cangjie_test_cleanup_failed": "[CangjieTestCleanup] Startup orphan cleanup failed: {{error}}"
+		"cangjie_test_cleanup_failed": "[CangjieTestCleanup] Startup orphan cleanup failed: {{error}}",
+		"cangjie_lsp": {
+			"cangjie_home_not_found": "CANGJIE_HOME not found. Configure Cangjie SDK path.",
+			"cannot_read_source": "Cannot read source file.",
+			"cjpm_not_found": "cjpm not found. Ensure Cangjie SDK is installed and CANGJIE_HOME is set.",
+			"invalid_identifier": "Please enter a valid Cangjie identifier",
+			"no_cjpm_workspace": "No cjpm workspace found (cjpm.toml missing). Cannot run this command."
+		},
+		"cloud_agent": {
+			"api_key_hint_401": "401: Check API key. Hint: Set via Cloud Agent Profile UI (migrated to SecretStorage),",
+			"compile_fix_not_applied": "Compile fix was not applied by the agent.",
+			"missing_run_id": "Missing run_id for deferred resume.",
+			"not_initialized": "ProfileStorageService not initialized. Call setProfileStorageService() first in extension.ts.",
+			"profile_not_configured": "No active Cloud Agent profile configured.",
+			"server_url_empty": "Cloud Agent Profile serverUrl cannot be empty. Configure it in settings.",
+			"task_failed": "Cloud Agent task failed."
+		},
+		"run_code": {
+			"matlab_live_script_unsupported": "MATLAB Live Script (.mlx) is not supported.",
+			"matlab_not_detected": "MATLAB runtime not detected."
+		}
 	},
 	"warnings": {
 		"no_terminal_content": "No terminal content selected",
@@ -165,7 +185,15 @@
 		"cangjie_toolchain_incomplete": "Cangjie toolchain incomplete or not runnable: {{detail}}",
 		"cangjie_cjc_not_found": "No valid cjc compiler found in the selected directory. Please confirm the SDK root directory.",
 		"cangjie_sdk_not_detected": "Cangjie SDK not detected. Please configure the SDK path to enable full Cangjie language support.",
-		"cangjie_index_limit_reached": "Cangjie file index limit reached ({{max}} files), some files may not be indexed."
+		"cangjie_index_limit_reached": "Cangjie file index limit reached ({{max}} files), some files may not be indexed.",
+		"cangjie_lsp": {
+			"cjc_no_expand_macros": "cjc does not support --expand-macros; macro expansion skipped.",
+			"cjc_not_found_for_macro": "cjc not found. Cannot expand macros without compiler.",
+			"executable_not_found_in_target": "No executable found in target/. Use cjpm: build (debug) or build first.",
+			"execute_on_cj_file": "Please run this command on a Cangjie .cj source file.",
+			"open_cj_file_first": "Please open a .cj file first.",
+			"tools_unavailable": "Cangjie SDK tools not available. Check installation."
+		}
 	},
 	"info": {
 		"cangjieCompileGuard": {
@@ -201,7 +229,33 @@
 		"cangjie_sdk_detected": "Cangjie SDK detected at {{path}}{{version}}. Auto-configure?",
 		"cangjie_sdk_auto_configured": "Cangjie SDK auto-configured{{version}}",
 		"cangjie_test_cleanup_orphan": "[CangjieTestCleanup] Startup orphan cleanup: removed {{filesRemoved}} generated test files ({{taskEntriesRemoved}} task buckets).",
-		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] Startup prune: removed {{filesRemoved}} generated test files ({{taskEntriesRemoved}} task buckets)."
+		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] Startup prune: removed {{filesRemoved}} generated test files ({{taskEntriesRemoved}} task buckets).",
+		"cangjie_lsp": {
+			"already_test_file": "Current file is already a *_test.cj test file.",
+			"configure_program_path": "Please configure the program path in launch.json",
+			"debug_cangjie_program": "Debug Cangjie Program",
+			"debug_cangjie_test": "Debug Cangjie Tests",
+			"detecting_toolchain": "Detecting cjc / cjpm / cjfmt / cjlint ...",
+			"detection_complete": "Detection complete.",
+			"edit_fix_prompt": "Edit fix",
+			"entry_deleted": "Entry deleted.",
+			"fix_suggestion_label": "Cangjie Fix Suggestion",
+			"learned_fixes_updated": "Learned fixes updated.",
+			"macro_expand_no_output": "Macro expansion produced no output.",
+			"new_function_name_prompt": "New function name",
+			"no_fix_yet": "(No fix learned yet)",
+			"no_learned_fixes": "No learned fixes yet.",
+			"no_testable_exports": "Source file has no testable functions or type declarations.",
+			"no_tests_to_clean": "No tests to clean up.",
+			"select_action": "Select action",
+			"select_learned_fix": "Select learned fix",
+			"target_path_prompt": "Target path (relative to workspace root)",
+			"toolchain_ok": "Cangjie SDK is ready."
+		},
+		"cloud_agent": {
+			"compile_no_fix": "Compilation succeeded, no fix needed.",
+			"task_completed": "Cloud Agent task completed."
+		}
 	},
 	"answers": {
 		"yes": "Yes",
@@ -223,7 +277,20 @@
 		"select_sdk_dir": "Select SDK Directory",
 		"download_sdk": "Download SDK",
 		"later": "Later",
-		"configure_now": "Configure Now"
+		"configure_now": "Configure Now",
+		"cangjie_lsp": {
+			"cancel": "Cancel",
+			"delete_entry": "Delete Entry",
+			"edit_fix": "Edit",
+			"manual_restart": "Manual Restart",
+			"open": "Open",
+			"open_settings": "Open Settings",
+			"still_generate": "Generate Anyway",
+			"still_launch": "Continue Launch",
+			"use_cjpm_build_debug": "Use cjpm: build (debug)",
+			"use_enhanced_rename": "Use Enhanced Rename",
+			"use_lsp_result": "Use LSP Result"
+		}
 	},
 	"tasks": {
 		"canceled": "Task error: It was stopped and canceled by the user.",
@@ -300,7 +367,26 @@
 		"url": "https://docs.njust-ai.local"
 	},
 	"tooltips": {
-		"bypass_mode_enabled": "Safety bypass mode enabled — Click to switch permission mode"
+		"bypass_mode_enabled": "Safety bypass mode enabled — Click to switch permission mode",
+		"cangjie_lsp": {
+			"compile_failed": "Compilation failed",
+			"compile_idle": "Cangjie compile: idle",
+			"compile_in_progress": "Compilation in progress…",
+			"kind_class": "class",
+			"kind_enum": "enum",
+			"kind_extend": "extend",
+			"kind_func": "function",
+			"kind_interface": "interface",
+			"kind_let": "let",
+			"kind_macro": "macro",
+			"kind_main": "main",
+			"kind_struct": "struct",
+			"kind_type_alias": "type alias",
+			"kind_var": "var",
+			"macro_call": "Macro call",
+			"macro_def_location": "Macro definition location",
+			"macro_not_in_index": "Macro definition not found in index"
+		}
 	},
 	"codelens": {
 		"run_test": "$(play) Run Test",
@@ -347,6 +433,31 @@
 				"class_name": "Class Name",
 				"value_type": "Value Type"
 			}
+		},
+		"profile": {
+			"custom_description": "Custom REST server configuration",
+			"custom_name": "Custom REST API",
+			"migrated_description": "Auto-migrated from legacy config",
+			"migrated_name": "Migrated Config",
+			"standard_name": "Standard Config (NJUST AI CJ)"
+		}
+	},
+	"code_actions": {
+		"cangjie_lsp": {
+			"add_return": "Add return statement",
+			"add_wildcard_case": "Add wildcard case",
+			"add_wildcard_case_check_return": "Add wildcard case (check return)",
+			"expand_macro": "Expand macro",
+			"go_to_macro_def": "Go to macro definition",
+			"let_to_var": "Convert let to var"
+		}
+	},
+	"status": {
+		"cangjie_lsp": {
+			"compile_compiling": "Compiling…",
+			"compile_idle": "Idle",
+			"full": "Full",
+			"incremental": "Incremental"
 		}
 	}
 }

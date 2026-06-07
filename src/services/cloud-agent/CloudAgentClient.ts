@@ -20,6 +20,7 @@ import type { IProtocolAdapter, UniversalTaskResponse } from "./adapters/types"
 import { McpProtocolAdapter, MCP_TOOLS } from "./adapters/McpProtocolAdapter"
 import type { McpCallbackHandler } from "./adapters/McpProtocolAdapter"
 import { normalizeServerUrl } from "./urlUtils"
+import { t } from "../../i18n"
 
 /** Maximum response body size (50 MB) before rejecting to avoid loading pathological payloads into memory. */
 const MAX_RESPONSE_BODY_BYTES = 50 * 1024 * 1024
@@ -62,8 +63,8 @@ function apiKeyHintFor401(status: number, bodySnippet: string): string {
 		return ""
 	}
 	return (
-		" Hint: 通过 Cloud Agent Profile 界面设置（已迁 SecretStorage），" +
-		"或 set process env CLOUD_AGENT_MOCK_API_KEY / NJUST_CLOUD_AGENT_API_KEY for the extension host (e.g. Njust-AI/.env). " +
+		t("errors.cloud_agent.api_key_hint_401") +
+		" or set process env CLOUD_AGENT_MOCK_API_KEY / NJUST_CLOUD_AGENT_API_KEY for the extension host (e.g. Njust-AI/.env). " +
 		"Workspace .vscode/settings.json only applies when that folder is the workspace root."
 	)
 }
@@ -143,7 +144,7 @@ export class CloudAgentClient {
 		this.serverUrl = normalizeServerUrl(profile.serverUrl)
 
 		if (!this.serverUrl?.trim()) {
-			throw new Error("Cloud Agent Profile 的 serverUrl 不能为空。请在设置中配置。")
+			throw new Error(t("errors.cloud_agent.server_url_empty"))
 		}
 
 		// HTTPS 校验

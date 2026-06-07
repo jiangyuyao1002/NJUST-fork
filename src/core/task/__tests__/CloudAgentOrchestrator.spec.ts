@@ -206,7 +206,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("未配置 Cloud Agent Profile"))
+			expect(host.say).toHaveBeenCalledWith(
+				"error",
+				expect.stringContaining("errors.cloud_agent.profile_not_configured"),
+			)
 			expect(mockClientInstance.connect).not.toHaveBeenCalled()
 		})
 
@@ -327,7 +330,7 @@ describe("CloudAgentOrchestrator", () => {
 			await orch.run("hello")
 
 			expect(applyCloudWorkspaceOps).not.toHaveBeenCalled()
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("1 条"))
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("info.cloud_agent.ops_not_enabled"))
 		})
 
 		it("applies workspace ops when applyRemoteWorkspaceOps is true and confirm is false", async () => {
@@ -375,7 +378,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("workspace_ops 格式无效"))
+			expect(host.say).toHaveBeenCalledWith(
+				"text",
+				expect.stringContaining("errors.cloud_agent.workspace_ops_invalid"),
+			)
 		})
 
 		it("skips compile loop when compileLoopEnabled is false", async () => {
@@ -436,7 +442,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("completion_result", expect.stringContaining("任务完成"))
+			expect(host.say).toHaveBeenCalledWith(
+				"completion_result",
+				expect.stringContaining("info.cloud_agent.task_completed"),
+			)
 		})
 
 		it("iterates pending → done with tool execution", async () => {
@@ -699,7 +708,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("缺少 run_id"))
+			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("errors.cloud_agent.missing_run_id"))
 			expect(CloudAgentClientMock.sendDeferredAbort).toHaveBeenCalled()
 		})
 
@@ -721,7 +730,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("server_revision 已变更"))
+			expect(host.say).toHaveBeenCalledWith(
+				"error",
+				expect.stringContaining("errors.cloud_agent.server_revision_changed"),
+			)
 			expect(CloudAgentClientMock.sendDeferredAbort).toHaveBeenCalled()
 		})
 
@@ -744,7 +756,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("最大迭代次数"))
+			expect(host.say).toHaveBeenCalledWith(
+				"error",
+				expect.stringContaining("errors.cloud_agent.max_iterations_reached"),
+			)
 			expect(CloudAgentClientMock.sendDeferredAbort).toHaveBeenCalled()
 		})
 
@@ -791,7 +806,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("completion_result", expect.stringContaining("未成功"))
+			expect(host.say).toHaveBeenCalledWith(
+				"completion_result",
+				expect.stringContaining("errors.cloud_agent.task_failed"),
+			)
 		})
 
 		it("reports deferred resume error", async () => {
@@ -853,7 +871,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("workspace_ops 无效"))
+			expect(host.say).toHaveBeenCalledWith(
+				"text",
+				expect.stringContaining("errors.cloud_agent.workspace_ops_invalid_deferred"),
+			)
 		})
 
 		it("reports logs in deferred loop", async () => {
@@ -1088,7 +1109,7 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("未返回修正代码"))
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("info.cloud_agent.compile_no_fix"))
 		})
 
 		it("stops when fixResult has workspaceOpsParseError", async () => {
@@ -1119,7 +1140,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("workspace_ops 无效"))
+			expect(host.say).toHaveBeenCalledWith(
+				"text",
+				expect.stringContaining("errors.cloud_agent.compile_fix_ops_invalid"),
+			)
 		})
 	})
 

@@ -536,7 +536,7 @@ describe("CangjieLspClient start()", () => {
 		await client.start()
 		expect(client.state).toBe("error")
 		const lastCall = mockShowErrorMessage.mock.calls[mockShowErrorMessage.mock.calls.length - 1]
-		expect(lastCall?.[0]).toContain("initialize fail")
+		expect(lastCall?.[0]).toContain("errors.cangjie_lsp.lsp_start_failed")
 	})
 })
 
@@ -711,13 +711,13 @@ describe("CangjieLspClient scheduleAutoRestart", () => {
 		cb({ newState: 1 })
 
 		expect(mockShowErrorMessage).toHaveBeenCalledWith(
-			expect.stringContaining("连续崩溃"),
-			expect.stringContaining("手动重启"),
+			expect.stringContaining("errors.cangjie_lsp.lsp_crashed_repeatedly"),
+			expect.stringContaining("buttons.cangjie_lsp.manual_restart"),
 		)
 	})
 
 	it("manual restart resets counter and restarts", async () => {
-		mockShowErrorMessage.mockResolvedValueOnce("手动重启")
+		mockShowErrorMessage.mockResolvedValueOnce("buttons.cangjie_lsp.manual_restart")
 		mockExistsSync.mockReturnValue(true)
 		mockTextDocuments.push({
 			languageId: "cangjie",

@@ -8,6 +8,8 @@ const CANGJIE_SKILLS_PLAN_SKILL = "skills-enhancement-plan"
 function selectCangjieScenarioSkills(triggerText: string | undefined): Set<string> {
 	const selected = new Set<string>()
 	const text = (triggerText ?? "").toLowerCase()
+	// Keyword regex for user-intent matching — Chinese keywords intentionally included
+	// to match Cangjie compiler error output and provide context to the LLM.
 	if (
 		/\bcjpm\b|\bcjc\b|\bcjfmt\b|\bcjlint\b|\bcjdb\b|\bcjprof\b|build|compile|run|test|package|workspace|toml|构建|编译|运行|测试|包|工作区/.test(
 			text,

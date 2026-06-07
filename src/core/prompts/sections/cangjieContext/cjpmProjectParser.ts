@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 import * as fs from "fs"
 import * as path from "path"
 import { parse as parseToml } from "smol-toml"
@@ -43,7 +46,11 @@ const MAX_SCAN_FILES = 500
 const MAX_WORKSPACE_MEMBERS = 20
 
 const PROJECT_OVERVIEW_CACHE_TTL_MS = 60_000
-type CjpmTomlMetaCacheEntry = { mtimeMs: number; value: { info: CjpmProjectInfo | null; cjpmRawHash: string }; time: number }
+type CjpmTomlMetaCacheEntry = {
+	mtimeMs: number
+	value: { info: CjpmProjectInfo | null; cjpmRawHash: string }
+	time: number
+}
 const cjpmTomlMetaCache = new Map<string, CjpmTomlMetaCacheEntry>()
 
 export async function verifyPackageDeclarations(
@@ -92,9 +99,7 @@ export async function verifyPackageDeclarations(
 				)
 			} else if (!declaredPkg && node.packageName.includes(".")) {
 				const relPath = path.relative(cwd, filePath).replace(/\\/g, "/")
-				mismatches.push(
-					`- ${relPath}: **缺少 package 声明**，应声明 \`package ${expectedPkg}\``,
-				)
+				mismatches.push(`- ${relPath}: **缺少 package 声明**，应声明 \`package ${expectedPkg}\``)
 			}
 		}
 
@@ -123,10 +128,7 @@ export async function verifyPackageDeclarations(
  * For workspace projects, generate a summary of public symbols in each
  * member module so the AI knows what's available across modules.
  */
-export async function buildWorkspaceSymbolSummary(
-	info: CjpmProjectInfo,
-	cwd: string,
-): Promise<string | null> {
+export async function buildWorkspaceSymbolSummary(info: CjpmProjectInfo, cwd: string): Promise<string | null> {
 	if (!info.isWorkspace || !info.members || info.members.length === 0) return null
 
 	const symbolIndex = CangjieSymbolIndex.getInstance()
@@ -159,9 +161,7 @@ export async function buildWorkspaceSymbolSummary(
 			return `  - ${vis}${s.kind} ${tp}**${s.name}**${sig}`
 		})
 
-		const suffix = symbols.length > MAX_SYMBOLS_PER_MODULE
-			? `\n  - _…共 ${symbols.length} 个符号_`
-			: ""
+		const suffix = symbols.length > MAX_SYMBOLS_PER_MODULE ? `\n  - _…共 ${symbols.length} 个符号_` : ""
 
 		moduleSections.push(`- **${member.name}** (${member.outputType}):\n${lines.join("\n")}${suffix}`)
 	}
@@ -281,9 +281,7 @@ function tomDepsFromObject(tbl: unknown): CjpmProjectInfo["dependencies"] | unde
 	return Object.keys(out).length > 0 ? out : undefined
 }
 
-function buildDependencyDisplay(
-	deps: CjpmProjectInfo["dependencies"] | undefined,
-): string[] | undefined {
+function buildDependencyDisplay(deps: CjpmProjectInfo["dependencies"] | undefined): string[] | undefined {
 	if (!deps || Object.keys(deps).length === 0) return undefined
 	const rows = Object.entries(deps).map(([d, t]) => {
 		if (t.path) return `${d}(path:${t.path})`
@@ -295,7 +293,10 @@ function buildDependencyDisplay(
 	return rows.length > 0 ? rows : undefined
 }
 
-async function parseMemberCjpmIntoWorkspaceMember(memberRoot: string, pathRel: string): Promise<WorkspaceMember | null> {
+async function parseMemberCjpmIntoWorkspaceMember(
+	memberRoot: string,
+	pathRel: string,
+): Promise<WorkspaceMember | null> {
 	const memberToml = path.join(memberRoot, "cjpm.toml")
 	let content: string
 	try {
@@ -346,7 +347,10 @@ async function parseMemberCjpmIntoWorkspaceMember(memberRoot: string, pathRel: s
 	}
 }
 
-async function projectInfoFromParsedTomlRoot(root: Record<string, unknown>, cwd: string): Promise<CjpmProjectInfo | null> {
+async function projectInfoFromParsedTomlRoot(
+	root: Record<string, unknown>,
+	cwd: string,
+): Promise<CjpmProjectInfo | null> {
 	const ws = root.workspace
 	if (ws && typeof ws === "object" && !Array.isArray(ws)) {
 		const membersRaw = (ws as Record<string, unknown>).members
@@ -354,7 +358,9 @@ async function projectInfoFromParsedTomlRoot(root: Record<string, unknown>, cwd:
 			? membersRaw.filter((x): x is string => typeof x === "string")
 			: []
 		const slice = memberPaths.slice(0, MAX_WORKSPACE_MEMBERS)
-		const resolved = await Promise.all(slice.map((mp) => parseMemberCjpmIntoWorkspaceMember(path.join(cwd, mp), mp)))
+		const resolved = await Promise.all(
+			slice.map((mp) => parseMemberCjpmIntoWorkspaceMember(path.join(cwd, mp), mp)),
+		)
 		const members = resolved.filter((m): m is WorkspaceMember => m != null)
 		const dependencies = tomDepsFromObject(root.dependencies)
 		return { name: "", version: "", outputType: "", isWorkspace: true, members, dependencies, srcDir: "src" }
@@ -371,7 +377,10 @@ async function projectInfoFromParsedTomlRoot(root: Record<string, unknown>, cwd:
 	return null
 }
 
-async function parseWorkspaceProjectRegexAsync(sections: Map<string, string>, cwd: string): Promise<CjpmProjectInfo | null> {
+async function parseWorkspaceProjectRegexAsync(
+	sections: Map<string, string>,
+	cwd: string,
+): Promise<CjpmProjectInfo | null> {
 	const ws = sections.get("workspace")
 	if (!ws) return null
 	const memberPaths = extractTomlArray(ws, "members")
@@ -415,7 +424,9 @@ export async function parseCjpmTomlContent(content: string, cwd: string): Promis
 	return null
 }
 
-export async function parseCjpmTomlWithMeta(cwd: string): Promise<{ info: CjpmProjectInfo | null; cjpmRawHash: string }> {
+export async function parseCjpmTomlWithMeta(
+	cwd: string,
+): Promise<{ info: CjpmProjectInfo | null; cjpmRawHash: string }> {
 	const tomlPath = path.join(cwd, "cjpm.toml")
 	const now = Date.now()
 	try {
@@ -454,7 +465,11 @@ function getPackageTreeCacheKey(cwd: string, srcDir: string, rootPackageName?: s
 	return `${cwd}|${srcDir}|${rootPackageName ?? "default"}`
 }
 
-export async function getCachedPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): Promise<PackageNode | null> {
+export async function getCachedPackageHierarchy(
+	cwd: string,
+	srcDir: string,
+	rootPackageName?: string,
+): Promise<PackageNode | null> {
 	const key = getPackageTreeCacheKey(cwd, srcDir, rootPackageName)
 	const now = Date.now()
 	const hit = packageTreeCache.get(key)
@@ -468,7 +483,11 @@ export async function getCachedPackageHierarchy(cwd: string, srcDir: string, roo
 	return value
 }
 
-export async function scanPackageHierarchy(cwd: string, srcDir: string, rootPackageName?: string): Promise<PackageNode | null> {
+export async function scanPackageHierarchy(
+	cwd: string,
+	srcDir: string,
+	rootPackageName?: string,
+): Promise<PackageNode | null> {
 	const srcPath = path.join(cwd, srcDir)
 	try {
 		await fs.promises.access(srcPath)
@@ -538,10 +557,7 @@ function countTreeFiles(node: PackageNode, testOnly: boolean): number {
 // System prompt section formatters
 // ---------------------------------------------------------------------------
 
-export async function readWorkspaceMemberDependencies(
-	cwd: string,
-	member: WorkspaceMember,
-): Promise<string[]> {
+export async function readWorkspaceMemberDependencies(cwd: string, member: WorkspaceMember): Promise<string[]> {
 	if (member.dependencyDisplay && member.dependencyDisplay.length > 0) {
 		return member.dependencyDisplay.slice(0, 5)
 	}
@@ -598,7 +614,9 @@ export async function buildCompactProjectOverviewSection(
 		lines.push(`目录: ${info.srcDir}/, 源文件: ${srcCount}, 测试文件: ${testCount}`)
 		if (activePkg) lines.push(`当前编辑包: ${activePkg}`)
 		if (pkgTree) {
-			const pkgSummary = [pkgTree.packageName, ...pkgTree.children.map((c) => c.packageName)].slice(0, 6).join(", ")
+			const pkgSummary = [pkgTree.packageName, ...pkgTree.children.map((c) => c.packageName)]
+				.slice(0, 6)
+				.join(", ")
 			lines.push(`包概览: ${pkgSummary}${pkgTree.children.length > 5 ? " ..." : ""}`)
 		}
 		lines.push(`包声明规则: package 与 ${info.srcDir}/ 目录层级一致`)
@@ -686,7 +704,6 @@ export async function getCjpmTreeSection(cwd: string): Promise<string | null> {
 // ---------------------------------------------------------------------------
 // Dynamic coding rules injection (context-aware)
 // ---------------------------------------------------------------------------
-
 
 export function invalidateCjpmProjectParserCaches(): void {
 	cjpmTomlMetaCache.clear()

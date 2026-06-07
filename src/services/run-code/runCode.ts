@@ -6,6 +6,7 @@ import { buildMatlabRunConfig } from "../matlab/matlabRunner"
 import { resolveMatlabRuntime } from "../matlab/matlabToolUtils"
 import { Package } from "../../shared/package"
 import { resolveLatexmkExecutable, resolvePdflatexExecutable } from "../latex/latexResolve"
+import { t } from "../../i18n"
 
 interface RunConfig {
 	command: string
@@ -101,7 +102,9 @@ function buildJavaScriptConfig(filePath: string): RunConfig {
 			if (pkg.scripts?.dev) {
 				return { command: "npm run dev", cwd: pkgRoot }
 			}
-		} catch { /* ignore */ }
+		} catch {
+			/* ignore */
+		}
 	}
 
 	return { command: `node "${filePath}"` }
@@ -120,7 +123,9 @@ function buildTypeScriptConfig(filePath: string): RunConfig {
 			if (pkg.scripts?.dev) {
 				return { command: "npm run dev", cwd: pkgRoot }
 			}
-		} catch { /* ignore */ }
+		} catch {
+			/* ignore */
+		}
 	}
 
 	return { command: `npx tsx "${filePath}"` }
@@ -133,7 +138,11 @@ function buildCConfig(filePath: string): RunConfig {
 	if (cmakeRoot) {
 		const bd = path.join(cmakeRoot, "build")
 		return {
-			command: chain(`cmake -S "${cmakeRoot}" -B "${bd}"`, `cmake --build "${bd}"`, `cmake --build "${bd}" --target run`),
+			command: chain(
+				`cmake -S "${cmakeRoot}" -B "${bd}"`,
+				`cmake --build "${bd}"`,
+				`cmake --build "${bd}" --target run`,
+			),
 			cwd: cmakeRoot,
 		}
 	}
@@ -160,7 +169,11 @@ function buildCppConfig(filePath: string): RunConfig {
 	if (cmakeRoot) {
 		const bd = path.join(cmakeRoot, "build")
 		return {
-			command: chain(`cmake -S "${cmakeRoot}" -B "${bd}"`, `cmake --build "${bd}"`, `cmake --build "${bd}" --target run`),
+			command: chain(
+				`cmake -S "${cmakeRoot}" -B "${bd}"`,
+				`cmake --build "${bd}"`,
+				`cmake --build "${bd}" --target run`,
+			),
 			cwd: cmakeRoot,
 		}
 	}
@@ -238,16 +251,14 @@ function buildRustConfig(filePath: string): RunConfig {
 function buildMatlabConfig(filePath: string, _workDir: string): RunConfig | undefined {
 	const ext = path.extname(filePath).toLowerCase()
 	if (ext === ".mlx") {
-		void vscode.window.showWarningMessage(
-			".mlx（MATLAB Live Script）不适合用命令行直接执行；请用 MATLAB 桌面打开，或改用纯 .m 脚本。",
-		)
+		void vscode.window.showWarningMessage(t("errors.run_code.matlab_live_script_unsupported"))
 		return undefined
 	}
 	const c = buildMatlabRunConfig(filePath)
 	if (!c) {
 		if (ext === ".m") {
 			if (!resolveMatlabRuntime()) {
-				void vscode.window.showErrorMessage("未检测到 MATLAB 或 Octave，无法运行。")
+				void vscode.window.showErrorMessage(t("errors.run_code.matlab_not_detected"))
 			} else {
 				void vscode.window.showWarningMessage("Failed to generate run command for this file.")
 			}
@@ -298,7 +309,13 @@ function buildKotlinConfig(filePath: string): RunConfig {
 		}
 	}
 
-	return { command: chain(`kotlinc "${path.basename(filePath)}" -include-runtime -d "${base}.jar"`, `java -jar "${base}.jar"`), cwd: fileDir }
+	return {
+		command: chain(
+			`kotlinc "${path.basename(filePath)}" -include-runtime -d "${base}.jar"`,
+			`java -jar "${base}.jar"`,
+		),
+		cwd: fileDir,
+	}
 }
 
 function buildDartConfig(filePath: string): RunConfig {
@@ -340,7 +357,14 @@ function buildLatexConfig(filePath: string, _workDir: string): RunConfig {
 
 	if (engine === "latexmk") {
 		const bin = quoteArg(resolveLatexmkExecutable(cfg.get<string>("latex.latexmkPath")))
-		const args = ["-pdf", "-interaction=nonstopmode", "-file-line-error", "-synctex=1", ...extra.map(quoteArg), quoteArg(base)]
+		const args = [
+			"-pdf",
+			"-interaction=nonstopmode",
+			"-file-line-error",
+			"-synctex=1",
+			...extra.map(quoteArg),
+			quoteArg(base),
+		]
 		return { command: `${bin} ${args.join(" ")}`, cwd }
 	}
 

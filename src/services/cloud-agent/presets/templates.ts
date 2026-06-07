@@ -1,4 +1,5 @@
 import type { CloudAgentProfile, AuthConfig } from "../types/profile"
+import { t } from "../../../i18n"
 
 function makeId(): string {
 	return `profile-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -31,7 +32,7 @@ function builtIn(
  */
 export const NJUST_STANDARD_PROFILE: CloudAgentProfile = builtIn(
 	"njust-ai-standard",
-	"标准配置 (NJUST AI CJ)",
+	t("templates.profile.standard_name"),
 	"",
 	{
 		type: "api-key",
@@ -45,8 +46,8 @@ export const NJUST_STANDARD_PROFILE: CloudAgentProfile = builtIn(
  * 可选覆盖端点路径和字段映射。
  */
 export const CUSTOM_REST_PROFILE: Omit<CloudAgentProfile, "id" | "createdAt" | "updatedAt"> = {
-	name: "自定义 REST API",
-	description: "自定义 REST 服务端配置",
+	name: t("templates.profile.custom_name"),
+	description: t("templates.profile.custom_description"),
 	protocolType: "rest",
 	serverUrl: "",
 	auth: {

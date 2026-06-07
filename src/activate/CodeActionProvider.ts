@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 
 import { CodeActionName, CodeActionId } from "@njust-ai/types"
 import { Package } from "../shared/package"
+import { t } from "../i18n"
 
 import { getCodeActionCommand } from "../utils/commands"
 import { EditorUtils } from "../integrations/editor/EditorUtils"
@@ -26,7 +27,7 @@ function enrichCangjieFixData(diagnostics: ReturnType<typeof EditorUtils.createD
 		if (pattern) {
 			return {
 				...d,
-				message: `${d.message}\n[仓颉修复建议] ${pattern.suggestion}`,
+				message: `${d.message}\n[${t("info.cangjie_lsp.fix_suggestion_label")}] ${pattern.suggestion}`,
 			}
 		}
 		return d

@@ -157,6 +157,26 @@
 			"streamProcessingError": "Error processing response stream: {{message}}",
 			"unexpectedStreamError": "Unexpected error processing response stream",
 			"completionError": "OpenAI Codex completion error: {{message}}"
+		},
+		"cangjie_lsp": {
+			"cangjie_home_not_found": "未找到 CANGJIE_HOME。请配置仓颉 SDK 路径。",
+			"cannot_read_source": "无法读取源文件内容。",
+			"cjpm_not_found": "未找到 cjpm。请确认已安装仓颉 SDK 并设置 CANGJIE_HOME。",
+			"invalid_identifier": "请输入合法的仓颉标识符",
+			"no_cjpm_workspace": "未找到 cjpm 工作区（缺少 cjpm.toml）。无法运行此命令。"
+		},
+		"cloud_agent": {
+			"api_key_hint_401": "401：请检查 API Key。提示：通过 Cloud Agent Profile 界面设置（已迁移 SecretStorage），",
+			"compile_fix_not_applied": "Agent 未应用编译修复。",
+			"missing_run_id": "deferred resume 缺少 run_id。",
+			"not_initialized": "ProfileStorageService 尚未初始化。请确认在 extension.ts 中先调用 setProfileStorageService()。",
+			"profile_not_configured": "未配置活跃的 Cloud Agent Profile。",
+			"server_url_empty": "Cloud Agent Profile 的 serverUrl 不能为空。请在设置中配置。",
+			"task_failed": "Cloud Agent 任务失败。"
+		},
+		"run_code": {
+			"matlab_live_script_unsupported": "不支持 MATLAB Live Script (.mlx)。",
+			"matlab_not_detected": "未检测到 MATLAB 运行环境。"
 		}
 	},
 	"warnings": {
@@ -170,7 +190,15 @@
 		"cangjie_toolchain_incomplete": "仓颉工具链不完整或不可运行：{{detail}}",
 		"cangjie_cjc_not_found": "所选目录下未找到有效的 cjc 编译器。请确认选择了正确的 SDK 根目录。",
 		"cangjie_sdk_not_detected": "未检测到仓颉 SDK。请配置 SDK 路径以启用完整的仓颉语言支持。",
-		"cangjie_index_limit_reached": "仓颉文件索引达到上限（{{max}} 个），部分文件可能未被索引"
+		"cangjie_index_limit_reached": "仓颉文件索引达到上限（{{max}} 个），部分文件可能未被索引",
+		"cangjie_lsp": {
+			"cjc_no_expand_macros": "cjc 不支持 --expand-macros；宏展开已跳过。",
+			"cjc_not_found_for_macro": "未找到 cjc。无编译器无法展开宏。",
+			"executable_not_found_in_target": "未在 target/ 下找到可执行文件。使用 cjpm: build (debug) 或先执行 build。",
+			"execute_on_cj_file": "请在仓颉 .cj 源文件上执行此命令。",
+			"open_cj_file_first": "请先打开 .cj 文件。",
+			"tools_unavailable": "仓颉 SDK 工具不可用。请检查安装。"
+		}
 	},
 	"info": {
 		"cangjieCompileGuard": {
@@ -206,7 +234,33 @@
 		"cangjie_sdk_detected": "检测到仓颉 SDK 位于 {{path}}{{version}}，是否自动配置？",
 		"cangjie_sdk_auto_configured": "仓颉 SDK 已自动配置{{version}}",
 		"cangjie_test_cleanup_orphan": "[CangjieTestCleanup] 启动孤儿清理：移除 {{filesRemoved}} 个生成测试文件（{{taskEntriesRemoved}} 个任务桶）。",
-		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] 启动修剪：移除 {{filesRemoved}} 个生成测试文件（{{taskEntriesRemoved}} 个任务桶）。"
+		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] 启动修剪：移除 {{filesRemoved}} 个生成测试文件（{{taskEntriesRemoved}} 个任务桶）。",
+		"cangjie_lsp": {
+			"already_test_file": "当前文件已是 *_test.cj 测试文件。",
+			"configure_program_path": "请在 launch.json 中配置 program 路径",
+			"debug_cangjie_program": "调试仓颉程序",
+			"debug_cangjie_test": "调试仓颉测试",
+			"detecting_toolchain": "正在检测 cjc / cjpm / cjfmt / cjlint …",
+			"detection_complete": "检测完成。",
+			"edit_fix_prompt": "编辑修复",
+			"entry_deleted": "条目已删除。",
+			"fix_suggestion_label": "仓颉修复建议",
+			"learned_fixes_updated": "学习记录已更新。",
+			"macro_expand_no_output": "宏展开未产生输出。",
+			"new_function_name_prompt": "新函数名",
+			"no_fix_yet": "（尚未学到修复方式）",
+			"no_learned_fixes": "暂无学习到的修复记录。",
+			"no_testable_exports": "源文件暂无可测试的函数或类型声明。",
+			"no_tests_to_clean": "无需清理的测试文件。",
+			"select_action": "选择操作",
+			"select_learned_fix": "选择学习到的修复",
+			"target_path_prompt": "目标路径（相对于工作区根目录）",
+			"toolchain_ok": "仓颉 SDK 已就绪。"
+		},
+		"cloud_agent": {
+			"compile_no_fix": "编译通过，无需修复。",
+			"task_completed": "Cloud Agent 任务完成。"
+		}
 	},
 	"answers": {
 		"yes": "是",
@@ -228,7 +282,20 @@
 		"select_sdk_dir": "选择 SDK 目录",
 		"download_sdk": "下载 SDK",
 		"later": "稍后",
-		"configure_now": "立即配置"
+		"configure_now": "立即配置",
+		"cangjie_lsp": {
+			"cancel": "取消",
+			"delete_entry": "删除条目",
+			"edit_fix": "编辑",
+			"manual_restart": "手动重启",
+			"open": "打开",
+			"open_settings": "打开设置",
+			"still_generate": "仍然生成",
+			"still_launch": "仍继续启动",
+			"use_cjpm_build_debug": "使用 cjpm: build (debug)",
+			"use_enhanced_rename": "使用增强重命名",
+			"use_lsp_result": "使用 LSP 结果"
+		}
 	},
 	"tasks": {
 		"canceled": "任务错误：它已被用户停止并取消。",
@@ -313,7 +380,26 @@
 		"url": "https://docs.njust-ai.local"
 	},
 	"tooltips": {
-		"bypass_mode_enabled": "安全旁路模式已启用 — 点击可切换权限模式"
+		"bypass_mode_enabled": "安全旁路模式已启用 — 点击可切换权限模式",
+		"cangjie_lsp": {
+			"compile_failed": "编译失败",
+			"compile_idle": "仓颉编译：空闲",
+			"compile_in_progress": "编译进行中…",
+			"kind_class": "类",
+			"kind_enum": "枚举",
+			"kind_extend": "扩展",
+			"kind_func": "函数",
+			"kind_interface": "接口",
+			"kind_let": "let",
+			"kind_macro": "宏",
+			"kind_main": "main",
+			"kind_struct": "结构体",
+			"kind_type_alias": "类型别名",
+			"kind_var": "var",
+			"macro_call": "宏调用",
+			"macro_def_location": "宏定义位置",
+			"macro_not_in_index": "未在索引中找到宏定义"
+		}
 	},
 	"codelens": {
 		"run_test": "$(play) 运行测试",
@@ -360,6 +446,31 @@
 				"class_name": "类名",
 				"value_type": "值类型"
 			}
+		},
+		"profile": {
+			"custom_description": "自定义 REST 服务端配置",
+			"custom_name": "自定义 REST API",
+			"migrated_description": "从旧版配置自动迁移",
+			"migrated_name": "迁移配置",
+			"standard_name": "标准配置 (NJUST AI CJ)"
+		}
+	},
+	"code_actions": {
+		"cangjie_lsp": {
+			"add_return": "添加 return 语句",
+			"add_wildcard_case": "添加通配 case",
+			"add_wildcard_case_check_return": "添加通配 case（检查 return）",
+			"expand_macro": "展开宏",
+			"go_to_macro_def": "跳转到宏定义",
+			"let_to_var": "将 let 改为 var"
+		}
+	},
+	"status": {
+		"cangjie_lsp": {
+			"compile_compiling": "编译中…",
+			"compile_idle": "空闲",
+			"full": "全量",
+			"incremental": "增量"
 		}
 	}
 }

@@ -7,14 +7,25 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { Package } from "../../shared/package"
 import { resolveCangjieToolPath, buildCangjieToolEnv } from "./cangjieToolUtils"
-import { invalidateCangjieL3ContextCache, recordLearnedFix, recordLearnedFailure } from "../../core/prompts/sections/cangjie-context"
+import {
+	invalidateCangjieL3ContextCache,
+	recordLearnedFix,
+	recordLearnedFailure,
+} from "../../core/prompts/sections/cangjie-context"
 import { getCjpmTreeSummaryForPrompt } from "./cjpmTreeForPrompt"
 import { recordCompileHistoryEvent } from "./cangjieCompileHistory"
-import { analyzeCompileOutput, formatAnalysisSummary, getFixDirectiveForLearning, normalizeErrorPattern } from "./CangjieErrorAnalyzer"
+import {
+	analyzeCompileOutput,
+	formatAnalysisSummary,
+	getFixDirectiveForLearning,
+	normalizeErrorPattern,
+} from "./CangjieErrorAnalyzer"
 import type { CangjieMetricsCollector } from "./CangjieMetricsCollector"
 import { getErrorMessage } from "../../shared/error-utils"
+import { safeUnlink } from "./safeUnlink"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
+import { t } from "../../i18n"
 
 const execFileAsync = promisify(execFile)
 
@@ -127,9 +138,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			// Step 1: Auto-format with cjfmt (Phase 3.2)
 			const formatResult = await this.formatFile(doc.fileName)
 			if (formatResult.formatted) {
-				this.outputChannel.appendLine(
-					`[CompileGuard] 🎨 cjfmt formatted ${path.basename(doc.fileName)}`,
-				)
+				this.outputChannel.appendLine(`[CompileGuard] 🎨 cjfmt formatted ${path.basename(doc.fileName)}`)
 			}
 
 			this.lintReportUriByCwd.set(cwd, doc.uri)
@@ -138,12 +147,11 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			const t = setTimeout(() => {
 				this.compileDebounceByCwd.delete(cwd)
 				this.runDebouncedPostSavePipeline(cwd).catch((err) => {
-				this.outputChannel.appendLine(
-					`[CompileGuard] Unhandled error in post-save pipeline: ` +
-					`${getErrorMessage(err)}`,
-				)
-				TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
-			})
+					this.outputChannel.appendLine(
+						`[CompileGuard] Unhandled error in post-save pipeline: ` + `${getErrorMessage(err)}`,
+					)
+					TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
+				})
 			}, this.COMPILE_DEBOUNCE_MS)
 			this.compileDebounceByCwd.set(cwd, t)
 		})
@@ -170,7 +178,9 @@ export class CangjieCompileGuard implements vscode.Disposable {
 					}
 				}
 			}
-			this.outputChannel.appendLine(`[CompileGuard] ✅ Build passed (${buildMode}) after save burst (${savedLabel})`)
+			this.outputChannel.appendLine(
+				`[CompileGuard] ✅ Build passed (${buildMode}) after save burst (${savedLabel})`,
+			)
 			this.onSuccessfulBuild?.({ cwd, docUri: docUri ?? undefined })
 		} else {
 			this.outputChannel.appendLine(
@@ -218,7 +228,10 @@ export class CangjieCompileGuard implements vscode.Disposable {
 		})
 		this.compileTailByCwd.set(
 			cwd,
-			done.then(() => undefined, () => undefined),
+			done.then(
+				() => undefined,
+				() => undefined,
+			),
 		)
 		await done
 		return result
@@ -233,14 +246,16 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			const r: CompileResult = { success: false, output: "cjpm not found", errorCount: 0, errorLocations: [] }
 			const dt = Date.now() - t0
 			this.metricsCollector?.recordBuild(r, dt)
-			void vscode.window.showErrorMessage(
-				"未找到 cjpm：请设置 CANGJIE_HOME、PATH，或在设置中配置 njust-ai.cangjieTools.cjpmPath。",
-				"打开设置",
-			).then((c) => {
-				if (c === "打开设置") {
-					void vscode.commands.executeCommand("workbench.action.openSettings", `${Package.name}.cangjieTools.cjpmPath`)
-				}
-			})
+			void vscode.window
+				.showErrorMessage(t("errors.cangjie_lsp.cjpm_not_found"), t("buttons.cangjie_lsp.open_settings"))
+				.then((c) => {
+					if (c === t("buttons.cangjie_lsp.open_settings")) {
+						void vscode.commands.executeCommand(
+							"workbench.action.openSettings",
+							`${Package.name}.cangjieTools.cjpmPath`,
+						)
+					}
+				})
 			this._onCompile.fire({
 				status: "end",
 				cwd,
@@ -280,9 +295,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 		} else if (useIncremental) {
 			this.incrementalAvailable = false
 			this.fullBuildCountSinceIncrementalFailure = 0
-			this.outputChannel.appendLine(
-				`[CompileGuard] Incremental build failed, retrying with full build…`,
-			)
+			this.outputChannel.appendLine(`[CompileGuard] Incremental build failed, retrying with full build…`)
 			const fullResult = await this.execBuild(cjpmPath, ["build"], cwd)
 			fullResult.incremental = false
 			if (fullResult.success) {
@@ -418,15 +431,15 @@ export class CangjieCompileGuard implements vscode.Disposable {
 		buildOutput: string,
 		_success: boolean,
 	): void {
-			// Clear only diagnostics under this project root (multi-project safe).
-			if (this.compileDiagnostics) {
-				for (const [uri] of this.compileDiagnostics) {
-					if (uri.fsPath.startsWith(cwd)) {
-						this.compileDiagnostics.delete(uri)
-					}
+		// Clear only diagnostics under this project root (multi-project safe).
+		if (this.compileDiagnostics) {
+			for (const [uri] of this.compileDiagnostics) {
+				if (uri.fsPath.startsWith(cwd)) {
+					this.compileDiagnostics.delete(uri)
 				}
 			}
-			
+		}
+
 		if (!this.compileDiagnostics) return
 		if (locations.length === 0) {
 			this.compileDiagnostics.clear()
@@ -446,8 +459,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			const range = new vscode.Range(line, col, line, col + 1)
 			const errKey = `${loc.file}:${loc.line}`
 			const errKeyAbs = `${abs}:${loc.line}`
-			const snippet =
-				this.lastErrors.get(errKey) ?? this.lastErrors.get(errKeyAbs) ?? buildOutput.slice(0, 300)
+			const snippet = this.lastErrors.get(errKey) ?? this.lastErrors.get(errKeyAbs) ?? buildOutput.slice(0, 300)
 			const diag = new vscode.Diagnostic(
 				range,
 				truncateCompileDiagnosticMessage(snippet, 500),
@@ -465,15 +477,11 @@ export class CangjieCompileGuard implements vscode.Disposable {
 
 	private async execBuild(cjpmPath: string, args: string[], cwd: string): Promise<CompileResult> {
 		try {
-			const { stdout, stderr } = await execFileAsync(
-				cjpmPath,
-				args,
-				{
-					timeout: COMPILE_TIMEOUT_MS,
-					cwd,
-					env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
-				},
-			)
+			const { stdout, stderr } = await execFileAsync(cjpmPath, args, {
+				timeout: COMPILE_TIMEOUT_MS,
+				cwd,
+				env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
+			})
 			const output = stdout + stderr
 			this.lastErrors.clear()
 			return { success: true, output, errorCount: 0, errorLocations: [] }
@@ -491,7 +499,10 @@ export class CangjieCompileGuard implements vscode.Disposable {
 				const line = parseInt(match[2]!, 10)
 				const col = parseInt(match[3]!, 10)
 				errorLocations.push({ file, line, col })
-				this.lastErrors.set(`${file}:${line}`, normalizeErrorPattern(output.slice(match.index, match.index + 300)))
+				this.lastErrors.set(
+					`${file}:${line}`,
+					normalizeErrorPattern(output.slice(match.index, match.index + 300)),
+				)
 			}
 
 			return {
@@ -514,14 +525,10 @@ export class CangjieCompileGuard implements vscode.Disposable {
 
 		const tmpOutput = path.join(os.tmpdir(), `cjfmt_guard_${Date.now()}.cj`)
 		try {
-			await execFileAsync(
-				cjfmtPath,
-				["-f", filePath, "-o", tmpOutput],
-				{
-					timeout: FORMAT_TIMEOUT_MS,
-					env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
-				},
-			)
+			await execFileAsync(cjfmtPath, ["-f", filePath, "-o", tmpOutput], {
+				timeout: FORMAT_TIMEOUT_MS,
+				env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
+			})
 
 			if (!fs.existsSync(tmpOutput)) {
 				return { formatted: false, output: "No output produced" }
@@ -540,7 +547,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 			const msg = getErrorMessage(error)
 			return { formatted: false, output: msg }
 		} finally {
-			try { fs.unlinkSync(tmpOutput) } catch {}
+			safeUnlink(tmpOutput)
 		}
 	}
 
@@ -567,7 +574,7 @@ export class CangjieCompileGuard implements vscode.Disposable {
 	}
 
 	private getSuggestionForError(errorMsg: string): string | null {
-		// Map common error patterns to fix suggestions
+		// Agent-facing fix suggestions — intentionally kept in Chinese (matches Cangjie compiler error output)
 		const patterns: Array<[RegExp, string]> = [
 			[/undeclared|cannot find|not found|未找到符号/, "添加缺失的 import 语句或检查拼写"],
 			[/type mismatch|incompatible types|类型不匹配/, "修正类型声明或添加类型转换"],
@@ -607,15 +614,11 @@ export class CangjieCompileGuard implements vscode.Disposable {
 		if (!cjpmPath) return null
 
 		try {
-			const { stdout, stderr } = await execFileAsync(
-				cjpmPath,
-				["tree", "-V", "--depth", String(depthLimit)],
-				{
-					timeout: 15_000,
-					cwd,
-					env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
-				},
-			)
+			const { stdout, stderr } = await execFileAsync(cjpmPath, ["tree", "-V", "--depth", String(depthLimit)], {
+				timeout: 15_000,
+				cwd,
+				env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
+			})
 			const output = (stdout + stderr).trim()
 			return output.length > 0 ? output : null
 		} catch {

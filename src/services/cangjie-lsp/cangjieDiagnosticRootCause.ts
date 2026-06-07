@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import { CangjieSymbolIndex } from "./CangjieSymbolIndex"
 
+// Agent-facing diagnostic root-cause trace — intentionally kept in Chinese (not i18n'd)
 const CHAIN_SYM_RE =
 	/(?:unknown name|undeclared|cannot find|找不到|未定义|undefined name|not found).*?['"`]([A-Za-z_][\w]*)['"`]/i
 
@@ -22,7 +23,12 @@ export function traceDiagnosticRootCause(
 	if (m?.[1]) sym = m[1]
 	if (!sym) {
 		const m2 = diag.message.match(/\b([A-Z][A-Za-z0-9_]{1,63})\b/)
-		if (m2?.[1] && !/^(Error|Warning|String|Int32|Int64|UInt64|Float64|Bool|Unit|Nothing|Rune|Option|Array|List|Map|Set)$/.test(m2[1])) {
+		if (
+			m2?.[1] &&
+			!/^(Error|Warning|String|Int32|Int64|UInt64|Float64|Bool|Unit|Nothing|Rune|Option|Array|List|Map|Set)$/.test(
+				m2[1],
+			)
+		) {
 			sym = m2[1]
 		}
 	}
@@ -44,7 +50,8 @@ export function traceDiagnosticRootCause(
 	if (path.normalize(def!.filePath) === path.normalize(diagPath)) return null
 
 	const defDiagKey = path.normalize(def!.filePath)
-	const defDiags = diagnosticsByFile?.get(defDiagKey) ?? vscode.languages.getDiagnostics(vscode.Uri.file(def!.filePath))
+	const defDiags =
+		diagnosticsByFile?.get(defDiagKey) ?? vscode.languages.getDiagnostics(vscode.Uri.file(def!.filePath))
 	const hasErr = defDiags.some((d) => d.severity === vscode.DiagnosticSeverity.Error)
 	if (!hasErr) return null
 

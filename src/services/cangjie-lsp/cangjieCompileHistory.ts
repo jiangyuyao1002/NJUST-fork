@@ -72,6 +72,7 @@ export function recordCompileHistoryEvent(payload: {
 	bumpRevision(payload.cwd)
 }
 
+// Agent-facing compile history prompt section — intentionally kept in Chinese (not i18n'd)
 /** Markdown section for AI context (仓颉 Dev 模式). */
 export function formatCompileHistoryPromptSection(cwd: string): string | null {
 	const list = byCwd.get(cwd)

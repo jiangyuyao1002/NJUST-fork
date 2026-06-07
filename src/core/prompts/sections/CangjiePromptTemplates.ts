@@ -1,6 +1,9 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 export const CORE_PROJECT_TEMPLATE =
 	"## 仓颉代码模板\n\n" +
-	"### 可执行项目入口\n```cangjie\npackage my_app\nimport std.console.*\nmain(): Int64 {\n    println(\"Hello, Cangjie!\")\n    return 0\n}\n```\n"
+	'### 可执行项目入口\n```cangjie\npackage my_app\nimport std.console.*\nmain(): Int64 {\n    println("Hello, Cangjie!")\n    return 0\n}\n```\n'
 
 export const TEST_FILE_TEMPLATE =
 	"### 测试文件模板\n```cangjie\npackage my_app\nimport std.unittest.*\nimport std.unittest.testmacro.*\n@Test\nclass MyTest {\n    @TestCase\n    func testBasic() {\n        @Assert(1 + 1 == 2)\n    }\n}\n```\n"
@@ -25,7 +28,7 @@ export const DIAGNOSTIC_CODE_TEMPLATES: Array<{ categories: string[]; template: 
 		categories: ["类型不匹配", "类型转换失败"],
 		template:
 			"### 类型转换速查\n" +
-			"- `Int64 -> String`: `\"${value}\"` 或 `value.toString()`\n" +
+			'- `Int64 -> String`: `"${value}"` 或 `value.toString()`\n' +
 			"- `String -> Int64`: `Int64.parse(str)` 返回 `?Int64`\n" +
 			"- `Float64 -> Int64`: `Int64(floatVal)` (截断)\n" +
 			"- `Array<T> -> ArrayList<T>`: `ArrayList<T>(arr)`\n" +
@@ -58,7 +61,7 @@ export const DIAGNOSTIC_CODE_TEMPLATES: Array<{ categories: string[]; template: 
 		template:
 			"### interface 实现模板\n" +
 			"```cangjie\ninterface Printable {\n    func display(): String\n}\n" +
-			"class MyClass <: Printable {\n    public func display(): String {\n        return \"MyClass\"\n    }\n}\n```\n",
+			'class MyClass <: Printable {\n    public func display(): String {\n        return "MyClass"\n    }\n}\n```\n',
 	},
 ]
 

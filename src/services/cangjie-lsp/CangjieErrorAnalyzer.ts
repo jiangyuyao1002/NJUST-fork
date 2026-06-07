@@ -8,6 +8,7 @@ export interface CjcErrorPattern {
 	pattern: RegExp
 	category: string
 	docPaths: string[]
+	// Agent-facing summary — intentionally kept in Chinese (used in LLM prompts)
 	/** Human/long form for docs and tables */
 	suggestion: string
 	/** Short AI-facing directive; defaults to suggestion when absent */
@@ -46,11 +47,23 @@ export interface ErrorAnalysis {
 // ---------------------------------------------------------------------------
 
 export const STDLIB_DOC_MAP: DocMapping[] = [
-	{ prefix: "std.collection", docPaths: ["libs/std/collection/", "manual/source_zh_cn/collections/"], summary: "ArrayList, HashMap, HashSet 等集合类型" },
+	{
+		prefix: "std.collection",
+		docPaths: ["libs/std/collection/", "manual/source_zh_cn/collections/"],
+		summary: "ArrayList, HashMap, HashSet 等集合类型",
+	},
 	{ prefix: "std.io", docPaths: ["libs/std/io/", "manual/source_zh_cn/Basic_IO/"], summary: "流式 IO、文件读写" },
 	{ prefix: "std.fs", docPaths: ["libs/std/fs/"], summary: "文件系统操作" },
-	{ prefix: "std.net", docPaths: ["libs/std/net/", "manual/source_zh_cn/Net/"], summary: "HTTP/Socket/WebSocket 网络编程" },
-	{ prefix: "std.sync", docPaths: ["libs/std/sync/", "manual/source_zh_cn/concurrency/"], summary: "Mutex、AtomicInt 等并发同步原语" },
+	{
+		prefix: "std.net",
+		docPaths: ["libs/std/net/", "manual/source_zh_cn/Net/"],
+		summary: "HTTP/Socket/WebSocket 网络编程",
+	},
+	{
+		prefix: "std.sync",
+		docPaths: ["libs/std/sync/", "manual/source_zh_cn/concurrency/"],
+		summary: "Mutex、AtomicInt 等并发同步原语",
+	},
 	{ prefix: "std.time", docPaths: ["libs/std/time/"], summary: "日期时间处理" },
 	{ prefix: "std.math", docPaths: ["libs/std/math/"], summary: "数学运算" },
 	{ prefix: "std.regex", docPaths: ["libs/std/regex/"], summary: "正则表达式" },
@@ -65,7 +78,11 @@ export const STDLIB_DOC_MAP: DocMapping[] = [
 	{ prefix: "std.random", docPaths: ["libs/std/random/"], summary: "随机数生成" },
 	{ prefix: "std.process", docPaths: ["libs/std/process/"], summary: "进程管理" },
 	{ prefix: "std.env", docPaths: ["libs/std/env/"], summary: "环境变量" },
-	{ prefix: "std.reflect", docPaths: ["libs/std/reflect/", "manual/source_zh_cn/reflect_and_annotation/"], summary: "反射与注解" },
+	{
+		prefix: "std.reflect",
+		docPaths: ["libs/std/reflect/", "manual/source_zh_cn/reflect_and_annotation/"],
+		summary: "反射与注解",
+	},
 	{ prefix: "std.sort", docPaths: ["libs/std/sort/"], summary: "排序算法" },
 	{ prefix: "std.binary", docPaths: ["libs/std/binary/"], summary: "二进制数据处理" },
 	{ prefix: "std.ast", docPaths: ["libs/std/ast/"], summary: "AST 操作（宏编程）" },
@@ -129,7 +146,10 @@ export const CJC_ERROR_PATTERNS: CjcErrorPattern[] = [
 	{
 		pattern: /sealed.*cannot|sealed.*extend|sealed class|密封类/i,
 		category: "sealed 类限制",
-		docPaths: ["manual/source_zh_cn/class_and_interface/class.md", "manual/source_zh_cn/package/package_overview.md"],
+		docPaths: [
+			"manual/source_zh_cn/class_and_interface/class.md",
+			"manual/source_zh_cn/package/package_overview.md",
+		],
 		suggestion: "sealed class 仅允许在定义模块内继承，跨模块继承会失败",
 		fixDirective: "仅在 sealed class 定义模块内继承，或改为 open/abstract 设计",
 		priority: 65,
@@ -197,7 +217,10 @@ export const CJC_ERROR_PATTERNS: CjcErrorPattern[] = [
 	{
 		pattern: /(?:type mismatch|incompatible types|类型不匹配)/i,
 		category: "类型不匹配",
-		docPaths: ["manual/source_zh_cn/class_and_interface/typecast.md", "manual/source_zh_cn/class_and_interface/subtype.md"],
+		docPaths: [
+			"manual/source_zh_cn/class_and_interface/typecast.md",
+			"manual/source_zh_cn/class_and_interface/subtype.md",
+		],
 		suggestion: "检查赋值和参数的类型是否一致，必要时使用类型转换或泛型约束",
 		fixDirective: "使类型一致：修改变量类型、添加显式类型转换、或调整函数返回类型",
 		diagnosticCodes: ["E0308", "E0309"],
@@ -245,7 +268,10 @@ export const CJC_ERROR_PATTERNS: CjcErrorPattern[] = [
 	{
 		pattern: /(?:NoneValueException|unwrap.*None|getOrThrow)/i,
 		category: "空值异常",
-		docPaths: ["manual/source_zh_cn/error_handle/use_option.md", "manual/source_zh_cn/enum_and_pattern_match/option_type.md"],
+		docPaths: [
+			"manual/source_zh_cn/error_handle/use_option.md",
+			"manual/source_zh_cn/enum_and_pattern_match/option_type.md",
+		],
 		suggestion: "使用 `??` 合并运算符提供默认值，或用 match/if-let 安全解包 Option",
 		fixDirective: "用 ?? 提供默认值，或用 match/if-let 安全解包",
 		diagnosticCodes: ["E0505"],
@@ -421,7 +447,8 @@ export const CJC_ERROR_PATTERNS: CjcErrorPattern[] = [
 		pattern: /(?:invalid.*literal.*suffix|literal.*suffix|unknown.*suffix|字面量.*后缀)/i,
 		category: "字面量后缀错误",
 		docPaths: ["manual/source_zh_cn/basic_programming_concepts/literal.md"],
-		suggestion: "仓颉整数字面量默认为 Int64，浮点为 Float64。不支持自定义字面量后缀。需要其他类型时使用显式构造如 UInt8(42)。",
+		suggestion:
+			"仓颉整数字面量默认为 Int64，浮点为 Float64。不支持自定义字面量后缀。需要其他类型时使用显式构造如 UInt8(42)。",
 		fixDirective: "移除无效的字面量后缀，使用显式类型构造（如 UInt8(42)、Float32(3.14)）",
 		priority: 55,
 	},
@@ -536,7 +563,10 @@ export function getMatchingCjcPatternsByCategory(text: string): CjcErrorPattern[
 		const pa = patternPriority(a)
 		const pb = patternPriority(b)
 		if (pa !== pb) return pb - pa
-		return (CJC_PATTERN_INDEX.get(a) ?? Number.MAX_SAFE_INTEGER) - (CJC_PATTERN_INDEX.get(b) ?? Number.MAX_SAFE_INTEGER)
+		return (
+			(CJC_PATTERN_INDEX.get(a) ?? Number.MAX_SAFE_INTEGER) -
+			(CJC_PATTERN_INDEX.get(b) ?? Number.MAX_SAFE_INTEGER)
+		)
 	})
 }
 
@@ -575,7 +605,11 @@ export function analyzeCompileOutput(
 
 		for (const stdPkg of stdPackagesInOutput) {
 			for (const mapping of STDLIB_DOC_MAP) {
-				if (stdPkg === mapping.prefix || stdPkg.startsWith(mapping.prefix + ".") && !relPaths.some((r) => mapping.docPaths.some((d) => r.includes(d)))) {
+				if (
+					stdPkg === mapping.prefix ||
+					(stdPkg.startsWith(mapping.prefix + ".") &&
+						!relPaths.some((r) => mapping.docPaths.some((d) => r.includes(d))))
+				) {
 					const extra = docsBase
 						? mapping.docPaths.map((d) => path.join(docsBase, d).replace(/\\/g, "/"))
 						: mapping.docPaths

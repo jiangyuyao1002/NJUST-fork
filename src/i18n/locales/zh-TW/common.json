@@ -152,6 +152,26 @@
 			"streamProcessingError": "Error processing response stream: {{message}}",
 			"unexpectedStreamError": "Unexpected error processing response stream",
 			"completionError": "OpenAI Codex completion error: {{message}}"
+		},
+		"cangjie_lsp": {
+			"cangjie_home_not_found": "未找到 CANGJIE_HOME。請設定倉頡 SDK 路徑。",
+			"cannot_read_source": "無法讀取來源檔案內容。",
+			"cjpm_not_found": "未找到 cjpm。請確認已安裝倉頡 SDK 並設定 CANGJIE_HOME。",
+			"invalid_identifier": "請輸入合法的倉頡識別字",
+			"no_cjpm_workspace": "未找到 cjpm 工作區（缺少 cjpm.toml）。無法執行此命令。"
+		},
+		"cloud_agent": {
+			"api_key_hint_401": "401：請檢查 API Key。提示：透過 Cloud Agent Profile 介面設定（已遷移 SecretStorage），",
+			"compile_fix_not_applied": "Agent 未套用編譯修復。",
+			"missing_run_id": "deferred resume 缺少 run_id。",
+			"not_initialized": "ProfileStorageService 尚未初始化。請確認在 extension.ts 中先呼叫 setProfileStorageService()。",
+			"profile_not_configured": "未設定活躍的 Cloud Agent Profile。",
+			"server_url_empty": "Cloud Agent Profile 的 serverUrl 不能為空。請在設定中配置。",
+			"task_failed": "Cloud Agent 任務失敗。"
+		},
+		"run_code": {
+			"matlab_live_script_unsupported": "不支援 MATLAB Live Script (.mlx)。",
+			"matlab_not_detected": "未偵測到 MATLAB 執行環境。"
 		}
 	},
 	"warnings": {
@@ -165,7 +185,15 @@
 		"cangjie_toolchain_incomplete": "倉頡工具鍊不完整或不可執行：{{detail}}",
 		"cangjie_cjc_not_found": "所選目錄下未找到有效的 cjc 編譯器。請確認選擇了正確的 SDK 根目錄。",
 		"cangjie_sdk_not_detected": "未偵測到倉頡 SDK。請配置 SDK 路徑以啟用完整的倉頡語言支援。",
-		"cangjie_index_limit_reached": "倉頡檔案索引達到上限（{{max}} 個），部分檔案可能未被索引"
+		"cangjie_index_limit_reached": "倉頡檔案索引達到上限（{{max}} 個），部分檔案可能未被索引",
+		"cangjie_lsp": {
+			"cjc_no_expand_macros": "cjc 不支援 --expand-macros；巨集展開已跳過。",
+			"cjc_not_found_for_macro": "未找到 cjc。無編譯器無法展開巨集。",
+			"executable_not_found_in_target": "未在 target/ 下找到可執行檔。使用 cjpm: build (debug) 或先執行 build。",
+			"execute_on_cj_file": "請在倉頡 .cj 來源檔案上執行此命令。",
+			"open_cj_file_first": "請先開啟 .cj 檔案。",
+			"tools_unavailable": "倉頡 SDK 工具無法用。請檢查安裝。"
+		}
 	},
 	"info": {
 		"cangjieCompileGuard": {
@@ -201,7 +229,33 @@
 		"cangjie_sdk_detected": "偵測到倉頡 SDK 位於 {{path}}{{version}}，是否自動配置？",
 		"cangjie_sdk_auto_configured": "倉頡 SDK 已自動配置{{version}}",
 		"cangjie_test_cleanup_orphan": "[CangjieTestCleanup] 啟動孤兒清理：移除 {{filesRemoved}} 個產生測試檔案（{{taskEntriesRemoved}} 個工作桶）。",
-		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] 啟動修剪：移除 {{filesRemoved}} 個產生測試檔案（{{taskEntriesRemoved}} 個工作桶）。"
+		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] 啟動修剪：移除 {{filesRemoved}} 個產生測試檔案（{{taskEntriesRemoved}} 個工作桶）。",
+		"cangjie_lsp": {
+			"already_test_file": "目前檔案已是 *_test.cj 測試檔案。",
+			"configure_program_path": "請在 launch.json 中設定 program 路徑",
+			"debug_cangjie_program": "偵錯倉頡程式",
+			"debug_cangjie_test": "偵錯倉頡測試",
+			"detecting_toolchain": "正在偵測 cjc / cjpm / cjfmt / cjlint …",
+			"detection_complete": "偵測完成。",
+			"edit_fix_prompt": "編輯修復",
+			"entry_deleted": "項目已刪除。",
+			"fix_suggestion_label": "倉頡修復建議",
+			"learned_fixes_updated": "學習記錄已更新。",
+			"macro_expand_no_output": "巨集展開未產生輸出。",
+			"new_function_name_prompt": "新函式名稱",
+			"no_fix_yet": "（尚未學到修復方式）",
+			"no_learned_fixes": "暫無學習到的修復記錄。",
+			"no_testable_exports": "來源檔案暫無可測試的函式或型別宣告。",
+			"no_tests_to_clean": "無需清理的測試檔案。",
+			"select_action": "選擇操作",
+			"select_learned_fix": "選擇學習到的修復",
+			"target_path_prompt": "目標路徑（相對於工作區根目錄）",
+			"toolchain_ok": "倉頡 SDK 已就緒。"
+		},
+		"cloud_agent": {
+			"compile_no_fix": "編譯通過，無需修復。",
+			"task_completed": "Cloud Agent 任務完成。"
+		}
 	},
 	"answers": {
 		"yes": "是",
@@ -223,7 +277,20 @@
 		"select_sdk_dir": "選擇 SDK 目錄",
 		"download_sdk": "下載 SDK",
 		"later": "稍後",
-		"configure_now": "立即配置"
+		"configure_now": "立即配置",
+		"cangjie_lsp": {
+			"cancel": "取消",
+			"delete_entry": "刪除項目",
+			"edit_fix": "編輯",
+			"manual_restart": "手動重啟",
+			"open": "開啟",
+			"open_settings": "開啟設定",
+			"still_generate": "仍然產生",
+			"still_launch": "仍繼續啟動",
+			"use_cjpm_build_debug": "使用 cjpm: build (debug)",
+			"use_enhanced_rename": "使用增強重命名",
+			"use_lsp_result": "使用 LSP 結果"
+		}
 	},
 	"tasks": {
 		"canceled": "工作錯誤：它已被使用者停止並取消。",
@@ -308,7 +375,26 @@
 		"url": "https://docs.njust-ai.local"
 	},
 	"tooltips": {
-		"bypass_mode_enabled": "安全旁路模式已啟用 — 點擊可切換權限模式"
+		"bypass_mode_enabled": "安全旁路模式已啟用 — 點擊可切換權限模式",
+		"cangjie_lsp": {
+			"compile_failed": "編譯失敗",
+			"compile_idle": "倉頡編譯：閒置",
+			"compile_in_progress": "編譯進行中…",
+			"kind_class": "類別",
+			"kind_enum": "列舉",
+			"kind_extend": "擴充",
+			"kind_func": "函式",
+			"kind_interface": "介面",
+			"kind_let": "let",
+			"kind_macro": "巨集",
+			"kind_main": "main",
+			"kind_struct": "結構體",
+			"kind_type_alias": "型別別名",
+			"kind_var": "var",
+			"macro_call": "巨集呼叫",
+			"macro_def_location": "巨集定義位置",
+			"macro_not_in_index": "未在索引中找到巨集定義"
+		}
 	},
 	"codelens": {
 		"run_test": "$(play) 執行測試",
@@ -355,6 +441,31 @@
 				"class_name": "類別名稱",
 				"value_type": "值類型"
 			}
+		},
+		"profile": {
+			"custom_description": "自訂 REST 伺服器設定",
+			"custom_name": "自訂 REST API",
+			"migrated_description": "從舊版設定自動遷移",
+			"migrated_name": "遷移設定",
+			"standard_name": "標準設定 (NJUST AI CJ)"
+		}
+	},
+	"code_actions": {
+		"cangjie_lsp": {
+			"add_return": "新增 return 敘述",
+			"add_wildcard_case": "新增萬用 case",
+			"add_wildcard_case_check_return": "新增萬用 case（檢查 return）",
+			"expand_macro": "展開巨集",
+			"go_to_macro_def": "前往巨集定義",
+			"let_to_var": "將 let 改為 var"
+		}
+	},
+	"status": {
+		"cangjie_lsp": {
+			"compile_compiling": "編譯中…",
+			"compile_idle": "閒置",
+			"full": "全量",
+			"incremental": "增量"
 		}
 	}
 }

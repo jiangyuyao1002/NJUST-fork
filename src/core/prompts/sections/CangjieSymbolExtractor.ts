@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 import * as vscode from "vscode"
 import * as path from "path"
 
@@ -58,9 +61,10 @@ export function collectActiveCangjieEditorSnapshot(): {
 	for (const { fileName, defs } of fileSymbols) {
 		lines.push(`**${fileName}**:`)
 
-		const topLevel = totalDefs > MAX_DEFS
-			? defs.filter((d) => ["class", "struct", "interface", "enum", "extend", "main"].includes(d.kind))
-			: defs
+		const topLevel =
+			totalDefs > MAX_DEFS
+				? defs.filter((d) => ["class", "struct", "interface", "enum", "extend", "main"].includes(d.kind))
+				: defs
 
 		for (const def of topLevel) {
 			if (remaining <= 0) break
@@ -68,11 +72,7 @@ export function collectActiveCangjieEditorSnapshot(): {
 
 			const memberKinds = new Set(["func", "prop", "init", "operator"])
 			const children = defs.filter(
-				(d) =>
-					d !== def &&
-					d.startLine > def.startLine &&
-					d.endLine <= def.endLine &&
-					memberKinds.has(d.kind),
+				(d) => d !== def && d.startLine > def.startLine && d.endLine <= def.endLine && memberKinds.has(d.kind),
 			)
 
 			if (children.length > 0) {
@@ -97,9 +97,11 @@ export function collectActiveCangjieEditorSnapshot(): {
 	return { imports, symbols: lines.join("\n"), activePreparse }
 }
 
-export function getActiveCangjieFileInfo():
-	| { filePath: string; packageName: string | null; cursorLine: number }
-	| null {
+export function getActiveCangjieFileInfo(): {
+	filePath: string
+	packageName: string | null
+	cursorLine: number
+} | null {
 	const editor = vscode.window.activeTextEditor
 	if (!editor || (editor.document.languageId !== "cangjie" && !editor.document.fileName.endsWith(".cj"))) {
 		return null

@@ -11,10 +11,7 @@ import {
 	saveLearnedFixes,
 } from "../../core/prompts/sections/learnedFixesStorage"
 import { inferCangjiePackageFromSrcLayout } from "./cangjieSourceLayout"
-import {
-	registerGeneratedCangjieTestFile,
-	purgeAllTrackedCangjieTestFiles,
-} from "./cangjieGeneratedTestCleanup"
+import { registerGeneratedCangjieTestFile, purgeAllTrackedCangjieTestFiles } from "./cangjieGeneratedTestCleanup"
 import {
 	resolveCangjieToolPath,
 	buildCangjieToolEnv,
@@ -22,6 +19,7 @@ import {
 	probeCangjieToolchain,
 } from "./cangjieToolUtils"
 import { Package } from "../../shared/package"
+import { t } from "../../i18n"
 import type { CangjieLspClient } from "./CangjieLspClient"
 import { CangjieTemplateLibrary } from "./CangjieTemplateLibrary"
 import { CangjieProfiler } from "./CangjieProfiler"
@@ -147,12 +145,10 @@ function extractPublicSymbols(source: string): string[] {
 function hasTestableCangjieExports(source: string): boolean {
 	if (/\b(public|open)\s+(func|class|struct|interface)\b/.test(source)) return true
 	if (/^func\s+\w+/m.test(source)) return true
-	const substantive = source
-		.split(/\r?\n/)
-		.filter((l) => {
-			const t = l.trim()
-			return t.length > 0 && !t.startsWith("//") && !t.startsWith("package ") && !t.startsWith("import ")
-		})
+	const substantive = source.split(/\r?\n/).filter((l) => {
+		const t = l.trim()
+		return t.length > 0 && !t.startsWith("//") && !t.startsWith("package ") && !t.startsWith("import ")
+	})
 	return substantive.length >= 2
 }
 
@@ -163,12 +159,7 @@ function testClassNameFromBase(safe: string): string {
 
 function buildCangjieTestFileBody(safe: string, symbols: string[]): string {
 	if (symbols.length === 0) {
-		return (
-			`\t@TestCase\n` +
-			`\tfunc test_${safe}_smoke() {\n` +
-			`\t\t@Assert(1 + 1 == 2)\n` +
-			`\t}\n`
-		)
+		return `\t@TestCase\n` + `\tfunc test_${safe}_smoke() {\n` + `\t\t@Assert(1 + 1 == 2)\n` + `\t}\n`
 	}
 	return symbols
 		.map(
@@ -191,12 +182,12 @@ async function runCangjieGenerateTestFile(
 		targetUri = vscode.window.activeTextEditor.document.uri
 	}
 	if (!targetUri?.fsPath.endsWith(".cj")) {
-		vscode.window.showWarningMessage("请在仓颉 .cj 源文件上执行此命令。")
+		vscode.window.showWarningMessage(t("warnings.cangjie_lsp.execute_on_cj_file"))
 		return
 	}
 	const base = path.basename(targetUri.fsPath, ".cj")
 	if (base.endsWith("_test")) {
-		vscode.window.showInformationMessage("当前文件已是 *_test.cj 测试文件。")
+		vscode.window.showInformationMessage(t("info.cangjie_lsp.already_test_file"))
 		return
 	}
 
@@ -206,12 +197,12 @@ async function runCangjieGenerateTestFile(
 		const srcDoc = await vscode.workspace.openTextDocument(targetUri)
 		srcContent = srcDoc.getText()
 	} catch {
-		vscode.window.showErrorMessage("无法读取源文件内容。")
+		vscode.window.showErrorMessage(t("errors.cangjie_lsp.cannot_read_source"))
 		return
 	}
 
 	if (!hasTestableCangjieExports(srcContent)) {
-		vscode.window.showInformationMessage("源文件暂无可测试的函数或类型声明。")
+		vscode.window.showInformationMessage(t("info.cangjie_lsp.no_testable_exports"))
 		return
 	}
 
@@ -221,27 +212,29 @@ async function runCangjieGenerateTestFile(
 		const mirrored = mirroredTestPathUnderTestDir(targetUri, base, folder, testPath)
 		if (mirrored && fs.existsSync(mirrored) && path.normalize(mirrored) !== path.normalize(testPath)) {
 			const choice = await vscode.window.showWarningMessage(
-				`测试文件已存在于 test/ 目录：${path.relative(folder.uri.fsPath, mirrored)}`,
-				"打开",
-				"仍然生成",
-				"取消",
+				t("warnings.cangjie_lsp.test_file_exists_in_test_dir", {
+					path: path.relative(folder.uri.fsPath, mirrored),
+				}),
+				t("buttons.cangjie_lsp.open"),
+				t("buttons.cangjie_lsp.still_generate"),
+				t("buttons.cangjie_lsp.cancel"),
 			)
-			if (choice === "打开") {
+			if (choice === t("buttons.cangjie_lsp.open")) {
 				const doc = await vscode.workspace.openTextDocument(mirrored)
 				await vscode.window.showTextDocument(doc)
 				return
 			}
-			if (choice !== "仍然生成") return
+			if (choice !== t("buttons.cangjie_lsp.still_generate")) return
 		}
 	}
 
 	if (fs.existsSync(testPath)) {
 		const choice = await vscode.window.showWarningMessage(
-			`测试文件已存在：${path.basename(testPath)}`,
-			"打开",
-			"取消",
+			t("warnings.cangjie_lsp.test_file_exists", { name: path.basename(testPath) }),
+			t("buttons.cangjie_lsp.open"),
+			t("buttons.cangjie_lsp.cancel"),
 		)
-		if (choice === "打开") {
+		if (choice === t("buttons.cangjie_lsp.open")) {
 			const doc = await vscode.workspace.openTextDocument(testPath)
 			await vscode.window.showTextDocument(doc)
 		}
@@ -292,13 +285,13 @@ function runCjpmCommand(cjpmArg: string): void {
 	const cjpmPath = resolveCangjieToolPath("cjpm", "cangjieTools.cjpmPath")
 	if (!cjpmPath) {
 		void vscode.window
-			.showErrorMessage(
-				"未找到 cjpm：请设置 CANGJIE_HOME / PATH，或在设置中配置 njust-ai.cangjieTools.cjpmPath。",
-				"打开设置",
-			)
+			.showErrorMessage(t("errors.cangjie_lsp.cjpm_not_found"), t("buttons.cangjie_lsp.open_settings"))
 			.then((c) => {
-				if (c === "打开设置") {
-					void vscode.commands.executeCommand("workbench.action.openSettings", `${Package.name}.cangjieTools.cjpmPath`)
+				if (c === t("buttons.cangjie_lsp.open_settings")) {
+					void vscode.commands.executeCommand(
+						"workbench.action.openSettings",
+						`${Package.name}.cangjieTools.cjpmPath`,
+					)
 				}
 			})
 		return
@@ -316,9 +309,7 @@ function runCjpmCommand(cjpmArg: string): void {
 		env: buildCangjieToolEnv() as Record<string, string>,
 	})
 	terminal.show()
-	const cmd = process.platform === "win32"
-		? `& "${cjpmPath}" ${cjpmArg}`
-		: `"${cjpmPath}" ${cjpmArg}`
+	const cmd = process.platform === "win32" ? `& "${cjpmPath}" ${cjpmArg}` : `"${cjpmPath}" ${cjpmArg}`
 	terminal.sendText(cmd)
 }
 
@@ -332,14 +323,14 @@ export function registerCangjieCommands(
 		vscode.commands.registerCommand("njust-ai.cangjieVerifySdk", async () => {
 			const ch = vscode.window.createOutputChannel("Cangjie SDK Verify")
 			ch.show(true)
-			ch.appendLine("正在检测 cjc / cjpm / cjfmt / cjlint …")
+			ch.appendLine(t("info.cangjie_lsp.detecting_toolchain"))
 			const probes = await probeCangjieToolchain()
 			ch.appendLine(formatCangjieToolchainReport(probes))
-			ch.appendLine("\n检测完成。若某项失败，请检查 SDK 安装路径与扩展设置中的 cangjieTools.* / cangjieLsp.cjcPath。")
+			ch.appendLine(t("info.cangjie_lsp.detection_complete"))
 			if (!probes.every((p) => p.ok)) {
-				void vscode.window.showWarningMessage("部分仓颉工具不可用，详见「Cangjie SDK Verify」输出通道。")
+				void vscode.window.showWarningMessage(t("warnings.cangjie_lsp.tools_unavailable"))
 			} else {
-				void vscode.window.showInformationMessage("仓颉工具链检测全部通过。")
+				void vscode.window.showInformationMessage(t("info.cangjie_lsp.toolchain_ok"))
 			}
 		}),
 	)
@@ -357,7 +348,7 @@ export function registerCangjieCommands(
 		vscode.commands.registerCommand("njust-ai.cangjieViewLearnedFixes", async () => {
 			const cwd = findCjpmRoot()
 			if (!cwd) {
-				vscode.window.showErrorMessage("未找到含 cjpm.toml 的工作区项目。")
+				vscode.window.showErrorMessage(t("errors.cangjie_lsp.no_cjpm_workspace"))
 				return
 			}
 			ensureLearnedFixesFile(cwd)
@@ -371,14 +362,12 @@ export function registerCangjieCommands(
 		vscode.commands.registerCommand("njust-ai.cangjieManageLearnedFixes", async () => {
 			const cwd = findCjpmRoot()
 			if (!cwd) {
-				vscode.window.showErrorMessage("未找到含 cjpm.toml 的工作区项目。")
+				vscode.window.showErrorMessage(t("errors.cangjie_lsp.no_cjpm_workspace"))
 				return
 			}
 			const data = loadLearnedFixes(cwd)
 			if (data.patterns.length === 0) {
-				vscode.window.showInformationMessage(
-					"当前暂无 learned-fixes 条目。编译错误修复成功后会自动写入 .njust_ai/learned-fixes.json。",
-				)
+				vscode.window.showInformationMessage(t("info.cangjie_lsp.no_learned_fixes"))
 				return
 			}
 
@@ -386,37 +375,46 @@ export function registerCangjieCommands(
 			const items: Pick[] = data.patterns.map((p, i) => ({
 				label: p.errorPattern.length > 72 ? p.errorPattern.slice(0, 72) + "…" : p.errorPattern,
 				description:
-					p.fix.length > 0 ? (p.fix.length > 48 ? p.fix.slice(0, 48) + "…" : p.fix) : "（尚无 fix）",
+					p.fix.length > 0
+						? p.fix.length > 48
+							? p.fix.slice(0, 48) + "…"
+							: p.fix
+						: t("info.cangjie_lsp.no_fix_yet"),
 				index: i,
 			}))
-			const sel = await vscode.window.showQuickPick(items, { placeHolder: "选择一条 learned-fix 记录" })
+			const sel = await vscode.window.showQuickPick(items, {
+				placeHolder: t("info.cangjie_lsp.select_learned_fix"),
+			})
 			if (!sel) return
 
-			const op = await vscode.window.showQuickPick(["编辑修复说明", "删除此条目"], {
-				placeHolder: "选择操作",
-			})
+			const op = await vscode.window.showQuickPick(
+				[t("buttons.cangjie_lsp.edit_fix"), t("buttons.cangjie_lsp.delete_entry")],
+				{
+					placeHolder: t("info.cangjie_lsp.select_action"),
+				},
+			)
 			if (!op) return
 
 			const idx = sel.index
-			if (op === "删除此条目") {
+			if (op === t("buttons.cangjie_lsp.delete_entry")) {
 				data.patterns.splice(idx, 1)
 				saveLearnedFixes(cwd, data)
 				invalidateCangjieContextSectionCache()
-				vscode.window.showInformationMessage("已删除该条目。")
+				vscode.window.showInformationMessage(t("info.cangjie_lsp.entry_deleted"))
 				return
 			}
 
 			const cur = data.patterns[idx]!
 			const next = await vscode.window.showInputBox({
-				title: "编辑修复说明",
+				title: t("buttons.cangjie_lsp.edit_fix"),
 				value: cur.fix,
-				prompt: "写入后保存到 learned-fixes.json",
+				prompt: t("info.cangjie_lsp.edit_fix_prompt"),
 			})
 			if (next === undefined) return
 			cur.fix = next.slice(0, 1000)
 			saveLearnedFixes(cwd, data)
 			invalidateCangjieContextSectionCache()
-			vscode.window.showInformationMessage("已更新 learned-fixes。")
+			vscode.window.showInformationMessage(t("info.cangjie_lsp.learned_fixes_updated"))
 		}),
 	)
 
@@ -431,18 +429,19 @@ export function registerCangjieCommands(
 			const { filesRemoved, taskEntriesRemoved } = purgeAllTrackedCangjieTestFiles()
 			if (taskEntriesRemoved > 0) {
 				void vscode.window.showInformationMessage(
-					`已清空 ${taskEntriesRemoved} 个登记桶，删除磁盘文件 ${filesRemoved} 个。`,
+					t("info.cangjie_lsp.cleaned_generated_tests", {
+						taskEntries: taskEntriesRemoved,
+						files: filesRemoved,
+					}),
 				)
 			} else {
-				void vscode.window.showInformationMessage("没有需要清理的已登记生成测试文件。")
+				void vscode.window.showInformationMessage(t("info.cangjie_lsp.no_tests_to_clean"))
 			}
 		}),
 	)
 
 	for (const cmd of CJPM_COMMANDS) {
-		context.subscriptions.push(
-			vscode.commands.registerCommand(cmd.id, () => runCjpmCommand(cmd.cjpmArg)),
-		)
+		context.subscriptions.push(vscode.commands.registerCommand(cmd.id, () => runCjpmCommand(cmd.cjpmArg)))
 	}
 
 	context.subscriptions.push(
@@ -456,9 +455,7 @@ export function registerCangjieCommands(
 	// ── Template Library ──
 	const templateLibrary = new CangjieTemplateLibrary()
 	context.subscriptions.push(
-		vscode.commands.registerCommand("njust-ai.cangjieInsertTemplate", () =>
-			templateLibrary.showTemplatePicker(),
-		),
+		vscode.commands.registerCommand("njust-ai.cangjieInsertTemplate", () => templateLibrary.showTemplatePicker()),
 	)
 
 	// ── Profiler ──
@@ -486,17 +483,14 @@ export function registerCangjieCommands(
 	if (symbolIndex) {
 		const refactoring = new CangjieRefactoringProvider(symbolIndex)
 		context.subscriptions.push(
-			vscode.languages.registerCodeActionsProvider(
-				{ language: "cangjie", scheme: "file" },
-				refactoring,
-				{ providedCodeActionKinds: CangjieRefactoringProvider.providedCodeActionKinds },
-			),
+			vscode.languages.registerCodeActionsProvider({ language: "cangjie", scheme: "file" }, refactoring, {
+				providedCodeActionKinds: CangjieRefactoringProvider.providedCodeActionKinds,
+			}),
 		)
 		context.subscriptions.push(
 			vscode.commands.registerCommand(
 				"njust-ai.cangjieExtractFunction",
-				(doc: vscode.TextDocument, range: vscode.Range) =>
-					refactoring.extractFunction(doc, range),
+				(doc: vscode.TextDocument, range: vscode.Range) => refactoring.extractFunction(doc, range),
 			),
 		)
 		context.subscriptions.push(
@@ -505,7 +499,7 @@ export function registerCangjieCommands(
 				if (editor?.document.fileName.endsWith(".cj")) {
 					await refactoring.moveFile(editor.document.uri)
 				} else {
-					vscode.window.showWarningMessage("请先打开一个 .cj 文件")
+					vscode.window.showWarningMessage(t("warnings.cangjie_lsp.open_cj_file_first"))
 				}
 			}),
 		)

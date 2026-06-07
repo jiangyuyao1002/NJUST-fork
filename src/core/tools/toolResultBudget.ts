@@ -60,10 +60,7 @@ export interface ToolResultBudget {
  * Calculate tool result token budgets based on context window size.
  */
 export function getToolResultBudget(contextWindow: number): ToolResultBudget {
-	const singleMax = Math.min(
-		Math.floor(contextWindow * SINGLE_RESULT_MAX_RATIO),
-		SINGLE_RESULT_MAX_TOKENS,
-	)
+	const singleMax = Math.min(Math.floor(contextWindow * SINGLE_RESULT_MAX_RATIO), SINGLE_RESULT_MAX_TOKENS)
 	const totalMax = Math.floor(contextWindow * TOTAL_TOOL_RESULT_RATIO)
 	return {
 		singleMax: Math.max(singleMax, MIN_BUDGET_TOKENS),
@@ -120,6 +117,7 @@ export function truncateToolResult(result: string, budgetTokens: number): string
 	const tailPart = result.slice(tailStart)
 
 	const keptTokens = estimateTokens(headPart) + estimateTokens(tailPart)
+	// Agent-facing truncation summary — intentionally kept in Chinese for LLM context
 	const summaryLine = `\n[... 内容已裁剪，原始 ${currentTokens} tokens，保留 ${keptTokens} tokens ...]\n`
 
 	return headPart + summaryLine + tailPart
@@ -209,10 +207,7 @@ export function applyToolResultBudget(
 			const turnsAgo = currentTurn - turnIndex
 			// Decay: budget halves every HISTORY_DECAY_TURNS
 			const decayFactor = Math.pow(0.5, Math.floor(turnsAgo / HISTORY_DECAY_TURNS))
-			const turnBudget = Math.max(
-				Math.floor(budget.singleMax * decayFactor),
-				MIN_BUDGET_TOKENS,
-			)
+			const turnBudget = Math.max(Math.floor(budget.singleMax * decayFactor), MIN_BUDGET_TOKENS)
 
 			let modified = false
 			const newContent = message.content.map((block) => {

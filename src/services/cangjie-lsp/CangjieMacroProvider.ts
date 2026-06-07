@@ -10,6 +10,7 @@ import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
+import { t } from "../../i18n"
 
 const execFileAsync = promisify(execFile)
 
@@ -74,18 +75,22 @@ export class CangjieMacroCodeLensProvider implements vscode.CodeLensProvider {
 
 				const macroDefs = this.index.findDefinitionsByKind(macroName, "macro")
 				if (macroDefs.length > 0) {
-					lenses.push(new vscode.CodeLens(range, {
-						title: `$(symbol-event) 跳转到宏定义: ${macroName}`,
-						command: "njust-ai.cangjieGoToMacroDef",
-						arguments: [macroDefs[0]!.filePath, macroDefs[0]!.startLine],
-					}))
+					lenses.push(
+						new vscode.CodeLens(range, {
+							title: `$(symbol-event) ${t("code_actions.cangjie_lsp.go_to_macro_def")}: ${macroName}`,
+							command: "njust-ai.cangjieGoToMacroDef",
+							arguments: [macroDefs[0]!.filePath, macroDefs[0]!.startLine],
+						}),
+					)
 				}
 
-				lenses.push(new vscode.CodeLens(range, {
-					title: `$(unfold) 展开宏: @${macroName}`,
-					command: "njust-ai.cangjieExpandMacro",
-					arguments: [document.uri, i],
-				}))
+				lenses.push(
+					new vscode.CodeLens(range, {
+						title: `$(unfold) ${t("code_actions.cangjie_lsp.expand_macro")}: @${macroName}`,
+						command: "njust-ai.cangjieExpandMacro",
+						arguments: [document.uri, i],
+					}),
+				)
 			}
 		}
 
@@ -121,20 +126,22 @@ export class CangjieMacroHoverProvider implements vscode.HoverProvider {
 				const defs = this.index.findDefinitionsByKind(macroName, "macro")
 
 				const md = new vscode.MarkdownString()
-				md.appendMarkdown(`**宏调用:** \`@${macroName}\`\n\n`)
+				md.appendMarkdown(`**${t("tooltips.cangjie_lsp.macro_call")}:** \`@${macroName}\`\n\n`)
 
 				if (defs.length > 0) {
 					const def = defs[0]!
-					md.appendMarkdown(`**定义位置:** ${path.basename(def.filePath)}:${def.startLine + 1}\n\n`)
+					md.appendMarkdown(
+						`**${t("tooltips.cangjie_lsp.macro_def_location")}:** ${path.basename(def.filePath)}:${def.startLine + 1}\n\n`,
+					)
 					md.appendCodeblock(def.signature, "cangjie")
 				} else {
-					md.appendMarkdown(`*未在本地索引中找到宏定义（可能来自标准库或外部包）*`)
+					md.appendMarkdown(`*${t("tooltips.cangjie_lsp.macro_not_in_index")}*`)
 				}
 
-				return new vscode.Hover(md, new vscode.Range(
-					position.line, atIndex,
-					position.line, nameStart + macroName.length,
-				))
+				return new vscode.Hover(
+					md,
+					new vscode.Range(position.line, atIndex, position.line, nameStart + macroName.length),
+				)
 			}
 		}
 
@@ -147,69 +154,61 @@ export class CangjieMacroHoverProvider implements vscode.HoverProvider {
  */
 export function registerMacroCommands(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void {
 	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			"njust-ai.cangjieGoToMacroDef",
-			async (filePath: string, startLine: number) => {
-				const uri = vscode.Uri.file(filePath)
-				const doc = await vscode.workspace.openTextDocument(uri)
-				const editor = await vscode.window.showTextDocument(doc)
-				const pos = new vscode.Position(startLine, 0)
-				editor.selection = new vscode.Selection(pos, pos)
-				editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter)
-			},
-		),
+		vscode.commands.registerCommand("njust-ai.cangjieGoToMacroDef", async (filePath: string, startLine: number) => {
+			const uri = vscode.Uri.file(filePath)
+			const doc = await vscode.workspace.openTextDocument(uri)
+			const editor = await vscode.window.showTextDocument(doc)
+			const pos = new vscode.Position(startLine, 0)
+			editor.selection = new vscode.Selection(pos, pos)
+			editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter)
+		}),
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			"njust-ai.cangjieExpandMacro",
-			async (uri: vscode.Uri, _line: number) => {
-				const cjcPath = resolveCangjieToolPath("cjc", CJC_CONFIG_KEY)
-				if (!cjcPath) {
-					vscode.window.showWarningMessage("未找到 cjc 编译器，无法展开宏。")
+		vscode.commands.registerCommand("njust-ai.cangjieExpandMacro", async (uri: vscode.Uri, _line: number) => {
+			const cjcPath = resolveCangjieToolPath("cjc", CJC_CONFIG_KEY)
+			if (!cjcPath) {
+				vscode.window.showWarningMessage(t("warnings.cangjie_lsp.cjc_not_found_for_macro"))
+				return
+			}
+
+			const filePath = uri.fsPath
+			if (!fs.existsSync(filePath)) return
+
+			try {
+				const { stdout, stderr } = await execFileAsync(
+					cjcPath,
+					["--expand-macros", "--dump-to-screen", filePath],
+					{ timeout: 15_000, env: buildCangjieToolEnv() as NodeJS.ProcessEnv },
+				)
+
+				let expanded = stdout
+				if (stderr?.trim()) {
+					logger.warn("CangjieMacro", `cjc stderr:\n${stderr}`)
+				}
+				if (!expanded || expanded.trim().length === 0) {
+					vscode.window.showInformationMessage(t("info.cangjie_lsp.macro_expand_no_output"))
 					return
 				}
 
-				const filePath = uri.fsPath
-				if (!fs.existsSync(filePath)) return
+				expanded = await formatExpandedCangjieWithCjfmt(expanded, outputChannel)
 
-				try {
-					const { stdout, stderr } = await execFileAsync(
-						cjcPath,
-						["--expand-macros", "--dump-to-screen", filePath],
-						{ timeout: 15_000, env: buildCangjieToolEnv() as NodeJS.ProcessEnv },
-					)
+				const doc = await vscode.workspace.openTextDocument({
+					content: expanded,
+					language: "cangjie",
+				})
+				await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside })
+			} catch (err) {
+				const msg = getErrorMessage(err)
+				outputChannel.appendLine(`[MacroExpand] Error: ${msg}`)
+				TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 
-					let expanded = stdout
-					if (stderr?.trim()) {
-						logger.warn("CangjieMacro", `cjc stderr:\n${stderr}`)
-					}
-					if (!expanded || expanded.trim().length === 0) {
-						vscode.window.showInformationMessage("宏展开未产生输出（可能 cjc 不支持 --expand-macros 标志）。")
-						return
-					}
-
-					expanded = await formatExpandedCangjieWithCjfmt(expanded, outputChannel)
-
-					const doc = await vscode.workspace.openTextDocument({
-						content: expanded,
-						language: "cangjie",
-					})
-					await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside })
-				} catch (err) {
-					const msg = getErrorMessage(err)
-					outputChannel.appendLine(`[MacroExpand] Error: ${msg}`)
-					TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
-
-					if (msg.includes("--expand-macros")) {
-						vscode.window.showWarningMessage(
-							"当前版本的 cjc 不支持 --expand-macros 参数。宏展开功能需要更高版本的仓颉 SDK。",
-						)
-					} else {
-						vscode.window.showWarningMessage(`宏展开失败: ${msg}`)
-					}
+				if (msg.includes("--expand-macros")) {
+					vscode.window.showWarningMessage(t("warnings.cangjie_lsp.cjc_no_expand_macros"))
+				} else {
+					vscode.window.showWarningMessage(t("warnings.cangjie_lsp.macro_expand_failed", { msg }))
 				}
-			},
-		),
+			}
+		}),
 	)
 }

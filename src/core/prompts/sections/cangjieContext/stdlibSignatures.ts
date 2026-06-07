@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 /** Pre-baked one-line API hints for std roots — avoids extra corpus hits for common imports. */
 export const STDLIB_API_SIGNATURE_HINTS: Record<string, string> = {
 	"std.collection":
@@ -82,7 +85,7 @@ export const STDLIB_CRITICAL_SIGNATURES: Record<string, string> = {
 	].join("\n"),
 	"std.format": [
 		"func format(fmt: String, args: Array<ToString>): String",
-		"字符串插值: \"value = ${expr}\" — expr 须实现 ToString",
+		'字符串插值: "value = ${expr}" — expr 须实现 ToString',
 	].join("\n"),
 	"std.random": [
 		"class Random { init(); init(seed: Int64); func nextInt64(): Int64; func nextInt64(bound: Int64): Int64; func nextFloat64(): Float64; func nextBool(): Bool }",
@@ -101,14 +104,11 @@ export const STDLIB_CRITICAL_SIGNATURES: Record<string, string> = {
 		"class Process { static func run(command: String, args: Array<String>): ProcessResult }",
 		"class ProcessResult { prop exitCode: Int64; prop stdout: String; prop stderr: String }",
 	].join("\n"),
-	"std.env": [
-		"func getEnv(String): ?String",
-		"func setEnv(String, String): Unit",
-		"func currentDir(): String",
-	].join("\n"),
+	"std.env": ["func getEnv(String): ?String", "func setEnv(String, String): Unit", "func currentDir(): String"].join(
+		"\n",
+	),
 	"std.log": [
 		"class Logger { static func getLogger(name: String): Logger; func info(String): Unit; func warn(String): Unit; func error(String): Unit; func debug(String): Unit }",
 		"enum LogLevel { case DEBUG | INFO | WARN | ERROR }",
 	].join("\n"),
 }
-

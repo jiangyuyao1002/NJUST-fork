@@ -482,7 +482,9 @@ describe("runCode", () => {
 	it("builds MATLAB warning for mlx files", async () => {
 		setEditor("D:\\repo\\src\\main.mlx", "matlab")
 		await runActiveEditorCode(outputChannelMock)
-		expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(expect.stringContaining("不适合用命令行直接执行"))
+		expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+			expect.stringContaining("errors.run_code.matlab_live_script_unsupported"),
+		)
 	})
 
 	it("builds MATLAB run config from buildMatlabRunConfig", async () => {
@@ -500,7 +502,7 @@ describe("runCode", () => {
 
 		await runActiveEditorCode(outputChannelMock)
 		expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-			expect.stringContaining("未检测到 MATLAB 或 Octave"),
+			expect.stringContaining("errors.run_code.matlab_not_detected"),
 		)
 	})
 

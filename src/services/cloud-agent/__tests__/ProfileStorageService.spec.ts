@@ -332,6 +332,6 @@ describe("ProfileStorageService", () => {
 describe("getProfileStorageService() singleton", () => {
 	it("throws when not initialized", () => {
 		setProfileStorageService(undefined as unknown as ProfileStorageService)
-		expect(() => getProfileStorageService()).toThrow(/尚未初始化/)
+		expect(() => getProfileStorageService()).toThrow(/errors\.cloud_agent\.not_initialized/)
 	})
 })

@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import { parseCangjieDefinitions, type CangjieDef } from "../tree-sitter/cangjieParser"
+import { t } from "../../i18n"
 
 /**
  * Fallback hover provider for Cangjie files. Only contributes when the LSP
@@ -27,7 +28,9 @@ export class CangjieHoverProvider implements vscode.HoverProvider {
 		const md = new vscode.MarkdownString()
 		md.appendCodeblock(sigLine, "cangjie")
 		if (def.endLine > def.startLine) {
-			md.appendMarkdown(`\n\n*${kindLabel}* \`${def.name}\` — 第 ${def.startLine + 1}–${def.endLine + 1} 行`)
+			md.appendMarkdown(
+				`\n\n*${kindLabel}* \`${def.name}\` — ${t("tooltips.cangjie_lsp.hover_line_range", { start: def.startLine + 1, end: def.endLine + 1 })}`,
+			)
 		} else {
 			md.appendMarkdown(`\n\n*${kindLabel}* \`${def.name}\``)
 		}
@@ -53,9 +56,17 @@ export class CangjieHoverProvider implements vscode.HoverProvider {
 
 	private kindLabel(kind: string): string {
 		const labels: Record<string, string> = {
-			class: "类", struct: "结构体", interface: "接口", enum: "枚举",
-			func: "函数", main: "入口函数", macro: "宏", extend: "扩展",
-			var: "变量", let: "常量", type_alias: "类型别名",
+			class: t("tooltips.cangjie_lsp.kind_class"),
+			struct: t("tooltips.cangjie_lsp.kind_struct"),
+			interface: t("tooltips.cangjie_lsp.kind_interface"),
+			enum: t("tooltips.cangjie_lsp.kind_enum"),
+			func: t("tooltips.cangjie_lsp.kind_func"),
+			main: t("tooltips.cangjie_lsp.kind_main"),
+			macro: t("tooltips.cangjie_lsp.kind_macro"),
+			extend: t("tooltips.cangjie_lsp.kind_extend"),
+			var: t("tooltips.cangjie_lsp.kind_var"),
+			let: t("tooltips.cangjie_lsp.kind_let"),
+			type_alias: t("tooltips.cangjie_lsp.kind_type_alias"),
 		}
 		return labels[kind] || kind
 	}

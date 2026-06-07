@@ -1,3 +1,6 @@
+// Agent-facing prompt templates — Chinese strings are intentionally kept in Chinese
+// to match Cangjie compiler error output and provide context to the LLM.
+// Do NOT i18n these strings; they target the AI agent, not the VS Code UI.
 import * as vscode from "vscode"
 
 import { matchCjcErrorPattern } from "../../../../services/cangjie-lsp/CangjieErrorAnalyzer"
@@ -26,14 +29,10 @@ export function buildContextualCodingRules(
 
 	if (!hasActiveCangjieFile && !projectInfo) return null
 
-	const hasTestFile = vscode.window.visibleTextEditors.some(
-		(e) => e.document.fileName.endsWith("_test.cj"),
-	)
+	const hasTestFile = vscode.window.visibleTextEditors.some((e) => e.document.fileName.endsWith("_test.cj"))
 	const hasSyncImport = imports.some((i) => i.startsWith("std.sync"))
 	const diags = diagnostics
-	const hasErrors = diags.some(
-		(d) => d.severity === vscode.DiagnosticSeverity.Error,
-	)
+	const hasErrors = diags.some((d) => d.severity === vscode.DiagnosticSeverity.Error)
 	const isWorkspace = projectInfo?.isWorkspace ?? false
 
 	// Always inject the core project templates (compact)
@@ -115,7 +114,7 @@ export function buildContextualCodingRules(
 		const wsWorkflow =
 			"### Workspace 项目规则\n" +
 			"- `[workspace]` 和 `[package]` 不能在同一 cjpm.toml\n" +
-			"- 模块间依赖: `{ path = \"../module_name\" }` 写在子模块的 `[dependencies]`\n" +
+			'- 模块间依赖: `{ path = "../module_name" }` 写在子模块的 `[dependencies]`\n' +
 			"- `cjpm run --name <模块>` 运行指定模块\n" +
 			"- 每个模块需独立的 cjpm.toml 和 src/ 目录\n"
 		if (budget >= wsWorkflow.length) {

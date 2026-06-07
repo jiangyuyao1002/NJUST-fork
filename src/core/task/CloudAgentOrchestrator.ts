@@ -91,7 +91,7 @@ export class CloudAgentOrchestrator {
 		// 1. 从 ProfileStorageService 获取活跃 Profile
 		const profile = getProfileStorageService().getActiveProfile()
 		if (!profile) {
-			await this.host.say("error", "未配置 Cloud Agent Profile。请在设置中创建或选择一个 Profile。")
+			await this.host.say("error", t("errors.cloud_agent.profile_not_configured"))
 			return
 		}
 
@@ -176,7 +176,7 @@ export class CloudAgentOrchestrator {
 		if (runResult.workspaceOpsParseError) {
 			await this.host.say(
 				"text",
-				`Cloud Agent 响应中的 workspace_ops 格式无效，已跳过本地写盘。校验信息：${runResult.workspaceOpsParseError}`,
+				t("errors.cloud_agent.workspace_ops_invalid", { validationMessage: runResult.workspaceOpsParseError }),
 			)
 		}
 
@@ -184,7 +184,10 @@ export class CloudAgentOrchestrator {
 		if (!behavior.applyRemoteWorkspaceOps && ops.length > 0) {
 			await this.host.say(
 				"text",
-				`Cloud Agent 返回了 ${ops.length} 条可应用的 workspace_ops，但当前设置未开启「应用远程工作区操作」，因此不会在本地创建或修改文件。请在设置中启用 ${Package.name}.cloudAgent.applyRemoteWorkspaceOps（并可保留 ${Package.name}.cloudAgent.confirmRemoteWorkspaceOps 以在聊天界面中逐项确认）。`,
+				t("info.cloud_agent.ops_not_enabled", {
+					count: ops.length,
+					packageName: Package.name,
+				}),
 			)
 		}
 
@@ -259,7 +262,10 @@ export class CloudAgentOrchestrator {
 				const elapsedSec = Math.round((Date.now() - loopStartTime) / 1000)
 				await this.host.say(
 					"error",
-					`[Deferred] 达到最大运行时长 (${elapsedSec}s > ${CLOUD_AGENT_DEFERRED_MAX_DURATION_MS / 1000}s)，已中止 Cloud Agent 会话。`,
+					t("errors.cloud_agent.max_duration_reached", {
+						elapsed: elapsedSec,
+						max: CLOUD_AGENT_DEFERRED_MAX_DURATION_MS / 1000,
+					}),
 				)
 				await CloudAgentClient.sendDeferredAbort(
 					profile,
@@ -282,7 +288,9 @@ export class CloudAgentOrchestrator {
 			if (workspaceOpsParseError) {
 				await this.host.say(
 					"text",
-					`Cloud Agent 响应中的 workspace_ops 无效，已跳过写盘。校验信息：${workspaceOpsParseError}`,
+					t("errors.cloud_agent.workspace_ops_invalid_deferred", {
+						validationMessage: workspaceOpsParseError,
+					}),
 				)
 			} else if (ops.length > 0 && behavior.applyRemoteWorkspaceOps) {
 				const applied = await this.applyWorkspaceOps(ops, behavior.confirmRemoteWorkspaceOps)
@@ -290,10 +298,7 @@ export class CloudAgentOrchestrator {
 					hadWorkspaceOpsForCompile = true
 				}
 			} else if (ops.length > 0) {
-				await this.host.say(
-					"text",
-					`Cloud Agent 返回了 ${ops.length} 条 workspace_ops，但 applyRemoteWorkspaceOps 已关闭，跳过写盘。`,
-				)
+				await this.host.say("text", t("info.cloud_agent.ops_skipped", { count: ops.length }))
 			}
 
 			const toolResults: DeferredToolResult[] = []
@@ -329,7 +334,10 @@ export class CloudAgentOrchestrator {
 			if (this.host.abort) break
 
 			if (pendingTools.length > 0 && toolResults.length !== pendingTools.length) {
-				const msg = `Cloud Agent deferred/resume 无法继续：本轮 pending_tools 为 ${pendingTools.length} 条，本地仅生成 ${toolResults.length} 条 tool_results（请重试任务或更新插件）。`
+				const msg = t("errors.cloud_agent.pending_tools_mismatch", {
+					pending: pendingTools.length,
+					results: toolResults.length,
+				})
 				await this.host.say("error", msg)
 				await this.host.ask("api_req_failed", msg)
 				return
@@ -337,7 +345,7 @@ export class CloudAgentOrchestrator {
 
 			const runIdForResume = deferredResp.run_id
 			if (!runIdForResume?.trim()) {
-				const msg = "Cloud Agent deferred/resume 无法继续：缺少 run_id。"
+				const msg = t("errors.cloud_agent.missing_run_id")
 				await this.host.say("error", msg)
 				await this.host.ask("api_req_failed", msg)
 				await CloudAgentClient.sendDeferredAbort(
@@ -367,7 +375,10 @@ export class CloudAgentOrchestrator {
 				if (lastServerRevision !== undefined && nextRev !== undefined && nextRev !== lastServerRevision) {
 					await this.host.say(
 						"error",
-						`[Deferred] 服务端 server_revision 已变更（${lastServerRevision} → ${nextRev}），为避免会话串线已中止。`,
+						t("errors.cloud_agent.server_revision_changed", {
+							old: lastServerRevision,
+							new: nextRev,
+						}),
 					)
 					await CloudAgentClient.sendDeferredAbort(
 						profile,
@@ -383,7 +394,10 @@ export class CloudAgentOrchestrator {
 				if (deferredResp.run_id && lastNotifiedRunId && deferredResp.run_id !== lastNotifiedRunId) {
 					await this.host.say(
 						"text",
-						`[Deferred] 服务端更新了 run_id（${lastNotifiedRunId.slice(0, 8)}… → ${deferredResp.run_id.slice(0, 8)}…），后续轮次将使用新会话上下文。`,
+						t("info.cloud_agent.run_id_updated", {
+							old: lastNotifiedRunId.slice(0, 8),
+							new: deferredResp.run_id.slice(0, 8),
+						}),
 					)
 				}
 				lastNotifiedRunId = deferredResp.run_id
@@ -402,7 +416,11 @@ export class CloudAgentOrchestrator {
 					sessionRecoveries++
 					await this.host.say(
 						"text",
-						`[Deferred] 会话已过期（run_id ${runIdForResume.slice(0, 8)}…），正在自动恢复 (${sessionRecoveries}/${CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX})…`,
+						t("info.cloud_agent.session_expired", {
+							runId: runIdForResume.slice(0, 8),
+							current: sessionRecoveries,
+							max: CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX,
+						}),
 					)
 
 					const restartAbort = new AbortController()
@@ -414,6 +432,7 @@ export class CloudAgentOrchestrator {
 						)
 						deferredResp = await restartClient.deferredStart(
 							this.host.taskId,
+							// Agent-facing prompt — intentionally kept in Chinese (not i18n'd)
 							`[自动恢复] 之前的 deferred 会话已过期（run_id ${runIdForResume.slice(0, 8)}…），请继续之前的任务。`,
 							this.host.cwd,
 						)
@@ -421,13 +440,18 @@ export class CloudAgentOrchestrator {
 						lastServerRevision = deferredResp.server_revision
 						await this.host.say(
 							"text",
-							`[Deferred] 会话已恢复，新的 run_id: ${(deferredResp.run_id ?? "").slice(0, 8)}…`,
+							t("info.cloud_agent.session_recovered", {
+								runId: (deferredResp.run_id ?? "").slice(0, 8),
+							}),
 						)
 						continue
 					} catch (restartError) {
 						if (this.host.abort) break
 						const restartMsg = getErrorMessage(restartError)
-						await this.host.say("error", `[Deferred] 会话恢复失败: ${restartMsg}`)
+						await this.host.say(
+							"error",
+							t("errors.cloud_agent.session_recovery_failed", { msg: restartMsg }),
+						)
 						await this.host.ask("api_req_failed", restartMsg)
 						return
 					} finally {
@@ -453,7 +477,7 @@ export class CloudAgentOrchestrator {
 		}
 
 		if (iteration >= maxIterations && deferredResp.status === "pending") {
-			await this.host.say("error", `[Deferred] 达到最大迭代次数 (${maxIterations})，已中止 Cloud Agent 会话。`)
+			await this.host.say("error", t("errors.cloud_agent.max_iterations_reached", { max: maxIterations }))
 			await CloudAgentClient.sendDeferredAbort(
 				profile,
 				this.host.taskId,
@@ -476,7 +500,7 @@ export class CloudAgentOrchestrator {
 			if (finalParsed.error) {
 				await this.host.say(
 					"text",
-					`Cloud Agent 最终响应中的 workspace_ops 无效，已跳过写盘。校验信息：${finalParsed.error}`,
+					t("errors.cloud_agent.final_workspace_ops_invalid", { validationMessage: finalParsed.error }),
 				)
 			} else if (finalParsed.operations.length > 0 && behavior.applyRemoteWorkspaceOps) {
 				const applied = await this.applyWorkspaceOps(finalParsed.operations, behavior.confirmRemoteWorkspaceOps)
@@ -502,7 +526,7 @@ export class CloudAgentOrchestrator {
 
 			await this.host.say(
 				"completion_result",
-				deferredResp.ok ? "Cloud Agent 任务完成。" : "Cloud Agent 任务结束（服务端报告未成功）。",
+				deferredResp.ok ? t("info.cloud_agent.task_completed") : t("errors.cloud_agent.task_failed"),
 			)
 		}
 	}
@@ -671,7 +695,7 @@ export class CloudAgentOrchestrator {
 			} catch (error) {
 				if (this.host.abort) break
 				const msg = getErrorMessage(error)
-				await this.host.say("error", `[Compile] 修正请求失败: ${msg}`)
+				await this.host.say("error", t("errors.cloud_agent.compile_fix_failed", { msg }))
 				break
 			} finally {
 				this.host.setCurrentRequestAbortController(undefined)
@@ -680,20 +704,22 @@ export class CloudAgentOrchestrator {
 			if (fixResult.workspaceOpsParseError) {
 				await this.host.say(
 					"text",
-					`[Compile] 修正响应中的 workspace_ops 无效，停止编译反馈循环。校验信息：${fixResult.workspaceOpsParseError}`,
+					t("errors.cloud_agent.compile_fix_ops_invalid", {
+						validationMessage: fixResult.workspaceOpsParseError,
+					}),
 				)
 				break
 			}
 
 			const fixOps = fixResult.workspaceOps
 			if (fixOps.length === 0) {
-				await this.host.say("text", "[Compile] Cloud Agent 未返回修正代码，停止编译反馈循环。")
+				await this.host.say("text", t("info.cloud_agent.compile_no_fix"))
 				break
 			}
 
 			const applied = await this.applyWorkspaceOps(fixOps, confirmOps)
 			if (!applied) {
-				await this.host.say("error", "[Compile] 修正代码未能应用到本地，停止编译反馈循环。")
+				await this.host.say("error", t("errors.cloud_agent.compile_fix_not_applied"))
 				break
 			}
 		}

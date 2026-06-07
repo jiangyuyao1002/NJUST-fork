@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { promises as fsPromises } from "fs"
 import type { CangjieSymbolIndex } from "./CangjieSymbolIndex"
+import { t } from "../../i18n"
 
 /**
  * Enhanced RenameProvider that compares LSP rename results with the local
@@ -55,16 +56,23 @@ export class CangjieEnhancedRenameProvider implements vscode.RenameProvider {
 
 		if (lspEdit && indexLocCount > lspLocCount) {
 			const diff = indexLocCount - lspLocCount
+			const useEnhancedBtn = t("buttons.cangjie_lsp.use_enhanced_rename")
+			const useLspBtn = t("buttons.cangjie_lsp.use_lsp_result")
+			const cancelBtn = t("buttons.cangjie_lsp.cancel")
 			const choice = await vscode.window.showWarningMessage(
-				`LSP 重命名找到 ${lspLocCount} 处引用，本地索引发现 ${indexLocCount} 处（多 ${diff} 处）。是否使用增强版重命名？`,
-				"使用增强版（本地索引）",
-				"使用 LSP 结果",
-				"取消",
+				t("warnings.cangjie_lsp.rename_discrepancy", {
+					lspCount: lspLocCount,
+					indexCount: indexLocCount,
+					diff,
+				}),
+				useEnhancedBtn,
+				useLspBtn,
+				cancelBtn,
 			)
 
-			if (choice === "使用增强版（本地索引）") {
+			if (choice === useEnhancedBtn) {
 				return this.buildIndexRenameEdit(oldName, newName, indexRefs)
-			} else if (choice === "使用 LSP 结果") {
+			} else if (choice === useLspBtn) {
 				return lspEdit
 			}
 			return undefined
@@ -116,10 +124,7 @@ export class CangjieEnhancedRenameProvider implements vscode.RenameProvider {
 		const edit = new vscode.WorkspaceEdit()
 		for (const ref of refs) {
 			const uri = vscode.Uri.file(ref.filePath)
-			const range = new vscode.Range(
-				ref.line, ref.column,
-				ref.line, ref.column + oldName.length,
-			)
+			const range = new vscode.Range(ref.line, ref.column, ref.line, ref.column + oldName.length)
 			edit.replace(uri, range, newName)
 		}
 		return edit
@@ -129,7 +134,9 @@ export class CangjieEnhancedRenameProvider implements vscode.RenameProvider {
 		name: string,
 		refs: Array<{ filePath: string; line: number; column: number }>,
 	): Promise<Array<{ filePath: string; line: number; column: number }>> {
-		const useAst = vscode.workspace.getConfiguration("njust-ai").get<boolean>("cangjieTools.useCjcAstForIndex", false)
+		const useAst = vscode.workspace
+			.getConfiguration("njust-ai")
+			.get<boolean>("cangjieTools.useCjcAstForIndex", false)
 		if (!useAst) return refs
 		const fileCache = new Map<string, string[]>()
 		const out: Array<{ filePath: string; line: number; column: number }> = []
@@ -184,7 +191,7 @@ export class CangjieEnhancedRenameProvider implements vscode.RenameProvider {
 					quote = ""
 				}
 				if (i === index) return false
-			} else if (ch === "\"" || ch === "'") {
+			} else if (ch === '"' || ch === "'") {
 				if (i <= index) {
 					inString = true
 					quote = ch

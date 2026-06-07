@@ -100,6 +100,8 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			} catch (error) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("apply_patch")
+				// Agent-facing: format hint is embedded in tool_result sent to the AI,
+				// intentionally kept in Chinese.
 				const formatHint =
 					task.consecutiveMistakeCount >= 2
 						? "\n\n正确格式示例：\n*** Begin Patch\n*** Update File: path/to/file.cj\n@@ -line,count +line,count @@\n old line\n+new line\n*** End Patch"
@@ -437,7 +439,10 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 		const targetRelPath = change.movePath ?? relPath
 		const targetAbsolutePath = path.resolve(task.cwd, targetRelPath)
 		if (task.taskMode === "cangjie") {
-			const structureError = await task.cangjieRuntimePolicy.validateProjectStructureForWrite(targetRelPath, newContent)
+			const structureError = await task.cangjieRuntimePolicy.validateProjectStructureForWrite(
+				targetRelPath,
+				newContent,
+			)
 			if (structureError) {
 				task.recordToolError("apply_patch", structureError)
 				pushToolResult(formatResponse.toolError(structureError))
@@ -560,7 +565,8 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			}
 
 			// Check if destination path is write-protected
-			const isMovePathWriteProtected = (await task.rooProtectedController?.isWriteProtected(change.movePath)) || false
+			const isMovePathWriteProtected =
+				(await task.rooProtectedController?.isWriteProtected(change.movePath)) || false
 			if (isMovePathWriteProtected) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("apply_patch")
@@ -604,7 +610,10 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				await fs.unlink(absolutePath)
 			} catch (error) {
 				logger.error("ApplyPatchTool", `Failed to delete original file after move: ${error}`)
-				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+				TelemetryService.reportError(
+					error instanceof Error ? error : new Error(String(error)),
+					TelemetryEventName.UTILITY_ERROR,
+				)
 			}
 
 			await task.fileContextTracker.trackFileContext(change.movePath, "njust_ai_edited" as RecordSource)

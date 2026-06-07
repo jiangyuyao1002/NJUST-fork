@@ -1,22 +1,22 @@
 import * as fs from "fs"
 import * as path from "path"
 
+// Agent-facing stdlib constraint hints for AI prompts — intentionally kept in Chinese (not i18n'd)
+
 export interface StdlibConstraintCacheFile {
 	corpusTag: string
 	extracted: Record<string, string>
 }
 
 const STDLIB_CONSTRAINT_MEM_CACHE_TTL_MS = 30_000
-let stdlibConstraintMemCache:
-	| {
-			baseHash: number
-			corpusRoot: string
-			globalStoragePath: string
-			corpusTag: string
-			value: Record<string, string>
-			time: number
-	  }
-	| null = null
+let stdlibConstraintMemCache: {
+	baseHash: number
+	corpusRoot: string
+	globalStoragePath: string
+	corpusTag: string
+	value: Record<string, string>
+	time: number
+} | null = null
 
 function simpleHash(str: string): number {
 	let h = 0

@@ -13,6 +13,7 @@ import { Package } from "../../shared/package"
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
+import { t } from "../../i18n"
 
 const CANGJIE_LANGUAGE_ID = "cangjie"
 const LSP_SERVER_NAME = "Cangjie Language Server"
@@ -21,9 +22,7 @@ const LSP_SERVER_NAME = "Cangjie Language Server"
 // Middleware helpers: debounce high-frequency LSP requests
 // ---------------------------------------------------------------------------
 
-export function debounceMiddleware<T>(delayMs: number): (
-	next: () => vscode.ProviderResult<T>,
-) => Thenable<T> {
+export function debounceMiddleware<T>(delayMs: number): (next: () => vscode.ProviderResult<T>) => Thenable<T> {
 	let timer: ReturnType<typeof setTimeout> | undefined
 	let pending: { resolve: (v: T) => void; reject: (e: unknown) => void } | undefined
 
@@ -47,11 +46,12 @@ export function debounceMiddleware<T>(delayMs: number): (
 
 function buildMiddleware(): Middleware {
 	const hoverDebounce = debounceMiddleware<vscode.Hover | null | undefined>(100)
-	const completionDebounce = debounceMiddleware<vscode.CompletionItem[] | vscode.CompletionList | null | undefined>(150)
+	const completionDebounce = debounceMiddleware<vscode.CompletionItem[] | vscode.CompletionList | null | undefined>(
+		150,
+	)
 
 	return {
-		provideHover: (document, position, token, next) =>
-			hoverDebounce(() => next(document, position, token)),
+		provideHover: (document, position, token, next) => hoverDebounce(() => next(document, position, token)),
 		provideCompletionItem: (document, position, context, token, next) =>
 			completionDebounce(() => next(document, position, context, token)),
 	}
@@ -72,9 +72,7 @@ function readCjpmPackageName(projectRoot: string): string | undefined {
 		if (pkgIdx === -1) return undefined
 
 		const nextSectionIdx = content.indexOf("\n[", pkgIdx + 1)
-		const pkgSection = nextSectionIdx === -1
-			? content.slice(pkgIdx)
-			: content.slice(pkgIdx, nextSectionIdx)
+		const pkgSection = nextSectionIdx === -1 ? content.slice(pkgIdx) : content.slice(pkgIdx, nextSectionIdx)
 
 		const match = pkgSection.match(CJPM_PKG_NAME_RE)
 		return match ? match[1] : undefined
@@ -103,16 +101,16 @@ export function filterFalsePackageDiagnostics(
 		}
 
 		if (documentText === undefined) {
-			const doc = vscode.workspace.textDocuments.find(d => d.uri.toString() === uri.toString())
+			const doc = vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri.toString())
 			documentText = doc ? doc.getText() : ""
 		}
 
 		if (documentText) {
 			// Escape regex characters in the expected package name just in case
-			const escapedExpected = lspExpected!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-			
+			const escapedExpected = lspExpected!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
 			// 1. If document already correctly declares EXACTLY what LSP expects (LSP is out of sync)
-			const actualPackageDecl = new RegExp(`^\\s*package\\s+${escapedExpected}\\s*(//.*)?$`, 'm')
+			const actualPackageDecl = new RegExp(`^\\s*package\\s+${escapedExpected}\\s*(//.*)?$`, "m")
 			if (actualPackageDecl.test(documentText)) {
 				return false // The document already correctly declares this package. False positive!
 			}
@@ -170,9 +168,10 @@ export function detectCangjieHome(serverPath?: string): string | undefined {
 		}
 	}
 
-	const wellKnownPaths = process.platform === "win32"
-		? ["D:\\cangjie", "C:\\cangjie", path.join(process.env.LOCALAPPDATA || "", "cangjie")]
-		: ["/usr/local/cangjie", path.join(process.env.HOME || "", ".cangjie")]
+	const wellKnownPaths =
+		process.platform === "win32"
+			? ["D:\\cangjie", "C:\\cangjie", path.join(process.env.LOCALAPPDATA || "", "cangjie")]
+			: ["/usr/local/cangjie", path.join(process.env.HOME || "", ".cangjie")]
 
 	for (const p of wellKnownPaths) {
 		if (p && fs.existsSync(path.join(p, "bin"))) {
@@ -332,7 +331,11 @@ export class CangjieLspClient {
 
 	onStateChange(listener: CangjieLspStateListener): vscode.Disposable {
 		this.stateListeners.push(listener)
-		return { dispose: () => { this.stateListeners = this.stateListeners.filter((l) => l !== listener) } }
+		return {
+			dispose: () => {
+				this.stateListeners = this.stateListeners.filter((l) => l !== listener)
+			},
+		}
 	}
 
 	/**
@@ -386,7 +389,9 @@ export class CangjieLspClient {
 			}
 			this.extensionOutputChannel.appendLine("[CangjieLSP] Configuration changed, restarting server...")
 			this.configRestartChain = this.configRestartChain
-				.catch(() => { /* keep chain alive after error */ })
+				.catch(() => {
+					/* keep chain alive after error */
+				})
 				.then(async () => {
 					await this.stop()
 					await this.start()
@@ -483,7 +488,7 @@ export class CangjieLspClient {
 		} else {
 			this.extensionOutputChannel.appendLine(
 				"[CangjieLSP] WARNING: CANGJIE_HOME not detected. The LSP server may fail to start. " +
-				"Please set the CANGJIE_HOME environment variable or run envsetup.ps1 from the Cangjie SDK."
+					"Please set the CANGJIE_HOME environment variable or run envsetup.ps1 from the Cangjie SDK.",
 			)
 		}
 
@@ -507,7 +512,9 @@ export class CangjieLspClient {
 
 		const realPackageName = cjpmRoot ? readCjpmPackageName(cjpmRoot) : undefined
 		if (realPackageName) {
-			this.extensionOutputChannel.appendLine(`[CangjieLSP] Root package name from cjpm.toml: "${realPackageName}"`)
+			this.extensionOutputChannel.appendLine(
+				`[CangjieLSP] Root package name from cjpm.toml: "${realPackageName}"`,
+			)
 		}
 
 		const baseMiddleware = buildMiddleware()
@@ -531,12 +538,18 @@ export class CangjieLspClient {
 					const t0 = Date.now()
 					const result = baseMiddleware.provideCompletionItem!(document, position, context, token, next)
 					if (!this.firstCompletionLogged && result) {
-						Promise.resolve(result).then(() => {
-							if (!this.firstCompletionLogged) {
-								this.firstCompletionLogged = true
-								this.extensionOutputChannel.appendLine(`[Perf] First completion response in ${Date.now() - t0}ms`)
-							}
-						}).catch(() => { /* best-effort perf logging */ })
+						Promise.resolve(result)
+							.then(() => {
+								if (!this.firstCompletionLogged) {
+									this.firstCompletionLogged = true
+									this.extensionOutputChannel.appendLine(
+										`[Perf] First completion response in ${Date.now() - t0}ms`,
+									)
+								}
+							})
+							.catch(() => {
+								/* best-effort perf logging */
+							})
 					}
 					return result
 				},
@@ -544,24 +557,25 @@ export class CangjieLspClient {
 					const t0 = Date.now()
 					const result = baseMiddleware.provideHover!(document, position, token, next)
 					if (!this.firstHoverLogged && result) {
-						Promise.resolve(result).then(() => {
-							if (!this.firstHoverLogged) {
-								this.firstHoverLogged = true
-								this.extensionOutputChannel.appendLine(`[Perf] First hover response in ${Date.now() - t0}ms`)
-							}
-						}).catch(() => { /* best-effort perf logging */ })
+						Promise.resolve(result)
+							.then(() => {
+								if (!this.firstHoverLogged) {
+									this.firstHoverLogged = true
+									this.extensionOutputChannel.appendLine(
+										`[Perf] First hover response in ${Date.now() - t0}ms`,
+									)
+								}
+							})
+							.catch(() => {
+								/* best-effort perf logging */
+							})
 					}
 					return result
 				},
 			},
 		}
 
-		this.client = new LanguageClient(
-			"cangjieLsp",
-			LSP_SERVER_NAME,
-			serverOptions,
-			clientOptions,
-		)
+		this.client = new LanguageClient("cangjieLsp", LSP_SERVER_NAME, serverOptions, clientOptions)
 
 		// Register before start() so a crash/stop between start resolving and this listener cannot be missed.
 		this.clientStateDisposable?.dispose()
@@ -589,14 +603,19 @@ export class CangjieLspClient {
 			TelemetryService.reportError(error, TelemetryEventName.CANGJIE_LSP_ERROR)
 			this.setState("error", message)
 			if (message.includes("initialize fail") || message.includes("system api")) {
-				vscode.window.showErrorMessage(
-					`Cangjie LSP 启动失败: ${message}。请确认已运行 Cangjie SDK 的 envsetup 脚本，或在设置中配置正确的 CANGJIE_HOME 路径。`,
-					"打开设置"
-				).then((choice) => {
-					if (choice === "打开设置") {
-						vscode.commands.executeCommand("workbench.action.openSettings", `${Package.name}.cangjieLsp`)
-					}
-				})
+				vscode.window
+					.showErrorMessage(
+						t("errors.cangjie_lsp.lsp_start_failed", { message }),
+						t("buttons.cangjie_lsp.open_settings"),
+					)
+					.then((choice) => {
+						if (choice === t("buttons.cangjie_lsp.open_settings")) {
+							vscode.commands.executeCommand(
+								"workbench.action.openSettings",
+								`${Package.name}.cangjieLsp`,
+							)
+						}
+					})
 			} else {
 				vscode.window.showErrorMessage(`Failed to start Cangjie Language Server: ${message}`)
 			}
@@ -610,15 +629,17 @@ export class CangjieLspClient {
 			this.extensionOutputChannel.appendLine(
 				`[CangjieLSP] Auto-restart limit reached (${MAX_AUTO_RESTARTS}). Use "Cangjie: Restart Language Server" to retry manually.`,
 			)
-			vscode.window.showErrorMessage(
-				`仓颉语言服务连续崩溃 ${MAX_AUTO_RESTARTS} 次，已停止自动重启。请检查 SDK 配置或手动重启。`,
-				"手动重启",
-			).then((choice) => {
-				if (choice === "手动重启") {
-					this.autoRestartCount = 0
-					void this.restart()
-				}
-			})
+			vscode.window
+				.showErrorMessage(
+					t("errors.cangjie_lsp.lsp_crashed_repeatedly", { count: MAX_AUTO_RESTARTS }),
+					t("buttons.cangjie_lsp.manual_restart"),
+				)
+				.then((choice) => {
+					if (choice === t("buttons.cangjie_lsp.manual_restart")) {
+						this.autoRestartCount = 0
+						void this.restart()
+					}
+				})
 			return
 		}
 
@@ -725,7 +746,9 @@ export class CangjieLspClient {
 		if (!coll) return
 		if (!opts?.cwd) {
 			coll.clear()
-			this.extensionOutputChannel.appendLine("[CangjieLSP] Cleared all LSP diagnostics after cjpm success (no cwd).")
+			this.extensionOutputChannel.appendLine(
+				"[CangjieLSP] Cleared all LSP diagnostics after cjpm success (no cwd).",
+			)
 			return
 		}
 		const root = normalizeCwdKey(opts.cwd)
@@ -781,11 +804,16 @@ export class CangjieLspClient {
 	}
 
 	private suppressLspErrorsAfterCjpmSuccessMs(): number {
-		const v = vscode.workspace.getConfiguration(Package.name).get<number>("cangjieLsp.suppressLspErrorsAfterCjpmSuccessMs", 0)
+		const v = vscode.workspace
+			.getConfiguration(Package.name)
+			.get<number>("cangjieLsp.suppressLspErrorsAfterCjpmSuccessMs", 0)
 		return typeof v === "number" && v > 0 ? v : 0
 	}
 
-	private applyLspErrorSuppressAfterCjpmSuccess(uri: vscode.Uri, diagnostics: vscode.Diagnostic[]): vscode.Diagnostic[] {
+	private applyLspErrorSuppressAfterCjpmSuccess(
+		uri: vscode.Uri,
+		diagnostics: vscode.Diagnostic[],
+	): vscode.Diagnostic[] {
 		const windowMs = this.suppressLspErrorsAfterCjpmSuccessMs()
 		if (windowMs <= 0 || diagnostics.length === 0) return diagnostics
 		const proj = this.findCjpmRootContainingFile(uri.fsPath)
