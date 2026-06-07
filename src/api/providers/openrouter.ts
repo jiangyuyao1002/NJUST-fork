@@ -40,6 +40,7 @@ import { TelemetryService } from "@njust-ai/telemetry"
 import { logger } from "../../shared/logger"
 import { requireApiKey } from "../interfaces/api-key-validator"
 import { getErrorMessage } from "../../shared/error-utils"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 
 // Add custom interface for OpenRouter params.
 type OpenRouterChatCompletionParams = OpenAI.Chat.ChatCompletionCreateParams & {
@@ -165,7 +166,7 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 		const baseURL = this.options.openRouterBaseUrl || "https://openrouter.ai/api/v1"
 		const apiKey = requireApiKey(this.options.openRouterApiKey, "OpenRouter")
 
-		this.client = new OpenAI({ baseURL, apiKey, defaultHeaders: DEFAULT_HEADERS })
+		this.client = new OpenAI({ baseURL, apiKey, defaultHeaders: DEFAULT_HEADERS, timeout: getApiRequestTimeout() })
 
 		// Load models asynchronously to populate cache before getModel() is called
 		this.loadDynamicModels().catch((error) => {

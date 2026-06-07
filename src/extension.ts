@@ -10,6 +10,7 @@ import { TelemetryService } from "@njust-ai/telemetry"
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
 import { logger } from "./shared/logger"
+import { t } from "./i18n"
 import { initializeNetworkProxy } from "./utils/networkProxy"
 
 import { Package } from "./shared/package"
@@ -22,10 +23,7 @@ import { McpServerManager } from "./services/mcp/McpServerManager"
 import { CodeIndexManager } from "./services/code-index/manager"
 import { AuditLogger } from "./services/AuditLogger"
 import { AuditSink } from "./services/AuditSink"
-import {
-	cleanupOrphanedTestFiles,
-	initTestCleanup,
-} from "./services/cangjie-lsp/cangjieGeneratedTestCleanup"
+import { cleanupOrphanedTestFiles, initTestCleanup } from "./services/cangjie-lsp/cangjieGeneratedTestCleanup"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./core/config/autoImportSettings"
 import { startupProfiler } from "./utils/profiler"
@@ -45,11 +43,7 @@ import { resolveInlineCompletionApiHandler } from "./services/inline-completion/
 import { getErrorMessage } from "./shared/error-utils"
 
 import { initializeCloudAgent } from "./activate/cloudAgentInit"
-import {
-	initializeCangjieLanguage,
-	wireCangjieCommands,
-	disposeCangjieLanguage,
-} from "./activate/cangjieLanguage"
+import { initializeCangjieLanguage, wireCangjieCommands, disposeCangjieLanguage } from "./activate/cangjieLanguage"
 import { setupMcpToolsServer } from "./activate/mcpToolsServer"
 import { setupDevModeWatcher } from "./activate/devModeWatcher"
 import { registerLatexCommands } from "./services/latex/latexCommands"
@@ -128,12 +122,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		.then((r) => {
 			if (r.filesRemoved > 0) {
 				outputChannel.appendLine(
-					`[CangjieTestCleanup] 启动孤儿清理：移除 ${r.filesRemoved} 个生成测试文件（${r.taskEntriesRemoved} 个任务桶）。`,
+					t("info.cangjie_test_cleanup_orphan", {
+						filesRemoved: r.filesRemoved,
+						taskEntriesRemoved: r.taskEntriesRemoved,
+					}),
 				)
 			}
 		})
 		.catch((e) => {
-			outputChannel.appendLine(`[CangjieTestCleanup] 启动孤儿清理失败：${getErrorMessage(e)}`)
+			outputChannel.appendLine(t("errors.cangjie_test_cleanup_failed", { error: getErrorMessage(e) }))
 			TelemetryService.reportError(e, TelemetryEventName.EXTENSION_INIT_ERROR)
 		})
 
@@ -208,7 +205,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	provider.compileLocal = async (cwd) => {
 		const compileGuard = cangjieInit.compileGuardAccessor()
 		if (!compileGuard) {
-			throw new Error("CangjieCompileGuard 未初始化，无法执行本地编译。")
+			throw new Error(t("common:errors.cangjieCompileGuard.notInitialized"))
 		}
 		const result = await compileGuard.compile(cwd)
 		return { success: result.success, output: result.output }
@@ -259,11 +256,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			const api = await resolveInlineCompletionApiHandler(provider, log)
 			if (api) {
 				const { id } = api.getModel()
-				void vscode.window.showInformationMessage(`内联补全 API 可用：${id}`)
+				void vscode.window.showInformationMessage(t("info.inline_completion_api_available", { id }))
 			} else {
-				void vscode.window.showWarningMessage(
-					"内联补全：未解析到 API。请在扩展设置中配置提供商并填写密钥，或先开始侧边栏对话任务；详情见输出面板「NJUST_AI」。",
-				)
+				void vscode.window.showWarningMessage(t("warnings.inline_completion_no_api"))
 			}
 		}),
 	)

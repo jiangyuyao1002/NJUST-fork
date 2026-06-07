@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import * as fs from "fs"
+import { t } from "../../i18n"
 
 export interface CangjieTemplate {
 	id: string
@@ -33,9 +34,9 @@ export type CangjieTemplateCategory =
 const BUILTIN_TEMPLATES: CangjieTemplate[] = [
 	{
 		id: "exec-hello",
-		title: "可执行项目 (Hello World)",
+		title: t("templates.cangjie.hello_world_title"),
 		category: "executable",
-		description: "最简 main 入口，打印一行文本并返回 0",
+		description: t("templates.cangjie.hello_world_desc"),
 		body: `package {{packageName}}
 
 import std.console.*
@@ -46,15 +47,15 @@ main(): Int64 {
 }
 `,
 		params: [
-			{ name: "packageName", label: "包名", defaultValue: "my_app" },
-			{ name: "projectName", label: "项目名", defaultValue: "Cangjie" },
+			{ name: "packageName", label: t("templates.cangjie.params.package_name"), defaultValue: "my_app" },
+			{ name: "projectName", label: t("templates.cangjie.params.project_name"), defaultValue: "Cangjie" },
 		],
 	},
 	{
 		id: "http-server",
-		title: "HTTP 服务器",
+		title: t("templates.cangjie.http_server_title"),
 		category: "http-server",
-		description: "使用 std.net 创建简单 HTTP 服务器",
+		description: t("templates.cangjie.http_server_desc"),
 		body: `package {{packageName}}
 
 import std.net.*
@@ -80,15 +81,15 @@ func handleClient(client: Socket): Unit {
 }
 `,
 		params: [
-			{ name: "packageName", label: "包名", defaultValue: "my_server" },
-			{ name: "port", label: "端口", defaultValue: "8080" },
+			{ name: "packageName", label: t("templates.cangjie.params.package_name"), defaultValue: "my_server" },
+			{ name: "port", label: t("templates.cangjie.params.port"), defaultValue: "8080" },
 		],
 	},
 	{
 		id: "cli-tool",
-		title: "CLI 工具",
+		title: t("templates.cangjie.cli_tool_title"),
 		category: "cli-tool",
-		description: "命令行工具骨架，解析 argv 参数",
+		description: t("templates.cangjie.cli_tool_desc"),
 		body: `package {{packageName}}
 
 import std.console.*
@@ -115,15 +116,15 @@ func printHelp(): Unit {
 }
 `,
 		params: [
-			{ name: "packageName", label: "包名", defaultValue: "my_cli" },
-			{ name: "toolName", label: "工具名", defaultValue: "mytool" },
+			{ name: "packageName", label: t("templates.cangjie.params.package_name"), defaultValue: "my_cli" },
+			{ name: "toolName", label: t("templates.cangjie.params.tool_name"), defaultValue: "mytool" },
 		],
 	},
 	{
 		id: "unittest",
-		title: "单元测试",
+		title: t("templates.cangjie.unit_test_title"),
 		category: "testing",
-		description: "@Test / @TestCase 单测模板",
+		description: t("templates.cangjie.unit_test_desc"),
 		body: `package {{packageName}}
 
 import std.unittest.*
@@ -144,15 +145,15 @@ class {{testClassName}} {
 }
 `,
 		params: [
-			{ name: "packageName", label: "包名", defaultValue: "my_app" },
-			{ name: "testClassName", label: "测试类名", defaultValue: "MyTest" },
+			{ name: "packageName", label: t("templates.cangjie.params.package_name"), defaultValue: "my_app" },
+			{ name: "testClassName", label: t("templates.cangjie.params.test_class_name"), defaultValue: "MyTest" },
 		],
 	},
 	{
 		id: "data-processing",
-		title: "数据处理",
+		title: t("templates.cangjie.data_processing_title"),
 		category: "data-processing",
-		description: "使用 ArrayList/HashMap 做集合处理",
+		description: t("templates.cangjie.data_processing_desc"),
 		body: `package {{packageName}}
 
 import std.collection.*
@@ -175,15 +176,13 @@ main(): Int64 {
     return 0
 }
 `,
-		params: [
-			{ name: "packageName", label: "包名", defaultValue: "my_app" },
-		],
+		params: [{ name: "packageName", label: t("templates.cangjie.params.package_name"), defaultValue: "my_app" }],
 	},
 	{
 		id: "concurrency-mutex",
-		title: "并发 (Mutex)",
+		title: t("templates.cangjie.concurrency_title"),
 		category: "concurrency",
-		description: "多线程共享状态 + Mutex 保护",
+		description: t("templates.cangjie.concurrency_desc"),
 		body: `package {{packageName}}
 
 import std.sync.*
@@ -213,15 +212,15 @@ main(): Int64 {
 }
 `,
 		params: [
-			{ name: "packageName", label: "包名", defaultValue: "my_app" },
-			{ name: "threadCount", label: "线程数", defaultValue: "4" },
+			{ name: "packageName", label: t("templates.cangjie.params.package_name"), defaultValue: "my_app" },
+			{ name: "threadCount", label: t("templates.cangjie.params.thread_count"), defaultValue: "4" },
 		],
 	},
 	{
 		id: "static-library",
-		title: "静态库",
+		title: t("templates.cangjie.static_lib_title"),
 		category: "library",
-		description: "公开 API 的 static library 包骨架",
+		description: t("templates.cangjie.static_lib_desc"),
 		body: `package {{packageName}}
 
 public class {{className}} {
@@ -241,9 +240,9 @@ public class {{className}} {
 }
 `,
 		params: [
-			{ name: "packageName", label: "包名", defaultValue: "my_lib" },
-			{ name: "className", label: "类名", defaultValue: "MyService" },
-			{ name: "valueType", label: "值类型", defaultValue: "String" },
+			{ name: "packageName", label: t("templates.cangjie.params.package_name"), defaultValue: "my_lib" },
+			{ name: "className", label: t("templates.cangjie.params.class_name"), defaultValue: "MyService" },
+			{ name: "valueType", label: t("templates.cangjie.params.value_type"), defaultValue: "String" },
 		],
 	},
 ]
@@ -307,7 +306,7 @@ export class CangjieTemplateLibrary {
 		}))
 
 		const selected = await vscode.window.showQuickPick(items, {
-			placeHolder: "选择仓颉代码模板…",
+			placeHolder: t("placeholders.select_cangjie_template"),
 			matchOnDescription: true,
 			matchOnDetail: true,
 		})

@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { t } from "../../i18n"
 
 const TEST_CLASS_RE = /^\s*@Test\b/
 const TEST_CASE_RE = /^\s*@TestCase\b/
@@ -19,17 +20,21 @@ export class CangjieTestCodeLensProvider implements vscode.CodeLensProvider {
 		for (const target of targets) {
 			const range = new vscode.Range(target.line, 0, target.line, 0)
 
-			lenses.push(new vscode.CodeLens(range, {
-				title: "$(play) 运行测试",
-				command: "njust-ai.cangjieRunTest",
-				arguments: [target.name, document.uri],
-			}))
+			lenses.push(
+				new vscode.CodeLens(range, {
+					title: t("codelens.run_test"),
+					command: "njust-ai.cangjieRunTest",
+					arguments: [target.name, document.uri],
+				}),
+			)
 
-			lenses.push(new vscode.CodeLens(range, {
-				title: "$(debug-alt) 调试测试",
-				command: "njust-ai.cangjieDebugTest",
-				arguments: [target.name, document.uri],
-			}))
+			lenses.push(
+				new vscode.CodeLens(range, {
+					title: t("codelens.debug_test"),
+					command: "njust-ai.cangjieDebugTest",
+					arguments: [target.name, document.uri],
+				}),
+			)
 		}
 
 		return lenses

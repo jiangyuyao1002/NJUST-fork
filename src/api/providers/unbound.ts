@@ -19,6 +19,7 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { requireApiKey } from "../interfaces/api-key-validator"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 
 // Unbound usage includes extra fields for Anthropic cache tokens.
 interface UnboundUsage extends OpenAI.CompletionUsage {
@@ -64,6 +65,7 @@ export class UnboundHandler extends BaseProvider implements SingleCompletionHand
 				...DEFAULT_HEADERS,
 				"X-Unbound-Metadata": JSON.stringify({ labels: [{ key: "app", value: "Njust-AI" }] }),
 			},
+			timeout: getApiRequestTimeout(),
 		})
 	}
 

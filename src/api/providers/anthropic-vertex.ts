@@ -26,6 +26,7 @@ import {
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { requireApiKey } from "../interfaces/api-key-validator"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 
 // https://docs.anthropic.com/en/api/claude-on-vertex-ai
 export class AnthropicVertexHandler extends BaseProvider implements SingleCompletionHandler {
@@ -41,6 +42,9 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 		const projectId = requireApiKey(this.options.vertexProjectId, "Vertex AI Project ID")
 		const region = this.options.vertexRegion ?? "us-east5"
 
+		const timeout = getApiRequestTimeout()
+		const clientOptions = timeout !== undefined ? { timeout } : {}
+
 		if (this.options.vertexJsonCredentials) {
 			this.client = new AnthropicVertex({
 				projectId,
@@ -49,6 +53,7 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 					scopes: ["https://www.googleapis.com/auth/cloud-platform"],
 					credentials: safeJsonParse<JWTInput>(this.options.vertexJsonCredentials, undefined),
 				}),
+				...clientOptions,
 			})
 		} else if (this.options.vertexKeyFile) {
 			this.client = new AnthropicVertex({
@@ -58,9 +63,10 @@ export class AnthropicVertexHandler extends BaseProvider implements SingleComple
 					scopes: ["https://www.googleapis.com/auth/cloud-platform"],
 					keyFile: this.options.vertexKeyFile,
 				}),
+				...clientOptions,
 			})
 		} else {
-			this.client = new AnthropicVertex({ projectId, region })
+			this.client = new AnthropicVertex({ projectId, region, ...clientOptions })
 		}
 	}
 

@@ -942,7 +942,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译通过"))
+			expect(host.say).toHaveBeenCalledWith(
+				"text",
+				expect.stringContaining("info.cangjieCompileGuard.compileSuccess"),
+			)
 			expect(host.compileLocal).toHaveBeenCalledWith(path.resolve("/test/workspace"))
 		})
 
@@ -977,8 +980,11 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译失败"))
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("编译通过"))
+			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("cangjieCompileGuard.compileFailed"))
+			expect(host.say).toHaveBeenCalledWith(
+				"text",
+				expect.stringContaining("info.cangjieCompileGuard.compileSuccess"),
+			)
 		})
 
 		it("stops after maxRetries reached (local)", async () => {
@@ -1001,7 +1007,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("text", expect.stringContaining("最大重试次数"))
+			expect(host.say).toHaveBeenCalledWith(
+				"text",
+				expect.stringContaining("info.cangjieCompileGuard.maxRetriesReached"),
+			)
 		})
 
 		it("reports local compile failure when compileLocal throws", async () => {
@@ -1023,7 +1032,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("本地编译失败"))
+			expect(host.say).toHaveBeenCalledWith(
+				"error",
+				expect.stringContaining("errors.cangjieCompileGuard.compileFailed"),
+			)
 		})
 
 		it("stops when compileLocal is not configured", async () => {
@@ -1043,7 +1055,10 @@ describe("CloudAgentOrchestrator", () => {
 
 			await orch.run("hello")
 
-			expect(host.say).toHaveBeenCalledWith("error", expect.stringContaining("本地编译功能未配置"))
+			expect(host.say).toHaveBeenCalledWith(
+				"error",
+				expect.stringContaining("info.cangjieCompileGuard.feedbackLoopNotConfigured"),
+			)
 		})
 
 		it("stops when fixResult has no workspace_ops", async () => {

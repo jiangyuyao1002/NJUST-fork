@@ -29,6 +29,11 @@ const ALWAYS_REQUIRE_CONFIRM_PATTERNS: RegExp[] = [
 	/\bRemove-Item\b/i,
 	/\bdel(?=\s|"|')/i,
 	/\bgit\s+commit\b/i,
+	/\bgit\s+push\s+(-f\b|--force\b)/i,
+	/\bchmod\s+(-R\s+)?777\b/i,
+	/\bDROP\s+(TABLE|DATABASE)\b/i,
+	/\bTRUNCATE\b/i,
+	/\bformat\s+[a-zA-Z]:/i,
 ]
 
 // We have auto-approval actions for different categories.

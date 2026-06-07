@@ -11,33 +11,34 @@
  */
 
 interface BucketConfig {
-	capacity: number       // max tokens the bucket can hold
-	refillPerSec: number   // tokens added per second
+	capacity: number // max tokens the bucket can hold
+	refillPerSec: number // tokens added per second
 }
 
 interface BucketState {
 	tokens: number
-	lastRefill: number     // timestamp of last refill
+	lastRefill: number // timestamp of last refill
 	waiting: Array<{ resolve: () => void; createdAt: number }>
 }
 
 const DEFAULT_CONFIGS: Record<string, BucketConfig> = {
-	anthropic:   { capacity: 10, refillPerSec: 0.5 },   // ~30 RPM
-	openai:      { capacity: 20, refillPerSec: 1.0 },   // ~60 RPM
-	bedrock:     { capacity: 20, refillPerSec: 1.0 },
-	gemini:      { capacity: 30, refillPerSec: 1.5 },   // ~90 RPM
-	openrouter:  { capacity: 15, refillPerSec: 0.75 },
-	mistral:     { capacity: 15, refillPerSec: 0.75 },
-	deepseek:    { capacity: 15, refillPerSec: 0.75 },
-	aws:         { capacity: 20, refillPerSec: 1.0 },
-	vertex:      { capacity: 20, refillPerSec: 1.0 },
-	default:     { capacity: 10, refillPerSec: 0.5 },
+	anthropic: { capacity: 10, refillPerSec: 0.5 }, // ~30 RPM
+	openai: { capacity: 20, refillPerSec: 1.0 }, // ~60 RPM
+	bedrock: { capacity: 20, refillPerSec: 1.0 },
+	gemini: { capacity: 30, refillPerSec: 1.5 }, // ~90 RPM
+	openrouter: { capacity: 15, refillPerSec: 0.75 },
+	mistral: { capacity: 15, refillPerSec: 0.75 },
+	deepseek: { capacity: 15, refillPerSec: 0.75 },
+	aws: { capacity: 20, refillPerSec: 1.0 },
+	vertex: { capacity: 20, refillPerSec: 1.0 },
+	default: { capacity: 10, refillPerSec: 0.5 },
 }
 
 export class TokenBucketRateLimiter {
 	private static _instance: TokenBucketRateLimiter
 	private buckets = new Map<string, BucketState>()
 	private configs: Record<string, BucketConfig>
+	private refillTimer: ReturnType<typeof setTimeout> | null = null
 
 	constructor(customConfigs?: Record<string, Partial<BucketConfig>>) {
 		this.configs = { ...DEFAULT_CONFIGS }
@@ -60,6 +61,9 @@ export class TokenBucketRateLimiter {
 	}
 
 	static resetInstance(): void {
+		if (TokenBucketRateLimiter._instance) {
+			TokenBucketRateLimiter._instance.dispose()
+		}
 		TokenBucketRateLimiter._instance = undefined as UnsafeAny
 	}
 
@@ -130,7 +134,12 @@ export class TokenBucketRateLimiter {
 		const cfg = this.getConfig(provider)
 		const waitMs = Math.ceil(1000 / cfg.refillPerSec)
 
-		setTimeout(() => {
+		if (this.refillTimer) {
+			clearTimeout(this.refillTimer)
+		}
+
+		this.refillTimer = setTimeout(() => {
+			this.refillTimer = null
 			const b = this.buckets.get(provider)
 			if (!b || b.waiting.length === 0) return
 			this.refill(b, cfg)
@@ -185,5 +194,14 @@ export class TokenBucketRateLimiter {
 	/** Reset all buckets (for testing). */
 	reset(): void {
 		this.buckets.clear()
+		if (this.refillTimer) {
+			clearTimeout(this.refillTimer)
+			this.refillTimer = null
+		}
+	}
+
+	/** Dispose the limiter and clear any pending timers. */
+	dispose(): void {
+		this.reset()
 	}
 }

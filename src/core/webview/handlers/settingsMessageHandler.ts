@@ -886,7 +886,7 @@ async function handleCloudAgentSaveProfile(context: MessageHandlerContext, messa
 		}
 	} catch (error) {
 		logger.error("SettingsMessageHandler", "Failed to save profile:", error)
-		vscode.window.showErrorMessage(`保存 Profile 失败: ${getErrorMessage(error)}`)
+		vscode.window.showErrorMessage(t("errors.save_profile_failed", { error: getErrorMessage(error) }))
 	}
 }
 
@@ -899,7 +899,7 @@ async function handleCloudAgentDeleteProfile(context: MessageHandlerContext, mes
 		}
 	} catch (error) {
 		logger.error("SettingsMessageHandler", "Failed to delete profile:", error)
-		vscode.window.showErrorMessage(`删除 Profile 失败: ${getErrorMessage(error)}`)
+		vscode.window.showErrorMessage(t("errors.delete_profile_failed", { error: getErrorMessage(error) }))
 	}
 }
 
@@ -916,7 +916,7 @@ async function handleCloudAgentSetActiveProfile(
 		}
 	} catch (error) {
 		logger.error("SettingsMessageHandler", "Failed to set active profile:", error)
-		vscode.window.showErrorMessage(`设置活跃 Profile 失败: ${getErrorMessage(error)}`)
+		vscode.window.showErrorMessage(t("errors.set_active_profile_failed", { error: getErrorMessage(error) }))
 	}
 }
 

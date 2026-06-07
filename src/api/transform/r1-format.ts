@@ -58,9 +58,16 @@ export function convertToR1Format(
 					if (part.type === "text") {
 						textParts.push(part.text)
 					} else if (part.type === "image") {
+						const src = part.source
+						const url =
+							src.type === "base64"
+								? `data:${src.media_type};base64,${src.data}`
+								: src.type === "url"
+									? src.url
+									: ""
 						imageParts.push({
 							type: "image_url",
-							image_url: { url: `data:${part.source.media_type};base64,${part.source.data}` },
+							image_url: { url },
 						})
 					} else if (part.type === "tool_result") {
 						// Convert tool_result to OpenAI tool message format
@@ -181,7 +188,10 @@ export function convertToR1Format(
 								arguments: JSON.stringify(part.input),
 							},
 						})
-					} else if ((part as Record<string, UnsafeAny>).type === "reasoning" && (part as Record<string, UnsafeAny>).text) {
+					} else if (
+						(part as Record<string, UnsafeAny>).type === "reasoning" &&
+						(part as Record<string, UnsafeAny>).text
+					) {
 						// Extract reasoning from content blocks (Task stores it this way)
 						extractedReasoning = (part as Record<string, UnsafeAny>).text
 					}
@@ -200,7 +210,11 @@ export function convertToR1Format(
 
 				// Check if we can merge with the last message (only if no tool calls)
 				const lastMessage = result[result.length - 1]
-				if (lastMessage?.role === "assistant" && !toolCalls.length && !(lastMessage as Record<string, UnsafeAny>).tool_calls) {
+				if (
+					lastMessage?.role === "assistant" &&
+					!toolCalls.length &&
+					!(lastMessage as Record<string, UnsafeAny>).tool_calls
+				) {
 					// Merge text content
 					if (typeof lastMessage.content === "string" && typeof assistantMessage.content === "string") {
 						lastMessage.content += `\n${assistantMessage.content}`

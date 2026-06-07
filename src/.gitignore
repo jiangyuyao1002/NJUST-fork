@@ -3,3 +3,6 @@ CHANGELOG.md
 LICENSE
 webview-ui
 assets/vscode-material-icons
+
+# Test debug logs
+vitest-fail*.log

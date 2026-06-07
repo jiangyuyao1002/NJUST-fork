@@ -16,6 +16,7 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 import { calculateApiCostAnthropic } from "../../shared/cost"
 import { convertOpenAIToolsToAnthropic } from "../../core/prompts/tools/native-tools/converters"
 import { getErrorMessage } from "../../shared/error-utils"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 
 /**
  * Converts OpenAI tool_choice to Anthropic ToolChoice format
@@ -74,6 +75,7 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 		this.client = new Anthropic({
 			baseURL,
 			apiKey: options.minimaxApiKey,
+			timeout: getApiRequestTimeout(),
 		})
 	}
 

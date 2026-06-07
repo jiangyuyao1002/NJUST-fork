@@ -28,6 +28,7 @@ import { BaseProvider } from "../base-provider"
 import type { SingleCompletionHandler } from "../../types"
 import { requireApiKey } from "../../interfaces/api-key-validator"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { getApiRequestTimeout } from "../utils/timeout-config"
 
 export type OpenAiNativeModel = ReturnType<OpenAiNativeHandlerBase["getModel"]>
 
@@ -185,6 +186,7 @@ export abstract class OpenAiNativeHandlerBase extends BaseProvider implements Si
 				session_id: this.sessionId,
 				"User-Agent": userAgent,
 			},
+			timeout: getApiRequestTimeout(),
 		})
 	}
 

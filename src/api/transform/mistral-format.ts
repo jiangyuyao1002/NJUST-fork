@@ -104,11 +104,16 @@ export function convertToMistralMessages(anthropicMessages: Anthropic.Messages.M
 						role: "user",
 						content: nonToolMessages.map((part) => {
 							if (part.type === "image") {
+								const src = part.source
+								const url =
+									src.type === "base64"
+										? `data:${src.media_type};base64,${src.data}`
+										: src.type === "url"
+											? src.url
+											: ""
 								return {
 									type: "image_url",
-									imageUrl: {
-										url: `data:${part.source.media_type};base64,${part.source.data}`,
-									},
+									imageUrl: { url },
 								}
 							}
 							return { type: "text", text: part.text }

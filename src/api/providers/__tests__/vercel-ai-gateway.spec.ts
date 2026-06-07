@@ -104,6 +104,7 @@ describe("VercelAiGatewayHandler", () => {
 				"X-Title": "NJUST_AI",
 				"User-Agent": expect.stringContaining("NJUST_AI/"),
 			}),
+			timeout: expect.any(Number),
 		})
 	})
 

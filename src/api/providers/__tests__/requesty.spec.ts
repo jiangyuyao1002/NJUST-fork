@@ -66,6 +66,7 @@ describe("RequestyHandler", () => {
 				"X-Title": "NJUST_AI",
 				"User-Agent": `NJUST_AI/${Package.version}`,
 			},
+			timeout: expect.any(Number),
 		})
 	})
 
@@ -81,6 +82,7 @@ describe("RequestyHandler", () => {
 				"X-Title": "NJUST_AI",
 				"User-Agent": `NJUST_AI/${Package.version}`,
 			},
+			timeout: expect.any(Number),
 		})
 	})
 

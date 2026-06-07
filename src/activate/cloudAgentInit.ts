@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import { setDeviceToken } from "../services/cloud-agent/deviceToken"
+import { t } from "../i18n"
 
 /**
  * Initialize Cloud Agent device token (SecretStorage with legacy migration)
@@ -42,7 +43,7 @@ export async function initializeCloudAgent(
 			`[CloudAgent] Migrated legacy config to Profile: ${migratedProfile.name} (${migratedProfile.serverUrl})`,
 		)
 		void vscode.window.showInformationMessage(
-			`Cloud Agent 配置已迁移为 Profile「${migratedProfile.name}」。可在 Cloud Agent 设置中管理。`,
+			t("info.cloud_agent_profile_migrated", { name: migratedProfile.name }),
 		)
 	}
 }

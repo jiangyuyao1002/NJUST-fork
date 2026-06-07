@@ -19,11 +19,11 @@ const {
 vi.mock("../../../services/web-search/WebSearchProvider", () => ({
 	createSearchProvider: createSearchProviderMock,
 	formatSearchResults: formatSearchResultsMock,
-	SEARCH_PROVIDER_INFO: {
+	getSearchProviderInfo: () => ({
 		"baidu-free": { label: "Baidu (Free)", keyHint: "No key needed", noKey: true },
 		serpapi: { label: "SerpAPI", keyHint: "Get from serpapi.com", noKey: false },
 		tavily: { label: "Tavily", keyHint: "Get from tavily.com", noKey: false },
-	},
+	}),
 }))
 
 vi.mock("../helpers/ToolResultCache", () => ({

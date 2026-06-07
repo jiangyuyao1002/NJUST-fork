@@ -136,18 +136,45 @@
 			"invalidKeyInvalidChars": "API key contains invalid characters.",
 			"apiRequestFailed": "API request failed ({{status}})"
 		},
+		"cangjieCompileGuard": {
+			"notInitialized": "CangjieCompileGuard is not initialized, cannot perform local compilation.",
+			"notConfigured": "Local compilation is not configured. Please ensure the Cangjie SDK is installed.",
+			"noOutput": "[Compilation process exited abnormally with no output. Please check if cjpm is properly installed.]",
+			"compileFailed": "[Compile] Local compilation failed: {{msg}}"
+		},
 		"manual_url_empty": "Please enter a valid callback URL",
 		"manual_url_no_query": "Invalid callback URL: missing query parameters",
 		"manual_url_missing_params": "Invalid callback URL: missing required parameters (code and state)",
 		"manual_url_auth_failed": "Manual URL authentication failed",
-		"manual_url_auth_error": "Authentication failed"
+		"manual_url_auth_error": "Authentication failed",
+		"save_profile_failed": "Failed to save Profile: {{error}}",
+		"delete_profile_failed": "Failed to delete Profile: {{error}}",
+		"set_active_profile_failed": "Failed to set active Profile: {{error}}",
+		"latex_compile_failed": "LaTeX compilation failed. Please install MiKTeX or TeX Live, or add MiKTeX bin to system PATH. You can also set njust-ai.latex.latexmkPath in settings. See output panel for details.",
+		"latex_error_log": "[LaTeX] Error: {{msg}}",
+		"cangjie_test_cleanup_failed": "[CangjieTestCleanup] Startup orphan cleanup failed: {{error}}"
 	},
 	"warnings": {
 		"no_terminal_content": "No terminal content selected",
 		"missing_task_files": "This task's files are missing. Would you like to remove it from the task list?",
-		"auto_import_failed": "Failed to auto-import NJUST_AI settings: {{error}}"
+		"auto_import_failed": "Failed to auto-import NJUST_AI settings: {{error}}",
+		"inline_completion_no_api": "Inline completion: No API resolved. Configure a provider and API key in extension settings, or start a sidebar chat task first.",
+		"latex_save_first": "Please save the LaTeX file before compiling.",
+		"latex_no_pdf_found": "Compilation finished but no generated PDF found. Check the output panel log.",
+		"latex_unsafe_args_filtered": "[LaTeX] Warning: Filtered unsafe arguments (-shell-escape, etc.).",
+		"cangjie_toolchain_incomplete": "Cangjie toolchain incomplete or not runnable: {{detail}}",
+		"cangjie_cjc_not_found": "No valid cjc compiler found in the selected directory. Please confirm the SDK root directory.",
+		"cangjie_sdk_not_detected": "Cangjie SDK not detected. Please configure the SDK path to enable full Cangjie language support.",
+		"cangjie_index_limit_reached": "Cangjie file index limit reached ({{max}} files), some files may not be indexed."
 	},
 	"info": {
+		"cangjieCompileGuard": {
+			"feedbackLoopNotConfigured": "[Compile] Local compilation is not configured, cannot run compile feedback loop. Please ensure the Cangjie SDK is installed and CangjieCompileGuard is initialized.",
+			"noCjpmToml": "[Compile] cjpm.toml not found, skipping compile feedback loop.",
+			"compileCheck": "[Compile] Local compilation check ({{attempt}}/{{maxRetries}})...",
+			"compileSuccess": "[Compile] Compilation passed!",
+			"maxRetriesReached": "[Compile] Maximum retry count ({{maxRetries}}) reached, stopping compile feedback loop."
+		},
 		"no_changes": "No changes found.",
 		"clipboard_copy": "System prompt successfully copied to clipboard",
 		"history_cleanup": "Cleaned up {{count}} task(s) with missing files from history.",
@@ -161,7 +188,20 @@
 		"image_copied_to_clipboard": "Image data URI copied to clipboard",
 		"image_saved": "Image saved to {{path}}",
 		"mode_exported": "Mode '{{mode}}' exported successfully",
-		"mode_imported": "Mode imported successfully"
+		"mode_imported": "Mode imported successfully",
+		"inline_completion_api_available": "Inline completion API available: {{id}}",
+		"cloud_agent_profile_migrated": "Cloud Agent configuration migrated to Profile \"{{name}}\". Manage in Cloud Agent settings.",
+		"latex_focus_file_first": "Please open and focus a .tex / LaTeX file first. Local compilation requires TeX Live or MiKTeX (latexmk or pdflatex).",
+		"latex_compile_success": "LaTeX compilation complete: {{filename}}",
+		"latex_pdflatex_hint": "[LaTeX] Hint: A single pdflatex run may not update TOC and cross-references; consider using latexmk engine.",
+		"cangjie_mode_left_with_files": "Left Cangjie Dev mode; {{count}} .cj file(s) still open. Edit permissions may differ in the new mode.",
+		"cangjie_sdk_configured": "Cangjie SDK configured successfully ({{version}})",
+		"cangjie_lsp_ready": "Cangjie LSP is ready.",
+		"cangjie_quick_start": "Quick start: (1) Run \"Cangjie: Verify SDK Installation\" from Command Palette (2) Use cjpm init or open a project with cjpm.toml (3) Open a .cj file to start LSP.",
+		"cangjie_sdk_detected": "Cangjie SDK detected at {{path}}{{version}}. Auto-configure?",
+		"cangjie_sdk_auto_configured": "Cangjie SDK auto-configured{{version}}",
+		"cangjie_test_cleanup_orphan": "[CangjieTestCleanup] Startup orphan cleanup: removed {{filesRemoved}} generated test files ({{taskEntriesRemoved}} task buckets).",
+		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] Startup prune: removed {{filesRemoved}} generated test files ({{taskEntriesRemoved}} task buckets)."
 	},
 	"answers": {
 		"yes": "Yes",
@@ -172,7 +212,18 @@
 	"buttons": {
 		"save": "Save",
 		"edit": "Edit",
-		"learn_more": "Learn More"
+		"learn_more": "Learn More",
+		"verify_sdk": "Verify SDK",
+		"open_tool_settings": "Open Tool Settings",
+		"verify_toolchain": "Verify Toolchain",
+		"reselect": "Reselect",
+		"cancel": "Cancel",
+		"manual_select": "Manual Select",
+		"dismiss": "Dismiss",
+		"select_sdk_dir": "Select SDK Directory",
+		"download_sdk": "Download SDK",
+		"later": "Later",
+		"configure_now": "Configure Now"
 	},
 	"tasks": {
 		"canceled": "Task error: It was stopped and canceled by the user.",
@@ -247,5 +298,55 @@
 	"docsLink": {
 		"label": "Docs",
 		"url": "https://docs.njust-ai.local"
+	},
+	"tooltips": {
+		"bypass_mode_enabled": "Safety bypass mode enabled — Click to switch permission mode"
+	},
+	"codelens": {
+		"run_test": "$(play) Run Test",
+		"debug_test": "$(debug-alt) Debug Test"
+	},
+	"dialogs": {
+		"select_cangjie_sdk_dir": "Select Cangjie SDK Directory"
+	},
+	"placeholders": {
+		"select_cangjie_template": "Select a Cangjie code template..."
+	},
+	"search_provider": {
+		"baidu_free_label": "Baidu Free",
+		"baidu_free_hint": "No key required; falls back to Sogou on Baidu failure",
+		"sogou_free_label": "Sogou Free",
+		"sogou_free_hint": "No key required; available in China"
+	},
+	"debug": {
+		"cangjie_test_name": "Debug Test: {{testName}}"
+	},
+	"templates": {
+		"cangjie": {
+			"hello_world_title": "Executable Project (Hello World)",
+			"hello_world_desc": "Minimal main entry, prints a line and returns 0",
+			"http_server_title": "HTTP Server",
+			"http_server_desc": "Create a simple HTTP server using std.net",
+			"cli_tool_title": "CLI Tool",
+			"cli_tool_desc": "CLI tool skeleton with argv parsing",
+			"unit_test_title": "Unit Test",
+			"unit_test_desc": "@Test / @TestCase unit test template",
+			"data_processing_title": "Data Processing",
+			"data_processing_desc": "Collection processing using ArrayList/HashMap",
+			"concurrency_title": "Concurrency (Mutex)",
+			"concurrency_desc": "Multi-thread shared state + Mutex protection",
+			"static_lib_title": "Static Library",
+			"static_lib_desc": "Public API static library package skeleton",
+			"params": {
+				"package_name": "Package Name",
+				"project_name": "Project Name",
+				"port": "Port",
+				"tool_name": "Tool Name",
+				"test_class_name": "Test Class Name",
+				"thread_count": "Thread Count",
+				"class_name": "Class Name",
+				"value_type": "Value Type"
+			}
+		}
 	}
 }

@@ -308,7 +308,11 @@ export function getModelsFromCache(provider: ProviderName): ModelRecord | undefi
 			// This ensures the data conforms to ModelRecord = Record<string, ModelInfo>
 			const validation = modelRecordSchema.safeParse(models)
 			if (!validation.success) {
-				logger.error("ModelCache", `Invalid disk cache data structure for ${provider}:`, validation.error.format())
+				logger.error(
+					"ModelCache",
+					`Invalid disk cache data structure for ${provider}:`,
+					validation.error.format(),
+				)
 				return undefined
 			}
 
@@ -380,7 +384,10 @@ function readDynamicDiskCache(provider: ProviderName): DiskCacheEntry | undefine
 			logger.error("ModelCache", `Invalid dynamic disk cache for ${provider}:`, validation.error.format())
 			return undefined
 		}
-		const entry: DiskCacheEntry = { timestamp: validation.data.timestamp, models: validation.data.models as DynamicModelRecord }
+		const entry: DiskCacheEntry = {
+			timestamp: validation.data.timestamp,
+			models: validation.data.models as DynamicModelRecord,
+		}
 		return entry
 	} catch (error) {
 		logger.error("ModelCache", `Error reading dynamic disk cache for ${provider}:`, error)
@@ -412,10 +419,7 @@ function tagWithSource(models: DynamicModelRecord, source: DynamicModelInfo["sou
 	return tagged
 }
 
-async function fetchDynamicModels(
-	provider: ProviderName,
-	options: ListModelsOptions,
-): Promise<DynamicModelRecord> {
+async function fetchDynamicModels(provider: ProviderName, options: ListModelsOptions): Promise<DynamicModelRecord> {
 	const kind: FetcherKind | undefined = providerFetcherMap[provider]
 
 	switch (kind) {
@@ -477,7 +481,9 @@ export async function listProviderModels(
 			const tagged = tagWithSource(fetched, "api")
 			dynamicMemoryCache.set(provider, tagged)
 
-			await writeDynamicDiskCache(provider, tagged).catch(() => {})
+			await writeDynamicDiskCache(provider, tagged).catch((e) => {
+				logger.debug("ModelCache", `Failed to write dynamic disk cache for ${provider}:`, e)
+			})
 
 			return tagged
 		} catch (error) {

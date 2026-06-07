@@ -24,6 +24,7 @@ import { getModelParams } from "../transform/model-params"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { BaseProvider } from "./base-provider"
 import { requireApiKey } from "../interfaces/api-key-validator"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 
 type GeminiHandlerOptions = ApiHandlerOptions & {
 	isVertex?: boolean
@@ -48,6 +49,9 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 			? (this.options.geminiApiKey ?? "not-provided")
 			: requireApiKey(this.options.geminiApiKey, "Gemini")
 
+		const timeout = getApiRequestTimeout()
+		const httpOptions = timeout !== undefined ? { timeout } : undefined
+
 		this.client = this.options.vertexJsonCredentials
 			? new GoogleGenAI({
 					vertexai: true,
@@ -56,6 +60,7 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 					googleAuthOptions: {
 						credentials: safeJsonParse<JWTInput>(this.options.vertexJsonCredentials, undefined),
 					},
+					httpOptions,
 				})
 			: this.options.vertexKeyFile
 				? new GoogleGenAI({
@@ -63,10 +68,11 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 						project,
 						location,
 						googleAuthOptions: { keyFile: this.options.vertexKeyFile },
+						httpOptions,
 					})
 				: isVertex
-					? new GoogleGenAI({ vertexai: true, project, location })
-					: new GoogleGenAI({ apiKey })
+					? new GoogleGenAI({ vertexai: true, project, location, httpOptions })
+					: new GoogleGenAI({ apiKey, httpOptions })
 	}
 
 	/** @internal Exposed for test mocking only. */

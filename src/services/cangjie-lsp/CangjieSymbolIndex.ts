@@ -15,6 +15,7 @@ import { extractCangjieImportPackagePrefixes, posixPathMatchesImportPackage } fr
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
+import { t } from "../../i18n"
 
 const INDEX_DIR = ".cangjie-index"
 const INDEX_FILE = "symbols.json"
@@ -54,7 +55,7 @@ function isCodeTokenPosition(line: string, index: number): boolean {
 				quote = ""
 			}
 			if (i === index) return false
-		} else if (ch === "\"" || ch === "'") {
+		} else if (ch === '"' || ch === "'") {
 			if (i <= index) {
 				inString = true
 				quote = ch
@@ -152,7 +153,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 	private static readonly MAX_READ_FILE_CACHE = 200
 	/** Deduplicates reindex error logs (per file, per session). */
 	private _loggedIndexErrors = new Set<string>()
-		private readFileCache = new Map<string, { mtime: number; lines: string[] }>()
+	private readFileCache = new Map<string, { mtime: number; lines: string[] }>()
 	private referenceIndex = new Map<string, ReferenceEntry[]>()
 	private dependencyCache = new Map<string, string[]>()
 	private reverseDependencyCache = new Map<string, string[]>()
@@ -258,7 +259,9 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 					this.data = parsed
 					this.readFileCache.clear()
 					this.rebuildNameIndex()
-					this.outputChannel.appendLine(`[SymbolIndex] Loaded index with ${Object.keys(this.data.files).length} files`)
+					this.outputChannel.appendLine(
+						`[SymbolIndex] Loaded index with ${Object.keys(this.data.files).length} files`,
+					)
 				}
 			}
 		} catch {
@@ -278,7 +281,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			this.addFileToDirectoryIndex(filePath)
 			for (const sym of fileEntry.symbols) {
 				let list = this.nameIndex.get(sym.name)
-				if (!list) { list = []; this.nameIndex.set(sym.name, list) }
+				if (!list) {
+					list = []
+					this.nameIndex.set(sym.name, list)
+				}
 				list.push(sym)
 			}
 			if (fileEntry.references) {
@@ -315,9 +321,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			const ret = sig.match(/\)\s*:\s*([\w.]+)\s*$/i)?.[1]
 			if (!ret) continue
 			const paramPart = sig.match(/\(([^)]*)\)/i)?.[1] ?? ""
-			const fromT =
-				paramPart.match(/(?:self|_\w*)\s*:\s*([\w.]+)/i)?.[1] ||
-				paramPart.match(/:\s*([\w.]+)/i)?.[1]
+			const fromT = paramPart.match(/(?:self|_\w*)\s*:\s*([\w.]+)/i)?.[1] || paramPart.match(/:\s*([\w.]+)/i)?.[1]
 			if (!fromT) continue
 			const fk = CangjieSymbolIndex.normalizeConversionTypeKey(fromT)
 			const tk = CangjieSymbolIndex.normalizeConversionTypeKey(ret)
@@ -337,9 +341,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 
 	/** Best-effort hint for numeric/type widening from compiler diagnostic text */
 	getConversionHintFromDiagnosticMessage(message: string): string | null {
-		const m2 = message.match(
-			/[`'"]([\w.]+)[`'"]?\s*(?:and|与|but|但|,)\s*[`'"]([\w.]+)[`'"]?/i,
-		)
+		const m2 = message.match(/[`'"]([\w.]+)[`'"]?\s*(?:and|与|but|但|,)\s*[`'"]([\w.]+)[`'"]?/i)
 		if (m2?.[1] && m2[2]) {
 			const a = CangjieSymbolIndex.normalizeConversionTypeKey(m2[1])
 			const b = CangjieSymbolIndex.normalizeConversionTypeKey(m2[2])
@@ -366,7 +368,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 				if (sym.kind === "package") {
 					const pkg = sym.name
 					let set = this.packageToFilesIndex.get(pkg)
-					if (!set) { set = new Set(); this.packageToFilesIndex.set(pkg, set) }
+					if (!set) {
+						set = new Set()
+						this.packageToFilesIndex.set(pkg, set)
+					}
 					set.add(filePath)
 				}
 			}
@@ -427,7 +432,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 		}
 	}
 
-	private removeReferencesFromIndex(filePath: string, refs?: Record<string, Array<{ line: number; column: number }>>): void {
+	private removeReferencesFromIndex(
+		filePath: string,
+		refs?: Record<string, Array<{ line: number; column: number }>>,
+	): void {
 		if (!refs) return
 		for (const [name, list] of Object.entries(refs)) {
 			const existing = this.referenceIndex.get(name)
@@ -441,7 +449,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 		}
 	}
 
-	private addReferencesToIndex(filePath: string, refs?: Record<string, Array<{ line: number; column: number }>>): void {
+	private addReferencesToIndex(
+		filePath: string,
+		refs?: Record<string, Array<{ line: number; column: number }>>,
+	): void {
 		if (!refs) return
 		for (const [name, list] of Object.entries(refs)) {
 			let existing = this.referenceIndex.get(name)
@@ -458,7 +469,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 	private addToNameIndex(symbols: SymbolEntry[]): void {
 		for (const sym of symbols) {
 			let list = this.nameIndex.get(sym.name)
-			if (!list) { list = []; this.nameIndex.set(sym.name, list) }
+			if (!list) {
+				list = []
+				this.nameIndex.set(sym.name, list)
+			}
 			list.push(sym)
 		}
 		this._symbolCount += symbols.length
@@ -503,15 +517,13 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 		const t0 = Date.now()
 
 		try {
-				const MAX_INDEX_FILES = 2000
+			const MAX_INDEX_FILES = 2000
 			const files = await vscode.workspace.findFiles("**/*.cj", "**/target/**", MAX_INDEX_FILES)
 			if (files.length >= MAX_INDEX_FILES) {
 				this.outputChannel.appendLine(
-					`Index limit reached: ${files.length} .cj files found, indexing first ${MAX_INDEX_FILES}`
+					`Index limit reached: ${files.length} .cj files found, indexing first ${MAX_INDEX_FILES}`,
 				)
-				vscode.window.showWarningMessage(
-					`仓颉文件索引达到上限 (${MAX_INDEX_FILES} 个)，部分文件可能未被索引`
-				)
+				vscode.window.showWarningMessage(t("warnings.cangjie_index_limit_reached", { max: MAX_INDEX_FILES }))
 			}
 			const pending: string[] = []
 			for (const uri of files) {
@@ -550,7 +562,9 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 	}
 
 	private get useCjcAst(): boolean {
-		const configured = vscode.workspace.getConfiguration(Package.name).get<boolean>("cangjieTools.useCjcAstForIndex")
+		const configured = vscode.workspace
+			.getConfiguration(Package.name)
+			.get<boolean>("cangjieTools.useCjcAstForIndex")
 		// Explicit user setting takes precedence over auto-detection.
 		if (typeof configured === "boolean") return configured
 		// Auto-detect: use cjc AST when the compiler is available.
@@ -566,7 +580,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 		// to prevent concurrent writes to the symbol table.
 		if (this.indexing) {
 			clearTimeout(this.reindexTimers.get(filePath))
-			this.reindexTimers.set(filePath, setTimeout(() => this.scheduleReindex(filePath), this.reindexDebounceMs + 200))
+			this.reindexTimers.set(
+				filePath,
+				setTimeout(() => this.scheduleReindex(filePath), this.reindexDebounceMs + 200),
+			)
 			return
 		}
 		const prev = this.reindexTimers.get(filePath)
@@ -589,7 +606,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			const stat = fs.statSync(filePath)
 			const content = fs.readFileSync(filePath, "utf-8")
 			this.evictOldestFromReadFileCache()
-		this.readFileCache.set(filePath, { mtime: stat.mtimeMs, lines: content.split("\n") })
+			this.readFileCache.set(filePath, { mtime: stat.mtimeMs, lines: content.split("\n") })
 			const defs = this.useCjcAst
 				? await parseCangjieWithFallback(filePath, content)
 				: parseCangjieDefinitions(content)
@@ -643,9 +660,7 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			// File may have been deleted or be unreadable
 			if (!this._loggedIndexErrors.has(filePath)) {
 				this._loggedIndexErrors.add(filePath)
-				this.outputChannel.appendLine(
-					`[SymbolIndex] Failed to reindex ${filePath}: ${getErrorMessage(err)}`,
-				)
+				this.outputChannel.appendLine(`[SymbolIndex] Failed to reindex ${filePath}: ${getErrorMessage(err)}`)
 			}
 			TelemetryService.reportError(err, TelemetryEventName.CANGJIE_LSP_ERROR)
 		}
@@ -712,7 +727,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			let node = this.prefixTrie
 			for (const ch of name) {
 				let child = node.children.get(ch)
-				if (!child) { child = { children: new Map(), symbols: [] }; node.children.set(ch, child) }
+				if (!child) {
+					child = { children: new Map(), symbols: [] }
+					node.children.set(ch, child)
+				}
 				node = child
 				node.symbols.push(sym)
 			}
@@ -727,7 +745,9 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 				const child = node.children.get(ch)
 				if (!child) break
 				// Remove from this node's symbol list (O(n) per node, but lists are small).
-				const idx = child.symbols.findIndex(s => s.filePath === sym.filePath && s.name === sym.name && s.startLine === sym.startLine)
+				const idx = child.symbols.findIndex(
+					(s) => s.filePath === sym.filePath && s.name === sym.name && s.startLine === sym.startLine,
+				)
 				if (idx !== -1) child.symbols.splice(idx, 1)
 				node = child
 			}
@@ -785,7 +805,8 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 		const symbols = fileEntry.symbols
 
 		// Binary search for the last symbol with startLine <= line
-		let lo = 0, hi = symbols.length - 1
+		let lo = 0,
+			hi = symbols.length - 1
 		let best: SymbolEntry | null = null
 		let bestSpan = Infinity
 		// Find the insertion point via binary search
@@ -795,7 +816,10 @@ export class CangjieSymbolIndex implements vscode.Disposable {
 			if (s.startLine <= line) {
 				if (line <= s.endLine && s.kind !== "import" && s.kind !== "package") {
 					const span = s.endLine - s.startLine
-					if (span < bestSpan) { best = s; bestSpan = span }
+					if (span < bestSpan) {
+						best = s
+						bestSpan = span
+					}
 				}
 				lo = mid + 1
 			} else {

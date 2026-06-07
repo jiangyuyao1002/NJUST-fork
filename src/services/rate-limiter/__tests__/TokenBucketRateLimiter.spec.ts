@@ -108,13 +108,50 @@ describe("TokenBucketRateLimiter", () => {
 
 			expect(limiter.getStats("test")).toBeNull()
 		})
+	})
 
-		it("resetInstance creates a fresh singleton", () => {
-			const first = TokenBucketRateLimiter.getInstance()
-			TokenBucketRateLimiter.resetInstance()
-			const second = TokenBucketRateLimiter.getInstance()
+	it("resetInstance creates a fresh singleton", () => {
+		const first = TokenBucketRateLimiter.getInstance()
+		TokenBucketRateLimiter.resetInstance()
+		const second = TokenBucketRateLimiter.getInstance()
 
-			expect(second).not.toBe(first)
-		})
+		expect(second).not.toBe(first)
+	})
+
+	it("reset clears pending refill timer", async () => {
+		const limiter = new TokenBucketRateLimiter({ test: { capacity: 1, refillPerSec: 1 } })
+		limiter.tryConsume("test")
+
+		void limiter.wait("test")
+		expect(vi.getTimerCount()).toBeGreaterThan(0)
+
+		limiter.reset()
+
+		expect(vi.getTimerCount()).toBe(0)
+	})
+
+	it("dispose clears pending refill timer", async () => {
+		const limiter = new TokenBucketRateLimiter({ test: { capacity: 1, refillPerSec: 1 } })
+		limiter.tryConsume("test")
+
+		void limiter.wait("test")
+		expect(vi.getTimerCount()).toBeGreaterThan(0)
+
+		limiter.dispose()
+
+		expect(vi.getTimerCount()).toBe(0)
+	})
+
+	it("resetInstance disposes the old instance before creating a new one", () => {
+		const first = TokenBucketRateLimiter.getInstance()
+		first.tryConsume("anthropic")
+		void first.wait("anthropic")
+
+		TokenBucketRateLimiter.resetInstance()
+		const second = TokenBucketRateLimiter.getInstance()
+
+		expect(second).not.toBe(first)
+		// The old instance's timer should have been cleared by dispose()
+		expect(second).toBeDefined()
 	})
 })

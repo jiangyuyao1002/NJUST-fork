@@ -26,9 +26,9 @@ export type PreprocessOptions = {
  * Override with env var CLAUDE_CODE_TIME_BASED_MC_GAP_MINUTES.
  */
 const TIME_BASED_GAP_THRESHOLD_MINUTES =
-	(typeof process !== "undefined" && process.env?.CLAUDE_CODE_TIME_BASED_MC_GAP_MINUTES
+	typeof process !== "undefined" && process.env?.CLAUDE_CODE_TIME_BASED_MC_GAP_MINUTES
 		? parseInt(process.env.CLAUDE_CODE_TIME_BASED_MC_GAP_MINUTES, 10) || 60
-		: 60)
+		: 60
 /** Keep this many most-recent compactable tool results when TBM fires */
 const TIME_BASED_KEEP_RECENT = 5
 /** Marker string for content-cleared tool results */
@@ -115,7 +115,7 @@ function applyTimeBasedMicrocompact(
 			) {
 				tokensSaved += typeof b.content === "string" ? b.content.length : 0
 				touched = true
-				return { ...block, content: TIME_BASED_CLEARED_MESSAGE }
+				return { ...block, content: TIME_BASED_CLEARED_MESSAGE } as typeof block
 			}
 			return block
 		})
@@ -126,10 +126,11 @@ function applyTimeBasedMicrocompact(
 	})
 
 	if (tokensSaved > 0) {
-		logger.info("ContextManagement",
+		logger.info(
+			"ContextManagement",
 			`[TIME-BASED MC] gap > ${TIME_BASED_GAP_THRESHOLD_MINUTES}min, ` +
-			`cleared ~${Math.round(tokensSaved / 4)} tokens from old tool results, ` +
-			`kept last ${keepSet.size}`,
+				`cleared ~${Math.round(tokensSaved / 4)} tokens from old tool results, ` +
+				`kept last ${keepSet.size}`,
 		)
 	}
 
@@ -239,10 +240,7 @@ function compactLongText(text: string): string {
  * (the combined pass result), plus the collapse result when triggered at very
  * high context percentages.
  */
-export function preprocessMessages(
-	messages: ApiMessage[],
-	options: PreprocessOptions,
-): PreprocessResult {
+export function preprocessMessages(messages: ApiMessage[], options: PreprocessOptions): PreprocessResult {
 	if (messages.length === 0) {
 		return { messages, collapsed: false }
 	}
@@ -272,7 +270,11 @@ export function preprocessMessages(
 
 	// Fast path: neither compaction layer is active
 	if (!options.enableMicroCompact && !snipEnabled) {
-		return contextCollapseMessages(msgs, { contextPercent, triggerPercent: collapseTriggerPercent, keepRecentMessages: collapseKeepRecent })
+		return contextCollapseMessages(msgs, {
+			contextPercent,
+			triggerPercent: collapseTriggerPercent,
+			keepRecentMessages: collapseKeepRecent,
+		})
 	}
 
 	// Build toolUseId → name map once (one scan)
@@ -299,14 +301,14 @@ export function preprocessMessages(
 					const compacted = compactByTool(b.content, toolName, budget)
 					if (compacted !== b.content) {
 						blockChanged = true
-						return { ...block, content: compacted }
+						return { ...block, content: compacted } as typeof block
 					}
 					return block
 				}
 				const encoded = JSON.stringify(b.content)
 				if (encoded.length <= budget) return block
 				blockChanged = true
-				return { ...block, content: compactByTool(encoded, toolName, budget) }
+				return { ...block, content: compactByTool(encoded, toolName, budget) } as typeof block
 			})
 			if (blockChanged) {
 				changed = true
@@ -329,5 +331,9 @@ export function preprocessMessages(
 	const combined = changed ? out : msgs
 
 	// Structural collapse (rare — only triggered at very high context)
-	return contextCollapseMessages(combined, { contextPercent, triggerPercent: collapseTriggerPercent, keepRecentMessages: collapseKeepRecent })
+	return contextCollapseMessages(combined, {
+		contextPercent,
+		triggerPercent: collapseTriggerPercent,
+		keepRecentMessages: collapseKeepRecent,
+	})
 }

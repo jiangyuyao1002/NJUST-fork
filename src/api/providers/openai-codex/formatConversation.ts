@@ -33,7 +33,13 @@ export function formatConversation(
 						content.push({ type: "input_text", text: block.text })
 					} else if (block.type === "image") {
 						const image = block as Anthropic.Messages.ImageBlockParam
-						const imageUrl = `data:${image.source.media_type};base64,${image.source.data}`
+						const src = image.source
+						const imageUrl =
+							src.type === "base64"
+								? `data:${src.media_type};base64,${src.data}`
+								: src.type === "url"
+									? src.url
+									: ""
 						content.push({ type: "input_image", image_url: imageUrl })
 					} else if (block.type === "tool_result") {
 						const result =

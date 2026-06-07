@@ -16,6 +16,7 @@ import { logger } from "../../shared/logger"
 import { ApiStream } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
 import { filterNonAnthropicBlocks } from "../transform/anthropic-filter"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 import { handleProviderError } from "./utils/error-handler"
 
 import { BaseProvider } from "./base-provider"
@@ -55,6 +56,7 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 		this.client = new Anthropic({
 			baseURL: this.options.anthropicBaseUrl || undefined,
 			[apiKeyFieldName]: this.options.apiKey,
+			timeout: getApiRequestTimeout(),
 		})
 	}
 
@@ -213,7 +215,7 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 					break
 				}
 				default: {
-					stream = await this.client.messages.create(
+					stream = (await this.client.messages.create(
 						{
 							model: modelId,
 							max_tokens: maxTokens ?? ANTHROPIC_DEFAULT_MAX_TOKENS,
@@ -224,7 +226,7 @@ export class AnthropicHandler extends BaseProvider implements SingleCompletionHa
 							...nativeToolParams,
 						},
 						metadata?.signal ? { signal: metadata.signal } : undefined,
-					) as UnsafeAny
+					)) as UnsafeAny
 					break
 				}
 			}

@@ -17,6 +17,7 @@ import { TelemetryService } from "@njust-ai/telemetry"
 import { logger } from "../../shared/logger"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 
 const QWEN_OAUTH_BASE_URL = "https://chat.qwen.ai"
 const QWEN_OAUTH_TOKEN_ENDPOINT = `${QWEN_OAUTH_BASE_URL}/api/v1/oauth2/token`
@@ -89,6 +90,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			this.client = new OpenAI({
 				apiKey: "dummy-key-will-be-replaced",
 				baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+				timeout: getApiRequestTimeout(),
 			})
 		}
 		return this.client
@@ -251,8 +253,6 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 		}
 		return baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`
 	}
-
-
 
 	override async *createMessage(
 		systemPrompt: string,

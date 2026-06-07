@@ -202,7 +202,10 @@ export function sanitizeGeminiMessages(
 					}
 					// Keep any textual content, but drop the tool_calls themselves
 					if (anyMsg.content) {
-						sanitized.push({ role: "assistant", content: anyMsg.content } as OpenAI.Chat.ChatCompletionAssistantMessageParam)
+						sanitized.push({
+							role: "assistant",
+							content: anyMsg.content,
+						} as OpenAI.Chat.ChatCompletionAssistantMessageParam)
 					}
 					continue
 				}
@@ -328,7 +331,9 @@ export function convertToOpenAiMessages(
 			if (anthropicMessage.role === "assistant") {
 				const mapped = mapReasoningDetails(messageWithDetails.reasoning_details)
 				if (mapped) {
-				;(baseMessage as OpenAI.Chat.ChatCompletionMessageParam & { reasoning_details?: UnsafeAny[] }).reasoning_details = mapped
+					;(
+						baseMessage as OpenAI.Chat.ChatCompletionMessageParam & { reasoning_details?: UnsafeAny[] }
+					).reasoning_details = mapped
 				}
 			}
 
@@ -435,9 +440,16 @@ export function convertToOpenAiMessages(
 							role: "user",
 							content: filteredNonToolMessages.map((part) => {
 								if (part.type === "image") {
+									const src = part.source
+									const url =
+										src.type === "base64"
+											? `data:${src.media_type};base64,${src.data}`
+											: src.type === "url"
+												? src.url
+												: ""
 									return {
 										type: "image_url",
-										image_url: { url: `data:${part.source.media_type};base64,${part.source.data}` },
+										image_url: { url },
 									}
 								}
 								return { type: "text", text: part.text }

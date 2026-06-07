@@ -7,7 +7,11 @@ import { applyCloudWorkspaceOps, applySingleCloudWorkspaceOp } from "../../servi
 import { buildCloudWorkspaceOpToolMessage } from "../../services/cloud-agent/buildCloudWorkspaceOpToolMessage"
 import { CloudAgentClient } from "../../services/cloud-agent/CloudAgentClient"
 import { executeDeferredToolCall } from "../../services/cloud-agent/executeDeferredToolCall"
-import { CLOUD_AGENT_DEFERRED_MAX_ITERATIONS, CLOUD_AGENT_DEFERRED_MAX_DURATION_MS, CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX } from "../../services/cloud-agent/deferredConstants"
+import {
+	CLOUD_AGENT_DEFERRED_MAX_ITERATIONS,
+	CLOUD_AGENT_DEFERRED_MAX_DURATION_MS,
+	CLOUD_AGENT_DEFERRED_SESSION_RECOVERY_MAX,
+} from "../../services/cloud-agent/deferredConstants"
 import { parseWorkspaceOps } from "../../services/cloud-agent/parseWorkspaceOps"
 import { getProfileStorageService } from "../../services/cloud-agent/ProfileStorageService"
 import type {
@@ -25,6 +29,7 @@ import { NJUST_AIEventName } from "@njust-ai/types"
 import { getErrorMessage } from "../../shared/error-utils"
 import type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 import { TaskAbortedError } from "./TaskErrors"
+import { t } from "../../i18n"
 
 export type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
 
@@ -86,10 +91,7 @@ export class CloudAgentOrchestrator {
 		// 1. 从 ProfileStorageService 获取活跃 Profile
 		const profile = getProfileStorageService().getActiveProfile()
 		if (!profile) {
-			await this.host.say(
-				"error",
-				"未配置 Cloud Agent Profile。请在设置中创建或选择一个 Profile。",
-			)
+			await this.host.say("error", "未配置 Cloud Agent Profile。请在设置中创建或选择一个 Profile。")
 			return
 		}
 
@@ -189,7 +191,13 @@ export class CloudAgentOrchestrator {
 		if (behavior.applyRemoteWorkspaceOps && ops.length > 0) {
 			const applied = await this.applyWorkspaceOps(ops, behavior.confirmRemoteWorkspaceOps)
 			if (behavior.compileLoopEnabled && applied && !this.host.abort) {
-				await this.runCompileFeedbackLoop(profile, behavior, callbacks, behavior.compileMaxRetries, behavior.confirmRemoteWorkspaceOps)
+				await this.runCompileFeedbackLoop(
+					profile,
+					behavior,
+					callbacks,
+					behavior.compileMaxRetries,
+					behavior.confirmRemoteWorkspaceOps,
+				)
 			}
 		}
 	}
@@ -483,7 +491,13 @@ export class CloudAgentOrchestrator {
 				hadWorkspaceOpsForCompile &&
 				!this.host.abort
 			) {
-				await this.runCompileFeedbackLoop(profile, behavior, callbacks, behavior.compileMaxRetries, behavior.confirmRemoteWorkspaceOps)
+				await this.runCompileFeedbackLoop(
+					profile,
+					behavior,
+					callbacks,
+					behavior.compileMaxRetries,
+					behavior.confirmRemoteWorkspaceOps,
+				)
 			}
 
 			await this.host.say(
@@ -582,22 +596,19 @@ export class CloudAgentOrchestrator {
 		confirmOps: boolean,
 	): Promise<void> {
 		if (!this.host.compileLocal) {
-			await this.host.say(
-				"error",
-				"[Compile] 本地编译功能未配置，无法执行编译反馈循环。请确认 Cangjie SDK 已安装且 CangjieCompileGuard 已初始化。",
-			)
+			await this.host.say("error", t("common:info.cangjieCompileGuard.feedbackLoopNotConfigured"))
 			return
 		}
 
 		const compileCwd = this.resolveCjpmRoot(this.host.cwd)
 		if (!compileCwd) {
-			await this.host.say("text", `[Compile] 未找到 cjpm.toml，跳过编译反馈循环。`)
+			await this.host.say("text", t("common:info.cangjieCompileGuard.noCjpmToml"))
 			return
 		}
 
 		// maxRetries = maximum number of compile attempts (including the first). Fix rounds = maxRetries - 1 at most.
 		for (let attempt = 1; attempt <= maxRetries && !this.host.abort; attempt++) {
-			await this.host.say("text", `[Compile] 本地编译检查 (${attempt}/${maxRetries})...`)
+			await this.host.say("text", t("common:info.cangjieCompileGuard.compileCheck", { attempt, maxRetries }))
 
 			let compileResult: { success: boolean; output: string }
 			try {
@@ -605,30 +616,34 @@ export class CloudAgentOrchestrator {
 			} catch (error) {
 				if (this.host.abort) break
 				const msg = getErrorMessage(error)
-				await this.host.say("error", `[Compile] 本地编译失败: ${msg}`)
+				await this.host.say("error", t("common:errors.cangjieCompileGuard.compileFailed", { msg }))
 				break
 			}
 
 			if (compileResult.success) {
-				await this.host.say("text", "[Compile] 编译通过!")
+				await this.host.say("text", t("common:info.cangjieCompileGuard.compileSuccess"))
 				break
 			}
 
 			let outputForAgent = compileResult.output
 			if (!outputForAgent.trim()) {
-				outputForAgent = "[编译进程异常退出，无输出。请检查 cjpm 是否已正确安装。]"
+				outputForAgent = t("common:errors.cangjieCompileGuard.noOutput")
 			}
 			const truncatedOutput =
 				outputForAgent.length > 8000
 					? outputForAgent.slice(0, 8000) + "\n...(output truncated)"
 					: outputForAgent
-			await this.host.say("text", `[Compile] 编译失败:\n\`\`\`\n${truncatedOutput}\n\`\`\``)
+			await this.host.say(
+				"text",
+				t("common:errors.cangjieCompileGuard.compileFailed", { msg: `\n\`\`\`\n${truncatedOutput}\n\`\`\`` }),
+			)
 
 			if (attempt >= maxRetries) {
-				await this.host.say("text", `[Compile] 已达最大重试次数 (${maxRetries})，停止编译反馈循环。`)
+				await this.host.say("text", t("common:info.cangjieCompileGuard.maxRetriesReached", { maxRetries }))
 				break
 			}
 
+			// Agent-facing prompt — intentionally kept in Chinese (not i18n'd) as it targets the LLM, not the UI.
 			const fixGoal =
 				`以下仓颉代码编译失败，请根据错误信息修正代码，返回修正后的 workspace_ops。` +
 				`仅修改出错的文件，不要重复返回正确的文件。\n\n编译输出:\n${truncatedOutput}`

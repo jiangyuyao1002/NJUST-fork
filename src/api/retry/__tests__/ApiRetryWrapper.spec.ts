@@ -17,9 +17,16 @@ function createMockHandler(config: {
 }): ApiHandler & SingleCompletionHandler {
 	let attempt = 0
 	return {
-		getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+		getModel: () => ({
+			id: "test",
+			info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+		}),
 		countTokens: async () => 0,
-		createMessage(_systemPrompt: string, _messages: unknown[], _metadata?: ApiHandlerCreateMessageMetadata): ApiStream {
+		createMessage(
+			_systemPrompt: string,
+			_messages: unknown[],
+			_metadata?: ApiHandlerCreateMessageMetadata,
+		): ApiStream {
 			return (async function* () {
 				const currentAttempt = attempt++
 				if (config.throwOnAttempt !== undefined && currentAttempt === config.throwOnAttempt) {
@@ -58,7 +65,11 @@ describe("wrapApiHandler", () => {
 			headers: { get: (name: string) => (name === "retry-after" ? "2" : null) },
 		})
 
-		const mock = createMockHandler({ throwOnAttempt: 0, errorToThrow: error429, chunks: [{ type: "text", text: "ok" }] })
+		const mock = createMockHandler({
+			throwOnAttempt: 0,
+			errorToThrow: error429,
+			chunks: [{ type: "text", text: "ok" }],
+		})
 		const wrapped = wrapApiHandler(mock)
 
 		const chunks: Array<{ type: string; text: string }> = []
@@ -78,7 +89,10 @@ describe("wrapApiHandler", () => {
 		// Throw on every attempt (more than maxAttempts)
 		let calls = 0
 		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+			getModel: () => ({
+				id: "test",
+				info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+			}),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
 				// eslint-disable-next-line require-yield
@@ -103,32 +117,10 @@ describe("wrapApiHandler", () => {
 
 		let calls = 0
 		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
-			countTokens: async () => 0,
-			createMessage(): ApiStream {
-				// eslint-disable-next-line require-yield
-				return (async function* () {
-					calls++
-					throw error503
-				})()
-			},
-			completePrompt: async () => "done",
-		}
-
-		const wrapped = wrapApiHandler(mock)
-		const iterator = wrapped.createMessage("sys", [])[Symbol.asyncIterator]()
-		const promise = iterator.next()
-
-		await expect(promise).rejects.toThrow("Service Unavailable")
-		expect(calls).toBe(DEFAULT_API_RETRY_OPTIONS.maxAttempts)
-	})
-
-	it("retries on 503 up to maxAttempts then throws", async () => {
-		const error503 = Object.assign(new Error("Service Unavailable"), { status: 503 })
-
-		let calls = 0
-		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+			getModel: () => ({
+				id: "test",
+				info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+			}),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
 				// eslint-disable-next-line require-yield
@@ -160,7 +152,10 @@ describe("wrapApiHandler", () => {
 
 		let calls = 0
 		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+			getModel: () => ({
+				id: "test",
+				info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+			}),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
 				// eslint-disable-next-line require-yield
@@ -195,7 +190,10 @@ describe("wrapApiHandler", () => {
 
 		let calls = 0
 		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+			getModel: () => ({
+				id: "test",
+				info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+			}),
 			countTokens: async () => 0,
 			createMessage: () => (async function* () {})(),
 			async completePrompt() {
@@ -217,7 +215,10 @@ describe("wrapApiHandler", () => {
 
 		let calls = 0
 		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+			getModel: () => ({
+				id: "test",
+				info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+			}),
 			countTokens: async () => 0,
 			createMessage: () => (async function* () {})(),
 			async completePrompt() {
@@ -239,7 +240,10 @@ describe("wrapApiHandler", () => {
 
 		let calls = 0
 		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+			getModel: () => ({
+				id: "test",
+				info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+			}),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
 				// eslint-disable-next-line require-yield
@@ -265,7 +269,10 @@ describe("wrapApiHandler", () => {
 	it("does not retry mid-stream failures", async () => {
 		let yielded = false
 		const mock: ApiHandler & SingleCompletionHandler = {
-			getModel: () => ({ id: "test", info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false } }),
+			getModel: () => ({
+				id: "test",
+				info: { maxTokens: 0, contextWindow: 0, supportsImages: false, supportsPromptCache: false },
+			}),
 			countTokens: async () => 0,
 			createMessage(): ApiStream {
 				return (async function* () {
@@ -300,7 +307,11 @@ describe("wrapApiHandler", () => {
 			headers: { get: (name: string) => (name === "retry-after" ? "1" : null) },
 		})
 
-		const mock = createMockHandler({ throwOnAttempt: 0, errorToThrow: error429, chunks: [{ type: "text", text: "ok" }] })
+		const mock = createMockHandler({
+			throwOnAttempt: 0,
+			errorToThrow: error429,
+			chunks: [{ type: "text", text: "ok" }],
+		})
 		const wrapped = wrapApiHandler(mock)
 
 		const emitSpy = vi.spyOn(taskEventBus, "emit")

@@ -8,6 +8,7 @@ import { resolveLatexmkExecutable, resolvePdflatexExecutable } from "./latexReso
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
+import { t } from "../../i18n"
 
 const execFileAsync = promisify(execFile)
 
@@ -30,14 +31,12 @@ export function registerLatexCommands(context: vscode.ExtensionContext, _outputC
 	const runCompile = async () => {
 		const editor = vscode.window.activeTextEditor
 		if (!editor || !isLatexDocument(editor.document)) {
-			void vscode.window.showInformationMessage(
-				"请先打开并聚焦 .tex / LaTeX 文件。本地编译需已安装 TeX Live 或 MiKTeX（latexmk 或 pdflatex）。",
-			)
+			void vscode.window.showInformationMessage(t("info.latex_focus_file_first"))
 			return
 		}
 
 		if (editor.document.isUntitled) {
-			void vscode.window.showWarningMessage("请先保存 LaTeX 文件再编译。")
+			void vscode.window.showWarningMessage(t("warnings.latex_save_first"))
 			return
 		}
 
@@ -51,10 +50,22 @@ export function registerLatexCommands(context: vscode.ExtensionContext, _outputC
 		const BLOCKED_ARGS = ["-shell-escape", "--shell-escape", "-enable-write18", "--enable-write18"]
 		const extra = rawExtra.filter((arg) => !BLOCKED_ARGS.includes(arg.toLowerCase()))
 		if (extra.length !== rawExtra.length) {
-			latexChannel.appendLine(`[LaTeX] 警告：已过滤不安全参数（-shell-escape 等）。`)
+			latexChannel.appendLine(t("warnings.latex_unsafe_args_filtered"))
 		}
 
-		const safeEnvKeys = ["PATH", "HOME", "USERPROFILE", "TEMP", "TMP", "TEXMFHOME", "TEXMFVAR", "TEXMFCONFIG", "SystemRoot", "APPDATA", "LOCALAPPDATA"]
+		const safeEnvKeys = [
+			"PATH",
+			"HOME",
+			"USERPROFILE",
+			"TEMP",
+			"TMP",
+			"TEXMFHOME",
+			"TEXMFVAR",
+			"TEXMFCONFIG",
+			"SystemRoot",
+			"APPDATA",
+			"LOCALAPPDATA",
+		]
 		const safeEnv: Record<string, string> = {}
 		for (const key of safeEnvKeys) {
 			if (process.env[key]) safeEnv[key] = process.env[key]!
@@ -92,12 +103,14 @@ export function registerLatexCommands(context: vscode.ExtensionContext, _outputC
 				})
 				if (stdout) latexChannel.appendLine(stdout)
 				if (stderr) latexChannel.appendLine(stderr)
-				latexChannel.appendLine("\n[LaTeX] 提示：pdflatex 单次运行可能不足以更新目录与交叉引用；建议使用 latexmk 引擎。")
+				latexChannel.appendLine(t("info.latex_pdflatex_hint"))
 			}
 
 			const pdfPath = path.join(cwd, path.basename(texPath, path.extname(texPath)) + ".pdf")
 			if (fs.existsSync(pdfPath)) {
-				void vscode.window.showInformationMessage(`LaTeX 编译完成：${path.basename(pdfPath)}`)
+				void vscode.window.showInformationMessage(
+					t("info.latex_compile_success", { filename: path.basename(pdfPath) }),
+				)
 				if (openPdf) {
 					try {
 						await vscode.commands.executeCommand("vscode.open", vscode.Uri.file(pdfPath))
@@ -106,15 +119,13 @@ export function registerLatexCommands(context: vscode.ExtensionContext, _outputC
 					}
 				}
 			} else {
-				void vscode.window.showWarningMessage("编译已结束但未找到生成的 PDF，请查看输出面板中的日志。")
+				void vscode.window.showWarningMessage(t("warnings.latex_no_pdf_found"))
 			}
 		} catch (e) {
 			const msg = getErrorMessage(e)
-			latexChannel.appendLine(`\n[LaTeX] 错误: ${msg}`)
+			latexChannel.appendLine(t("errors.latex_error_log", { msg }))
 			TelemetryService.reportError(e instanceof Error ? e : new Error(msg), TelemetryEventName.UTILITY_ERROR)
-			void vscode.window.showErrorMessage(
-				`LaTeX 编译失败。请安装 MiKTeX 或 TeX Live，或将 MiKTeX 的 bin 加入系统 PATH；也可在设置中填写 njust-ai.latex.latexmkPath（latexmk.exe 完整路径）。详情见输出「${LATEX_OUTPUT_CHANNEL}」。`,
-			)
+			void vscode.window.showErrorMessage(t("errors.latex_compile_failed"))
 		}
 	}
 

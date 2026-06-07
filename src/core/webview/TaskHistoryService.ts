@@ -25,6 +25,7 @@ import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
 import { TelemetryEventName } from "@njust-ai/types"
 import { TelemetryService } from "@njust-ai/telemetry"
+import { t } from "../../i18n"
 
 export interface TaskHistoryHost {
 	readonly context: vscode.ExtensionContext
@@ -86,7 +87,7 @@ export class TaskHistoryService {
 				})
 				if (filesRemoved > 0) {
 					this.host.outputChannel.appendLine(
-						`[CangjieTestCleanup] 启动修剪：移除 ${filesRemoved} 个生成测试文件（${taskEntriesRemoved} 个任务桶）。`,
+						`[CangjieTestCleanup] ${t("info.cangjie_test_cleanup_prune", { filesRemoved, taskEntriesRemoved })}`,
 					)
 				}
 			} catch (e) {
@@ -110,7 +111,8 @@ export class TaskHistoryService {
 		apiConversationHistory: Anthropic.MessageParam[]
 	}> {
 		const historyItem =
-			this.host.taskHistoryStore.get(id) ?? (this.host.context.globalState.get<HistoryItem[]>("taskHistory") ?? []).find((item) => item.id === id)
+			this.host.taskHistoryStore.get(id) ??
+			(this.host.context.globalState.get<HistoryItem[]>("taskHistory") ?? []).find((item) => item.id === id)
 
 		if (!historyItem) {
 			throw new Error("Task not found")
@@ -178,10 +180,15 @@ export class TaskHistoryService {
 		const { historyItem, apiConversationHistory } = await this.getTaskWithId(id)
 		const fileName = getTaskFileName(historyItem.ts)
 		const homedir = (await import("os")).homedir()
-		const defaultUri = await resolveDefaultSaveUri(this.host.contextProxy as UnsafeAny, "lastTaskExportPath", fileName, {
-			useWorkspace: false,
-			fallbackDir: path.join(homedir, "Downloads"),
-		})
+		const defaultUri = await resolveDefaultSaveUri(
+			this.host.contextProxy as UnsafeAny,
+			"lastTaskExportPath",
+			fileName,
+			{
+				useWorkspace: false,
+				fallbackDir: path.join(homedir, "Downloads"),
+			},
+		)
 		const saveUri = await downloadTask(historyItem.ts, apiConversationHistory, defaultUri)
 
 		if (saveUri) {
@@ -224,7 +231,11 @@ export class TaskHistoryService {
 							}
 						}
 					} catch (_error) {
-						logger.warn("TaskHistoryService", `deleteTaskWithId: child task ${taskId} not found or error during deletion:`, _error)
+						logger.warn(
+							"TaskHistoryService",
+							`deleteTaskWithId: child task ${taskId} not found or error during deletion:`,
+							_error,
+						)
 					}
 				}
 
@@ -374,9 +385,7 @@ export class TaskHistoryService {
 				const items = this.host.taskHistoryStore.getAll()
 				await this.host.contextProxy.setValue("taskHistory", items)
 			} catch (err) {
-				this.log(
-					`[scheduleGlobalStateWriteThrough] Failed: ${getErrorMessage(err)}`,
-				)
+				this.log(`[scheduleGlobalStateWriteThrough] Failed: ${getErrorMessage(err)}`)
 			}
 		}, TaskHistoryService.GLOBAL_STATE_WRITE_THROUGH_DEBOUNCE_MS)
 	}

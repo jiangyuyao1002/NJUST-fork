@@ -44,6 +44,7 @@ import { registerCangjieRulesHotReload } from "../services/cangjie-lsp/cangjieRu
 import { cangjieDiagnosticModeSwitch } from "../services/cangjie-lsp/cangjieDiagnosticModeSwitch"
 import { CangjieLintConfig } from "../services/cangjie-lsp/CangjieLintConfig"
 import { CangjieMetricsCollector } from "../services/cangjie-lsp/CangjieMetricsCollector"
+import { t } from "../i18n"
 
 // Module-level state
 let cangjieLspClient: CangjieLspClient | undefined
@@ -67,11 +68,13 @@ function scheduleCangjieToolchainGapCheck(outputChannel: vscode.OutputChannel): 
 		if (bad.length === 0) return
 		lastCangjieToolchainGapWarn = Date.now()
 		const detail = bad.map((b) => b.label).join(", ")
+		const verifyLabel = t("buttons.verify_sdk")
+		const settingsLabel = t("buttons.open_tool_settings")
 		await vscode.window
-			.showWarningMessage(`仓颉工具链不完整或不可运行：${detail}`, "验证 SDK", "打开工具设置")
+			.showWarningMessage(t("warnings.cangjie_toolchain_incomplete", { detail }), verifyLabel, settingsLabel)
 			.then((c) => {
-				if (c === "验证 SDK") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
-				if (c === "打开工具设置") {
+				if (c === verifyLabel) void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
+				if (c === settingsLabel) {
 					void vscode.commands.executeCommand("workbench.action.openSettings", `${Package.name}.cangjieTools`)
 				}
 			})
@@ -302,7 +305,7 @@ function registerCangjieTestCommands(context: vscode.ExtensionContext): void {
 			vscode.debug.startDebugging(folder, {
 				type: "cangjie",
 				request: "launch",
-				name: `调试测试: ${testName}`,
+				name: t("debug.cangjie_test_name", { testName }),
 				program: "${workspaceFolder}/target/output",
 				args: ["--test", "--filter", testName],
 				cwd: "${workspaceFolder}",
@@ -368,9 +371,7 @@ function registerCangjieCrossFileProviders(
 		),
 	)
 	context.subscriptions.push(
-		vscode.languages.registerWorkspaceSymbolProvider(
-			new CangjieWorkspaceSymbolProvider(cangjieSymbolIndex!),
-		),
+		vscode.languages.registerWorkspaceSymbolProvider(new CangjieWorkspaceSymbolProvider(cangjieSymbolIndex!)),
 	)
 }
 

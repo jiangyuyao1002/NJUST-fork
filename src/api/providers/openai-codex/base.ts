@@ -30,6 +30,7 @@ import {
 } from "./types"
 import { formatConversation } from "./formatConversation"
 import { processEvent, type CodexEventHandlerContext } from "./processEvent"
+import { getApiRequestTimeout } from "../utils/timeout-config"
 import { buildCodexHeaders, executeNonStreamingRequest } from "./completePrompt"
 
 /**
@@ -121,10 +122,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 	// Usage normalization
 	// -------------------------------------------------------------------------
 
-	normalizeUsage(
-		usage: unknown,
-		_model: OpenAiCodexModel,
-	): ApiStreamUsageChunk | undefined {
+	normalizeUsage(usage: unknown, _model: OpenAiCodexModel): ApiStreamUsageChunk | undefined {
 		if (!usage || typeof usage !== "object") return undefined
 		const u = usage as OpenAiCodexUsageData
 
@@ -290,6 +288,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 						apiKey: accessToken,
 						baseURL: CODEX_API_BASE_URL,
 						defaultHeaders: codexHeaders,
+						timeout: getApiRequestTimeout(),
 					})
 
 				const stream = await (client as UnsafeAny as ResponsesClientLike).responses.create(requestBody, {
@@ -448,7 +447,9 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 						}
 
 						try {
-							const parsed = codexResponsesStreamEventSchema.parse(JSON.parse(data)) as ResponsesStreamEvent
+							const parsed = codexResponsesStreamEventSchema.parse(
+								JSON.parse(data),
+							) as ResponsesStreamEvent
 
 							// Capture response metadata
 							if (parsed.response?.output && Array.isArray(parsed.response.output)) {
@@ -665,7 +666,9 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 						}
 					} else if (line.trim() && !line.startsWith(":")) {
 						try {
-							const parsed = codexResponsesStreamEventSchema.parse(JSON.parse(line)) as ResponsesStreamEvent
+							const parsed = codexResponsesStreamEventSchema.parse(
+								JSON.parse(line),
+							) as ResponsesStreamEvent
 							if (parsed.content || parsed.text || parsed.message) {
 								hasContent = true
 								this.sawTextOutputInCurrentResponse = true

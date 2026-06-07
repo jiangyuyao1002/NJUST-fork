@@ -149,7 +149,7 @@ describe("SwitchModeTool", () => {
 
 			await switchModeTool.execute({ mode_slug: "code" }, task, callbacks as any)
 
-			expect(showInfoMessageMock).toHaveBeenCalledWith(expect.stringContaining("2"))
+			expect(showInfoMessageMock).toHaveBeenCalledWith(expect.stringContaining("cangjie_mode_left_with_files"))
 		})
 
 		it("does not show info message when switching to cangjie", async () => {

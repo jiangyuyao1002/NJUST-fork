@@ -73,8 +73,12 @@ export function convertToVsCodeLmMessages(
 								? [new vscode.LanguageModelTextPart(toolMessage.content)]
 								: (toolMessage.content?.map((part) => {
 										if (part.type === "image") {
+											const src = part.source as
+												| { type: "base64"; media_type: string; data: string }
+												| { type: "url"; url: string }
+												| undefined
 											return new vscode.LanguageModelTextPart(
-												`[Image (${part.source?.type || "Unknown source-type"}): ${part.source?.media_type || "UnsafeAny media-type"} not supported by VSCode LM API]`,
+												`[Image (${src?.type ?? "unknown"}): ${src?.type === "base64" ? src.media_type : src?.type === "url" ? src.url : "unknown"} not supported by VSCode LM API]`,
 											)
 										}
 										return new vscode.LanguageModelTextPart(part.text)
@@ -86,8 +90,12 @@ export function convertToVsCodeLmMessages(
 					// Convert non-tool messages to TextParts after tool messages
 					...nonToolMessages.map((part) => {
 						if (part.type === "image") {
+							const src = part.source as
+								| { type: "base64"; media_type: string; data: string }
+								| { type: "url"; url: string }
+								| undefined
 							return new vscode.LanguageModelTextPart(
-								`[Image (${part.source?.type || "Unknown source-type"}): ${part.source?.media_type || "UnsafeAny media-type"} not supported by VSCode LM API]`,
+								`[Image (${src?.type ?? "unknown"}): ${src?.type === "base64" ? src.media_type : src?.type === "url" ? src.url : "unknown"} not supported by VSCode LM API]`,
 							)
 						}
 						return new vscode.LanguageModelTextPart(part.text)
@@ -185,7 +193,11 @@ export function extractTextCountFromMessage(message: vscode.LanguageModelChatMes
 					try {
 						text += JSON.stringify(item.input)
 					} catch (error) {
-						logger.error("VscodeLmFormat", "NJUST_AI <Language Model API>: Failed to stringify tool call input:", error)
+						logger.error(
+							"VscodeLmFormat",
+							"NJUST_AI <Language Model API>: Failed to stringify tool call input:",
+							error,
+						)
 					}
 				}
 			}

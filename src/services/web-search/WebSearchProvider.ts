@@ -1,5 +1,6 @@
-import {  guardedFetch } from "../../core/security/networkGuard"
+import { guardedFetch } from "../../core/security/networkGuard"
 import { getErrorMessage } from "../../shared/error-utils"
+import { t } from "../../i18n"
 
 export type WebSearchProviderName =
 	| "tavily"
@@ -727,23 +728,28 @@ export function createSearchProvider(
 	}
 }
 
-export const SEARCH_PROVIDER_INFO: Record<WebSearchProviderName, { label: string; keyHint: string; noKey?: boolean }> = {
-	"baidu-free": {
-		label: "百度免费 (Baidu Free)",
-		keyHint: "无需密钥；百度失败时自动切搜狗",
-		noKey: true,
-	},
-	"sogou-free": {
-		label: "搜狗免费 (Sogou Free)",
-		keyHint: "无需密钥；国内可用",
-		noKey: true,
-	},
-	duckduckgo: { label: "DuckDuckGo (Free)", keyHint: "No key; may not work in China", noKey: true },
-	tavily: { label: "Tavily", keyHint: "https://tavily.com" },
-	bing: { label: "Bing", keyHint: "Azure Portal → Bing Search API" },
-	google: { label: "Google", keyHint: "API_KEY|CX_ID (Google Custom Search)" },
-	baidu: { label: "Baidu API", keyHint: "Baidu AI Cloud Access Token" },
-	serpapi: { label: "SerpAPI", keyHint: "https://serpapi.com" },
+export function getSearchProviderInfo(): Record<
+	WebSearchProviderName,
+	{ label: string; keyHint: string; noKey?: boolean }
+> {
+	return {
+		"baidu-free": {
+			label: t("search_provider.baidu_free_label"),
+			keyHint: t("search_provider.baidu_free_hint"),
+			noKey: true,
+		},
+		"sogou-free": {
+			label: t("search_provider.sogou_free_label"),
+			keyHint: t("search_provider.sogou_free_hint"),
+			noKey: true,
+		},
+		duckduckgo: { label: "DuckDuckGo (Free)", keyHint: "No key; may not work in China", noKey: true },
+		tavily: { label: "Tavily", keyHint: "https://tavily.com" },
+		bing: { label: "Bing", keyHint: "Azure Portal → Bing Search API" },
+		google: { label: "Google", keyHint: "API_KEY|CX_ID (Google Custom Search)" },
+		baidu: { label: "Baidu API", keyHint: "Baidu AI Cloud Access Token" },
+		serpapi: { label: "SerpAPI", keyHint: "https://serpapi.com" },
+	}
 }
 
 export function formatSearchResults(results: WebSearchResult[]): string {

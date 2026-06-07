@@ -5,6 +5,7 @@ import { execFile } from "child_process"
 import { promisify } from "util"
 import { Package } from "../../shared/package"
 import { detectCangjieHome, formatCangjieToolchainSummaryLine } from "./cangjieToolUtils"
+import { t } from "../../i18n"
 
 const execFileAsync = promisify(execFile)
 const DISMISSED_KEY = "cangjie.sdkSetupDismissed"
@@ -12,10 +13,7 @@ const DOWNLOAD_URL = "https://cangjie-lang.cn/download"
 
 async function validateSdk(sdkPath: string): Promise<string | undefined> {
 	const exeName = process.platform === "win32" ? "cjc.exe" : "cjc"
-	const candidates = [
-		path.join(sdkPath, "bin", exeName),
-		path.join(sdkPath, "tools", "bin", exeName),
-	]
+	const candidates = [path.join(sdkPath, "bin", exeName), path.join(sdkPath, "tools", "bin", exeName)]
 
 	for (const cjcPath of candidates) {
 		if (!fs.existsSync(cjcPath)) continue
@@ -33,22 +31,22 @@ async function validateSdk(sdkPath: string): Promise<string | undefined> {
 async function configureSdkPath(sdkPath: string): Promise<void> {
 	const config = vscode.workspace.getConfiguration(Package.name)
 	const lspExe = process.platform === "win32" ? "LSPServer.exe" : "LSPServer"
-	const lspCandidates = [
-		path.join(sdkPath, "bin", lspExe),
-		path.join(sdkPath, "tools", "bin", lspExe),
-	]
+	const lspCandidates = [path.join(sdkPath, "bin", lspExe), path.join(sdkPath, "tools", "bin", lspExe)]
 	const lspPath = lspCandidates.find((p) => fs.existsSync(p))
 	if (lspPath) {
 		await config.update("cangjieLsp.serverPath", lspPath, vscode.ConfigurationTarget.Global)
 	}
 }
 
-async function promptManualSelect(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): Promise<void> {
+async function promptManualSelect(
+	context: vscode.ExtensionContext,
+	outputChannel: vscode.OutputChannel,
+): Promise<void> {
 	const uris = await vscode.window.showOpenDialog({
 		canSelectFolders: true,
 		canSelectFiles: false,
 		canSelectMany: false,
-		openLabel: "选择仓颉 SDK 目录",
+		openLabel: t("dialogs.select_cangjie_sdk_dir"),
 	})
 
 	if (!uris || uris.length === 0) return
@@ -58,22 +56,25 @@ async function promptManualSelect(context: vscode.ExtensionContext, outputChanne
 
 	if (version) {
 		await configureSdkPath(selectedPath)
-		vscode.window.showInformationMessage(`仓颉 SDK 已配置成功（${version}）`)
+		vscode.window.showInformationMessage(t("info.cangjie_sdk_configured", { version }))
 		outputChannel.appendLine(`[CangjieSdkSetup] SDK configured at ${selectedPath} (${version})`)
 		void formatCangjieToolchainSummaryLine().then((line) => {
 			if (line) {
-				vscode.window.showInformationMessage(line, "验证工具链").then((c) => {
-					if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
+				const verifyLabel = t("buttons.verify_toolchain")
+				vscode.window.showInformationMessage(line, verifyLabel).then((c) => {
+					if (c === verifyLabel) void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
 				})
 			}
 		})
 	} else {
+		const reselectLabel = t("buttons.reselect")
+		const cancelLabel = t("buttons.cancel")
 		const retry = await vscode.window.showWarningMessage(
-			`所选目录下未找到有效的 cjc 编译器。请确认选择了正确的 SDK 根目录。`,
-			"重新选择",
-			"取消",
+			t("warnings.cangjie_cjc_not_found"),
+			reselectLabel,
+			cancelLabel,
 		)
-		if (retry === "重新选择") {
+		if (retry === reselectLabel) {
 			await promptManualSelect(context, outputChannel)
 		}
 	}
@@ -91,13 +92,11 @@ export async function checkAndPromptSdkSetup(
 		if (!context.globalState.get<boolean>(QUICK_START_KEY)) {
 			await context.globalState.update(QUICK_START_KEY, true)
 			void formatCangjieToolchainSummaryLine().then((line) => {
-				const msg =
-					line ??
-					"仓颉 LSP 已就绪。"
-				const steps =
-					"快速开始：(1) 命令面板「Cangjie: Verify SDK Installation」确认工具链 (2) 使用 cjpm init 或打开含 cjpm.toml 的工程 (3) 打开 .cj 以启动 LSP 与保存编译。"
-				void vscode.window.showInformationMessage(`${msg}\n${steps}`, "验证工具链").then((c) => {
-					if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
+				const msg = line ?? t("info.cangjie_lsp_ready")
+				const steps = t("info.cangjie_quick_start")
+				const verifyLabel = t("buttons.verify_toolchain")
+				void vscode.window.showInformationMessage(`${msg}\n${steps}`, verifyLabel).then((c) => {
+					if (c === verifyLabel) void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
 				})
 			})
 		}
@@ -114,40 +113,47 @@ export async function checkAndPromptSdkSetup(
 		const version = await validateSdk(detectedHome)
 		const label = version ? `（${version}）` : ""
 
+		const yesLabel = t("answers.yes")
+		const manualSelectLabel = t("buttons.manual_select")
+		const dismissLabel = t("buttons.dismiss")
 		const choice = await vscode.window.showInformationMessage(
-			`检测到仓颉 SDK 位于 ${detectedHome}${label}，是否自动配置？`,
-			"是",
-			"手动选择",
-			"忽略",
+			t("info.cangjie_sdk_detected", { path: detectedHome, version: label }),
+			yesLabel,
+			manualSelectLabel,
+			dismissLabel,
 		)
 
-		if (choice === "是") {
+		if (choice === yesLabel) {
 			await configureSdkPath(detectedHome)
-			vscode.window.showInformationMessage(`仓颉 SDK 已自动配置${label}`)
+			vscode.window.showInformationMessage(t("info.cangjie_sdk_auto_configured", { version: label }))
 			outputChannel.appendLine(`[CangjieSdkSetup] Auto-configured SDK at ${detectedHome} ${label}`)
 			void formatCangjieToolchainSummaryLine().then((line) => {
 				if (line) {
-					vscode.window.showInformationMessage(line, "验证工具链").then((c) => {
-						if (c === "验证工具链") void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
+					const verifyLabel = t("buttons.verify_toolchain")
+					vscode.window.showInformationMessage(line, verifyLabel).then((c) => {
+						if (c === verifyLabel) void vscode.commands.executeCommand("njust-ai.cangjieVerifySdk")
 					})
 				}
 			})
-		} else if (choice === "手动选择") {
+		} else if (choice === manualSelectLabel) {
 			await promptManualSelect(context, outputChannel)
 		} else {
 			await context.globalState.update(DISMISSED_KEY, true)
 		}
 	} else {
+		const selectDirLabel = t("buttons.select_sdk_dir")
+		const downloadLabel = t("buttons.download_sdk")
+		const laterLabel = t("buttons.later")
 		const choice = await vscode.window.showWarningMessage(
-			"未检测到仓颉 SDK。请配置 SDK 路径以启用完整的仓颉语言支持。",
-			"选择 SDK 目录",
-			"下载 SDK",
-			"稍后",
+			t("warnings.cangjie_sdk_not_detected"),
+			selectDirLabel,
+			downloadLabel,
+			laterLabel,
 		)
 
-		if (choice === "选择 SDK 目录") {
+		if (choice === selectDirLabel) {
 			await promptManualSelect(context, outputChannel)
-		} else if (choice === "下载 SDK") {
+		} else if (choice === downloadLabel) {
 			vscode.env.openExternal(vscode.Uri.parse(DOWNLOAD_URL))
 		} else {
 			await context.globalState.update(DISMISSED_KEY, true)

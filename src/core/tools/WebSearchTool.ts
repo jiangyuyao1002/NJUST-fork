@@ -3,7 +3,11 @@ import { z } from "zod"
 import { BaseTool, type ToolCallbacks } from "./BaseTool"
 import { toolResultCache } from "./helpers/ToolResultCache"
 import type { Task } from "../task/Task"
-import { createSearchProvider, formatSearchResults, SEARCH_PROVIDER_INFO } from "../../services/web-search/WebSearchProvider"
+import {
+	createSearchProvider,
+	formatSearchResults,
+	getSearchProviderInfo,
+} from "../../services/web-search/WebSearchProvider"
 import type { WebSearchProviderName, SerpApiEngine } from "../../services/web-search/WebSearchProvider"
 
 class WebSearchToolImpl extends BaseTool<"web_search"> {
@@ -12,8 +16,10 @@ class WebSearchToolImpl extends BaseTool<"web_search"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Partial<{search_query: string; count?: number}>): boolean {
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
+	override isPartialArgsStable(partial: Partial<{ search_query: string; count?: number }>): boolean {
 		return typeof partial.search_query === "string" && partial.search_query.length > 0
 	}
 
@@ -45,7 +51,7 @@ class WebSearchToolImpl extends BaseTool<"web_search"> {
 			const apiKey = state?.webSearchApiKey
 			const providerName = (state?.webSearchProvider ?? "baidu-free") as WebSearchProviderName
 
-			const providerInfo = SEARCH_PROVIDER_INFO[providerName]
+			const providerInfo = getSearchProviderInfo()[providerName]
 			if (!providerInfo.noKey && (!apiKey || apiKey.trim().length === 0)) {
 				pushToolResult(
 					`Web search API key is not configured. ` +
@@ -56,7 +62,10 @@ class WebSearchToolImpl extends BaseTool<"web_search"> {
 				return
 			}
 
-			const approved = await askApproval("tool", JSON.stringify({ tool: "web_search", engine: providerName, query, count }))
+			const approved = await askApproval(
+				"tool",
+				JSON.stringify({ tool: "web_search", engine: providerName, query, count }),
+			)
 			if (!approved) {
 				pushToolResult("Web search was not approved by the user.")
 				return

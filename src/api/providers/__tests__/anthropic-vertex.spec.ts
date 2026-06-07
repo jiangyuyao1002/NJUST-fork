@@ -68,6 +68,7 @@ describe("VertexHandler", () => {
 			expect(AnthropicVertex).toHaveBeenCalledWith({
 				projectId: "test-project",
 				region: "us-central1",
+				timeout: expect.any(Number),
 			})
 		})
 	})

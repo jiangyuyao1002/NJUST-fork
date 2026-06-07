@@ -20,6 +20,7 @@ import { toRequestyServiceUrl } from "../../shared/utils/requesty"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { requireApiKey } from "../interfaces/api-key-validator"
+import { getApiRequestTimeout } from "./utils/timeout-config"
 
 // Requesty usage includes an extra field for Anthropic use cases.
 // Safely cast the prompt token details section to the appropriate structure.
@@ -70,6 +71,7 @@ export class RequestyHandler extends BaseProvider implements SingleCompletionHan
 			baseURL: this.baseURL,
 			apiKey: apiKey,
 			defaultHeaders: DEFAULT_HEADERS,
+			timeout: getApiRequestTimeout(),
 		})
 	}
 

@@ -8,6 +8,7 @@ import { formatResponse } from "../prompts/responses"
 import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
+import { t } from "../../i18n"
 
 interface SwitchModeParams {
 	mode_slug: string
@@ -65,7 +66,7 @@ export class SwitchModeTool extends BaseTool<"switch_mode"> {
 				const cjEditors = vscode.window.visibleTextEditors.filter((e) => e.document.fileName.endsWith(".cj"))
 				if (cjEditors.length > 0) {
 					void vscode.window.showInformationMessage(
-						`已离开仓颉 Dev 模式；仍有 ${cjEditors.length} 个 .cj 文件处于打开状态。新模式下的编辑权限可能不同，必要时请切回仓颉模式或使用只读工具查看代码。`,
+						t("info.cangjie_mode_left_with_files", { count: cjEditors.length }),
 					)
 				}
 			}

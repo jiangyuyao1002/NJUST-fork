@@ -245,7 +245,9 @@ export class CloudAgentClient {
 			try {
 				const connectPromise = this.adapter.connect()
 				if (signal) {
-					connectPromise.catch(() => {})
+					connectPromise.catch((e) =>
+						logger.debug("CloudAgentClient", "MCP connect promise rejected during abort race:", e),
+					)
 					await Promise.race([
 						connectPromise,
 						new Promise<never>((_, reject) => {
@@ -309,7 +311,9 @@ export class CloudAgentClient {
 		try {
 			return await fn(mcpAdapter)
 		} catch (err) {
-			await mcpAdapter.disconnect().catch(() => {})
+			await mcpAdapter
+				.disconnect()
+				.catch((e) => logger.debug("CloudAgentClient", "MCP disconnect failed during error cleanup:", e))
 			throw err
 		}
 	}

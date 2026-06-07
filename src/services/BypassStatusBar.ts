@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { t } from "../i18n"
 
 /**
  * VS Code 状态栏指示器：当权限模式为 bypass 时显示常驻警告。
@@ -11,7 +12,7 @@ export class BypassStatusBar implements vscode.Disposable {
 		this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 48)
 		this.item.name = "NJUST-AI Bypass Mode"
 		this.item.command = "njust-ai.toggleAutoApprove"
-		this.item.tooltip = "安全旁路模式已启用 — 点击可切换权限模式"
+		this.item.tooltip = t("tooltips.bypass_mode_enabled")
 		this.hide()
 	}
 

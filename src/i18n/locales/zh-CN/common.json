@@ -123,11 +123,23 @@
 			"invalidKeyInvalidChars": "API 密钥包含无效字符.",
 			"apiRequestFailed": "API 请求失败 ({{status}})"
 		},
+		"cangjieCompileGuard": {
+			"notInitialized": "CangjieCompileGuard 未初始化，无法执行本地编译。",
+			"notConfigured": "本地编译功能未配置，请确认 Cangjie SDK 已安装。",
+			"noOutput": "[编译进程异常退出，无输出。请检查 cjpm 是否已正确安装。]",
+			"compileFailed": "[Compile] 本地编译失败: {{msg}}"
+		},
 		"manual_url_empty": "请输入有效的回调 URL",
 		"manual_url_no_query": "无效的回调 URL：缺少查询参数",
 		"manual_url_missing_params": "无效的回调 URL：缺少必需参数（code 和 state）",
 		"manual_url_auth_failed": "手动 URL 身份验证失败",
 		"manual_url_auth_error": "身份验证失败",
+		"save_profile_failed": "保存 Profile 失败: {{error}}",
+		"delete_profile_failed": "删除 Profile 失败: {{error}}",
+		"set_active_profile_failed": "设置活跃 Profile 失败: {{error}}",
+		"latex_compile_failed": "LaTeX 编译失败。请安装 MiKTeX 或 TeX Live，或将 MiKTeX 的 bin 加入系统 PATH；也可在设置中填写 njust-ai.latex.latexmkPath。详情见输出面板。",
+		"latex_error_log": "[LaTeX] 错误: {{msg}}",
+		"cangjie_test_cleanup_failed": "[CangjieTestCleanup] 启动孤儿清理失败：{{error}}",
 		"openAiCodex": {
 			"notAuthenticated": "Not authenticated with OpenAI Codex. Please sign in using the OpenAI Codex OAuth flow.",
 			"invalidRequest": "Invalid request to Codex API. Please check your input parameters.",
@@ -150,9 +162,24 @@
 	"warnings": {
 		"no_terminal_content": "没有选择终端内容",
 		"missing_task_files": "此任务的文件丢失。您想从任务列表中删除它吗？",
-		"auto_import_failed": "自动导入 NJUST_AI 设置失败：{{error}}"
+		"auto_import_failed": "自动导入 NJUST_AI 设置失败：{{error}}",
+		"inline_completion_no_api": "内联补全：未解析到 API。请在扩展设置中配置提供商和 API 密钥，或先启动侧边栏对话任务。",
+		"latex_save_first": "请先保存 LaTeX 文件再编译。",
+		"latex_no_pdf_found": "编译已结束但未找到生成的 PDF，请查看输出面板中的日志。",
+		"latex_unsafe_args_filtered": "[LaTeX] 警告：已过滤不安全参数（-shell-escape 等）。",
+		"cangjie_toolchain_incomplete": "仓颉工具链不完整或不可运行：{{detail}}",
+		"cangjie_cjc_not_found": "所选目录下未找到有效的 cjc 编译器。请确认选择了正确的 SDK 根目录。",
+		"cangjie_sdk_not_detected": "未检测到仓颉 SDK。请配置 SDK 路径以启用完整的仓颉语言支持。",
+		"cangjie_index_limit_reached": "仓颉文件索引达到上限（{{max}} 个），部分文件可能未被索引"
 	},
 	"info": {
+		"cangjieCompileGuard": {
+			"feedbackLoopNotConfigured": "[Compile] 本地编译功能未配置，无法执行编译反馈循环。请确认 Cangjie SDK 已安装且 CangjieCompileGuard 已初始化。",
+			"noCjpmToml": "[Compile] 未找到 cjpm.toml，跳过编译反馈循环。",
+			"compileCheck": "[Compile] 本地编译检查 ({{attempt}}/{{maxRetries}})...",
+			"compileSuccess": "[Compile] 编译通过!",
+			"maxRetriesReached": "[Compile] 已达最大重试次数 ({{maxRetries}})，停止编译反馈循环。"
+		},
 		"no_changes": "未找到更改。",
 		"clipboard_copy": "系统消息已成功复制到剪贴板",
 		"history_cleanup": "已从历史记录中清理{{count}}个缺少文件的任务。",
@@ -166,7 +193,20 @@
 		"organization_share_link_copied": "组织分享链接已复制到剪贴板！",
 		"public_share_link_copied": "公开分享链接已复制到剪贴板！",
 		"mode_exported": "模式 '{{mode}}' 已成功导出",
-		"mode_imported": "模式已成功导入"
+		"mode_imported": "模式已成功导入",
+		"inline_completion_api_available": "内联补全 API 可用：{{id}}",
+		"cloud_agent_profile_migrated": "Cloud Agent 配置已迁移为 Profile「{{name}}」。可在 Cloud Agent 设置中管理。",
+		"latex_focus_file_first": "请先打开并聚焦 .tex / LaTeX 文件。本地编译需已安装 TeX Live 或 MiKTeX（latexmk 或 pdflatex）。",
+		"latex_compile_success": "LaTeX 编译完成：{{filename}}",
+		"latex_pdflatex_hint": "[LaTeX] 提示：pdflatex 单次运行可能不足以更新目录与交叉引用；建议使用 latexmk 引擎。",
+		"cangjie_mode_left_with_files": "已离开仓颉 Dev 模式；仍有 {{count}} 个 .cj 文件处于打开状态。编辑权限在新模式下可能不同。",
+		"cangjie_sdk_configured": "仓颉 SDK 已配置成功（{{version}}）",
+		"cangjie_lsp_ready": "仓颉 LSP 已就绪。",
+		"cangjie_quick_start": "快速开始：(1) 命令面板运行\"Cangjie: Verify SDK Installation\"确认工具链 (2) cjpm init 或打开含 cjpm.toml 的项目 (3) 打开 .cj 文件启动 LSP。",
+		"cangjie_sdk_detected": "检测到仓颉 SDK 位于 {{path}}{{version}}，是否自动配置？",
+		"cangjie_sdk_auto_configured": "仓颉 SDK 已自动配置{{version}}",
+		"cangjie_test_cleanup_orphan": "[CangjieTestCleanup] 启动孤儿清理：移除 {{filesRemoved}} 个生成测试文件（{{taskEntriesRemoved}} 个任务桶）。",
+		"cangjie_test_cleanup_prune": "[CangjieTestCleanup] 启动修剪：移除 {{filesRemoved}} 个生成测试文件（{{taskEntriesRemoved}} 个任务桶）。"
 	},
 	"answers": {
 		"yes": "是",
@@ -177,7 +217,18 @@
 	"buttons": {
 		"save": "保存",
 		"edit": "编辑",
-		"learn_more": "了解更多"
+		"learn_more": "了解更多",
+		"verify_sdk": "验证 SDK",
+		"open_tool_settings": "打开工具设置",
+		"verify_toolchain": "验证工具链",
+		"reselect": "重新选择",
+		"cancel": "取消",
+		"manual_select": "手动选择",
+		"dismiss": "忽略",
+		"select_sdk_dir": "选择 SDK 目录",
+		"download_sdk": "下载 SDK",
+		"later": "稍后",
+		"configure_now": "立即配置"
 	},
 	"tasks": {
 		"canceled": "任务错误：它已被用户停止并取消。",
@@ -260,5 +311,55 @@
 	"docsLink": {
 		"label": "Docs",
 		"url": "https://docs.njust-ai.local"
+	},
+	"tooltips": {
+		"bypass_mode_enabled": "安全旁路模式已启用 — 点击可切换权限模式"
+	},
+	"codelens": {
+		"run_test": "$(play) 运行测试",
+		"debug_test": "$(debug-alt) 调试测试"
+	},
+	"dialogs": {
+		"select_cangjie_sdk_dir": "选择仓颉 SDK 目录"
+	},
+	"placeholders": {
+		"select_cangjie_template": "选择仓颉代码模板…"
+	},
+	"search_provider": {
+		"baidu_free_label": "百度免费",
+		"baidu_free_hint": "无需密钥；百度失败时自动切搜狗",
+		"sogou_free_label": "搜狗免费",
+		"sogou_free_hint": "无需密钥；国内可用"
+	},
+	"debug": {
+		"cangjie_test_name": "调试测试: {{testName}}"
+	},
+	"templates": {
+		"cangjie": {
+			"hello_world_title": "可执行项目 (Hello World)",
+			"hello_world_desc": "最小 main 入口，打印一行并返回 0",
+			"http_server_title": "HTTP 服务器",
+			"http_server_desc": "使用 std.net 创建简单 HTTP 服务器",
+			"cli_tool_title": "CLI 工具",
+			"cli_tool_desc": "带 argv 解析的 CLI 工具骨架",
+			"unit_test_title": "单元测试",
+			"unit_test_desc": "@Test / @TestCase 单元测试模板",
+			"data_processing_title": "数据处理",
+			"data_processing_desc": "使用 ArrayList/HashMap 的集合处理",
+			"concurrency_title": "并发 (Mutex)",
+			"concurrency_desc": "多线程共享状态 + Mutex 保护",
+			"static_lib_title": "静态库",
+			"static_lib_desc": "公共 API 静态库包骨架",
+			"params": {
+				"package_name": "包名",
+				"project_name": "项目名",
+				"port": "端口",
+				"tool_name": "工具名",
+				"test_class_name": "测试类名",
+				"thread_count": "线程数",
+				"class_name": "类名",
+				"value_type": "值类型"
+			}
+		}
 	}
 }

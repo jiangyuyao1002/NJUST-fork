@@ -4,6 +4,7 @@
  */
 import { EventEmitter } from "events"
 import type { ICloudAgentHost } from "./interfaces/ICloudAgentHost"
+import { t } from "../../i18n"
 
 /** Minimal shape of Task needed to build a cloud agent host. */
 interface CloudAgentTaskRef {
@@ -40,7 +41,7 @@ export function createCloudAgentHost(task: CloudAgentTaskRef & EventEmitter): IC
 		compileLocal: async (cwd) => {
 			const provider = task.hostRef.deref()
 			if (!provider?.compileLocal) {
-				throw new Error("本地编译功能未配置，请确认 Cangjie SDK 已安装。")
+				throw new Error(t("common:errors.cangjieCompileGuard.notConfigured"))
 			}
 			return provider.compileLocal(cwd)
 		},
