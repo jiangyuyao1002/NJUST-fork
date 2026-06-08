@@ -1,8 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { executeDeferredToolCall } from "../executeDeferredToolCall"
 import type { DeferredToolCall } from "../types"
-import type { RooIgnoreController } from "../../../core/ignore/RooIgnoreController"
-import type { RooProtectedController } from "../../../core/protect/RooProtectedController"
+import type { IPathValidator, IWriteProtector } from "../interfaces/IPathAccessController"
 
 vi.mock("../../mcp-server/tool-executors", () => ({
 	execReadFile: vi.fn(() => Promise.resolve("file content")),
@@ -31,20 +30,20 @@ vi.mock("../../mcp-server/tool-executors", () => ({
 describe("executeDeferredToolCall security", () => {
 	const cwd = "/test/workspace"
 
-	function createRooIgnoreController(options?: {
+	function createPathValidator(options?: {
 		allowPath?: (path: string) => boolean
 		validateCommand?: (command: string) => string | undefined
-	}): RooIgnoreController {
+	}): IPathValidator {
 		return {
 			validateAccess: vi.fn(options?.allowPath ?? ((path: string) => !path.includes(".rooignore"))),
 			validateCommand: vi.fn(options?.validateCommand ?? (() => undefined)),
-		} as unknown as RooIgnoreController
+		} as unknown as IPathValidator
 	}
 
-	function createRooProtectedController(isWriteProtected: (path: string) => boolean): RooProtectedController {
+	function createWriteProtector(isWriteProtected: (path: string) => boolean): IWriteProtector {
 		return {
 			isWriteProtected: vi.fn(async (path: string) => isWriteProtected(path)),
-		} as unknown as RooProtectedController
+		} as unknown as IWriteProtector
 	}
 
 	describe("execute_command passes allowedCommands/deniedCommands", () => {
@@ -102,28 +101,28 @@ describe("executeDeferredToolCall security", () => {
 
 	describe("path protection checks", () => {
 		it("rejects write_file to .rooignore path", async () => {
-			const rooIgnoreController = createRooIgnoreController()
+			const pathValidator = createPathValidator()
 			const call: DeferredToolCall = {
 				call_id: "test-5",
 				tool: "write_file",
 				arguments: { path: ".rooignore/config.json", content: "test" },
 			}
 
-			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, pathValidator)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Access denied by .rooignore")
 		})
 
 		it("rejects apply_diff to .rooignore path", async () => {
-			const rooIgnoreController = createRooIgnoreController()
+			const pathValidator = createPathValidator()
 			const call: DeferredToolCall = {
 				call_id: "test-6",
 				tool: "apply_diff",
 				arguments: { path: ".rooignore/config.json", diff: "test" },
 			}
 
-			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, pathValidator)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Access denied by .rooignore")
@@ -144,20 +143,20 @@ describe("executeDeferredToolCall security", () => {
 
 	describe("read_file .rooignore checks", () => {
 		it("rejects read_file to .rooignore path", async () => {
-			const rooIgnoreController = createRooIgnoreController()
+			const pathValidator = createPathValidator()
 			const call: DeferredToolCall = {
 				call_id: "test-read-1",
 				tool: "read_file",
 				arguments: { path: ".rooignore/secret.txt" },
 			}
 
-			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, pathValidator)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Access denied by .rooignore")
 		})
 
-		it("allows read_file to .rooignore path when no rooIgnoreController is provided", async () => {
+		it("allows read_file to .rooignore path when no pathValidator is provided", async () => {
 			const call: DeferredToolCall = {
 				call_id: "test-read-default",
 				tool: "read_file",
@@ -186,14 +185,14 @@ describe("executeDeferredToolCall security", () => {
 
 	describe("list_files .rooignore checks", () => {
 		it("rejects list_files to .rooignore directory", async () => {
-			const rooIgnoreController = createRooIgnoreController()
+			const pathValidator = createPathValidator()
 			const call: DeferredToolCall = {
 				call_id: "test-list-1",
 				tool: "list_files",
 				arguments: { path: ".rooignore" },
 			}
 
-			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, pathValidator)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Access denied by .rooignore")
@@ -214,14 +213,14 @@ describe("executeDeferredToolCall security", () => {
 
 	describe("search_files .rooignore checks", () => {
 		it("rejects search_files to .rooignore directory", async () => {
-			const rooIgnoreController = createRooIgnoreController()
+			const pathValidator = createPathValidator()
 			const call: DeferredToolCall = {
 				call_id: "test-search-1",
 				tool: "search_files",
 				arguments: { path: ".rooignore", regex: "test" },
 			}
 
-			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, pathValidator)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Access denied by .rooignore")
@@ -242,7 +241,7 @@ describe("executeDeferredToolCall security", () => {
 
 	describe("execute_command .rooignore checks", () => {
 		it("rejects command accessing .rooignore path", async () => {
-			const rooIgnoreController = createRooIgnoreController({
+			const pathValidator = createPathValidator({
 				allowPath: () => true,
 				validateCommand: (cmd: string) => {
 					if (cmd.includes(".rooignore")) return ".rooignore/secret.txt"
@@ -256,15 +255,15 @@ describe("executeDeferredToolCall security", () => {
 				arguments: { command: "cat .rooignore/secret.txt" },
 			}
 
-			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, pathValidator)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Access denied by .rooignore")
-			expect(rooIgnoreController.validateCommand).toHaveBeenCalledWith("cat .rooignore/secret.txt")
+			expect(pathValidator.validateCommand).toHaveBeenCalledWith("cat .rooignore/secret.txt")
 		})
 
 		it("allows command not accessing .rooignore path", async () => {
-			const rooIgnoreController = createRooIgnoreController({ allowPath: () => true })
+			const pathValidator = createPathValidator({ allowPath: () => true })
 
 			const call: DeferredToolCall = {
 				call_id: "test-cmd-2",
@@ -272,7 +271,7 @@ describe("executeDeferredToolCall security", () => {
 				arguments: { command: "echo test" },
 			}
 
-			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, rooIgnoreController)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, pathValidator)
 
 			expect(result.is_error).toBe(false)
 		})
@@ -280,7 +279,7 @@ describe("executeDeferredToolCall security", () => {
 
 	describe("write_file protected checks", () => {
 		it("rejects write_file to protected path", async () => {
-			const rooProtectedController = createRooProtectedController((path) => path.includes(".njust_ai"))
+			const writeProtector = createWriteProtector((path) => path.includes(".njust_ai"))
 
 			const call: DeferredToolCall = {
 				call_id: "test-protected-1",
@@ -288,14 +287,7 @@ describe("executeDeferredToolCall security", () => {
 				arguments: { path: ".njust_ai/settings.json", content: "{}" },
 			}
 
-			const result = await executeDeferredToolCall(
-				cwd,
-				call,
-				undefined,
-				undefined,
-				undefined,
-				rooProtectedController,
-			)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, undefined, writeProtector)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Write protected")
@@ -304,7 +296,7 @@ describe("executeDeferredToolCall security", () => {
 
 	describe("apply_diff protected checks", () => {
 		it("rejects apply_diff to protected path", async () => {
-			const rooProtectedController = createRooProtectedController((path) => path.includes(".njust_ai"))
+			const writeProtector = createWriteProtector((path) => path.includes(".njust_ai"))
 
 			const call: DeferredToolCall = {
 				call_id: "test-protected-2",
@@ -312,14 +304,7 @@ describe("executeDeferredToolCall security", () => {
 				arguments: { path: ".njust_ai/settings.json", diff: "test" },
 			}
 
-			const result = await executeDeferredToolCall(
-				cwd,
-				call,
-				undefined,
-				undefined,
-				undefined,
-				rooProtectedController,
-			)
+			const result = await executeDeferredToolCall(cwd, call, undefined, undefined, undefined, writeProtector)
 
 			expect(result.is_error).toBe(true)
 			expect(result.content).toContain("Write protected")

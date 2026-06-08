@@ -11,8 +11,7 @@ import type {
 import type { CloudAgentProfile } from "../types/profile"
 import type { ApplyCloudWorkspaceOpsResult, CloudWorkspaceOpResult } from "../applyCloudWorkspaceOps"
 import type { ParseWorkspaceOpsResult } from "../parseWorkspaceOps"
-import type { RooIgnoreController } from "../../../core/ignore/RooIgnoreController"
-import type { RooProtectedController } from "../../../core/protect/RooProtectedController"
+import type { IPathValidator, IWriteProtector } from "./IPathAccessController"
 
 /**
  * Minimal client interface exposed to core/task code.
@@ -50,8 +49,8 @@ export interface ICloudAgentService {
 		call: DeferredToolCall,
 		allowedCommands?: string[],
 		deniedCommands?: string[],
-		rooIgnoreController?: RooIgnoreController,
-		rooProtectedController?: RooProtectedController,
+		pathValidator?: IPathValidator,
+		writeProtector?: IWriteProtector,
 	): Promise<DeferredToolResult>
 
 	buildCloudWorkspaceOpToolMessage(
@@ -63,16 +62,16 @@ export interface ICloudAgentService {
 	applySingleCloudWorkspaceOp(
 		cwd: string,
 		op: WorkspaceOp,
-		rooIgnoreController?: RooIgnoreController,
-		rooProtectedController?: RooProtectedController,
+		pathValidator?: IPathValidator,
+		writeProtector?: IWriteProtector,
 	): Promise<CloudWorkspaceOpResult>
 
 	applyCloudWorkspaceOps(
 		cwd: string,
 		ops: WorkspaceOp[],
 		isAborted?: () => boolean,
-		rooIgnoreController?: RooIgnoreController,
-		rooProtectedController?: RooProtectedController,
+		pathValidator?: IPathValidator,
+		writeProtector?: IWriteProtector,
 	): Promise<ApplyCloudWorkspaceOpsResult>
 
 	readonly deferredConstants: {

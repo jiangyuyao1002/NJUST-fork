@@ -40,13 +40,16 @@ export interface UniversalTaskResponse {
 	raw?: Record<string, unknown>
 }
 
-export type EndpointType =
-	| "health"
-	| "run"
-	| "deferredStart"
-	| "deferredResume"
-	| "deferredAbort"
-	| "compile"
+export type EndpointType = "health" | "run" | "deferredStart" | "deferredResume" | "deferredAbort" | "compile"
+
+// ─── MCP 回调处理器（可选） ────────────────────────────────────────
+
+export interface McpCallbackHandler {
+	onText?: (content: string) => Promise<void>
+	onReasoning?: (content: string) => Promise<void>
+	onDone?: (summary: string) => Promise<void>
+	onError?: (message: string) => Promise<void>
+}
 
 // ─── 适配器接口 ────────────────────────────────────────────────────
 
@@ -78,4 +81,15 @@ export interface IProtocolAdapter {
 
 	/** 构建认证头（不包含 Content-Type，由 Client 添加） */
 	buildAuthHeaders(): Record<string, string>
+
+	// ─── MCP 可选方法（REST 适配器无需实现） ─────────────────────────
+
+	/** 设置 MCP 回调处理器（仅 MCP 适配器需要） */
+	setCallbackHandler?(handler: McpCallbackHandler): void
+
+	/** 调用 MCP 工具（仅 MCP 适配器需要） */
+	callTool?(name: string, args: Record<string, unknown>): Promise<UniversalTaskResponse>
+
+	/** 解析编译响应（仅 MCP 适配器需要） */
+	parseCompileResponse?(data: Record<string, unknown>): { success: boolean; output: string }
 }

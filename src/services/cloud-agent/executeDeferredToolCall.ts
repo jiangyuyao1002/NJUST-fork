@@ -8,8 +8,7 @@ import {
 } from "../mcp-server/tool-executors"
 import type { DeferredToolCall, DeferredToolResult } from "./types"
 import { getErrorMessage } from "../../shared/error-utils"
-import { allowRooIgnorePathAccess, type RooIgnoreController } from "../../core/ignore/RooIgnoreController"
-import type { RooProtectedController } from "../../core/protect/RooProtectedController"
+import type { IPathValidator, IWriteProtector } from "./interfaces/IPathAccessController"
 
 function expectString(args: Record<string, UnsafeAny>, key: string): string {
 	const val = args[key]
@@ -55,8 +54,8 @@ export async function executeDeferredToolCall(
 	call: DeferredToolCall,
 	allowedCommands?: string[],
 	deniedCommands?: string[],
-	rooIgnoreController?: RooIgnoreController,
-	rooProtectedController?: RooProtectedController,
+	pathValidator?: IPathValidator,
+	writeProtector?: IWriteProtector,
 ): Promise<DeferredToolResult> {
 	try {
 		const args = call.arguments
@@ -71,10 +70,15 @@ export async function executeDeferredToolCall(
 
 		let content: string
 
+		// Helper to check path access (replaces allowRooIgnorePathAccess)
+		const isPathAccessAllowed = (validator: IPathValidator | undefined, filePath: string): boolean => {
+			return !validator || validator.validateAccess(filePath)
+		}
+
 		switch (call.tool) {
 			case "read_file": {
 				const readPath = expectString(args, "path")
-				const readAccessAllowed = allowRooIgnorePathAccess(rooIgnoreController, readPath)
+				const readAccessAllowed = isPathAccessAllowed(pathValidator, readPath)
 				if (!readAccessAllowed) {
 					return {
 						call_id: call.call_id,
@@ -92,7 +96,7 @@ export async function executeDeferredToolCall(
 
 			case "write_file": {
 				const writePath = expectString(args, "path")
-				const accessAllowed = allowRooIgnorePathAccess(rooIgnoreController, writePath)
+				const accessAllowed = isPathAccessAllowed(pathValidator, writePath)
 				if (!accessAllowed) {
 					return {
 						call_id: call.call_id,
@@ -100,7 +104,7 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				const isWriteProtected = (await rooProtectedController?.isWriteProtected(writePath)) || false
+				const isWriteProtected = (await writeProtector?.isWriteProtected(writePath)) || false
 				if (isWriteProtected) {
 					return {
 						call_id: call.call_id,
@@ -108,13 +112,17 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				content = await execWriteFile(cwd, { path: writePath, content: expectString(args, "content") }, rooProtectedController)
+				content = await execWriteFile(
+					cwd,
+					{ path: writePath, content: expectString(args, "content") },
+					writeProtector,
+				)
 				break
 			}
 
 			case "apply_diff": {
 				const diffPath = expectString(args, "path")
-				const accessAllowed = allowRooIgnorePathAccess(rooIgnoreController, diffPath)
+				const accessAllowed = isPathAccessAllowed(pathValidator, diffPath)
 				if (!accessAllowed) {
 					return {
 						call_id: call.call_id,
@@ -122,7 +130,7 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				const isWriteProtected = (await rooProtectedController?.isWriteProtected(diffPath)) || false
+				const isWriteProtected = (await writeProtector?.isWriteProtected(diffPath)) || false
 				if (isWriteProtected) {
 					return {
 						call_id: call.call_id,
@@ -130,14 +138,14 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				content = await execApplyDiff(cwd, { path: diffPath, diff: expectString(args, "diff") }, rooProtectedController)
+				content = await execApplyDiff(cwd, { path: diffPath, diff: expectString(args, "diff") }, writeProtector)
 				break
 			}
 
 			case "list_files": {
 				const raw = args.path
 				const listPath = typeof raw === "string" ? raw.trim() : ""
-				const listAccessAllowed = allowRooIgnorePathAccess(rooIgnoreController, listPath || ".")
+				const listAccessAllowed = isPathAccessAllowed(pathValidator, listPath || ".")
 				if (!listAccessAllowed) {
 					return {
 						call_id: call.call_id,
@@ -148,14 +156,14 @@ export async function executeDeferredToolCall(
 				content = await execListFiles(
 					cwd,
 					{ path: listPath || ".", recursive: expectOptionalBoolean(args, "recursive") },
-					rooIgnoreController,
+					pathValidator,
 				)
 				break
 			}
 
 			case "search_files": {
 				const searchPath = expectOptionalString(args, "path") ?? "."
-				const searchAccessAllowed = allowRooIgnorePathAccess(rooIgnoreController, searchPath)
+				const searchAccessAllowed = isPathAccessAllowed(pathValidator, searchPath)
 				if (!searchAccessAllowed) {
 					return {
 						call_id: call.call_id,
@@ -165,15 +173,19 @@ export async function executeDeferredToolCall(
 				}
 				content = await execSearchFiles(
 					cwd,
-					{ path: searchPath, regex: expectString(args, "regex"), file_pattern: expectOptionalString(args, "file_pattern") },
-					rooIgnoreController,
+					{
+						path: searchPath,
+						regex: expectString(args, "regex"),
+						file_pattern: expectOptionalString(args, "file_pattern"),
+					},
+					pathValidator,
 				)
 				break
 			}
 
 			case "execute_command": {
 				const command = expectString(args, "command")
-				const blockedPath = rooIgnoreController?.validateCommand(command)
+				const blockedPath = pathValidator?.validateCommand?.(command)
 				if (blockedPath) {
 					return {
 						call_id: call.call_id,
@@ -181,11 +193,16 @@ export async function executeDeferredToolCall(
 						is_error: true,
 					}
 				}
-				content = await execCommand(cwd, {
-					command,
-					cwd: expectOptionalString(args, "cwd"),
-					timeout: expectOptionalNumber(args, "timeout"),
-				}, allowedCommands, deniedCommands)
+				content = await execCommand(
+					cwd,
+					{
+						command,
+						cwd: expectOptionalString(args, "cwd"),
+						timeout: expectOptionalNumber(args, "timeout"),
+					},
+					allowedCommands,
+					deniedCommands,
+				)
 				break
 			}
 

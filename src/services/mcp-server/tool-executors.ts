@@ -9,8 +9,7 @@ import { checkCommandSafety } from "../../core/tools/helpers/commandSafety"
 import { filterSensitiveEnv } from "../../utils/env"
 import { getCommandDecision } from "../../core/auto-approval"
 import { detectCangjieHome } from "../cangjie-lsp/cangjieToolUtils"
-import type { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
-import type { RooProtectedController } from "../../core/protect/RooProtectedController"
+import type { IPathValidator, IWriteProtector } from "../cloud-agent/interfaces/IPathAccessController"
 
 function extractFirstCommandToken(command: string): string {
 	const trimmed = command.trim()
@@ -128,10 +127,10 @@ export interface WriteFileParams {
 export async function execWriteFile(
 	cwd: string,
 	params: WriteFileParams,
-	protectedController?: RooProtectedController,
+	writeProtector?: IWriteProtector,
 ): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
-	if (protectedController && (await protectedController.isWriteProtected(params.path))) {
+	if (writeProtector && (await writeProtector.isWriteProtected(params.path))) {
 		throw new Error(`File is write-protected: ${params.path}`)
 	}
 
@@ -153,7 +152,7 @@ export interface ListFilesParams {
 export async function execListFiles(
 	cwd: string,
 	params: ListFilesParams,
-	rooIgnoreController?: RooIgnoreController,
+	pathValidator?: IPathValidator,
 ): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
 
@@ -165,7 +164,7 @@ export async function execListFiles(
 
 	const relFiles = files
 		.map((f) => path.relative(cwd, f).replace(/\\/g, "/"))
-		.filter((relPath) => !rooIgnoreController || rooIgnoreController.validateAccess(relPath))
+		.filter((relPath) => !pathValidator || pathValidator.validateAccess(relPath))
 	let result = relFiles.join("\n")
 
 	if (didHitLimit) {
@@ -184,7 +183,7 @@ export interface SearchFilesParams {
 export async function execSearchFiles(
 	cwd: string,
 	params: SearchFilesParams,
-	rooIgnoreController?: RooIgnoreController,
+	pathValidator?: IPathValidator,
 ): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
 
@@ -192,7 +191,7 @@ export async function execSearchFiles(
 		throw new Error(`Directory not found: ${params.path}`)
 	}
 
-	return await regexSearchFiles(cwd, absPath, params.regex, params.file_pattern, rooIgnoreController)
+	return await regexSearchFiles(cwd, absPath, params.regex, params.file_pattern, pathValidator)
 }
 
 export interface ExecuteCommandParams {
@@ -308,10 +307,10 @@ export interface ApplyDiffParams {
 export async function execApplyDiff(
 	cwd: string,
 	params: ApplyDiffParams,
-	protectedController?: RooProtectedController,
+	writeProtector?: IWriteProtector,
 ): Promise<string> {
 	const absPath = await ensureWithinWorkspace(cwd, params.path)
-	if (protectedController && (await protectedController.isWriteProtected(params.path))) {
+	if (writeProtector && (await writeProtector.isWriteProtected(params.path))) {
 		throw new Error(`File is write-protected: ${params.path}`)
 	}
 

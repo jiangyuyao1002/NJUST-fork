@@ -2,8 +2,7 @@ import { execApplyDiff, execWriteFile } from "../mcp-server/tool-executors"
 
 import type { WorkspaceOp } from "./types"
 import { getErrorMessage } from "../../shared/error-utils"
-import { allowRooIgnorePathAccess, type RooIgnoreController } from "../../core/ignore/RooIgnoreController"
-import type { RooProtectedController } from "../../core/protect/RooProtectedController"
+import type { IPathValidator, IWriteProtector } from "./interfaces/IPathAccessController"
 
 export interface CloudWorkspaceOpResult {
 	path: string
@@ -24,23 +23,23 @@ export interface ApplyCloudWorkspaceOpsResult {
 export async function applySingleCloudWorkspaceOp(
 	cwd: string,
 	op: WorkspaceOp,
-	rooIgnoreController?: RooIgnoreController,
-	rooProtectedController?: RooProtectedController,
+	pathValidator?: IPathValidator,
+	writeProtector?: IWriteProtector,
 ): Promise<CloudWorkspaceOpResult> {
 	try {
-		const accessAllowed = allowRooIgnorePathAccess(rooIgnoreController, op.path)
+		const accessAllowed = !pathValidator || pathValidator.validateAccess(op.path)
 		if (!accessAllowed) {
 			return { path: op.path, ok: false, message: `Access denied by .rooignore: ${op.path}` }
 		}
-		const isWriteProtected = (await rooProtectedController?.isWriteProtected(op.path)) || false
+		const isWriteProtected = (await writeProtector?.isWriteProtected(op.path)) || false
 		if (isWriteProtected) {
 			return { path: op.path, ok: false, message: `Write protected: ${op.path}` }
 		}
 		if (op.op === "write_file") {
-			const message = await execWriteFile(cwd, { path: op.path, content: op.content }, rooProtectedController)
+			const message = await execWriteFile(cwd, { path: op.path, content: op.content }, writeProtector)
 			return { path: op.path, ok: true, message }
 		}
-		const message = await execApplyDiff(cwd, { path: op.path, diff: op.diff }, rooProtectedController)
+		const message = await execApplyDiff(cwd, { path: op.path, diff: op.diff }, writeProtector)
 		return { path: op.path, ok: true, message }
 	} catch (e) {
 		const msg = getErrorMessage(e)
@@ -55,8 +54,8 @@ export async function applyCloudWorkspaceOps(
 	cwd: string,
 	ops: WorkspaceOp[],
 	isAborted?: () => boolean,
-	rooIgnoreController?: RooIgnoreController,
-	rooProtectedController?: RooProtectedController,
+	pathValidator?: IPathValidator,
+	writeProtector?: IWriteProtector,
 ): Promise<ApplyCloudWorkspaceOpsResult> {
 	const results: CloudWorkspaceOpResult[] = []
 
@@ -70,7 +69,7 @@ export async function applyCloudWorkspaceOps(
 		}
 
 		const op = ops[i]!
-		const single = await applySingleCloudWorkspaceOp(cwd, op, rooIgnoreController, rooProtectedController)
+		const single = await applySingleCloudWorkspaceOp(cwd, op, pathValidator, writeProtector)
 		results.push(single)
 		if (!single.ok) {
 			return { results, failedAtIndex: i, ok: false }

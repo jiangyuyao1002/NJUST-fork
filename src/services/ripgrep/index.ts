@@ -4,7 +4,7 @@ import * as readline from "readline"
 
 import * as vscode from "vscode"
 
-import { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
+import type { IPathValidator } from "../cloud-agent/interfaces/IPathAccessController"
 import { fileExistsAtPath } from "../../utils/fs"
 import { logger } from "../../shared/logger"
 import { TelemetryService } from "@njust-ai/telemetry"
@@ -103,7 +103,10 @@ export async function getBinPath(vscodeAppRoot: string): Promise<string | undefi
 
 	// Fallback: search in PATH
 	try {
-		const result = childProcess.execSync(isWindows ? "where rg" : "which rg", { encoding: "utf8" }).trim().split("\n")[0]
+		const result = childProcess
+			.execSync(isWindows ? "where rg" : "which rg", { encoding: "utf8" })
+			.trim()
+			.split("\n")[0]
 		if (result) {
 			return result
 		}
@@ -169,7 +172,7 @@ export async function regexSearchFiles(
 	directoryPath: string,
 	regex: string,
 	filePattern?: string,
-	rooIgnoreController?: RooIgnoreController,
+	pathValidator?: IPathValidator,
 ): Promise<string> {
 	const vscodeAppRoot = vscode.env.appRoot
 	const rgPath = await getBinPath(vscodeAppRoot)
@@ -248,11 +251,9 @@ export async function regexSearchFiles(
 		}
 	})
 
-
-
 	// Filter results using RooIgnoreController if provided
-	const filteredResults = rooIgnoreController
-		? results.filter((result) => rooIgnoreController.validateAccess(result.file))
+	const filteredResults = pathValidator
+		? results.filter((result) => pathValidator.validateAccess(result.file))
 		: results
 
 	return formatResults(filteredResults, cwd)

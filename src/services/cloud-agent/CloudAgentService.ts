@@ -25,8 +25,7 @@ import type {
 	WorkspaceOp,
 } from "./types"
 import type { CloudAgentProfile } from "./types/profile"
-import type { RooIgnoreController } from "../../core/ignore/RooIgnoreController"
-import type { RooProtectedController } from "../../core/protect/RooProtectedController"
+import type { IPathValidator, IWriteProtector } from "./interfaces/IPathAccessController"
 import type { ICloudAgentClient, ICloudAgentService } from "./interfaces/ICloudAgentService"
 
 /**
@@ -95,17 +94,10 @@ export class CloudAgentService implements ICloudAgentService {
 		call: DeferredToolCall,
 		allowedCommands?: string[],
 		deniedCommands?: string[],
-		rooIgnoreController?: RooIgnoreController,
-		rooProtectedController?: RooProtectedController,
+		pathValidator?: IPathValidator,
+		writeProtector?: IWriteProtector,
 	): Promise<DeferredToolResult> {
-		return executeDeferredToolCall(
-			cwd,
-			call,
-			allowedCommands,
-			deniedCommands,
-			rooIgnoreController,
-			rooProtectedController,
-		)
+		return executeDeferredToolCall(cwd, call, allowedCommands, deniedCommands, pathValidator, writeProtector)
 	}
 
 	buildCloudWorkspaceOpToolMessage(
@@ -119,20 +111,20 @@ export class CloudAgentService implements ICloudAgentService {
 	applySingleCloudWorkspaceOp(
 		cwd: string,
 		op: WorkspaceOp,
-		rooIgnoreController?: RooIgnoreController,
-		rooProtectedController?: RooProtectedController,
+		pathValidator?: IPathValidator,
+		writeProtector?: IWriteProtector,
 	): Promise<CloudWorkspaceOpResult> {
-		return applySingleCloudWorkspaceOp(cwd, op, rooIgnoreController, rooProtectedController)
+		return applySingleCloudWorkspaceOp(cwd, op, pathValidator, writeProtector)
 	}
 
 	applyCloudWorkspaceOps(
 		cwd: string,
 		ops: WorkspaceOp[],
 		isAborted?: () => boolean,
-		rooIgnoreController?: RooIgnoreController,
-		rooProtectedController?: RooProtectedController,
+		pathValidator?: IPathValidator,
+		writeProtector?: IWriteProtector,
 	): Promise<ApplyCloudWorkspaceOpsResult> {
-		return applyCloudWorkspaceOps(cwd, ops, isAborted, rooIgnoreController, rooProtectedController)
+		return applyCloudWorkspaceOps(cwd, ops, isAborted, pathValidator, writeProtector)
 	}
 
 	get deferredConstants() {

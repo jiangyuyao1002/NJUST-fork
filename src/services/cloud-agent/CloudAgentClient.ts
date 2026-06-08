@@ -16,9 +16,9 @@ import type {
 } from "./types"
 import type { CloudAgentProfile } from "./types/profile"
 import { AdapterFactory } from "./adapters/AdapterFactory"
-import type { IProtocolAdapter, UniversalTaskResponse } from "./adapters/types"
-import { McpProtocolAdapter, MCP_TOOLS } from "./adapters/McpProtocolAdapter"
-import type { McpCallbackHandler } from "./adapters/McpProtocolAdapter"
+import type { IProtocolAdapterFactory } from "./adapters/IProtocolAdapterFactory"
+import type { IProtocolAdapter, McpCallbackHandler, UniversalTaskResponse } from "./adapters/types"
+import { MCP_TOOLS } from "./adapters/McpProtocolAdapter"
 import { normalizeServerUrl } from "./urlUtils"
 import { t } from "../../i18n"
 
@@ -91,7 +91,7 @@ export class CloudAgentClient {
 		}
 
 		// 从 Profile 构建临时适配器以生成认证头
-		const tempAdapter = AdapterFactory.create(profile)
+		const tempAdapter = AdapterFactory.DEFAULT.create(profile)
 		const headers: Record<string, string> = {
 			"Content-Type": "application/json",
 			...tempAdapter.buildAuthHeaders(),
@@ -136,7 +136,11 @@ export class CloudAgentClient {
 	private readonly retryExecutor = new ApiRetryExecutor(CLOUD_AGENT_RETRY_OPTIONS)
 	private readonly adapter: IProtocolAdapter
 
-	constructor(callbacks: CloudAgentCallbacks, options: CloudAgentClientOptions) {
+	constructor(
+		callbacks: CloudAgentCallbacks,
+		options: CloudAgentClientOptions,
+		adapterFactory: IProtocolAdapterFactory = AdapterFactory.DEFAULT,
+	) {
 		this.callbacks = callbacks
 		this.options = options
 
@@ -154,10 +158,10 @@ export class CloudAgentClient {
 		}
 
 		// 创建并初始化适配器
-		this.adapter = AdapterFactory.create(profile)
+		this.adapter = adapterFactory.create(profile)
 
 		if (this.adapter.protocolType === "mcp") {
-			;(this.adapter as McpProtocolAdapter).setCallbackHandler(this.createMcpCallbackHandler())
+			this.adapter.setCallbackHandler?.(this.createMcpCallbackHandler())
 		}
 	}
 
@@ -307,12 +311,11 @@ export class CloudAgentClient {
 	 * 在 MCP adapter 上执行操作。异常时自动释放连接。
 	 * 成功路径的连接释放由调用者（CloudAgentOrchestrator.runLegacy 的 finally 块）负责。
 	 */
-	private async withMcpAdapter<T>(fn: (adapter: McpProtocolAdapter) => Promise<T>): Promise<T> {
-		const mcpAdapter = this.adapter as McpProtocolAdapter
+	private async withMcpAdapter<T>(fn: (adapter: IProtocolAdapter) => Promise<T>): Promise<T> {
 		try {
-			return await fn(mcpAdapter)
+			return await fn(this.adapter)
 		} catch (err) {
-			await mcpAdapter
+			await this.adapter
 				.disconnect()
 				.catch((e) => logger.debug("CloudAgentClient", "MCP disconnect failed during error cleanup:", e))
 			throw err
@@ -337,7 +340,7 @@ export class CloudAgentClient {
 
 		// 2. 根据协议类型选择调用方式
 		if (this.adapter.protocolType === "mcp") {
-			data = await this.withMcpAdapter((mcpAdapter) => mcpAdapter.callTool(MCP_TOOLS.SUBMIT_TASK, body))
+			data = await this.withMcpAdapter((adapter) => adapter.callTool!(MCP_TOOLS.SUBMIT_TASK, body))
 		} else {
 			// REST 路径（现有逻辑不变）
 			const endpoint = this.adapter.getEndpoint("run")
@@ -410,12 +413,12 @@ export class CloudAgentClient {
 	 */
 	async compile(sessionId: string, workspacePath?: string): Promise<CloudCompileResult> {
 		if (this.adapter.protocolType === "mcp") {
-			return this.withMcpAdapter(async (mcpAdapter) => {
-				const result = await mcpAdapter.callTool(MCP_TOOLS.COMPILE, {
+			return this.withMcpAdapter(async (adapter) => {
+				const result = await adapter.callTool!(MCP_TOOLS.COMPILE, {
 					session_id: sessionId,
 					workspace_path: workspacePath,
 				})
-				return mcpAdapter.parseCompileResponse(result.raw ?? {})
+				return adapter.parseCompileResponse!(result.raw ?? {})
 			})
 		}
 

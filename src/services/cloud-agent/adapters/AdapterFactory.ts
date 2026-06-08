@@ -1,11 +1,14 @@
 import type { CloudAgentProfile } from "../types/profile"
 import type { IProtocolAdapter } from "./types"
+import type { IProtocolAdapterFactory } from "./IProtocolAdapterFactory"
 import { RestProtocolAdapter } from "./RestProtocolAdapter"
 import { McpProtocolAdapter } from "./McpProtocolAdapter"
 import { logger } from "../../../shared/logger"
 
-export class AdapterFactory {
-	static create(profile: CloudAgentProfile): IProtocolAdapter {
+export class AdapterFactory implements IProtocolAdapterFactory {
+	static readonly DEFAULT = new AdapterFactory()
+
+	create(profile: CloudAgentProfile): IProtocolAdapter {
 		let adapter: IProtocolAdapter
 
 		switch (profile.protocolType) {
