@@ -71,6 +71,15 @@ vi.mock("../../../i18n", () => ({
 
 import { CangjieMacroCodeLensProvider, CangjieMacroHoverProvider } from "../CangjieMacroProvider"
 
+function createMockDocument(lines: string[]) {
+	return {
+		getText: () => lines.join("\n"),
+		lineCount: lines.length,
+		lineAt: (i: number) => ({ text: lines[i] ?? "" }),
+		getWordRangeAtPosition: vi.fn().mockReturnValue(undefined),
+	} as any
+}
+
 describe("CangjieMacroProvider", () => {
 	let mockIndex: any
 	let mockOutput: any
@@ -80,6 +89,7 @@ describe("CangjieMacroProvider", () => {
 		mockIndex = {
 			findEnclosingSymbol: vi.fn().mockReturnValue(null),
 			findDefinitions: vi.fn().mockReturnValue([]),
+			findDefinitionsByKind: vi.fn().mockReturnValue([]),
 		}
 		mockOutput = { appendLine: vi.fn(), dispose: vi.fn() }
 	})
@@ -87,26 +97,81 @@ describe("CangjieMacroProvider", () => {
 	describe("CangjieMacroCodeLensProvider", () => {
 		it("returns empty lenses for document without macros", () => {
 			const provider = new CangjieMacroCodeLensProvider(mockIndex)
-			const doc = {
-				getText: () => "func main() {}",
-				lineCount: 1,
-				lineAt: () => ({ text: "func main() {}" }),
-			} as any
+			const doc = createMockDocument(["func main() {}"])
 			const result = provider.provideCodeLenses(doc, {} as any)
 			expect(result).toEqual([])
+		})
+
+		it("generates Expand Macro lens for custom macro call", () => {
+			const provider = new CangjieMacroCodeLensProvider(mockIndex)
+			const doc = createMockDocument(["@MyMacro", "func main() {}"])
+			const result = provider.provideCodeLenses(doc, {} as any)
+			expect(result.length).toBeGreaterThanOrEqual(1)
+			// Should have "Expand Macro" lens
+			const expandLens = result.find((l: any) => l.command?.title?.includes("expand_macro"))
+			expect(expandLens).toBeDefined()
+		})
+
+		it("generates Go to Macro Definition lens when definition found", () => {
+			mockIndex.findDefinitionsByKind.mockReturnValue([{ filePath: "/test/macro.cj", startLine: 5 }])
+			const provider = new CangjieMacroCodeLensProvider(mockIndex)
+			const doc = createMockDocument(["@MyMacro", "func main() {}"])
+			const result = provider.provideCodeLenses(doc, {} as any)
+			expect(result.length).toBeGreaterThanOrEqual(2)
+			// Should have "Go to Macro Definition" lens
+			const gotoLens = result.find((l: any) => l.command?.title?.includes("go_to_macro_def"))
+			expect(gotoLens).toBeDefined()
+		})
+
+		it("filters built-in annotations", () => {
+			const provider = new CangjieMacroCodeLensProvider(mockIndex)
+			const doc = createMockDocument(["@Test", "@TestCase", "@Assert", "@Deprecated", "@Suppress", "@Override"])
+			const result = provider.provideCodeLenses(doc, {} as any)
+			expect(result).toEqual([])
+		})
+
+		it("handles multiple macro calls on different lines", () => {
+			const provider = new CangjieMacroCodeLensProvider(mockIndex)
+			const doc = createMockDocument(["@Macro1", "func foo() {}", "@Macro2", "func bar() {}"])
+			const result = provider.provideCodeLenses(doc, {} as any)
+			expect(result.length).toBeGreaterThanOrEqual(2)
 		})
 	})
 
 	describe("CangjieMacroHoverProvider", () => {
 		it("returns undefined for non-macro hover", () => {
 			const provider = new CangjieMacroHoverProvider(mockIndex, mockOutput)
-			const doc = {
-				getText: () => "func main() {}",
-				getWordRangeAtPosition: () => undefined,
-				lineAt: (_line: number) => ({ text: "func main() {}" }),
-			} as any
+			const doc = createMockDocument(["func main() {}"])
 			const result = provider.provideHover(doc, { line: 0, character: 0 } as any, {} as any)
 			expect(result).toBeUndefined()
+		})
+
+		it("returns hover for macro call when cursor is on macro name", () => {
+			mockIndex.findDefinitionsByKind.mockReturnValue([
+				{ filePath: "/test/macro.cj", startLine: 5, signature: "macro MyMacro() {}" },
+			])
+			const provider = new CangjieMacroHoverProvider(mockIndex, mockOutput)
+			const doc = createMockDocument(["@MyMacro func main() {}"])
+			// Cursor on 'M' of MyMacro (position 1)
+			const result = provider.provideHover(doc, { line: 0, character: 1 } as any, {} as any)
+			expect(result).toBeDefined()
+		})
+
+		it("returns undefined when cursor is not on macro call", () => {
+			const provider = new CangjieMacroHoverProvider(mockIndex, mockOutput)
+			const doc = createMockDocument(["@MyMacro func main() {}"])
+			// Cursor on 'f' of func (position 10)
+			const result = provider.provideHover(doc, { line: 0, character: 10 } as any, {} as any)
+			expect(result).toBeUndefined()
+		})
+
+		it("shows hover for built-in annotations (no filtering in hover provider)", () => {
+			const provider = new CangjieMacroHoverProvider(mockIndex, mockOutput)
+			const doc = createMockDocument(["@Test func main() {}"])
+			// Cursor on 'T' of Test
+			const result = provider.provideHover(doc, { line: 0, character: 1 } as any, {} as any)
+			// Hover provider does NOT filter built-in annotations (unlike CodeLens provider)
+			expect(result).toBeDefined()
 		})
 	})
 })

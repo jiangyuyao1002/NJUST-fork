@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-const { mockExistsSync, mockReadFileSync, mockGetWorkspaceFolder } = vi.hoisted(() => ({
-	mockExistsSync: vi.fn(),
-	mockReadFileSync: vi.fn(),
-	mockGetWorkspaceFolder: vi.fn(),
-}))
+const { mockExistsSync, mockReadFileSync, mockGetWorkspaceFolder, mockResolveCangjieToolPath, mockExecFile } =
+	vi.hoisted(() => ({
+		mockExistsSync: vi.fn(),
+		mockReadFileSync: vi.fn(),
+		mockGetWorkspaceFolder: vi.fn(),
+		mockResolveCangjieToolPath: vi.fn(),
+		mockExecFile: vi.fn(),
+	}))
 
 vi.mock("fs", async () => {
 	const actual = await vi.importActual<typeof import("fs")>("fs")
@@ -15,6 +18,10 @@ vi.mock("fs", async () => {
 		readFileSync: mockReadFileSync,
 	}
 })
+
+vi.mock("child_process", () => ({
+	execFile: mockExecFile,
+}))
 
 vi.mock("vscode", () => ({
 	DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
@@ -62,7 +69,7 @@ vi.mock("vscode", () => ({
 }))
 
 vi.mock("../cangjieToolUtils", () => ({
-	resolveCangjieToolPath: vi.fn().mockReturnValue(undefined),
+	resolveCangjieToolPath: mockResolveCangjieToolPath,
 	buildCangjieToolEnv: vi.fn().mockReturnValue({}),
 }))
 
@@ -89,6 +96,9 @@ describe("CjlintDiagnostics", () => {
 		vi.clearAllMocks()
 		mockOutput = { appendLine: vi.fn(), dispose: vi.fn() }
 		diagnostics = new CjlintDiagnostics(mockOutput as any)
+		mockResolveCangjieToolPath.mockReturnValue(undefined)
+		mockExistsSync.mockReturnValue(false)
+		mockGetWorkspaceFolder.mockReturnValue({ uri: { fsPath: "/ws" } })
 	})
 
 	it("creates diagnostic collection on construction", () => {
@@ -105,13 +115,49 @@ describe("CjlintDiagnostics", () => {
 	})
 
 	it("lintSingleFile returns early when cjlint not found", async () => {
+		mockResolveCangjieToolPath.mockReturnValue(undefined)
 		const uri = { fsPath: "/test/file.cj" } as any
 		await diagnostics.lintSingleFile(uri)
 		expect(mockOutput.appendLine).not.toHaveBeenCalledWith(expect.stringContaining("Error"))
 	})
 
 	it("lintWorkspace returns early when cjlint not found", async () => {
+		mockResolveCangjieToolPath.mockReturnValue(undefined)
 		await diagnostics.lintWorkspace()
 		expect(mockOutput.appendLine).not.toHaveBeenCalledWith(expect.stringContaining("Error"))
+	})
+
+	it("lintSingleFile runs cjlint when tool found", async () => {
+		mockResolveCangjieToolPath.mockReturnValue("/opt/cangjie/bin/cjlint")
+		mockExistsSync.mockReturnValue(true)
+		// Mock execFile to succeed
+		mockExecFile.mockImplementation((_cmd: string, _args: string[], _opts: any, cb: (...args: any[]) => void) => {
+			if (typeof cb === "function") cb(null, { stdout: "", stderr: "" })
+		})
+		// Mock readFileSync to return JSON report
+		mockReadFileSync.mockReturnValue(
+			JSON.stringify([{ file: "/test/file.cj", line: 1, column: 1, message: "test error", severity: "error" }]),
+		)
+		// Mock existsSync for report file
+		mockExistsSync.mockImplementation((p: string) => {
+			if (p === "/test/file.cj") return true
+			if (p.includes("cjlint_single_")) return true
+			return false
+		})
+		const uri = { fsPath: "/test/file.cj" } as any
+		await diagnostics.lintSingleFile(uri)
+		// Should have called execFile
+		expect(mockExecFile).toHaveBeenCalled()
+	})
+
+	it("lintWorkspace runs cjlint when tool found", async () => {
+		mockResolveCangjieToolPath.mockReturnValue("/opt/cangjie/bin/cjlint")
+		mockExistsSync.mockReturnValue(true)
+		mockExecFile.mockImplementation((_cmd: string, _args: string[], _opts: any, cb: (...args: any[]) => void) => {
+			if (typeof cb === "function") cb(null, { stdout: "", stderr: "" })
+		})
+		mockReadFileSync.mockReturnValue("[]")
+		await diagnostics.lintWorkspace()
+		expect(mockExecFile).toHaveBeenCalled()
 	})
 })
