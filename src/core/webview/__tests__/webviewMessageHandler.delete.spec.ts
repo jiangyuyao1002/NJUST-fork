@@ -80,6 +80,7 @@ describe("webviewMessageHandler delete functionality", () => {
 		// Create mock provider
 		provider = {
 			getCurrentTask: vi.fn(() => getCurrentTaskMock),
+			postStateToWebview: vi.fn(),
 			postMessageToWebview: vi.fn(),
 			contextProxy: {
 				getValue: vi.fn(),

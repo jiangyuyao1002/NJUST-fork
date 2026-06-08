@@ -46,6 +46,7 @@ describe("webviewMessageHandler - checkpoint operations", () => {
 		// Setup mock provider
 		mockProvider = {
 			getCurrentTask: vi.fn(() => mockCline),
+			postStateToWebview: vi.fn(),
 			postMessageToWebview: vi.fn(),
 			getTaskWithId: vi.fn(function () {
 				return {
