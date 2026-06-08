@@ -93,10 +93,14 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 		let workspaceGit: SimpleGit
 		let testFile: string
 		let service: RepoPerTaskCheckpointService
+		let currentShadowDir: string
+		let currentWorkspaceDir: string
 
 		beforeEach(async () => {
 			const shadowDir = path.join(tmpDir, `${prefix}-${Date.now()}`)
 			const workspaceDir = path.join(tmpDir, `workspace-${Date.now()}`)
+			currentShadowDir = shadowDir
+			currentWorkspaceDir = workspaceDir
 			const repo = await initWorkspaceRepo({ workspaceDir })
 
 			workspaceGit = repo.git
@@ -108,6 +112,8 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 
 		afterEach(async () => {
 			vitest.restoreAllMocks()
+			await removeTempDir(currentShadowDir)
+			await removeTempDir(currentWorkspaceDir)
 		})
 
 		afterAll(async () => {

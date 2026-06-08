@@ -31,9 +31,6 @@ export default defineConfig({
 			exclude: [
 				"**/__tests__/**",
 				"**/__mocks__/**",
-				"src/services/cangjie-lsp/**",
-				"**/cangjie-lsp/**",
-				"**/cangjie-context.ts",
 				"src/services/cangjie-corpus/**",
 				"src/core/task/interfaces/**",
 				"**/ClassifierStrategy.ts",

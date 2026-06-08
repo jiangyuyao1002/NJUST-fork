@@ -27,10 +27,7 @@ function createMockProfile(): CloudAgentProfile {
 }
 
 function createInMemoryMcpServer(): McpServer {
-	const server = new McpServer(
-		{ name: "test-cloud-agent", version: "1.0.0" },
-		{ capabilities: { tools: {} } },
-	)
+	const server = new McpServer({ name: "test-cloud-agent", version: "1.0.0" }, { capabilities: { tools: {} } })
 
 	server.tool(
 		"submit_task",
@@ -47,20 +44,22 @@ function createInMemoryMcpServer(): McpServer {
 			})
 
 			return {
-				content: [{
-					type: "text",
-					text: JSON.stringify({
-						ok: true,
-						status: "done",
-						run_id: "run-inmemory",
-						text: "Task completed via InMemory transport",
-						logs: ["step 1 done", "step 2 done"],
-						memory_summary: "Test memory summary",
-						tokens_in: 50,
-						tokens_out: 100,
-						cost: 0.01,
-					}),
-				}],
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify({
+							ok: true,
+							status: "done",
+							run_id: "run-inmemory",
+							text: "Task completed via InMemory transport",
+							logs: ["step 1 done", "step 2 done"],
+							memory_summary: "Test memory summary",
+							tokens_in: 50,
+							tokens_out: 100,
+							cost: 0.01,
+						}),
+					},
+				],
 			}
 		},
 	)
@@ -73,10 +72,12 @@ function createInMemoryMcpServer(): McpServer {
 			workspacePath: z.string().optional(),
 		},
 		async () => ({
-			content: [{
-				type: "text",
-				text: JSON.stringify({ success: true, output: "Build OK (in-memory)" }),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({ success: true, output: "Build OK (in-memory)" }),
+				},
+			],
 		}),
 	)
 
@@ -96,16 +97,10 @@ describe("McpProtocolAdapter Integration (InMemory)", () => {
 
 		adapter = new McpProtocolAdapter()
 		adapter.initialize(createMockProfile())
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		;(adapter as any).transport = clientTransport
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		;(adapter as any).client = new Client(
-			{ name: "njust-ai", version: "1.0.0" },
-			{ capabilities: {} },
-		)
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		;(adapter as any).client = new Client({ name: "njust-ai", version: "1.0.0" }, { capabilities: {} })
+
 		await (adapter as any).client.connect(clientTransport)
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		;(adapter as any).connected = true
 	})
 
@@ -157,17 +152,17 @@ describe("McpProtocolAdapter Integration (InMemory)", () => {
 
 	it("should parse MCP ToolResult format via parseResponseBody", () => {
 		const mcpResult = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({
-					ok: true,
-					status: "done",
-					run_id: "run-test",
-					pending_tools: [
-						{ call_id: "c1", tool: "read_file", arguments: { path: "a.txt" } },
-					],
-				}),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						ok: true,
+						status: "done",
+						run_id: "run-test",
+						pending_tools: [{ call_id: "c1", tool: "read_file", arguments: { path: "a.txt" } }],
+					}),
+				},
+			],
 		}
 
 		const result = adapter.parseResponseBody(mcpResult)
@@ -188,10 +183,12 @@ describe("McpProtocolAdapter Integration (InMemory)", () => {
 
 	it("should handle non-array pending_tools gracefully", () => {
 		const mcpResult = {
-			content: [{
-				type: "text",
-				text: JSON.stringify({ pending_tools: "not-array" }),
-			}],
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({ pending_tools: "not-array" }),
+				},
+			],
 		}
 		const result = adapter.parseResponseBody(mcpResult)
 		expect(result.pendingTools).toEqual([])
@@ -199,7 +196,7 @@ describe("McpProtocolAdapter Integration (InMemory)", () => {
 
 	it("should disconnect cleanly", async () => {
 		await adapter.disconnect()
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 		expect((adapter as any).connected).toBe(false)
 	})
 })

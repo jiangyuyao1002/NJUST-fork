@@ -24,12 +24,10 @@ export class StdioTransportStrategy implements ITransportStrategy {
 		const isWindows = process.platform === "win32"
 
 		// Check if command is already cmd.exe to avoid double-wrapping
-		const isAlreadyWrapped =
-			config.command.toLowerCase() === "cmd.exe" || config.command.toLowerCase() === "cmd"
+		const isAlreadyWrapped = config.command.toLowerCase() === "cmd.exe" || config.command.toLowerCase() === "cmd"
 
 		const command = isWindows && !isAlreadyWrapped ? "cmd.exe" : config.command
-		const args =
-			isWindows && !isAlreadyWrapped ? ["/c", config.command, ...(config.args || [])] : config.args
+		const args = isWindows && !isAlreadyWrapped ? ["/c", config.command, ...(config.args || [])] : config.args
 
 		const mergedEnv = mergeSafeEnv(getDefaultEnvironment(), config.env || {}, name)
 		const env: Record<string, string> = {}
@@ -41,7 +39,7 @@ export class StdioTransportStrategy implements ITransportStrategy {
 
 		// Validate config.cwd for basic safety (no null bytes, no obviously malicious paths)
 		const cwd = config.cwd ? String(config.cwd) : undefined
-		if (cwd && cwd.includes("\0")) {
+		if (cwd?.includes("\0")) {
 			logger.warn("McpHub", `stdio "${name}" cwd contains null bytes, ignoring`)
 		}
 		const safeCwd = cwd && !cwd.includes("\0") ? cwd : undefined
