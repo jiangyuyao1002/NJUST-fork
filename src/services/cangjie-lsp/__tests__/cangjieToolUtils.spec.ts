@@ -396,6 +396,34 @@ describe("cangjieToolUtils", () => {
 			}
 		})
 
+		it("updates an existing PATH key when building win32 environment", () => {
+			invalidateCangjieToolEnvCache()
+			const origPlatform = Object.getOwnPropertyDescriptor(process, "platform")
+			const origEnv = Object.getOwnPropertyDescriptor(process, "env")
+			Object.defineProperty(process, "platform", { value: "win32" })
+			Object.defineProperty(process, "env", {
+				value: { PATH: "C:\\existing-bin" },
+				configurable: true,
+				writable: true,
+			})
+
+			mockExistsSync.mockReturnValue(true)
+
+			try {
+				const env = buildCangjieToolEnv("C:\\cangjie")
+				expect(env.PATH).toContain("windows_x86_64_llvm")
+				expect(env.Path).toContain("windows_x86_64_llvm")
+				expect(env.LD_LIBRARY_PATH).toBeUndefined()
+			} finally {
+				if (origPlatform) {
+					Object.defineProperty(process, "platform", origPlatform)
+				}
+				if (origEnv) {
+					Object.defineProperty(process, "env", origEnv)
+				}
+			}
+		})
+
 		it("preserves existing LD_LIBRARY_PATH content on non-win32", () => {
 			invalidateCangjieToolEnvCache()
 			const origPlatform = Object.getOwnPropertyDescriptor(process, "platform")

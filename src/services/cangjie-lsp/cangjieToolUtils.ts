@@ -98,8 +98,15 @@ export function buildCangjieToolEnv(cangjieHome?: string): Record<string, string
 	extraPaths.push(path.join(home, "tools", "lib"))
 
 	const existing = env["PATH"] || env["Path"] || ""
-	const pathKey = process.platform === "win32" ? "Path" : "PATH"
-	env[pathKey] = extraPaths.filter((p) => fs.existsSync(p)).join(sep) + sep + existing
+	const updatedPath = extraPaths.filter((p) => fs.existsSync(p)).join(sep) + sep + existing
+	if (process.platform === "win32") {
+		const pathKeys = Object.keys(env).filter((key) => key.toLowerCase() === "path")
+		for (const key of new Set([...pathKeys, "Path"])) {
+			env[key] = updatedPath
+		}
+	} else {
+		env["PATH"] = updatedPath
+	}
 
 	if (process.platform !== "win32") {
 		const ldPaths = extraPaths.filter((p) => fs.existsSync(p))
