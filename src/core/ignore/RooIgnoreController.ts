@@ -119,19 +119,25 @@ export class RooIgnoreController {
 			try {
 				realPath = fsSync.realpathSync(absolutePath)
 			} catch {
-				// If realpath fails (file doesn't exist, broken symlink, etc.),
-				// use the original path
-				realPath = absolutePath
+				// Fail-closed: if we can't resolve the real path, deny access
+				return false
 			}
 
 			// Convert real path to relative for .rooignore checking
 			const relativePath = path.relative(this.cwd, realPath).toPosix()
 
+			// Paths outside the cwd start with ".." and can't match any
+			// .rooignore pattern. The ignore library throws RangeError for such
+			// paths, so allow them early (consistent with RooProtectedController).
+			if (relativePath.startsWith("..")) {
+				return true
+			}
+
 			// Check if the real path is ignored
 			return !this.ignoreInstance.ignores(relativePath)
 		} catch {
-			// Allow access to files outside cwd or on errors (backward compatibility)
-			return true
+			// Fail-closed: if we can't determine access status, deny access
+			return false
 		}
 	}
 

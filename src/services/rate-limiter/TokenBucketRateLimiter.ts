@@ -38,7 +38,10 @@ export class TokenBucketRateLimiter {
 	private static _instance: TokenBucketRateLimiter
 	private buckets = new Map<string, BucketState>()
 	private configs: Record<string, BucketConfig>
-	private refillTimer: ReturnType<typeof setTimeout> | null = null
+	// Per-provider refill timers. Previously this was a single field, which
+	// caused a later-scheduled provider's timer to clearTimeout() an earlier
+	// provider's pending timer.
+	private refillTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 	constructor(customConfigs?: Record<string, Partial<BucketConfig>>) {
 		this.configs = { ...DEFAULT_CONFIGS }
@@ -134,12 +137,15 @@ export class TokenBucketRateLimiter {
 		const cfg = this.getConfig(provider)
 		const waitMs = Math.ceil(1000 / cfg.refillPerSec)
 
-		if (this.refillTimer) {
-			clearTimeout(this.refillTimer)
+		// Clear any pending timer for THIS provider only — other providers'
+		// timers must be preserved.
+		const existing = this.refillTimers.get(provider)
+		if (existing) {
+			clearTimeout(existing)
 		}
 
-		this.refillTimer = setTimeout(() => {
-			this.refillTimer = null
+		const timer = setTimeout(() => {
+			this.refillTimers.delete(provider)
 			const b = this.buckets.get(provider)
 			if (!b || b.waiting.length === 0) return
 			this.refill(b, cfg)
@@ -155,6 +161,7 @@ export class TokenBucketRateLimiter {
 				this.scheduleRefill(provider)
 			}
 		}, waitMs)
+		this.refillTimers.set(provider, timer)
 	}
 
 	/**
@@ -194,10 +201,10 @@ export class TokenBucketRateLimiter {
 	/** Reset all buckets (for testing). */
 	reset(): void {
 		this.buckets.clear()
-		if (this.refillTimer) {
-			clearTimeout(this.refillTimer)
-			this.refillTimer = null
+		for (const timer of this.refillTimers.values()) {
+			clearTimeout(timer)
 		}
+		this.refillTimers.clear()
 	}
 
 	/** Dispose the limiter and clear any pending timers. */

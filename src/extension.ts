@@ -28,6 +28,7 @@ import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./core/config/autoImportSettings"
 import { startupProfiler } from "./utils/profiler"
 import { API } from "./extension/api"
+import { TokenBucketRateLimiter } from "./services/rate-limiter/TokenBucketRateLimiter"
 
 import {
 	handleUri,
@@ -60,9 +61,15 @@ let outputChannel: vscode.OutputChannel
 let extensionContext: vscode.ExtensionContext
 let auditLogger: AuditLogger | undefined
 let auditSink: AuditSink | undefined
+let contextProxy: ContextProxy | undefined
+let provider: ClineProvider | undefined
 
-// This method is called when your extension is activated.
-// Your extension is activated the very first time the command is executed.
+// Captured process-level listeners so deactivate() can remove them.
+// Without removal, repeated activation/deactivation (e.g. during dev reload)
+// leaks listeners and inflates the process listener count indefinitely.
+let unhandledRejectionListener: NodeJS.UnhandledRejectionListener | undefined
+let uncaughtExceptionListener: NodeJS.UncaughtExceptionListener | undefined
+
 export async function activate(context: vscode.ExtensionContext) {
 	// Load environment variables from .env file
 	// The extension-level .env is optional (not shipped in production builds).
@@ -81,14 +88,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	startupProfiler.start("activate")
 	extensionContext = context
-	process.on("unhandledRejection", (reason, _promise) => {
+	unhandledRejectionListener = (reason, _promise) => {
 		logger.error("Extension", "Unhandled promise rejection:", reason)
 		TelemetryService.reportError(
 			reason instanceof Error ? reason : new Error(String(reason)),
 			TelemetryEventName.UTILITY_ERROR,
 		)
-	})
-	process.on("uncaughtException", (error) => {
+	}
+	process.on("unhandledRejection", unhandledRejectionListener)
+	uncaughtExceptionListener = (error) => {
 		logger.error("Extension", "Uncaught exception:", error)
 		TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 		// Re-throw to preserve Node.js default fatal behavior.
@@ -97,7 +105,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		setTimeout(() => {
 			throw error
 		}, 100)
-	})
+	}
+	process.on("uncaughtException", uncaughtExceptionListener)
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
@@ -169,7 +178,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Initialize Cloud Agent (device token + profile storage)
 	await initializeCloudAgent(context, outputChannel)
 
-	const contextProxy = await ContextProxy.getInstance(context)
+	const contextProxyInstance = await ContextProxy.getInstance(context)
+	contextProxy = contextProxyInstance
 
 	// Initialize code index managers for all workspace folders.
 	const codeIndexManagers: CodeIndexManager[] = []
@@ -182,7 +192,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				codeIndexManagers.push(manager)
 
 				// Initialize in background; do not block extension activation
-				void manager.initialize(contextProxy).catch((error) => {
+				void manager.initialize(contextProxyInstance).catch((error) => {
 					const message = getErrorMessage(error)
 					outputChannel.appendLine(
 						`[CodeIndexManager] Error during background CodeIndexManager configuration/indexing for ${folder.uri.fsPath}: ${message}`,
@@ -199,10 +209,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	const cangjieInit = initializeCangjieLanguage(context, outputChannel)
 
 	// Initialize the provider.
-	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
+	const providerInstance = new ClineProvider(context, outputChannel, "sidebar", contextProxyInstance)
+	provider = providerInstance
 
 	// Inject local compile capability for CloudAgentOrchestrator.
-	provider.compileLocal = async (cwd) => {
+	providerInstance.compileLocal = async (cwd) => {
 		const compileGuard = cangjieInit.compileGuardAccessor()
 		if (!compileGuard) {
 			throw new Error(t("common:errors.cangjieCompileGuard.notInitialized"))
@@ -212,7 +223,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, provider, {
+		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, providerInstance, {
 			webviewOptions: { retainContextWhenHidden: true },
 		}),
 	)
@@ -220,20 +231,20 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Auto-import configuration if specified in settings.
 	try {
 		await autoImportSettings(outputChannel, {
-			providerSettingsManager: provider.providerSettingsManager,
-			contextProxy: provider.contextProxy,
-			customModesManager: provider.customModesManager,
+			providerSettingsManager: providerInstance.providerSettingsManager,
+			contextProxy: providerInstance.contextProxy,
+			customModesManager: providerInstance.customModesManager,
 		})
 	} catch (error) {
 		outputChannel.appendLine(`[AutoImport] Error during auto-import: ${getErrorMessage(error)}`)
 		TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 	}
 
-	registerCommands({ context, outputChannel, provider })
+	registerCommands({ context, outputChannel, provider: providerInstance })
 
 	registerLatexCommands(context, outputChannel)
 
-	const inlineCompletionProvider = new InlineCompletionProvider(context, provider, outputChannel)
+	const inlineCompletionProvider = new InlineCompletionProvider(context, providerInstance, outputChannel)
 	// Use scheme + glob: a lone `pattern: "**/*"` often fails to match workspace/untitled documents reliably.
 	context.subscriptions.push(
 		vscode.languages.registerInlineCompletionItemProvider(
@@ -253,7 +264,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand("njust-ai.inlineCompletionDiagnostics", async () => {
 			const log = (m: string) => outputChannel.appendLine(m)
-			const api = await resolveInlineCompletionApiHandler(provider, log)
+			const api = await resolveInlineCompletionApiHandler(providerInstance, log)
 			if (api) {
 				const { id } = api.getModel()
 				void vscode.window.showInformationMessage(t("info.inline_completion_api_available", { id }))
@@ -264,11 +275,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	// Register VSCode Chat Participant (@njust-ai) for the native chat panel.
-	const chatParticipant = new ChatParticipantHandler(provider, context, outputChannel)
+	const chatParticipant = new ChatParticipantHandler(providerInstance, context, outputChannel)
 	context.subscriptions.push({ dispose: () => chatParticipant.dispose() })
 
 	// Register Njust-AI's native tools as VSCode Language Model Tools.
-	registerLMTools(context, provider, outputChannel)
+	registerLMTools(context, providerInstance, outputChannel)
 
 	/**
 	 * We use the text document content provider API to show the left side for diff
@@ -297,7 +308,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	// Wire Cangjie commands that depend on ClineProvider
-	wireCangjieCommands(context, () => provider.getCurrentTask()?.taskId)
+	wireCangjieCommands(context, () => providerInstance.getCurrentTask()?.taskId)
 
 	registerCodeActions(context)
 	registerTerminalActions(context)
@@ -345,7 +356,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		void context.globalState.update("hasActivatedBefore", true)
 	}
 
-	return new API(outputChannel, provider, socketPath, enableLogging)
+	return new API(outputChannel, providerInstance, socketPath, enableLogging)
 }
 
 // This method is called when your extension is deactivated.
@@ -357,6 +368,36 @@ export async function deactivate() {
 
 	await McpServerManager.cleanup(extensionContext)
 	TerminalRegistry.cleanup()
+
+	// Dispose ClineProvider (releases webview, message router, services, etc.)
+	// This must run before disposing ContextProxy because the provider holds
+	// references to it via task state.
+	try {
+		if (provider) {
+			await provider.dispose()
+			provider = undefined
+		}
+	} catch (e) {
+		logger.error("Extension", "Error disposing ClineProvider:", e)
+	}
+
+	// Dispose ContextProxy — clears its secretRefreshInterval timer and cache.
+	try {
+		if (contextProxy) {
+			contextProxy.dispose()
+			contextProxy = undefined
+		}
+	} catch (e) {
+		logger.error("Extension", "Error disposing ContextProxy:", e)
+	}
+
+	// Reset the rate-limiter singleton to clear any pending refill timers
+	// that would otherwise keep the Node event loop alive after deactivation.
+	try {
+		TokenBucketRateLimiter.resetInstance()
+	} catch (e) {
+		logger.error("Extension", "Error resetting TokenBucketRateLimiter:", e)
+	}
 
 	// Flush audit log before exit
 	if (auditSink) {
@@ -371,5 +412,25 @@ export async function deactivate() {
 	// Flush telemetry before exit
 	if (TelemetryService.hasInstance()) {
 		TelemetryService.instance.shutdown()
+	}
+
+	// Remove the process-level listeners registered in activate(). Without
+	// this, repeated activation/deactivation (e.g. during dev reload) leaks
+	// listeners and inflates the process listener count indefinitely.
+	if (unhandledRejectionListener) {
+		process.removeListener("unhandledRejection", unhandledRejectionListener)
+		unhandledRejectionListener = undefined
+	}
+	if (uncaughtExceptionListener) {
+		process.removeListener("uncaughtException", uncaughtExceptionListener)
+		uncaughtExceptionListener = undefined
+	}
+
+	// Dispose the output channel last so the deactivation log line above
+	// is captured before the channel itself is torn down.
+	try {
+		outputChannel.dispose()
+	} catch (e) {
+		logger.error("Extension", "Error disposing output channel:", e)
 	}
 }

@@ -5,11 +5,21 @@ import type { Mock } from "vitest"
 import { RooIgnoreController } from "../RooIgnoreController"
 import * as path from "path"
 import * as fs from "fs/promises"
+import fsSync from "fs"
 import { fileExistsAtPath } from "../../../utils/fs"
 
 // Mock dependencies
 vi.mock("fs/promises")
 vi.mock("../../../utils/fs")
+// The realpathSync mock is created inside the factory so it is hoisted correctly
+// by Vitest. Tests that need to make it throw access it via (fsSync.realpathSync as Mock).
+// The source file uses `import fsSync from "fs"` (default import). We mirror that.
+vi.mock("fs", () => ({
+	default: {
+		realpathSync: vi.fn((p: string) => p),
+	},
+	realpathSync: vi.fn((p: string) => p),
+}))
 vi.mock("vscode", () => {
 	const mockDisposable = { dispose: vi.fn() }
 
@@ -35,6 +45,7 @@ describe("RooIgnoreController Security Tests", () => {
 	let controller: RooIgnoreController
 	let mockFileExists: Mock<typeof fileExistsAtPath>
 	let mockReadFile: Mock<typeof fs.readFile>
+	let mockRealpathSync: Mock
 
 	beforeEach(async () => {
 		// Reset mocks
@@ -43,10 +54,15 @@ describe("RooIgnoreController Security Tests", () => {
 		// Setup mocks
 		mockFileExists = fileExistsAtPath as Mock<typeof fileExistsAtPath>
 		mockReadFile = fs.readFile as Mock<typeof fs.readFile>
+		mockRealpathSync = (fsSync as unknown as { realpathSync: Mock }).realpathSync
 
 		// By default, setup .rooignore to exist with some patterns
 		mockFileExists.mockResolvedValue(true)
 		mockReadFile.mockResolvedValue("node_modules\n.git\nsecrets/**\n*.log\nprivate/")
+
+		// By default, realpathSync returns the input path (pass-through identity)
+		// so existing tests behave as before. Specific fail-closed tests override this.
+		mockRealpathSync.mockImplementation((p: string) => p)
 
 		// Create and initialize controller
 		controller = new RooIgnoreController(TEST_CWD)
@@ -320,6 +336,46 @@ build/
 
 			// Clean up
 			consoleSpy.mockRestore()
+		})
+	})
+
+	describe("validateAccess fail-closed behavior", () => {
+		/**
+		 * Tests that validateAccess fails closed (returns false) when realpathSync throws.
+		 * Prevents access when the real path cannot be resolved (e.g. broken symlink,
+		 * missing file, permission error).
+		 */
+		it("should deny access when realpathSync throws (fail-closed)", () => {
+			mockRealpathSync.mockImplementation(() => {
+				throw new Error("ENOENT: no such file or directory")
+			})
+
+			// Path that realpathSync cannot resolve must NOT be allowed
+			expect(controller.validateAccess("secrets/keys.json")).toBe(false)
+			expect(controller.validateAccess("missing-file.txt")).toBe(false)
+			expect(controller.validateAccess("path/to/broken-symlink")).toBe(false)
+		})
+
+		/**
+		 * Tests that validateAccess fails closed (returns false) when the outer
+		 * try-catch catches an unexpected error. Catches edge cases like malformed
+		 * paths that bypass realpathSync but throw in path.relative / ignore checks.
+		 */
+		it("should deny access on unexpected errors in the outer try-catch (fail-closed)", () => {
+			// Force the ignore library to throw inside the try block.
+			// We do this by stubbing the internal ignoreInstance.ignores method.
+			const ignoreInstance = (controller as unknown as { ignoreInstance: { ignores: Mock } }).ignoreInstance
+			const originalIgnores = ignoreInstance.ignores
+			ignoreInstance.ignores = vi.fn(() => {
+				throw new Error("Unexpected error in ignore check")
+			})
+
+			try {
+				// Any path should be denied when the ignore check throws
+				expect(controller.validateAccess("any/path.txt")).toBe(false)
+			} finally {
+				ignoreInstance.ignores = originalIgnores
+			}
 		})
 	})
 })

@@ -138,13 +138,25 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				return
 			}
 
-			if (safetyCheck.requiresConfirmation && !isBypassMode) {
-				logger.warn(
-					"ExecuteCommandTool",
-					"execute_command: high-risk pattern; user must approve in UI:",
-					canonicalCommand,
-				)
-				recordSecurityMetric("execute_command_high_risk", {
+			if (safetyCheck.requiresConfirmation) {
+				if (!isBypassMode) {
+					logger.warn(
+						"ExecuteCommandTool",
+						"execute_command: high-risk pattern; user must approve in UI:",
+						canonicalCommand,
+					)
+				} else {
+					// In bypass mode, user confirmation is skipped but the
+					// dangerous command is still executed. Record a separate
+					// audit metric so security review can find bypassed
+					// high-risk executions.
+					logger.warn(
+						"ExecuteCommandTool",
+						"execute_command: high-risk pattern; bypass mode, user confirmation skipped:",
+						canonicalCommand,
+					)
+				}
+				recordSecurityMetric(isBypassMode ? "execute_command_high_risk_bypass" : "execute_command_high_risk", {
 					cmd: canonicalCommand.slice(0, 240),
 					riskLevel: safetyCheck.riskLevel,
 					reasons: safetyCheck.reasons.slice(0, 5).join(", "),

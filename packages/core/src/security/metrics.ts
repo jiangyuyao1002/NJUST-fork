@@ -13,11 +13,15 @@ type SecurityMetricName =
 	| "permission_bypass_deny"
 	| "permission_auto_downgrade"
 	| "execute_command_high_risk"
+	| "execute_command_high_risk_bypass"
 	| "tool_exec_duration_ms"
 	| "tool_memory_delta_mb"
 	| "tool_memory_rss_mb"
 
-export function recordSecurityMetric(name: SecurityMetricName, attrs: Record<string, string | number | boolean> = {}): void {
+export function recordSecurityMetric(
+	name: SecurityMetricName,
+	attrs: Record<string, string | number | boolean> = {},
+): void {
 	const payload = Object.entries(attrs)
 		.map(([k, v]) => `${k}=${String(v)}`)
 		.join(" ")
@@ -34,7 +38,11 @@ export function startTraceSpan(
 	name: string,
 	attrs: Record<string, string | number | boolean> = {},
 	parentTraceId?: string,
-): { traceId: string; spanId: string; end: (status: "ok" | "error", endAttrs?: Record<string, string | number | boolean>) => void } {
+): {
+	traceId: string
+	spanId: string
+	end: (status: "ok" | "error", endAttrs?: Record<string, string | number | boolean>) => void
+} {
 	const fallbackTraceId = (parentTraceId ?? randomUUID()) as `${string}-${string}-${string}-${string}-${string}`
 	const fallbackSpanId = randomUUID()
 	const startedAt = Date.now()
@@ -51,7 +59,11 @@ export function startTraceSpan(
 	}
 
 	try {
-		TelemetryService.instance.captureEvent(`trace.${name}.start`, { traceId: runtimeTraceId, spanId: runtimeSpanId, ...attrs })
+		TelemetryService.instance.captureEvent(`trace.${name}.start`, {
+			traceId: runtimeTraceId,
+			spanId: runtimeSpanId,
+			...attrs,
+		})
 	} catch {
 		// no-op
 	}
