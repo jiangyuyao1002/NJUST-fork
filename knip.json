@@ -48,6 +48,7 @@
 				"core/tools/permissions/PermissionContext.ts",
 				"core/assistant-message/index.ts",
 				"core/message-queue/index.ts",
+				"core/task/ModelFallback.ts",
 				"core/security/index.ts",
 				"core/webview/WebviewHost.ts",
 				"services/marketplace/index.ts",
