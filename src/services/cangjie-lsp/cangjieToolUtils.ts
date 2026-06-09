@@ -35,9 +35,7 @@ export function detectCangjieHome(): string | undefined {
 
 	// 2. Infer from VS Code LSP serverPath config (aligns with CangjieLspClient)
 	try {
-		const serverPath = vscode.workspace
-			.getConfiguration("njust-ai.cangjieLsp")
-			.get<string>("serverPath")
+		const serverPath = vscode.workspace.getConfiguration("njust-ai.cangjieLsp").get<string>("serverPath")
 		if (serverPath && fs.existsSync(serverPath)) {
 			const sdkRoot = path.resolve(serverPath, "..", "..")
 			if (fs.existsSync(path.join(sdkRoot, "bin"))) {
@@ -45,11 +43,14 @@ export function detectCangjieHome(): string | undefined {
 				return homeDetectCache
 			}
 		}
-	} catch { /* vscode not available (tests) */ }
+	} catch {
+		/* vscode not available (tests) */
+	}
 
-	const wellKnownPaths = process.platform === "win32"
-		? ["D:\\cangjie", "C:\\cangjie", path.join(process.env.LOCALAPPDATA || "", "cangjie")]
-		: ["/usr/local/cangjie", path.join(process.env.HOME || "", ".cangjie")]
+	const wellKnownPaths =
+		process.platform === "win32"
+			? ["D:\\cangjie", "C:\\cangjie", path.join(process.env.LOCALAPPDATA || "", "cangjie")]
+			: ["/usr/local/cangjie", path.join(process.env.HOME || "", ".cangjie")]
 
 	for (const p of wellKnownPaths) {
 		if (p && fs.existsSync(path.join(p, "bin"))) {
@@ -119,14 +120,9 @@ export function buildCangjieToolEnv(cangjieHome?: string): Record<string, string
  * 3. Well-known install locations
  * 4. System PATH (fallback)
  */
-export function resolveCangjieToolPath(
-	toolName: string,
-	configKey?: string,
-): string | undefined {
+export function resolveCangjieToolPath(toolName: string, configKey?: string): string | undefined {
 	if (configKey) {
-		const configured = vscode.workspace
-			.getConfiguration(Package.name)
-			.get<string>(configKey, "")
+		const configured = vscode.workspace.getConfiguration(Package.name).get<string>(configKey, "")
 		if (configured) {
 			const resolved = path.resolve(configured)
 			if (fs.existsSync(resolved)) return resolved
@@ -138,19 +134,17 @@ export function resolveCangjieToolPath(
 
 	const cangjieHome = detectCangjieHome()
 	if (cangjieHome) {
-		const candidates = [
-			path.join(cangjieHome, "bin", exeName),
-			path.join(cangjieHome, "tools", "bin", exeName),
-		]
+		const candidates = [path.join(cangjieHome, "bin", exeName), path.join(cangjieHome, "tools", "bin", exeName)]
 		for (const c of candidates) {
 			if (fs.existsSync(c)) return c
 		}
 	}
 
-	logger.warn("CangjieToolUtils",
+	logger.warn(
+		"CangjieToolUtils",
 		`Cannot locate ${toolName}: no configured path, ` +
-		`CANGJIE_HOME not set, and not found in well-known install locations. ` +
-		`Falling back to bare "${exeName}" — commands may fail with ENOENT.`,
+			`CANGJIE_HOME not set, and not found in well-known install locations. ` +
+			`Falling back to bare "${exeName}" — commands may fail with ENOENT.`,
 	)
 	return exeName
 }
@@ -212,9 +206,7 @@ export async function probeCangjieToolchain(): Promise<CangjieToolProbeResult[]>
 
 	for (const { id, configKey } of defs) {
 		const resolved = resolveCangjieToolPath(id, configKey)
-		const configured = configKey
-			? vscode.workspace.getConfiguration(Package.name).get<string>(configKey, "")
-			: ""
+		const configured = configKey ? vscode.workspace.getConfiguration(Package.name).get<string>(configKey, "") : ""
 		const looksConfigured = Boolean(configKey && configured.length > 0)
 
 		if (looksConfigured && resolved === undefined) {
@@ -264,7 +256,11 @@ export async function probeCangjieToolchain(): Promise<CangjieToolProbeResult[]>
 				}
 			}
 			if (lastErr !== undefined) throw lastErr
-			const versionLine = stdout.trim().split("\n").filter((l) => l.trim())[0] ?? ""
+			const versionLine =
+				stdout
+					.trim()
+					.split("\n")
+					.filter((l) => l.trim())[0] ?? ""
 			out.push({
 				id,
 				label: id,
@@ -330,7 +326,8 @@ export function getSymbolContextForFile(filePath: string): string | null {
 	if (!index) return null
 
 	const normalized = path.resolve(filePath)
-	const symbols = index.getSymbolsByDirectory(path.dirname(normalized))
+	const symbols = index
+		.getSymbolsByDirectory(path.dirname(normalized))
 		.filter((s: { filePath: string }) => path.resolve(s.filePath) === normalized)
 
 	if (symbols.length === 0) return null
@@ -391,7 +388,7 @@ export function autoDetectPackageDeclaration(filePath: string): string | null {
 		const rootName = nameMatch?.[1] || "default"
 		const srcDir = srcDirMatch?.[1] || "src"
 
-		const srcRoot = path.join(cwd, srcDir)
+		const srcRoot = path.resolve(cwd, srcDir)
 		const absFile = path.resolve(filePath)
 
 		if (!absFile.startsWith(srcRoot)) return null
