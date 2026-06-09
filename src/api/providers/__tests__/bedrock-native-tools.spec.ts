@@ -33,6 +33,7 @@ vi.mock("@aws-sdk/client-bedrock-runtime", () => {
 import { AwsBedrockHandler } from "../bedrock"
 import { ConverseStreamCommand } from "@aws-sdk/client-bedrock-runtime"
 import type { ApiHandlerCreateMessageMetadata } from "../../types"
+import { convertToolsForBedrock, convertToolChoiceForBedrock } from "../bedrock-tools"
 
 const mockConverseStreamCommand = vi.mocked(ConverseStreamCommand)
 
@@ -70,18 +71,8 @@ const testTools = [
 ]
 
 describe("AwsBedrockHandler Native Tool Calling", () => {
-	let handler: AwsBedrockHandler
-
 	beforeEach(() => {
 		vi.clearAllMocks()
-
-		// Create handler with a model that supports native tools
-		handler = new AwsBedrockHandler({
-			apiModelId: "anthropic.claude-3-5-sonnet-20241022-v2:0",
-			awsAccessKey: "test-access-key",
-			awsSecretKey: "test-secret-key",
-			awsRegion: "us-east-1",
-		})
 
 		// Mock the stream response
 		mockSend.mockResolvedValue({
@@ -98,9 +89,6 @@ describe("AwsBedrockHandler Native Tool Calling", () => {
 
 	describe("convertToolsForBedrock", () => {
 		it("should convert OpenAI tools to Bedrock format", () => {
-			// Access private method
-			const convertToolsForBedrock = (handler as any).convertToolsForBedrock.bind(handler)
-
 			const bedrockTools = convertToolsForBedrock(testTools)
 
 			expect(bedrockTools).toHaveLength(2)
@@ -118,8 +106,6 @@ describe("AwsBedrockHandler Native Tool Calling", () => {
 		})
 
 		it("should transform type arrays to anyOf for JSON Schema 2020-12 compliance", () => {
-			const convertToolsForBedrock = (handler as any).convertToolsForBedrock.bind(handler)
-
 			// Tools with type: ["string", "null"] syntax (valid in draft-07 but not 2020-12)
 			const toolsWithNullableTypes = [
 				{
@@ -186,8 +172,6 @@ describe("AwsBedrockHandler Native Tool Calling", () => {
 		})
 
 		it("should filter non-function tools", () => {
-			const convertToolsForBedrock = (handler as any).convertToolsForBedrock.bind(handler)
-
 			const mixedTools = [
 				...testTools,
 				{ type: "other" as any, something: {} }, // Should be filtered out
@@ -201,32 +185,24 @@ describe("AwsBedrockHandler Native Tool Calling", () => {
 
 	describe("convertToolChoiceForBedrock", () => {
 		it("should convert 'auto' to Bedrock auto format", () => {
-			const convertToolChoiceForBedrock = (handler as any).convertToolChoiceForBedrock.bind(handler)
-
 			const result = convertToolChoiceForBedrock("auto")
 
 			expect(result).toEqual({ auto: {} })
 		})
 
 		it("should convert 'required' to Bedrock any format", () => {
-			const convertToolChoiceForBedrock = (handler as any).convertToolChoiceForBedrock.bind(handler)
-
 			const result = convertToolChoiceForBedrock("required")
 
 			expect(result).toEqual({ any: {} })
 		})
 
 		it("should return undefined for 'none'", () => {
-			const convertToolChoiceForBedrock = (handler as any).convertToolChoiceForBedrock.bind(handler)
-
 			const result = convertToolChoiceForBedrock("none")
 
 			expect(result).toBeUndefined()
 		})
 
 		it("should convert specific tool choice to Bedrock tool format", () => {
-			const convertToolChoiceForBedrock = (handler as any).convertToolChoiceForBedrock.bind(handler)
-
 			const result = convertToolChoiceForBedrock({
 				type: "function",
 				function: { name: "read_file" },
@@ -240,8 +216,6 @@ describe("AwsBedrockHandler Native Tool Calling", () => {
 		})
 
 		it("should default to auto for undefined toolChoice", () => {
-			const convertToolChoiceForBedrock = (handler as any).convertToolChoiceForBedrock.bind(handler)
-
 			const result = convertToolChoiceForBedrock(undefined)
 
 			expect(result).toEqual({ auto: {} })
