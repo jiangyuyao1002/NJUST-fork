@@ -18,6 +18,7 @@ export default defineConfig({
 			"**/out/**",
 		],
 		watch: false,
+		retry: 2,
 		reporters,
 		silent: false,
 		maxWorkers: process.env.CI ? 1 : undefined,
