@@ -14,12 +14,19 @@ vi.mock("../../../utils/fs")
 // The realpathSync mock is created inside the factory so it is hoisted correctly
 // by Vitest. Tests that need to make it throw access it via (fsSync.realpathSync as Mock).
 // The source file uses `import fsSync from "fs"` (default import). We mirror that.
-vi.mock("fs", () => ({
-	default: {
-		realpathSync: vi.fn((p: string) => p),
-	},
-	realpathSync: vi.fn((p: string) => p),
-}))
+vi.mock("fs", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("fs")>()
+	const realpathSync = vi.fn((p: string) => p)
+
+	return {
+		...actual,
+		default: {
+			...actual,
+			realpathSync,
+		},
+		realpathSync,
+	}
+})
 vi.mock("vscode", () => {
 	const mockDisposable = { dispose: vi.fn() }
 
