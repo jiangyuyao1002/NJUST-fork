@@ -18,10 +18,7 @@ import { ApiStream } from "../transform/stream"
 import { addCacheBreakpoints } from "../transform/caching/vertex"
 import { getModelParams } from "../transform/model-params"
 import { filterNonAnthropicBlocks } from "../transform/anthropic-filter"
-import {
-	convertOpenAIToolsToAnthropic,
-	convertOpenAIToolChoiceToAnthropic,
-} from "../../core/prompts/tools/native-tools/converters"
+import { convertOpenAIToolsToAnthropic, convertOpenAIToolChoiceToAnthropic } from "../transform/native-tool-converters"
 
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"

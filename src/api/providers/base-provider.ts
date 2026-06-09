@@ -10,7 +10,7 @@ import { isMcpTool } from "../../utils/mcp-name"
 import { computeBackoffMs, delayMs, DEFAULT_API_RETRY_OPTIONS, type ApiRetryOptions } from "../retry/ApiRetryStrategy"
 import { analyzeErrorForRetry } from "../retry/ApiErrorClassifier"
 import { RETRY_WRAPPER_APPLIED } from "../retry/ApiRetryWrapper"
-import { taskEventBus } from "../../core/events/TaskEventBus"
+import { getApiEventBus } from "../retry/event-bus"
 
 export const CONTENT_CHUNK_TYPES: ReadonlySet<string> = new Set([
 	"text",
@@ -253,7 +253,7 @@ export abstract class BaseProvider implements ApiHandler {
 					throw error
 				}
 				const delay = computeBackoffMs(attempt, config, decision.retryAfterSeconds)
-				taskEventBus.emit("task:llm-retry", {
+				getApiEventBus()?.emit("task:llm-retry", {
 					taskId: context?.taskId,
 					data: {
 						attempt: attempt + 1,

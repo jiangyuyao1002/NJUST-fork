@@ -3,8 +3,8 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { type ProviderSettings, type ModelInfo } from "@njust-ai/types"
 
 import { ApiStream } from "./transform/stream"
-import { ModelFallbackManager, type FallbackConfig } from "../core/task/ModelFallback"
-import { defaultToolCallParser } from "../core/assistant-message/ToolCallParserImpl"
+import { ModelFallbackManager, type FallbackConfig } from "@njust-ai/core/task"
+import type { IToolCallParser } from "./interfaces/IToolCallParser"
 
 import { providerRegistry } from "./registry/ProviderRegistry"
 import type { ApiHandler, ApiHandlerCreateMessageMetadata } from "./types"
@@ -24,6 +24,13 @@ export interface FallbackProviderConfig {
 export interface ApiHandlerDependencies {
 	/** Callback to persist secrets to VS Code SecretStorage. */
 	storeSecret?: (key: string, value: string) => Promise<void>
+	/**
+	 * Tool-call parser passed through to the provider. Callers should
+	 * pass `defaultToolCallParser` from `../core/assistant-message/ToolCallParserImpl`
+	 * to keep prior behavior. Kept out of this module to avoid pulling
+	 * assistant-message parser code into the public api/ surface.
+	 */
+	toolCallParser?: IToolCallParser
 }
 
 export function buildApiHandler(
@@ -51,7 +58,7 @@ export function buildApiHandler(
 
 function createHandler(configuration: ProviderSettings, dependencies?: ApiHandlerDependencies): ApiHandler {
 	return providerRegistry.createHandler(configuration, {
-		toolCallParser: defaultToolCallParser,
+		toolCallParser: dependencies?.toolCallParser,
 		storeSecret: dependencies?.storeSecret,
 	})
 }

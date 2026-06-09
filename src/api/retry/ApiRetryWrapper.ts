@@ -4,7 +4,7 @@ import type { ApiHandler, ApiHandlerCreateMessageMetadata, SingleCompletionHandl
 import type { ApiStream, ApiStreamChunk } from "../transform/stream"
 import { analyzeErrorForRetry, ApiErrorCategory } from "./ApiErrorClassifier"
 import { computeBackoffMs, delayMs, DEFAULT_API_RETRY_OPTIONS, type ApiRetryOptions } from "./ApiRetryStrategy"
-import { taskEventBus } from "../../core/events/TaskEventBus"
+import { getApiEventBus } from "./event-bus"
 
 export type RetryWrapperOptions = Partial<ApiRetryOptions>
 
@@ -52,7 +52,7 @@ async function* wrapStreamWithRetry(
 			}
 
 			const delay = computeBackoffMs(attempt, config, decision.retryAfterSeconds)
-			taskEventBus.emit("task:llm-retry", {
+			getApiEventBus()?.emit("task:llm-retry", {
 				taskId: context.taskId,
 				data: {
 					attempt: attempt + 1,
@@ -130,7 +130,7 @@ export function wrapApiHandler(
 							}
 
 							const delay = computeBackoffMs(attempt, config, decision.retryAfterSeconds)
-							taskEventBus.emit("task:llm-retry", {
+							getApiEventBus()?.emit("task:llm-retry", {
 								data: {
 									attempt: attempt + 1,
 									delayMs: delay,

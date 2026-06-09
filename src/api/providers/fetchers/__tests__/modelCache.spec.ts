@@ -45,22 +45,12 @@ vi.mock("../litellm")
 vi.mock("../openrouter")
 vi.mock("../requesty")
 
-// Mock ContextProxy with a simple static instance
-vi.mock("../../../core/config/ContextProxy", () => ({
-	ContextProxy: {
-		instance: {
-			globalStorageUri: {
-				fsPath: "/mock/storage/path",
-			},
-		},
-	},
-}))
-
 // Then imports
 import type { Mock } from "vitest"
 import * as fsSync from "fs"
 import NodeCache from "node-cache"
 import { getModels, getModelsFromCache } from "../modelCache"
+import { setModelCacheStore } from "../modelCacheStore"
 import { getLiteLLMModels } from "../litellm"
 import { getOpenRouterModels } from "../openrouter"
 import { getRequestyModels } from "../requesty"
@@ -74,6 +64,7 @@ const DUMMY_REQUESTY_KEY = "requesty-key-for-testing"
 describe("getModels with new GetModelsOptions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		setModelCacheStore({ globalStorageUri: { fsPath: "/mock/storage/path" } })
 	})
 
 	it("calls getLiteLLMModels with correct parameters", async () => {
@@ -162,6 +153,7 @@ describe("getModelsFromCache disk fallback", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
+		setModelCacheStore({ globalStorageUri: { fsPath: "/mock/storage/path" } })
 		// Get the mock cache instance
 		const MockedNodeCache = vi.mocked(NodeCache)
 		mockCache = new MockedNodeCache()
@@ -174,6 +166,19 @@ describe("getModelsFromCache disk fallback", () => {
 
 	it("returns undefined when both memory and disk cache miss", () => {
 		vi.mocked(fsSync.existsSync).mockReturnValue(false)
+
+		const result = getModelsFromCache("openrouter")
+
+		expect(result).toBeUndefined()
+	})
+
+	it("returns undefined from disk cache when no store is injected", () => {
+		// Clear the store injected by beforeEach to simulate a host that
+		// forgot to call setModelCacheStore. Cache must degrade gracefully.
+		setModelCacheStore(undefined)
+
+		vi.mocked(fsSync.existsSync).mockReturnValue(true)
+		vi.mocked(fsSync.readFileSync).mockReturnValue("{}")
 
 		const result = getModelsFromCache("openrouter")
 
@@ -198,11 +203,7 @@ describe("getModelsFromCache disk fallback", () => {
 		expect(fsSync.existsSync).not.toHaveBeenCalled()
 	})
 
-	it("returns disk cache data when memory cache misses and context is available", () => {
-		// Note: This test validates the logic but the ContextProxy mock in test environment
-		// returns undefined for getCacheDirectoryPathSync, which is expected behavior
-		// when the context is not fully initialized. The actual disk cache loading
-		// is validated through integration tests.
+	it("returns disk cache data when memory cache misses and store is injected", () => {
 		const diskModels = {
 			"disk-model": {
 				maxTokens: 4096,
@@ -216,9 +217,9 @@ describe("getModelsFromCache disk fallback", () => {
 
 		const result = getModelsFromCache("openrouter")
 
-		// In the test environment, ContextProxy.instance may not be fully initialized,
-		// so getCacheDirectoryPathSync returns undefined and disk cache is not attempted
-		expect(result).toBeUndefined()
+		// With setModelCacheStore called in beforeEach, the cache directory
+		// resolves and disk cache is read.
+		expect(result).toEqual(diskModels)
 	})
 
 	it("handles disk read errors gracefully", () => {
@@ -259,6 +260,7 @@ describe("empty cache protection", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
+		setModelCacheStore({ globalStorageUri: { fsPath: "/mock/storage/path" } })
 		// Get the mock cache instance
 		const MockedNodeCache = vi.mocked(NodeCache)
 		mockCache = new MockedNodeCache()

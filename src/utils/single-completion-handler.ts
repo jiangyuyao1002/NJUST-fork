@@ -1,6 +1,7 @@
 import type { ProviderSettings } from "@njust-ai/types"
 
 import { buildApiHandler, SingleCompletionHandler } from "../api"
+import { defaultToolCallParser } from "../core/assistant-message/ToolCallParserImpl"
 
 /**
  * Enhances a prompt using the configured API without creating a full Cline instance or task history.
@@ -14,7 +15,7 @@ export async function singleCompletionHandler(apiConfiguration: ProviderSettings
 		throw new Error("No valid API configuration provided")
 	}
 
-	const handler = buildApiHandler(apiConfiguration)
+	const handler = buildApiHandler(apiConfiguration, undefined, { toolCallParser: defaultToolCallParser })
 
 	// Check if handler supports single completions
 	if (!("completePrompt" in handler)) {

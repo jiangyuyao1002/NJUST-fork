@@ -122,7 +122,11 @@ describe("enhancePrompt", () => {
 
 		const result = await singleCompletionHandler(openRouterConfig, "Test prompt")
 
-		expect(buildApiHandler).toHaveBeenCalledWith(openRouterConfig)
+		expect(buildApiHandler).toHaveBeenCalledWith(
+			openRouterConfig,
+			undefined,
+			expect.objectContaining({ toolCallParser: expect.anything() }),
+		)
 		expect(result).toBe("Enhanced prompt")
 	})
 

@@ -62,8 +62,10 @@ vi.mock("fs/promises", () => ({
 vi.mock("os", () => ({
 	default: {
 		homedir: vi.fn(() => "/mock/home"),
+		tmpdir: vi.fn(() => "/mock/tmp"),
 	},
 	homedir: vi.fn(() => "/mock/home"),
+	tmpdir: vi.fn(() => "/mock/tmp"),
 }))
 
 vi.mock("../../../utils/safeWriteJson")

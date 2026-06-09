@@ -45,6 +45,7 @@ import { TelemetryService } from "@njust-ai/telemetry"
 // api
 import { ApiHandler, buildApiHandler } from "../../api"
 import { ApiStream } from "../../api/transform/stream"
+import { defaultToolCallParser } from "../assistant-message/ToolCallParserImpl"
 
 // shared
 import { findLastIndex } from "../../shared/array"
@@ -591,6 +592,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		this.apiConfiguration = apiConfiguration
 		this.api = buildApiHandler(this.apiConfiguration, undefined, {
+			toolCallParser: defaultToolCallParser,
 			storeSecret: (key, value) =>
 				Promise.resolve(host.contextProxy.storeSecret(key as keyof SecretState, value)),
 		})
@@ -1033,6 +1035,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.apiConfiguration = newApiConfiguration
 		const host = this.hostRef.deref()
 		this.api = buildApiHandler(this.apiConfiguration, undefined, {
+			toolCallParser: defaultToolCallParser,
 			storeSecret: host
 				? (key, value) => Promise.resolve(host.contextProxy.storeSecret(key as keyof SecretState, value))
 				: undefined,

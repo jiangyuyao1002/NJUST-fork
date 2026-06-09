@@ -22,10 +22,7 @@ import { handleProviderError } from "./utils/error-handler"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { calculateApiCostAnthropic } from "../../shared/cost"
-import {
-	convertOpenAIToolsToAnthropic,
-	convertOpenAIToolChoiceToAnthropic,
-} from "../../core/prompts/tools/native-tools/converters"
+import { convertOpenAIToolsToAnthropic, convertOpenAIToolChoiceToAnthropic } from "../transform/native-tool-converters"
 import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from "../../core/prompts/system"
 import { summarizePromptCacheUsage } from "../../core/prompts/cache-monitor"
 import { globalCostTracker } from "../../utils/costTracker"

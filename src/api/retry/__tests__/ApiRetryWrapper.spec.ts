@@ -6,7 +6,8 @@ import { DEFAULT_API_RETRY_OPTIONS } from "../ApiRetryStrategy"
 import * as ApiRetryStrategy from "../ApiRetryStrategy"
 import type { ApiHandler, ApiHandlerCreateMessageMetadata, SingleCompletionHandler } from "../../types"
 import type { ApiStream } from "../../transform/stream"
-import { taskEventBus } from "../../../core/events/TaskEventBus"
+import { setApiEventBus } from "../event-bus"
+import type { ITaskEventBus, TaskEventName, TaskEventPayload } from "@njust-ai/core/events"
 
 // Helper to build a mock handler whose createMessage yields chunks from an array
 // and optionally throws on the first attempt.
@@ -50,10 +51,13 @@ function createMockHandler(config: {
 describe("wrapApiHandler", () => {
 	beforeEach(() => {
 		vi.spyOn(ApiRetryStrategy, "delayMs").mockImplementation(() => Promise.resolve())
+		// Reset the api-layer event bus so each test starts clean.
+		setApiEventBus(undefined)
 	})
 
 	afterEach(() => {
 		vi.restoreAllMocks()
+		setApiEventBus(undefined)
 	})
 
 	// ───────────────────────────────────────────────
@@ -314,7 +318,13 @@ describe("wrapApiHandler", () => {
 		})
 		const wrapped = wrapApiHandler(mock)
 
-		const emitSpy = vi.spyOn(taskEventBus, "emit")
+		// Inject a spy bus so we can assert retry events without coupling
+		// the test to the concrete TaskEventBus implementation.
+		const emitSpy = vi.fn()
+		const spyBus: ITaskEventBus = {
+			emit: (event: TaskEventName, payload?: TaskEventPayload) => emitSpy(event, payload),
+		}
+		setApiEventBus(spyBus)
 
 		for await (const _chunk of wrapped.createMessage("sys", [], { taskId: "task-123" })) {
 			// no-op

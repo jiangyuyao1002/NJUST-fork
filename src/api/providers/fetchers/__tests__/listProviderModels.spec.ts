@@ -36,14 +36,6 @@ vi.mock("fs", () => ({
 	readFileSync: vi.fn().mockReturnValue("{}"),
 }))
 
-vi.mock("../../../../core/config/ContextProxy", () => ({
-	ContextProxy: {
-		instance: {
-			globalStorageUri: { fsPath: "/mock/storage/path" },
-		},
-	},
-}))
-
 vi.mock("../openai-compatible", () => ({
 	fetchOpenAICompatibleModels: vi.fn(),
 }))
@@ -58,6 +50,7 @@ vi.mock("../../../../shared/logger", () => ({
 }))
 
 import { listProviderModels } from "../modelCache"
+import { setModelCacheStore } from "../modelCacheStore"
 import { fetchOpenAICompatibleModels } from "../openai-compatible"
 import { fetchAnthropicModels } from "../anthropic"
 import { fetchGeminiModels } from "../gemini"
@@ -81,6 +74,7 @@ describe("listProviderModels", () => {
 		sharedMockGet.mockReturnValue(undefined)
 		vi.mocked(fsSync.existsSync).mockReturnValue(false)
 		vi.mocked(fsSync.readFileSync).mockReturnValue("{}")
+		setModelCacheStore({ globalStorageUri: { fsPath: "/mock/storage/path" } })
 	})
 
 	it("returns empty for fallback-only provider", async () => {

@@ -15,7 +15,10 @@
 		"./stream": "./src/stream/index.ts",
 		"./prefetch": "./src/prefetch/index.ts",
 		"./message-queue": "./src/message-queue/index.ts",
-		"./custom-tools": "./src/custom-tools/index.ts"
+		"./custom-tools": "./src/custom-tools/index.ts",
+		"./storage": "./src/storage/index.ts",
+		"./events": "./src/events/index.ts",
+		"./task": "./src/task/index.ts"
 	},
 	"scripts": {
 		"lint": "eslint src --ext=ts --max-warnings=0",

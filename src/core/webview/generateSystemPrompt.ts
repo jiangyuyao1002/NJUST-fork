@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import { WebviewMessage } from "../../shared/WebviewMessage"
 import { defaultModeSlug } from "../../shared/modes"
 import { buildApiHandler } from "../../api"
+import { defaultToolCallParser } from "../assistant-message/ToolCallParserImpl"
 
 import { SYSTEM_PROMPT } from "../prompts/system"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
@@ -51,7 +52,7 @@ export const generateSystemPrompt = async (provider: ISystemPromptHost, message:
 
 	let modelInfo: { isStealthModel?: boolean } | undefined
 	try {
-		const tempApiHandler = buildApiHandler(apiConfiguration)
+		const tempApiHandler = buildApiHandler(apiConfiguration, undefined, { toolCallParser: defaultToolCallParser })
 		modelInfo = tempApiHandler.getModel().info
 	} catch (error) {
 		logger.error("GenerateSystemPrompt", "Error fetching model info for system prompt preview:", error)
@@ -87,5 +88,3 @@ export const generateSystemPrompt = async (provider: ISystemPromptHost, message:
 
 	return systemPrompt
 }
-
-

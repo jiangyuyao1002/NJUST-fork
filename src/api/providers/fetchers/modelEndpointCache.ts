@@ -7,13 +7,13 @@ import { z } from "zod"
 
 import { modelInfoSchema, type ModelRecord } from "@njust-ai/types"
 
-import { ContextProxy } from "../../../core/config/ContextProxy"
 import { RouterName } from "../../../shared/api"
 import { getCacheDirectoryPath } from "../../../utils/storage"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { logger } from "../../../shared/logger"
 import { safeWriteJson } from "../../../utils/safeWriteJson"
 
+import { getModelCacheStore } from "./modelCacheStore"
 import { getOpenRouterModelEndpoints } from "./openrouter"
 import { getModels } from "./modelCache"
 
@@ -23,14 +23,23 @@ const modelRecordSchema = z.record(z.string(), modelInfoSchema)
 const getCacheKey = (router: RouterName, modelId: string) => sanitize(`${router}_${modelId}`)
 
 async function writeModelEndpoints(key: string, data: ModelRecord) {
+	const basePath = getModelCacheStore()?.globalStorageUri.fsPath
+	if (!basePath) {
+		logger.debug("ModelEndpointCache", `Skipping ${key} endpoint write: cacheStore not initialized`)
+		return
+	}
 	const filename = `${key}_endpoints.json`
-	const cacheDir = await getCacheDirectoryPath(ContextProxy.instance.globalStorageUri.fsPath)
+	const cacheDir = await getCacheDirectoryPath(basePath)
 	await safeWriteJson(path.join(cacheDir, filename), data)
 }
 
 async function readModelEndpoints(key: string): Promise<ModelRecord | undefined> {
+	const basePath = getModelCacheStore()?.globalStorageUri.fsPath
+	if (!basePath) {
+		return undefined
+	}
 	const filename = `${key}_endpoints.json`
-	const cacheDir = await getCacheDirectoryPath(ContextProxy.instance.globalStorageUri.fsPath)
+	const cacheDir = await getCacheDirectoryPath(basePath)
 	const filePath = path.join(cacheDir, filename)
 	const exists = await fileExistsAtPath(filePath)
 	if (!exists) {
@@ -58,7 +67,6 @@ export const getModelEndpoints = async ({
 	let modelProviders = memoryCache.get<ModelRecord>(key)
 
 	if (modelProviders) {
-
 		return modelProviders
 	}
 
@@ -83,12 +91,10 @@ export const getModelEndpoints = async ({
 	}
 
 	if (Object.keys(modelProviders).length > 0) {
-
 		memoryCache.set(key, modelProviders)
 
 		try {
 			await writeModelEndpoints(key, modelProviders)
-
 		} catch (error) {
 			logger.error("ModelEndpointCache", `Error writing ${key} endpoints to file cache`, error)
 		}
@@ -98,7 +104,6 @@ export const getModelEndpoints = async ({
 
 	try {
 		modelProviders = await readModelEndpoints(router)
-
 	} catch (error) {
 		logger.error("ModelEndpointCache", `Error reading ${key} endpoints from file cache`, error)
 	}

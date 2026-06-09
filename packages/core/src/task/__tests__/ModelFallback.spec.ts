@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { ModelFallbackManager } from "../ModelFallback"
+import { ModelFallbackManager } from "../ModelFallback.js"
 
 describe("ModelFallbackManager", () => {
 	it("starts on the primary model with empty fallback state", () => {
@@ -141,7 +141,7 @@ describe("ModelFallbackManager", () => {
 
 	it("returns state copies instead of mutable internal state", () => {
 		const manager = new ModelFallbackManager("primary")
-		const state = manager.getState() as any
+		const state = manager.getState() as { currentModelIndex: number; originalModel: string }
 
 		state.currentModelIndex = 99
 		state.originalModel = "mutated"

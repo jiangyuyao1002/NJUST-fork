@@ -17,6 +17,7 @@ import { Package } from "./shared/package"
 import { formatLanguage } from "./shared/language"
 import { ContextProxy } from "./core/config/ContextProxy"
 import { ClineProvider } from "./core/webview/ClineProvider"
+import { taskEventBus } from "./core/events/TaskEventBus"
 import { DIFF_VIEW_URI_SCHEME } from "./integrations/editor/diffViewConstants"
 import { TerminalRegistry } from "./integrations/terminal/TerminalRegistry"
 import { McpServerManager } from "./services/mcp/McpServerManager"
@@ -29,6 +30,8 @@ import { autoImportSettings } from "./core/config/autoImportSettings"
 import { startupProfiler } from "./utils/profiler"
 import { API } from "./extension/api"
 import { TokenBucketRateLimiter } from "./services/rate-limiter/TokenBucketRateLimiter"
+import { setModelCacheStore } from "./api/providers/fetchers/modelCacheStore"
+import { setApiEventBus } from "./api/retry/event-bus"
 
 import {
 	handleUri,
@@ -180,6 +183,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const contextProxyInstance = await ContextProxy.getInstance(context)
 	contextProxy = contextProxyInstance
+
+	// Inject the model cache store so api/providers/fetchers can locate
+	// the on-disk cache directory without importing ContextProxy directly.
+	setModelCacheStore(contextProxyInstance)
+
+	// Inject the task event bus so api/ retry / error handlers can emit
+	// without importing src/core/events/TaskEventBus directly.
+	setApiEventBus(taskEventBus)
 
 	// Initialize code index managers for all workspace folders.
 	const codeIndexManagers: CodeIndexManager[] = []

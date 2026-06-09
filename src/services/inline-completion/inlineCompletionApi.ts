@@ -1,5 +1,6 @@
 import { buildApiHandler, type ApiHandler } from "../../api"
 import type { ClineProvider } from "../../core/webview/ClineProvider"
+import { defaultToolCallParser } from "../../core/assistant-message/ToolCallParserImpl"
 import { getErrorMessage } from "../../shared/error-utils"
 
 let loggedMissingApiProfile = false
@@ -27,11 +28,9 @@ export async function resolveInlineCompletionApiHandler(
 			return undefined
 		}
 		loggedMissingApiProfile = false
-		return buildApiHandler(apiConfiguration)
+		return buildApiHandler(apiConfiguration, undefined, { toolCallParser: defaultToolCallParser })
 	} catch (error) {
-		log?.(
-			`[InlineCompletion] Could not build API handler: ${getErrorMessage(error)}`,
-		)
+		log?.(`[InlineCompletion] Could not build API handler: ${getErrorMessage(error)}`)
 		return undefined
 	}
 }

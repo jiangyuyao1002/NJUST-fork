@@ -1,9 +1,10 @@
 import { debugLog } from "../../utils/debugLog"
 import { logger } from "../../shared/logger"
 
-export interface DisposableLike {
-	dispose(): void
-}
+import type { DisposableLike, ITaskEventBus, TaskEventName, TaskEventPayload } from "@njust-ai/core/events"
+
+export type { DisposableLike, TaskEventName, TaskEventPayload }
+export type { ITaskEventBus } from "@njust-ai/core/events"
 
 class Disposable implements DisposableLike {
 	constructor(private readonly disposeFn: () => void) {}
@@ -13,24 +14,6 @@ class Disposable implements DisposableLike {
 	}
 }
 
-/** Task-scoped domain events (B.1). */
-export type TaskEventName =
-	| "task:started"
-	| "task:completed"
-	| "task:failed"
-	| "task:aborted"
-	| "task:tool-executing"
-	| "task:tool-completed"
-	| "task:llm-response"
-	| "task:tokens-updated"
-	| "task:llm-retry"
-	| "task:assistant-message-requested"
-
-export type TaskEventPayload = {
-	taskId?: string
-	data?: unknown
-}
-
 export type TaskEventListener = (event: TaskEventName, payload: TaskEventPayload) => void | Promise<void>
 
 /**
@@ -38,7 +21,7 @@ export type TaskEventListener = (event: TaskEventName, payload: TaskEventPayload
  */
 export type TaskEventBusMiddleware = (event: TaskEventName, payload: TaskEventPayload, next: () => void) => void
 
-export class TaskEventBus {
+export class TaskEventBus implements ITaskEventBus {
 	private readonly listeners = new Map<TaskEventName, Set<TaskEventListener>>()
 	private middleware: TaskEventBusMiddleware | undefined
 

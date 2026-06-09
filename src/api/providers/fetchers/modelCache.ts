@@ -11,11 +11,11 @@ import { modelInfoSchema } from "@njust-ai/types"
 import { logger } from "../../../shared/logger"
 import { safeWriteJson } from "../../../utils/safeWriteJson"
 
-import { ContextProxy } from "../../../core/config/ContextProxy"
 import { getCacheDirectoryPath } from "../../../utils/storage"
 import type { RouterName } from "../../../shared/api"
 import { fileExistsAtPath } from "../../../utils/fs"
 
+import { getModelCacheStore } from "./modelCacheStore"
 import { getOpenRouterModels } from "./openrouter"
 import { getVercelAiGatewayModels } from "./vercel-ai-gateway"
 import { getRequestyModels } from "./requesty"
@@ -49,14 +49,23 @@ const diskCacheEntrySchema = z.object({
 const inFlightRefresh = new Map<RouterName, Promise<ModelRecord>>()
 
 async function writeModels(router: RouterName, data: ModelRecord) {
+	const basePath = getModelCacheStore()?.globalStorageUri.fsPath
+	if (!basePath) {
+		logger.debug("ModelCache", `Skipping ${router} model write: cacheStore not initialized`)
+		return
+	}
 	const filename = `${router}_models.json`
-	const cacheDir = await getCacheDirectoryPath(ContextProxy.instance.globalStorageUri.fsPath)
+	const cacheDir = await getCacheDirectoryPath(basePath)
 	await safeWriteJson(path.join(cacheDir, filename), data)
 }
 
 async function _readModels(router: RouterName): Promise<ModelRecord | undefined> {
+	const basePath = getModelCacheStore()?.globalStorageUri.fsPath
+	if (!basePath) {
+		return undefined
+	}
 	const filename = `${router}_models.json`
-	const cacheDir = await getCacheDirectoryPath(ContextProxy.instance.globalStorageUri.fsPath)
+	const cacheDir = await getCacheDirectoryPath(basePath)
 	const filePath = path.join(cacheDir, filename)
 	const exists = await fileExistsAtPath(filePath)
 	if (!exists) {
@@ -334,7 +343,7 @@ export function getModelsFromCache(provider: ProviderName): ModelRecord | undefi
  */
 function getCacheDirectoryPathSync(): string | undefined {
 	try {
-		const globalStoragePath = ContextProxy.instance?.globalStorageUri?.fsPath
+		const globalStoragePath = getModelCacheStore()?.globalStorageUri?.fsPath
 		if (!globalStoragePath) {
 			return undefined
 		}

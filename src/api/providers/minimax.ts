@@ -14,7 +14,7 @@ import { mergeEnvironmentDetailsForMiniMax } from "../transform/minimax-format"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { calculateApiCostAnthropic } from "../../shared/cost"
-import { convertOpenAIToolsToAnthropic } from "../../core/prompts/tools/native-tools/converters"
+import { convertOpenAIToolsToAnthropic } from "../transform/native-tool-converters"
 import { getErrorMessage } from "../../shared/error-utils"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 

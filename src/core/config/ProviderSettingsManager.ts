@@ -19,6 +19,7 @@ import { TelemetryService } from "@njust-ai/telemetry"
 import { Mode, modes } from "../../shared/modes"
 import { getErrorMessage } from "../../shared/error-utils"
 import { buildApiHandler } from "../../api"
+import { defaultToolCallParser } from "../assistant-message/ToolCallParserImpl"
 import { logger } from "../../shared/logger"
 
 // Type-safe model migrations mapping
@@ -199,14 +200,17 @@ export class ProviderSettingsManager {
 		})
 		// Suppress rejection — lock chain errors are logged above, and we only
 		// need the returned promise for serialisation; never reject the lock itself.
-		this._lock = next.then(() => {}, () => {}) as Promise<void>
+		this._lock = next.then(
+			() => {},
+			() => {},
+		) as Promise<void>
 		return next
 	}
 
 	/**
 	 * Initialize config if it doesn't exist and run migrations.
 	 */
-	
+
 	private async migrateRateLimitSeconds(providerProfiles: ProviderProfiles) {
 		try {
 			let rateLimitSeconds: number | undefined
@@ -214,7 +218,11 @@ export class ProviderSettingsManager {
 			try {
 				rateLimitSeconds = await this.context.globalState.get<number>("rateLimitSeconds")
 			} catch (error) {
-				logger.error("ProviderSettingsManager", "[MigrateRateLimitSeconds] Error getting global rate limit:", error)
+				logger.error(
+					"ProviderSettingsManager",
+					"[MigrateRateLimitSeconds] Error getting global rate limit:",
+					error,
+				)
 			}
 
 			if (rateLimitSeconds === undefined) {
@@ -228,7 +236,11 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			logger.error("ProviderSettingsManager", `[MigrateRateLimitSeconds] Failed to migrate rate limit settings:`, error)
+			logger.error(
+				"ProviderSettingsManager",
+				`[MigrateRateLimitSeconds] Failed to migrate rate limit settings:`,
+				error,
+			)
 		}
 	}
 
@@ -264,7 +276,11 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			logger.error("ProviderSettingsManager", `[MigrateConsecutiveMistakeLimit] Failed to migrate consecutive mistake limit:`, error)
+			logger.error(
+				"ProviderSettingsManager",
+				`[MigrateConsecutiveMistakeLimit] Failed to migrate consecutive mistake limit:`,
+				error,
+			)
 		}
 	}
 
@@ -276,7 +292,11 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			logger.error("ProviderSettingsManager", `[MigrateTodoListEnabled] Failed to migrate todo list enabled setting:`, error)
+			logger.error(
+				"ProviderSettingsManager",
+				`[MigrateTodoListEnabled] Failed to migrate todo list enabled setting:`,
+				error,
+			)
 		}
 	}
 
@@ -304,7 +324,8 @@ export class ProviderSettingsManager {
 				// Check if the current model ID needs migration
 				const newModelId = providerMigrations[apiConfig.apiModelId]
 				if (newModelId && newModelId !== apiConfig.apiModelId) {
-					logger.info("ProviderSettingsManager", 
+					logger.info(
+						"ProviderSettingsManager",
 						`[ModelMigration] Migrating ${apiConfig.apiProvider} model from ${apiConfig.apiModelId} to ${newModelId}`,
 					)
 					apiConfig.apiModelId = newModelId
@@ -536,7 +557,9 @@ export class ProviderSettingsManager {
 
 					// Try to build an API handler to get model information
 					try {
-						const apiHandler = buildApiHandler(configs[name])
+						const apiHandler = buildApiHandler(configs[name], undefined, {
+							toolCallParser: defaultToolCallParser,
+						})
 						const modelInfo = apiHandler.getModel().info
 
 						// Check if the model supports reasoning budgets
@@ -551,7 +574,10 @@ export class ProviderSettingsManager {
 					} catch (error) {
 						// If we can't build the API handler or get model info, skip filtering
 						// to avoid accidental data loss from incomplete configurations
-						logger.warn("ProviderSettingsManager", `Skipping token field filtering for config '${name}': ${getErrorMessage(error)}`)
+						logger.warn(
+							"ProviderSettingsManager",
+							`Skipping token field filtering for config '${name}': ${getErrorMessage(error)}`,
+						)
 					}
 				}
 				return profiles
@@ -659,7 +685,8 @@ export class ProviderSettingsManager {
 			apiProvider !== undefined &&
 			(typeof apiProvider !== "string" || (!isProviderName(apiProvider) && !isRetiredProvider(apiProvider)))
 		) {
-			logger.info("ProviderSettingsManager", 
+			logger.info(
+				"ProviderSettingsManager",
 				`[ProviderSettingsManager] Sanitizing UnsafeAny provider "${config.apiProvider}" - resetting to undefined`,
 			)
 			// Return a new config object without the invalid apiProvider
