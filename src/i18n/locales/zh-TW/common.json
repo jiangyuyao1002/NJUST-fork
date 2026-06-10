@@ -460,6 +460,15 @@
 			"let_to_var": "將 let 改為 var"
 		}
 	},
+	"tools": {
+		"apply_patch_format_hint": "\n\n正確格式範例：\n*** Begin Patch\n*** Update File: path/to/file.cj\n@@ -line,count +line,count @@\n old line\n+new line\n*** End Patch",
+		"cangjie_preflight_failed": "倉頡程式碼預檢失敗，檔案未寫入：\n",
+		"cangjie_preflight_retry": "\n\n請修正以上錯誤後重試。",
+		"truncation_summary": "\n[... 內容已裁剪，原始 {{currentTokens}} tokens，保留 {{keptTokens}} tokens ...]\n",
+		"deferred_session_recovery": "[自動恢復] 之前的 deferred 工作階段已過期（run_id {{runId}}…），請繼續之前的任務。",
+		"compile_fix_goal_prefix": "以下倉頡程式碼編譯失敗，請根據錯誤訊息修正程式碼，回傳修正後的 workspace_ops。",
+		"compile_fix_goal_suffix": "僅修改出錯的檔案，不要重複回傳正確的檔案。\n\n編譯輸出:\n{{output}}"
+	},
 	"status": {
 		"cangjie_lsp": {
 			"compile_compiling": "編譯中…",
