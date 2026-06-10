@@ -37,12 +37,15 @@ export class StdioTransportStrategy implements ITransportStrategy {
 			}
 		}
 
-		// Validate config.cwd for basic safety (no null bytes, no obviously malicious paths)
+		// Validate config.cwd for basic safety (no null bytes, no path traversal)
 		const cwd = config.cwd ? String(config.cwd) : undefined
 		if (cwd?.includes("\0")) {
 			logger.warn("McpHub", `stdio "${name}" cwd contains null bytes, ignoring`)
 		}
-		const safeCwd = cwd && !cwd.includes("\0") ? cwd : undefined
+		if (cwd?.includes("..")) {
+			logger.warn("McpHub", `stdio "${name}" cwd contains path traversal (..), ignoring`)
+		}
+		const safeCwd = cwd && !cwd.includes("\0") && !cwd.includes("..") ? cwd : undefined
 
 		const transport = new StdioClientTransport({
 			command,
