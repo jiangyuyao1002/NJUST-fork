@@ -3,7 +3,7 @@
  *
  * Manages RuleCard-based long-term memory.
  * LLM distillation converts recent episodic episodes into reusable rules.
- * Dual-write: .njust_ai/memories/ + .roo/session-memories/
+ * Persisted to .njust_ai/memories/.
  */
 
 import * as fs from "fs/promises"
@@ -20,7 +20,6 @@ import {
 	LTM_FILE,
 	LTM_MAX_RULES,
 	MEMRL_PRIMARY_DIR,
-	MEMRL_ROO_DIR,
 	SIM_THRESHOLD,
 	TOP_K1,
 	TOP_K2,
@@ -62,10 +61,6 @@ export class LongTermMemoryService {
 		return path.join(this.workspaceDir, MEMRL_PRIMARY_DIR, LTM_FILE)
 	}
 
-	private get rooPath(): string {
-		return path.join(this.workspaceDir, MEMRL_ROO_DIR, LTM_FILE)
-	}
-
 	async load(): Promise<void> {
 		if (this.loaded) return
 		const current = currentEmbedFingerprint()
@@ -92,9 +87,6 @@ export class LongTermMemoryService {
 
 	private async persist(): Promise<void> {
 		await safeWriteJson(this.primaryPath, this.store)
-		await safeWriteJson(this.rooPath, this.store).catch(() => {
-			/* best-effort mirror */
-		})
 	}
 
 	// ── Distillation (fire-and-forget from MemoryManager) ─────────────────────

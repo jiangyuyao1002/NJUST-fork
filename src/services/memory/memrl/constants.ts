@@ -1,14 +1,11 @@
 /**
  * MemRL Memory System — Path constants & hyperparameters.
  *
- * Dual-write strategy:
- *  - Primary:    .njust_ai/memories/  (episodic, LTM)
- *  - Secondary:  .roo/session-memories/  (acceptance criteria mirror)
+ * Storage: .njust_ai/memories/  (episodic, LTM)
  */
 
 // ── Storage directories (relative to workspace root) ──────────────────────────
 export const MEMRL_PRIMARY_DIR = ".njust_ai/memories"
-export const MEMRL_ROO_DIR = ".roo/session-memories"
 
 // File names inside the above directories
 export const EPISODIC_FILE = "episodic.json"
