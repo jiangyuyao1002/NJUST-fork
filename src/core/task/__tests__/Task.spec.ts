@@ -601,7 +601,7 @@ describe("Cline", () => {
 
 			await vi.waitFor(
 				() => {
-					expect(loggerSpy).toHaveBeenCalledWith("startTask failed", expect.any(Error))
+					expect(loggerSpy).toHaveBeenCalledWith("Task", "startTask failed", expect.any(Error))
 				},
 				{ timeout: 3000 },
 			)

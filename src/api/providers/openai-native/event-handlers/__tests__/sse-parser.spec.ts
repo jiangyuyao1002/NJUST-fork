@@ -39,7 +39,7 @@ describe("parseSseStream", () => {
 		const stream = createStream([
 			'data: {"type":"response.text.delta","delta":"Hello"}\n\n',
 			'data: {"type":"response.text.delta","delta":" world"}\n\n',
-			'data: [DONE]\n\n',
+			"data: [DONE]\n\n",
 		])
 
 		const chunks: any[] = []
@@ -54,10 +54,7 @@ describe("parseSseStream", () => {
 	})
 
 	it("should handle [DONE] markers", async () => {
-		const stream = createStream([
-			'data: {"type":"response.text.delta","delta":"Done"}\n\n',
-			"data: [DONE]\n\n",
-		])
+		const stream = createStream(['data: {"type":"response.text.delta","delta":"Done"}\n\n', "data: [DONE]\n\n"])
 
 		const chunks: any[] = []
 		for await (const chunk of parseSseStream(stream, createMockModel(), createMockCtx())) {
@@ -70,7 +67,7 @@ describe("parseSseStream", () => {
 	it("should handle invalid JSON gracefully", async () => {
 		const stream = createStream([
 			'data: {"type":"response.text.delta","delta":"Before"}\n\n',
-			'data: {invalid json}\n\n',
+			"data: {invalid json}\n\n",
 			'data: {"type":"response.text.delta","delta":"After"}\n\n',
 		])
 
@@ -152,9 +149,7 @@ describe("parseSseStream", () => {
 	})
 
 	it("should propagate errors from status handlers", async () => {
-		const stream = createStream([
-			'data: {"type":"response.error","error":{"message":"Model overloaded"}}\n\n',
-		])
+		const stream = createStream(['data: {"type":"response.error","error":{"message":"Model overloaded"}}\n\n'])
 
 		await expect(async () => {
 			for await (const _ of parseSseStream(stream, createMockModel(), createMockCtx())) {

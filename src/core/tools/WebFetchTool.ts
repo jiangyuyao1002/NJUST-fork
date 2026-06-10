@@ -30,8 +30,12 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Partial<{url: string; format?: "text" | "html" | "json" | "markdown"; maxLength?: number}>): boolean {
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
+	override isPartialArgsStable(
+		partial: Partial<{ url: string; format?: "text" | "html" | "json" | "markdown"; maxLength?: number }>,
+	): boolean {
 		if (typeof partial.url !== "string" || partial.url.length === 0) return false
 		try {
 			const parsed = new URL(partial.url)
@@ -71,9 +75,7 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 				parsedUrl = await assertSafeOutboundUrl(url)
 				hostname = parsedUrl.hostname
 			} catch (error) {
-				pushToolResult(
-					formatResponse.toolError(error instanceof Error ? error.message : `Invalid URL: ${url}`),
-				)
+				pushToolResult(formatResponse.toolError(error instanceof Error ? error.message : `Invalid URL: ${url}`))
 				return
 			}
 
@@ -91,10 +93,7 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 				preRequestIPs = new Set(preLookup.map((e) => e.address))
 			}
 
-			const approved = await askApproval(
-				"tool",
-				JSON.stringify({ tool: "web_fetch", url, format }),
-			)
+			const approved = await askApproval("tool", JSON.stringify({ tool: "web_fetch", url, format }))
 			if (!approved) {
 				pushToolResult("Web fetch was not approved by the user.")
 				return
@@ -132,13 +131,9 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 					assertPublicIp(entry.address)
 				}
 				const postIPs = new Set(postLookup.map((e) => e.address))
-				const changed =
-					preRequestIPs.size !== postIPs.size ||
-					[...preRequestIPs].some((ip) => !postIPs.has(ip))
+				const changed = preRequestIPs.size !== postIPs.size || [...preRequestIPs].some((ip) => !postIPs.has(ip))
 				if (changed) {
-					throw new Error(
-						`Potential DNS rebinding detected for host: ${hostname} — request blocked.`,
-					)
+					throw new Error(`Potential DNS rebinding detected for host: ${hostname} — request blocked.`)
 				}
 			}
 
@@ -146,7 +141,8 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 
 			switch (format) {
 				case "json": {
-					const data = typeof response.data === "string" ? response.data : JSON.stringify(response.data, null, 2)
+					const data =
+						typeof response.data === "string" ? response.data : JSON.stringify(response.data, null, 2)
 					result = data
 					break
 				}

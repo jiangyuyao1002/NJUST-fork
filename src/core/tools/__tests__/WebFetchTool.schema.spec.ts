@@ -8,7 +8,11 @@ describe("WebFetchTool schema", () => {
 	})
 
 	it("passes with optional fields", () => {
-		const result = webFetchTool.inputSchema.safeParse({ url: "https://example.com", format: "json", maxLength: 5000 })
+		const result = webFetchTool.inputSchema.safeParse({
+			url: "https://example.com",
+			format: "json",
+			maxLength: 5000,
+		})
 		expect(result.success).toBe(true)
 	})
 

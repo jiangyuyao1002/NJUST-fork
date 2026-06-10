@@ -97,14 +97,17 @@ describe("CangjieRuntimePolicy", () => {
 		const policy = new CangjieRuntimePolicy(tempDir)
 
 		await expect(
-			policy.validateProjectStructureForWrite("cjpm.toml", "[package]\nname = \"demo\"\n[workspace]\nmembers = []\n"),
+			policy.validateProjectStructureForWrite(
+				"cjpm.toml",
+				'[package]\nname = "demo"\n[workspace]\nmembers = []\n',
+			),
 		).resolves.toContain("[package] and [workspace]")
 	})
 
 	it("requires a successful build after Cangjie source changes before completion", () => {
 		const policy = new CangjieRuntimePolicy(tempDir)
 
-		policy.noteWriteApplied("src/main.cj", "main() {}", "main() { println(\"hi\") }")
+		policy.noteWriteApplied("src/main.cj", "main() {}", 'main() { println("hi") }')
 		expect(policy.getAttemptCompletionBlockReason()).toContain("last successful build")
 
 		policy.noteBuildResult("cjpm build", true, "build ok")
@@ -126,7 +129,7 @@ describe("CangjieRuntimePolicy", () => {
 	it("surfaces build root causes and upgrades prompt detail after build failure", () => {
 		const policy = new CangjieRuntimePolicy(tempDir)
 
-		policy.noteWriteApplied("src/main.cj", "main() {}", "main() { let x: Int32 = \"oops\" }")
+		policy.noteWriteApplied("src/main.cj", "main() {}", 'main() { let x: Int32 = "oops" }')
 		policy.noteBuildResult("cjpm build", true, "build ok")
 		policy.noteBuildResult("cjpm build", false, "type mismatch: expected Int32, found String")
 

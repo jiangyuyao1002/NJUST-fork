@@ -92,7 +92,11 @@ describe("BashCommandAnalyzer", () => {
 		it("allows non-command tools without pattern analysis", () => {
 			const classifier = new StaticPatternClassifier()
 
-			const result = classifier.classifySync("read_file", { path: "README.md" }, { ...context, toolName: "read_file" })
+			const result = classifier.classifySync(
+				"read_file",
+				{ path: "README.md" },
+				{ ...context, toolName: "read_file" },
+			)
 
 			expect(result.action).toBe("allow")
 			expect(result.confidence).toBe(0.3)

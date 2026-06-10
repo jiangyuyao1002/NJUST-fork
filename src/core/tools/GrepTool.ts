@@ -32,8 +32,12 @@ export class GrepTool extends BaseTool<"grep"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Partial<{pattern: string; path?: string; include?: string; exclude?: string; contextLines?: number}>): boolean {
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
+	override isPartialArgsStable(
+		partial: Partial<{ pattern: string; path?: string; include?: string; exclude?: string; contextLines?: number }>,
+	): boolean {
 		return typeof partial.pattern === "string" && partial.pattern.length > 0
 	}
 

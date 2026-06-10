@@ -58,7 +58,8 @@ export async function executeNonStreamingRequest(
 	if (!response.ok) {
 		const errorText = await response.text()
 		throw new Error(
-			t("common:errors.openAiCodex.genericError", { status: response.status }) + (errorText ? `: ${errorText}` : ""),
+			t("common:errors.openAiCodex.genericError", { status: response.status }) +
+				(errorText ? `: ${errorText}` : ""),
 		)
 	}
 

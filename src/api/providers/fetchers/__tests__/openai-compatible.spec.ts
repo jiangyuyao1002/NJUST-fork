@@ -29,9 +29,7 @@ describe("fetchOpenAICompatibleModels", () => {
 
 	it("uses options.apiKey over env var", async () => {
 		const models = {
-			data: [
-				{ id: "gpt-4o", context_window: 128000, max_tokens: 16384 },
-			],
+			data: [{ id: "gpt-4o", context_window: 128000, max_tokens: 16384 }],
 		}
 		mockFetch.mockResolvedValueOnce({
 			ok: true,
@@ -63,10 +61,7 @@ describe("fetchOpenAICompatibleModels", () => {
 			baseUrl: "https://custom.host/api",
 		})
 
-		expect(mockFetch).toHaveBeenCalledWith(
-			"https://custom.host/api/models",
-			expect.anything(),
-		)
+		expect(mockFetch).toHaveBeenCalledWith("https://custom.host/api/models", expect.anything())
 	})
 
 	it("handles deepseek special baseUrl (no /v1)", async () => {
@@ -78,10 +73,7 @@ describe("fetchOpenAICompatibleModels", () => {
 
 		await fetchOpenAICompatibleModels("deepseek", { apiKey: "k" })
 
-		expect(mockFetch).toHaveBeenCalledWith(
-			"https://api.deepseek.com/models",
-			expect.anything(),
-		)
+		expect(mockFetch).toHaveBeenCalledWith("https://api.deepseek.com/models", expect.anything())
 	})
 
 	it("parses json.models when json.data is absent", async () => {
@@ -103,9 +95,9 @@ describe("fetchOpenAICompatibleModels", () => {
 			text: () => Promise.resolve("rate limited"),
 		})
 
-		await expect(
-			fetchOpenAICompatibleModels("openai", { apiKey: "k" }),
-		).rejects.toThrow("Failed to fetch models for openai: 429")
+		await expect(fetchOpenAICompatibleModels("openai", { apiKey: "k" })).rejects.toThrow(
+			"Failed to fetch models for openai: 429",
+		)
 	})
 
 	it("returns empty record when response has no data or models array", async () => {

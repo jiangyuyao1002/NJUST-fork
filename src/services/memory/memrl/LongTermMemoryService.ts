@@ -166,7 +166,7 @@ Focus on high-Q episodes (Q ≥ 0.6) as positive examples.`
 
 			await this.persist()
 		} catch {
-			// Silently swallow — distillation is best-effort
+			// intentionally ignored: distillation is best-effort
 		}
 	}
 

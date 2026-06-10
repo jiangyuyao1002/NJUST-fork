@@ -99,7 +99,9 @@ export class TaskBoard {
 	 */
 	async updateTask(
 		taskId: string,
-		updates: Partial<Pick<TaskBoardItem, "title" | "description" | "status" | "priority" | "dependsOn" | "metadata">>,
+		updates: Partial<
+			Pick<TaskBoardItem, "title" | "description" | "status" | "priority" | "dependsOn" | "metadata">
+		>,
 	): Promise<TaskBoardItem> {
 		return this.withLock(async () => {
 			await this.ensureLoaded()

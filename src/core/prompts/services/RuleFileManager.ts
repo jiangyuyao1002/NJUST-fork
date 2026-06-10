@@ -5,6 +5,8 @@ import { Dirent } from "fs"
 
 import { NJUST_AI_CONFIG_DIR } from "@njust-ai/types"
 
+import { logger } from "../../../shared/logger"
+
 import {
 	getRooDirectoriesForCwd,
 	getAllRooDirectoriesForCwd,
@@ -110,7 +112,8 @@ async function resolveSymLink(
 			// Handle nested symlinks by awaiting the recursive call
 			await resolveSymLink(resolvedTarget, fileInfo, depth + 1)
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("RuleFileManager", "symlink resolution failed", error)
 		// Skip invalid symlinks
 	}
 }
@@ -248,9 +251,7 @@ export function shouldIncludeRuleFile(filename: string): boolean {
 export async function loadRuleFiles(cwd: string, enableSubfolderRules: boolean = false): Promise<string> {
 	const rules: string[] = []
 	// Use recursive discovery only if enableSubfolderRules is true
-	const rooDirectories = enableSubfolderRules
-		? await getAllRooDirectoriesForCwd(cwd)
-		: getRooDirectoriesForCwd(cwd)
+	const rooDirectories = enableSubfolderRules ? await getAllRooDirectoriesForCwd(cwd) : getRooDirectoriesForCwd(cwd)
 
 	// Check for .njust_ai/rules/ directories in order (global, project-local, and optionally subfolders)
 	for (const rooDir of rooDirectories) {
@@ -354,7 +355,8 @@ export async function loadAgentRulesFileFromDirectory(
 				// Found a standard file, don't check alternative
 				break
 			}
-		} catch {
+		} catch (error) {
+			logger.debug("RuleFileManager", "agent rules file read failed", error)
 			// Silently ignore errors - agent rules files are optional
 		}
 	}
@@ -371,7 +373,8 @@ export async function loadAgentRulesFileFromDirectory(
 				: `# Agent Rules Local (${localFilename}):`
 			results.push(`${localHeader}\n${localContent}`)
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("RuleFileManager", "local agent rules file read failed", error)
 		// Silently ignore errors - local agent rules file is optional
 	}
 
@@ -386,10 +389,7 @@ export async function loadAgentRulesFileFromDirectory(
  * @param enableSubfolderRules - Whether to include AGENTS.md from subdirectories (default: false)
  * @returns Combined AGENTS.md content from all locations
  */
-export async function loadAllAgentRulesFiles(
-	cwd: string,
-	enableSubfolderRules: boolean = false,
-): Promise<string> {
+export async function loadAllAgentRulesFiles(cwd: string, enableSubfolderRules: boolean = false): Promise<string> {
 	const agentRules: string[] = []
 
 	// When subfolder rules are disabled, only load from root
@@ -487,9 +487,7 @@ export async function loadModeRules(
 
 	const modeRules: string[] = []
 	// Use recursive discovery only if enableSubfolderRules is true
-	const rooDirectories = enableSubfolderRules
-		? await getAllRooDirectoriesForCwd(cwd)
-		: getRooDirectoriesForCwd(cwd)
+	const rooDirectories = enableSubfolderRules ? await getAllRooDirectoriesForCwd(cwd) : getRooDirectoriesForCwd(cwd)
 
 	// Check for .njust_ai/rules-{mode}/ directories in order (global, project-local, and optionally subfolders)
 	for (const rooDir of rooDirectories) {

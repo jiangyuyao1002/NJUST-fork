@@ -15,10 +15,10 @@ export type MemoryType = "session" | "user_feedback" | "project" | "reference"
 
 /** TTL configuration per memory type (in milliseconds). */
 export const MEMORY_TTL: Record<MemoryType, number> = {
-	session: 7 * 24 * 60 * 60 * 1000,        // 7 days
-	user_feedback: 7 * 24 * 60 * 60 * 1000,   // 7 days
-	project: 30 * 24 * 60 * 60 * 1000,        // 30 days
-	reference: 90 * 24 * 60 * 60 * 1000,      // 90 days
+	session: 7 * 24 * 60 * 60 * 1000, // 7 days
+	user_feedback: 7 * 24 * 60 * 60 * 1000, // 7 days
+	project: 30 * 24 * 60 * 60 * 1000, // 30 days
+	reference: 90 * 24 * 60 * 60 * 1000, // 90 days
 }
 
 export interface MemoryEntry {
@@ -33,10 +33,7 @@ export interface MemoryEntry {
 /**
  * Load all non-expired memory entries of a given type from disk.
  */
-export async function loadMemories(
-	workspaceDir: string,
-	type?: MemoryType,
-): Promise<MemoryEntry[]> {
+export async function loadMemories(workspaceDir: string, type?: MemoryType): Promise<MemoryEntry[]> {
 	const dir = path.join(workspaceDir, SESSION_MEMORIES_DIR)
 	try {
 		const files = await fs.readdir(dir)
@@ -53,17 +50,20 @@ export async function loadMemories(
 				const ttl = MEMORY_TTL[parsed.type] ?? MEMORY_TTL.session
 				if (Date.now() - parsed.timestamp > ttl) {
 					// Remove expired file silently
-					fs.unlink(path.join(dir, file)).catch(() => { /* best-effort cleanup */ })
+					fs.unlink(path.join(dir, file)).catch(() => {
+						/* best-effort cleanup */
+					})
 					continue
 				}
 				entries.push(parsed)
 			} catch {
-				// Skip corrupted files
+				// intentionally ignored: skip corrupted files
 			}
 		}
 
 		return entries.sort((a, b) => b.timestamp - a.timestamp)
 	} catch {
+		// intentionally ignored: memory directory read failure
 		return []
 	}
 }
@@ -71,10 +71,7 @@ export async function loadMemories(
 /**
  * Save a memory entry to disk.
  */
-export async function saveMemory(
-	entry: MemoryEntry,
-	workspaceDir: string,
-): Promise<void> {
+export async function saveMemory(entry: MemoryEntry, workspaceDir: string): Promise<void> {
 	const dir = path.join(workspaceDir, SESSION_MEMORIES_DIR)
 	await fs.mkdir(dir, { recursive: true })
 	const filename = `memory-${entry.timestamp}-${entry.id.slice(0, 8)}.json`
@@ -105,11 +102,12 @@ export async function pruneExpiredMemories(workspaceDir: string): Promise<number
 					removed++
 				}
 			} catch {
-				// Skip corrupted files
+				// intentionally ignored: skip corrupted files
 			}
 		}
 		return removed
 	} catch {
+		// intentionally ignored: memory cleanup failure
 		return 0
 	}
 }

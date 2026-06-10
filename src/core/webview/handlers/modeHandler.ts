@@ -22,6 +22,7 @@ import { resolveDefaultSaveUri, saveLastExportPath } from "../../../utils/export
 
 import { MessageRouter, type MessageHandlerContext } from "./MessageRouter"
 import { getErrorMessage } from "../../../shared/error-utils"
+import { logger } from "../../../shared/logger"
 
 export function registerModeHandlers(router: MessageRouter): void {
 	router.register("mode", handleMode)
@@ -112,7 +113,8 @@ async function handleUpdateCustomMode(context: MessageHandlerContext, message: W
 			await updateGlobalState("customModes", customModes)
 			await updateGlobalState("mode", message.modeConfig.slug)
 			await provider.postStateToWebview()
-		} catch {
+		} catch (error) {
+			logger.debug("ModeHandler", "updateCustomMode error", error)
 			// Error already shown to user by updateCustomMode
 		}
 	}

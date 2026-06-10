@@ -5,10 +5,7 @@ import { snipCompactMessages } from "./snipCompact"
 /**
  * Aggressive compact path used only after API hard failures (e.g. prompt too long).
  */
-export function reactiveCompactMessages(
-	messages: ApiMessage[],
-	contextPercent: number,
-): ApiMessage[] {
+export function reactiveCompactMessages(messages: ApiMessage[], contextPercent: number): ApiMessage[] {
 	const micro = microcompactMessages(messages)
 	const snip = snipCompactMessages(micro, {
 		contextPercent: Math.max(85, contextPercent),

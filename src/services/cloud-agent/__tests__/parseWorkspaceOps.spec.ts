@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-	parseWorkspaceOps,
-	WORKSPACE_OPS_MAX_BODY_CHARS,
-	WORKSPACE_OPS_MAX_COUNT,
-} from "../parseWorkspaceOps"
+import { parseWorkspaceOps, WORKSPACE_OPS_MAX_BODY_CHARS, WORKSPACE_OPS_MAX_COUNT } from "../parseWorkspaceOps"
 
 describe("parseWorkspaceOps", () => {
 	it("returns empty when workspace_ops is absent", () => {

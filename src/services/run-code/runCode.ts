@@ -103,7 +103,7 @@ function buildJavaScriptConfig(filePath: string): RunConfig {
 				return { command: "npm run dev", cwd: pkgRoot }
 			}
 		} catch {
-			/* ignore */
+			// intentionally ignored: package.json read failure
 		}
 	}
 
@@ -124,7 +124,7 @@ function buildTypeScriptConfig(filePath: string): RunConfig {
 				return { command: "npm run dev", cwd: pkgRoot }
 			}
 		} catch {
-			/* ignore */
+			// intentionally ignored: package.json read failure
 		}
 	}
 

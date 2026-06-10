@@ -59,7 +59,10 @@ export interface TaskLifecycleHost {
 	consecutiveNoToolUseCount: number
 	consecutiveNoAssistantMessagesCount: number
 	persistentRetryHandler?: { cancel(): void } | undefined
-	providerProfileChangeListener?: (() => void) | undefined
+	readonly modeHandler: {
+		providerProfileChangeListener: ((...args: any[]) => void) | undefined
+		dispose(): void
+	}
 	messageQueueStateChangedHandler?: (() => void) | undefined
 	queuedMessageTimer?: ReturnType<typeof setTimeout> | undefined
 	rooIgnoreController?: { dispose(): void } | undefined
@@ -477,12 +480,9 @@ export class TaskLifecycleHandler {
 		}
 
 		try {
-			if (t.providerProfileChangeListener) {
-				const provider = t.hostRef.deref()
-				if (provider) {
-					provider.off(NJUST_AIEventName.ProviderProfileChanged, t.providerProfileChangeListener)
-				}
-				t.providerProfileChangeListener = undefined
+			const provider = t.hostRef.deref()
+			if (provider) {
+				t.modeHandler.dispose()
 			}
 		} catch (error) {
 			logger.error("TaskLifecycleHandler", "Error removing provider profile change listener:", error)

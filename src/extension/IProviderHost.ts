@@ -16,7 +16,13 @@ export interface IProviderHost {
 	getCurrentTask(): Task | undefined
 	getCurrentTaskStack(): string[]
 	getTaskWithId(id: string): Promise<{ historyItem: HistoryItem }>
-	createTask(text?: string, images?: string[], parentTask?: unknown, options?: CreateTaskOptions, configuration?: unknown): Promise<Task | undefined>
+	createTask(
+		text?: string,
+		images?: string[],
+		parentTask?: unknown,
+		options?: CreateTaskOptions,
+		configuration?: unknown,
+	): Promise<Task | undefined>
 	createTaskWithHistoryItem(historyItem: HistoryItem, options?: unknown): Promise<Task | undefined>
 	cancelTask(): Promise<void>
 	postStateToWebview(): Promise<void>
@@ -30,4 +36,3 @@ export interface IProviderHost {
 
 	on(event: string, listener: (...args: UnsafeAny[]) => void): this
 }
-

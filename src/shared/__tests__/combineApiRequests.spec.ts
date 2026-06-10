@@ -9,7 +9,7 @@ import { combineApiRequests } from "../combineApiRequests"
 describe("combineApiRequests", () => {
 	// Helper function to create a basic api_req_started message
 	const createStartMessage = (text: string = '{"request":"GET /api/data"}', ts: number = 1000): ClineMessage => ({
-		id: 'test',
+		id: "test",
 		type: "say",
 		say: "api_req_started",
 		text,
@@ -18,7 +18,7 @@ describe("combineApiRequests", () => {
 
 	// Helper function to create a basic api_req_finished message
 	const createFinishMessage = (text: string = '{"cost":0.005}', ts: number = 1001): ClineMessage => ({
-		id: 'test',
+		id: "test",
 		type: "say",
 		say: "api_req_finished",
 		text,
@@ -30,7 +30,7 @@ describe("combineApiRequests", () => {
 		say: ClineSay = "text",
 		text: string = "Hello world",
 		ts: number = 999,
-	): ClineMessage => ({ id: 'test', type: "say", say, text, ts })
+	): ClineMessage => ({ id: "test", type: "say", say, text, ts })
 
 	describe("Basic functionality", () => {
 		it("should combine a pair of api_req_started and api_req_finished messages", () => {
@@ -166,7 +166,7 @@ describe("combineApiRequests", () => {
 
 		it("should handle missing text field in api_req_started", () => {
 			const startMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_started",
 				ts: 1000,
@@ -191,7 +191,7 @@ describe("combineApiRequests", () => {
 		it("should handle missing text field in api_req_finished", () => {
 			const startMessage = createStartMessage()
 			const finishMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_finished",
 				ts: 1001,
@@ -262,7 +262,7 @@ describe("combineApiRequests", () => {
 
 		it("should preserve additional properties in the messages", () => {
 			const startMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_started",
 				text: '{"request":"GET /api/data"}',
@@ -272,7 +272,7 @@ describe("combineApiRequests", () => {
 			}
 
 			const finishMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_finished",
 				text: '{"cost":0.005}',
@@ -293,7 +293,7 @@ describe("combineApiRequests", () => {
 
 		it("should handle invalid JSON in api_req_started message", () => {
 			const startMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_started",
 				text: "This is not valid JSON",
@@ -318,7 +318,7 @@ describe("combineApiRequests", () => {
 		it("should handle invalid JSON in api_req_finished message", () => {
 			const startMessage = createStartMessage('{"request":"GET /api/data"}', 1000)
 			const finishMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_finished",
 				text: "This is not valid JSON",
@@ -339,7 +339,7 @@ describe("combineApiRequests", () => {
 			})
 		})
 
-	it("should handle non-object JSON in api_req_started message", () => {
+		it("should handle non-object JSON in api_req_started message", () => {
 			const startMessage = createStartMessage('"just a string"', 1000)
 			const finishMessage = createFinishMessage('{"cost": 0.005}', 1001)
 
@@ -359,7 +359,7 @@ describe("combineApiRequests", () => {
 		it("should handle non-object JSON in api_req_finished message", () => {
 			const startMessage = createStartMessage('{"request":"GET /api/data"}', 1000)
 			const finishMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_finished",
 				text: '"just a string"', // Valid JSON, but not an object
@@ -485,7 +485,7 @@ describe("combineApiRequests", () => {
 		it("should handle undefined text field", () => {
 			const startMessage = createStartMessage('{"request":"GET /api/data"}', 1000)
 			const finishMessage: ClineMessage = {
-				id: 'test',
+				id: "test",
 				type: "say",
 				say: "api_req_finished",
 				text: undefined, // undefined text field

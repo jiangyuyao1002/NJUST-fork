@@ -69,8 +69,9 @@ export async function taskMetadata({
 		taskMessage = messages[0] // First message is always the task say.
 
 		const lastRelevantMessage =
-			messages[findLastIndex(messages, (m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"))]! ||
-			taskMessage
+			messages[
+				findLastIndex(messages, (m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"))
+			]! || taskMessage
 
 		timestamp = lastRelevantMessage.ts
 

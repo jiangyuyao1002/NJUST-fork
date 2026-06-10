@@ -51,14 +51,12 @@ describe("normalizeDeferredResponse", () => {
 	})
 
 	it("rejects deferred_protocol_version below supported minimum", () => {
-		expect(() =>
-			normalizeDeferredResponse({ run_id: "r1", status: "done", deferred_protocol_version: 0 }),
-		).toThrow(/deferred_protocol_version/)
+		expect(() => normalizeDeferredResponse({ run_id: "r1", status: "done", deferred_protocol_version: 0 })).toThrow(
+			/deferred_protocol_version/,
+		)
 	})
 
 	it("rejects run_id with newlines or excessive length", () => {
-		expect(() =>
-			normalizeDeferredResponse({ run_id: "bad\nid", status: "done" }),
-		).toThrow(/run_id/)
+		expect(() => normalizeDeferredResponse({ run_id: "bad\nid", status: "done" })).toThrow(/run_id/)
 	})
 })

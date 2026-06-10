@@ -89,7 +89,10 @@ function findNameIndexInDeclarationLine(line: string, name: string): number {
 	}
 }
 
-function scanCangjieTextStateUpTo(s: string, endExclusive: number): {
+function scanCangjieTextStateUpTo(
+	s: string,
+	endExclusive: number,
+): {
 	inString: boolean
 	inChar: boolean
 	inLineComment: boolean
@@ -341,34 +344,60 @@ export function findClosingBrace(lines: string[], openLine: number): number {
 			const next = j + 1 < line.length ? line[j + 1] : ""
 
 			if (inBlockComment) {
-				if (ch === "*" && next === "/") { inBlockComment = false; j += 2; continue }
-				j++; continue
+				if (ch === "*" && next === "/") {
+					inBlockComment = false
+					j += 2
+					continue
+				}
+				j++
+				continue
 			}
 			if (inString) {
-				if (ch === "\\" ) { j += 2; continue }
+				if (ch === "\\") {
+					j += 2
+					continue
+				}
 				if (ch === '"') inString = false
-				j++; continue
+				j++
+				continue
 			}
 			if (inChar) {
-				if (ch === "\\") { j += 2; continue }
+				if (ch === "\\") {
+					j += 2
+					continue
+				}
 				if (ch === "'") inChar = false
-				j++; continue
+				j++
+				continue
 			}
 			if (ch === "/" && next === "/") break
-			if (ch === "/" && next === "*") { inBlockComment = true; j += 2; continue }
-			if (ch === '"') { inString = true; j++; continue }
-			if (ch === "'") { inChar = true; j++; continue }
+			if (ch === "/" && next === "*") {
+				inBlockComment = true
+				j += 2
+				continue
+			}
+			if (ch === '"') {
+				inString = true
+				j++
+				continue
+			}
+			if (ch === "'") {
+				inChar = true
+				j++
+				continue
+			}
 
 			if (ch === "{") depth++
-			if (ch === "}") { depth--; if (depth === 0) return i }
+			if (ch === "}") {
+				depth--
+				if (depth === 0) return i
+			}
 			j++
 		}
 	}
 	// No matching brace found -- return last line as best-effort boundary.
 	// This prevents the entire file tail from collapsing into one span.
-	logger.warn("CangjieParser",
-		`findClosingBrace: unmatched { at line ${openLine}, treating file end as boundary`,
-	)
+	logger.warn("CangjieParser", `findClosingBrace: unmatched { at line ${openLine}, treating file end as boundary`)
 	return Math.max(openLine, lines.length - 1)
 }
 
@@ -376,7 +405,19 @@ export function findClosingBrace(lines: string[], openLine: number): number {
  * Determine whether a definition kind is a "block" definition (has `{ ... }`).
  */
 function isBlockDef(kind: CangjieDefKind): boolean {
-	return ["class", "struct", "interface", "enum", "func", "extend", "main", "macro", "init", "prop", "operator"].includes(kind)
+	return [
+		"class",
+		"struct",
+		"interface",
+		"enum",
+		"func",
+		"extend",
+		"main",
+		"macro",
+		"init",
+		"prop",
+		"operator",
+	].includes(kind)
 }
 
 function _isEnumContainer(kind: CangjieDefKind): boolean {
@@ -393,17 +434,35 @@ function _stripInlineComment(line: string): string {
 	for (let i = 0; i < line.length - 1; i++) {
 		const ch = line[i]
 		if (inString) {
-			if (ch === "\\") { i++; continue }
-			if (ch === '"') { inString = false; continue }
+			if (ch === "\\") {
+				i++
+				continue
+			}
+			if (ch === '"') {
+				inString = false
+				continue
+			}
 			continue
 		}
 		if (inChar) {
-			if (ch === "\\") { i++; continue }
-			if (ch === "'") { inChar = false; continue }
+			if (ch === "\\") {
+				i++
+				continue
+			}
+			if (ch === "'") {
+				inChar = false
+				continue
+			}
 			continue
 		}
-		if (ch === '"') { inString = true; continue }
-		if (ch === "'") { inChar = true; continue }
+		if (ch === '"') {
+			inString = true
+			continue
+		}
+		if (ch === "'") {
+			inChar = true
+			continue
+		}
 		if (ch === "/" && line[i + 1] === "/") return line.slice(0, i)
 	}
 	return line
@@ -531,18 +590,36 @@ function findFirstBraceOutsideString(line: string): number {
 	for (let i = 0; i < line.length; i++) {
 		const ch = line[i]
 		if (inString) {
-			if (ch === "\\") { i++; continue }
-			if (ch === '"') { inString = false; continue }
+			if (ch === "\\") {
+				i++
+				continue
+			}
+			if (ch === '"') {
+				inString = false
+				continue
+			}
 			continue
 		}
 		if (inChar) {
-			if (ch === "\\") { i++; continue }
-			if (ch === "'") { inChar = false; continue }
+			if (ch === "\\") {
+				i++
+				continue
+			}
+			if (ch === "'") {
+				inChar = false
+				continue
+			}
 			continue
 		}
-		if (ch === '"') { inString = true; continue }
-		if (ch === "'") { inChar = true; continue }
-		if (ch === "{" ) return i
+		if (ch === '"') {
+			inString = true
+			continue
+		}
+		if (ch === "'") {
+			inChar = true
+			continue
+		}
+		if (ch === "{") return i
 	}
 	return -1
 }
@@ -617,7 +694,12 @@ function classifyTypeMemberLine(trimmed: string): TypeMemberBucket | null {
 	if (ENUM_VARIANT_LINE_RE.test(trimmed) || CASE_LINE_RE.test(trimmed)) return "enumCases"
 	if (/operator\s+func\b/.test(trimmed)) return "operators"
 	if (/\binit\s*\(/.test(trimmed)) return "inits"
-	if (/\bprop\b/.test(trimmed) || /^\s*(?:public|protected|private|internal|open|static|mut|override|redef|unsafe|sealed|\s)*(?:var|let)\s+/.test(trimmed)) {
+	if (
+		/\bprop\b/.test(trimmed) ||
+		/^\s*(?:public|protected|private|internal|open|static|mut|override|redef|unsafe|sealed|\s)*(?:var|let)\s+/.test(
+			trimmed,
+		)
+	) {
 		return "properties"
 	}
 	if (/\bfunc\s+/.test(trimmed)) return "methods"
@@ -672,9 +754,7 @@ export function extractTypeMemberSummaries(
 		const trimmed = lines[i]?.trim() ?? ""
 		if (!trimmed || trimmed.startsWith("//")) continue
 		const isMember =
-			TYPE_MEMBER_LINE_RE.test(trimmed) ||
-			ENUM_VARIANT_LINE_RE.test(trimmed) ||
-			CASE_LINE_RE.test(trimmed)
+			TYPE_MEMBER_LINE_RE.test(trimmed) || ENUM_VARIANT_LINE_RE.test(trimmed) || CASE_LINE_RE.test(trimmed)
 		if (!isMember) continue
 
 		totalMatchingLines++
@@ -759,9 +839,7 @@ interface CjcAstNode {
  * Resolve the `cjc` executable path from configuration or environment.
  */
 function resolveCjcPath(): string | undefined {
-	const configured = vscode.workspace
-		.getConfiguration(Package.name)
-		.get<string>("cangjieLsp.cjcPath", "")
+	const configured = vscode.workspace.getConfiguration(Package.name).get<string>("cangjieLsp.cjcPath", "")
 
 	if (configured) {
 		const resolved = path.resolve(configured)
@@ -771,10 +849,7 @@ function resolveCjcPath(): string | undefined {
 
 	const cangjieHome = process.env.CANGJIE_HOME
 	if (cangjieHome) {
-		const candidates = [
-			path.join(cangjieHome, "bin", "cjc.exe"),
-			path.join(cangjieHome, "bin", "cjc"),
-		]
+		const candidates = [path.join(cangjieHome, "bin", "cjc.exe"), path.join(cangjieHome, "bin", "cjc")]
 		for (const c of candidates) {
 			if (fs.existsSync(c)) return c
 		}
@@ -844,9 +919,16 @@ function parseCjcDumpOutput(output: string): CjcAstNode[] {
 			const finished = stack.pop()
 			if (finished) {
 				const declTypes = [
-					"ClassDecl", "StructDecl", "InterfaceDecl", "EnumDecl",
-					"FuncDecl", "MacroDecl", "VarDecl", "MainDecl",
-					"ExtendDecl", "TypeAliasDecl",
+					"ClassDecl",
+					"StructDecl",
+					"InterfaceDecl",
+					"EnumDecl",
+					"FuncDecl",
+					"MacroDecl",
+					"VarDecl",
+					"MainDecl",
+					"ExtendDecl",
+					"TypeAliasDecl",
 				]
 				if (declTypes.includes(finished.type)) {
 					nodes.push({
@@ -888,11 +970,10 @@ export async function parseCangjieCjcAst(filePath: string): Promise<CangjieDef[]
 	if (!cjcPath) return undefined
 
 	try {
-		const { stdout } = await execFileAsync(
-			cjcPath,
-			["--dump-ast", "--dump-to-screen", filePath],
-			{ timeout: 15_000, maxBuffer: 10 * 1024 * 1024 },
-		)
+		const { stdout } = await execFileAsync(cjcPath, ["--dump-ast", "--dump-to-screen", filePath], {
+			timeout: 15_000,
+			maxBuffer: 10 * 1024 * 1024,
+		})
 
 		const astNodes = parseCjcDumpOutput(stdout)
 		if (astNodes.length === 0) return undefined
@@ -905,7 +986,18 @@ export async function parseCangjieCjcAst(filePath: string): Promise<CangjieDef[]
 			const startLine = node.startLine ?? 0
 			let endLine = startLine
 
-			if (["ClassDecl", "StructDecl", "InterfaceDecl", "EnumDecl", "FuncDecl", "MacroDecl", "ExtendDecl", "MainDecl"].includes(node.type)) {
+			if (
+				[
+					"ClassDecl",
+					"StructDecl",
+					"InterfaceDecl",
+					"EnumDecl",
+					"FuncDecl",
+					"MacroDecl",
+					"ExtendDecl",
+					"MainDecl",
+				].includes(node.type)
+			) {
 				// Find the closing brace from source
 				for (let j = startLine; j < Math.min(startLine + 3, sourceLines.length); j++) {
 					if (sourceLines[j]!.includes("{")) {
@@ -931,10 +1023,7 @@ export async function parseCangjieCjcAst(filePath: string): Promise<CangjieDef[]
  * Try cjc AST first, fall back to regex parser.
  * Used for code-index integration where richer structure is beneficial.
  */
-export async function parseCangjieWithFallback(
-	filePath: string,
-	content: string,
-): Promise<CangjieDef[]> {
+export async function parseCangjieWithFallback(filePath: string, content: string): Promise<CangjieDef[]> {
 	const cjcDefs = await parseCangjieCjcAst(filePath)
 	if (cjcDefs && cjcDefs.length > 0) return cjcDefs
 	return parseCangjieDefinitions(content)

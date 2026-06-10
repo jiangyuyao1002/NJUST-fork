@@ -316,7 +316,8 @@ async function parseMemberCjpmIntoWorkspaceMember(
 				dependencyDisplay: buildDependencyDisplay(memberDeps),
 			}
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("CjpmProjectParser", "member smol-toml parse failed", error)
 		/* member smol-toml failed */
 	}
 	try {
@@ -417,7 +418,8 @@ export async function parseCjpmTomlContent(content: string, cwd: string): Promis
 		if (sections.has("package")) {
 			return parseSingleModuleProject(sections)
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("CjpmProjectParser", "cjpm project parse failed", error)
 		/* ignore parse errors */
 	}
 	return null
@@ -677,7 +679,8 @@ export async function getCjpmTreeSection(cwd: string): Promise<string | null> {
 		try {
 			await fs.promises.access(lockPath)
 			lockMtime = (await fs.promises.stat(lockPath)).mtimeMs
-		} catch {
+		} catch (error) {
+			logger.debug("CjpmProjectParser", "lock file access failed", error)
 			/* lock file doesn't exist */
 		}
 		const now = Date.now()

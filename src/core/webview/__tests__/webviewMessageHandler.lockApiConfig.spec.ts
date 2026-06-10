@@ -1,6 +1,5 @@
 // npx vitest run core/webview/__tests__/webviewMessageHandler.lockApiConfig.spec.ts
 
-
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { webviewMessageHandler } from "../webviewMessageHandler"
 import type { ClineProvider } from "../ClineProvider"

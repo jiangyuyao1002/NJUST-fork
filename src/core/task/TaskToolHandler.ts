@@ -30,9 +30,7 @@ export class TaskToolHandler {
 				block.type === "tool_result" && block.tool_use_id === toolResult.tool_use_id,
 		)
 		if (existingResult) {
-			logger.warn("TaskToolHandler",
-				`Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`,
-			)
+			logger.warn("TaskToolHandler", `Skipping duplicate tool_result for tool_use_id: ${toolResult.tool_use_id}`)
 			return false
 		}
 		this.ctx.userMessageContent.push(toolResult)

@@ -43,9 +43,7 @@ export class TaskGetTool extends BaseTool<"task_get"> {
 			if (!found) {
 				pushToolResult(formatResponse.toolError(`Task not found: ${params.taskId}`))
 			} else {
-				pushToolResult(
-					`Task details:\n${JSON.stringify(found, null, 2)}`,
-				)
+				pushToolResult(`Task details:\n${JSON.stringify(found, null, 2)}`)
 			}
 		} catch (error) {
 			await handleError("getting task", error as Error)

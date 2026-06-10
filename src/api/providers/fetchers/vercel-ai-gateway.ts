@@ -74,7 +74,10 @@ export async function getVercelAiGatewayModels(_options?: ApiHandlerOptions): Pr
 		for (const rawModel of result.success ? result.data.data : []) {
 			const parsedModel = vercelAiGatewayModelSchema.safeParse(rawModel)
 			if (!parsedModel.success) {
-				logger.error("VercelAiGateway", `Skipping invalid model entry ${JSON.stringify(parsedModel.error.format())}`)
+				logger.error(
+					"VercelAiGateway",
+					`Skipping invalid model entry ${JSON.stringify(parsedModel.error.format())}`,
+				)
 				continue
 			}
 			const model = parsedModel.data

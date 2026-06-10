@@ -113,8 +113,7 @@ export async function fetchOpenAICompatibleModels(
 		throw new Error(`Missing API key for provider: ${provider}`)
 	}
 
-	const baseUrl =
-		options.baseUrl || process.env[config.baseUrlEnv] || config.defaultBaseUrl
+	const baseUrl = options.baseUrl || process.env[config.baseUrlEnv] || config.defaultBaseUrl
 
 	const res = await fetch(joinUrl(baseUrl, config.path), {
 		headers: {
@@ -129,11 +128,7 @@ export async function fetchOpenAICompatibleModels(
 	}
 
 	const json = await res.json()
-	const list = Array.isArray(json.data)
-		? json.data
-		: Array.isArray(json.models)
-			? json.models
-			: []
+	const list = Array.isArray(json.data) ? json.data : Array.isArray(json.models) ? json.models : []
 
 	const models: DynamicModelRecord = {}
 

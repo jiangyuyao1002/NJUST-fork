@@ -3,7 +3,12 @@ import { notebookEditTool } from "../NotebookEditTool"
 
 describe("NotebookEditTool schema", () => {
 	it("passes with valid insert", () => {
-		const result = notebookEditTool.inputSchema.safeParse({ path: "test.ipynb", action: "insert", cellIndex: 0, content: "print('hello')" })
+		const result = notebookEditTool.inputSchema.safeParse({
+			path: "test.ipynb",
+			action: "insert",
+			cellIndex: 0,
+			content: "print('hello')",
+		})
 		expect(result.success).toBe(true)
 	})
 

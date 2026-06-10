@@ -78,13 +78,19 @@ async function doDeleteOperation(context: MessageHandlerContext, messageTs: numb
 	const { messageIndex } = findMessageIndices(messageTs, currentCline)
 	let hasCheckpoint = false
 	if (messageIndex !== -1) {
-		const checkpoints = currentCline.clineMessages.filter((m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs)
+		const checkpoints = currentCline.clineMessages.filter(
+			(m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs,
+		)
 		hasCheckpoint = checkpoints.length > 0
 	}
 	await context.provider.postMessageToWebview({ type: "showDeleteMessageDialog", messageTs, hasCheckpoint })
 }
 
-async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number, restoreCheckpoint?: boolean): Promise<void> {
+async function doDeleteConfirm(
+	context: MessageHandlerContext,
+	messageTs: number,
+	restoreCheckpoint?: boolean,
+): Promise<void> {
 	const { provider } = context
 	const currentCline = provider.getCurrentTask()
 	if (!currentCline) return
@@ -105,13 +111,21 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 			return
 		}
 		if (restoreCheckpoint) {
-			const cps = currentCline.clineMessages.filter((m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs)
+			const cps = currentCline.clineMessages.filter(
+				(m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs,
+			)
 			if (cps[0]?.text) {
 				await handleCheckpointRestoreOperation({
-					provider, currentCline, messageTs: target.ts!, messageIndex,
-					checkpoint: { hash: cps[0].text }, operation: "delete",
+					provider,
+					currentCline,
+					messageTs: target.ts!,
+					messageIndex,
+					checkpoint: { hash: cps[0].text },
+					operation: "delete",
 				})
-			} else { vscode.window.showWarningMessage("No checkpoint found before this message") }
+			} else {
+				vscode.window.showWarningMessage("No checkpoint found before this message")
+			}
 		} else {
 			const saved = new Map<number, UnsafeAny>()
 			for (let i = 0; i < messageIndex; i++) {
@@ -124,7 +138,8 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 				if (idx !== -1) currentCline.clineMessages[idx]!.checkpoint = cp
 			}
 			await saveTaskMessages({
-				messages: currentCline.clineMessages, taskId: currentCline.taskId,
+				messages: currentCline.clineMessages,
+				taskId: currentCline.taskId,
 				globalStoragePath: provider.contextProxy.globalStorageUri.fsPath,
 			})
 			await provider.postStateToWebview()
@@ -136,19 +151,39 @@ async function doDeleteConfirm(context: MessageHandlerContext, messageTs: number
 	}
 }
 
-async function doEditOperation(context: MessageHandlerContext, messageTs: number, editedContent: string, images?: string[]): Promise<void> {
+async function doEditOperation(
+	context: MessageHandlerContext,
+	messageTs: number,
+	editedContent: string,
+	images?: string[],
+): Promise<void> {
 	const currentCline = context.provider.getCurrentTask()
 	let hasCheckpoint = false
 	if (currentCline) {
 		const { messageIndex } = findMessageIndices(messageTs, currentCline)
 		if (messageIndex !== -1) {
-			hasCheckpoint = currentCline.clineMessages.filter((m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs).length > 0
+			hasCheckpoint =
+				currentCline.clineMessages.filter(
+					(m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs,
+				).length > 0
 		}
 	}
-	await context.provider.postMessageToWebview({ type: "showEditMessageDialog", messageTs, text: editedContent, hasCheckpoint, images })
+	await context.provider.postMessageToWebview({
+		type: "showEditMessageDialog",
+		messageTs,
+		text: editedContent,
+		hasCheckpoint,
+		images,
+	})
 }
 
-async function doEditConfirm(context: MessageHandlerContext, messageTs: number, editedContent: string, restoreCheckpoint?: boolean, images?: string[]): Promise<void> {
+async function doEditConfirm(
+	context: MessageHandlerContext,
+	messageTs: number,
+	editedContent: string,
+	restoreCheckpoint?: boolean,
+	images?: string[],
+): Promise<void> {
 	const { provider } = context
 	const currentCline = provider.getCurrentTask()
 	if (!currentCline) return
@@ -164,15 +199,23 @@ async function doEditConfirm(context: MessageHandlerContext, messageTs: number, 
 			return
 		}
 		if (restoreCheckpoint) {
-			const cps = currentCline.clineMessages.filter((m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs)
+			const cps = currentCline.clineMessages.filter(
+				(m: ClineMessage) => m.say === "checkpoint_saved" && m.ts! > messageTs,
+			)
 			if (cps[0]?.text) {
 				await handleCheckpointRestoreOperation({
-					provider, currentCline, messageTs: target.ts!, messageIndex,
-					checkpoint: { hash: cps[0].text }, operation: "edit",
+					provider,
+					currentCline,
+					messageTs: target.ts!,
+					messageIndex,
+					checkpoint: { hash: cps[0].text },
+					operation: "edit",
 					editData: { editedContent, images, apiConversationHistoryIndex },
 				})
 				return
-			} else { vscode.window.showWarningMessage("No checkpoint found before this message") }
+			} else {
+				vscode.window.showWarningMessage("No checkpoint found before this message")
+			}
 		}
 		let delIdx = messageIndex
 		let delApiIdx = apiConversationHistoryIndex
@@ -202,7 +245,8 @@ async function doEditConfirm(context: MessageHandlerContext, messageTs: number, 
 			if (idx !== -1) currentCline.clineMessages[idx]!.checkpoint = cp
 		}
 		await saveTaskMessages({
-			messages: currentCline.clineMessages, taskId: currentCline.taskId,
+			messages: currentCline.clineMessages,
+			taskId: currentCline.taskId,
 			globalStoragePath: provider.contextProxy.globalStorageUri.fsPath,
 		})
 		await provider.postStateToWebview()
@@ -225,32 +269,49 @@ async function handleWebviewDidLaunch(context: MessageHandlerContext, _message: 
 	void getTheme().then((t) => provider.postMessageToWebview({ type: "theme", text: JSON.stringify(t) }))
 	const mcpHub = provider.getMcpHub()
 	if (mcpHub) void provider.postMessageToWebview({ type: "mcpServers", mcpServers: mcpHub.getAllServers() })
-	provider.providerSettingsManager.listConfig().then(async (list) => {
-		if (!list) return
-		if (list.length === 1) {
-			if (!checkExistKey(list[0])) {
-				const { apiConfiguration } = await provider.getState()
-				if (checkExistKey(apiConfiguration)) {
-					await provider.providerSettingsManager.saveConfig(list[0]!.name ?? "default", apiConfiguration)
-					list[0]!.apiProvider = apiConfiguration.apiProvider
+	provider.providerSettingsManager
+		.listConfig()
+		.then(async (list) => {
+			if (!list) return
+			if (list.length === 1) {
+				if (!checkExistKey(list[0])) {
+					const { apiConfiguration } = await provider.getState()
+					if (checkExistKey(apiConfiguration)) {
+						await provider.providerSettingsManager.saveConfig(list[0]!.name ?? "default", apiConfiguration)
+						list[0]!.apiProvider = apiConfiguration.apiProvider
+					}
 				}
 			}
-		}
-		const curName = context.getGlobalState("currentApiConfigName")
-		if (curName && !(await provider.providerSettingsManager.hasConfig(curName))) {
-			const name = list[0]?.name
-			await updateGlobalState("currentApiConfigName", name)
-			if (name) { await provider.activateProviderProfile({ name }); return }
-		}
-		await Promise.all([updateGlobalState("listApiConfigMeta", list), provider.postMessageToWebview({ type: "listApiConfig", listApiConfig: list })])
-	}).catch((e: Error) => provider.log(`Error list api configuration: ${JSON.stringify(e, Object.getOwnPropertyNames(e), 2)}`))
+			const curName = context.getGlobalState("currentApiConfigName")
+			if (curName && !(await provider.providerSettingsManager.hasConfig(curName))) {
+				const name = list[0]?.name
+				await updateGlobalState("currentApiConfigName", name)
+				if (name) {
+					await provider.activateProviderProfile({ name })
+					return
+				}
+			}
+			await Promise.all([
+				updateGlobalState("listApiConfigMeta", list),
+				provider.postMessageToWebview({ type: "listApiConfig", listApiConfig: list }),
+			])
+		})
+		.catch((e: Error) =>
+			provider.log(`Error list api configuration: ${JSON.stringify(e, Object.getOwnPropertyNames(e), 2)}`),
+		)
 	provider.isViewLaunched = true
 }
 
 async function handleNewTask(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	try {
 		const resolved = await resolveIncomingImages(context, { text: message.text, images: message.images })
-		await context.provider.createTask(resolved.text, resolved.images, undefined, { taskId: message.taskId }, message.taskConfiguration)
+		await context.provider.createTask(
+			resolved.text,
+			resolved.images,
+			undefined,
+			{ taskId: message.taskId },
+			message.taskConfiguration,
+		)
 		await context.provider.postMessageToWebview({ type: "invoke", invoke: "newChat" })
 	} catch (error) {
 		await context.provider.postMessageToWebview({ type: "invoke", invoke: "newChat" })
@@ -291,7 +352,10 @@ function handleDeleteTaskWithId(context: MessageHandlerContext, message: Webview
 	void context.provider.deleteTaskWithId(message.text)
 }
 
-async function handleDeleteMultipleTasksWithIds(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+async function handleDeleteMultipleTasksWithIds(
+	context: MessageHandlerContext,
+	message: WebviewMessage,
+): Promise<void> {
 	const { provider } = context
 	const ids = message.ids
 	if (!Array.isArray(ids)) return
@@ -300,15 +364,25 @@ async function handleDeleteMultipleTasksWithIds(context: MessageHandlerContext, 
 	logger.info("TaskMessageHandler", `Batch deletion started: ${ids.length} tasks total`)
 	for (let i = 0; i < ids.length; i += BATCH) {
 		const batch = ids.slice(i, i + BATCH)
-		const r = await Promise.all(batch.map(async (id: string) => {
-			try { await provider.deleteTaskWithId(id); return { id, success: true } }
-			catch (e) { logger.info("TaskMessageHandler", `Failed to delete task ${id}: ${getErrorMessage(e)}`); return { id, success: false } }
-		}))
+		const r = await Promise.all(
+			batch.map(async (id: string) => {
+				try {
+					await provider.deleteTaskWithId(id)
+					return { id, success: true }
+				} catch (e) {
+					logger.info("TaskMessageHandler", `Failed to delete task ${id}: ${getErrorMessage(e)}`)
+					return { id, success: false }
+				}
+			}),
+		)
 		results.push(...r)
 		await provider.postStateToWebview()
 	}
 	const ok = results.filter((r) => r.success).length
-	logger.info("TaskMessageHandler", `Batch deletion completed: ${ok}/${ids.length} tasks successful, ${ids.length - ok} tasks failed`)
+	logger.info(
+		"TaskMessageHandler",
+		`Batch deletion completed: ${ok}/${ids.length} tasks successful, ${ids.length - ok} tasks failed`,
+	)
 }
 
 function handleExportTaskWithId(context: MessageHandlerContext, message: WebviewMessage): void {
@@ -316,17 +390,29 @@ function handleExportTaskWithId(context: MessageHandlerContext, message: Webview
 	void context.provider.exportTaskWithId(message.text)
 }
 
-async function handleGetTaskWithAggregatedCosts(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
+async function handleGetTaskWithAggregatedCosts(
+	context: MessageHandlerContext,
+	message: WebviewMessage,
+): Promise<void> {
 	const { provider } = context
 	try {
 		const taskId = message.text
 		if (!taskId) throw new Error("Task ID is required")
 		const result = await provider.getTaskWithAggregatedCosts(taskId)
-		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: taskId, historyItem: result.historyItem, aggregatedCosts: result.aggregatedCosts })
+		await provider.postMessageToWebview({
+			type: "taskWithAggregatedCosts",
+			text: taskId,
+			historyItem: result.historyItem,
+			aggregatedCosts: result.aggregatedCosts,
+		})
 	} catch (error) {
 		logger.error("TaskMessageHandler", "Error getting task with aggregated costs:", error)
 		TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
-		await provider.postMessageToWebview({ type: "taskWithAggregatedCosts", text: message.text, error: getErrorMessage(error) })
+		await provider.postMessageToWebview({
+			type: "taskWithAggregatedCosts",
+			text: message.text,
+			error: getErrorMessage(error),
+		})
 	}
 }
 
@@ -338,23 +424,36 @@ async function handleDidShowAnnouncement(context: MessageHandlerContext, _messag
 
 async function handleDeleteMessage(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
 	if (!context.provider.getCurrentTask()) {
-		await vscode.window.showErrorMessage(t("common:errors.message.no_active_task_to_delete")); return
+		await vscode.window.showErrorMessage(t("common:errors.message.no_active_task_to_delete"))
+		return
 	}
 	if (typeof message.value !== "number" || !Number.isFinite(message.value) || message.value <= 0) {
-		await vscode.window.showErrorMessage(t("common:errors.message.invalid_timestamp_for_deletion")); return
+		await vscode.window.showErrorMessage(t("common:errors.message.invalid_timestamp_for_deletion"))
+		return
 	}
 	await doDeleteOperation(context, message.value)
 }
 
 async function handleSubmitEditedMessage(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
-	if (context.provider.getCurrentTask() && typeof message.value === "number" && message.value && message.editedMessageContent) {
+	if (
+		context.provider.getCurrentTask() &&
+		typeof message.value === "number" &&
+		message.value &&
+		message.editedMessageContent
+	) {
 		await doEditOperation(context, message.value, message.editedMessageContent, message.images)
 	}
 }
 
 async function handleDeleteMessageConfirmEntry(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
-	if (!message.messageTs) { await vscode.window.showErrorMessage(t("common:errors.message.cannot_delete_missing_timestamp")); return }
-	if (typeof message.messageTs !== "number") { await vscode.window.showErrorMessage(t("common:errors.message.cannot_delete_invalid_timestamp")); return }
+	if (!message.messageTs) {
+		await vscode.window.showErrorMessage(t("common:errors.message.cannot_delete_missing_timestamp"))
+		return
+	}
+	if (typeof message.messageTs !== "number") {
+		await vscode.window.showErrorMessage(t("common:errors.message.cannot_delete_invalid_timestamp"))
+		return
+	}
 	await doDeleteConfirm(context, message.messageTs, message.restoreCheckpoint)
 }
 
@@ -375,7 +474,13 @@ async function handleFocusPanelRequest(_context: MessageHandlerContext, _message
 }
 
 async function handleSwitchTab(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
-	if (message.tab) await context.provider.postMessageToWebview({ type: "action", action: "switchTab", tab: message.tab, values: message.values })
+	if (message.tab)
+		await context.provider.postMessageToWebview({
+			type: "action",
+			action: "switchTab",
+			tab: message.tab,
+			values: message.values,
+		})
 }
 
 async function handleQueueMessage(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -404,10 +509,16 @@ async function handleCheckpointRestore(context: MessageHandlerContext, message: 
 	const r = checkoutRestorePayloadSchema.safeParse(message.payload)
 	if (!r.success) return
 	await provider.cancelTask()
-	try { await pWaitFor(() => provider.getCurrentTask()?.isInitialized === true, { timeout: 3_000 }) }
-	catch { vscode.window.showErrorMessage(t("common:errors.checkpoint_timeout")) }
-	try { await provider.getCurrentTask()?.checkpointRestore(r.data) }
-	catch { vscode.window.showErrorMessage(t("common:errors.checkpoint_failed")) }
+	try {
+		await pWaitFor(() => provider.getCurrentTask()?.isInitialized === true, { timeout: 3_000 })
+	} catch {
+		vscode.window.showErrorMessage(t("common:errors.checkpoint_timeout"))
+	}
+	try {
+		await provider.getCurrentTask()?.checkpointRestore(r.data)
+	} catch {
+		vscode.window.showErrorMessage(t("common:errors.checkpoint_failed"))
+	}
 }
 
 async function handlePlanAction(context: MessageHandlerContext, message: WebviewMessage): Promise<void> {
@@ -421,10 +532,17 @@ async function handlePlanAction(context: MessageHandlerContext, message: Webview
 			await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: engine.getPlan(pid) })
 			break
 		case "execute":
-			engine.executePlan(pid, { onPlanUpdate: async (p: UnsafeAny) => { await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: p }) } })
+			engine
+				.executePlan(pid, {
+					onPlanUpdate: async (p: UnsafeAny) => {
+						await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: p })
+					},
+				})
 				.catch((err: Error) => provider.log(`[PlanEngine] Execution error: ${err}`))
 			break
-		case "pause": engine.pausePlan(); break
+		case "pause":
+			engine.pausePlan()
+			break
 		case "cancel":
 			engine.deletePlan(pid)
 			await provider.postMessageToWebview({ type: "planUpdate" as UnsafeAny, plan: null })

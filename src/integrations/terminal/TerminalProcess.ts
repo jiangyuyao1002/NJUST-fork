@@ -50,7 +50,10 @@ export class TerminalProcess extends BaseTerminalProcess {
 		if (!isShellIntegrationAvailable) {
 			terminal.sendText(command, true)
 
-			logger.warn("TerminalProcess", "Shell integration not available. Command sent without knowledge of response.")
+			logger.warn(
+				"TerminalProcess",
+				"Shell integration not available. Command sent without knowledge of response.",
+			)
 
 			this.emit(
 				"no_shell_integration",
@@ -136,7 +139,10 @@ export class TerminalProcess extends BaseTerminalProcess {
 		} catch (error) {
 			// Stream timeout or other error occurred
 			logger.error("TerminalProcess", "Stream error:", getErrorMessage(error))
-			TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
+			TelemetryService.reportError(
+				error instanceof Error ? error : new Error(getErrorMessage(error)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 
 			// Emit completed event with error message
 			this.emit(

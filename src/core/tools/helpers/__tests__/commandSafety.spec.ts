@@ -14,21 +14,16 @@ describe("checkCommandSafety", () => {
 		})
 	})
 
-	it.each([
-		"echo hello",
-		"printf hello",
-		"cat README.md",
-		"ls -la",
-		"dir",
-		"where node",
-		"./echo hello",
-	])("allowlists simple command %s", (command) => {
-		const result = checkCommandSafety(command)
+	it.each(["echo hello", "printf hello", "cat README.md", "ls -la", "dir", "where node", "./echo hello"])(
+		"allowlists simple command %s",
+		(command) => {
+			const result = checkCommandSafety(command)
 
-		expect(result.safe).toBe(true)
-		expect(result.riskLevel).toBe("safe")
-		expect(result.requiresConfirmation).toBe(false)
-	})
+			expect(result.safe).toBe(true)
+			expect(result.riskLevel).toBe("safe")
+			expect(result.requiresConfirmation).toBe(false)
+		},
+	)
 
 	it.each([
 		["echo hello && rm -rf /", "forbidden"],

@@ -7,7 +7,11 @@ import { Task } from "../task/Task"
 import { validateRegexPattern } from "../../utils/safeRegex"
 import { getReadablePath } from "../../utils/path"
 import { ignoreAbortError } from "../../utils/errorHandling"
-import { isPathUnderBundledCangjieCorpus, isPathPotentiallyUnderCangjieCorpus, getBundledCangjieCorpusPath } from "../../utils/bundledCangjieCorpus"
+import {
+	isPathUnderBundledCangjieCorpus,
+	isPathPotentiallyUnderCangjieCorpus,
+	getBundledCangjieCorpusPath,
+} from "../../utils/bundledCangjieCorpus"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
 import { regexSearchFiles } from "../../services/ripgrep"
 import {
@@ -49,8 +53,12 @@ export class SearchFilesTool extends BaseTool<"search_files"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Partial<{path: string; regex: string; file_pattern?: string | null; semantic_query?: string | null}>): boolean {
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
+	override isPartialArgsStable(
+		partial: Partial<{ path: string; regex: string; file_pattern?: string | null; semantic_query?: string | null }>,
+	): boolean {
 		return typeof partial.path === "string" && typeof partial.regex === "string"
 	}
 
@@ -87,7 +95,7 @@ export class SearchFilesTool extends BaseTool<"search_files"> {
 			return
 		}
 
-		const relDirPath = (params.path && params.path.trim().length > 0) ? params.path : "."
+		const relDirPath = params.path && params.path.trim().length > 0 ? params.path : "."
 		const regex = params.regex
 		const filePattern = params.file_pattern || undefined
 		const semanticQuery = params.semantic_query || undefined
@@ -132,9 +140,10 @@ export class SearchFilesTool extends BaseTool<"search_files"> {
 					const index = getOrCreateCorpusSemanticIndex(corpusRoot)
 
 					if (index.isAvailable) {
-						const pathPrefix = absolutePath !== corpusRoot
-							? path.relative(corpusRoot, absolutePath).replace(/\\/g, "/")
-							: undefined
+						const pathPrefix =
+							absolutePath !== corpusRoot
+								? path.relative(corpusRoot, absolutePath).replace(/\\/g, "/")
+								: undefined
 						let hits = index.search(semanticQuery, 10, pathPrefix)
 						if (hits.length === 0) {
 							const expanded = expandCangjieSemanticQuery(semanticQuery)
@@ -161,7 +170,13 @@ export class SearchFilesTool extends BaseTool<"search_files"> {
 				}
 			}
 
-			const results = await regexSearchFiles(task.cwd, absolutePath, regex || ".*", filePattern, task.rooIgnoreController)
+			const results = await regexSearchFiles(
+				task.cwd,
+				absolutePath,
+				regex || ".*",
+				filePattern,
+				task.rooIgnoreController,
+			)
 
 			if (isUnderCangjieCorpus) {
 				toolResultCache.set(cacheKey, results)

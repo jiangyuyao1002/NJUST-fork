@@ -177,9 +177,7 @@ describe("ContextProxy - Additional Coverage", () => {
 			await expect(proxy.refreshSecrets()).resolves.toBeUndefined()
 
 			// Should have logged the error (single template-literal argument)
-			expect(loggerSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Error refreshing"),
-			)
+			expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining("Error refreshing"))
 		})
 	})
 
@@ -279,9 +277,7 @@ describe("ContextProxy - Additional Coverage", () => {
 			const errorProxy = new ContextProxy(mockContext)
 			await errorProxy.initialize()
 
-			expect(loggerSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Error loading global apiProvider"),
-			)
+			expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining("Error loading global apiProvider"))
 		})
 
 		it("logs error when secrets.get throws", async () => {
@@ -299,9 +295,7 @@ describe("ContextProxy - Additional Coverage", () => {
 			const errorProxy = new ContextProxy(mockContext)
 			await errorProxy.initialize()
 
-			expect(loggerSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Error loading secret apiKey"),
-			)
+			expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining("Error loading secret apiKey"))
 		})
 
 		it("completes initialization even if some loads fail", async () => {
@@ -341,16 +335,10 @@ describe("ContextProxy - Additional Coverage", () => {
 			expect(mockSecrets.store).toHaveBeenCalledWith("openRouterImageApiKey", "migrated-api-key")
 
 			// Should store selected model in global state
-			expect(mockGlobalState.update).toHaveBeenCalledWith(
-				"openRouterImageGenerationSelectedModel",
-				"flux-pro",
-			)
+			expect(mockGlobalState.update).toHaveBeenCalledWith("openRouterImageGenerationSelectedModel", "flux-pro")
 
 			// Should remove old nested structure
-			expect(mockGlobalState.update).toHaveBeenCalledWith(
-				"openRouterImageGenerationSettings",
-				undefined,
-			)
+			expect(mockGlobalState.update).toHaveBeenCalledWith("openRouterImageGenerationSettings", undefined)
 		})
 
 		it("does not overwrite existing secret during migration", async () => {
@@ -376,9 +364,7 @@ describe("ContextProxy - Additional Coverage", () => {
 			await migrationProxy.initialize()
 
 			// Should NOT store the old key since we already have one
-			const storeCalls = mockSecrets.store.mock.calls.filter(
-				(call: any[]) => call[0] === "openRouterImageApiKey",
-			)
+			const storeCalls = mockSecrets.store.mock.calls.filter((call: any[]) => call[0] === "openRouterImageApiKey")
 			expect(storeCalls).toHaveLength(0)
 		})
 
@@ -538,9 +524,7 @@ describe("ContextProxy - Additional Coverage", () => {
 				openAiHeaders: null as any,
 			})
 
-			expect(setValuesSpy).toHaveBeenCalledWith(
-				expect.objectContaining({ openAiHeaders: {} }),
-			)
+			expect(setValuesSpy).toHaveBeenCalledWith(expect.objectContaining({ openAiHeaders: {} }))
 		})
 
 		it("normalizes empty openAiHeaders to empty object", async () => {
@@ -550,9 +534,7 @@ describe("ContextProxy - Additional Coverage", () => {
 				openAiHeaders: {},
 			})
 
-			expect(setValuesSpy).toHaveBeenCalledWith(
-				expect.objectContaining({ openAiHeaders: {} }),
-			)
+			expect(setValuesSpy).toHaveBeenCalledWith(expect.objectContaining({ openAiHeaders: {} }))
 		})
 
 		it("preserves non-empty openAiHeaders", async () => {
@@ -598,10 +580,7 @@ describe("ContextProxy - Additional Coverage", () => {
 
 			await proxy.resetAllState()
 
-			expect(loggerSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Failed to reset state"),
-				expect.any(Error),
-			)
+			expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to reset state"), expect.any(Error))
 		})
 	})
 
@@ -675,10 +654,7 @@ describe("ContextProxy - Additional Coverage", () => {
 			} as any)
 
 			// Should log the failure but not throw
-			expect(loggerSpy).toHaveBeenCalledWith(
-				expect.stringContaining("Failed to set value"),
-				expect.any(Error),
-			)
+			expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to set value"), expect.any(Error))
 
 			// Other key should still have been set
 			expect(proxy.getGlobalState("apiModelId")).toBe("gpt-4")

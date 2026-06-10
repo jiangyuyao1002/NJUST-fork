@@ -3,6 +3,7 @@ import * as path from "path"
 
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { safeWriteJson } from "../../utils/safeWriteJson"
+import { logger } from "../../shared/logger"
 
 export type RetryEvent = {
 	taskId: string
@@ -55,7 +56,8 @@ export async function clearRetryEvents(globalStoragePath: string, taskId: string
 	const file = await getRetryEventsFile(globalStoragePath, taskId)
 	try {
 		await fs.unlink(file)
-	} catch {
+	} catch (error) {
+		logger.debug("RetryPersistence", "retry events file deletion failed", error)
 		// ignore when file does not exist
 	}
 }

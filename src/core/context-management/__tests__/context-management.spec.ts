@@ -582,9 +582,7 @@ describe("Context Management", () => {
 			const modelInfo = createModelInfo(100000, 30000)
 			const totalTokens = 70001 // Above threshold
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			const result = await manageContext({
 				messages: messagesWithSmallContent,
@@ -638,9 +636,7 @@ describe("Context Management", () => {
 			const modelInfo = createModelInfo(100000, 30000)
 			const totalTokens = 70001 // Above threshold
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			// When truncating, always uses 0.5 fraction
 			// With 4 messages after the first, 0.5 fraction means remove 2 messages
@@ -754,9 +750,7 @@ describe("Context Management", () => {
 			const contextWindow = modelInfo.contextWindow
 			const totalTokens = 60000 // Below allowedTokens but 60% of context window
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			const result = await manageContext({
 				messages: messagesWithSmallContent,
@@ -841,9 +835,7 @@ describe("Context Management", () => {
 				vi.clearAllMocks()
 				const summarizeSpy = vi.spyOn(condenseModule, "summarizeConversation")
 				const modelInfo = createModelInfo(100000, 30000)
-				const messagesWithSmallContent = messages.map((m) =>
-					m.role === "user" ? { ...m, content: "" } : m,
-				)
+				const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 				const result = await manageContext({
 					messages: messagesWithSmallContent,
@@ -884,9 +876,7 @@ describe("Context Management", () => {
 					.spyOn(condenseModule, "summarizeConversation")
 					.mockResolvedValue(mockSummarizeResponse)
 				const modelInfo = createModelInfo(100000, 30000)
-				const messagesWithSmallContent = messages.map((m) =>
-					m.role === "user" ? { ...m, content: "" } : m,
-				)
+				const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 				const result = await manageContext({
 					messages: messagesWithSmallContent,
@@ -911,18 +901,14 @@ describe("Context Management", () => {
 			})
 
 			it("increments compactFailures when condensation fails", async () => {
-				const summarizeSpy = vi
-					.spyOn(condenseModule, "summarizeConversation")
-					.mockResolvedValue({
-						messages,
-						summary: "",
-						cost: 0.01,
-						error: "Summarization failed",
-					})
+				const summarizeSpy = vi.spyOn(condenseModule, "summarizeConversation").mockResolvedValue({
+					messages,
+					summary: "",
+					cost: 0.01,
+					error: "Summarization failed",
+				})
 				const modelInfo = createModelInfo(100000, 30000)
-				const messagesWithSmallContent = messages.map((m) =>
-					m.role === "user" ? { ...m, content: "" } : m,
-				)
+				const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 				const result = await manageContext({
 					messages: messagesWithSmallContent,
@@ -1017,17 +1003,13 @@ describe("Context Management", () => {
 
 		describe("lightweight summary path", () => {
 			it("falls through to LLM condensation when lightweight summary has no source material", async () => {
-				const summarizeSpy = vi
-					.spyOn(condenseModule, "summarizeConversation")
-					.mockResolvedValue({
-						messages: [{ role: "user", content: "LLM summary", isSummary: true }],
-						summary: "LLM summary",
-						cost: 0.03,
-					})
+				const summarizeSpy = vi.spyOn(condenseModule, "summarizeConversation").mockResolvedValue({
+					messages: [{ role: "user", content: "LLM summary", isSummary: true }],
+					summary: "LLM summary",
+					cost: 0.03,
+				})
 				const modelInfo = createModelInfo(100000, 30000)
-				const emptySourceMessages = messages.map((m) =>
-					m.role === "user" ? { ...m, content: "" } : m,
-				)
+				const emptySourceMessages = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 				const result = await manageContext({
 					messages: emptySourceMessages,
@@ -1152,9 +1134,7 @@ describe("Context Management", () => {
 			const modelInfo = createModelInfo(100000, 30000)
 			const totalTokens = 70001 // Above threshold
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			const filesReadByRoo = ["src/test.ts", "src/utils.ts"]
 			const cwd = "/test/project"
@@ -1229,9 +1209,7 @@ describe("Context Management", () => {
 			const modelInfo = createModelInfo(100000, 30000)
 			const totalTokens = 70001 // Above threshold
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			const result = await manageContext({
 				messages: messagesWithSmallContent,
@@ -1290,9 +1268,7 @@ describe("Context Management", () => {
 			const modelInfo = createModelInfo(100000, 30000)
 			const totalTokens = 70001 // Above threshold
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			const _result = await manageContext({
 				messages: messagesWithSmallContent,
@@ -1360,9 +1336,7 @@ describe("Context Management", () => {
 			const totalTokens = Math.floor(contextWindow * 0.65) // 65000 tokens
 
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			// Mock the summarizeConversation function
 			const mockSummary = "Profile-specific threshold summary"
@@ -1425,9 +1399,7 @@ describe("Context Management", () => {
 			const totalTokens = Math.floor(contextWindow * 0.8) // 80000 tokens
 
 			// User content must be empty to prevent tryBuildLightweightSummary from intercepting
-			const messagesWithSmallContent = messages.map((m) =>
-				m.role === "user" ? { ...m, content: "" } : m,
-			)
+			const messagesWithSmallContent = messages.map((m) => (m.role === "user" ? { ...m, content: "" } : m))
 
 			// Mock the summarizeConversation function
 			const mockSummary = "Global threshold fallback summary"

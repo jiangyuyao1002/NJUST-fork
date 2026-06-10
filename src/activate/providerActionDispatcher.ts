@@ -18,7 +18,13 @@ export interface IProviderActionTarget {
 	readonly view?: { visible?: boolean }
 	getState(): Promise<{ customSupportPrompts?: Record<string, string | undefined> }>
 	postMessageToWebview(message: UnsafeAny): Promise<void>
-	createTask(text: string, images?: string[], parentTask?: unknown, options?: unknown, configuration?: unknown): Promise<unknown>
+	createTask(
+		text: string,
+		images?: string[],
+		parentTask?: unknown,
+		options?: unknown,
+		configuration?: unknown,
+	): Promise<unknown>
 }
 
 const activeInstances: Set<IProviderActionTarget & { constructor: { name: string } }> = new Set()

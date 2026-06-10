@@ -35,14 +35,12 @@ vi.mock("vscode", () => {
 		workspace: {
 			registerTextDocumentContentProvider: vi.fn(),
 			getConfiguration: vi.fn().mockReturnValue({ get: vi.fn().mockReturnValue("") }),
-			createFileSystemWatcher: vi
-				.fn()
-				.mockReturnValue({
-					onDidCreate: vi.fn(),
-					onDidChange: vi.fn(),
-					onDidDelete: vi.fn(),
-					dispose: vi.fn(),
-				}),
+			createFileSystemWatcher: vi.fn().mockReturnValue({
+				onDidCreate: vi.fn(),
+				onDidChange: vi.fn(),
+				onDidDelete: vi.fn(),
+				dispose: vi.fn(),
+			}),
 			onDidChangeWorkspaceFolders: vi.fn(),
 			onDidChangeConfiguration: vi.fn(),
 			onDidSaveTextDocument: vi.fn(),

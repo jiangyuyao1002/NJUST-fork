@@ -13,10 +13,7 @@ import { loadSessionMemories, formatSessionMemoriesForPrompt } from "../../conde
  * @param tokenBudget - Maximum token budget for the section (default: 3000)
  * @returns Formatted prompt section string, or empty string if no memories exist
  */
-export async function getSessionMemorySection(
-	workspaceDir: string,
-	tokenBudget: number = 3000,
-): Promise<string> {
+export async function getSessionMemorySection(workspaceDir: string, tokenBudget: number = 3000): Promise<string> {
 	const memories = await loadSessionMemories(workspaceDir, 3)
 	if (memories.length === 0) return ""
 

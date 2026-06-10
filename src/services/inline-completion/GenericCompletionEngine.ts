@@ -4,7 +4,12 @@ import type { ApiHandler } from "../../api"
 
 import { streamCompletionText } from "./completionStream"
 import { normalizeInlineInsert } from "./completionPostProcess"
-import { formatCursorLineForPrompt, getLinesAfterCursor, getLinesBeforeCursor, INLINE_CURSOR_MARKER } from "./contextExtraction"
+import {
+	formatCursorLineForPrompt,
+	getLinesAfterCursor,
+	getLinesBeforeCursor,
+	INLINE_CURSOR_MARKER,
+} from "./contextExtraction"
 
 const SYSTEM = `You are an inline code completion engine. The user prompt marks the insertion point with ${INLINE_CURSOR_MARKER} on the current line.
 Output ONLY the new characters to insert at that point — no markdown fences, no explanations, no quotes around the whole answer.

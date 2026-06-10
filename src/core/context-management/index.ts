@@ -758,7 +758,10 @@ export async function manageContext({
 							})
 							.catch((err: unknown) => {
 								logger.warn("ContextManagement", "Failed to capture compact telemetry", err)
-								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
+								TelemetryService.reportError(
+									err instanceof Error ? err : new Error(String(err)),
+									TelemetryEventName.UTILITY_ERROR,
+								)
 							})
 						compactFailures = 0
 						const restored = postCompactRestore(smResult.messages, {
@@ -788,7 +791,10 @@ export async function manageContext({
 							})
 							.catch((err: unknown) => {
 								logger.warn("ContextManagement", "Failed to capture memory compact telemetry", err)
-								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
+								TelemetryService.reportError(
+									err instanceof Error ? err : new Error(String(err)),
+									TelemetryEventName.UTILITY_ERROR,
+								)
 							})
 						compactFailures = 0
 						const restored = postCompactRestore(smMemoryResult.messages, {
@@ -841,7 +847,10 @@ export async function manageContext({
 							})
 							.catch((err: unknown) => {
 								logger.warn("ContextManagement", "Failed to capture compact telemetry", err)
-								TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
+								TelemetryService.reportError(
+									err instanceof Error ? err : new Error(String(err)),
+									TelemetryEventName.UTILITY_ERROR,
+								)
 							})
 						compactFailures = 0
 						const restored = postCompactRestore(result.messages, {

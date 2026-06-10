@@ -52,7 +52,10 @@ describe("tool result budget", () => {
 	})
 
 	it("summarizes grep/search-style outputs by line budget before generic truncation", () => {
-		const lines = Array.from({ length: 1400 }, (_, i) => `src/file${i}.ts:${i + 1}:match and some extra payload text`).join("\n")
+		const lines = Array.from(
+			{ length: 1400 },
+			(_, i) => `src/file${i}.ts:${i + 1}:match and some extra payload text`,
+		).join("\n")
 		const messages: ApiMessage[] = [
 			{
 				role: "assistant",

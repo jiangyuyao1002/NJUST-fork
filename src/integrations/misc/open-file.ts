@@ -63,7 +63,7 @@ export async function openFile(filePath: string, options: OpenFileOptions = {}) 
 				successfulUri = tempUri // Path found
 				break // Exit loop once a path is successfully stated
 			} catch {
-				// Stat failed for this path, continue to the next one
+				// intentionally ignored: stat failed for this path, try next
 			}
 		}
 

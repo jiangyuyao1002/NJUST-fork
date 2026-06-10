@@ -301,10 +301,7 @@ const QUERY_SYNONYM_EXTRA: Record<string, string> = {
 }
 
 export function expandCangjieSemanticQuery(query: string): string {
-	const words = query
-		.toLowerCase()
-		.split(/\s+/)
-		.filter(Boolean)
+	const words = query.toLowerCase().split(/\s+/).filter(Boolean)
 	const seen = new Set(words)
 	const extras: string[] = []
 	for (const w of words) {

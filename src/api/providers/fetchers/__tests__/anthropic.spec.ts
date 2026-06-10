@@ -48,10 +48,7 @@ describe("fetchAnthropicModels", () => {
 
 		await fetchAnthropicModels({ apiKey: "k", baseUrl: "https://proxy.example.com" })
 
-		expect(mockFetch).toHaveBeenCalledWith(
-			"https://proxy.example.com/models",
-			expect.anything(),
-		)
+		expect(mockFetch).toHaveBeenCalledWith("https://proxy.example.com/models", expect.anything())
 	})
 
 	it("parses Anthropic model data with capabilities", async () => {
@@ -118,8 +115,6 @@ describe("fetchAnthropicModels", () => {
 			text: () => Promise.resolve("unauthorized"),
 		})
 
-		await expect(
-			fetchAnthropicModels({ apiKey: "bad" }),
-		).rejects.toThrow("Failed to fetch Anthropic models: 401")
+		await expect(fetchAnthropicModels({ apiKey: "bad" })).rejects.toThrow("Failed to fetch Anthropic models: 401")
 	})
 })

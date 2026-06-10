@@ -40,7 +40,7 @@ function tryWhich(cmd: string): string | undefined {
 			}
 		}
 	} catch {
-		/* not on PATH */
+		// intentionally ignored: tool not on PATH
 	}
 	return undefined
 }

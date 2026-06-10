@@ -91,7 +91,6 @@ function matchToolPattern(pattern: string, toolName: string): boolean {
  *  - Extended rule sources (policySettings for organization-level policies)
  */
 
-
 export class PermissionRuleEngine {
 	private rules: PermissionRule[] = []
 	private mode: PermissionMode = "default"
@@ -178,7 +177,7 @@ export class PermissionRuleEngine {
 	recordDenial(toolName: string): void {
 		const now = Date.now()
 		const existing = this.denialTracker.get(toolName)
-		if (existing && (now - existing.lastDenialAt) < PermissionRuleEngine.DENIAL_RESET_MS) {
+		if (existing && now - existing.lastDenialAt < PermissionRuleEngine.DENIAL_RESET_MS) {
 			existing.consecutiveCount++
 			existing.lastDenialAt = now
 		} else {
@@ -200,7 +199,7 @@ export class PermissionRuleEngine {
 		const record = this.denialTracker.get(toolName)
 		if (!record) return 0
 		// Auto-reset if enough time has passed
-		if ((Date.now() - record.lastDenialAt) >= PermissionRuleEngine.DENIAL_RESET_MS) {
+		if (Date.now() - record.lastDenialAt >= PermissionRuleEngine.DENIAL_RESET_MS) {
 			this.denialTracker.delete(toolName)
 			return 0
 		}
@@ -403,9 +402,12 @@ export class PermissionRuleEngine {
 				recordSecurityMetric("permission_bypass_allow", { tool: toolName, paramSummary: audit })
 				return "allow"
 			}
-			case "ask": return "ask"
-			case "auto": return toolMeta.isReadOnly ? "allow" : "ask"
-			case "default": break
+			case "ask":
+				return "ask"
+			case "auto":
+				return toolMeta.isReadOnly ? "allow" : "ask"
+			case "default":
+				break
 		}
 
 		let sawAllow = false
@@ -419,8 +421,13 @@ export class PermissionRuleEngine {
 				this.recordDenial(toolName)
 				return "deny"
 			}
-			if (rule.action === "allow") { sawAllow = true; continue }
-			if (rule.action === "ask") { sawAsk = true }
+			if (rule.action === "allow") {
+				sawAllow = true
+				continue
+			}
+			if (rule.action === "ask") {
+				sawAsk = true
+			}
 		}
 
 		if (sawAllow) return "allow"
@@ -475,7 +482,10 @@ export class PermissionRuleEngine {
 
 				if (result && result.confidence >= minConfidenceThreshold) {
 					if (result.action === "deny") {
-						logger.info("PermissionRuleEngine", `deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
+						logger.info(
+							"PermissionRuleEngine",
+							`deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`,
+						)
 						recordSecurityMetric("permission_deny", {
 							tool: toolName,
 							classifier: classifier.name,
@@ -484,7 +494,10 @@ export class PermissionRuleEngine {
 						return "deny"
 					}
 					if (result.action === "ask") {
-						logger.info("PermissionRuleEngine", `ask tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
+						logger.info(
+							"PermissionRuleEngine",
+							`ask tool=${toolName} classifier=${classifier.name}: ${result.reason}`,
+						)
 						return "ask"
 					}
 				}
@@ -522,7 +535,10 @@ export class PermissionRuleEngine {
 
 				if (result.confidence >= minConfidenceThreshold) {
 					if (result.action === "deny") {
-						logger.info("PermissionRuleEngine", `deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`)
+						logger.info(
+							"PermissionRuleEngine",
+							`deny tool=${toolName} classifier=${classifier.name}: ${result.reason}`,
+						)
 						recordSecurityMetric("permission_deny", {
 							tool: toolName,
 							classifier: classifier.name,

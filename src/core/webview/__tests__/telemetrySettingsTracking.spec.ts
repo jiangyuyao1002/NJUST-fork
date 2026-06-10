@@ -22,7 +22,9 @@ describe("Telemetry Settings Tracking", () => {
 
 		// Mock the TelemetryService
 		vi.spyOn(TelemetryService, "hasInstance").mockReturnValue(true)
-		vi.spyOn(TelemetryService, "instance", "get").mockReturnValue(mockTelemetryService as unknown as TelemetryService)
+		vi.spyOn(TelemetryService, "instance", "get").mockReturnValue(
+			mockTelemetryService as unknown as TelemetryService,
+		)
 	})
 
 	describe("when telemetry is turned OFF", () => {

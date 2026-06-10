@@ -31,17 +31,22 @@ export async function readTaskMessages({
 		try {
 			const parsedData = JSON.parse(await fs.readFile(filePath, "utf8"))
 			if (!Array.isArray(parsedData)) {
-				logger.warn("TaskMessages", 
+				logger.warn(
+					"TaskMessages",
 					`[readTaskMessages] Parsed data is not an array (got ${typeof parsedData}), returning empty. TaskId: ${taskId}, Path: ${filePath}`,
 				)
 				return []
 			}
 			messages = parsedData
 		} catch (error) {
-			logger.warn("TaskMessages", 
+			logger.warn(
+				"TaskMessages",
 				`[readTaskMessages] Failed to parse ${filePath} for task ${taskId}, returning empty: ${getErrorMessage(error)}`,
 			)
-			TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
+			TelemetryService.reportError(
+				error instanceof Error ? error : new Error(getErrorMessage(error)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 			return []
 		}
 	}
@@ -62,7 +67,8 @@ export async function readTaskMessages({
 				}
 			}
 		} catch (error) {
-			logger.warn("TaskMessages",
+			logger.warn(
+				"TaskMessages",
 				`[readTaskMessages] Failed to parse append file for task ${taskId}: ${getErrorMessage(error)}`,
 			)
 		}
@@ -99,7 +105,8 @@ export async function saveTaskMessagesIncremental({ messages, taskId, globalStor
 	try {
 		const countData = await fs.readFile(countFilePath, "utf-8")
 		lastFullCount = parseInt(countData, 10) || 0
-	} catch {
+	} catch (error) {
+		logger.debug("TaskMessages", "message count file read failed", error)
 		// No count file yet — will do full save
 	}
 

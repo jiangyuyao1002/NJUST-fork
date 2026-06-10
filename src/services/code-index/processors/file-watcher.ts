@@ -106,7 +106,7 @@ export class FileWatcher implements IFileWatcher {
 	/**
 	 * Initializes the file watcher
 	 */
-		// eslint-disable-next-line @typescript-eslint/require-await
+	// eslint-disable-next-line @typescript-eslint/require-await
 	async initialize(): Promise<void> {
 		// Create file watcher
 		const filePattern = new vscode.RelativePattern(
@@ -505,10 +505,7 @@ export class FileWatcher implements IFileWatcher {
 			}
 
 			// Check if file should be ignored
-			if (
-				!this.ignoreController.validateAccess(filePath) ||
-				(this.ignoreInstance?.ignores(relativeFilePath))
-			) {
+			if (!this.ignoreController.validateAccess(filePath) || this.ignoreInstance?.ignores(relativeFilePath)) {
 				return {
 					path: filePath,
 					status: "skipped" as const,

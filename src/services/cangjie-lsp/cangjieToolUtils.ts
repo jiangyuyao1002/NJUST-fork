@@ -44,7 +44,7 @@ export function detectCangjieHome(): string | undefined {
 			}
 		}
 	} catch {
-		/* vscode not available (tests) */
+		// intentionally ignored: vscode not available (tests)
 	}
 
 	const wellKnownPaths =

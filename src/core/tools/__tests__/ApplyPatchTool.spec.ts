@@ -584,7 +584,9 @@ describe("ApplyPatchTool", () => {
 				])
 				fileExistsAtPathMock.mockResolvedValueOnce(true)
 				const task = createTask()
-				task.rooProtectedController.isWriteProtected.mockImplementation(async (p: string) => p === "protected.ts")
+				task.rooProtectedController.isWriteProtected.mockImplementation(
+					async (p: string) => p === "protected.ts",
+				)
 				const callbacks = createCallbacks()
 
 				await tool.execute({ patch: "patch" }, task, callbacks)

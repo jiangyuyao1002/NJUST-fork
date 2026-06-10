@@ -10,7 +10,6 @@ import { Tiktoken } from "tiktoken/lite"
 import o200kBase from "tiktoken/encoders/o200k_base"
 import type { Anthropic } from "@anthropic-ai/sdk"
 import type { ApiMessage } from "../task-persistence/apiMessages"
-
 // ─── Budget Constants ────────────────────────────────────────────────────────
 
 /** Single result maximum ratio of context window */
@@ -117,8 +116,7 @@ export function truncateToolResult(result: string, budgetTokens: number): string
 	const tailPart = result.slice(tailStart)
 
 	const keptTokens = estimateTokens(headPart) + estimateTokens(tailPart)
-	// Agent-facing truncation summary — intentionally kept in Chinese for LLM context
-	const summaryLine = `\n[... 内容已裁剪，原始 ${currentTokens} tokens，保留 ${keptTokens} tokens ...]\n`
+	const summaryLine = `\n[... 内容已裁剪：原始 ${currentTokens} tokens，保留 ${keptTokens} tokens ...]\n`
 
 	return headPart + summaryLine + tailPart
 }

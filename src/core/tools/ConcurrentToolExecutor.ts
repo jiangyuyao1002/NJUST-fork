@@ -38,16 +38,22 @@ export class ConcurrentToolExecutor {
 
 	private resolveAbortOnError(opts?: ConcurrentRunOptions) {
 		const strategy = opts?.abortStrategy
-		if (strategy === "continueOnError") return { shouldAbortOnError: false, continueOnError: true, useTransitiveAbort: false }
+		if (strategy === "continueOnError")
+			return { shouldAbortOnError: false, continueOnError: true, useTransitiveAbort: false }
 		if (strategy === "transitiveAbort") {
 			const hasGraph = !!opts?.dependencyGraph && !opts.dependencyGraph.isEmpty()
 			return { shouldAbortOnError: !hasGraph, continueOnError: false, useTransitiveAbort: hasGraph }
 		}
-		if (strategy === "failFast") return { shouldAbortOnError: true, continueOnError: false, useTransitiveAbort: false }
+		if (strategy === "failFast")
+			return { shouldAbortOnError: true, continueOnError: false, useTransitiveAbort: false }
 		return { shouldAbortOnError: opts?.failFast === true, continueOnError: false, useTransitiveAbort: false }
 	}
 
-	async run<T>(items: T[], fn: (item: T, index: number, ctx: ConcurrentRunContext) => Promise<void>, runOpts?: ConcurrentRunOptions): Promise<void> {
+	async run<T>(
+		items: T[],
+		fn: (item: T, index: number, ctx: ConcurrentRunContext) => Promise<void>,
+		runOpts?: ConcurrentRunOptions,
+	): Promise<void> {
 		if (items.length === 0) return
 		const concurrencyLimit = this.concurrencyController?.getEffectiveMaxConcurrency() ?? this.maxConcurrency
 		const workerCount = Math.max(1, Math.min(this.maxConcurrency, concurrencyLimit, items.length))
@@ -153,9 +159,13 @@ export class ConcurrentToolExecutor {
 		await Promise.allSettled(workerTasks)
 
 		if (errors.length > 0) {
-			const messages = errors.map((e) => `[item ${e.index}] ${e.error instanceof Error ? e.error.message : String(e.error)}`)
+			const messages = errors.map(
+				(e) => `[item ${e.index}] ${e.error instanceof Error ? e.error.message : String(e.error)}`,
+			)
 			if (continueOnError) {
-				throw new Error(`ConcurrentToolExecutor (continueOnError): ${errors.length} task(s) failed:\n${messages.join("\n")}`)
+				throw new Error(
+					`ConcurrentToolExecutor (continueOnError): ${errors.length} task(s) failed:\n${messages.join("\n")}`,
+				)
 			}
 			throw new Error(`ConcurrentToolExecutor: ${errors.length} task(s) failed:\n${messages.join("\n")}`)
 		}

@@ -174,7 +174,12 @@ describe("git utils", () => {
 			})
 
 			// execFile mock for searchCommits git log call (now uses execFileAsync)
-			vitest.mocked(execFile).mockImplementation(function (file: string, cmdArgs: string[], options: any, callback: any) {
+			vitest.mocked(execFile).mockImplementation(function (
+				file: string,
+				cmdArgs: string[],
+				options: any,
+				callback: any,
+			) {
 				if (file === "git" && cmdArgs[0] === "log") {
 					callback(null, { stdout: mockCommitData, stderr: "" })
 					return {} as any
@@ -283,7 +288,12 @@ describe("git utils", () => {
 			// execFile mock for searchCommits git log calls (now uses execFileAsync)
 			let logCallIndex = 0
 			const logResponses = ["", mockCommitData]
-			vitest.mocked(execFile).mockImplementation(function (file: string, cmdArgs: string[], options: any, callback: any) {
+			vitest.mocked(execFile).mockImplementation(function (
+				file: string,
+				cmdArgs: string[],
+				options: any,
+				callback: any,
+			) {
 				if (file === "git" && cmdArgs[0] === "log") {
 					const response = logResponses[logCallIndex++] || ""
 					callback(null, { stdout: response, stderr: "" })

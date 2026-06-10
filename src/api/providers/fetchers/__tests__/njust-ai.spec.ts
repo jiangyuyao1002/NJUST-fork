@@ -863,12 +863,12 @@ describe("getRooModels", () => {
 					settings: {
 						includedTools: ["apply_patch"],
 					},
-				// Versioned settings keyed by very high version - never met
-				versionedSettings: {
-					"9999.0.0": {
-						includedTools: ["apply_patch", "search_replace"],
+					// Versioned settings keyed by very high version - never met
+					versionedSettings: {
+						"9999.0.0": {
+							includedTools: ["apply_patch", "search_replace"],
+						},
 					},
-				},
 				},
 			],
 		}
@@ -946,13 +946,13 @@ describe("getRooModels", () => {
 					settings: {
 						feature: "default",
 					},
-				// Multiple version keys - should use highest one <= current version
-				versionedSettings: {
-					"9999.0.0": { feature: "future" },
-					"3.0.0": { feature: "current" },
-					"2.0.0": { feature: "old" },
-					"1.0.0": { feature: "very_old" },
-				},
+					// Multiple version keys - should use highest one <= current version
+					versionedSettings: {
+						"9999.0.0": { feature: "future" },
+						"3.0.0": { feature: "current" },
+						"2.0.0": { feature: "old" },
+						"1.0.0": { feature: "very_old" },
+					},
 				},
 			],
 		}

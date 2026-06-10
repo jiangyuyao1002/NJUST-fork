@@ -45,7 +45,9 @@ describe("TaskResultAggregator", () => {
 		const aggregator = new TaskResultAggregator()
 		aggregator.addResult(result({ resultType: "code_modification", filesModified: ["a.ts"], summary: "patched" }))
 		aggregator.addResult(result({ resultType: "search_analysis", filesRead: ["b.ts"], summary: "found" }))
-		aggregator.addResult(result({ resultType: "command_execution", commandsExecuted: ["pnpm test"], summary: "green" }))
+		aggregator.addResult(
+			result({ resultType: "command_execution", commandsExecuted: ["pnpm test"], summary: "green" }),
+		)
 		aggregator.addResult(result({ status: "failed", error: "boom", duration: 2500 }))
 
 		const aggregated = aggregator.aggregate()

@@ -29,8 +29,14 @@ describe("indexingMessageHandler", () => {
 
 	it("registers all 8 indexing handlers", () => {
 		const registeredTypes = [
-			"saveCodeIndexSettingsAtomic", "requestIndexingStatus", "requestCodeIndexSecretStatus",
-			"startIndexing", "stopIndexing", "toggleWorkspaceIndexing", "setAutoEnableDefault", "clearIndexData",
+			"saveCodeIndexSettingsAtomic",
+			"requestIndexingStatus",
+			"requestCodeIndexSecretStatus",
+			"startIndexing",
+			"stopIndexing",
+			"toggleWorkspaceIndexing",
+			"setAutoEnableDefault",
+			"clearIndexData",
 		]
 		for (const type of registeredTypes) {
 			const handler = vi.fn()

@@ -1,5 +1,10 @@
 import { classifyApiError, type ApiErrorKind } from "../errors/apiErrorClassifier"
-import { mapErrorToRecoveryAction, shouldRetryCapacityError, type RecoveryAction, type QuerySource } from "../errors/recoveryStrategyMap"
+import {
+	mapErrorToRecoveryAction,
+	shouldRetryCapacityError,
+	type RecoveryAction,
+	type QuerySource,
+} from "../errors/recoveryStrategyMap"
 import { appendRetryEvent } from "../errors/retryPersistence"
 import { reactiveCompactMessages } from "../context-management/reactiveCompact"
 import { TaskState } from "./TaskStateMachine"
@@ -36,24 +41,28 @@ export class ErrorRecoveryHandler {
 	 * - { action: "retry", nextAttempt } → yield* this.attemptApiRequest(nextAttempt)
 	 * - { action: "fallthrough" } → continue to the existing backoff / user-prompt logic
 	 */
-	async handleApiError(error: unknown, retryAttempt: number, querySource: QuerySource = "user_query"): Promise<RecoveryResult> {
+	async handleApiError(
+		error: unknown,
+		retryAttempt: number,
+		querySource: QuerySource = "user_query",
+	): Promise<RecoveryResult> {
 		if (this.task.abort) {
 			return { action: "fallthrough" }
 		}
 
 		const classified = classifyApiError(error)
-	
+
 		// 529 capacity errors: background queries (auto_compact) should not retry
 		// to avoid cascade amplification during service degradation.
 		if (classified === "capacity" && !shouldRetryCapacityError(querySource)) {
 			return { action: "fallthrough" }
 		}
-	
+
 		// model_overloaded: background tasks should not retry to avoid amplification
 		if (classified === "model_overloaded" && !shouldRetryCapacityError(querySource)) {
 			return { action: "fallthrough" }
 		}
-	
+
 		const recoveryAction = mapErrorToRecoveryAction(classified, retryAttempt)
 
 		// Record the retry event for diagnostics
@@ -69,7 +78,7 @@ export class ErrorRecoveryHandler {
 				`Failed to persist retry event for task ${this.task.taskId}: ${getErrorMessage(writeErr)}`,
 			)
 		})
-	
+
 		switch (recoveryAction) {
 			case "reactive_compact_then_retry":
 			case "retry_with_continuation": {
@@ -80,10 +89,11 @@ export class ErrorRecoveryHandler {
 					// For max_output_tokens: preserve partial output and add continuation cue.
 					// The StreamingToolExecutor's withheld results (if any) are kept in place —
 					// they will be drained and included in the next API request by Task.ts.
-				logger.warn("ErrorRecoveryHandler",
-					`max_output_tokens hit for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
-						`Preserving partial output and adding continuation cue...`,
-				)
+					logger.warn(
+						"ErrorRecoveryHandler",
+						`max_output_tokens hit for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
+							`Preserving partial output and adding continuation cue...`,
+					)
 					await this.addContinuationCue()
 				}
 
@@ -91,7 +101,8 @@ export class ErrorRecoveryHandler {
 			}
 			case "context_window_recover": {
 				this.task.forceTaskState(TaskState.COMPACTING)
-				logger.warn("ErrorRecoveryHandler",
+				logger.warn(
+					"ErrorRecoveryHandler",
 					`Context window exceeded for task ${this.task.taskId}, model ${this.task.api.getModel().id}. ` +
 						`Retry attempt ${retryAttempt + 1}. ` +
 						`Attempting automatic truncation...`,
@@ -105,32 +116,34 @@ export class ErrorRecoveryHandler {
 				// regular retry slot.
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
-	
+
 			// === New recovery actions (Task 4.2) ===
-	
+
 			case "strip_media_retry": {
 				// media_too_large: scan conversation for large media content,
 				// remove image/file blocks, then retry.
-				logger.warn("ErrorRecoveryHandler",
+				logger.warn(
+					"ErrorRecoveryHandler",
 					`Media too large for task ${this.task.taskId} (attempt ${retryAttempt + 1}/2). ` +
 						`Stripping media content from messages...`,
 				)
 				await this.stripLargeMediaFromHistory()
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
-	
+
 			case "overloaded_backoff": {
 				// model_overloaded (503): exponential backoff starting at 5s, max 120s.
 				// After 3 failures, the strategy map returns "none" → fallback candidate.
 				const backoffMs = Math.min(5000 * Math.pow(2, retryAttempt), 120_000)
-				logger.warn("ErrorRecoveryHandler",
+				logger.warn(
+					"ErrorRecoveryHandler",
 					`Model overloaded for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
 						`Backing off for ${backoffMs / 1000}s...`,
 				)
 				await this.delay(backoffMs)
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
-	
+
 			case "inject_tool_hint_retry": {
 				// invalid_tool_use: inject correction hint so the model fixes its tool call.
 				// On 2nd retry (retryAttempt >= 1), also include a usage example.
@@ -139,9 +152,10 @@ export class ErrorRecoveryHandler {
 					"Please strictly follow the tool schema and provide all required parameters."
 				const exampleSuffix =
 					retryAttempt >= 1
-						? "\n\nExample of correct tool use: {\"tool\": \"tool_name\", \"parameters\": {\"param1\": \"value1\"}}"
+						? '\n\nExample of correct tool use: {"tool": "tool_name", "parameters": {"param1": "value1"}}'
 						: ""
-				logger.warn("ErrorRecoveryHandler",
+				logger.warn(
+					"ErrorRecoveryHandler",
 					`Invalid tool use for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
 						`Injecting correction hint...`,
 				)
@@ -151,10 +165,11 @@ export class ErrorRecoveryHandler {
 				})
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
-	
+
 			case "content_policy_reject": {
 				// content_policy: do NOT retry. Notify user that content was rejected.
-				logger.warn("ErrorRecoveryHandler",
+				logger.warn(
+					"ErrorRecoveryHandler",
 					`Content rejected by safety/policy filter for task ${this.task.taskId}. No retry.`,
 				)
 				await this.task.say(
@@ -164,22 +179,24 @@ export class ErrorRecoveryHandler {
 				)
 				return { action: "fallthrough" }
 			}
-	
+
 			case "partial_continue": {
 				// partial_response: keep existing content, send "continue" to resume generation.
-				logger.warn("ErrorRecoveryHandler",
+				logger.warn(
+					"ErrorRecoveryHandler",
 					`Partial response received for task ${this.task.taskId} (attempt ${retryAttempt + 1}/3). ` +
 						`Sending continuation request...`,
 				)
 				await this.addContinuationCue()
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
-	
+
 			case "server_error_backoff": {
 				// server_error (500): exponential backoff with diagnostics logging.
 				const backoffMs = Math.min(2000 * Math.pow(2, retryAttempt), 60_000)
 				const errorMsg = getErrorMessage(error)
-				logger.error("ErrorRecoveryHandler",
+				logger.error(
+					"ErrorRecoveryHandler",
 					`Server error 500 for task ${this.task.taskId} (attempt ${retryAttempt + 1}/5). ` +
 						`Diagnostics: ${errorMsg}. ` +
 						`Backing off for ${backoffMs / 1000}s...`,
@@ -187,29 +204,31 @@ export class ErrorRecoveryHandler {
 				await this.delay(backoffMs)
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
-	
+
 			case "unknown_single_retry": {
 				// unknown: log the full error, try once, then give up.
 				const errorMsg = error instanceof Error ? error.stack || error.message : String(error)
-				logger.warn("ErrorRecoveryHandler",
+				logger.warn(
+					"ErrorRecoveryHandler",
 					`Unknown error for task ${this.task.taskId} (single retry). Full error: ${errorMsg}`,
 				)
 				return { action: "retry", nextAttempt: retryAttempt + 1 }
 			}
-	
+
 			case "model_fallback": {
-			// Retries exhausted for model_overloaded / timeout → suggest model fallback
-			logger.warn("ErrorRecoveryHandler",
-				`Retries exhausted for ${classified} errors on task ${this.task.taskId}. ` +
-					`Recommending model fallback...`,
-			)
-			return {
-				action: "model_fallback",
-				errorCategory: classified,
+				// Retries exhausted for model_overloaded / timeout → suggest model fallback
+				logger.warn(
+					"ErrorRecoveryHandler",
+					`Retries exhausted for ${classified} errors on task ${this.task.taskId}. ` +
+						`Recommending model fallback...`,
+				)
+				return {
+					action: "model_fallback",
+					errorCategory: classified,
 					reason: `Model retries exhausted after ${retryAttempt} attempts due to ${classified}. Fallback recommended.`,
 				}
 			}
-			
+
 			case "backoff_retry":
 			case "timeout_degrade":
 			case "none":
@@ -302,13 +321,9 @@ export class ErrorRecoveryHandler {
 		if (!hasPendingToolUses && !alreadyQueued) {
 			// Inject error tool_result placeholders for any saved tool_use blocks that
 			// lack corresponding results, preventing API protocol violations.
-			const lastAssistant = [...this.task.apiConversationHistory]
-				.reverse()
-				.find((m) => m.role === "assistant")
+			const lastAssistant = [...this.task.apiConversationHistory].reverse().find((m) => m.role === "assistant")
 			if (lastAssistant && Array.isArray(lastAssistant.content)) {
-				const orphanedToolUses = lastAssistant.content.filter(
-					(b) => b.type === "tool_use",
-				)
+				const orphanedToolUses = lastAssistant.content.filter((b) => b.type === "tool_use")
 				if (orphanedToolUses.length > 0) {
 					const toolResults = orphanedToolUses.map((tu) => ({
 						type: "tool_result" as const,
@@ -339,7 +354,11 @@ export class ErrorRecoveryHandler {
 			if (Array.isArray(msg.content)) {
 				const filtered = msg.content.map((block) => {
 					const b = block as unknown as TypedBlock
-					if (b.type === "image" || b.type === "image_url" || (b.source as Record<string, unknown>)?.type === "base64") {
+					if (
+						b.type === "image" ||
+						b.type === "image_url" ||
+						(b.source as Record<string, unknown>)?.type === "base64"
+					) {
 						modified = true
 						return { type: "text" as const, text: "[Image removed: content too large for API]" }
 					}

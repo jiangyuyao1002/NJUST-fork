@@ -53,7 +53,7 @@ import { combineApiRequests } from "../../shared/combineApiRequests"
 import { combineCommandSequences } from "../../shared/combineCommandSequences"
 import { getApiMetrics, hasTokenUsageChanged, hasToolUsageChanged } from "../../shared/getApiMetrics"
 import { ClineAskResponse } from "../../shared/WebviewMessage"
-import { defaultModeSlug } from "../../shared/modes"
+
 import { DiffStrategy } from "../../shared/tools"
 import { logger } from "../../shared/logger"
 
@@ -111,8 +111,9 @@ import { type TaskSubtaskHost } from "./interfaces/TaskSubtaskHost"
 import { TaskToolHandler } from "./TaskToolHandler"
 import { TaskExecutor, type TaskExecutorHost } from "./TaskExecutor"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
+import { TaskModeHandler } from "./TaskModeHandler"
 import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
-import { getErrorMessage } from "../../shared/error-utils"
+
 import {
 	addToApiConversationHistoryWithTask,
 	addToClineMessagesWithTask,
@@ -199,17 +200,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/** MemRL: set when the agent invokes attempt_completion (its own success signal). */
 	private completionAttempted = false
 
-	/** Task mode. Async-initialized from provider state; falls back to defaultModeSlug. Access via getTaskMode() or taskMode getter after taskModeReady resolves. */
-	private _taskMode: string | undefined
-
-	/** Resolves when task mode initialization completes. History items resolve immediately; new tasks after provider state fetch. */
-	private taskModeReady: Promise<void>
-
-	/** Provider profile name. Async-initialized from provider state; falls back to "default". May be undefined for backward compat. */
-	private _taskApiConfigName: string | undefined
-
-	/** Resolves when API config name initialization completes. */
-	private taskApiConfigReady: Promise<void>
+	private readonly modeHandler: TaskModeHandler
 
 	hostRef: WeakRef<ITaskHost>
 	private readonly eventBus: TaskEventBus
@@ -386,8 +377,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private _started = false
 	// No streaming parser is required.
 	assistantMessageParser?: undefined
-	private providerProfileChangeListener?: (config: { name: string; provider?: string }) => void
-
 	// Native tool call streaming state (track which index each tool is at)
 	private streamingToolCallIndices: Map<string, number> = new Map()
 	readonly toolExecution = new ToolExecutionContext(
@@ -616,20 +605,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.requestBuilder.inheritCacheFromParent(parentTask)
 		}
 
-		// Store the task's mode and API config name when it's created.
-		// For history items, use the stored values; for new tasks, we'll set them
-		// after getting state.
+		this.modeHandler = new TaskModeHandler(this)
+
 		if (historyItem) {
-			this._taskMode = historyItem.mode || defaultModeSlug
-			this._taskApiConfigName = historyItem.apiConfigName
-			this.taskModeReady = Promise.resolve()
-			this.taskApiConfigReady = Promise.resolve()
+			this.modeHandler.initializeFromHistory(historyItem)
 		} else {
-			// For new tasks, don't set the mode/apiConfigName yet - wait for async initialization.
-			this._taskMode = undefined
-			this._taskApiConfigName = undefined
-			this.taskModeReady = this.initializeTaskMode(host)
-			this.taskApiConfigReady = this.initializeTaskApiConfigName(host)
+			this.modeHandler.initializeAsync(host)
 		}
 
 		this.assistantMessageParser = undefined
@@ -644,8 +625,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		this.messageQueueService.on("stateChanged", this.messageQueueStateChangedHandler)
 
-		// Listen for provider profile changes to update parser state
-		this.setupProviderProfileChangeListener(host)
+		this.modeHandler.setupListener(host)
 
 		// Set up diff strategy
 		this.diffStrategy = new MultiSearchReplaceDiffStrategy()
@@ -686,12 +666,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this._started = true
 			if (task || images) {
 				void this.startTask(task, images).catch((error) => {
-					logger.error("startTask failed", error)
+					logger.error("Task", "startTask failed", error)
 					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			} else if (historyItem) {
 				void this.resumeTaskFromHistory().catch((error) => {
-					logger.error("resumeTaskFromHistory failed", error)
+					logger.error("Task", "resumeTaskFromHistory failed", error)
 					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 				})
 			} else {
@@ -700,112 +680,36 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 	}
 
-	/** Initialize task mode from provider state. Falls back to defaultModeSlug on error. */
-	private async initializeTaskMode(host: ITaskHost): Promise<void> {
-		try {
-			const state = await host.getState()
-			this._taskMode = state?.mode || defaultModeSlug
-		} catch (error) {
-			// If there's an error getting state, use the default mode
-			this._taskMode = defaultModeSlug
-			// Use the provider's log method for better error visibility
-			const errorMessage = `Failed to initialize task mode: ${getErrorMessage(error)}`
-			host.log(errorMessage)
-		}
-	}
-
-	/** Initialize API config name from provider state. Falls back to "default" on error. */
-	private async initializeTaskApiConfigName(host: ITaskHost): Promise<void> {
-		try {
-			const state = await host.getState()
-
-			// Avoid clobbering a newer value that may have been set while awaiting provider state
-			// (e.g., user switches provider profile immediately after task creation).
-			if (this._taskApiConfigName === undefined) {
-				this._taskApiConfigName = state?.currentApiConfigName ?? "default"
-			}
-		} catch (error) {
-			// If there's an error getting state, use the default profile (unless a newer value was set).
-			if (this._taskApiConfigName === undefined) {
-				this._taskApiConfigName = "default"
-			}
-			// Use the provider's log method for better error visibility
-			const errorMessage = `Failed to initialize task API config name: ${getErrorMessage(error)}`
-			host.log(errorMessage)
-		}
-	}
-
-	/** Subscribe to provider profile changes; update API config when profile switches. */
-	private setupProviderProfileChangeListener(host: ITaskHost): void {
-		// Only set up listener if provider has the on method (may not exist in test mocks)
-		if (typeof host.on !== "function") {
-			return
-		}
-
-		this.providerProfileChangeListener = async () => {
-			// Abort fetch before awaiting provider state so the in-flight stream stops immediately.
-			this.cancelCurrentRequest()
-			try {
-				const newState = await host.getState()
-				if (newState?.apiConfiguration) {
-					this.updateApiConfiguration(newState.apiConfiguration)
-				}
-			} catch (error) {
-				logger.error(
-					"Task",
-					`Failed to update API configuration on profile change for task ${this.taskId}.${this.instanceId}:`,
-					error,
-				)
-				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
-			}
-		}
-
-		host.on(NJUST_AIEventName.ProviderProfileChanged, this.providerProfileChangeListener)
-	}
-
-	/** Await task mode initialization. */
 	public async waitForModeInitialization(): Promise<void> {
-		return this.taskModeReady
+		return this.modeHandler.waitForModeInitialization()
 	}
 
-	/** Get task mode (async, waits for init). Falls back to defaultModeSlug. */
 	public async getTaskMode(): Promise<string> {
-		await this.taskModeReady
-		return this._taskMode || defaultModeSlug
+		return this.modeHandler.getTaskMode()
 	}
 
-	/** Synchronous task mode getter. Throws if not yet initialized. */
 	public get taskMode(): string {
-		if (this._taskMode === undefined) {
-			throw new Error("Task mode accessed before initialization. Use getTaskMode() or wait for taskModeReady.")
-		}
-
-		return this._taskMode
+		return this.modeHandler.taskMode
 	}
 
 	public setTaskMode(mode: string): void {
-		this._taskMode = mode
+		this.modeHandler.setTaskMode(mode)
 	}
 
-	/** Await API config name initialization. */
 	public async waitForApiConfigInitialization(): Promise<void> {
-		return this.taskApiConfigReady
+		return this.modeHandler.waitForApiConfigInitialization()
 	}
 
-	/** Get API config name (async, waits for init). May return undefined for backward compat. */
 	public async getTaskApiConfigName(): Promise<string | undefined> {
-		await this.taskApiConfigReady
-		return this._taskApiConfigName
+		return this.modeHandler.getTaskApiConfigName()
 	}
 
-	/** Synchronous API config name getter. Returns undefined if not yet initialized (backward compat). */
 	public get taskApiConfigName(): string | undefined {
-		return this._taskApiConfigName
+		return this.modeHandler.taskApiConfigName
 	}
 
-	/** @internal Update API config name (called on provider profile switch). */
 	public setTaskApiConfigName(apiConfigName: string | undefined): void {
-		this._taskApiConfigName = apiConfigName
+		this.modeHandler.setTaskApiConfigName(apiConfigName)
 	}
 
 	static create(options: TaskOptions): [Task, Promise<void>] {
@@ -1154,7 +1058,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		if (task || images) {
 			void this.startTask(task ?? undefined, images ?? undefined).catch((error) => {
-				logger.error("startTask failed", error)
+				logger.error("Task", "startTask failed", error)
 				TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
 			})
 		}
@@ -1320,7 +1224,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this.memrlEpisodicHints = episodicHints
 				this.memrlLtmRules = ltmRules
 				this.requestBuilder["systemPromptPartsCache"] = undefined
-			} catch {
+			} catch (error) {
+				logger.debug("Task", "memrl beforeRun failed", error)
 				/* non-blocking */
 			}
 		}
@@ -1374,7 +1279,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this.memrlLtmRules = ltmRules
 				// Invalidate the cached system prompt so the new hints are injected.
 				this.requestBuilder["systemPromptPartsCache"] = undefined
-			} catch {
+			} catch (error) {
+				logger.debug("Task", "memrl beforeRun failed (retry)", error)
 				// Non-blocking: failures must not prevent task execution.
 			}
 		}

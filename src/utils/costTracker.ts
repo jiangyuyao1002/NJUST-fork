@@ -237,9 +237,7 @@ export class CostTracker {
 
 		for (const [model, usage] of this.usageByModel.entries()) {
 			const cacheInfo =
-				usage.cacheReadInputTokens > 0
-					? ` (${usage.cacheReadInputTokens.toLocaleString()} cached)`
-					: ""
+				usage.cacheReadInputTokens > 0 ? ` (${usage.cacheReadInputTokens.toLocaleString()} cached)` : ""
 			lines.push(
 				`  ${model}: ${usage.inputTokens.toLocaleString()} input${cacheInfo}, ` +
 					`${usage.outputTokens.toLocaleString()} output, ` +
@@ -249,9 +247,7 @@ export class CostTracker {
 		}
 
 		const totals = this.getTotalTokens()
-		lines.push(
-			`  Total: ${totals.input.toLocaleString()} input, ${totals.output.toLocaleString()} output`,
-		)
+		lines.push(`  Total: ${totals.input.toLocaleString()} input, ${totals.output.toLocaleString()} output`)
 
 		if (this.getTotalCost() > 0) {
 			lines.push(`  Total cost: $${this.getTotalCost().toFixed(4)}`)

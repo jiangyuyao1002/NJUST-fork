@@ -8,7 +8,6 @@ import * as path from "path"
 const distPath = path.join(__dirname, "../dist")
 
 describe.skipIf(!fs.existsSync(distPath))("dist assets", () => {
-
 	describe("tiktoken", () => {
 		it("should have tiktoken wasm file", () => {
 			expect(fs.existsSync(path.join(distPath, "tiktoken_bg.wasm"))).toBe(true)

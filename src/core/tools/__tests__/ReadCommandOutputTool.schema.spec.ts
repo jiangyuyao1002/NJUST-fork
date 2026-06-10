@@ -8,7 +8,12 @@ describe("ReadCommandOutputTool schema", () => {
 	})
 
 	it("passes with optional fields", () => {
-		const result = readCommandOutputTool.inputSchema.safeParse({ artifact_id: "cmd-123.txt", search: "error", offset: 0, limit: 1024 })
+		const result = readCommandOutputTool.inputSchema.safeParse({
+			artifact_id: "cmd-123.txt",
+			search: "error",
+			offset: 0,
+			limit: 1024,
+		})
 		expect(result.success).toBe(true)
 	})
 

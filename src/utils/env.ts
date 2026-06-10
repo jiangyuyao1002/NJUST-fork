@@ -40,9 +40,7 @@ function isSensitiveEnvKey(key: string): boolean {
 	return SENSITIVE_ENV_PATTERNS.some((p) => p.test(key))
 }
 
-export function filterSensitiveEnv(
-	extra?: Record<string, string | undefined>,
-): Record<string, string | undefined> {
+export function filterSensitiveEnv(extra?: Record<string, string | undefined>): Record<string, string | undefined> {
 	const filtered: Record<string, string | undefined> = {}
 	for (const [key, value] of Object.entries(process.env)) {
 		if (!isSensitiveEnvKey(key)) {
@@ -89,10 +87,7 @@ export const PATH_KEYS = new Set(["PATH", "PATHEXT"])
  * - Drops keys in DANGEROUS_ENV_KEYS and logs a warning.
  * - Appends PATH-like variables instead of replacing them.
  */
-function findPathKeyInDefaults(
-	defaults: Record<string, string | undefined>,
-	upperKey: string,
-): string | undefined {
+function findPathKeyInDefaults(defaults: Record<string, string | undefined>, upperKey: string): string | undefined {
 	if (PATH_KEYS.has(upperKey)) {
 		for (const k of Object.keys(defaults)) {
 			if (k.toUpperCase() === upperKey) {

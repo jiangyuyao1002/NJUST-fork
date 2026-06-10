@@ -108,7 +108,7 @@ export function buildWhitespaceTolerantRegex(oldLF: string, opts?: { cangjie?: b
 	if (oldLF.length > MAX_WS_TOLERANT_PATTERN_LEN) {
 		throw new Error(
 			`Pattern too long for whitespace-tolerant regex: ${oldLF.length} > ${MAX_WS_TOLERANT_PATTERN_LEN}. ` +
-			`ReDoS risk — split into smaller search blocks.`,
+				`ReDoS risk — split into smaller search blocks.`,
 		)
 	}
 	if (oldLF === "") {

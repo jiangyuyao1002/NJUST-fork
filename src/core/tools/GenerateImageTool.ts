@@ -26,7 +26,9 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 	readonly name = "generate_image" as const
 	override readonly requiresCheckpoint = true
 
-	override get shouldDefer() { return true }
+	override get shouldDefer() {
+		return true
+	}
 
 	protected override get inputSchema() {
 		return z.object({
@@ -106,16 +108,9 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 				const mimeType = imageExtension === "jpg" ? "jpeg" : imageExtension
 				inputImageData = `data:image/${mimeType};base64,${imageBuffer.toString("base64")}`
 			} catch (error) {
-				await task.say(
-					"error",
-					`Failed to read input image: ${getErrorMessage(error)}`,
-				)
+				await task.say("error", `Failed to read input image: ${getErrorMessage(error)}`)
 				task.didToolFailInCurrentTurn = true
-				pushToolResult(
-					formatResponse.toolError(
-						`Failed to read input image: ${getErrorMessage(error)}`,
-					),
-				)
+				pushToolResult(formatResponse.toolError(`Failed to read input image: ${getErrorMessage(error)}`))
 				return
 			}
 		}
@@ -197,7 +192,12 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 			} else {
 				// Use OpenRouter provider (only supports chat completions API)
 				const openRouterHandler = new OpenRouterHandler({} as UnsafeAny)
-				result = await openRouterHandler.generateImage(prompt, selectedModel!, openRouterApiKey!, inputImageData)
+				result = await openRouterHandler.generateImage(
+					prompt,
+					selectedModel!,
+					openRouterApiKey!,
+					inputImageData,
+				)
 			}
 
 			if (!result.success) {

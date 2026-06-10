@@ -17,9 +17,7 @@ function isSchema(value: UnsafeAny): value is JsonSchema {
 
 export function ensureAllRequired(schema: UnsafeAny): UnsafeAny {
 	const getPrimaryType = (value: UnsafeAny): string | undefined =>
-		isSchema(value)
-			? Array.isArray(value.type) ? value.type.find((t) => t !== "null") : value.type
-			: undefined
+		isSchema(value) ? (Array.isArray(value.type) ? value.type.find((t) => t !== "null") : value.type) : undefined
 
 	if (!isSchema(schema) || getPrimaryType(schema) !== "object") {
 		return schema

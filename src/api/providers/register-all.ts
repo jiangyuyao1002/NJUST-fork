@@ -72,6 +72,7 @@ providerRegistry.register("mimo", (o: ApiHandlerOptions) => new MimoHandler(o))
 providerRegistry.register("mimo-token-plan", (o: ApiHandlerOptions) => new MimoTokenPlanHandler(o))
 providerRegistry.register(
 	"vertex",
-	(o: ApiHandlerOptions) => (o.apiModelId?.startsWith("claude") ? new AnthropicVertexHandler(o) : new VertexHandler(o)),
+	(o: ApiHandlerOptions) =>
+		o.apiModelId?.startsWith("claude") ? new AnthropicVertexHandler(o) : new VertexHandler(o),
 	"native",
 )

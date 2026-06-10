@@ -48,7 +48,10 @@ async function loadLanguage(langName: string, sourceDirectory?: string) {
 		const { Language } = await import("web-tree-sitter")
 		return await Language.load(wasmPath)
 	} catch (error) {
-		logger.error("LanguageParser", `Error loading language: ${wasmPath}: ${error instanceof Error ? error.message : error}`)
+		logger.error(
+			"LanguageParser",
+			`Error loading language: ${wasmPath}: ${error instanceof Error ? error.message : error}`,
+		)
 		TelemetryService.reportError(error, TelemetryEventName.PARSER_ERROR)
 		throw error
 	}
@@ -87,7 +90,10 @@ export async function loadRequiredLanguageParsers(filesToParse: string[], source
 			await Parser.init()
 			isParserInitialized = true
 		} catch (error) {
-			logger.error("LanguageParser", `Error initializing parser: ${error instanceof Error ? error.message : error}`)
+			logger.error(
+				"LanguageParser",
+				`Error initializing parser: ${error instanceof Error ? error.message : error}`,
+			)
 			TelemetryService.reportError(error, TelemetryEventName.PARSER_ERROR)
 			throw error
 		}

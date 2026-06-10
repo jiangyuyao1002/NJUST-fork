@@ -72,22 +72,28 @@ export async function readApiMessages({
 		try {
 			const parsedData = JSON.parse(fileContent)
 			if (!Array.isArray(parsedData)) {
-				logger.warn("ApiMessages", 
+				logger.warn(
+					"ApiMessages",
 					`[readApiMessages] Parsed data is not an array (got ${typeof parsedData}), returning empty. TaskId: ${taskId}, Path: ${filePath}`,
 				)
 				return []
 			}
 			if (parsedData.length === 0) {
-				logger.error("ApiMessages", 
+				logger.error(
+					"ApiMessages",
 					`[Njust-AI-Debug] readApiMessages: Found API conversation history file, but it's empty (parsed as []). TaskId: ${taskId}, Path: ${filePath}`,
 				)
 			}
 			return parsedData
 		} catch (error) {
-			logger.warn("ApiMessages", 
+			logger.warn(
+				"ApiMessages",
 				`[readApiMessages] Error parsing API conversation history file, returning empty. TaskId: ${taskId}, Path: ${filePath}, Error: ${error}`,
 			)
-			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+			TelemetryService.reportError(
+				error instanceof Error ? error : new Error(String(error)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 			return []
 		}
 	} else {
@@ -98,31 +104,38 @@ export async function readApiMessages({
 			try {
 				const parsedData = JSON.parse(fileContent)
 				if (!Array.isArray(parsedData)) {
-					logger.warn("ApiMessages", 
+					logger.warn(
+						"ApiMessages",
 						`[readApiMessages] Parsed OLD data is not an array (got ${typeof parsedData}), returning empty. TaskId: ${taskId}, Path: ${oldPath}`,
 					)
 					return []
 				}
 				if (parsedData.length === 0) {
-					logger.error("ApiMessages", 
+					logger.error(
+						"ApiMessages",
 						`[Njust-AI-Debug] readApiMessages: Found OLD API conversation history file (claude_messages.json), but it's empty (parsed as []). TaskId: ${taskId}, Path: ${oldPath}`,
 					)
 				}
 				await fs.unlink(oldPath)
 				return parsedData
 			} catch (error) {
-				logger.warn("ApiMessages", 
+				logger.warn(
+					"ApiMessages",
 					`[readApiMessages] Error parsing OLD API conversation history file (claude_messages.json), returning empty. TaskId: ${taskId}, Path: ${oldPath}, Error: ${error}`,
 				)
 				// DO NOT unlink oldPath if parsing failed.
-				TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+				TelemetryService.reportError(
+					error instanceof Error ? error : new Error(String(error)),
+					TelemetryEventName.UTILITY_ERROR,
+				)
 				return []
 			}
 		}
 	}
 
 	// If we reach here, neither the new nor the old history file was found.
-	logger.error("ApiMessages", 
+	logger.error(
+		"ApiMessages",
 		`[Njust-AI-Debug] readApiMessages: API conversation history file not found for taskId: ${taskId}. Expected at: ${filePath}`,
 	)
 	return []

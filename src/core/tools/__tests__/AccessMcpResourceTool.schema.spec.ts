@@ -3,7 +3,10 @@ import { accessMcpResourceTool } from "../accessMcpResourceTool"
 
 describe("AccessMcpResourceTool schema", () => {
 	it("passes with valid input", () => {
-		const result = accessMcpResourceTool.inputSchema.safeParse({ server_name: "test-server", uri: "test://resource" })
+		const result = accessMcpResourceTool.inputSchema.safeParse({
+			server_name: "test-server",
+			uri: "test://resource",
+		})
 		expect(result.success).toBe(true)
 	})
 

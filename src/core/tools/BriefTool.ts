@@ -50,9 +50,8 @@ export class BriefTool extends BaseTool<"brief"> {
 		const { handleError, pushToolResult } = callbacks
 
 		try {
-			const maxLength = typeof params.maxLength === "number" && params.maxLength > 0
-				? params.maxLength
-				: DEFAULT_MAX_LENGTH
+			const maxLength =
+				typeof params.maxLength === "number" && params.maxLength > 0 ? params.maxLength : DEFAULT_MAX_LENGTH
 
 			const content = params.content
 
@@ -119,9 +118,7 @@ function briefContent(text: string, maxLength: number): string {
 
 	// --- assemble ---
 	const parts: string[] = []
-	const trimmedFirst = firstPara.length > firstParaBudget
-		? firstPara.slice(0, firstParaBudget) + "..."
-		: firstPara
+	const trimmedFirst = firstPara.length > firstParaBudget ? firstPara.slice(0, firstParaBudget) + "..." : firstPara
 	parts.push(trimmedFirst)
 
 	if (keyLines.length > 0) {

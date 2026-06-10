@@ -24,7 +24,8 @@ import {
 	CRITICAL_SIGNATURE_MODULES,
 	resolveRootPackageName,
 } from "./cangjiePreflightCheck"
-import {	countOccurrences,
+import {
+	countOccurrences,
 	safeLiteralReplace,
 	detectLineEnding,
 	normalizeToLF,
@@ -326,7 +327,10 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			// Cangjie preflight check for .cj files (only in Cangjie mode)
 			let cangjiePostWriteWarnings = ""
 			if (absolutePath.toLowerCase().endsWith(".cj") && task.taskMode === "cangjie") {
-				const structureError = await task.cangjieRuntimePolicy.validateProjectStructureForWrite(relPath, newContent)
+				const structureError = await task.cangjieRuntimePolicy.validateProjectStructureForWrite(
+					relPath,
+					newContent,
+				)
 				if (structureError) {
 					await finalizePartialToolAskIfNeeded(relPath)
 					task.recordToolError("edit_file", structureError)
@@ -361,7 +365,10 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 				if (searchGate) {
 					cangjiePostWriteWarnings += searchGate
 				}
-				const missingEvidence = task.cangjieRuntimePolicy.getMissingImportEvidence(currentContent ?? undefined, newContent)
+				const missingEvidence = task.cangjieRuntimePolicy.getMissingImportEvidence(
+					currentContent ?? undefined,
+					newContent,
+				)
 				if (missingEvidence.length > 0) {
 					const errorMsg =
 						`Missing bundled corpus evidence for newly introduced stdlib modules: ${missingEvidence.join(", ")}. ` +
@@ -406,8 +413,7 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			if (isOutsideWorkspace) {
 				task.consecutiveMistakeCount++
 				task.didToolFailInCurrentTurn = true
-				const formattedError =
-					`Safety: cannot edit file outside workspace: ${getReadablePath(task.cwd, relPath)}`
+				const formattedError = `Safety: cannot edit file outside workspace: ${getReadablePath(task.cwd, relPath)}`
 				await finalizePartialToolAskIfNeeded(relPath)
 				await recordFailureForPathAndMaybeEscalate(relPath, formattedError)
 				task.recordToolError("edit_file", formattedError)

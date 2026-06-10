@@ -4,11 +4,7 @@ import { describe, it, expect } from "vitest"
 
 import type { ModelInfo } from "@njust-ai/types"
 
-import {
-	calculateApiCostAnthropic,
-	calculateApiCostOpenAI,
-	resolveOpenAiUsageForCost,
-} from "../../shared/cost"
+import { calculateApiCostAnthropic, calculateApiCostOpenAI, resolveOpenAiUsageForCost } from "../../shared/cost"
 
 describe("Cost Utility", () => {
 	describe("resolveOpenAiUsageForCost", () => {

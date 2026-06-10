@@ -12,6 +12,7 @@
 import type { AgentDefinition } from "./types"
 import { ToolHookManager } from "../tools/ToolHookManager"
 import type { LifecycleHookContext } from "../tools/toolHooks"
+import { logger } from "../../shared/logger"
 
 // ── MCP Integration ──
 
@@ -19,10 +20,7 @@ import type { LifecycleHookContext } from "../tools/toolHooks"
  * Resolve the effective MCP server list for an agent.
  * Built-in and parent servers are additive.
  */
-export function resolveAgentMcpServers(
-	agentDef: AgentDefinition,
-	parentServers: string[] = [],
-): string[] {
+export function resolveAgentMcpServers(agentDef: AgentDefinition, parentServers: string[] = []): string[] {
 	const agentServers = agentDef.mcpServers ?? []
 	// Deduplicate: agent-specific servers override parent duplicates
 	const seen = new Set(agentServers)
@@ -130,12 +128,9 @@ export function activateAgentFeatures(
 		}
 		// Notify via ToolHookManager that a subagent started
 		try {
-			void ToolHookManager.instance.runSubagentStartHooks(
-				params.parentTaskId,
-				agentDef.agentType,
-				hookContext,
-			)
-		} catch {
+			void ToolHookManager.instance.runSubagentStartHooks(params.parentTaskId, agentDef.agentType, hookContext)
+		} catch (error) {
+			logger.debug("AgentFeature", "hook start failed", error)
 			// Hooks are fire-and-forget
 		}
 	}
@@ -160,13 +155,11 @@ export function deactivateAgentFeatures(
 ): void {
 	if (state.hooks.length > 0 && params.parentTaskId) {
 		try {
-			void ToolHookManager.instance.runSubagentStopHooks(
-				params.parentTaskId,
-				"agent",
-				params.success,
-				{ taskId: params.taskId },
-			)
-		} catch {
+			void ToolHookManager.instance.runSubagentStopHooks(params.parentTaskId, "agent", params.success, {
+				taskId: params.taskId,
+			})
+		} catch (error) {
+			logger.debug("AgentFeature", "hook end failed", error)
 			// Hooks are fire-and-forget
 		}
 	}

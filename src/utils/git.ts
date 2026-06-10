@@ -61,7 +61,7 @@ export async function getGitRepositoryInfo(workspaceRoot: string): Promise<GitRe
 				gitInfo.defaultBranch = branchMatch[1]
 			}
 		} catch {
-			// Ignore config reading errors
+			// intentionally ignored: config reading errors
 		}
 
 		// Try to read HEAD file to get current branch
@@ -74,7 +74,7 @@ export async function getGitRepositoryInfo(workspaceRoot: string): Promise<GitRe
 					gitInfo.defaultBranch = branchMatch[1].trim()
 				}
 			} catch {
-				// Ignore HEAD reading errors
+				// intentionally ignored: HEAD reading errors
 			}
 		}
 
@@ -241,7 +241,16 @@ export async function searchCommits(query: string, cwd: string): Promise<GitComm
 		// Search commits by hash or message, limiting to 10 results
 		const { stdout } = await execFileAsync(
 			"git",
-			["log", "-n", "10", "--format=%H%n%h%n%s%n%an%n%ad", "--date=short", "--grep", query, "--regexp-ignore-case"],
+			[
+				"log",
+				"-n",
+				"10",
+				"--format=%H%n%h%n%s%n%an%n%ad",
+				"--date=short",
+				"--grep",
+				query,
+				"--regexp-ignore-case",
+			],
 			{ cwd },
 		)
 

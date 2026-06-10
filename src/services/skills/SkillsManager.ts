@@ -88,14 +88,17 @@ export class SkillsManager {
 				const normalizedReal = realEntryPath.toLowerCase()
 				const normalizedDir = realDirPath.toLowerCase()
 				if (!normalizedReal.startsWith(normalizedDir + path.sep) && normalizedReal !== normalizedDir) {
-					logger.error("SkillsManager", `Skipping "${entryName}": symlink target "${realEntryPath}" escapes skills directory "${realDirPath}"`)
+					logger.error(
+						"SkillsManager",
+						`Skipping "${entryName}": symlink target "${realEntryPath}" escapes skills directory "${realDirPath}"`,
+					)
 					continue
 				}
 
 				await this.loadSkillMetadata(realEntryPath, source, mode, entryName)
 			}
 		} catch {
-			// Directory doesn't exist or can't be read - this is fine
+			// intentionally ignored: directory doesn't exist or can't be read
 		}
 	}
 
@@ -120,7 +123,10 @@ export class SkillsManager {
 		try {
 			const stat = await fs.stat(skillMdPath)
 			if (stat.size > SkillsManager.MAX_SKILL_FILE_SIZE) {
-				logger.error("SkillsManager", `Skill at ${skillDir}: SKILL.md exceeds maximum size of ${SkillsManager.MAX_SKILL_FILE_SIZE} bytes (${stat.size} bytes)`)
+				logger.error(
+					"SkillsManager",
+					`Skill at ${skillDir}: SKILL.md exceeds maximum size of ${SkillsManager.MAX_SKILL_FILE_SIZE} bytes (${stat.size} bytes)`,
+				)
 				return
 			}
 			const fileContent = await fs.readFile(skillMdPath, "utf-8")
@@ -142,7 +148,10 @@ export class SkillsManager {
 			// Per the Agent Skills spec: "name field must match the parent directory name"
 			const effectiveSkillName = skillName || path.basename(skillDir)
 			if (frontmatter.name !== effectiveSkillName) {
-				logger.error("SkillsManager", `Skill name "${frontmatter.name}" doesn't match directory "${effectiveSkillName}"`)
+				logger.error(
+					"SkillsManager",
+					`Skill name "${frontmatter.name}" doesn't match directory "${effectiveSkillName}"`,
+				)
 				return
 			}
 
@@ -159,7 +168,10 @@ export class SkillsManager {
 			// - non-empty (after trimming)
 			const description = frontmatter.description.trim()
 			if (description.length < 1 || description.length > 1024) {
-				logger.error("SkillsManager", `Skill "${effectiveSkillName}" has an invalid description length: must be 1-1024 characters (got ${description.length})`)
+				logger.error(
+					"SkillsManager",
+					`Skill "${effectiveSkillName}" has an invalid description length: must be 1-1024 characters (got ${description.length})`,
+				)
 				return
 			}
 
@@ -335,7 +347,6 @@ export class SkillsManager {
 		}
 		return results
 	}
-
 
 	/**
 	 * Get a skill by name, source, and optionally mode
@@ -572,7 +583,7 @@ Add your skill instructions here.
 				await fs.rmdir(sourceSkillsDir)
 			}
 		} catch {
-			// Ignore errors - directory might not exist or have permission issues
+			// intentionally ignored: directory might not exist or have permission issues
 		}
 
 		// Refresh skills list

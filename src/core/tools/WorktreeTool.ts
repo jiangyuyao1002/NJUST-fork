@@ -44,19 +44,21 @@ export class WorktreeTool extends BaseTool<"custom_tool"> {
 	}
 
 	protected override get inputSchema() {
-		return z.object({
-			action: z.enum(["enter", "exit"]),
-			branch: z.string().optional(),
-			path: z.string().optional(),
-		}).refine(
-			(data) => {
-				if (data.action === "enter") {
-					return !!(data.branch || data.path)
-				}
-				return true
-			},
-			{ message: "Either 'branch' or 'path' is required for 'enter' action", path: ["branch"] },
-		)
+		return z
+			.object({
+				action: z.enum(["enter", "exit"]),
+				branch: z.string().optional(),
+				path: z.string().optional(),
+			})
+			.refine(
+				(data) => {
+					if (data.action === "enter") {
+						return !!(data.branch || data.path)
+					}
+					return true
+				},
+				{ message: "Either 'branch' or 'path' is required for 'enter' action", path: ["branch"] },
+			)
 	}
 
 	override validateInput(params: WorktreeParams): ValidationResult {
@@ -101,11 +103,11 @@ export class WorktreeTool extends BaseTool<"custom_tool"> {
 
 				pushToolResult(
 					`Worktree command prepared:\n` +
-					`  Command: ${command}\n` +
-					`  Branch: ${targetBranch}\n` +
-					`  Path: ${targetPath}\n\n` +
-					`Note: Use execute_command to run the git worktree command. ` +
-					`After creation, cd into the worktree path to work in isolation.`
+						`  Command: ${command}\n` +
+						`  Branch: ${targetBranch}\n` +
+						`  Path: ${targetPath}\n\n` +
+						`Note: Use execute_command to run the git worktree command. ` +
+						`After creation, cd into the worktree path to work in isolation.`,
 				)
 			} else {
 				// action === "exit"
@@ -120,10 +122,10 @@ export class WorktreeTool extends BaseTool<"custom_tool"> {
 
 				pushToolResult(
 					`Worktree removal command prepared:\n` +
-					`  Command: ${command}\n` +
-					`  Path: ${targetPath}\n\n` +
-					`Note: Use execute_command to run the git worktree remove command. ` +
-					`The worktree directory and its branch will be cleaned up.`
+						`  Command: ${command}\n` +
+						`  Path: ${targetPath}\n\n` +
+						`Note: Use execute_command to run the git worktree remove command. ` +
+						`The worktree directory and its branch will be cleaned up.`,
 				)
 			}
 		} catch (error) {

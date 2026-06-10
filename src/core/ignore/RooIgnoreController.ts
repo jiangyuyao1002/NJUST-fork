@@ -10,6 +10,94 @@ import { TelemetryEventName } from "@njust-ai/types"
 
 export const LOCK_TEXT_SYMBOL = "\u{1F512}"
 
+function tokenizeCommand(command: string): string[] {
+	const tokens: string[] = []
+	let current = ""
+	let quote: "'" | '"' | undefined
+	let tokenStarted = false
+
+	const pushToken = () => {
+		if (tokenStarted) {
+			tokens.push(current)
+			current = ""
+			tokenStarted = false
+		}
+	}
+
+	for (let i = 0; i < command.length; i++) {
+		const char = command[i]!
+
+		if (quote) {
+			if (char === quote) {
+				quote = undefined
+			} else if (char === "\\" && quote === '"' && command[i + 1] === '"') {
+				current += '"'
+				i++
+			} else {
+				current += char
+			}
+			continue
+		}
+
+		if (char === "'" || char === '"') {
+			quote = char
+			tokenStarted = true
+		} else if (/\s/.test(char)) {
+			pushToken()
+		} else if (char === "\\" && command[i + 1] && /\s/.test(command[i + 1]!)) {
+			current += command[++i]!
+			tokenStarted = true
+		} else {
+			current += char
+			tokenStarted = true
+		}
+	}
+
+	pushToken()
+	return tokens
+}
+
+function splitCommandSegments(command: string): string[] {
+	const segments: string[] = []
+	let current = ""
+	let quote: "'" | '"' | undefined
+
+	const pushSegment = () => {
+		const segment = current.trim()
+		if (segment) {
+			segments.push(segment)
+		}
+		current = ""
+	}
+
+	for (let i = 0; i < command.length; i++) {
+		const char = command[i]!
+
+		if (quote) {
+			current += char
+			if (char === quote && command[i - 1] !== "\\") {
+				quote = undefined
+			}
+			continue
+		}
+
+		if (char === "'" || char === '"') {
+			quote = char
+			current += char
+		} else if (char === ";" || char === "\n" || char === "\r" || char === "|" || char === "&") {
+			pushSegment()
+			if ((char === "|" || char === "&") && command[i + 1] === char) {
+				i++
+			}
+		} else {
+			current += char
+		}
+	}
+
+	pushSegment()
+	return segments
+}
+
 /**
  * Controls LLM access to files by enforcing ignore patterns.
  * Designed to be instantiated once in Cline.ts and passed to file manipulation services.
@@ -152,11 +240,23 @@ export class RooIgnoreController {
 			return undefined
 		}
 
-		// Split command into parts and get the base command
-		const parts = command.trim().split(/\s+/)
+		for (const segment of splitCommandSegments(command)) {
+			const blockedPath = this.validateCommandSegment(tokenizeCommand(segment))
+			if (blockedPath) {
+				return blockedPath
+			}
+		}
+
+		return undefined
+	}
+
+	private validateCommandSegment(parts: string[]): string | undefined {
+		if (parts.length === 0) {
+			return undefined
+		}
 		const baseCommand = parts[0]!.toLowerCase()
 
-		// Commands that read file contents
+		// Commands that read file contents directly (argument is a file path)
 		const fileReadingCommands = [
 			// Unix commands
 			"cat",
@@ -173,20 +273,57 @@ export class RooIgnoreController {
 			"type",
 			"select-string",
 			"sls",
+			// Interpreters that can execute/read scripts
+			"python",
+			"python3",
+			"node",
+			"php",
+			"ruby",
+			"perl",
 		]
+		const interpreterInlineCodeFlags: Record<string, string[]> = {
+			python: ["-c"],
+			python3: ["-c"],
+			node: ["-e", "--eval", "-p", "--print"],
+			php: ["-r"],
+			ruby: ["-e"],
+			perl: ["-e"],
+		}
+		const windowsStyleFlagCommands = ["get-content", "gc", "type", "select-string", "sls"]
 
 		if (fileReadingCommands.includes(baseCommand)) {
-			// Check each argument that could be a file path
 			for (let i = 1; i < parts.length; i++) {
 				const arg = parts[i]!
-				if (arg.startsWith("-") || arg.startsWith("/")) {
+				// Skip flags (single-dash or double-dash options)
+				if (arg.startsWith("-")) {
+					const inlineCodeFlags = interpreterInlineCodeFlags[baseCommand] ?? []
+					const inlineCodeFlag = inlineCodeFlags.find(
+						(flag) =>
+							arg === flag ||
+							arg.startsWith(`${flag}=`) ||
+							(flag.length === 2 && arg.length > 2 && arg.startsWith(flag)),
+					)
+					if (inlineCodeFlag && arg === inlineCodeFlag) {
+						i++
+					}
 					continue
 				}
-				if (arg.includes(":")) {
+				// Skip Windows-style flags like /flag
+				if (windowsStyleFlagCommands.includes(baseCommand) && /^\/[a-zA-Z][\w-]*$/.test(arg)) {
 					continue
 				}
 				if (!this.validateAccess(arg)) {
 					return arg
+				}
+			}
+		}
+
+		// dd: extract file path from if= argument
+		if (baseCommand === "dd") {
+			for (const part of parts) {
+				const match = /^if=(.+)$/.exec(part)
+				if (match?.[1] && !this.validateAccess(match[1])) {
+					return match[1]
 				}
 			}
 		}

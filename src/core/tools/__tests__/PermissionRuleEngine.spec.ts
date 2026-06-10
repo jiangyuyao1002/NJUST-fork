@@ -28,7 +28,9 @@ const readOnly: ToolMetadata = { isReadOnly: true, isDestructive: false }
 const writeTool: ToolMetadata = { isReadOnly: false, isDestructive: false }
 const destructive: ToolMetadata = { isReadOnly: false, isDestructive: true }
 
-function rule(partial: Partial<PermissionRule> & Pick<PermissionRule, "id" | "action" | "toolPattern">): PermissionRule {
+function rule(
+	partial: Partial<PermissionRule> & Pick<PermissionRule, "id" | "action" | "toolPattern">,
+): PermissionRule {
 	return {
 		description: partial.id,
 		priority: 0,
@@ -113,7 +115,9 @@ describe("PermissionRuleEngine", () => {
 		it("sorts rules by source priority before rule priority", () => {
 			const engine = engineWithoutClassifiers()
 			engine.addRule(rule({ id: "session-allow", action: "allow", toolPattern: "read_file", priority: 1000 }))
-			engine.addRule(rule({ id: "policy-deny", action: "deny", toolPattern: "read_file", priority: 1, source: "policy" }))
+			engine.addRule(
+				rule({ id: "policy-deny", action: "deny", toolPattern: "read_file", priority: 1, source: "policy" }),
+			)
 
 			expect(engine.getRules().map((r) => r.id)).toEqual(["policy-deny", "session-allow"])
 			expect(engine.evaluate("read_file", {}, readOnly)).toBe("deny")
@@ -250,7 +254,14 @@ describe("PermissionRuleEngine", () => {
 				JSON.stringify({
 					rules: [
 						{ id: "session", description: "s", action: "allow", toolPattern: "*", priority: 100 },
-						{ id: "policy", description: "p", action: "deny", toolPattern: "*", priority: 1, source: "policy" },
+						{
+							id: "policy",
+							description: "p",
+							action: "deny",
+							toolPattern: "*",
+							priority: 1,
+							source: "policy",
+						},
 					],
 				}),
 			)
@@ -270,7 +281,9 @@ describe("PermissionRuleEngine", () => {
 
 		it("saves serializable rules without condition functions", async () => {
 			const engine = engineWithoutClassifiers()
-			engine.addRule(rule({ id: "conditional", action: "allow", toolPattern: "read_file", condition: () => true }))
+			engine.addRule(
+				rule({ id: "conditional", action: "allow", toolPattern: "read_file", condition: () => true }),
+			)
 
 			await engine.saveToConfig("rules.json")
 

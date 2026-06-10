@@ -2,7 +2,9 @@ import { describe, it, expect, vi } from "vitest"
 
 vi.mock("@njust-ai/telemetry", () => ({
 	TelemetryService: {
-		reportError: vi.fn(), instance: { captureSlidingWindowTruncation: vi.fn() } },
+		reportError: vi.fn(),
+		instance: { captureSlidingWindowTruncation: vi.fn() },
+	},
 }))
 
 import { truncateConversation, MAX_CONSECUTIVE_COMPACT_FAILURES } from "../index"
@@ -47,19 +49,13 @@ describe("truncateConversation", () => {
 	})
 
 	it("does not remove the first message", () => {
-		const messages: ApiMessage[] = [
-			makeMsg("user", "system prompt", 0),
-			makeMsg("assistant", "response", 1),
-		]
+		const messages: ApiMessage[] = [makeMsg("user", "system prompt", 0), makeMsg("assistant", "response", 1)]
 		const result = truncateConversation(messages, 0.5, "task-1")
 		expect(result.messages.length).toBeGreaterThanOrEqual(1)
 	})
 
 	it("returns empty removal when fraction is 0", () => {
-		const messages: ApiMessage[] = [
-			makeMsg("user", "hello", 0),
-			makeMsg("assistant", "hi", 1),
-		]
+		const messages: ApiMessage[] = [makeMsg("user", "hello", 0), makeMsg("assistant", "hi", 1)]
 		const result = truncateConversation(messages, 0, "task-1")
 		expect(result.messagesRemoved).toBe(0)
 	})
@@ -72,10 +68,7 @@ describe("truncateConversation", () => {
 	})
 
 	it("generates a unique truncation ID", () => {
-		const messages: ApiMessage[] = [
-			makeMsg("user", "a", 0),
-			makeMsg("assistant", "b", 1),
-		]
+		const messages: ApiMessage[] = [makeMsg("user", "a", 0), makeMsg("assistant", "b", 1)]
 		const r1 = truncateConversation(messages, 0.3, "t1")
 		const r2 = truncateConversation(messages, 0.3, "t1")
 		expect(r1.truncationId).toBeDefined()
@@ -96,11 +89,11 @@ describe("truncateConversation", () => {
 		]
 		const result = truncateConversation(messages, 0.3, "task-1")
 		// Verify tool pairs stay together
-		const hasToolUse = result.messages.some((m) =>
-			Array.isArray(m.content) && m.content.some((b: any) => b.type === "tool_use")
+		const hasToolUse = result.messages.some(
+			(m) => Array.isArray(m.content) && m.content.some((b: any) => b.type === "tool_use"),
 		)
-		const hasToolResult = result.messages.some((m) =>
-			Array.isArray(m.content) && m.content.some((b: any) => b.type === "tool_result")
+		const hasToolResult = result.messages.some(
+			(m) => Array.isArray(m.content) && m.content.some((b: any) => b.type === "tool_result"),
 		)
 		// If one exists, the other should exist (they're paired)
 		if (hasToolUse || hasToolResult) {
@@ -181,8 +174,8 @@ describe("truncateConversation", () => {
 		]
 		const result = truncateConversation(messages, 0.5, "task-1")
 		// Error recovery messages should not be truncated (protected in smart truncation)
-		const errorRecoveryMsg = result.messages.find((m) =>
-			typeof m.content === "string" && m.content.includes("error recovery")
+		const errorRecoveryMsg = result.messages.find(
+			(m) => typeof m.content === "string" && m.content.includes("error recovery"),
 		)
 		expect(errorRecoveryMsg?.truncationParent).toBeUndefined()
 	})

@@ -39,9 +39,7 @@ export interface CacheableMessageParam {
  * Helper to add cache_control to a text part.
  * Returns a new object with the cache_control property added.
  */
-export function withCacheControl<T extends OpenAI.Chat.ChatCompletionContentPartText>(
-	part: T,
-): CacheableTextPart {
+export function withCacheControl<T extends OpenAI.Chat.ChatCompletionContentPartText>(part: T): CacheableTextPart {
 	return {
 		...part,
 		cache_control: { type: "ephemeral" },

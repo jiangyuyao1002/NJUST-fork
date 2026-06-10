@@ -125,7 +125,7 @@ export class CangjieLspStatusBar implements vscode.Disposable {
 				this.updateLspState(this._lastState, this._lastMessage)
 			}
 		} catch {
-			// SDK not available — no version display
+			// intentionally ignored: SDK not available, no version display
 		}
 	}
 

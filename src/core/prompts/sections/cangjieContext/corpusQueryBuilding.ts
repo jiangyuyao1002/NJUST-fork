@@ -13,6 +13,7 @@ import { resolveCjcPatternForDiagnostic as _resolveCjcPatternForDiagnostic } fro
 import { STDLIB_API_SIGNATURE_HINTS, STDLIB_CRITICAL_SIGNATURES } from "./stdlibSignatures"
 import { CORPUS_BM25_MAX_CHUNKS_PER_PATH } from "./budget"
 import { readFileUtf8Lru } from "./cacheManagement"
+import { logger } from "../../../../shared/logger"
 
 let corpusSingleton: { instance: CangjieCorpusSemanticIndex; root: string } | null = null
 
@@ -126,7 +127,8 @@ export async function buildStdlibSignatureHintsSection(
 		try {
 			await fs.promises.access(docsBase)
 			hints = mergeStdlibConstraintHintsFromCorpus({ ...STDLIB_API_SIGNATURE_HINTS }, docsBase, globalStoragePath)
-		} catch {
+		} catch (error) {
+			logger.debug("CorpusQueryBuilding", "corpus docs directory access failed", error)
 			/* docsBase doesn't exist, use default hints */
 		}
 	}
@@ -193,7 +195,8 @@ function getCorpusExtraLatinKeyRegexMap(): Map<string, RegExp> {
 			try {
 				const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 				m.set(k, new RegExp(`(?<![\\w.])${escaped}(?![\\w])`, "i"))
-			} catch {
+			} catch (error) {
+				logger.debug("CorpusQueryBuilding", "regex compilation failed for corpus key", error)
 				/* skip malformed key */
 			}
 		}
@@ -258,7 +261,8 @@ export async function buildCorpusExtraFewShotSection(
 			usedRel.add(rel)
 			const title = path.basename(rel, ".md")
 			picked.push(`### 语料示例: ${title}\n来源: \`${rel}\`\n\n${body}`)
-		} catch {
+		} catch (error) {
+			logger.debug("CorpusQueryBuilding", "corpus file read failed", error)
 			/* skip */
 		}
 	}
@@ -315,7 +319,8 @@ export function buildAutoCorpusSearchSection(
 				return `## 语料库自动检索结果（基于当前 import 与诊断）\n\n${hints}`
 			}
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("CorpusQueryBuilding", "corpus query building failed", error)
 		// corpus unavailable - no injection
 	}
 	return null

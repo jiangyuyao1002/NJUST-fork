@@ -2,7 +2,10 @@ import OpenAI from "openai"
 
 import type { CacheableTextPart } from "./types"
 
-export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.ChatCompletionMessageParam[]): OpenAI.Chat.ChatCompletionMessageParam[] {
+export function addCacheBreakpoints(
+	systemPrompt: string,
+	messages: OpenAI.Chat.ChatCompletionMessageParam[],
+): OpenAI.Chat.ChatCompletionMessageParam[] {
 	// Shallow clone to avoid mutating the caller's array.
 	// Individual messages are cloned when their content needs to be modified.
 	const result = [...messages]
@@ -25,7 +28,10 @@ export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.
 	for (const idx of lastTwoUserIndices) {
 		const msg = result[idx]!
 		if (typeof msg.content === "string" && msg.content.length > 0) {
-			result[idx] = { ...msg, content: [{ type: "text" as const, text: msg.content }] } as OpenAI.Chat.ChatCompletionMessageParam
+			result[idx] = {
+				...msg,
+				content: [{ type: "text" as const, text: msg.content }],
+			} as OpenAI.Chat.ChatCompletionMessageParam
 		}
 
 		const content = result[idx]!.content

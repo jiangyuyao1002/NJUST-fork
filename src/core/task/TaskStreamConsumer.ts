@@ -491,7 +491,8 @@ export async function consumeApiStream(config: ConsumeStreamConfig): Promise<Str
 					e2e: profile.e2eMs ?? -1,
 					success: !profile.aborted && !profile.error,
 				})
-			} catch {
+			} catch (error) {
+				logger.debug("TaskStreamConsumer", "telemetry submission failed", error)
 				// Telemetry failure is non-fatal
 			}
 		}
@@ -692,14 +693,15 @@ export async function finalizeStreamResponse(config: FinalizeConfig): Promise<Fi
 					.slice(0, 200)
 				if (textSummary) stm.push("assistant", textSummary)
 			}
-		} catch {
+		} catch (error) {
+			logger.debug("TaskStreamConsumer", "STM population failed", error)
 			// silent — STM population must never affect task flow
 		}
 	}
 
 	if (partialBlocks.length > 0) {
 		void t.presentAssistantMessage().catch((error) => {
-			logger.error("presentAssistantMessage failed", error)
+			logger.error("TaskStreamConsumer", "presentAssistantMessage failed", error)
 			TelemetryService.reportError(
 				error instanceof Error ? error : new Error(String(error)),
 				TelemetryEventName.UTILITY_ERROR,

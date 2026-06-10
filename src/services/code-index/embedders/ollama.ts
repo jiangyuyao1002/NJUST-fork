@@ -52,13 +52,14 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 					const prefixedText = `${queryPrefix}${text}`
 					const estimatedTokens = Math.ceil(prefixedText.length / 4)
 					if (estimatedTokens > MAX_ITEM_TOKENS) {
-						logger.warn("OllamaEmbedder",
-								t("embeddings:textWithPrefixExceedsTokenLimit", {
-									index,
-									estimatedTokens,
-									maxTokens: MAX_ITEM_TOKENS,
-								}),
-							)
+						logger.warn(
+							"OllamaEmbedder",
+							t("embeddings:textWithPrefixExceedsTokenLimit", {
+								index,
+								estimatedTokens,
+								maxTokens: MAX_ITEM_TOKENS,
+							}),
+						)
 						// Return original text if adding prefix would exceed limit
 						return text
 					}
@@ -92,7 +93,7 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 				try {
 					errorBody = await response.text()
 				} catch {
-					// Ignore error reading body
+					// intentionally ignored: error reading body
 				}
 				throw new Error(
 					t("embeddings:ollama.requestFailed", {
@@ -117,14 +118,21 @@ export class CodeIndexOllamaEmbedder implements IEmbedder {
 		} catch (error: UnsafeAny) {
 			// Log the original error for debugging purposes
 			logger.error("OllamaEmbedder", "Ollama embedding failed:", error)
-			try { TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR) } catch { /* best-effort */ }
+			try {
+				TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
+			} catch {
+				/* best-effort */
+			}
 
 			const err = error as Record<string, UnsafeAny>
 
 			// Handle specific error types with better messages
 			if (err.name === "AbortError") {
 				throw new Error(t("embeddings:validation.connectionFailed"))
-			} else if ((typeof err.message === "string" && err.message.includes("fetch failed")) || err.code === "ECONNREFUSED") {
+			} else if (
+				(typeof err.message === "string" && err.message.includes("fetch failed")) ||
+				err.code === "ECONNREFUSED"
+			) {
 				throw new Error(t("embeddings:ollama.serviceNotRunning", { baseUrl: this.baseUrl }))
 			} else if (err.code === "ENOTFOUND") {
 				throw new Error(t("embeddings:ollama.hostNotFound", { baseUrl: this.baseUrl }))

@@ -120,9 +120,7 @@ export function handleProviderError(
 
 	// Non-Error: wrap with provider-specific prefix
 	logger.error(providerName, "Non-Error exception:", redactApiSecrets(String(error)))
-	const wrapped = new ApiProviderError(
-		redactApiSecrets(`${providerName} ${messagePrefix} error: ${String(error)}`),
-	)
+	const wrapped = new ApiProviderError(redactApiSecrets(`${providerName} ${messagePrefix} error: ${String(error)}`))
 
 	// Also try to preserve status for non-Error exceptions (e.g., plain objects with status)
 	if (hasNumericStatus(error)) {

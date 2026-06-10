@@ -1,7 +1,6 @@
 import * as vscode from "vscode"
 import { CangjieSymbolIndex } from "./CangjieSymbolIndex"
 
-
 const KIND_TO_ICON: Record<string, vscode.SymbolKind> = {
 	class: vscode.SymbolKind.Class,
 	struct: vscode.SymbolKind.Struct,
@@ -39,10 +38,7 @@ export class CangjieWorkspaceSymbolProvider implements vscode.WorkspaceSymbolPro
 				sym.name,
 				KIND_TO_ICON[sym.kind] ?? vscode.SymbolKind.Object,
 				`${sym.kind}${sym.signature ? " " + sym.signature : ""}`,
-				new vscode.Location(
-					vscode.Uri.file(sym.filePath),
-					new vscode.Range(sym.startLine, 0, sym.endLine, 0),
-				),
+				new vscode.Location(vscode.Uri.file(sym.filePath), new vscode.Range(sym.startLine, 0, sym.endLine, 0)),
 			)
 		})
 	}

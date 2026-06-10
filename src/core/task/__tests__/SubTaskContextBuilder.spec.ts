@@ -12,7 +12,9 @@ import {
 
 describe("SubTaskContextBuilder", () => {
 	it("extracts relevant files from common path formats and excludes globs", () => {
-		const files = extractRelevantFiles("Edit ./src/app.ts, `tests/foo.spec.ts`, src/lib/util.ts, ignore src/**/*.ts")
+		const files = extractRelevantFiles(
+			"Edit ./src/app.ts, `tests/foo.spec.ts`, src/lib/util.ts, ignore src/**/*.ts",
+		)
 
 		expect(files).toEqual(["./src/app.ts", "tests/foo.spec.ts", "src/app.ts", "src/lib/util.ts"])
 	})
@@ -33,11 +35,7 @@ describe("SubTaskContextBuilder", () => {
 	})
 
 	it("builds forked context with default budget", () => {
-		const context = buildForkedContext(
-			"Read src/a.ts",
-			[{ role: "assistant", content: "decision" }],
-			{} as any,
-		)
+		const context = buildForkedContext("Read src/a.ts", [{ role: "assistant", content: "decision" }], {} as any)
 
 		expect(context).toEqual({
 			taskDescription: "Read src/a.ts",
@@ -104,11 +102,7 @@ describe("SubTaskContextBuilder", () => {
 	})
 
 	it("truncates long task result summaries", () => {
-		const summary = generateTaskResultSummary(
-			"child-1",
-			[{ role: "assistant", content: "x".repeat(500) }],
-			180,
-		)
+		const summary = generateTaskResultSummary("child-1", [{ role: "assistant", content: "x".repeat(500) }], 180)
 
 		expect(summary.length).toBeLessThanOrEqual(180)
 		expect(summary).toContain("...")

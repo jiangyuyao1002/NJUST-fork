@@ -94,7 +94,8 @@ export class ChatParticipantHandler {
 			const message = getErrorMessage(error)
 			try {
 				stream.markdown(`**Error:** ${message}`)
-			} catch {
+			} catch (error) {
+				logger.debug("ChatParticipant", "stream.markdown failed during error display", error)
 				// stream.markdown() failure during error display — outer outputChannel will still log
 			}
 			this.outputChannel.appendLine(`[ChatParticipant] Error: ${message}`)

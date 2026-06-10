@@ -1,10 +1,6 @@
 import type { ModelInfo } from "@njust-ai/types"
 
-export type ModelSource =
-	| "api"
-	| "disk-cache"
-	| "stale-disk-cache"
-	| "hardcoded-fallback"
+export type ModelSource = "api" | "disk-cache" | "stale-disk-cache" | "hardcoded-fallback"
 
 export interface DynamicModelInfo extends ModelInfo {
 	source: ModelSource
@@ -18,13 +14,6 @@ export interface ListModelsOptions {
 	forceRefresh?: boolean
 }
 
-export type FetcherKind =
-	| "openai-compatible"
-	| "anthropic"
-	| "gemini"
-	| "existing"
-	| "fallback-only"
+export type FetcherKind = "openai-compatible" | "anthropic" | "gemini" | "existing" | "fallback-only"
 
-export type ModelFetcher = (
-	options: ListModelsOptions,
-) => Promise<DynamicModelRecord>
+export type ModelFetcher = (options: ListModelsOptions) => Promise<DynamicModelRecord>

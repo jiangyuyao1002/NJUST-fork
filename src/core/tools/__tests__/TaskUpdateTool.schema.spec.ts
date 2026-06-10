@@ -8,7 +8,11 @@ describe("TaskUpdateTool schema", () => {
 	})
 
 	it("passes with optional fields", () => {
-		const result = taskUpdateTool.inputSchema.safeParse({ taskId: "task-123", status: "completed", priority: "high" })
+		const result = taskUpdateTool.inputSchema.safeParse({
+			taskId: "task-123",
+			status: "completed",
+			priority: "high",
+		})
 		expect(result.success).toBe(true)
 	})
 

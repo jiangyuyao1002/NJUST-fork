@@ -1,8 +1,6 @@
 import type { DynamicModelRecord, ListModelsOptions } from "../modelTypes"
 
-export async function fetchAnthropicModels(
-	options: ListModelsOptions = {},
-): Promise<DynamicModelRecord> {
+export async function fetchAnthropicModels(options: ListModelsOptions = {}): Promise<DynamicModelRecord> {
 	const apiKey = options.apiKey ?? process.env.ANTHROPIC_API_KEY
 	if (!apiKey) {
 		throw new Error("Missing Anthropic API key")

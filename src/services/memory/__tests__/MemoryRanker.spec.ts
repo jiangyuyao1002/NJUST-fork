@@ -94,9 +94,7 @@ describe("MemoryRanker", () => {
 
 		it("filters out memories below the threshold", () => {
 			const query = "very specific query about elephants"
-			const memories: MemoryEntry[] = [
-				makeEntry({ id: "irrelevant", content: "cooking pasta", tags: [] }),
-			]
+			const memories: MemoryEntry[] = [makeEntry({ id: "irrelevant", content: "cooking pasta", tags: [] })]
 			const ranked = rankMemories(memories, query, 0.5)
 			expect(ranked).toHaveLength(0)
 		})

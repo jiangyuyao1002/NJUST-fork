@@ -47,7 +47,11 @@ export class PermissionError extends ToolError {
  * Replaces the standalone `isRetryableToolError()` helper.
  */
 export class RetryableError extends ToolError {
-	constructor(toolName: string, message: string, public readonly originalError?: Error) {
+	constructor(
+		toolName: string,
+		message: string,
+		public readonly originalError?: Error,
+	) {
 		super(toolName, message, `Retryable error in tool '${toolName}'`)
 		this.name = "RetryableError"
 	}
@@ -87,10 +91,7 @@ export class RetryableError extends ToolError {
 		}
 		// Check cause chain
 		const cause = anyErr.cause as { code?: string; message?: string } | undefined
-		if (
-			cause?.code &&
-			["ETIMEDOUT", "ECONNRESET", "EAI_AGAIN", "UND_ERR_CONNECT_TIMEOUT"].includes(cause.code)
-		) {
+		if (cause?.code && ["ETIMEDOUT", "ECONNRESET", "EAI_AGAIN", "UND_ERR_CONNECT_TIMEOUT"].includes(cause.code)) {
 			return true
 		}
 		return false

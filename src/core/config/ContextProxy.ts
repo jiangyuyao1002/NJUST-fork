@@ -72,18 +72,14 @@ export class ContextProxy {
 				try {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
-					logger.error(
-						`Error loading secret ${key}: ${getErrorMessage(error)}`,
-					)
+					logger.error(`Error loading secret ${key}: ${getErrorMessage(error)}`)
 				}
 			}),
 			...GLOBAL_SECRET_KEYS.map(async (key) => {
 				try {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
-					logger.error(
-						`Error loading global secret ${key}: ${getErrorMessage(error)}`,
-					)
+					logger.error(`Error loading global secret ${key}: ${getErrorMessage(error)}`)
 				}
 			}),
 		]
@@ -103,16 +99,18 @@ export class ContextProxy {
 		await this.migrateOldDefaultCondensingPrompt()
 
 		// Schedule periodic secret cache refresh to pick up credential rotations.
-	// Without this, rotated API keys would require an extension restart.
-	this.secretRefreshInterval = setInterval(async () => {
-		for (const key of [...SECRET_STATE_KEYS, ...GLOBAL_SECRET_KEYS]) {
-			try {
-				this.secretCache[key] = await this.originalContext.secrets.get(key)
-			} catch { /* ignore individual failures */ }
-		}
-	}, TIMING.SECRET_REFRESH_INTERVAL_MS)
+		// Without this, rotated API keys would require an extension restart.
+		this.secretRefreshInterval = setInterval(async () => {
+			for (const key of [...SECRET_STATE_KEYS, ...GLOBAL_SECRET_KEYS]) {
+				try {
+					this.secretCache[key] = await this.originalContext.secrets.get(key)
+				} catch {
+					/* ignore individual failures */
+				}
+			}
+		}, TIMING.SECRET_REFRESH_INTERVAL_MS)
 
-	this._isInitialized = true
+		this._isInitialized = true
 	}
 
 	/**
@@ -122,7 +120,7 @@ export class ContextProxy {
 	 * Note: Only true customizations are migrated. If the legacy prompt equals the default,
 	 * we skip the migration to avoid pinning users to an old default if the default changes.
 	 */
-		/**
+	/**
 	 * Migration version marker stored in globalState.
 	 * Incremented atomically after each successful migration step.
 	 * On startup, migrations at or below this version are skipped.
@@ -131,16 +129,11 @@ export class ContextProxy {
 
 	// eslint-disable-next-line @typescript-eslint/require-await
 	private async getMigrationVersion(): Promise<number> {
-		return this.originalContext.globalState.get<number>(
-			ContextProxy.MIGRATION_VERSION_KEY,
-		) ?? 0
+		return this.originalContext.globalState.get<number>(ContextProxy.MIGRATION_VERSION_KEY) ?? 0
 	}
 
 	private async setMigrationVersion(version: number): Promise<void> {
-		await this.originalContext.globalState.update(
-			ContextProxy.MIGRATION_VERSION_KEY,
-			version,
-		)
+		await this.originalContext.globalState.update(ContextProxy.MIGRATION_VERSION_KEY, version)
 	}
 
 	private async migrateLegacyCondensingPrompt() {
@@ -169,9 +162,7 @@ export class ContextProxy {
 				this.stateCache.customCondensingPrompt = undefined
 			}
 		} catch (error) {
-			logger.error(
-				`Error during customCondensingPrompt migration: ${getErrorMessage(error)}`,
-			)
+			logger.error(`Error during customCondensingPrompt migration: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -207,9 +198,7 @@ export class ContextProxy {
 				this.stateCache.customSupportPrompts = updatedPrompts
 			}
 		} catch (error) {
-			logger.error(
-				`Error during old default condensing prompt migration: ${getErrorMessage(error)}`,
-			)
+			logger.error(`Error during old default condensing prompt migration: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -273,9 +262,7 @@ export class ContextProxy {
 				await this.originalContext.globalState.update("apiProvider", undefined)
 			}
 		} catch (error) {
-			logger.error(
-				`Error during invalid API provider migration: ${getErrorMessage(error)}`,
-			)
+			logger.error(`Error during invalid API provider migration: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -285,7 +272,9 @@ export class ContextProxy {
 	private async migrateImageGenerationSettings() {
 		try {
 			// Check if there's an old nested structure
-			const oldNestedSettings = this.originalContext.globalState.get<UnsafeAny>("openRouterImageGenerationSettings")
+			const oldNestedSettings = this.originalContext.globalState.get<UnsafeAny>(
+				"openRouterImageGenerationSettings",
+			)
 
 			if (oldNestedSettings && typeof oldNestedSettings === "object") {
 				logger.info("Migrating old nested image generation settings to flattened structure")
@@ -315,9 +304,7 @@ export class ContextProxy {
 				logger.info("Removed old nested openRouterImageGenerationSettings")
 			}
 		} catch (error) {
-			logger.error(
-				`Error during image generation settings migration: ${getErrorMessage(error)}`,
-			)
+			logger.error(`Error during image generation settings migration: ${getErrorMessage(error)}`)
 		}
 	}
 
@@ -404,18 +391,14 @@ export class ContextProxy {
 				try {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
-					logger.error(
-						`Error refreshing secret ${key}: ${getErrorMessage(error)}`,
-					)
+					logger.error(`Error refreshing secret ${key}: ${getErrorMessage(error)}`)
 				}
 			}),
 			...GLOBAL_SECRET_KEYS.map(async (key) => {
 				try {
 					this.secretCache[key] = await this.originalContext.secrets.get(key)
 				} catch (error) {
-					logger.error(
-						`Error refreshing global secret ${key}: ${getErrorMessage(error)}`,
-					)
+					logger.error(`Error refreshing global secret ${key}: ${getErrorMessage(error)}`)
 				}
 			}),
 		]

@@ -46,14 +46,23 @@ export class CangjieSourceScanner {
 
 			// Block comments end at */
 			if (inBlock > 0) {
-				if (ch === "*" && next === "/") { inBlock--; states[i] = { inString, inChar, inLineComment, inBlock }; i++; continue }
+				if (ch === "*" && next === "/") {
+					inBlock--
+					states[i] = { inString, inChar, inLineComment, inBlock }
+					i++
+					continue
+				}
 				states[i] = { inString, inChar, inLineComment, inBlock }
 				continue
 			}
 
 			// String literals
 			if (inString) {
-				if (ch === "\\") { states[i] = { inString, inChar, inLineComment, inBlock }; i++; continue }
+				if (ch === "\\") {
+					states[i] = { inString, inChar, inLineComment, inBlock }
+					i++
+					continue
+				}
 				if (ch === '"') inString = false
 				states[i] = { inString, inChar, inLineComment, inBlock }
 				continue
@@ -61,17 +70,37 @@ export class CangjieSourceScanner {
 
 			// Char literals
 			if (inChar) {
-				if (ch === "\\") { states[i] = { inString, inChar, inLineComment, inBlock }; i++; continue }
+				if (ch === "\\") {
+					states[i] = { inString, inChar, inLineComment, inBlock }
+					i++
+					continue
+				}
 				if (ch === "'") inChar = false
 				states[i] = { inString, inChar, inLineComment, inBlock }
 				continue
 			}
 
 			// Comment starts
-			if (ch === "/" && next === "/") { inLineComment = true; i++; continue }
-			if (ch === "/" && next === "*") { inBlock++; i++; continue }
-			if (ch === '"') { inString = true; states[i] = { inString, inChar, inLineComment, inBlock }; continue }
-			if (ch === "'") { inChar = true; states[i] = { inString, inChar, inLineComment, inBlock }; continue }
+			if (ch === "/" && next === "/") {
+				inLineComment = true
+				i++
+				continue
+			}
+			if (ch === "/" && next === "*") {
+				inBlock++
+				i++
+				continue
+			}
+			if (ch === '"') {
+				inString = true
+				states[i] = { inString, inChar, inLineComment, inBlock }
+				continue
+			}
+			if (ch === "'") {
+				inChar = true
+				states[i] = { inString, inChar, inLineComment, inBlock }
+				continue
+			}
 
 			states[i] = { inString, inChar, inLineComment, inBlock }
 		}

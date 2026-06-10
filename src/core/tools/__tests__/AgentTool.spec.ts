@@ -123,7 +123,10 @@ describe("AgentTool", () => {
 
 		await tool.execute({ task: "inspect" }, task, callbacks as any)
 
-		expect(callbacks.handleError).toHaveBeenCalledWith("creating sub-agent", expect.objectContaining({ message: "spawn failed" }))
+		expect(callbacks.handleError).toHaveBeenCalledWith(
+			"creating sub-agent",
+			expect.objectContaining({ message: "spawn failed" }),
+		)
 	})
 
 	it("shows partial agent approval content", async () => {

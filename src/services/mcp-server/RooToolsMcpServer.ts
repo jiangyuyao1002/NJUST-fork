@@ -74,10 +74,7 @@ export class RooToolsMcpServer {
 	}
 
 	private createMcpServer(): McpServer {
-		const server = new McpServer(
-			{ name: "njust-ai-tools", version: "1.0.0" },
-			{ capabilities: { tools: {} } },
-		)
+		const server = new McpServer({ name: "njust-ai-tools", version: "1.0.0" }, { capabilities: { tools: {} } })
 
 		server.tool(
 			"read_file",
@@ -277,7 +274,7 @@ export class RooToolsMcpServer {
 			try {
 				await transport.close()
 			} catch {
-				// best-effort cleanup
+				// intentionally ignored: best-effort transport cleanup
 			}
 		}
 		this.transports.clear()

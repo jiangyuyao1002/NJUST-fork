@@ -2,7 +2,11 @@ import type { ApiStream } from "../../../transform/stream"
 import type { OpenAiNativeModel, ResponsesStreamEvent } from "../base"
 import type { EventHandlerContext } from "./types"
 
-export async function* handleFallback(event: ResponsesStreamEvent, model: OpenAiNativeModel, ctx: EventHandlerContext): ApiStream {
+export async function* handleFallback(
+	event: ResponsesStreamEvent,
+	model: OpenAiNativeModel,
+	ctx: EventHandlerContext,
+): ApiStream {
 	// Handle response.output for events without specific type handlers
 	if (event?.response?.output && Array.isArray(event.response.output)) {
 		for (const outputItem of event.response.output) {

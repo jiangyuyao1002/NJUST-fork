@@ -46,7 +46,7 @@ export function registerCangjieRulesHotReload(
 			globalWatcher = fs.watch(globalRulesDir, { recursive: true }, notify)
 		}
 	} catch {
-		/* ignore */
+		// intentionally ignored: fs.watch may fail on some paths
 	}
 
 	context.subscriptions.push({

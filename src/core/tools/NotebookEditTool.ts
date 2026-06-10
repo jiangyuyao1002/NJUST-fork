@@ -35,21 +35,23 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 	}
 
 	protected override get inputSchema() {
-		return z.object({
-			path: z.string().min(1, "path is required"),
-			action: z.enum(["insert", "edit", "delete"]),
-			cellIndex: z.number().int().nonnegative("cellIndex must be a non-negative integer"),
-			content: z.string().optional(),
-			cellType: z.enum(["code", "markdown"]).optional(),
-		}).refine(
-			(data) => {
-				if (data.action === "insert" || data.action === "edit") {
-					return typeof data.content === "string" && data.content.length > 0
-				}
-				return true
-			},
-			{ message: "content is required for insert and edit actions", path: ["content"] },
-		)
+		return z
+			.object({
+				path: z.string().min(1, "path is required"),
+				action: z.enum(["insert", "edit", "delete"]),
+				cellIndex: z.number().int().nonnegative("cellIndex must be a non-negative integer"),
+				content: z.string().optional(),
+				cellType: z.enum(["code", "markdown"]).optional(),
+			})
+			.refine(
+				(data) => {
+					if (data.action === "insert" || data.action === "edit") {
+						return typeof data.content === "string" && data.content.length > 0
+					}
+					return true
+				},
+				{ message: "content is required for insert and edit actions", path: ["content"] },
+			)
 	}
 
 	async execute(params: NotebookEditParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
@@ -80,9 +82,7 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 				notebookDoc = await vscode.workspace.openNotebookDocument(uri)
 			} catch (err) {
 				pushToolResult(
-					formatResponse.toolError(
-						`Failed to open notebook at '${path}': ${getErrorMessage(err)}`,
-					),
+					formatResponse.toolError(`Failed to open notebook at '${path}': ${getErrorMessage(err)}`),
 				)
 				return
 			}
@@ -115,10 +115,7 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 
 			switch (action) {
 				case "insert": {
-					const kind =
-						cellType === "markdown"
-							? vscode.NotebookCellKind.Markup
-							: vscode.NotebookCellKind.Code
+					const kind = cellType === "markdown" ? vscode.NotebookCellKind.Markup : vscode.NotebookCellKind.Code
 					const languageId = cellType === "markdown" ? "markdown" : "python"
 					const cellData = new vscode.NotebookCellData(kind, content!, languageId)
 					const notebookEdit = vscode.NotebookEdit.insertCells(cellIndex, [cellData])
@@ -135,9 +132,7 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 							: vscode.NotebookCellKind.Code
 						: existingCell.kind
 					const languageId =
-						kind === vscode.NotebookCellKind.Markup
-							? "markdown"
-							: existingCell.document.languageId
+						kind === vscode.NotebookCellKind.Markup ? "markdown" : existingCell.document.languageId
 					const cellData = new vscode.NotebookCellData(kind, content!, languageId)
 					const deleteEdit = vscode.NotebookEdit.deleteCells(
 						new vscode.NotebookRange(cellIndex, cellIndex + 1),
@@ -160,9 +155,7 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 
 			if (!success) {
 				pushToolResult(
-					formatResponse.toolError(
-						`Failed to apply notebook edit. The workspace edit was rejected.`,
-					),
+					formatResponse.toolError(`Failed to apply notebook edit. The workspace edit was rejected.`),
 				)
 				return
 			}
@@ -176,14 +169,10 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 					)
 					break
 				case "edit":
-					pushToolResult(
-						`Successfully edited cell at index ${cellIndex} in '${path}'.`,
-					)
+					pushToolResult(`Successfully edited cell at index ${cellIndex} in '${path}'.`)
 					break
 				case "delete":
-					pushToolResult(
-						`Successfully deleted cell at index ${cellIndex} in '${path}'.`,
-					)
+					pushToolResult(`Successfully deleted cell at index ${cellIndex} in '${path}'.`)
 					break
 			}
 		} catch (error) {

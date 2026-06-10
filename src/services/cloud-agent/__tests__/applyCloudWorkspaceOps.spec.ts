@@ -17,9 +17,7 @@ describe("applyCloudWorkspaceOps", () => {
 
 	it("writes a new file", async () => {
 		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "cloud-ws-"))
-		const r = await applyCloudWorkspaceOps(tmpDir, [
-			{ op: "write_file", path: "hello.txt", content: "world" },
-		])
+		const r = await applyCloudWorkspaceOps(tmpDir, [{ op: "write_file", path: "hello.txt", content: "world" }])
 		expect(r.ok).toBe(true)
 		expect(r.results).toHaveLength(1)
 		expect(r.results[0].ok).toBe(true)

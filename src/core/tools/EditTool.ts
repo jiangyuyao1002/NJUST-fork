@@ -24,7 +24,8 @@ import {
 	CRITICAL_SIGNATURE_MODULES,
 	resolveRootPackageName,
 } from "./cangjiePreflightCheck"
-import {	countOccurrences,
+import {
+	countOccurrences,
 	safeLiteralReplace,
 	detectLineEnding,
 	normalizeToLF,
@@ -75,7 +76,6 @@ export class EditTool extends BaseTool<"edit"> {
 		const { askApproval, handleError, pushToolResult } = callbacks
 
 		try {
-
 			// Check old_string !== new_string (skip for file creation with empty old_string)
 			if (old_string !== "" && old_string === new_string) {
 				task.consecutiveMistakeCount++
@@ -195,7 +195,13 @@ export class EditTool extends BaseTool<"edit"> {
 				}
 
 				if (isPreventFocusDisruptionEnabled) {
-					await task.diffViewProvider.saveDirectly(relPath, new_string, true, diagnosticsEnabled, writeDelayMs)
+					await task.diffViewProvider.saveDirectly(
+						relPath,
+						new_string,
+						true,
+						diagnosticsEnabled,
+						writeDelayMs,
+					)
 				} else {
 					await task.diffViewProvider.saveChanges(diagnosticsEnabled, writeDelayMs)
 				}
@@ -337,7 +343,10 @@ export class EditTool extends BaseTool<"edit"> {
 			// Cangjie preflight check for .cj files (only in Cangjie mode)
 			let cangjiePostWriteWarnings = ""
 			if (absolutePath.toLowerCase().endsWith(".cj") && task.taskMode === "cangjie") {
-				const structureError = await task.cangjieRuntimePolicy.validateProjectStructureForWrite(relPath, newContent)
+				const structureError = await task.cangjieRuntimePolicy.validateProjectStructureForWrite(
+					relPath,
+					newContent,
+				)
 				if (structureError) {
 					task.recordToolError("edit", structureError)
 					pushToolResult(formatResponse.toolError(structureError))
@@ -464,7 +473,8 @@ export class EditTool extends BaseTool<"edit"> {
 
 			// Get the formatted response message
 			const matchStrategyNote = matchStrategy ? ` (matched via ${matchStrategy} strategy)` : ""
-			const replacementNote = expectedReplacements && expectedReplacements > 1 ? ` (${expectedReplacements} replacements)` : ""
+			const replacementNote =
+				expectedReplacements && expectedReplacements > 1 ? ` (${expectedReplacements} replacements)` : ""
 			const message = await task.diffViewProvider.pushToolWriteResult(task, task.cwd, false)
 			pushToolResult(message + matchStrategyNote + replacementNote + cangjiePostWriteWarnings)
 

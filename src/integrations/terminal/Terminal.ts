@@ -81,7 +81,10 @@ export class Terminal extends BaseTerminal {
 					void process.run(command)
 				})
 				.catch(() => {
-					logger.info("Terminal", `[Terminal ${this.id}] Shell integration not available. Command execution aborted.`)
+					logger.info(
+						"Terminal",
+						`[Terminal ${this.id}] Shell integration not available. Command execution aborted.`,
+					)
 
 					// Clean up temporary directory if shell integration is not available
 					ShellIntegrationManager.zshCleanupTmpDir(this.id)

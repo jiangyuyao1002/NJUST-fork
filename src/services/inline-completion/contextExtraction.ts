@@ -3,7 +3,11 @@ import * as vscode from "vscode"
 /** Marker inserted into prompts so the model sees exactly where insertion happens (avoid emitting this literal in output). */
 export const INLINE_CURSOR_MARKER = "[CURSOR]"
 
-export function getLinesBeforeCursor(document: vscode.TextDocument, position: vscode.Position, maxLines: number): string {
+export function getLinesBeforeCursor(
+	document: vscode.TextDocument,
+	position: vscode.Position,
+	maxLines: number,
+): string {
 	const startLine = Math.max(0, position.line - (maxLines - 1))
 	const range = new vscode.Range(startLine, 0, position.line, position.character)
 	return document.getText(range)

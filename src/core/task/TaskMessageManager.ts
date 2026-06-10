@@ -261,10 +261,14 @@ export class TaskMessageManager {
 				interval: 50,
 				timeout: 30_000,
 			}).catch(() => {
-				logger.warn("TaskMessageManager",
+				logger.warn(
+					"TaskMessageManager",
 					`flushPendingToolResultsToHistory: timed out waiting for assistant message to be saved for task ${this.ctx.taskId}`,
 				)
-				TelemetryService.reportError(new Error("flushPendingToolResultsToHistory timeout"), TelemetryEventName.TASK_LIFECYCLE_ERROR)
+				TelemetryService.reportError(
+					new Error("flushPendingToolResultsToHistory timeout"),
+					TelemetryEventName.TASK_LIFECYCLE_ERROR,
+				)
 			})
 		}
 
@@ -289,7 +293,8 @@ export class TaskMessageManager {
 		if (saved) {
 			this.ctx.userMessageContent = []
 		} else {
-			logger.warn("TaskMessageManager",
+			logger.warn(
+				"TaskMessageManager",
 				`flushPendingToolResultsToHistory: save failed for task ${this.ctx.taskId}, retaining pending tool results in memory`,
 			)
 		}
@@ -317,7 +322,8 @@ export class TaskMessageManager {
 
 		for (let attempt = 0; attempt < delays.length; attempt++) {
 			await new Promise<void>((resolve) => setTimeout(resolve, delays[attempt]))
-			logger.warn("TaskMessageManager",
+			logger.warn(
+				"TaskMessageManager",
 				`retrySaveApiConversationHistory: retry attempt ${attempt + 1}/${delays.length} for task ${this.ctx.taskId}`,
 			)
 

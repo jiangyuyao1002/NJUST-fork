@@ -12,7 +12,7 @@ describe("getApiMetrics", () => {
 		text: string = '{"tokensIn":10,"tokensOut":20}',
 		ts: number = 1000,
 	): ClineMessage => ({
-		id: 'test',
+		id: "test",
 		type: "say",
 		say: "api_req_started",
 		text,
@@ -26,7 +26,7 @@ describe("getApiMetrics", () => {
 		prevContextTokens: number = 1000,
 		ts: number = 2000,
 	): ClineMessage => ({
-		id: 'test',
+		id: "test",
 		type: "say",
 		say: "condense_context",
 		contextCondense: {
@@ -44,7 +44,7 @@ describe("getApiMetrics", () => {
 		text: string = "Hello world",
 		ts: number = 999,
 	): ClineMessage => ({
-		id: 'test',
+		id: "test",
 		type: "say",
 		say,
 		text,
@@ -163,7 +163,7 @@ describe("getApiMetrics", () => {
 		it("should handle invalid JSON in api_req_started message", () => {
 			const messages: ClineMessage[] = [
 				{
-					id: 'test',
+					id: "test",
 					type: "say",
 					say: "api_req_started",
 					text: "This is not valid JSON",
@@ -185,7 +185,7 @@ describe("getApiMetrics", () => {
 		it("should handle missing text field in api_req_started message", () => {
 			const messages: ClineMessage[] = [
 				{
-					id: 'test',
+					id: "test",
 					type: "say",
 					say: "api_req_started",
 					ts: 1000,
@@ -207,7 +207,7 @@ describe("getApiMetrics", () => {
 		it("should handle missing contextCondense field in condense_context message", () => {
 			const messages: ClineMessage[] = [
 				{
-					id: 'test',
+					id: "test",
 					type: "say",
 					say: "condense_context",
 					ts: 1000,

@@ -72,7 +72,11 @@ export const registerCommands = (options: RegisterCommandOptions) => {
 	}
 }
 
-const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions): Record<CommandId, UnsafeAny> => ({
+const getCommandsMap = ({
+	context,
+	outputChannel,
+	provider,
+}: RegisterCommandOptions): Record<CommandId, UnsafeAny> => ({
 	activationCompleted: () => {},
 	plusButtonClicked: async () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -192,9 +196,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		try {
 			await vscode.commands.executeCommand("markdown.showPreviewToSide", ed.document.uri)
 		} catch (e) {
-			outputChannel.appendLine(
-				`[openMarkdownPreview] Built-in Markdown preview failed: ${getErrorMessage(e)}`,
-			)
+			outputChannel.appendLine(`[openMarkdownPreview] Built-in Markdown preview failed: ${getErrorMessage(e)}`)
 			TelemetryService.reportError(e, TelemetryEventName.EXTENSION_INIT_ERROR)
 			void vscode.window.showWarningMessage(t("common:markdown_preview.builtin_unavailable"))
 		}

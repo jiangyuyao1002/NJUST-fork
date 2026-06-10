@@ -8,15 +8,36 @@ const isWin = process.platform === "win32"
 const MIKTEX_LATEXMK: string[] = isWin
 	? [
 			path.join(process.env.ProgramFiles ?? "C:\\Program Files", "MiKTeX", "miktex", "bin", "x64", "latexmk.exe"),
-			path.join(process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)", "MiKTeX", "miktex", "bin", "x64", "latexmk.exe"),
+			path.join(
+				process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)",
+				"MiKTeX",
+				"miktex",
+				"bin",
+				"x64",
+				"latexmk.exe",
+			),
 		]
 	: []
 
 /** Typical MiKTeX pdflatex (Windows). */
 const MIKTEX_PDFLATEX: string[] = isWin
 	? [
-			path.join(process.env.ProgramFiles ?? "C:\\Program Files", "MiKTeX", "miktex", "bin", "x64", "pdflatex.exe"),
-			path.join(process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)", "MiKTeX", "miktex", "bin", "x64", "pdflatex.exe"),
+			path.join(
+				process.env.ProgramFiles ?? "C:\\Program Files",
+				"MiKTeX",
+				"miktex",
+				"bin",
+				"x64",
+				"pdflatex.exe",
+			),
+			path.join(
+				process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)",
+				"MiKTeX",
+				"miktex",
+				"bin",
+				"x64",
+				"pdflatex.exe",
+			),
 		]
 	: []
 
@@ -25,7 +46,7 @@ function firstExisting(paths: string[]): string | undefined {
 		try {
 			if (p && fs.existsSync(p)) return p
 		} catch {
-			/* ignore */
+			// intentionally ignored: file existence check
 		}
 	}
 	return undefined
@@ -50,7 +71,7 @@ function findTexliveWin32(tool: "latexmk.exe" | "pdflatex.exe"): string | undefi
 				if (fs.existsSync(candidate)) return candidate
 			}
 		} catch {
-			/* ignore */
+			// intentionally ignored: directory listing may fail
 		}
 	}
 	return undefined

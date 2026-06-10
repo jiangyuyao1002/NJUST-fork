@@ -278,11 +278,7 @@ export class ToolHookManager {
 	/**
 	 * Run subagent start hooks.
 	 */
-	async runSubagentStartHooks(
-		parentTaskId: string,
-		agentType: string,
-		context: LifecycleHookContext,
-	): Promise<void> {
+	async runSubagentStartHooks(parentTaskId: string, agentType: string, context: LifecycleHookContext): Promise<void> {
 		for (const hook of this.subagentStartHooks) {
 			try {
 				await hook(parentTaskId, agentType, context)

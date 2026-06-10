@@ -28,9 +28,13 @@ export class CacheManager implements ICacheManager {
 			context.globalStorageUri,
 			`njust-ai-index-cache-${createHash("sha256").update(workspacePath).digest("hex")}.json`,
 		)
-		this._debouncedSaveCache = debounce(async () => {
-			await this._performSave()
-		}, 500, { maxWait: 2000 })
+		this._debouncedSaveCache = debounce(
+			async () => {
+				await this._performSave()
+			},
+			500,
+			{ maxWait: 2000 },
+		)
 	}
 
 	/**

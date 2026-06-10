@@ -23,17 +23,16 @@ const KIND_TO_MODIFIER: Record<string, string[]> = {
 	extend: ["declaration"],
 }
 
-
 export class CangjieSemanticTokensProvider implements vscode.DocumentSemanticTokensProvider {
 	private static readonly _legend = new vscode.SemanticTokensLegend(
 		["type", "function", "macro", "variable", "property", "namespace", "operator", "decorator"],
 		["declaration", "readonly"],
 	)
-	static get legend(): vscode.SemanticTokensLegend { return CangjieSemanticTokensProvider._legend }
+	static get legend(): vscode.SemanticTokensLegend {
+		return CangjieSemanticTokensProvider._legend
+	}
 	// eslint-disable-next-line @typescript-eslint/require-await
-	async provideDocumentSemanticTokens(
-		document: vscode.TextDocument,
-	): Promise<vscode.SemanticTokens> {
+	async provideDocumentSemanticTokens(document: vscode.TextDocument): Promise<vscode.SemanticTokens> {
 		const builder = new vscode.SemanticTokensBuilder(CangjieSemanticTokensProvider._legend)
 		const content = document.getText()
 		const defs = parseCangjieDefinitions(content)
@@ -48,11 +47,7 @@ export class CangjieSemanticTokensProvider implements vscode.DocumentSemanticTok
 			if (nameIdx === -1) continue
 
 			const modifierFlags = KIND_TO_MODIFIER[def.kind] ?? []
-			builder.push(
-				new vscode.Range(line, nameIdx, line, nameIdx + def.name.length),
-				tokenType,
-				modifierFlags,
-			)
+			builder.push(new vscode.Range(line, nameIdx, line, nameIdx + def.name.length), tokenType, modifierFlags)
 		}
 
 		return builder.build()

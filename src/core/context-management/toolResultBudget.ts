@@ -9,11 +9,7 @@ export const DEFAULT_MAX_ROUND_TOTAL_CHARS = 300_000 // 单轮所有工具结果
  * Truncate a tool result string to a maximum number of characters.
  * Appends a notice when truncation occurs.
  */
-export function truncateToolResult(
-	result: string,
-	maxChars: number,
-	toolName?: string,
-): string {
+export function truncateToolResult(result: string, maxChars: number, toolName?: string): string {
 	if (result.length <= maxChars) return result
 
 	const truncated = result.slice(0, maxChars)
@@ -124,9 +120,7 @@ function resolveBudgetByTool(
 	const base = maxCharsByTool[tool] ?? defaultMaxChars
 	const ratio = agePenaltyLevel >= 3 ? 0.4 : agePenaltyLevel === 2 ? 0.55 : agePenaltyLevel === 1 ? 0.75 : 1
 	// HCA: scale by turn importance — high-importance turns retain more content
-	const importanceRatio = turnImportance !== undefined
-		? 0.5 + turnImportance * 0.5
-		: 1.0
+	const importanceRatio = turnImportance !== undefined ? 0.5 + turnImportance * 0.5 : 1.0
 	return Math.max(1200, Math.floor(base * ratio * importanceRatio))
 }
 
@@ -183,7 +177,13 @@ export function applyToolResultBudget(
 			if (block.type !== "tool_result") return block
 			const toolUseId = (block as { tool_use_id?: string }).tool_use_id
 			const toolName = (toolUseId && toolUseIdToName.get(toolUseId)) ?? "unknown_tool"
-			const budget = resolveBudgetByTool({ name: toolName }, maxCharsByTool, defaultMaxChars, agePenaltyLevel, turnImportance)
+			const budget = resolveBudgetByTool(
+				{ name: toolName },
+				maxCharsByTool,
+				defaultMaxChars,
+				agePenaltyLevel,
+				turnImportance,
+			)
 			if (typeof block.content === "string") {
 				const compacted = compactByToolHeuristic(block.content, toolName, budget)
 				if (compacted !== block.content) {

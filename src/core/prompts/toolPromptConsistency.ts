@@ -54,9 +54,7 @@ export function checkToolPromptConsistency(
 	systemPrompt: string,
 	tools: OpenAI.Chat.ChatCompletionTool[],
 ): ConsistencyCheckResult {
-	const availableNames = new Set(
-		tools.map((t) => (t as OpenAI.Chat.ChatCompletionFunctionTool).function.name),
-	)
+	const availableNames = new Set(tools.map((t) => (t as OpenAI.Chat.ChatCompletionFunctionTool).function.name))
 
 	const mentionedButUnavailable: string[] = []
 	const availableButUnmentioned: string[] = []
@@ -85,15 +83,17 @@ export function checkToolPromptConsistency(
 
 	if (!ok) {
 		if (mentionedButUnavailable.length > 0) {
-			logger.warn("ToolPromptConsistency", 
+			logger.warn(
+				"ToolPromptConsistency",
 				`[ToolPromptConsistency] Tools mentioned in system prompt but NOT in tool list: ${mentionedButUnavailable.join(", ")}. ` +
-				`The model may attempt to call these and fail.`,
+					`The model may attempt to call these and fail.`,
 			)
 		}
 		if (availableButUnmentioned.length > 0) {
-			logger.warn("ToolPromptConsistency", 
+			logger.warn(
+				"ToolPromptConsistency",
 				`[ToolPromptConsistency] Tools in tool list but NOT mentioned in system prompt: ${availableButUnmentioned.join(", ")}. ` +
-				`The model may not know to use these.`,
+					`The model may not know to use these.`,
 			)
 		}
 	}

@@ -65,7 +65,11 @@ export class TerminalRegistry {
 						terminal.setActiveStream(stream)
 						terminal.busy = true // Mark terminal as busy when shell execution starts
 					} else {
-						logger.error("TerminalRegistry", "onDidStartTerminalShellExecution - Shell execution started, but not from a Njust-AI-registered terminal:", e)
+						logger.error(
+							"TerminalRegistry",
+							"onDidStartTerminalShellExecution - Shell execution started, but not from a Njust-AI-registered terminal:",
+							e,
+						)
 					}
 				},
 			)
@@ -87,20 +91,32 @@ export class TerminalRegistry {
 					})
 
 					if (!terminal) {
-						logger.error("TerminalRegistry", "onDidEndTerminalShellExecution - Shell execution ended, but not from a Njust-AI-registered terminal:", e)
+						logger.error(
+							"TerminalRegistry",
+							"onDidEndTerminalShellExecution - Shell execution ended, but not from a Njust-AI-registered terminal:",
+							e,
+						)
 
 						return
 					}
 
 					if (!terminal.running) {
-						logger.error("TerminalRegistry", "Shell execution end event received, but process is not running for terminal:", { terminalId: terminal?.id, command: process?.command, exitCode: e.exitCode })
+						logger.error(
+							"TerminalRegistry",
+							"Shell execution end event received, but process is not running for terminal:",
+							{ terminalId: terminal?.id, command: process?.command, exitCode: e.exitCode },
+						)
 
 						terminal.busy = false
 						return
 					}
 
 					if (!process) {
-						logger.error("TerminalRegistry", "Shell execution end event received on running terminal, but process is undefined:", { terminalId: terminal.id, exitCode: e.exitCode })
+						logger.error(
+							"TerminalRegistry",
+							"Shell execution end event received on running terminal, but process is undefined:",
+							{ terminalId: terminal.id, exitCode: e.exitCode },
+						)
 
 						return
 					}
@@ -191,8 +207,11 @@ export class TerminalRegistry {
 			})
 
 			if (terminal) {
-				logger.info("TerminalRegistry", `Reusing persistent shell session for task ${taskId} ` +
-					`(terminal cwd: ${terminal.getCurrentWorkingDirectory()}, requested cwd: ${cwd})`)
+				logger.info(
+					"TerminalRegistry",
+					`Reusing persistent shell session for task ${taskId} ` +
+						`(terminal cwd: ${terminal.getCurrentWorkingDirectory()}, requested cwd: ${cwd})`,
+				)
 			}
 		}
 

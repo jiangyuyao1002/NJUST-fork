@@ -426,8 +426,7 @@ export class CloudAgentOrchestrator {
 						)
 						deferredResp = await restartClient.deferredStart(
 							this.host.taskId,
-							// Agent-facing prompt — intentionally kept in Chinese (not i18n'd)
-							`[自动恢复] 之前的 deferred 会话已过期（run_id ${runIdForResume.slice(0, 8)}…），请继续之前的任务。`,
+							t("tools.deferred_session_recovery", { runId: runIdForResume.slice(0, 8) }),
 							this.host.cwd,
 						)
 						lastNotifiedRunId = deferredResp.run_id
@@ -663,10 +662,10 @@ export class CloudAgentOrchestrator {
 				break
 			}
 
-			// Agent-facing prompt — intentionally kept in Chinese (not i18n'd) as it targets the LLM, not the UI.
 			const fixGoal =
-				`以下仓颉代码编译失败，请根据错误信息修正代码，返回修正后的 workspace_ops。` +
-				`仅修改出错的文件，不要重复返回正确的文件。\n\n编译输出:\n${truncatedOutput}`
+				t("tools.compile_fix_goal_prefix") +
+				"\n\n" +
+				t("tools.compile_fix_goal_suffix", { output: truncatedOutput })
 
 			await this.host.say("api_req_started", JSON.stringify({ request: "Cloud Agent compile-fix iteration" }))
 

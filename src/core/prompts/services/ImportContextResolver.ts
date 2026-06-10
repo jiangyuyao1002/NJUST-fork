@@ -2,6 +2,7 @@ import * as path from "path"
 import * as fs from "fs"
 
 import * as vscode from "vscode"
+import { logger } from "../../../shared/logger"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -136,7 +137,7 @@ export function extractDefs(content: string, patterns: Array<{ re: RegExp; kind:
 // ---------------------------------------------------------------------------
 
 const CPP_INCLUDE_LOCAL = /^\s*#include\s+"([^"]+)"/gm
- 
+
 const _CPP_INCLUDE_SYSTEM = /^\s*#include\s+<([^>]+)>/gm
 
 const JAVA_IMPORT = /^\s*import\s+(?:static\s+)?([\w.]+(?:\.\*)?)\s*;/gm
@@ -396,7 +397,8 @@ export function collectFilesInDir(dir: string, extensions: string[], maxFiles: n
 				files.push(path.join(dir, entry.name))
 			}
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("ImportContextResolver", "directory read failed", error)
 		// skip unreadable directories
 	}
 	return files

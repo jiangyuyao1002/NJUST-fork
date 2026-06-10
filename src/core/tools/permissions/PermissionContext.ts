@@ -1,3 +1,4 @@
+import { logger } from "../../../shared/logger"
 /**
  * Permission Context with One-Shot Resolution
  *
@@ -47,7 +48,8 @@ export class PermissionContext {
 		for (const cb of this._resolveCallbacks) {
 			try {
 				cb(result)
-			} catch {
+			} catch (error) {
+				logger.debug("PermissionContext", "permission callback error", error)
 				// ignore callback errors
 			}
 		}

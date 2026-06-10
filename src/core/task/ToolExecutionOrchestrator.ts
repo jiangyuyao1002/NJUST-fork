@@ -11,7 +11,6 @@
  * from Task.ts is deferred to Phase 2.
  */
 
-
 // ─── Tool Category Classification ────────────────────────────────────────────
 
 export type ToolCategory = "read" | "write" | "mcp" | "bash" | "default"

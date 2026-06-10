@@ -41,10 +41,15 @@ export class WebviewContentProvider {
 					localPort = raw
 					logger.info("WebviewContentProvider", `Using Vite server port from ${portFilePath}: ${localPort}`)
 				} else {
-					logger.warn("WebviewContentProvider", `Invalid port in ${portFilePath}: "${raw}", using default: ${localPort}`)
+					logger.warn(
+						"WebviewContentProvider",
+						`Invalid port in ${portFilePath}: "${raw}", using default: ${localPort}`,
+					)
 				}
 			} else {
-				logger.info("WebviewContentProvider", `Port file not found at ${portFilePath}, using default port: ${localPort}`,
+				logger.info(
+					"WebviewContentProvider",
+					`Port file not found at ${portFilePath}, using default port: ${localPort}`,
 				)
 			}
 		} catch (err) {
@@ -67,19 +72,10 @@ export class WebviewContentProvider {
 		const openRouterBaseUrl = this.host.getValues().openRouterBaseUrl || "https://openrouter.ai"
 		const openRouterDomain = openRouterBaseUrl.match(/^(https?:\/\/[^/]+)/)?.[1] || "https://openrouter.ai"
 
-		const stylesUri = getUri(webview, this.host.extensionUri, [
-			"webview-ui",
-			"build",
-			"assets",
-			"index.css",
-		])
+		const stylesUri = getUri(webview, this.host.extensionUri, ["webview-ui", "build", "assets", "index.css"])
 
 		const codiconsUri = getUri(webview, this.host.extensionUri, ["assets", "codicons", "codicon.css"])
-		const materialIconsUri = getUri(webview, this.host.extensionUri, [
-			"assets",
-			"vscode-material-icons",
-			"icons",
-		])
+		const materialIconsUri = getUri(webview, this.host.extensionUri, ["assets", "vscode-material-icons", "icons"])
 		const imagesUri = getUri(webview, this.host.extensionUri, ["assets", "images"])
 		const audioUri = getUri(webview, this.host.extensionUri, ["webview-ui", "audio"])
 
@@ -135,20 +131,11 @@ export class WebviewContentProvider {
 	 * Generates HTML content for production build.
 	 */
 	getHtmlContent(webview: vscode.Webview): string {
-		const stylesUri = getUri(webview, this.host.extensionUri, [
-			"webview-ui",
-			"build",
-			"assets",
-			"index.css",
-		])
+		const stylesUri = getUri(webview, this.host.extensionUri, ["webview-ui", "build", "assets", "index.css"])
 
 		const scriptUri = getUri(webview, this.host.extensionUri, ["webview-ui", "build", "assets", "index.js"])
 		const codiconsUri = getUri(webview, this.host.extensionUri, ["assets", "codicons", "codicon.css"])
-		const materialIconsUri = getUri(webview, this.host.extensionUri, [
-			"assets",
-			"vscode-material-icons",
-			"icons",
-		])
+		const materialIconsUri = getUri(webview, this.host.extensionUri, ["assets", "vscode-material-icons", "icons"])
 		const imagesUri = getUri(webview, this.host.extensionUri, ["assets", "images"])
 		const audioUri = getUri(webview, this.host.extensionUri, ["webview-ui", "audio"])
 

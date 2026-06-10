@@ -27,6 +27,7 @@ import {
 	CRITICAL_SIGNATURE_MODULES,
 	resolveRootPackageName,
 } from "./cangjiePreflightCheck"
+import { t } from "../../i18n"
 
 interface WriteToFileParams {
 	path: string
@@ -163,9 +164,9 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 				// Agent-facing: preflight errors are embedded in tool_result sent to the AI,
 				// intentionally kept in Chinese as the Cangjie LLM responds better to Chinese technical feedback.
 				const errorMsg =
-					`仓颉代码预检失败，文件未写入：\n` +
+					t("tools.cangjie_preflight_failed") +
 					preflight.errors.map((e) => `- ${e}`).join("\n") +
-					`\n\n请修正以上错误后重试。`
+					t("tools.cangjie_preflight_retry")
 				task.recordToolError("write_to_file", errorMsg)
 				pushToolResult(formatResponse.toolError(errorMsg))
 				await task.diffViewProvider.reset()

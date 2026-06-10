@@ -235,11 +235,7 @@ describe("PersistentRetryManager", () => {
 			const heartbeat = vi.fn()
 			const promise = manager.waitForRetry("timeout", heartbeat)
 			expect(heartbeat).toHaveBeenCalledTimes(1)
-			expect(heartbeat).toHaveBeenCalledWith(
-				expect.stringContaining("timeout"),
-				1,
-				expect.any(Number),
-			)
+			expect(heartbeat).toHaveBeenCalledWith(expect.stringContaining("timeout"), 1, expect.any(Number))
 			vi.advanceTimersByTime(3000)
 			await promise
 		})

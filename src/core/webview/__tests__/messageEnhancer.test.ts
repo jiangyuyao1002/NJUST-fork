@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { ProviderSettings, ClineMessage } from "@njust-ai/types"
 import { TelemetryService } from "@njust-ai/telemetry"
@@ -319,7 +318,9 @@ describe("MessageEnhancer", () => {
 			]
 
 			// Access private method for testing
-			const history = (MessageEnhancer as unknown as { extractTaskHistory: (messages: ClineMessage[]) => string }).extractTaskHistory(messages)
+			const history = (
+				MessageEnhancer as unknown as { extractTaskHistory: (messages: ClineMessage[]) => string }
+			).extractTaskHistory(messages)
 
 			expect(history).toContain("User: User message 1")
 			expect(history).toContain("Assistant: Assistant message 1")
@@ -338,11 +339,17 @@ describe("MessageEnhancer", () => {
 			] as unknown as ClineMessage[]
 
 			// Access private method for testing
-			const history = (MessageEnhancer as unknown as { extractTaskHistory: (messages: ClineMessage[]) => string }).extractTaskHistory(malformedMessages)
+			const history = (
+				MessageEnhancer as unknown as { extractTaskHistory: (messages: ClineMessage[]) => string }
+			).extractTaskHistory(malformedMessages)
 
 			// Should return empty string and log error
 			expect(history).toBe("")
-			expect(logger.error).toHaveBeenCalledWith("MessageEnhancer", "Failed to extract task history:", expect.any(Error))
+			expect(logger.error).toHaveBeenCalledWith(
+				"MessageEnhancer",
+				"Failed to extract task history:",
+				expect.any(Error),
+			)
 		})
 
 		it("should handle messages with circular references", () => {
@@ -353,7 +360,9 @@ describe("MessageEnhancer", () => {
 			const messages = [circularMessage] as ClineMessage[]
 
 			// Access private method for testing
-			const history = (MessageEnhancer as unknown as { extractTaskHistory: (messages: ClineMessage[]) => string }).extractTaskHistory(messages)
+			const history = (
+				MessageEnhancer as unknown as { extractTaskHistory: (messages: ClineMessage[]) => string }
+			).extractTaskHistory(messages)
 
 			// Should handle gracefully
 			expect(history).toBe("User: Test")

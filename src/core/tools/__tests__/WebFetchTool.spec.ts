@@ -1,18 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const {
-	axiosGetMock,
-	axiosIsAxiosErrorMock,
-	dnsLookupMock,
-	assertSafeOutboundUrlMock,
-	assertPublicIpMock,
-} = vi.hoisted(() => ({
-	axiosGetMock: vi.fn(),
-	axiosIsAxiosErrorMock: vi.fn(),
-	dnsLookupMock: vi.fn(),
-	assertSafeOutboundUrlMock: vi.fn(),
-	assertPublicIpMock: vi.fn(),
-}))
+const { axiosGetMock, axiosIsAxiosErrorMock, dnsLookupMock, assertSafeOutboundUrlMock, assertPublicIpMock } =
+	vi.hoisted(() => ({
+		axiosGetMock: vi.fn(),
+		axiosIsAxiosErrorMock: vi.fn(),
+		dnsLookupMock: vi.fn(),
+		assertSafeOutboundUrlMock: vi.fn(),
+		assertPublicIpMock: vi.fn(),
+	}))
 
 vi.mock("axios", () => ({
 	default: {
@@ -173,7 +168,9 @@ describe("webFetchTool", () => {
 
 		await webFetchTool.execute({ url: "https://example.com" }, {} as any, callbacks as any)
 
-		expect(callbacks.pushToolResult).toHaveBeenCalledWith(expect.stringContaining("HTTP request failed (500 Server Error)"))
+		expect(callbacks.pushToolResult).toHaveBeenCalledWith(
+			expect.stringContaining("HTTP request failed (500 Server Error)"),
+		)
 	})
 
 	it("delegates non-axios errors to handleError", async () => {

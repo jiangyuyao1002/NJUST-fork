@@ -73,9 +73,7 @@ export class CangjieLintConfig implements vscode.Disposable {
 
 		this.loadConfig()
 
-		this.watcher = vscode.workspace.createFileSystemWatcher(
-			new vscode.RelativePattern(root, ".cjlintrc{,.json}"),
-		)
+		this.watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(root, ".cjlintrc{,.json}"))
 		this.disposables.push(this.watcher)
 		this.watcher.onDidChange(() => this.loadConfig())
 		this.watcher.onDidCreate((uri) => {
@@ -212,17 +210,13 @@ export class CangjieLintConfig implements vscode.Disposable {
 						const range = new vscode.Range(i, match.index, i, match.index + match[0].length)
 						const severity = this.mapSeverity(rule.severity)
 						if (severity === undefined) continue
-						const diag = new vscode.Diagnostic(
-							range,
-							`[${rule.id}] ${rule.message}`,
-							severity,
-						)
+						const diag = new vscode.Diagnostic(range, `[${rule.id}] ${rule.message}`, severity)
 						diag.source = "cjlint-custom"
 						diagnostics.push(diag)
 					}
 				}
 			} catch {
-				// Skip invalid regex patterns
+				// intentionally ignored: skip invalid regex patterns
 			}
 		}
 
@@ -236,11 +230,16 @@ export class CangjieLintConfig implements vscode.Disposable {
 
 	private mapSeverity(severity: LintSeverity): vscode.DiagnosticSeverity | undefined {
 		switch (severity) {
-			case "error": return vscode.DiagnosticSeverity.Error
-			case "warning": return vscode.DiagnosticSeverity.Warning
-			case "info": return vscode.DiagnosticSeverity.Information
-			case "off": return undefined
-			default: return vscode.DiagnosticSeverity.Warning
+			case "error":
+				return vscode.DiagnosticSeverity.Error
+			case "warning":
+				return vscode.DiagnosticSeverity.Warning
+			case "info":
+				return vscode.DiagnosticSeverity.Information
+			case "off":
+				return undefined
+			default:
+				return vscode.DiagnosticSeverity.Warning
 		}
 	}
 

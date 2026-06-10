@@ -3,7 +3,10 @@ import { applyDiffTool } from "../ApplyDiffTool"
 
 describe("ApplyDiffTool schema", () => {
 	it("passes with valid input", () => {
-		const result = applyDiffTool.inputSchema.safeParse({ path: "test.txt", diff: "--- a/test.txt\n+++ b/test.txt\n@@ -1 +1 @@\n-old\n+new" })
+		const result = applyDiffTool.inputSchema.safeParse({
+			path: "test.txt",
+			diff: "--- a/test.txt\n+++ b/test.txt\n@@ -1 +1 @@\n-old\n+new",
+		})
 		expect(result.success).toBe(true)
 	})
 

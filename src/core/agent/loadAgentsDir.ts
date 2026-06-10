@@ -12,11 +12,7 @@
 import * as fs from "fs/promises"
 import type { Dirent } from "fs"
 import * as path from "path"
-import type {
-	AgentDefinition,
-	CustomAgentDefinition,
-	PluginAgentDefinition,
-} from "./types"
+import type { AgentDefinition, CustomAgentDefinition, PluginAgentDefinition } from "./types"
 import { BUILT_IN_AGENTS } from "./builtInAgents"
 
 // ── Agent cache ──
@@ -85,7 +81,6 @@ function parseFrontmatter(content: string): { fm: AgentFrontmatter; body: string
 		// Parse booleans
 		else if (value === "true") value = true
 		else if (value === "false") value = false
-
 		;(fm as UnsafeAny)[key] = value
 	}
 
@@ -158,12 +153,7 @@ export async function getAgentDefinitions(cwd?: string): Promise<AgentDefinition
 		Promise.resolve([] as CustomAgentDefinition[]),
 	])
 
-	const all: AgentDefinition[] = [
-		...BUILT_IN_AGENTS,
-		..._pluginAgents,
-		...userAgents,
-		...projectAgents,
-	]
+	const all: AgentDefinition[] = [...BUILT_IN_AGENTS, ..._pluginAgents, ...userAgents, ...projectAgents]
 
 	// Deduplicate: higher priority wins
 	const seen = new Map<string, AgentDefinition>()

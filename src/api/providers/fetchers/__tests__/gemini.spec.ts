@@ -104,9 +104,7 @@ describe("fetchGeminiModels", () => {
 
 	it("skips items without name", async () => {
 		const response = {
-			models: [
-				{ supportedGenerationMethods: ["generateContent"] },
-			],
+			models: [{ supportedGenerationMethods: ["generateContent"] }],
 		}
 		mockFetch.mockResolvedValueOnce({
 			ok: true,
@@ -120,14 +118,15 @@ describe("fetchGeminiModels", () => {
 	it("applies defaults when fields are missing", async () => {
 		mockFetch.mockResolvedValueOnce({
 			ok: true,
-			json: () => Promise.resolve({
-				models: [
-					{
-						name: "models/minimal",
-						supportedGenerationMethods: ["generateContent"],
-					},
-				],
-			}),
+			json: () =>
+				Promise.resolve({
+					models: [
+						{
+							name: "models/minimal",
+							supportedGenerationMethods: ["generateContent"],
+						},
+					],
+				}),
 		})
 
 		const result = await fetchGeminiModels({ apiKey: "k" })
@@ -154,8 +153,6 @@ describe("fetchGeminiModels", () => {
 			text: () => Promise.resolve("bad request"),
 		})
 
-		await expect(
-			fetchGeminiModels({ apiKey: "k" }),
-		).rejects.toThrow("Failed to fetch Gemini models: 400")
+		await expect(fetchGeminiModels({ apiKey: "k" })).rejects.toThrow("Failed to fetch Gemini models: 400")
 	})
 })

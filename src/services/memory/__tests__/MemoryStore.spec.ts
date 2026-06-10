@@ -66,7 +66,9 @@ describe("MemoryStore", () => {
 
 		it("loads and returns valid non-expired entries", async () => {
 			const entry = makeEntry({ timestamp: Date.now() })
-			vi.mocked(fs.readdir).mockResolvedValueOnce([`memory-${entry.timestamp}-abc12345.json`] as unknown as string[])
+			vi.mocked(fs.readdir).mockResolvedValueOnce([
+				`memory-${entry.timestamp}-abc12345.json`,
+			] as unknown as string[])
 			vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(entry) as unknown as Buffer)
 			const result = await loadMemories(WORKSPACE)
 			expect(result).toHaveLength(1)
@@ -78,7 +80,9 @@ describe("MemoryStore", () => {
 				type: "session",
 				timestamp: Date.now() - MEMORY_TTL.session - 1000, // expired
 			})
-			vi.mocked(fs.readdir).mockResolvedValueOnce([`memory-${expiredEntry.timestamp}-abc12345.json`] as unknown as string[])
+			vi.mocked(fs.readdir).mockResolvedValueOnce([
+				`memory-${expiredEntry.timestamp}-abc12345.json`,
+			] as unknown as string[])
 			vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(expiredEntry) as unknown as Buffer)
 			const result = await loadMemories(WORKSPACE)
 			expect(result).toHaveLength(0)
@@ -160,7 +164,9 @@ describe("MemoryStore", () => {
 				type: "session",
 				timestamp: Date.now() - MEMORY_TTL.session - 1000,
 			})
-			vi.mocked(fs.readdir).mockResolvedValueOnce([`memory-${expired.timestamp}-abc12345.json`] as unknown as string[])
+			vi.mocked(fs.readdir).mockResolvedValueOnce([
+				`memory-${expired.timestamp}-abc12345.json`,
+			] as unknown as string[])
 			vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(expired) as unknown as Buffer)
 			const removed = await pruneExpiredMemories(WORKSPACE)
 			expect(removed).toBe(1)
@@ -169,7 +175,9 @@ describe("MemoryStore", () => {
 
 		it("does not remove valid entries", async () => {
 			const valid = makeEntry({ timestamp: Date.now() })
-			vi.mocked(fs.readdir).mockResolvedValueOnce([`memory-${valid.timestamp}-abc12345.json`] as unknown as string[])
+			vi.mocked(fs.readdir).mockResolvedValueOnce([
+				`memory-${valid.timestamp}-abc12345.json`,
+			] as unknown as string[])
 			vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(valid) as unknown as Buffer)
 			const removed = await pruneExpiredMemories(WORKSPACE)
 			expect(removed).toBe(0)
@@ -186,7 +194,9 @@ describe("MemoryStore", () => {
 			// An entry that's expired for session but not for reference
 			const ageMs = MEMORY_TTL.session + 1000 // past session TTL
 			const refEntry = makeEntry({ type: "reference", timestamp: Date.now() - ageMs })
-			vi.mocked(fs.readdir).mockResolvedValueOnce([`memory-${refEntry.timestamp}-abc12345.json`] as unknown as string[])
+			vi.mocked(fs.readdir).mockResolvedValueOnce([
+				`memory-${refEntry.timestamp}-abc12345.json`,
+			] as unknown as string[])
 			vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(refEntry) as unknown as Buffer)
 			// reference TTL is 90 days, so this should NOT be pruned
 			const removed = await pruneExpiredMemories(WORKSPACE)

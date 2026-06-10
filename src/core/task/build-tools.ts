@@ -109,7 +109,10 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 	// Compute a config hash for schema cache validation.
 	// Includes: mode, disabled tools, supportsImages, MCP server+tool names, custom tools flag.
 	const mcpToolNames = mcpHub
-		? getMcpServerTools(mcpHub).map((t) => getToolName(t)).sort().join(",")
+		? getMcpServerTools(mcpHub)
+				.map((t) => getToolName(t))
+				.sort()
+				.join(",")
 		: ""
 	const configKey = [
 		mode ?? "",
@@ -131,7 +134,9 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 			// We need allowedFunctionNames — retrieve from cache metadata
 			const allowedNames = globalToolSchemaCache.get("__allowedFunctionNames__")
 			return {
-				tools: cachedTools.filter((t) => getToolName(t) !== "__allowedFunctionNames__").sort((a, b) => getToolName(a).localeCompare(getToolName(b))),
+				tools: cachedTools
+					.filter((t) => getToolName(t) !== "__allowedFunctionNames__")
+					.sort((a, b) => getToolName(a).localeCompare(getToolName(b))),
 				allowedFunctionNames: allowedNames
 					? allowedFunctionNamesSchema.parse(JSON.parse(allowedNames.hash))
 					: undefined,

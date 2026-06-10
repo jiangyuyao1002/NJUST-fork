@@ -8,7 +8,11 @@ describe("UseMcpToolTool schema", () => {
 	})
 
 	it("passes with optional arguments", () => {
-		const result = useMcpToolTool.inputSchema.safeParse({ server_name: "test-server", tool_name: "test-tool", arguments: { key: "value" } })
+		const result = useMcpToolTool.inputSchema.safeParse({
+			server_name: "test-server",
+			tool_name: "test-tool",
+			arguments: { key: "value" },
+		})
 		expect(result.success).toBe(true)
 	})
 

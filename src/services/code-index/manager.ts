@@ -464,7 +464,7 @@ export class CodeIndexManager {
 					TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 					// Re-throw the error so the caller knows validation failed
 					throw error
-			}
+				}
 			}
 		}
 	}

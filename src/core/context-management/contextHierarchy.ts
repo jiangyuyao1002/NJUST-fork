@@ -64,10 +64,10 @@ export const DEFAULT_ADAPTIVE_PARAMS: AdaptiveParams = {
 	selfAttnMeanMult: 2.0,
 	queryAttnMult: 2.5,
 	fileHotnessMult: 1.5,
-	attnContentWeight: 0.40,
+	attnContentWeight: 0.4,
 	attnFileWeight: 0.25,
 	attnToolWeight: 0.15,
-	attnTemporalWeight: 0.20,
+	attnTemporalWeight: 0.2,
 	impDiffThreshold: 0.02,
 }
 
@@ -111,8 +111,14 @@ export function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
 // ═══════════════════════════════════════════════════════════════════
 
 const FILE_PATH_FIELDS = [
-	"filePath", "path", "target_file", "source_file",
-	"file_path", "target", "absolutePath", "output_file",
+	"filePath",
+	"path",
+	"target_file",
+	"source_file",
+	"file_path",
+	"target",
+	"absolutePath",
+	"output_file",
 ]
 
 function looksLikePath(s: UnsafeAny): s is string {
@@ -293,11 +299,7 @@ function computeTurnAttentionMatrix(turns: TurnMeta[], params: AdaptiveParams): 
 			const toolSim = jaccardSimilarity(turns[i]!.toolNames, turns[j]!.toolNames)
 			const temporalWeight = Math.pow(0.5, Math.abs(i - j) / HALF_LIFE_TURNS)
 
-			const score =
-				cw * contentSim +
-				fw * fileOverlap +
-				tw * toolSim +
-				hw * temporalWeight
+			const score = cw * contentSim + fw * fileOverlap + tw * toolSim + hw * temporalWeight
 
 			attn[i * N + j] = Math.min(1, Math.max(0, score))
 			attn[j * N + i] = attn[i * N + j]! // symmetric
@@ -350,7 +352,7 @@ function deriveTargetParams(stats: SessionStats): AdaptiveParams {
 	// Rule 1: fileDensity — file-related parameters
 	if (stats.fileDensity > 0.5) {
 		t.fileHotnessMult = Math.min(3.0, 1.5 + (stats.fileDensity - 0.5) * 4.0)
-		t.attnFileWeight = Math.min(0.50, 0.25 + (stats.fileDensity - 0.5) * 0.5)
+		t.attnFileWeight = Math.min(0.5, 0.25 + (stats.fileDensity - 0.5) * 0.5)
 	} else if (stats.fileDensity < 0.1) {
 		t.fileHotnessMult = 1.0
 		t.attnFileWeight = 0.15
@@ -372,43 +374,43 @@ function deriveTargetParams(stats: SessionStats): AdaptiveParams {
 	// Rule 4: conversation age — reduce temporal weight, redistribute to others
 	if (stats.turnCount > 30) {
 		const oldTemporal = t.attnTemporalWeight
-		t.attnTemporalWeight = Math.max(0.05, 0.20 - (stats.turnCount - 30) * 0.003)
+		t.attnTemporalWeight = Math.max(0.05, 0.2 - (stats.turnCount - 30) * 0.003)
 		const delta = oldTemporal - t.attnTemporalWeight
 		t.attnContentWeight += delta / 3
 		t.attnFileWeight += delta / 3
 		t.attnToolWeight += delta / 3
 	}
 
-		// Rules 5 & 6: compute chat- and tool-driven adjustments independently,
-		// then apply them simultaneously to eliminate order dependence between
-		// the two rules (they modify contentWeight in opposite directions).
-		const chatExcess = stats.chatRatio > 0.5 ? stats.chatRatio - 0.5 : 0
-		const toolBoost = stats.toolDiversity < 0.3 ? (0.3 - stats.toolDiversity) * 0.4 : 0
+	// Rules 5 & 6: compute chat- and tool-driven adjustments independently,
+	// then apply them simultaneously to eliminate order dependence between
+	// the two rules (they modify contentWeight in opposite directions).
+	const chatExcess = stats.chatRatio > 0.5 ? stats.chatRatio - 0.5 : 0
+	const toolBoost = stats.toolDiversity < 0.3 ? (0.3 - stats.toolDiversity) * 0.4 : 0
 
-		if (chatExcess > 0 || toolBoost > 0) {
-			let cw = t.attnContentWeight
-			let fw = t.attnFileWeight
-			let tw = t.attnToolWeight
+	if (chatExcess > 0 || toolBoost > 0) {
+		let cw = t.attnContentWeight
+		let fw = t.attnFileWeight
+		let tw = t.attnToolWeight
 
-			// Rule 5: chatRatio → content ↑, file ↓, hotness ↓
-			if (chatExcess > 0) {
-				cw = Math.min(0.60, cw + chatExcess * 0.3)
-				fw = Math.max(0.10, fw - chatExcess * 0.2)
-				t.fileHotnessMult = Math.max(0.5, t.fileHotnessMult - chatExcess * 0.8)
-			}
-
-			// Rule 6: toolDiversity → tool ↑, content ↓
-			if (toolBoost > 0) {
-				tw = Math.min(0.30, tw + toolBoost)
-				cw = Math.max(0.20, cw - toolBoost)
-			}
-
-			t.attnContentWeight = cw
-			t.attnFileWeight = fw
-			t.attnToolWeight = tw
+		// Rule 5: chatRatio → content ↑, file ↓, hotness ↓
+		if (chatExcess > 0) {
+			cw = Math.min(0.6, cw + chatExcess * 0.3)
+			fw = Math.max(0.1, fw - chatExcess * 0.2)
+			t.fileHotnessMult = Math.max(0.5, t.fileHotnessMult - chatExcess * 0.8)
 		}
 
-		// Rule 7: conversation length — adjust turn-grouping threshold
+		// Rule 6: toolDiversity → tool ↑, content ↓
+		if (toolBoost > 0) {
+			tw = Math.min(0.3, tw + toolBoost)
+			cw = Math.max(0.2, cw - toolBoost)
+		}
+
+		t.attnContentWeight = cw
+		t.attnFileWeight = fw
+		t.attnToolWeight = tw
+	}
+
+	// Rule 7: conversation length — adjust turn-grouping threshold
 	// Short conversations: stronger grouping (fewer turns to protect)
 	// Long conversations: weaker grouping (more turns, rely on per-message weight)
 	if (stats.turnCount < 10) {
@@ -428,7 +430,7 @@ function deriveTargetParams(stats: SessionStats): AdaptiveParams {
 	t.selfAttnMeanMult = Math.max(1.0, Math.min(4.0, t.selfAttnMeanMult))
 	t.queryAttnMult = Math.max(1.0, Math.min(5.0, t.queryAttnMult))
 	t.fileHotnessMult = Math.max(0.5, Math.min(3.0, t.fileHotnessMult))
-	t.impDiffThreshold = Math.max(0.01, Math.min(0.10, t.impDiffThreshold))
+	t.impDiffThreshold = Math.max(0.01, Math.min(0.1, t.impDiffThreshold))
 
 	return t
 }
@@ -578,10 +580,7 @@ export function computeTurnSelfAttentionMean(hierarchy: ContextHierarchy, turnId
  *
  * Use getAllTurnImportances() to get per-turn scores as a Float64Array.
  */
-export function computeTurnImportance(
-	hierarchy: ContextHierarchy,
-	turnIdx?: number,
-): number {
+export function computeTurnImportance(hierarchy: ContextHierarchy, turnIdx?: number): number {
 	const N = hierarchy.turnCount
 	if (N === 0) return 0
 

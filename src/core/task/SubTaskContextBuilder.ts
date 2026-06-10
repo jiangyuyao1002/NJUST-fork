@@ -129,7 +129,9 @@ export function generateParentContextSummary(
 		if (typeof content === "string") return content
 		if (Array.isArray(content)) {
 			return content
-				.filter((block: { type: string; text?: string }) => block.type === "text" && typeof block.text === "string")
+				.filter(
+					(block: { type: string; text?: string }) => block.type === "text" && typeof block.text === "string",
+				)
 				.map((block: { type: string; text?: string }) => block.text!)
 				.join("\n")
 		}
@@ -150,7 +152,9 @@ export function generateParentContextSummary(
 
 		if (config.includeFileChanges) {
 			// Extract file paths from tool use patterns
-			const filePatterns = text.match(/(?:write_to_file|apply_diff|read_file).*?(?:path|file)["':>\s]+([^"'<\n]+)/gi)
+			const filePatterns = text.match(
+				/(?:write_to_file|apply_diff|read_file).*?(?:path|file)["':>\s]+([^"'<\n]+)/gi,
+			)
 			if (filePatterns) {
 				for (const match of filePatterns) {
 					const pathMatch = match.match(/["':>\s]([^"'<\n]+\.[a-zA-Z]{1,10})$/)
@@ -283,7 +287,9 @@ export function generateTaskResultSummary(
 		if (typeof content === "string") return content
 		if (Array.isArray(content)) {
 			return content
-				.filter((block: { type: string; text?: string }) => block.type === "text" && typeof block.text === "string")
+				.filter(
+					(block: { type: string; text?: string }) => block.type === "text" && typeof block.text === "string",
+				)
 				.map((block: { type: string; text?: string }) => block.text!)
 				.join("\n")
 		}

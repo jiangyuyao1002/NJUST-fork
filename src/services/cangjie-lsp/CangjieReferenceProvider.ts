@@ -24,10 +24,9 @@ export class CangjieReferenceProvider implements vscode.ReferenceProvider {
 		const refs = this.index.findReferences(word, document.uri)
 		if (refs.length === 0) return undefined
 
-		const locations = refs.map((r) => new vscode.Location(
-			vscode.Uri.file(r.filePath),
-			new vscode.Position(r.line, r.column),
-		))
+		const locations = refs.map(
+			(r) => new vscode.Location(vscode.Uri.file(r.filePath), new vscode.Position(r.line, r.column)),
+		)
 
 		if (!context.includeDeclaration) {
 			const defs = this.index.findDefinitions(word, document.uri)

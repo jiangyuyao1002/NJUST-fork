@@ -135,9 +135,7 @@ export class TaskResultAggregator {
 		// Group results by type (failed tasks are collected separately regardless of type)
 		const codeResults = this.results.filter((r) => r.resultType === "code_modification" && r.status !== "failed")
 		const searchResults = this.results.filter((r) => r.resultType === "search_analysis" && r.status !== "failed")
-		const commandResults = this.results.filter(
-			(r) => r.resultType === "command_execution" && r.status !== "failed",
-		)
+		const commandResults = this.results.filter((r) => r.resultType === "command_execution" && r.status !== "failed")
 		const generalResults = this.results.filter((r) => r.resultType === "general" && r.status !== "failed")
 		const failedResults = this.results.filter((r) => r.status === "failed")
 
@@ -158,8 +156,7 @@ export class TaskResultAggregator {
 			const content = searchResults
 				.map((r) => {
 					const summary = truncateText(r.summary, MAX_PER_SUBTASK_TOKENS * 4)
-					const refs =
-						r.filesRead.length > 0 ? `\n  References: ${r.filesRead.slice(0, 10).join(", ")}` : ""
+					const refs = r.filesRead.length > 0 ? `\n  References: ${r.filesRead.slice(0, 10).join(", ")}` : ""
 					return `- ${r.taskDescription}: ${summary}${refs}`
 				})
 				.join("\n")

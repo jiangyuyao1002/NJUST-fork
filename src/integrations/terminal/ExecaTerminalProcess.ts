@@ -120,7 +120,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 						try {
 							this.subprocess?.kill("SIGKILL")
 						} catch {
-							// SIGKILL may fail if process already exited — expected and ignorable
+							// intentionally ignored: SIGKILL may fail if process already exited
 						}
 
 						resolve()
@@ -192,7 +192,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 						try {
 							this.subprocess?.kill("SIGKILL")
 						} catch {
-							/* Process may have already exited */
+							// intentionally ignored: process may have already exited
 						}
 					}, 5_000)
 					timer.unref() // Don't block Node.js exit
@@ -212,7 +212,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 						try {
 							process.kill(this.pid!, "SIGKILL")
 						} catch {
-							/* Process may have already exited */
+							// intentionally ignored: process may have already exited
 						}
 					}, 5_000)
 					timer.unref()

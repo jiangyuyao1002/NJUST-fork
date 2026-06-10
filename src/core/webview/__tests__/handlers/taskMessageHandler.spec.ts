@@ -16,7 +16,9 @@ vi.mock("../../../integrations/theme/getTheme", () => ({ getTheme: vi.fn().mockR
 vi.mock("../../../../shared/package", () => ({ Package: { name: "njust-ai" } }))
 vi.mock("../../../task-persistence", () => ({ saveTaskMessages: vi.fn() }))
 vi.mock("../../handlers/shared-utils", () => ({
-	resolveIncomingImages: vi.fn().mockImplementation((_ctx: any, data: any) => Promise.resolve({ text: data.text, images: data.images })),
+	resolveIncomingImages: vi
+		.fn()
+		.mockImplementation((_ctx: any, data: any) => Promise.resolve({ text: data.text, images: data.images })),
 }))
 
 import { registerTaskHandlers } from "../../handlers/taskMessageHandler"
@@ -36,13 +38,32 @@ describe("taskMessageHandler", () => {
 
 	it("registers all expected task handlers", () => {
 		const registeredTypes = [
-			"webviewDidLaunch", "newTask", "clearTask", "cancelTask", "cancelAutoApproval",
-			"exportCurrentTask", "showTaskWithId", "deleteTaskWithId", "deleteMultipleTasksWithIds",
-			"exportTaskWithId", "getTaskWithAggregatedCosts", "condenseTaskContextRequest",
-			"didShowAnnouncement", "deleteMessage", "submitEditedMessage", "deleteMessageConfirm",
-			"editMessageConfirm", "updateTodoList", "focusPanelRequest", "switchTab",
-			"queueMessage", "removeQueuedMessage", "editQueuedMessage",
-			"checkpointDiff", "checkpointRestore", "planAction",
+			"webviewDidLaunch",
+			"newTask",
+			"clearTask",
+			"cancelTask",
+			"cancelAutoApproval",
+			"exportCurrentTask",
+			"showTaskWithId",
+			"deleteTaskWithId",
+			"deleteMultipleTasksWithIds",
+			"exportTaskWithId",
+			"getTaskWithAggregatedCosts",
+			"condenseTaskContextRequest",
+			"didShowAnnouncement",
+			"deleteMessage",
+			"submitEditedMessage",
+			"deleteMessageConfirm",
+			"editMessageConfirm",
+			"updateTodoList",
+			"focusPanelRequest",
+			"switchTab",
+			"queueMessage",
+			"removeQueuedMessage",
+			"editQueuedMessage",
+			"checkpointDiff",
+			"checkpointRestore",
+			"planAction",
 		]
 		for (const type of registeredTypes) {
 			const handler = vi.fn()
@@ -150,7 +171,13 @@ describe("taskMessageHandler", () => {
 
 		await router.route(context, { type: "newTask", text: "do something", images: [] } as any)
 
-		expect(context.provider.createTask).toHaveBeenCalledWith("do something", [], undefined, expect.any(Object), undefined)
+		expect(context.provider.createTask).toHaveBeenCalledWith(
+			"do something",
+			[],
+			undefined,
+			expect.any(Object),
+			undefined,
+		)
 	})
 
 	it("condenseTaskContextRequest calls provider.condenseTaskContext", async () => {

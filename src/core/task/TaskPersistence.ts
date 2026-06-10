@@ -50,10 +50,7 @@ export function addToClineMessagesWithTask(
 	return msgMgr.addToClineMessages(message as ClineMessage)
 }
 
-export function overwriteClineMessagesWithTask(
-	msgMgr: TaskMessageManager,
-	newMessages: ClineMessage[],
-): Promise<void> {
+export function overwriteClineMessagesWithTask(msgMgr: TaskMessageManager, newMessages: ClineMessage[]): Promise<void> {
 	return msgMgr.overwriteClineMessages(newMessages)
 }
 
@@ -65,10 +62,7 @@ export function saveClineMessagesWithTask(msgMgr: TaskMessageManager): Promise<b
 	return msgMgr.saveClineMessages()
 }
 
-export function findMessageByTimestampWithTask(
-	msgMgr: TaskMessageManager,
-	ts: number,
-): ClineMessage | undefined {
+export function findMessageByTimestampWithTask(msgMgr: TaskMessageManager, ts: number): ClineMessage | undefined {
 	return msgMgr.findMessageByTimestamp(ts)
 }
 

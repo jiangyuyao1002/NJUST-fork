@@ -90,7 +90,11 @@ export class StreamingToolExecutor {
 		)
 	}
 
-	async runEagerBatch(task: Task, batch: ToolUse[], runOne: (toolUse: ToolUse, signal: AbortSignal) => Promise<void>): Promise<void> {
+	async runEagerBatch(
+		task: Task,
+		batch: ToolUse[],
+		runOne: (toolUse: ToolUse, signal: AbortSignal) => Promise<void>,
+	): Promise<void> {
 		const itemCategories = new Map<number, ReturnType<typeof classifyToolCategory>>()
 		batch.forEach((toolUse, index) => {
 			itemCategories.set(index, classifyToolCategory(toolUse.name, false))
@@ -123,7 +127,10 @@ export class StreamingToolExecutor {
 			// Log the aggregate error but don't re-throw — doing so would trigger the
 			// serial fallback path and re-execute already-completed tools.
 			logger.error("StreamingToolExecutor", "eager batch completed with errors:", err)
-			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
+			TelemetryService.reportError(
+				err instanceof Error ? err : new Error(String(err)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 		}
 	}
 
@@ -135,13 +142,11 @@ export class StreamingToolExecutor {
 	static isMaxOutputTokensError(error: UnsafeAny): boolean {
 		if (!error) return false
 		const msg = String((error as Record<string, UnsafeAny>)?.message ?? "").toLowerCase()
-		const stopReason = String((error as Record<string, UnsafeAny>)?.stop_reason ?? (error as Record<string, UnsafeAny>)?.stopReason ?? "").toLowerCase()
+		const stopReason = String(
+			(error as Record<string, UnsafeAny>)?.stop_reason ?? (error as Record<string, UnsafeAny>)?.stopReason ?? "",
+		).toLowerCase()
 
-		return (
-			/max[_\s-]?output[_\s-]?tokens/.test(msg) ||
-			stopReason === "max_tokens" ||
-			stopReason === "length"
-		)
+		return /max[_\s-]?output[_\s-]?tokens/.test(msg) || stopReason === "max_tokens" || stopReason === "length"
 	}
 
 	/**

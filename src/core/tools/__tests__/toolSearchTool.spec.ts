@@ -46,7 +46,7 @@ describe("toolSearchTool", () => {
 		} as any)
 
 		const output = pushToolResult.mock.calls[0][0] as string
-		expect(output).toContain("Found 1 deferred tool(s) matching \"read\"")
+		expect(output).toContain('Found 1 deferred tool(s) matching "read"')
 		expect(output).toContain("Read File (read_file)")
 		expect(output).not.toContain("Tool Search")
 	})
@@ -71,7 +71,7 @@ describe("toolSearchTool", () => {
 		} as any)
 
 		const output = pushToolResult.mock.calls[0][0] as string
-		expect(output).toContain("No deferred tools matched the query \"database\"")
+		expect(output).toContain('No deferred tools matched the query "database"')
 		expect(output).toContain("Available deferred tools: Read File")
 	})
 })

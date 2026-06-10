@@ -141,10 +141,7 @@ describe("handleOpenFile security", () => {
 
 		await router.route(context, message)
 
-		expect(mockOpenFile).toHaveBeenCalledWith(
-			"/workspace/src/file.ts",
-			undefined,
-		)
+		expect(mockOpenFile).toHaveBeenCalledWith("/workspace/src/file.ts", undefined)
 	})
 
 	it("resolves relative paths before checking", async () => {

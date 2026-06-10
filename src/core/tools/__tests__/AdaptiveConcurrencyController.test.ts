@@ -16,14 +16,16 @@ describe("AdaptiveConcurrencyController", () => {
 		const c = new AdaptiveConcurrencyController({ read: 2 })
 		let active = 0
 		let maxActive = 0
-		await Promise.all(Array.from({ length: 5 }).map(async () => {
-			await c.acquire("read")
-			active++
-			maxActive = Math.max(maxActive, active)
-			await new Promise((r) => setTimeout(r, 10))
-			active--
-			c.release("read")
-		}))
+		await Promise.all(
+			Array.from({ length: 5 }).map(async () => {
+				await c.acquire("read")
+				active++
+				maxActive = Math.max(maxActive, active)
+				await new Promise((r) => setTimeout(r, 10))
+				active--
+				c.release("read")
+			}),
+		)
 		expect(maxActive).toBeLessThanOrEqual(4)
 	})
 
@@ -57,13 +59,23 @@ describe("executor integration", () => {
 		const items = [0, 1, 2]
 		let maxRead = 0
 		let maxWrite = 0
-		await executor.run(items, async (_item, idx) => {
-			const category: ToolCategory = idx === 0 || idx === 2 ? "read" : "write"
-			const statusBefore = controller.getStatus()[category].active
-			if (category === "read") maxRead = Math.max(maxRead, statusBefore)
-			else maxWrite = Math.max(maxWrite, statusBefore)
-			await new Promise((r) => setTimeout(r, 5))
-		}, { itemCategories: new Map([[0, "read"], [1, "write"], [2, "read"]]) })
+		await executor.run(
+			items,
+			async (_item, idx) => {
+				const category: ToolCategory = idx === 0 || idx === 2 ? "read" : "write"
+				const statusBefore = controller.getStatus()[category].active
+				if (category === "read") maxRead = Math.max(maxRead, statusBefore)
+				else maxWrite = Math.max(maxWrite, statusBefore)
+				await new Promise((r) => setTimeout(r, 5))
+			},
+			{
+				itemCategories: new Map([
+					[0, "read"],
+					[1, "write"],
+					[2, "read"],
+				]),
+			},
+		)
 		expect(maxRead).toBeLessThanOrEqual(1)
 		expect(maxWrite).toBeLessThanOrEqual(1)
 	})
@@ -73,11 +85,21 @@ describe("executor integration", () => {
 		const scheduler = new ToolExecutionScheduler()
 		const executor = new ConcurrentToolExecutor({ maxConcurrency: 3, concurrencyController: controller, scheduler })
 		const events: string[] = []
-		await executor.run(["r1", "w1", "r2"], async (item, idx) => {
-			events.push(`start-${item}`)
-			await new Promise((r) => setTimeout(r, idx === 1 ? 15 : 5))
-			events.push(`end-${item}`)
-		}, { itemCategories: new Map([[0, "read"], [1, "write"], [2, "read"]]) })
+		await executor.run(
+			["r1", "w1", "r2"],
+			async (item, idx) => {
+				events.push(`start-${item}`)
+				await new Promise((r) => setTimeout(r, idx === 1 ? 15 : 5))
+				events.push(`end-${item}`)
+			},
+			{
+				itemCategories: new Map([
+					[0, "read"],
+					[1, "write"],
+					[2, "read"],
+				]),
+			},
+		)
 		expect(events.indexOf("start-w1")).toBeGreaterThanOrEqual(0)
 	})
 })

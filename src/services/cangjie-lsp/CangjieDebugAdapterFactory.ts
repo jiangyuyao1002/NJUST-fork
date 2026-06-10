@@ -39,7 +39,7 @@ function findCangjieExecutableInTarget(workspaceRoot: string): string | undefine
 		try {
 			if (fs.existsSync(p) && fs.statSync(p).isFile()) return p
 		} catch {
-			/* ignore */
+			// intentionally ignored: file existence check fallback
 		}
 	}
 

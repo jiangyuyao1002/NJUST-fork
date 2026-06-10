@@ -99,9 +99,7 @@ void translationsReady.then(() =>
 		fallbackLng: "en",
 		debug: false,
 		resources: translations,
-		parseMissingKeyHandler: isDevMode
-			? (key: string) => `[MISSING] ${key}`
-			: undefined,
+		parseMissingKeyHandler: isDevMode ? (key: string) => `[MISSING] ${key}` : undefined,
 		interpolation: {
 			escapeValue: false,
 		},

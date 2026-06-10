@@ -65,7 +65,10 @@ function getContextSectionCacheTtlMs(): number {
 		return l3TtlConfigCache.value
 	}
 	const v = vscode.workspace.getConfiguration(Package.name).get<number>("cangjieContext.l3CacheTtlMs")
-	const value = typeof v === "number" && v >= LIMITS.CANGJIE_L3_CACHE_TTL_MIN_MS && v <= LIMITS.CANGJIE_L3_CACHE_TTL_MAX_MS ? Math.floor(v) : LIMITS.CANGJIE_L3_CACHE_TTL_DEFAULT_MS
+	const value =
+		typeof v === "number" && v >= LIMITS.CANGJIE_L3_CACHE_TTL_MIN_MS && v <= LIMITS.CANGJIE_L3_CACHE_TTL_MAX_MS
+			? Math.floor(v)
+			: LIMITS.CANGJIE_L3_CACHE_TTL_DEFAULT_MS
 	l3TtlConfigCache = { value, fetchedAt: now }
 	return value
 }
@@ -87,9 +90,7 @@ export async function computeContextCacheKey(cwd: string, diagSummaryHash: numbe
 	const openFilesPromises = vscode.window.visibleTextEditors
 		.filter((e) => e.document.languageId === "cangjie" || e.document.fileName.endsWith(".cj"))
 		.map((e) => editorDocumentCacheKey(e.document.uri))
-	const openFiles = (await Promise.all(openFilesPromises))
-		.sort()
-		.join("|")
+	const openFiles = (await Promise.all(openFilesPromises)).sort().join("|")
 	return `${cwd}|${openFiles}|${diagSummaryHash}|ch:${getCompileHistoryRevision(cwd)}`
 }
 
@@ -153,7 +154,9 @@ export function getCangjieSystemPromptCacheKeySuffix(cwd: string, mode: string, 
 }
 
 export function getCachedProjectOverview(key: string, now: number): string | null {
-	return projectOverviewCache && projectOverviewCache.key === key && now - projectOverviewCache.time < PROJECT_OVERVIEW_CACHE_TTL_MS
+	return projectOverviewCache &&
+		projectOverviewCache.key === key &&
+		now - projectOverviewCache.time < PROJECT_OVERVIEW_CACHE_TTL_MS
 		? projectOverviewCache.value
 		: null
 }
@@ -163,7 +166,9 @@ export function setCachedProjectOverview(key: string, value: string | null, now:
 }
 
 export function getCachedHeavyContext(key: string, now: number): HeavyContextBundle | null {
-	return heavyContextCache && heavyContextCache.key === key && now - heavyContextCache.time < HEAVY_CONTEXT_CACHE_TTL_MS
+	return heavyContextCache &&
+		heavyContextCache.key === key &&
+		now - heavyContextCache.time < HEAVY_CONTEXT_CACHE_TTL_MS
 		? heavyContextCache.value
 		: null
 }

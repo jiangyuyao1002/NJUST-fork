@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import {
-	DuckDuckGoSearchProvider,
-	BaiduFreeSearchProvider,
-	SogouFreeSearchProvider,
-} from "../WebSearchProvider"
+import { DuckDuckGoSearchProvider, BaiduFreeSearchProvider, SogouFreeSearchProvider } from "../WebSearchProvider"
 
 vi.mock("../../../core/security/networkGuard", () => ({
 	guardedFetch: vi.fn(),
@@ -68,8 +64,7 @@ describe("WebSearchProvider ReDoS hardening", () => {
 		})
 
 		it("Sogou truncates HTML to 500KB before parsing", async () => {
-			const afterMarker =
-				'<h3><a href="https://example.com/hidden">Hidden After 500KB</a></h3>'
+			const afterMarker = '<h3><a href="https://example.com/hidden">Hidden After 500KB</a></h3>'
 			const padding = "<div>" + "x".repeat(500_001) + "</div>"
 			const html = padding + afterMarker
 
@@ -97,10 +92,12 @@ describe("WebSearchProvider ReDoS hardening", () => {
 			const links: string[] = []
 			const snippets: string[] = []
 			for (let i = 0; i < 200; i++) {
-				links.push('<a rel="nofollow" href="https://example.com/' + i + '" class="result-link">Result ' + i + '</a>')
-				snippets.push('<td class="result-snippet">Snippet ' + i + '</td>')
+				links.push(
+					'<a rel="nofollow" href="https://example.com/' + i + '" class="result-link">Result ' + i + "</a>",
+				)
+				snippets.push('<td class="result-snippet">Snippet ' + i + "</td>")
 			}
-			const html = links.join('') + snippets.join('')
+			const html = links.join("") + snippets.join("")
 
 			globalThis.fetch = vi.fn().mockResolvedValue({
 				ok: true,

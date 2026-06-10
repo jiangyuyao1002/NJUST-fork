@@ -9,13 +9,16 @@ import { TelemetryEventName } from "@njust-ai/types"
 import { TelemetryService } from "@njust-ai/telemetry"
 
 export interface ICheckpointRestoreHost {
-	setPendingEditOperation(operationId: string, editData: {
-		messageTs: number
-		editedContent: string
-		images?: string[]
-		messageIndex: number
-		apiConversationHistoryIndex: number
-	}): void
+	setPendingEditOperation(
+		operationId: string,
+		editData: {
+			messageTs: number
+			editedContent: string
+			images?: string[]
+			messageIndex: number
+			apiConversationHistoryIndex: number
+		},
+	): void
 	readonly contextProxy: { globalStorageUri: { fsPath: string } }
 	getTaskWithId(id: string): Promise<{ historyItem: UnsafeAny }>
 	createTaskWithHistoryItem(historyItem: UnsafeAny): Promise<Task | undefined>
@@ -79,14 +82,15 @@ export async function handleCheckpointRestoreOperation(config: CheckpointRestore
 	} catch (error) {
 		logger.error("CheckpointRestore", `Error in checkpoint restore (${operation}):`, error)
 		TelemetryService.reportError(error, TelemetryEventName.CHECKPOINT_ERROR)
-		vscode.window.showErrorMessage(
-			`Error during checkpoint restore: ${getErrorMessage(error)}`,
-		)
+		vscode.window.showErrorMessage(`Error during checkpoint restore: ${getErrorMessage(error)}`)
 		throw error
 	}
 }
 
-export async function waitForClineInitialization(provider: ICheckpointRestoreHost, timeoutMs: number = 3000): Promise<boolean> {
+export async function waitForClineInitialization(
+	provider: ICheckpointRestoreHost,
+	timeoutMs: number = 3000,
+): Promise<boolean> {
 	try {
 		await pWaitFor(() => provider.getCurrentTask()?.isInitialized === true, {
 			timeout: timeoutMs,
@@ -98,4 +102,3 @@ export async function waitForClineInitialization(provider: ICheckpointRestoreHos
 		return false
 	}
 }
-

@@ -61,7 +61,9 @@ export const fallbackModels: Partial<Record<ProviderName, DynamicModelRecord>> =
 	},
 
 	fireworks: {
-		"accounts/fireworks/models/llama4-maverick-instruct-basic": model("accounts/fireworks/models/llama4-maverick-instruct-basic"),
+		"accounts/fireworks/models/llama4-maverick-instruct-basic": model(
+			"accounts/fireworks/models/llama4-maverick-instruct-basic",
+		),
 	},
 
 	sambanova: {

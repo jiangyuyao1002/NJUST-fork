@@ -30,7 +30,9 @@ describe("TaskCoordinator", () => {
 	})
 
 	it("delegates task lifecycle operations", async () => {
-		await expect(coordinator.createTask("hello", ["img"], undefined, { taskId: "task-1" } as any, {})).resolves.toBe(task)
+		await expect(
+			coordinator.createTask("hello", ["img"], undefined, { taskId: "task-1" } as any, {}),
+		).resolves.toBe(task)
 		await coordinator.cancelTask()
 		await coordinator.clearTask()
 		coordinator.resumeTask("task-1")

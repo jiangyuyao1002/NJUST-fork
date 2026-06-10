@@ -6,7 +6,9 @@ import { NJUST_AIEventName, NjustAiEventsSchema, taskEventSchema } from "@njust-
 
 describe("delegation event schemas", () => {
 	test("NjustAiEventsSchema validates tuples", () => {
-		expect(() => (NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegated].parse(["p", "c"])).not.toThrow()
+		expect(() =>
+			(NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegated].parse(["p", "c"]),
+		).not.toThrow()
 		expect(() =>
 			(NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegationCompleted].parse(["p", "c", "s"]),
 		).not.toThrow()

@@ -42,9 +42,7 @@ describe("Solidity Source Code Definition Tests", () => {
 	it("should parse function declarations", () => {
 		expect(parseResult).toMatch(/70--87 \| {5}function transfer\(/)
 		expect(parseResult).toMatch(/89--93 \| {5}function interfaceFunction\(/)
-		expect(parseResult).toMatch(
-			/6--6 \| {5}function interfaceFunction\(uint256 value\) external returns \(bool\);/,
-		)
+		expect(parseResult).toMatch(/6--6 \| {5}function interfaceFunction\(uint256 value\) external returns \(bool\);/)
 		expect(parseResult).toMatch(
 			/12--14 \| {5}function add\(uint256 a, uint256 b\) internal pure returns \(uint256\) {/,
 		)

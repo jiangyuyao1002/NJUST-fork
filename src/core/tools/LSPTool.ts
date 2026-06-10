@@ -141,7 +141,9 @@ function formatSymbolResults(symbols: UnsafeAny[], cwd: string): string {
 export class LSPTool extends BaseTool<"lsp"> {
 	readonly name = "lsp" as const
 
-	override get shouldDefer() { return true }
+	override get shouldDefer() {
+		return true
+	}
 
 	override isConcurrencySafe(): boolean {
 		return true
@@ -260,7 +262,11 @@ export class LSPTool extends BaseTool<"lsp"> {
 					(action === "hover" || action === "definition") &&
 					!/^No (hover information available|results found)\./.test(resultText)
 				) {
-					task.cangjieRuntimePolicy.noteLspEvidence(action, `${relPath}:${line}:${character}`, resultText.slice(0, 1000))
+					task.cangjieRuntimePolicy.noteLspEvidence(
+						action,
+						`${relPath}:${line}:${character}`,
+						resultText.slice(0, 1000),
+					)
 				}
 			}
 

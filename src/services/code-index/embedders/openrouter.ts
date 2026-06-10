@@ -108,13 +108,14 @@ export class OpenRouterEmbedder implements IEmbedder {
 					const prefixedText = `${queryPrefix}${text}`
 					const estimatedTokens = Math.ceil(prefixedText.length / 4)
 					if (estimatedTokens > MAX_ITEM_TOKENS) {
-						logger.warn("OpenRouterEmbedder",
-								t("embeddings:textWithPrefixExceedsTokenLimit", {
-									index,
-									estimatedTokens,
-									maxTokens: MAX_ITEM_TOKENS,
-								}),
-							)
+						logger.warn(
+							"OpenRouterEmbedder",
+							t("embeddings:textWithPrefixExceedsTokenLimit", {
+								index,
+								estimatedTokens,
+								maxTokens: MAX_ITEM_TOKENS,
+							}),
+						)
 						// Return original text if adding prefix would exceed limit
 						return text
 					}
@@ -136,13 +137,14 @@ export class OpenRouterEmbedder implements IEmbedder {
 				const itemTokens = Math.ceil(text.length / 4)
 
 				if (itemTokens > this.maxItemTokens) {
-					logger.warn("OpenRouterEmbedder",
-							t("embeddings:textExceedsTokenLimit", {
-								index: i,
-								itemTokens,
-								maxTokens: this.maxItemTokens,
-							}),
-						)
+					logger.warn(
+						"OpenRouterEmbedder",
+						t("embeddings:textExceedsTokenLimit", {
+							index: i,
+							itemTokens,
+							maxTokens: this.maxItemTokens,
+						}),
+					)
 					processedIndices.push(i)
 					continue
 				}
@@ -253,20 +255,25 @@ export class OpenRouterEmbedder implements IEmbedder {
 						const globalDelay = await this.getGlobalRateLimitDelay()
 						const delayMs = Math.max(baseDelay, globalDelay)
 
-						logger.warn("OpenRouterEmbedder",
-								t("embeddings:rateLimitRetry", {
-									delayMs,
-									attempt: attempts + 1,
-									maxRetries: MAX_RETRIES,
-								}),
-							)
+						logger.warn(
+							"OpenRouterEmbedder",
+							t("embeddings:rateLimitRetry", {
+								delayMs,
+								attempt: attempts + 1,
+								maxRetries: MAX_RETRIES,
+							}),
+						)
 						await new Promise((resolve) => setTimeout(resolve, delayMs))
 						continue
 					}
 				}
 
 				// Log the error for debugging
-				logger.error("OpenRouterEmbedder", `OpenRouter embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
+				logger.error(
+					"OpenRouterEmbedder",
+					`OpenRouter embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`,
+					error,
+				)
 
 				// Format and throw the error
 				throw formatEmbeddingError(error, MAX_RETRIES)

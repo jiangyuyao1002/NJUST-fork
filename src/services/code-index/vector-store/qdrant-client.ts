@@ -137,7 +137,11 @@ export class QdrantVectorStore implements IVectorStore {
 			return collectionInfo
 		} catch (error: UnsafeAny) {
 			if (error instanceof Error) {
-				logger.warn("QdrantVectorStore", `Warning during getCollectionInfo for "${this.collectionName}". Collection may not exist or another error occurred:`, error.message)
+				logger.warn(
+					"QdrantVectorStore",
+					`Warning during getCollectionInfo for "${this.collectionName}". Collection may not exist or another error occurred:`,
+					error.message,
+				)
 				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 			}
 			return null
@@ -199,7 +203,11 @@ export class QdrantVectorStore implements IVectorStore {
 			return created
 		} catch (error: UnsafeAny) {
 			const errorMessage = getErrorMessage(error)
-			logger.error("QdrantVectorStore", `Failed to initialize Qdrant collection "${this.collectionName}":`, errorMessage)
+			logger.error(
+				"QdrantVectorStore",
+				`Failed to initialize Qdrant collection "${this.collectionName}":`,
+				errorMessage,
+			)
 			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 
 			// If this is already a vector dimension mismatch error (identified by cause), re-throw it as-is
@@ -220,7 +228,10 @@ export class QdrantVectorStore implements IVectorStore {
 	 * @returns Promise resolving to boolean indicating if a new collection was created
 	 */
 	private async _recreateCollectionWithNewDimension(existingVectorSize: number): Promise<boolean> {
-		logger.warn("QdrantVectorStore", `Collection ${this.collectionName} exists with vector size ${existingVectorSize}, but expected ${this.vectorSize}. Recreating collection.`)
+		logger.warn(
+			"QdrantVectorStore",
+			`Collection ${this.collectionName} exists with vector size ${existingVectorSize}, but expected ${this.vectorSize}. Recreating collection.`,
+		)
 
 		let deletionSucceeded = false
 		let recreationAttempted = false
@@ -242,7 +253,10 @@ export class QdrantVectorStore implements IVectorStore {
 			}
 
 			// Step 4: Create the new collection with correct dimensions
-logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName} with vector size ${this.vectorSize}...`)
+			logger.info(
+				"QdrantVectorStore",
+				`Creating new collection ${this.collectionName} with vector size ${this.vectorSize}...`,
+			)
 			recreationAttempted = true
 			await this.client.createCollection(this.collectionName, {
 				vectors: {
@@ -271,7 +285,10 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 				contextualErrorMessage = `Deleted existing collection but failed to create new collection with vector size ${this.vectorSize}. ${errorMessage}`
 			}
 
-			logger.error("QdrantVectorStore", `CRITICAL: Failed to recreate collection ${this.collectionName} for dimension change (${existingVectorSize} -> ${this.vectorSize}). ${contextualErrorMessage}`)
+			logger.error(
+				"QdrantVectorStore",
+				`CRITICAL: Failed to recreate collection ${this.collectionName} for dimension change (${existingVectorSize} -> ${this.vectorSize}). ${contextualErrorMessage}`,
+			)
 			TelemetryService.reportError(recreationError, TelemetryEventName.CODE_INDEX_ERROR)
 
 			// Create a comprehensive error message for the user
@@ -300,9 +317,13 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 		} catch (indexError: UnsafeAny) {
 			const errorMessage = getErrorMessage(indexError).toLowerCase()
 			if (!errorMessage.includes("already exists")) {
-					logger.warn("QdrantVectorStore", `Could not create payload index for type on ${this.collectionName}. Details:`, getErrorMessage(indexError))
-					TelemetryService.reportError(indexError, TelemetryEventName.CODE_INDEX_ERROR)
-				}
+				logger.warn(
+					"QdrantVectorStore",
+					`Could not create payload index for type on ${this.collectionName}. Details:`,
+					getErrorMessage(indexError),
+				)
+				TelemetryService.reportError(indexError, TelemetryEventName.CODE_INDEX_ERROR)
+			}
 		}
 
 		// Create indexes for pathSegments fields
@@ -315,7 +336,11 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			} catch (indexError: UnsafeAny) {
 				const errorMessage = getErrorMessage(indexError).toLowerCase()
 				if (!errorMessage.includes("already exists")) {
-					logger.warn("QdrantVectorStore", `Could not create payload index for pathSegments.${i} on ${this.collectionName}. Details:`, getErrorMessage(indexError))
+					logger.warn(
+						"QdrantVectorStore",
+						`Could not create payload index for pathSegments.${i} on ${this.collectionName}. Details:`,
+						getErrorMessage(indexError),
+					)
 					TelemetryService.reportError(indexError, TelemetryEventName.CODE_INDEX_ERROR)
 				}
 			}
@@ -478,7 +503,10 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 			// First check if the collection exists
 			const collectionExists = await this.collectionExists()
 			if (!collectionExists) {
-				logger.warn("QdrantVectorStore", `Skipping deletion - collection "${this.collectionName}" does not exist`)
+				logger.warn(
+					"QdrantVectorStore",
+					`Skipping deletion - collection "${this.collectionName}" does not exist`,
+				)
 				return
 			}
 
@@ -557,9 +585,9 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 	async clearCollection(): Promise<void> {
 		try {
 			await this.client.delete(this.collectionName, {
-					filter: {},
-					wait: true,
-				})
+				filter: {},
+				wait: true,
+			})
 		} catch (error) {
 			logger.error("QdrantVectorStore", "Failed to clear collection:", error)
 			TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
@@ -606,7 +634,10 @@ logger.info("QdrantVectorStore", `Creating new collection ${this.collectionName}
 
 			// Backward compatibility: No marker exists (old index or pre-marker version)
 			// Fall back to old logic - assume complete if collection has points
-			logger.info("QdrantVectorStore", "No indexing metadata marker found. Using backward compatibility mode (checking points_count > 0).")
+			logger.info(
+				"QdrantVectorStore",
+				"No indexing metadata marker found. Using backward compatibility mode (checking points_count > 0).",
+			)
 			return pointsCount > 0
 		} catch (error) {
 			logger.warn("QdrantVectorStore", "Failed to check if collection has data:", error)

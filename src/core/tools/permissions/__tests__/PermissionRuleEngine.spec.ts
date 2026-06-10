@@ -87,9 +87,9 @@ describe("PermissionRuleEngine - Extended", () => {
 			const engine = new PermissionRuleEngine()
 			engine.setMode("bypass")
 
-			await expect(
-				engine.evaluateAsync("execute_command", { command: "rm -rf /" }, destructive),
-			).resolves.toBe("deny")
+			await expect(engine.evaluateAsync("execute_command", { command: "rm -rf /" }, destructive)).resolves.toBe(
+				"deny",
+			)
 			expect(recordSecurityMetric).toHaveBeenCalledWith("permission_bypass_deny", expect.any(Object))
 		})
 
@@ -97,9 +97,7 @@ describe("PermissionRuleEngine - Extended", () => {
 			const engine = new PermissionRuleEngine()
 			engine.setMode("bypass")
 
-			await expect(
-				engine.evaluateAsync("execute_command", { command: "ls" }, writeTool),
-			).resolves.toBe("allow")
+			await expect(engine.evaluateAsync("execute_command", { command: "ls" }, writeTool)).resolves.toBe("allow")
 			expect(recordSecurityMetric).toHaveBeenCalledWith("permission_bypass_allow", expect.any(Object))
 		})
 
@@ -135,9 +133,7 @@ describe("PermissionRuleEngine - Extended", () => {
 			engine.setClassifierConfig({ enabledClassifiers: ["async-test"] })
 			engine.addRule(rule({ id: "deny-rule", action: "deny", toolPattern: "write_to_file" }))
 
-			await expect(
-				engine.evaluateAsync("write_to_file", {}, writeTool),
-			).resolves.toBe("deny")
+			await expect(engine.evaluateAsync("write_to_file", {}, writeTool)).resolves.toBe("deny")
 			expect(asyncClassifier.classify).not.toHaveBeenCalled()
 		})
 
@@ -152,9 +148,7 @@ describe("PermissionRuleEngine - Extended", () => {
 			engine.setClassifierConfig({ enabledClassifiers: ["async-test"] })
 			engine.addRule(rule({ id: "allow-rule", action: "allow", toolPattern: "write_to_file" }))
 
-			await expect(
-				engine.evaluateAsync("write_to_file", {}, writeTool),
-			).resolves.toBe("allow")
+			await expect(engine.evaluateAsync("write_to_file", {}, writeTool)).resolves.toBe("allow")
 			expect(asyncClassifier.classify).not.toHaveBeenCalled()
 		})
 
@@ -168,9 +162,7 @@ describe("PermissionRuleEngine - Extended", () => {
 			engine.registerClassifier(asyncClassifier)
 			engine.setClassifierConfig({ enabledClassifiers: ["async-deny"] })
 
-			await expect(
-				engine.evaluateAsync("write_to_file", {}, writeTool),
-			).resolves.toBe("deny")
+			await expect(engine.evaluateAsync("write_to_file", {}, writeTool)).resolves.toBe("deny")
 			expect(asyncClassifier.classify).toHaveBeenCalled()
 			expect(engine.getDenialCount("write_to_file")).toBe(1)
 		})
@@ -195,9 +187,7 @@ describe("PermissionRuleEngine - Extended", () => {
 			engine.recordDenial("write_to_file")
 			engine.recordDenial("write_to_file")
 
-			await expect(
-				engine.evaluateAsync("write_to_file", {}, writeTool),
-			).resolves.toBe("ask")
+			await expect(engine.evaluateAsync("write_to_file", {}, writeTool)).resolves.toBe("ask")
 		})
 
 		it("passes extra context to async classifiers", async () => {
@@ -229,9 +219,7 @@ describe("PermissionRuleEngine - Extended", () => {
 			engine.registerClassifier(classifier)
 			engine.setClassifierConfig({ enabledClassifiers: ["ask-classifier"] })
 
-			await expect(
-				engine.evaluateAsync("write_to_file", {}, writeTool),
-			).resolves.toBe("ask")
+			await expect(engine.evaluateAsync("write_to_file", {}, writeTool)).resolves.toBe("ask")
 		})
 	})
 
@@ -334,10 +322,7 @@ describe("PermissionRuleEngine - Extended", () => {
 
 			// Falls through to default (no sync result available)
 			expect(engine.evaluate("read_file", {}, readOnly)).toBe("allow")
-			expect(logger.warn).toHaveBeenCalledWith(
-				"PermissionRuleEngine",
-				expect.stringContaining("async-only"),
-			)
+			expect(logger.warn).toHaveBeenCalledWith("PermissionRuleEngine", expect.stringContaining("async-only"))
 		})
 
 		it("skips classifiers not in enabledClassifiers list", () => {
@@ -675,8 +660,22 @@ describe("PermissionRuleEngine - Extended", () => {
 			vi.mocked(fs.readFile).mockResolvedValueOnce(
 				JSON.stringify({
 					rules: [
-						{ id: "r1", description: "Rule 1", action: "allow", toolPattern: "read_*", priority: 10, source: "user" },
-						{ id: "r2", description: "Rule 2", action: "deny", toolPattern: "write_*", priority: 5, source: "policy" },
+						{
+							id: "r1",
+							description: "Rule 1",
+							action: "allow",
+							toolPattern: "read_*",
+							priority: 10,
+							source: "user",
+						},
+						{
+							id: "r2",
+							description: "Rule 2",
+							action: "deny",
+							toolPattern: "write_*",
+							priority: 5,
+							source: "policy",
+						},
 					],
 				}),
 			)
@@ -739,9 +738,7 @@ describe("PermissionRuleEngine - Extended", () => {
 		it("roundtrip: save then load produces identical rules", async () => {
 			const engine1 = engineWithoutClassifiers()
 			engine1.addRule(rule({ id: "r1", action: "allow", toolPattern: "read_*", priority: 10, source: "user" }))
-			engine1.addRule(
-				rule({ id: "r2", action: "deny", toolPattern: "write_*", priority: 5, source: "policy" }),
-			)
+			engine1.addRule(rule({ id: "r2", action: "deny", toolPattern: "write_*", priority: 5, source: "policy" }))
 
 			await engine1.saveToConfig("roundtrip.json")
 
@@ -751,10 +748,10 @@ describe("PermissionRuleEngine - Extended", () => {
 			const engine2 = engineWithoutClassifiers()
 			await engine2.loadFromConfig("roundtrip.json")
 
-			expect(engine2.getRules().map((r) => r.id)).toEqual(
-				engine1.getRules().map((r) => r.id),
-			)
-			expect(engine2.getRules().map((r) => ({ action: r.action, toolPattern: r.toolPattern, source: r.source }))).toEqual(
+			expect(engine2.getRules().map((r) => r.id)).toEqual(engine1.getRules().map((r) => r.id))
+			expect(
+				engine2.getRules().map((r) => ({ action: r.action, toolPattern: r.toolPattern, source: r.source })),
+			).toEqual(
 				engine1.getRules().map((r) => ({ action: r.action, toolPattern: r.toolPattern, source: r.source })),
 			)
 		})

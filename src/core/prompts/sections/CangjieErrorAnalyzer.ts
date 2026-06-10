@@ -26,7 +26,9 @@ export function resolveCjcPatternForDiagnostic(diag: vscode.Diagnostic): CjcErro
 	return matchCjcErrorPattern(diag.message)
 }
 
-export function buildDiagnosticPatternCache(diags: vscode.Diagnostic[]): Map<vscode.Diagnostic, CjcErrorPattern | null> {
+export function buildDiagnosticPatternCache(
+	diags: vscode.Diagnostic[],
+): Map<vscode.Diagnostic, CjcErrorPattern | null> {
 	const m = new Map<vscode.Diagnostic, CjcErrorPattern | null>()
 	for (const d of diags) m.set(d, resolveCjcPatternForDiagnostic(d))
 	return m

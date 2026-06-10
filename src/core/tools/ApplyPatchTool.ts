@@ -27,6 +27,7 @@ import {
 } from "./cangjiePreflightCheck"
 import { logger } from "../../shared/logger"
 import { getErrorMessage } from "../../shared/error-utils"
+import { t } from "../../i18n"
 
 interface ApplyPatchParams {
 	patch: string
@@ -102,10 +103,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				task.recordToolError("apply_patch")
 				// Agent-facing: format hint is embedded in tool_result sent to the AI,
 				// intentionally kept in Chinese.
-				const formatHint =
-					task.consecutiveMistakeCount >= 2
-						? "\n\n正确格式示例：\n*** Begin Patch\n*** Update File: path/to/file.cj\n@@ -line,count +line,count @@\n old line\n+new line\n*** End Patch"
-						: ""
+				const formatHint = task.consecutiveMistakeCount >= 2 ? t("tools.apply_patch_format_hint") : ""
 				const errorMessage =
 					error instanceof ParseError
 						? `Invalid patch format: ${error.message}${formatHint}`
@@ -131,10 +129,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			} catch (error) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("apply_patch")
-				const formatHint =
-					task.consecutiveMistakeCount >= 2
-						? "\n\n正确格式示例：\n*** Begin Patch\n*** Update File: path/to/file.cj\n@@ -line,count +line,count @@\n old line\n+new line\n*** End Patch"
-						: ""
+				const formatHint = task.consecutiveMistakeCount >= 2 ? t("tools.apply_patch_format_hint") : ""
 				const errorMessage = `Failed to process patch: ${getErrorMessage(error)}${formatHint}`
 				pushToolResult(formatResponse.toolError(errorMessage))
 				return

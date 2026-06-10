@@ -372,9 +372,17 @@ export class API extends EventEmitter<NJUST_AIEvents> implements NJUST_AIAPI {
 				;(this.emit as UnsafeAny)(NJUST_AIEventName.TaskDelegated, task.taskId, childTaskId)
 			})
 
-			task.on(NJUST_AIEventName.TaskDelegationCompleted as UnsafeAny, (childTaskId: UnsafeAny, summary: UnsafeAny) => {
-				;(this.emit as UnsafeAny)(NJUST_AIEventName.TaskDelegationCompleted, task.taskId, childTaskId, summary)
-			})
+			task.on(
+				NJUST_AIEventName.TaskDelegationCompleted as UnsafeAny,
+				(childTaskId: UnsafeAny, summary: UnsafeAny) => {
+					;(this.emit as UnsafeAny)(
+						NJUST_AIEventName.TaskDelegationCompleted,
+						task.taskId,
+						childTaskId,
+						summary,
+					)
+				},
+			)
 
 			task.on(NJUST_AIEventName.TaskDelegationResumed as UnsafeAny, (childTaskId: UnsafeAny) => {
 				;(this.emit as UnsafeAny)(NJUST_AIEventName.TaskDelegationResumed, task.taskId, childTaskId)
@@ -404,9 +412,12 @@ export class API extends EventEmitter<NJUST_AIEvents> implements NJUST_AIAPI {
 				this.emit(NJUST_AIEventName.TaskToolFailed, taskId, tool, error)
 			})
 
-			task.on(NJUST_AIEventName.TaskTokenUsageUpdated, (_: UnsafeAny, tokenUsage: UnsafeAny, toolUsage: UnsafeAny) => {
-				this.emit(NJUST_AIEventName.TaskTokenUsageUpdated, task.taskId, tokenUsage, toolUsage)
-			})
+			task.on(
+				NJUST_AIEventName.TaskTokenUsageUpdated,
+				(_: UnsafeAny, tokenUsage: UnsafeAny, toolUsage: UnsafeAny) => {
+					this.emit(NJUST_AIEventName.TaskTokenUsageUpdated, task.taskId, tokenUsage, toolUsage)
+				},
+			)
 
 			this.emit(NJUST_AIEventName.TaskCreated, task.taskId)
 		})

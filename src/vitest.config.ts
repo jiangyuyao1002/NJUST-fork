@@ -23,11 +23,22 @@ export default defineConfig({
 		maxWorkers: process.env.CI ? 1 : undefined,
 		testTimeout: 30_000,
 		hookTimeout: 30_000,
+		retry: 2,
 		coverage: {
 			provider: "v8",
 			reporter: ["json", "html", "text-summary"],
 			reportsDirectory: "../coverage/src",
-			include: ["src/core/**", "src/api/**", "src/services/**", "src/chat/**"],
+			include: [
+				"src/core/**",
+				"src/api/**",
+				"src/services/**",
+				"src/chat/**",
+				"src/utils/**",
+				"src/integrations/**",
+				"src/activate/**",
+				"src/shared/**",
+				"src/i18n/**",
+			],
 			exclude: [
 				"**/__tests__/**",
 				"**/__mocks__/**",

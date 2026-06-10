@@ -70,13 +70,7 @@ export interface AgentInfo {
 
 export type AgentSource = "built-in" | "userSettings" | "projectSettings" | "plugin"
 
-export type AgentPermissionMode =
-	| "bypassPermissions"
-	| "acceptEdits"
-	| "auto"
-	| "dontAsk"
-	| "plan"
-	| "default"
+export type AgentPermissionMode = "bypassPermissions" | "acceptEdits" | "auto" | "dontAsk" | "plan" | "default"
 
 export type AgentIsolation = "shared" | "forked" | "worktree"
 
@@ -136,10 +130,7 @@ export interface PluginAgentDefinition extends BaseAgentDefinition {
 	pluginId: string
 }
 
-export type AgentDefinition =
-	| BuiltInAgentDefinition
-	| CustomAgentDefinition
-	| PluginAgentDefinition
+export type AgentDefinition = BuiltInAgentDefinition | CustomAgentDefinition | PluginAgentDefinition
 
 /** Resolve effective tools considering allow-list and deny-list */
 export function resolveAgentTools(def: AgentDefinition): string[] {

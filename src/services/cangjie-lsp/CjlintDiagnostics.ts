@@ -100,7 +100,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 					env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
 				})
 			} catch {
-				// cjlint may exit with non-zero when issues are found
+				// intentionally ignored: cjlint exits non-zero when issues found
 			}
 
 			const allDiagnostics = new Map<string, vscode.Diagnostic[]>()
@@ -175,7 +175,7 @@ export class CjlintDiagnostics implements vscode.Disposable {
 						env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
 					})
 				} catch {
-					// cjlint may exit with non-zero when issues are found
+					// intentionally ignored: cjlint exits non-zero when issues found
 				}
 
 				const reportPath = `${tmpReport}.json`

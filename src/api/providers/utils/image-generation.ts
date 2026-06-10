@@ -134,7 +134,7 @@ export async function generateImageWithProvider(options: ImageGenerationOptions)
 					})
 				}
 			} catch {
-				// Use default error message
+				// intentionally ignored: error response body parse failure, use default message
 			}
 			return {
 				success: false,
@@ -267,7 +267,7 @@ export async function generateImageWithImagesApi(options: ImagesApiOptions): Pro
 					})
 				}
 			} catch {
-				// Use default error message
+				// intentionally ignored: error response body parse failure, use default message
 			}
 			return {
 				success: false,

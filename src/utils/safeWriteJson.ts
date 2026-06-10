@@ -129,11 +129,19 @@ async function safeWriteJson(filePath: string, data: UnsafeAny, options?: SafeWr
 			} catch (unlinkBackupError) {
 				// Log this error, but do not re-throw. The main operation was successful.
 				// actualTempBackupFilePath remains set, indicating an orphaned backup.
-				logger.error("SafeWriteJson", `Successfully wrote ${absoluteFilePath}, but failed to clean up backup ${actualTempBackupFilePath}:`, unlinkBackupError)
+				logger.error(
+					"SafeWriteJson",
+					`Successfully wrote ${absoluteFilePath}, but failed to clean up backup ${actualTempBackupFilePath}:`,
+					unlinkBackupError,
+				)
 			}
 		}
 	} catch (originalError) {
-		logger.error("SafeWriteJson", `Operation failed for ${absoluteFilePath}: [Original Error Caught]`, originalError)
+		logger.error(
+			"SafeWriteJson",
+			`Operation failed for ${absoluteFilePath}: [Original Error Caught]`,
+			originalError,
+		)
 
 		const newFileToCleanupWithinCatch = actualTempNewFilePath
 		const backupFileToRollbackOrCleanupWithinCatch = actualTempBackupFilePath
@@ -146,7 +154,11 @@ async function safeWriteJson(filePath: string, data: UnsafeAny, options?: SafeWr
 				actualTempBackupFilePath = null
 			} catch (rollbackError) {
 				// actualTempBackupFilePath (outer scope) remains pointing to backupFileToRollbackOrCleanupWithinCatch
-				logger.error("SafeWriteJson", `[Catch] Failed to restore backup ${backupFileToRollbackOrCleanupWithinCatch} to ${absoluteFilePath}:`, rollbackError)
+				logger.error(
+					"SafeWriteJson",
+					`[Catch] Failed to restore backup ${backupFileToRollbackOrCleanupWithinCatch} to ${absoluteFilePath}:`,
+					rollbackError,
+				)
 			}
 		}
 
@@ -155,7 +167,11 @@ async function safeWriteJson(filePath: string, data: UnsafeAny, options?: SafeWr
 			try {
 				await fs.unlink(newFileToCleanupWithinCatch)
 			} catch (cleanupError) {
-				logger.error("SafeWriteJson", `[Catch] Failed to clean up temporary new file ${newFileToCleanupWithinCatch}:`, cleanupError)
+				logger.error(
+					"SafeWriteJson",
+					`[Catch] Failed to clean up temporary new file ${newFileToCleanupWithinCatch}:`,
+					cleanupError,
+				)
 			}
 		}
 
@@ -164,7 +180,11 @@ async function safeWriteJson(filePath: string, data: UnsafeAny, options?: SafeWr
 			try {
 				await fs.unlink(actualTempBackupFilePath)
 			} catch (cleanupError) {
-				logger.error("SafeWriteJson", `[Catch] Failed to clean up temporary backup file ${actualTempBackupFilePath}:`, cleanupError)
+				logger.error(
+					"SafeWriteJson",
+					`[Catch] Failed to clean up temporary backup file ${actualTempBackupFilePath}:`,
+					cleanupError,
+				)
 			}
 		}
 		throw originalError // This MUST be the error that rejects the promise.

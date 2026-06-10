@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { CangjieSymbolIndex } from "./CangjieSymbolIndex"
-import {  type CangjieDefKind } from "../../services/tree-sitter/cangjieParser"
+import { type CangjieDefKind } from "../../services/tree-sitter/cangjieParser"
 
 const CALLABLE_KINDS: Set<CangjieDefKind> = new Set(["func", "main", "init", "macro", "operator"])
 
@@ -16,16 +16,19 @@ export class CangjieCallHierarchyProvider implements vscode.CallHierarchyProvide
 		const sym = this.index.findEnclosingSymbol(document.uri.fsPath, position.line)
 		if (!sym || !CALLABLE_KINDS.has(sym.kind)) return []
 
-		return [{
-			kind: sym.kind === "main" || sym.kind === "init"
-				? vscode.SymbolKind.Constructor
-				: vscode.SymbolKind.Function,
-			name: sym.name,
-			detail: sym.signature ?? sym.kind,
-			uri: vscode.Uri.file(sym.filePath),
-			range: new vscode.Range(sym.startLine, 0, sym.endLine, 0),
-			selectionRange: new vscode.Range(sym.startLine, 0, sym.startLine, 100),
-		}]
+		return [
+			{
+				kind:
+					sym.kind === "main" || sym.kind === "init"
+						? vscode.SymbolKind.Constructor
+						: vscode.SymbolKind.Function,
+				name: sym.name,
+				detail: sym.signature ?? sym.kind,
+				uri: vscode.Uri.file(sym.filePath),
+				range: new vscode.Range(sym.startLine, 0, sym.endLine, 0),
+				selectionRange: new vscode.Range(sym.startLine, 0, sym.startLine, 100),
+			},
+		]
 	}
 
 	// eslint-disable-next-line @typescript-eslint/require-await
@@ -92,7 +95,12 @@ export class CangjieCallHierarchyProvider implements vscode.CallHierarchyProvide
 						name: calleeName,
 						uri: item.uri,
 						range: new vscode.Range(callLine, match.index, callLine, match.index + calleeName.length),
-						selectionRange: new vscode.Range(callLine, match.index, callLine, match.index + calleeName.length),
+						selectionRange: new vscode.Range(
+							callLine,
+							match.index,
+							callLine,
+							match.index + calleeName.length,
+						),
 					},
 					fromRanges: [new vscode.Range(callLine, match.index, callLine, match.index + calleeName.length)],
 				})

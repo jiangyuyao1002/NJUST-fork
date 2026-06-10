@@ -13,11 +13,7 @@ export type {
 	CloudAgentAuthConfig as AuthConfig,
 } from "@njust-ai/types"
 
-import type {
-	CloudAgentEndpointConfig,
-	CloudAgentRestFieldMapping,
-	CloudAgentAuthConfig,
-} from "@njust-ai/types"
+import type { CloudAgentEndpointConfig, CloudAgentRestFieldMapping, CloudAgentAuthConfig } from "@njust-ai/types"
 
 /** 端点默认值 */
 export const DEFAULT_ENDPOINTS: Readonly<CloudAgentEndpointConfig> = {

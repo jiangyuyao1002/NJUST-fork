@@ -39,7 +39,8 @@ export async function* handleAttemptApiRequestError(options: {
 	}
 
 	const persistentRetryHandler =
-		host.persistentRetryHandler ?? (host.persistentRetryHandler = new (await import("./PersistentRetry")).PersistentRetryManager())
+		host.persistentRetryHandler ??
+		(host.persistentRetryHandler = new (await import("./PersistentRetry")).PersistentRetryManager())
 
 	const recovery = await host.errorRecovery.handleApiError(error, retryAttempt)
 	if (recovery.action === "retry") {
@@ -55,7 +56,9 @@ export async function* handleAttemptApiRequestError(options: {
 			if (persistentRetryHandler.isEligible(errorType)) {
 				const taskHost = host.hostRef.deref()
 				if (taskHost?.log) {
-					taskHost.log(`[Task#${host.taskId}] Normal retry limit reached. Entering persistent retry for ${errorType}...`)
+					taskHost.log(
+						`[Task#${host.taskId}] Normal retry limit reached. Entering persistent retry for ${errorType}...`,
+					)
 				}
 				try {
 					await persistentRetryHandler.waitForRetry(errorType, (message, _retryCount, _elapsed) => {

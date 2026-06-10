@@ -29,17 +29,17 @@ export interface ToolErrorClassification {
 }
 
 export type ToolErrorCategory =
-	| "filesystem"    // ENOENT, EACCES, EPERM, ENOSPC, EISDIR, etc.
-	| "network"       // ECONNREFUSED, ETIMEDOUT, ECONNRESET, DNS failures
-	| "permission"    // Permission denied by the security system
-	| "timeout"       // Operation timed out
-	| "validation"    // Invalid input parameters
-	| "not_found"     // Resource not found (file, tool, MCP server)
-	| "conflict"      // Resource conflict (file locked, merge conflict)
-	| "quota"         // Rate limit, token budget, disk quota
-	| "external"      // External service error (MCP server, API)
-	| "internal"      // Internal/unexpected error
-	| "unknown"       // Cannot classify
+	| "filesystem" // ENOENT, EACCES, EPERM, ENOSPC, EISDIR, etc.
+	| "network" // ECONNREFUSED, ETIMEDOUT, ECONNRESET, DNS failures
+	| "permission" // Permission denied by the security system
+	| "timeout" // Operation timed out
+	| "validation" // Invalid input parameters
+	| "not_found" // Resource not found (file, tool, MCP server)
+	| "conflict" // Resource conflict (file locked, merge conflict)
+	| "quota" // Rate limit, token budget, disk quota
+	| "external" // External service error (MCP server, API)
+	| "internal" // Internal/unexpected error
+	| "unknown" // Cannot classify
 
 /**
  * Classify a tool execution error into a structured category.
@@ -66,7 +66,10 @@ export function classifyToolError(error: UnsafeAny): ToolErrorClassification {
 		}
 	}
 	const isToolPermission = /permission denied for tool|blocked by hook|permission.*deny/i.test(msg)
-	if (!isToolPermission && (code === "EACCES" || code === "EPERM" || /permission denied|access denied|eacces|eperm/i.test(msg))) {
+	if (
+		!isToolPermission &&
+		(code === "EACCES" || code === "EPERM" || /permission denied|access denied|eacces|eperm/i.test(msg))
+	) {
 		return {
 			category: "filesystem",
 			retryable: false,

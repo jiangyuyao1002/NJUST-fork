@@ -130,6 +130,38 @@ describe("RooIgnoreController Security Tests", () => {
 			)
 		})
 
+		it("should block interpreters and dd from reading ignored files", () => {
+			expect(controller.validateCommand("python secrets/script.py")).toBe("secrets/script.py")
+			expect(controller.validateCommand("node private/script.js")).toBe("private/script.js")
+			expect(controller.validateCommand("dd if=secrets/keys.json of=/tmp/keys.json")).toBe("secrets/keys.json")
+		})
+
+		it("should validate absolute interpreter script paths inside the workspace", () => {
+			const absoluteIgnoredScript = "/test/path/secrets/script.py"
+
+			expect(controller.validateCommand(`python ${absoluteIgnoredScript}`)).toBe(absoluteIgnoredScript)
+		})
+
+		it("should not treat quoted inline interpreter code as file paths", () => {
+			const validateAccessSpy = vi.spyOn(controller, "validateAccess")
+
+			expect(controller.validateCommand('python -c "print hello world"')).toBeUndefined()
+			expect(controller.validateCommand('node -e "console.log hello world"')).toBeUndefined()
+			expect(validateAccessSpy).not.toHaveBeenCalled()
+		})
+
+		it("should validate every command in a chained command", () => {
+			expect(controller.validateCommand("echo ok && python secrets/script.py")).toBe("secrets/script.py")
+			expect(controller.validateCommand("echo ok; cat private/notes.txt")).toBe("private/notes.txt")
+			expect(controller.validateCommand("echo ok | cat node_modules/package.json")).toBe(
+				"node_modules/package.json",
+			)
+		})
+
+		it("should not split command operators inside quotes", () => {
+			expect(controller.validateCommand('echo "cat secrets/keys.json && node private/script.js"')).toBeUndefined()
+		})
+
 		/**
 		 * Tests non-file reading commands
 		 */

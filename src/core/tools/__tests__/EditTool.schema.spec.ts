@@ -8,7 +8,13 @@ describe("EditTool schema", () => {
 	})
 
 	it("passes with optional fields", () => {
-		const result = editTool.inputSchema.safeParse({ file_path: "test.txt", old_string: "old", new_string: "new", replace_all: true, expected_replacements: 2 })
+		const result = editTool.inputSchema.safeParse({
+			file_path: "test.txt",
+			old_string: "old",
+			new_string: "new",
+			replace_all: true,
+			expected_replacements: 2,
+		})
 		expect(result.success).toBe(true)
 	})
 

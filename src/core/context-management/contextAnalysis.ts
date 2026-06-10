@@ -57,9 +57,7 @@ function estimateCharTokens(text: string): number {
 /**
  * Detected known file read tool names from content blocks.
  */
-const FILE_READ_TOOL_NAMES = new Set([
-	"read_file",
-])
+const FILE_READ_TOOL_NAMES = new Set(["read_file"])
 
 /**
  * Analyze messages and produce a token usage breakdown by category.
@@ -68,10 +66,7 @@ const FILE_READ_TOOL_NAMES = new Set([
  * tool results, tool uses, assistant reasoning, user messages, summaries,
  * and duplicate reads.
  */
-export function analyzeContextTokens(
-	messages: ApiMessage[],
-	systemPromptTokens: number = 0,
-): ContextAnalysisResult {
+export function analyzeContextTokens(messages: ApiMessage[], systemPromptTokens: number = 0): ContextAnalysisResult {
 	// First pass: collect tool_use id->name mappings and file-read IDs.
 	// The id->name map resolves tool names for LargeToolResultInfo
 	// (tool_use_id is an Anthropic UUID, not a human-readable name).
@@ -230,7 +225,9 @@ export function formatAnalysisResult(analysis: ContextAnalysisResult): string {
 	]
 
 	if (analysis.duplicateReads.length > 0) {
-		lines.push(`\nDuplicate reads (${analysis.duplicateReads.length}, ~${analysis.estimatedDuplicateReadTokens} tokens):`)
+		lines.push(
+			`\nDuplicate reads (${analysis.duplicateReads.length}, ~${analysis.estimatedDuplicateReadTokens} tokens):`,
+		)
 		for (const dup of analysis.duplicateReads.slice(0, 5)) {
 			lines.push(`  ${dup.filePath} — read ${dup.readCount}x`)
 		}
@@ -275,9 +272,7 @@ function blockToText(block: Anthropic.Messages.ContentBlockParam): string {
 			return block.text
 		case "tool_result":
 			if (typeof block.content === "string") return block.content
-			return (block.content ?? [])
-				.map((part) => (part.type === "text" ? part.text : ""))
-				.join("\n")
+			return (block.content ?? []).map((part) => (part.type === "text" ? part.text : "")).join("\n")
 		case "tool_use":
 			return `${block.name}: ${JSON.stringify(block.input || {})}`
 		default:

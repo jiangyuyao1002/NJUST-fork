@@ -7,11 +7,7 @@ import { z } from "zod"
 
 /** "true" / "false" strings vs real booleans. */
 export const optionalBooleanCoerced = z
-	.union([
-		z.boolean(),
-		z.literal("true").transform(() => true),
-		z.literal("false").transform(() => false),
-	])
+	.union([z.boolean(), z.literal("true").transform(() => true), z.literal("false").transform(() => false)])
 	.optional()
 
 function preprocessOptionalNumber(val: unknown): unknown {

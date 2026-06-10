@@ -1,8 +1,4 @@
-import type {
-	McpResourceResponse,
-	McpServer,
-	McpToolCallResponse,
-} from "@njust-ai/types"
+import type { McpResourceResponse, McpServer, McpToolCallResponse } from "@njust-ai/types"
 
 import type { McpConnection } from "../McpHub"
 

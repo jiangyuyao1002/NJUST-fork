@@ -9,7 +9,12 @@ export interface ConcurrencyLimits {
 }
 
 export type ConcurrencyStatus = Record<ToolCategory, { active: number; limit: number; waiting: number }>
-export type ConcurrencyTuningEvent = { category: ToolCategory; previousLimit: number; nextLimit: number; reason: "increase" | "decrease" }
+export type ConcurrencyTuningEvent = {
+	category: ToolCategory
+	previousLimit: number
+	nextLimit: number
+	reason: "increase" | "decrease"
+}
 
 type Waiter = { resolve: () => void }
 
@@ -80,7 +85,13 @@ export class AdaptiveConcurrencyController {
 	}
 
 	getStatus(): ConcurrencyStatus {
-		return { read: this.status("read"), write: this.status("write"), mcp: this.status("mcp"), bash: this.status("bash"), default: this.status("default") }
+		return {
+			read: this.status("read"),
+			write: this.status("write"),
+			mcp: this.status("mcp"),
+			bash: this.status("bash"),
+			default: this.status("default"),
+		}
 	}
 
 	reset(): void {
@@ -109,7 +120,9 @@ export class AdaptiveConcurrencyController {
 
 	tune(stats: ToolExecutionStats): void {
 		for (const category of ["read", "write", "mcp", "bash", "default"] as ToolCategory[]) {
-			const items = [...stats.getAll().entries()].filter(([toolName]) => this.categoryOfTool(toolName) === category).map(([, data]) => data)
+			const items = [...stats.getAll().entries()]
+				.filter(([toolName]) => this.categoryOfTool(toolName) === category)
+				.map(([, data]) => data)
 			if (items.length === 0) continue
 			const count = items.reduce((n, d) => n + d.count, 0)
 			const avgMs = items.reduce((n, d) => n + d.avgMs * d.count, 0) / count

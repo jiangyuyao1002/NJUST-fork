@@ -100,7 +100,11 @@ export async function getOllamaModels(
 						.then((ollamaModelInfo) => {
 							const parsedModelInfo = _OllamaModelInfoResponseSchema.safeParse(ollamaModelInfo.data)
 							if (!parsedModelInfo.success) {
-								logger.error("Ollama", "Error parsing Ollama model info response", parsedModelInfo.error.format())
+								logger.error(
+									"Ollama",
+									"Error parsing Ollama model info response",
+									parsedModelInfo.error.format(),
+								)
 								return
 							}
 							const modelInfo = parseOllamaModel(parsedModelInfo.data)

@@ -254,7 +254,8 @@ export async function buildWebviewState(
 		if (activeProfile) {
 			workspaceWebviewConfig.cloudAgentServerUrl = activeProfile.serverUrl
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("WebviewStateBuilder", "ProfileStorageService not initialized", error)
 		// ProfileStorageService 可能尚未初始化
 	}
 

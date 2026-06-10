@@ -33,7 +33,11 @@ describe("validateToolParams", () => {
 		["apply_diff", { path: "a.ts", diff: "" }, "diff: diff must not be empty"],
 		["apply_patch", { patch: "" }, "patch: patch must not be empty"],
 		["edit", { file_path: "a.ts", old_string: "a" }, "new_string: Required"],
-		["edit_file", { file_path: "a.ts", old_string: "a", new_string: "b", expected_replacements: 0 }, "expected_replacements"],
+		[
+			"edit_file",
+			{ file_path: "a.ts", old_string: "a", new_string: "b", expected_replacements: 0 },
+			"expected_replacements",
+		],
 		["execute_command", { command: "" }, "command: command must not be empty"],
 		["search_files", { path: "src", regex: "" }, "regex: regex must not be empty"],
 		["use_mcp_tool", { server_name: "", tool_name: "tool" }, "server_name: server_name must not be empty"],

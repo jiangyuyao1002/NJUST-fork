@@ -67,7 +67,11 @@ export class RooProtectedController {
 			return this.ignoreInstance.ignores(relativePath)
 		} catch (error) {
 			// Fail-closed: if we can't determine protection status, assume protected
-			logger.warn("RooProtectedController", `Error checking protection for ${filePath} (treating as protected):`, error)
+			logger.warn(
+				"RooProtectedController",
+				`Error checking protection for ${filePath} (treating as protected):`,
+				error,
+			)
 			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			return true
 		}

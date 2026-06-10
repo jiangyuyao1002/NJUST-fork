@@ -6,10 +6,7 @@ import process from "process"
  * `.` as a command. Rewrite `./` → `.\` at segment boundaries. Skipped for bash/sh/WSL/Git-Bash shells
  * where `./` is valid.
  */
-export function normalizeDotSlashCommandForWindowsShell(
-	command: string,
-	execaShellPath: string | undefined,
-): string {
+export function normalizeDotSlashCommandForWindowsShell(command: string, execaShellPath: string | undefined): string {
 	if (process.platform !== "win32") {
 		return command
 	}

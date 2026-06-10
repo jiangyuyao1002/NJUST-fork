@@ -14,10 +14,7 @@ export function redactApiSecrets(text: string): string {
 	s = s.replace(BEARER_RE, "Bearer [REDACTED]")
 	s = s.replace(SK_PREFIX_RE, "sk-[REDACTED]")
 	s = s.replace(AWS_ACCESS_KEY_RE, "AKIA[REDACTED]")
-	s = s.replace(
-		/\b(api[_-]?key|apikey|authorization|x-api-key)\s*[=:]\s*["']?[^\s"'<>\r\n]{6,}/gi,
-		"$1=[REDACTED]",
-	)
+	s = s.replace(/\b(api[_-]?key|apikey|authorization|x-api-key)\s*[=:]\s*["']?[^\s"'<>\r\n]{6,}/gi, "$1=[REDACTED]")
 	return s
 }
 

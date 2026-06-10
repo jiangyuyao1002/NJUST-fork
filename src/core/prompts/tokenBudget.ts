@@ -8,8 +8,8 @@ export type PromptTokenBudget = {
 
 const MIN_SYSTEM_PROMPT_TOKENS = 1200
 const SYSTEM_PROMPT_BUDGET_RATIO = 0.15
-const TOOL_DEFINITION_BUDGET_RATIO = 0.10
-const DIALOG_HISTORY_BUDGET_RATIO = 0.50
+const TOOL_DEFINITION_BUDGET_RATIO = 0.1
+const DIALOG_HISTORY_BUDGET_RATIO = 0.5
 
 export function estimatePromptTokens(text: string): number {
 	if (!text) return 0
@@ -18,7 +18,12 @@ export function estimatePromptTokens(text: string): number {
 	let other = 0
 	for (const ch of text) {
 		const cp = ch.codePointAt(0)!
-		if ((cp >= 0x4e00 && cp <= 0x9fff) || (cp >= 0x3400 && cp <= 0x4dbf) || (cp >= 0x3040 && cp <= 0x30ff) || (cp >= 0xac00 && cp <= 0xd7af)) {
+		if (
+			(cp >= 0x4e00 && cp <= 0x9fff) ||
+			(cp >= 0x3400 && cp <= 0x4dbf) ||
+			(cp >= 0x3040 && cp <= 0x30ff) ||
+			(cp >= 0xac00 && cp <= 0xd7af)
+		) {
 			cjk++
 		} else {
 			other++
@@ -29,7 +34,10 @@ export function estimatePromptTokens(text: string): number {
 
 export function derivePromptTokenBudget(contextWindow?: number): PromptTokenBudget | null {
 	if (!contextWindow || contextWindow <= 0) return null
-	const systemPromptMaxTokens = Math.max(MIN_SYSTEM_PROMPT_TOKENS, Math.floor(contextWindow * SYSTEM_PROMPT_BUDGET_RATIO))
+	const systemPromptMaxTokens = Math.max(
+		MIN_SYSTEM_PROMPT_TOKENS,
+		Math.floor(contextWindow * SYSTEM_PROMPT_BUDGET_RATIO),
+	)
 	const toolDefinitionMaxTokens = Math.max(600, Math.floor(contextWindow * TOOL_DEFINITION_BUDGET_RATIO))
 	const dialogHistoryMinTokens = Math.max(2000, Math.floor(contextWindow * DIALOG_HISTORY_BUDGET_RATIO))
 	return {
@@ -97,7 +105,10 @@ export function trimSectionsByBudget(sections: SectionBudget[], maxTokens: numbe
 		if (currentTokens <= maxTokens) break
 		retained.delete(section.name)
 		currentTokens -= section.estimatedTokens
-		logger.warn("TokenBudget", `[tokenBudget] Trimmed section "${section.name}" (${section.estimatedTokens} tokens) to fit budget`)
+		logger.warn(
+			"TokenBudget",
+			`[tokenBudget] Trimmed section "${section.name}" (${section.estimatedTokens} tokens) to fit budget`,
+		)
 	}
 
 	return retained

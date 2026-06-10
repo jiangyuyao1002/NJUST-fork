@@ -60,7 +60,7 @@ export class CodeIndexSearchService {
 			if (expectedDimension !== undefined && vector.length !== expectedDimension) {
 				throw new Error(
 					`Vector dimension mismatch: generated ${vector.length}, expected ${expectedDimension}. ` +
-					`The embedding model may have changed. Please re-index the codebase.`,
+						`The embedding model may have changed. Please re-index the codebase.`,
 				)
 			}
 

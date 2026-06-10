@@ -57,9 +57,7 @@ export async function* handleStatusEvent(
 
 	if (type === "response.failed") {
 		if (event?.error || event?.message) {
-			throw new ApiProviderError(
-				`Response failed: ${event.error?.message || event.message || "Unknown failure"}`,
-			)
+			throw new ApiProviderError(`Response failed: ${event.error?.message || event.message || "Unknown failure"}`)
 		}
 		return
 	}

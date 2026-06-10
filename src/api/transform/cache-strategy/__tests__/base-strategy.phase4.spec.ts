@@ -30,7 +30,10 @@ class ExposedStrategy extends CacheStrategy {
 		return this.meetsMinTokenThreshold(tokenCount)
 	}
 
-	public exposeApply(messages: ReturnType<ExposedStrategy["exposeMessages"]>, placements: Array<{ index: number; type: "message"; tokensCovered: number }>) {
+	public exposeApply(
+		messages: ReturnType<ExposedStrategy["exposeMessages"]>,
+		placements: Array<{ index: number; type: "message"; tokensCovered: number }>,
+	) {
 		return this.applyCachePoints(messages, placements)
 	}
 }

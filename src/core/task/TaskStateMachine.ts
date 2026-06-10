@@ -73,18 +73,18 @@ export class TaskStateMachine {
 	force(to: TaskState, source?: string): void {
 		if (this._state === to) return
 		if (this._forceLocked) {
-			logger.warn("TaskStateMachine",
-				`force() rejected (concurrent): ${this._state} -> ${to}` +
-				(source ? ` [source: ${source}]` : ""),
+			logger.warn(
+				"TaskStateMachine",
+				`force() rejected (concurrent): ${this._state} -> ${to}` + (source ? ` [source: ${source}]` : ""),
 			)
 			return
 		}
 		this._forceLocked = true
 		try {
 			if (!this.canTransition(to)) {
-				logger.warn("TaskStateMachine",
-					`Unsafe transition: ${this._state} -> ${to}` +
-					(source ? ` [source: ${source}]` : ""),
+				logger.warn(
+					"TaskStateMachine",
+					`Unsafe transition: ${this._state} -> ${to}` + (source ? ` [source: ${source}]` : ""),
 				)
 			}
 			this._previousState = this._state

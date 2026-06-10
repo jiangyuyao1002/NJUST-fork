@@ -44,19 +44,21 @@ export class ConfigTool extends BaseTool<"config"> {
 	}
 
 	protected override get inputSchema() {
-		return z.object({
-			action: z.enum(["get", "set", "list"]),
-			key: z.string().optional(),
-			value: z.unknown().optional(),
-		}).refine(
-			(data) => {
-				if (data.action === "get" || data.action === "set") {
-					return typeof data.key === "string" && data.key.length > 0
-				}
-				return true
-			},
-			{ message: "key is required for get and set actions", path: ["key"] },
-		)
+		return z
+			.object({
+				action: z.enum(["get", "set", "list"]),
+				key: z.string().optional(),
+				value: z.unknown().optional(),
+			})
+			.refine(
+				(data) => {
+					if (data.action === "get" || data.action === "set") {
+						return typeof data.key === "string" && data.key.length > 0
+					}
+					return true
+				},
+				{ message: "key is required for get and set actions", path: ["key"] },
+			)
 	}
 
 	override async execute(params: ConfigParams, task: Task, callbacks: ToolCallbacks): Promise<void> {

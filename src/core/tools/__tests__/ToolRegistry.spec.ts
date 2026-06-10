@@ -5,8 +5,12 @@ import { BaseTool } from "../BaseTool"
 // Minimal test tool that extends BaseTool
 class MockReadTool extends BaseTool<"read_file"> {
 	readonly name = "read_file" as const
-	override isConcurrencySafe() { return true }
-	override isReadOnly() { return true }
+	override isConcurrencySafe() {
+		return true
+	}
+	override isReadOnly() {
+		return true
+	}
 	async execute(): Promise<void> {}
 }
 
@@ -27,8 +31,12 @@ class MockEditTool extends BaseTool<"edit"> {
 
 class MockGrepTool extends BaseTool<"grep"> {
 	readonly name = "grep" as const
-	override isConcurrencySafe() { return true }
-	override isReadOnly() { return true }
+	override isConcurrencySafe() {
+		return true
+	}
+	override isReadOnly() {
+		return true
+	}
 	async execute(): Promise<void> {}
 }
 
@@ -103,7 +111,7 @@ describe("ToolRegistryImpl", () => {
 			registry.register(new MockEditTool())
 			const all = registry.getAllTools()
 			expect(all).toHaveLength(3)
-			expect(all.map(t => t.name)).toEqual(["read_file", "write_to_file", "edit"])
+			expect(all.map((t) => t.name)).toEqual(["read_file", "write_to_file", "edit"])
 		})
 	})
 
@@ -147,7 +155,9 @@ describe("ToolRegistryImpl", () => {
 		it("separates deferred and non-deferred tools", () => {
 			class DeferredTool extends BaseTool<"lsp"> {
 				readonly name = "lsp" as const
-				override get shouldDefer() { return true }
+				override get shouldDefer() {
+					return true
+				}
 				async execute(): Promise<void> {}
 			}
 

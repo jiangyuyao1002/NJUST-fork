@@ -35,11 +35,7 @@ export function requireApiKey(key: string | undefined, providerName: string): st
  * @returns The validated API key
  * @throws Error if the API key is not provided
  */
-export function requireApiKeyWithMessage(
-	key: string | undefined,
-	providerName: string,
-	customMessage: string,
-): string {
+export function requireApiKeyWithMessage(key: string | undefined, providerName: string, customMessage: string): string {
 	if (!key || key === "not-provided") {
 		throw new Error(`${providerName} API key is required. ${customMessage}`)
 	}

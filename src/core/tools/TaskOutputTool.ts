@@ -60,7 +60,9 @@ export class TaskOutputTool extends BaseTool<"task_output"> {
 				),
 			)
 		} catch (error) {
-			pushToolResult(formatResponse.toolError(`Failed to read task output for ${params.taskId}: ${String(error)}`))
+			pushToolResult(
+				formatResponse.toolError(`Failed to read task output for ${params.taskId}: ${String(error)}`),
+			)
 		}
 	}
 }

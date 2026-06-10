@@ -499,7 +499,7 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				throw new Error("NJUST_AI <Language Model API>: Request cancelled by user")
 			}
 
-				if (error instanceof Error) {
+			if (error instanceof Error) {
 				logger.error("VsCodeLm", "Stream error details:", {
 					message: error.message,
 					stack: error.stack,

@@ -150,22 +150,26 @@ export async function activate(context: vscode.ExtensionContext) {
 	customToolRegistry.setExtensionPath(context.extensionPath)
 
 	// Initialize i18n for internationalization support (follow VS Code UI language until user sets language in extension state).
-	await initializeI18n(context.globalState.get("language") ?? formatLanguage(vscode.env.language))
+	await startupProfiler.measure("i18n", async () => {
+		await initializeI18n(context.globalState.get("language") ?? formatLanguage(vscode.env.language))
+	})
 
 	// Parallelize independent initialization steps for faster startup.
 	// - Network proxy configuration (before any network requests)
 	// - Settings migration (independent of network proxy)
 	// Each step has its own error handling so one failure doesn't block the other.
-	await Promise.allSettled([
-		initializeNetworkProxy(context, outputChannel).catch((err) => {
-			outputChannel.appendLine(`[Startup] Network proxy init failed: ${getErrorMessage(err)}`)
-			TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
-		}),
-		migrateSettings(context, outputChannel).catch((err) => {
-			outputChannel.appendLine(`[Startup] Settings migration failed: ${getErrorMessage(err)}`)
-			TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
-		}),
-	])
+	await startupProfiler.measure("parallelInit", async () => {
+		await Promise.allSettled([
+			initializeNetworkProxy(context, outputChannel).catch((err) => {
+				outputChannel.appendLine(`[Startup] Network proxy init failed: ${getErrorMessage(err)}`)
+				TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
+			}),
+			migrateSettings(context, outputChannel).catch((err) => {
+				outputChannel.appendLine(`[Startup] Settings migration failed: ${getErrorMessage(err)}`)
+				TelemetryService.reportError(err, TelemetryEventName.EXTENSION_INIT_ERROR)
+			}),
+		])
+	})
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()
@@ -179,10 +183,15 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	// Initialize Cloud Agent (device token + profile storage)
-	await initializeCloudAgent(context, outputChannel)
+	await startupProfiler.measure("cloudAgent", async () => {
+		await initializeCloudAgent(context, outputChannel)
+	})
 
-	const contextProxyInstance = await ContextProxy.getInstance(context)
-	contextProxy = contextProxyInstance
+	let contextProxyInstance!: ContextProxy
+	await startupProfiler.measure("contextProxy", async () => {
+		contextProxyInstance = await ContextProxy.getInstance(context)
+		contextProxy = contextProxyInstance
+	})
 
 	// Inject the model cache store so api/providers/fetchers can locate
 	// the on-disk cache directory without importing ContextProxy directly.
@@ -217,10 +226,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	// Initialize Cangjie language support (LSP, debugger, providers, etc.)
-	const cangjieInit = initializeCangjieLanguage(context, outputChannel)
+	const cangjieInit = await startupProfiler.measure("cangjie", async () => {
+		return initializeCangjieLanguage(context, outputChannel)
+	})
 
 	// Initialize the provider.
-	const providerInstance = new ClineProvider(context, outputChannel, "sidebar", contextProxyInstance)
+	const providerInstance = await startupProfiler.measure("clineProvider", async () => {
+		return new ClineProvider(context, outputChannel, "sidebar", contextProxyInstance)
+	})
 	provider = providerInstance
 
 	// Inject local compile capability for CloudAgentOrchestrator.
@@ -325,7 +338,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerTerminalActions(context)
 
 	// Start MCP Tools Server if enabled in settings.
-	await setupMcpToolsServer({ context, outputChannel, defaultCommands })
+	await startupProfiler.measure("mcpToolsServer", async () => {
+		await setupMcpToolsServer({ context, outputChannel, defaultCommands })
+	})
 
 	// Allows other extensions to activate once Njust-AI is ready.
 	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)

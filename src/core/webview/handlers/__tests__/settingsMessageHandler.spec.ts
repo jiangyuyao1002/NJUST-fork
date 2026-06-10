@@ -120,9 +120,7 @@ describe("settingsMessageHandler - requestRouterModels", () => {
 			}),
 		)
 
-		expect(mockGetModels).not.toHaveBeenCalledWith(
-			expect.objectContaining({ provider: "deepseek" }),
-		)
+		expect(mockGetModels).not.toHaveBeenCalledWith(expect.objectContaining({ provider: "deepseek" }))
 	})
 
 	it("should post deepseek models to webview", async () => {
@@ -155,9 +153,7 @@ describe("settingsMessageHandler - requestRouterModels", () => {
 
 		await router.route(context, message)
 
-		expect(mockGetModels).toHaveBeenCalledWith(
-			expect.objectContaining({ provider: "openrouter" }),
-		)
+		expect(mockGetModels).toHaveBeenCalledWith(expect.objectContaining({ provider: "openrouter" }))
 		expect(mockListProviderModels).not.toHaveBeenCalled()
 	})
 

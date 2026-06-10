@@ -110,9 +110,7 @@ export class CangjieMetricsCollector implements vscode.Disposable {
 	 */
 	getSummary(): string {
 		const m = this.metrics
-		const successRate = m.totalBuilds > 0
-			? ((m.successfulBuilds / m.totalBuilds) * 100).toFixed(1)
-			: "N/A"
+		const successRate = m.totalBuilds > 0 ? ((m.successfulBuilds / m.totalBuilds) * 100).toFixed(1) : "N/A"
 
 		const lines = [
 			`Project Metrics: ${m.projectName}`,
@@ -181,7 +179,7 @@ export class CangjieMetricsCollector implements vscode.Disposable {
 					return parsed
 				}
 			} catch {
-				// Start fresh on parse error
+				// intentionally ignored: start fresh on parse error
 			}
 		}
 
@@ -206,7 +204,9 @@ export class CangjieMetricsCollector implements vscode.Disposable {
 				const content = fs.readFileSync(tomlPath, "utf-8")
 				const m = content.match(/name\s*=\s*"([^"]+)"/)
 				if (m) return m[1]!
-			} catch { /* ignore */ }
+			} catch {
+				/* ignore */
+			}
 		}
 		return path.basename(cwd)
 	}

@@ -452,6 +452,15 @@
 			"let_to_var": "Convert let to var"
 		}
 	},
+	"tools": {
+		"apply_patch_format_hint": "\n\nCorrect format example:\n*** Begin Patch\n*** Update File: path/to/file.cj\n@@ -line,count +line,count @@\n old line\n+new line\n*** End Patch",
+		"cangjie_preflight_failed": "Cangjie code preflight check failed, file not written:\n",
+		"cangjie_preflight_retry": "\n\nPlease fix the above errors and retry.",
+		"truncation_summary": "\n[... Content truncated, original {{currentTokens}} tokens, kept {{keptTokens}} tokens ...]\n",
+		"deferred_session_recovery": "[Auto-recovery] Previous deferred session expired (run_id {{runId}}…), please continue the previous task.",
+		"compile_fix_goal_prefix": "The following Cangjie code failed to compile. Please fix the code based on the error message and return corrected workspace_ops.",
+		"compile_fix_goal_suffix": "Only modify files with errors, do not re-return correct files.\n\nCompile output:\n{{output}}"
+	},
 	"status": {
 		"cangjie_lsp": {
 			"compile_compiling": "Compiling…",

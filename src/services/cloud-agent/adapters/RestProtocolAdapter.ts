@@ -1,11 +1,6 @@
 import type { CloudAgentProfile, RestFieldMapping, EndpointConfig } from "../types/profile"
 import { DEFAULT_ENDPOINTS, DEFAULT_FIELD_MAPPING, DEFAULT_AUTH } from "../types/profile"
-import type {
-	IProtocolAdapter,
-	UniversalTaskRequest,
-	UniversalTaskResponse,
-	EndpointType,
-} from "./types"
+import type { IProtocolAdapter, UniversalTaskRequest, UniversalTaskResponse, EndpointType } from "./types"
 import type { DeferredToolCall } from "../types"
 import { normalizeDeferredResponse } from "../normalizeDeferredResponse"
 import { getDeviceToken } from "../deviceToken"
@@ -22,7 +17,14 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 
 	private profile!: CloudAgentProfile
 	private resolvedMapping!: {
-		request: { goal: string; sessionId: string; workspacePath: string; images: string; runId: string; toolResults: string }
+		request: {
+			goal: string
+			sessionId: string
+			workspacePath: string
+			images: string
+			runId: string
+			toolResults: string
+		}
 		response: Record<string, string>
 		statusValues: Record<string, string>
 	}
@@ -140,8 +142,7 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 
 		// Device Token
 		const dtSource = auth.deviceTokenSource ?? DEFAULT_AUTH.deviceTokenSource ?? "global"
-		const dt =
-			dtSource === "profile" && auth.deviceToken ? auth.deviceToken : getDeviceToken()
+		const dt = dtSource === "profile" && auth.deviceToken ? auth.deviceToken : getDeviceToken()
 		if (dt) {
 			headers["X-Device-Token"] = dt
 		}
@@ -150,8 +151,7 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 		switch (auth.type) {
 			case "api-key":
 				if (auth.apiKey) {
-					headers[auth.apiKeyHeader ?? DEFAULT_AUTH.apiKeyHeader ?? "X-API-Key"] =
-						auth.apiKey
+					headers[auth.apiKeyHeader ?? DEFAULT_AUTH.apiKeyHeader ?? "X-API-Key"] = auth.apiKey
 				}
 				break
 			case "bearer":
@@ -161,9 +161,7 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 				break
 			case "basic":
 				if (auth.basicUsername && auth.basicPassword) {
-					const encoded = Buffer.from(
-						`${auth.basicUsername}:${auth.basicPassword}`,
-					).toString("base64")
+					const encoded = Buffer.from(`${auth.basicUsername}:${auth.basicPassword}`).toString("base64")
 					headers["Authorization"] = `Basic ${encoded}`
 				}
 				break
@@ -182,7 +180,14 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 	// ─── 内部工具 ──────────────────────────────────────────────────
 
 	private mergeFieldMapping(mapping?: RestFieldMapping): {
-		request: { goal: string; sessionId: string; workspacePath: string; images: string; runId: string; toolResults: string }
+		request: {
+			goal: string
+			sessionId: string
+			workspacePath: string
+			images: string
+			runId: string
+			toolResults: string
+		}
 		response: Record<string, string>
 		statusValues: Record<string, string>
 	} {
@@ -199,7 +204,7 @@ export class RestProtocolAdapter implements IProtocolAdapter {
 		const merged = { ...DEFAULT_ENDPOINTS, ...endpoints } as Required<EndpointConfig>
 		for (const key of Object.keys(merged) as (keyof Required<EndpointConfig>)[]) {
 			if (!merged[key]?.trim()) {
-				merged[key] = DEFAULT_ENDPOINTS[key] !
+				merged[key] = DEFAULT_ENDPOINTS[key]!
 			}
 		}
 		return merged

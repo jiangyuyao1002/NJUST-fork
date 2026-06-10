@@ -37,13 +37,11 @@ export default {
 				},
 				key: {
 					type: ["string", "null"],
-					description:
-						'The configuration key name. Required for "get" and "set" actions.',
+					description: 'The configuration key name. Required for "get" and "set" actions.',
 				},
 				value: {
 					type: ["string", "number", "boolean", "null"],
-					description:
-						'The value to set. Required for "set" action. Use null for "get" and "list".',
+					description: 'The value to set. Required for "set" action. Use null for "get" and "list".',
 				},
 			},
 			required: ["action"],

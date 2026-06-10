@@ -19,6 +19,7 @@ import {
 } from "../learnedFixesStorage"
 import { readFileUtf8Lru } from "./cacheManagement"
 import { normalizeDiagnosticMessageForAggregation } from "./diagnosticHandling"
+import { logger } from "../../../../shared/logger"
 
 const LEARNED_FIXES_MAX_SECTION_CHARS = 4000
 const normalizeDiagnosticCode = _normalizeDiagnosticCode
@@ -163,7 +164,8 @@ export async function buildCangjieStyleFewShotSection(
 			if (slice.trim().length < 24) continue
 			const block = "```cangjie\n" + `// ${sym.kind} ${sym.name} (${rel}:${from + 1})\n` + slice + "\n```"
 			scored.push({ score, rel, block })
-		} catch {
+		} catch (error) {
+			logger.debug("LearnedFixMatching", "learned fix snippet extraction failed", error)
 			/* skip */
 		}
 	}
@@ -535,7 +537,8 @@ export function recordLearnedFix(cwd: string, errorPattern: string, fix: string,
 
 	try {
 		saveLearnedFixes(cwd, data)
-	} catch {
+	} catch (error) {
+		logger.debug("LearnedFixMatching", "failed to save learned fixes", error)
 		// Non-critical: ignore write failures
 	}
 }
@@ -581,7 +584,8 @@ export function recordLearnedFailure(cwd: string, errorSnippet: string): void {
 
 	try {
 		saveLearnedFixes(cwd, data)
-	} catch {
+	} catch (error) {
+		logger.debug("LearnedFixMatching", "failed to save learned fixes (feedback)", error)
 		// ignore
 	}
 }

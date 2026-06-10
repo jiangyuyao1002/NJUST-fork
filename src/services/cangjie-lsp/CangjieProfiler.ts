@@ -56,15 +56,11 @@ export class CangjieProfiler implements vscode.Disposable {
 		}
 
 		try {
-			const { stdout, stderr } = await execFileAsync(
-				cjprofPath,
-				["run", target],
-				{
-					timeout: PROFILE_TIMEOUT_MS,
-					cwd,
-					env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
-				},
-			)
+			const { stdout, stderr } = await execFileAsync(cjprofPath, ["run", target], {
+				timeout: PROFILE_TIMEOUT_MS,
+				cwd,
+				env: buildCangjieToolEnv() as NodeJS.ProcessEnv,
+			})
 			const output = stdout + stderr
 			const hotPaths = this.parseProfileOutput(output)
 
@@ -159,7 +155,7 @@ export class CangjieProfiler implements vscode.Disposable {
 			const jsonStart = output.indexOf("[{")
 			const jsonEnd = jsonStart >= 0 ? output.indexOf("}]", jsonStart) : -1
 			if (jsonStart >= 0 && jsonEnd > jsonStart) {
-					const json = JSON.parse(output.slice(jsonStart, jsonEnd + 2)) as Array<{
+				const json = JSON.parse(output.slice(jsonStart, jsonEnd + 2)) as Array<{
 					function?: string
 					file?: string
 					line?: number
@@ -177,7 +173,7 @@ export class CangjieProfiler implements vscode.Disposable {
 				}))
 			}
 		} catch {
-			// Not JSON, try line-based
+			// intentionally ignored: not JSON, fallback to line-based parsing
 		}
 
 		// Line-based fallback: look for tabular output

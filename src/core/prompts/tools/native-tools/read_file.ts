@@ -62,7 +62,7 @@ export function createReadFileTool(options: ReadFileToolOptions = {}): OpenAI.Ch
 
 	// Build description based on capabilities
 	const descriptionIntro =
-		"CRITICAL: `path` is a REQUIRED parameter. Every call MUST include a non-empty `path` string. Sending `{}` or `{ \"path\": \"\" }` will fail. " +
+		'CRITICAL: `path` is a REQUIRED parameter. Every call MUST include a non-empty `path` string. Sending `{}` or `{ "path": "" }` will fail. ' +
 		"Read a file and return its contents with line numbers for diffing or discussion. IMPORTANT: This tool reads exactly one file per call. If you need multiple files, issue multiple parallel read_file calls."
 
 	const modeDescription =

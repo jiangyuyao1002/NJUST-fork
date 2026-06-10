@@ -4,7 +4,7 @@ import type { ClineMessage } from "@njust-ai/types"
 import { cleanHistoryForResumption, getResumeAskType, checkSubtaskBudget, safeDispose } from "../TaskLifecycle"
 
 vi.mock("../../../shared/logger", () => ({
-	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@njust-ai/telemetry", () => ({

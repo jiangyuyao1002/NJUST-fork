@@ -216,8 +216,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 		const outputTokens = usage?.completion_tokens || 0
 		const details = usage?.prompt_tokens_details
 		const cacheWriteTokens = details?.cache_write_tokens || usage?.cache_creation_input_tokens || 0
-		const cacheReadTokens =
-			usage?.cache_read_input_tokens ?? details?.cached_tokens ?? usage?.cached_tokens ?? 0
+		const cacheReadTokens = usage?.cache_read_input_tokens ?? details?.cached_tokens ?? usage?.cached_tokens ?? 0
 
 		const resolved = resolveOpenAiUsageForCost({
 			inputTokensReported: inputTokens,

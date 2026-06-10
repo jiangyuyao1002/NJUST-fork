@@ -50,9 +50,7 @@ describe("MessageRouter", () => {
 		await expect(router.route(context, { type: 123 } as any)).resolves.not.toThrow()
 
 		// All should have been rejected with the malformed message warning
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Rejected malformed webview message"),
-		)
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Rejected malformed webview message"))
 
 		warnSpy.mockRestore()
 	})

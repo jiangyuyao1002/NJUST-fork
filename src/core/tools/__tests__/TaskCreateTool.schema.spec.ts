@@ -8,7 +8,12 @@ describe("TaskCreateTool schema", () => {
 	})
 
 	it("passes with optional fields", () => {
-		const result = taskCreateTool.inputSchema.safeParse({ title: "New task", description: "Details", priority: "high", dependsOn: ["task-1"] })
+		const result = taskCreateTool.inputSchema.safeParse({
+			title: "New task",
+			description: "Details",
+			priority: "high",
+			dependsOn: ["task-1"],
+		})
 		expect(result.success).toBe(true)
 	})
 

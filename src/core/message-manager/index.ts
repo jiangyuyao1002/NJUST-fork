@@ -114,7 +114,8 @@ export class MessageManager {
 			// Collect truncationIds from sliding_window_truncation events
 			if (msg.say === "sliding_window_truncation" && msg.contextTruncation?.truncationId) {
 				truncationIds.add(msg.contextTruncation.truncationId)
-				logger.info("MessageManager",
+				logger.info(
+					"MessageManager",
 					`Found sliding_window_truncation to remove: ${msg.contextTruncation.truncationId}`,
 				)
 			}
@@ -198,7 +199,8 @@ export class MessageManager {
 		if (removedIds.truncationIds.size > 0) {
 			apiHistory = apiHistory.filter((msg) => {
 				if (msg.isTruncationMarker && msg.truncationId && removedIds.truncationIds.has(msg.truncationId)) {
-					logger.info("MessageManager",
+					logger.info(
+						"MessageManager",
 						`Removing orphaned truncation marker with truncationId: ${msg.truncationId}`,
 					)
 					return false

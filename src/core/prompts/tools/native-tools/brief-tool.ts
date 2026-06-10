@@ -27,8 +27,7 @@ export default {
 				},
 				maxLength: {
 					type: ["number", "null"],
-					description:
-						"Maximum character length of the output. Default: 500.",
+					description: "Maximum character length of the output. Default: 500.",
 				},
 			},
 			required: ["content"],

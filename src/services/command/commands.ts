@@ -68,7 +68,7 @@ async function resolveCommandSymLink(symlinkPath: string, fileInfo: CommandFileI
 			await resolveCommandSymLink(resolvedTarget, fileInfo, depth + 1)
 		}
 	} catch {
-		// Skip invalid symlinks
+		// intentionally ignored: invalid symlinks skipped
 	}
 }
 
@@ -118,7 +118,7 @@ async function tryResolveSymlinkedCommand(filePath: string): Promise<string | un
 			}
 		}
 	} catch {
-		// Not a symlink or invalid symlink
+		// intentionally ignored: not a symlink or invalid symlink
 	}
 	return undefined
 }
@@ -349,7 +349,7 @@ async function scanCommandDirectory(
 			}
 		}
 	} catch {
-		// Directory doesn't exist or can't be read - this is fine
+		// intentionally ignored: directory doesn't exist or can't be read
 	}
 }
 

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { applySystemPromptBudget, derivePromptTokenBudget, mergeDynamicPromptSegmentsByTokenBudget } from "../tokenBudget"
+import {
+	applySystemPromptBudget,
+	derivePromptTokenBudget,
+	mergeDynamicPromptSegmentsByTokenBudget,
+} from "../tokenBudget"
 
 describe("prompt token budget", () => {
 	it("derives ratio-based budgets from context window", () => {

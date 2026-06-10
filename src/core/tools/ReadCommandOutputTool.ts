@@ -92,8 +92,12 @@ export class ReadCommandOutputTool extends BaseTool<"read_command_output"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Partial<{artifact_id: string; search?: string; offset?: number; limit?: number}>): boolean {
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
+	override isPartialArgsStable(
+		partial: Partial<{ artifact_id: string; search?: string; offset?: number; limit?: number }>,
+	): boolean {
 		return typeof partial.artifact_id === "string" && partial.artifact_id.length > 0
 	}
 

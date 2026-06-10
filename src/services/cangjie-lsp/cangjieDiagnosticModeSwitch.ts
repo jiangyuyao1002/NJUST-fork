@@ -10,12 +10,12 @@ export const cangjieDiagnosticModeSwitch = {
 		try {
 			this.clearCjlint?.()
 		} catch {
-			/* ignore */
+			// intentionally ignored: diagnostic cleanup may fail if provider disposed
 		}
 		try {
 			this.clearCjpm?.()
 		} catch {
-			/* ignore */
+			// intentionally ignored: diagnostic cleanup may fail if provider disposed
 		}
 	},
 }

@@ -1,4 +1,5 @@
 export * from "./custom-tools/index.js"
+export * from "./assistant-message/index.js"
 export * from "./debug-log/index.js"
 export * from "./errors/index.js"
 export * from "./events/index.js"

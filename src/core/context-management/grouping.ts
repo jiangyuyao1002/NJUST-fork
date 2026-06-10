@@ -48,10 +48,7 @@ export function hasToolResults(msg: ApiMessage): boolean {
  *
  * Returns an expanded set of indices to truncate.
  */
-export function expandTruncationToAtomicUnits(
-	messages: ApiMessage[],
-	indicesToTruncate: Set<number>,
-): Set<number> {
+export function expandTruncationToAtomicUnits(messages: ApiMessage[], indicesToTruncate: Set<number>): Set<number> {
 	const expanded = new Set(indicesToTruncate)
 
 	// Pre-build O(1) lookup maps in a single pass:

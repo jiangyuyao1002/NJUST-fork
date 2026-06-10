@@ -31,11 +31,11 @@ export function cleanupStaleCjfmtTempFiles(log?: vscode.OutputChannel): void {
 					log?.appendLine(`[CjFmt] Removed stale temp file: ${name}`)
 				}
 			} catch {
-				/* ignore */
+				// intentionally ignored: temp file cleanup
 			}
 		}
 	} catch {
-		/* ignore */
+		// intentionally ignored: temp directory listing
 	}
 }
 

@@ -140,7 +140,7 @@ describe("getRetryAfterSecondsFromError", () => {
 	})
 
 	it("returns numeric value from headers.get('retry-after')", () => {
-		const error = { headers: { get: (n: string) => n === "retry-after" ? "10" : null } }
+		const error = { headers: { get: (n: string) => (n === "retry-after" ? "10" : null) } }
 		expect(getRetryAfterSecondsFromError(error)).toBe(10)
 	})
 

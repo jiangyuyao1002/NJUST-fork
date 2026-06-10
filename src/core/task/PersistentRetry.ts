@@ -171,7 +171,8 @@ export class PersistentRetryManager {
 		// Auto-reset if enough time has passed without errors
 		this.maybeResetOnQuietWindow()
 
-		const categoryMax = this.config.maxPerCategoryRetries[errorCategory] ?? DEFAULT_CONFIG.maxPerCategoryRetries.unknown ?? 3
+		const categoryMax =
+			this.config.maxPerCategoryRetries[errorCategory] ?? DEFAULT_CONFIG.maxPerCategoryRetries.unknown ?? 3
 		const record = this.records.get(errorCategory)
 		const categoryCount = record?.count ?? 0
 

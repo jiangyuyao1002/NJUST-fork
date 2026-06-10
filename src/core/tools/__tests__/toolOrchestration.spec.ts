@@ -85,8 +85,7 @@ describe("partitionToolCalls", () => {
 			mk("web_search", "5"),
 			mk("write_to_file", "6"),
 		]
-		const safe = (c: ToolUse) =>
-			["read_file", "search_files", "list_files", "web_search"].includes(c.name)
+		const safe = (c: ToolUse) => ["read_file", "search_files", "list_files", "web_search"].includes(c.name)
 		const batches = partitionToolCalls(calls, safe)
 		expect(batches.map((b) => ({ mode: b.mode, ids: b.calls.map((c) => c.id) }))).toEqual([
 			{ mode: "parallel", ids: ["1", "2"] },

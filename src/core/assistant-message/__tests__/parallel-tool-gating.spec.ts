@@ -18,7 +18,14 @@ describe("parallel tool gating", () => {
 	it("keeps write tool isolated between read-only groups", () => {
 		const calls = [mk("read_file", "a"), mk("search_files", "b"), mk("edit_file", "c"), mk("list_files", "d")]
 		const safe = (c: ToolUse) =>
-			["read_file", "search_files", "list_files", "codebase_search", "read_command_output", "web_search"].includes(c.name)
+			[
+				"read_file",
+				"search_files",
+				"list_files",
+				"codebase_search",
+				"read_command_output",
+				"web_search",
+			].includes(c.name)
 		const batches = partitionToolCalls(calls, safe)
 		expect(batches.map((b) => b.mode)).toEqual(["parallel", "serial", "serial"])
 		expect(batches.map((b) => b.calls.map((x) => x.id))).toEqual([["a", "b"], ["c"], ["d"]])

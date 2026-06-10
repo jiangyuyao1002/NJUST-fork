@@ -58,7 +58,6 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 		}
 
 		try {
-
 			const accessAllowed = allowRooIgnorePathAccess(task.rooIgnoreController, relPath)
 
 			if (!accessAllowed) {
@@ -100,8 +99,8 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 				originalContent,
 				diffContent,
 				Number.isFinite(parseInt(params.diff.match(/:start_line:(\d+)/)?.[1] ?? "", 10))
-				? parseInt(params.diff.match(/:start_line:(\d+)/)?.[1] ?? "", 10)
-				: 1,
+					? parseInt(params.diff.match(/:start_line:(\d+)/)?.[1] ?? "", 10)
+					: 1,
 			)) ?? {
 				success: false,
 				error: "No diff strategy available",
@@ -153,7 +152,7 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 				task.consecutiveMistakeCountForApplyDiff.delete(relPath)
 				pushToolResult(
 					"No changes applied: the diff appears to have already been " +
-					"applied to this file (result content matches original).",
+						"applied to this file (result content matches original).",
 				)
 				await task.diffViewProvider.reset()
 				this.resetPartialState()
@@ -335,7 +334,9 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			return
 		}
 
-		await task.ask("tool", JSON.stringify(sharedMessageProps), block.partial, toolProgressStatus).catch(ignoreAbortError)
+		await task
+			.ask("tool", JSON.stringify(sharedMessageProps), block.partial, toolProgressStatus)
+			.catch(ignoreAbortError)
 	}
 }
 

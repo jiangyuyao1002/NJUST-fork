@@ -2,11 +2,7 @@
 
 import { describe, it, expect } from "vitest"
 
-const THINKING_MODEL_PATTERNS = [
-	/doubao-(?!.*non-).*-thinking/,
-	/seed-1\.6/,
-	/seed-2\.0/,
-]
+const THINKING_MODEL_PATTERNS = [/doubao-(?!.*non-).*-thinking/, /seed-1\.6/, /seed-2\.0/]
 
 function isThinkingModel(modelId: string): boolean {
 	return THINKING_MODEL_PATTERNS.some((p) => p.test(modelId))

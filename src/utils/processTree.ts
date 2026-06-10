@@ -30,7 +30,7 @@ export function getProcessTree(pid: number, callback: (err: Error | null, childr
 function getWindowsProcessTree(pid: number, callback: (err: Error | null, children: ProcessInfo[]) => void): void {
 	// Get-CimInstance replaces the deprecated wmic.exe on Windows 11+
 	const cmd =
-		'Get-CimInstance -ClassName Win32_Process | Select-Object Name, ProcessId, ParentProcessId | ConvertTo-Csv -NoTypeInformation'
+		"Get-CimInstance -ClassName Win32_Process | Select-Object Name, ProcessId, ParentProcessId | ConvertTo-Csv -NoTypeInformation"
 
 	exec(`powershell -Command "${cmd}"`, (error, stdout) => {
 		if (error) {

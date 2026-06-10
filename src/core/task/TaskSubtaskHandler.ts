@@ -106,10 +106,7 @@ export class TaskSubtaskHandler {
 						return true
 					},
 				)
-				lastUserMsg.content = [
-					...contentWithoutEnvDetails,
-					{ type: "text" as const, text: environmentDetails },
-				]
+				lastUserMsg.content = [...contentWithoutEnvDetails, { type: "text" as const, text: environmentDetails }]
 			}
 		}
 

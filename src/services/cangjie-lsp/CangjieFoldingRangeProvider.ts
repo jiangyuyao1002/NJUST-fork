@@ -1,9 +1,7 @@
 import * as vscode from "vscode"
 import { parseCangjieDefinitions, type CangjieDefKind } from "../tree-sitter/cangjieParser"
 
-const BLOCK_KINDS: CangjieDefKind[] = [
-	"class", "struct", "interface", "enum", "func", "extend", "main", "macro",
-]
+const BLOCK_KINDS: CangjieDefKind[] = ["class", "struct", "interface", "enum", "func", "extend", "main", "macro"]
 
 export class CangjieFoldingRangeProvider implements vscode.FoldingRangeProvider {
 	provideFoldingRanges(
@@ -61,7 +59,13 @@ export class CangjieFoldingRangeProvider implements vscode.FoldingRangeProvider 
 
 			if (blockStart === -1 && text.trim().startsWith("//")) {
 				const commentStart = i
-				while (i + 1 < document.lineCount && document.lineAt(i + 1).text.trim().startsWith("//")) {
+				while (
+					i + 1 < document.lineCount &&
+					document
+						.lineAt(i + 1)
+						.text.trim()
+						.startsWith("//")
+				) {
 					i++
 				}
 				if (i > commentStart) {

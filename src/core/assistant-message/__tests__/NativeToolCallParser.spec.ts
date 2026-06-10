@@ -34,7 +34,7 @@ function sampleValueForSchema(schema: any): unknown {
 }
 
 function sampleArgsForTool(tool: ReturnType<typeof getNativeTools>[number]): Record<string, unknown> {
-	const parameters = "function" in tool ? tool.function.parameters as any : undefined
+	const parameters = "function" in tool ? (tool.function.parameters as any) : undefined
 	const result: Record<string, unknown> = {}
 	for (const key of parameters?.required ?? []) {
 		result[key] = sampleValueForSchema(parameters.properties?.[key])
@@ -76,7 +76,10 @@ describe("NativeToolCallParser", () => {
 
 				const parameters = tool.function.parameters as any
 				for (const key of Object.keys(parameters?.properties ?? {})) {
-					expect(toolParamNames, `Parameter '${key}' for '${toolName}' must be listed in toolParamNames`).toContain(key)
+					expect(
+						toolParamNames,
+						`Parameter '${key}' for '${toolName}' must be listed in toolParamNames`,
+					).toContain(key)
 				}
 			}
 		})

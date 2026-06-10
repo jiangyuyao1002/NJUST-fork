@@ -32,10 +32,7 @@ vi.mock("reconnecting-eventsource", () => ({
 	default: vi.fn(),
 }))
 
-import {
-	appendErrorMessageToConnection,
-	connectToServerWithHub,
-} from "../McpHubConnection"
+import { appendErrorMessageToConnection, connectToServerWithHub } from "../McpHubConnection"
 import {
 	deleteServerWithHub,
 	readServerConfigFromFileWithHub,

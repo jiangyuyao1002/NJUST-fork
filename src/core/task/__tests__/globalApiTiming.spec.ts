@@ -1,10 +1,7 @@
 // npx vitest run src/core/task/__tests__/globalApiTiming.spec.ts
 
 import { describe, it, expect, beforeEach } from "vitest"
-import {
-	getLastGlobalApiRequestTime,
-	setLastGlobalApiRequestTime,
-} from "../globalApiTiming"
+import { getLastGlobalApiRequestTime, setLastGlobalApiRequestTime } from "../globalApiTiming"
 
 describe("globalApiTiming", () => {
 	beforeEach(() => {

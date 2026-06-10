@@ -1,7 +1,11 @@
 import path from "path"
 
 import { getMatchingCjcPatternsByCategory, parseCjpmToml } from "../prompts/sections/cangjie-context"
-import { CRITICAL_SIGNATURE_MODULES, SEARCH_GATE_EXEMPT_MODULES, extractStdImports } from "../tools/cangjiePreflightCheck"
+import {
+	CRITICAL_SIGNATURE_MODULES,
+	SEARCH_GATE_EXEMPT_MODULES,
+	extractStdImports,
+} from "../tools/cangjiePreflightCheck"
 
 export type CangjieContextIntensity = "compact" | "full"
 
@@ -52,9 +56,7 @@ function splitCommandSegments(command: string): string[] {
 }
 
 function stripLeadingDirectoryChange(segment: string): string {
-	return segment
-		.replace(/^(?:cd|Set-Location)\s+[^&|;]+$/i, "")
-		.trim()
+	return segment.replace(/^(?:cd|Set-Location)\s+[^&|;]+$/i, "").trim()
 }
 
 function extractStdModuleFromCorpusPath(filePath: string): string | undefined {
@@ -198,7 +200,9 @@ export class CangjieRuntimePolicy {
 				}))
 			: [{ prefix: normalizeRelPath(info.srcDir || "src").replace(/\/+$/, ""), rootPackageName: info.name }]
 
-		const match = projectRoots.find((root) => normalized === root.prefix || normalized.startsWith(`${root.prefix}/`))
+		const match = projectRoots.find(
+			(root) => normalized === root.prefix || normalized.startsWith(`${root.prefix}/`),
+		)
 		if (!match) {
 			const allowed = projectRoots.map((root) => `${root.prefix}/`).join(", ")
 			return `Cangjie source files must be written under the configured source directory. Allowed source roots: ${allowed}. Target: ${relPath}.`
@@ -373,7 +377,9 @@ export class CangjieRuntimePolicy {
 		}
 		if (this.recentBuildFailed) {
 			const causeSummary =
-				this.recentBuildRootCauses.length > 0 ? ` Recent root causes: ${this.recentBuildRootCauses.join(", ")}.` : ""
+				this.recentBuildRootCauses.length > 0
+					? ` Recent root causes: ${this.recentBuildRootCauses.join(", ")}.`
+					: ""
 			const directive = this.repairDirective ? ` ${this.repairDirective}` : ""
 			return `Completion blocked in Cangjie mode: the latest build failed.${causeSummary}${directive}`
 		}

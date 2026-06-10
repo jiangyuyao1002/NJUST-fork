@@ -37,7 +37,10 @@ export class CangjieTypeHierarchyProvider implements vscode.TypeHierarchyProvide
 
 			const items: vscode.TypeHierarchyItem[] = []
 			for (const m of superMatch) {
-				const name = m.replace(/^(?:<:|extends|where)\s+/, "").split(".").pop()!
+				const name = m
+					.replace(/^(?:<:|extends|where)\s+/, "")
+					.split(".")
+					.pop()!
 				const defs = this.index.findDefinitions(name)
 				for (const def of defs) {
 					if (!TYPE_KINDS.has(def.kind)) continue
@@ -80,11 +83,12 @@ export class CangjieTypeHierarchyProvider implements vscode.TypeHierarchyProvide
 
 	private symbolToItem(sym: SymbolEntry): vscode.TypeHierarchyItem {
 		return {
-			kind: sym.kind === "interface"
-				? vscode.SymbolKind.Interface
-				: sym.kind === "enum"
-					? vscode.SymbolKind.Enum
-					: vscode.SymbolKind.Class,
+			kind:
+				sym.kind === "interface"
+					? vscode.SymbolKind.Interface
+					: sym.kind === "enum"
+						? vscode.SymbolKind.Enum
+						: vscode.SymbolKind.Class,
 			name: sym.name,
 			detail: sym.signature ?? sym.kind,
 			uri: vscode.Uri.file(sym.filePath),

@@ -250,10 +250,14 @@ export class DirectoryScanner implements IDirectoryScanner {
 					// Re-throw AbortError — it's not a file processing error, just a user-initiated stop
 					if (error instanceof DOMException && error.name === "AbortError") {
 						throw error
-				}
-				logger.error("DirectoryScanner", `Error processing file ${filePath} in workspace ${scanWorkspace}:`, error)
-				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
-				if (onError) {
+					}
+					logger.error(
+						"DirectoryScanner",
+						`Error processing file ${filePath} in workspace ${scanWorkspace}:`,
+						error,
+					)
+					TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
+					if (onError) {
 						onError(
 							error instanceof Error
 								? new Error(`${error.message} (Workspace: ${scanWorkspace}, File: ${filePath})`)
@@ -342,7 +346,11 @@ export class DirectoryScanner implements IDirectoryScanner {
 					await this.cacheManager.deleteHash(fp)
 				}
 			} catch (error: unknown) {
-				logger.error("DirectoryScanner", `Failed to batch-delete ${deletedFilePaths.length} files from workspace ${scanWorkspace}:`, error)
+				logger.error(
+					"DirectoryScanner",
+					`Failed to batch-delete ${deletedFilePaths.length} files from workspace ${scanWorkspace}:`,
+					error,
+				)
 				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 				if (onError) {
 					onError(
@@ -398,13 +406,19 @@ export class DirectoryScanner implements IDirectoryScanner {
 					} catch (deleteError: unknown) {
 						const errorObj = deleteError as Record<string, unknown>
 						const _errorStatus =
-							errorObj?.status || (errorObj?.response as Record<string, unknown>)?.status || errorObj?.statusCode
+							errorObj?.status ||
+							(errorObj?.response as Record<string, unknown>)?.status ||
+							errorObj?.statusCode
 						const errorMessage = getErrorMessage(deleteError)
 
-						logger.error("DirectoryScanner", `Failed to delete points for ${uniqueFilePaths.length} files before upsert in workspace ${scanWorkspace}:`, deleteError)
+						logger.error(
+							"DirectoryScanner",
+							`Failed to delete points for ${uniqueFilePaths.length} files before upsert in workspace ${scanWorkspace}:`,
+							deleteError,
+						)
 						TelemetryService.reportError(deleteError, TelemetryEventName.CODE_INDEX_ERROR)
 
-							// Re-throw with workspace context
+						// Re-throw with workspace context
 						throw new Error(
 							`Failed to delete points for ${uniqueFilePaths.length} files. Workspace: ${scanWorkspace}. ${errorMessage}`,
 							{ cause: deleteError },
@@ -447,7 +461,11 @@ export class DirectoryScanner implements IDirectoryScanner {
 				success = true
 			} catch (error) {
 				lastError = error as Error
-				logger.error("DirectoryScanner", `Error processing batch (attempt ${attempts}) in workspace ${scanWorkspace}:`, error)
+				logger.error(
+					"DirectoryScanner",
+					`Error processing batch (attempt ${attempts}) in workspace ${scanWorkspace}:`,
+					error,
+				)
 				TelemetryService.reportError(error, TelemetryEventName.CODE_INDEX_ERROR)
 
 				if (attempts < MAX_BATCH_RETRIES) {

@@ -65,9 +65,7 @@ export class TaskStopTool extends BaseTool<"task_stop"> {
 				return
 			}
 
-			const runningTask = provider
-				.getAllTaskInstances?.()
-				?.find((t: Task) => t.taskId === params.taskId)
+			const runningTask = provider.getAllTaskInstances?.()?.find((t: Task) => t.taskId === params.taskId)
 
 			if (!runningTask) {
 				pushToolResult(`Task ${params.taskId} is not currently running (already stopped or completed).`)
@@ -75,9 +73,7 @@ export class TaskStopTool extends BaseTool<"task_stop"> {
 			}
 
 			await runningTask.abortTask(true)
-			pushToolResult(
-				`Stopped task ${params.taskId}${params.reason ? ` (reason: ${params.reason})` : ""}.`,
-			)
+			pushToolResult(`Stopped task ${params.taskId}${params.reason ? ` (reason: ${params.reason})` : ""}.`)
 		} catch (error) {
 			pushToolResult(formatResponse.toolError(`Failed to stop task ${params.taskId}: ${String(error)}`))
 		}

@@ -49,7 +49,10 @@ export class ShellIntegrationManager {
 	[ -f "$ZDOTDIR/.zlogin" ] && source "$ZDOTDIR/.zlogin"
 	[ "$ZDOTDIR" = "$HOME" ] && unset ZDOTDIR
 	`
-				logger.info("ShellIntegrationManager", `Creating .zshrc file at ${zshrcPath} with content:\n${zshrcContent}`)
+				logger.info(
+					"ShellIntegrationManager",
+					`Creating .zshrc file at ${zshrcPath} with content:\n${zshrcContent}`,
+				)
 				vscode.workspace.fs.writeFile(vscode.Uri.file(zshrcPath), Buffer.from(zshrcContent)).then(
 					// Success handler
 					() => {
@@ -101,8 +104,14 @@ export class ShellIntegrationManager {
 
 			return true
 		} catch (error: unknown) {
-			logger.error("ShellIntegrationManager", `Error cleaning up temporary directory ${tmpDir}: ${getErrorMessage(error)}`)
-			TelemetryService.reportError(error instanceof Error ? error : new Error(getErrorMessage(error)), TelemetryEventName.UTILITY_ERROR)
+			logger.error(
+				"ShellIntegrationManager",
+				`Error cleaning up temporary directory ${tmpDir}: ${getErrorMessage(error)}`,
+			)
+			TelemetryService.reportError(
+				error instanceof Error ? error : new Error(getErrorMessage(error)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 
 			return false
 		}

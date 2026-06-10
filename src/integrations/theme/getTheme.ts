@@ -90,7 +90,7 @@ export async function getTheme() {
 
 		return converted
 	} catch {
-		// Theme loading can fail for non-standard themes; this is non-fatal.
+		// intentionally ignored: theme loading can fail for non-standard themes
 	}
 	return undefined
 }

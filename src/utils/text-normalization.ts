@@ -87,15 +87,24 @@ export function normalizeString(str: string, options: NormalizeOptions = DEFAULT
  * @returns The unescaped string with HTML entities converted to their literal characters
  */
 const HTML_ENTITIES: Record<string, string> = {
-	"&amp;": "&", "&lt;": "<", "&gt;": ">",
-	"&quot;": '"', "&#39;": "'", "&#x27;": "'",
-	"&apos;": "'", "&nbsp;": " ", "&#x2F;": "/",
-	"&#91;": "[", "&#93;": "]", "&lsqb;": "[", "&rsqb;": "]",
-	"&#x60;": "`", "&#96;": "`",
+	"&amp;": "&",
+	"&lt;": "<",
+	"&gt;": ">",
+	"&quot;": '"',
+	"&#39;": "'",
+	"&#x27;": "'",
+	"&apos;": "'",
+	"&nbsp;": " ",
+	"&#x2F;": "/",
+	"&#91;": "[",
+	"&#93;": "]",
+	"&lsqb;": "[",
+	"&rsqb;": "]",
+	"&#x60;": "`",
+	"&#96;": "`",
 }
 
 export function unescapeHtmlEntities(text: string): string {
 	if (!text) return text
-	return text.replace(/&(?:#[xX]?[\da-fA-F]+|\w+);/g,
-		(match) => HTML_ENTITIES[match] ?? match)
+	return text.replace(/&(?:#[xX]?[\da-fA-F]+|\w+);/g, (match) => HTML_ENTITIES[match] ?? match)
 }

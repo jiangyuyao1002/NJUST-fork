@@ -57,7 +57,9 @@ export class CangjieCompletionEngine {
 
 		let grepRefs = ""
 		const pattern =
-			identifier.length >= 2 ? escapeRegexLiteral(identifier) : escapeRegexLiteral(line.text.trim().slice(0, 40) || "func")
+			identifier.length >= 2
+				? escapeRegexLiteral(identifier)
+				: escapeRegexLiteral(line.text.trim().slice(0, 40) || "func")
 
 		const wsFolder = vscode.workspace.getWorkspaceFolder(document.uri)
 		if (wsFolder && pattern.length >= 2) {
@@ -65,7 +67,7 @@ export class CangjieCompletionEngine {
 				const projectHits = await regexSearchFiles(wsFolder.uri.fsPath, wsFolder.uri.fsPath, pattern, "*.cj")
 				grepRefs += `### Project (.cj)\n${truncate(projectHits, MAX_GREP_CHARS / 2)}\n\n`
 			} catch {
-				// ignore
+				// intentionally ignored: regex search over project may fail
 			}
 		}
 
@@ -75,7 +77,7 @@ export class CangjieCompletionEngine {
 				const corpusHits = await regexSearchFiles(corpusRoot, corpusRoot, pattern, "*.cj")
 				grepRefs += `### CangjieCorpus\n${truncate(corpusHits, MAX_GREP_CHARS / 2)}\n\n`
 			} catch {
-				// ignore
+				// intentionally ignored: regex search over corpus may fail
 			}
 		}
 

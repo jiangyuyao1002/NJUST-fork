@@ -315,7 +315,7 @@ describe("mergeToolParamsForValidation + validateToolParams", () => {
 			params: {
 				server_name: "filesystem",
 				tool_name: "read_file",
-				arguments: "{\"path\":\"simple.txt\"}",
+				arguments: '{"path":"simple.txt"}',
 			},
 			nativeArgs: {
 				server_name: "filesystem",
@@ -333,9 +333,7 @@ describe("mergeToolParamsForValidation + validateToolParams", () => {
 	})
 
 	it("resolves safe aliases and validates search_replace with its own schema", () => {
-		expect(
-			validateToolParams("write_file", { path: "a.cj", content: "x" }).valid,
-		).toBe(true)
+		expect(validateToolParams("write_file", { path: "a.cj", content: "x" }).valid).toBe(true)
 		expect(
 			validateToolParams("search_replace", {
 				file_path: "a.cj",
@@ -347,9 +345,7 @@ describe("mergeToolParamsForValidation + validateToolParams", () => {
 	})
 
 	it("accepts read_file line numbers as numeric strings from legacy params", () => {
-		expect(
-			validateToolParams("read_file", { path: "a.cj", start_line: "1", end_line: "10" }).valid,
-		).toBe(true)
+		expect(validateToolParams("read_file", { path: "a.cj", start_line: "1", end_line: "10" }).valid).toBe(true)
 	})
 
 	it("validates edit_file separately from edit (expected_replacements)", () => {

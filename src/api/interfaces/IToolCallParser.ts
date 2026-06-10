@@ -1,23 +1,12 @@
-import type {
-	ApiStreamToolCallDeltaChunk,
-	ApiStreamToolCallEndChunk,
-	ApiStreamToolCallStartChunk,
-} from "../transform/stream"
+export type {
+	IToolCallParser,
+	ToolCallStreamEvent,
+	ToolCallStreamEventStart,
+	ToolCallStreamEventDelta,
+	ToolCallStreamEventEnd,
+} from "@njust-ai/core"
 
-/** Matches NativeToolCallParser's ToolCallStreamEvent. */
-export type ToolCallParserStreamEvent =
-	| ApiStreamToolCallStartChunk
-	| ApiStreamToolCallDeltaChunk
-	| ApiStreamToolCallEndChunk
+import type { ToolCallStreamEvent } from "@njust-ai/core"
 
-/**
- * Abstraction over native tool-call parsing (streaming + finish handling).
- * API providers depend on this instead of importing core/assistant-message directly.
- */
-export interface IToolCallParser {
-	processFinishReason(finishReason: string | null | undefined): ToolCallParserStreamEvent[]
-
-	/** Static streaming helpers are instance methods for injectability in tests. */
-	clearRawChunkState?(): void
-	clearAllStreamingToolCalls?(): void
-}
+/** @deprecated Use `ToolCallStreamEvent` from `@njust-ai/core` instead. */
+export type ToolCallParserStreamEvent = ToolCallStreamEvent

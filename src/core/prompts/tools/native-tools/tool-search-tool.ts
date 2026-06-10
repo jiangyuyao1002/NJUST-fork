@@ -21,8 +21,7 @@ export default {
 			properties: {
 				query: {
 					type: "string",
-					description:
-						"Space-separated keywords describing the tool capability you need",
+					description: "Space-separated keywords describing the tool capability you need",
 				},
 			},
 			required: ["query"],

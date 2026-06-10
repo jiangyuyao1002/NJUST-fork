@@ -38,12 +38,12 @@ async function formatExpandedCangjieWithCjfmt(expanded: string, outputChannel: v
 		try {
 			fs.unlinkSync(tmpIn)
 		} catch {
-			/* ignore */
+			// intentionally ignored: temp file cleanup
 		}
 		try {
 			fs.unlinkSync(tmpOut)
 		} catch {
-			/* ignore */
+			// intentionally ignored: temp file cleanup
 		}
 	}
 	return expanded

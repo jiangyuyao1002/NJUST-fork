@@ -95,7 +95,10 @@ export class CodeIndexConfigManager {
 			if (!isNaN(dimension) && dimension > 0) {
 				this.modelDimension = dimension
 			} else {
-				logger.warn("ConfigManager", `Invalid codebaseIndexEmbedderModelDimension value: ${rawDimension}. Must be a positive number.`)
+				logger.warn(
+					"ConfigManager",
+					`Invalid codebaseIndexEmbedderModelDimension value: ${rawDimension}. Must be a positive number.`,
+				)
 				this.modelDimension = undefined
 			}
 		} else {

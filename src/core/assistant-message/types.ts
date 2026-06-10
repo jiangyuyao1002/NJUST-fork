@@ -6,11 +6,7 @@ export type AssistantMessageContent = TextContent | ToolUse | McpToolUse
  * A discriminated content block that appears in assistant/content arrays.
  * Extends {@link AssistantMessageContent} with Anthropic-native tool_result blocks.
  */
-export type ContentBlock =
-	| TextContent
-	| ToolUse
-	| McpToolUse
-	| ToolResultBlock
+export type ContentBlock = TextContent | ToolUse | McpToolUse | ToolResultBlock
 
 export interface ToolResultBlock {
 	type: "tool_result"

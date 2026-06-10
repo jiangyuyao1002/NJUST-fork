@@ -194,7 +194,10 @@ describe("TaskMessageManager", () => {
 	})
 
 	it("validates user tool results against the previous effective assistant message", async () => {
-		const assistant = { role: "assistant", content: [{ type: "tool_use", id: "tool-1", name: "read_file", input: {} }] }
+		const assistant = {
+			role: "assistant",
+			content: [{ type: "tool_use", id: "tool-1", name: "read_file", input: {} }],
+		}
 		const ctx = createContext({ apiConversationHistory: [assistant as any] })
 		const user = { role: "user", content: [{ type: "tool_result", tool_use_id: "tool-1", content: "ok" }] } as any
 		const manager = new TaskMessageManager(ctx)
@@ -265,9 +268,7 @@ describe("TaskMessageManager", () => {
 	it("retries saving API history until a retry succeeds", async () => {
 		vi.useFakeTimers()
 		const manager = new TaskMessageManager(createContext())
-		saveApiMessagesMock
-			.mockRejectedValueOnce(new Error("first"))
-			.mockResolvedValueOnce(undefined)
+		saveApiMessagesMock.mockRejectedValueOnce(new Error("first")).mockResolvedValueOnce(undefined)
 
 		const result = manager.retrySaveApiConversationHistory()
 		await vi.advanceTimersByTimeAsync(100)
@@ -317,7 +318,10 @@ describe("TaskMessageManager", () => {
 
 		await manager.updateClineMessage(message)
 
-		expect(ctx.notifier?.postMessageToWebview).toHaveBeenCalledWith({ type: "messageUpdated", clineMessage: message })
+		expect(ctx.notifier?.postMessageToWebview).toHaveBeenCalledWith({
+			type: "messageUpdated",
+			clineMessage: message,
+		})
 		expect(ctx.emit).toHaveBeenCalledWith(expect.any(String), { action: "updated", message })
 	})
 
@@ -327,14 +331,16 @@ describe("TaskMessageManager", () => {
 
 		await expect(manager.saveClineMessages()).resolves.toBe(true)
 
-		expect(taskMetadataMock).toHaveBeenCalledWith(expect.objectContaining({
-			taskId: "task-1",
-			rootTaskId: "root-1",
-			parentTaskId: "parent-1",
-			taskNumber: 7,
-			workspace: "D:\\repo",
-			mode: "code",
-		}))
+		expect(taskMetadataMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				taskId: "task-1",
+				rootTaskId: "root-1",
+				parentTaskId: "parent-1",
+				taskNumber: 7,
+				workspace: "D:\\repo",
+				mode: "code",
+			}),
+		)
 		expect(ctx.debouncedEmitTokenUsage).toHaveBeenCalledWith({ totalTokens: 12 }, ctx.toolUsage)
 		expect(ctx.notifier?.updateTaskHistory).toHaveBeenCalledWith({ id: "task-1" })
 	})

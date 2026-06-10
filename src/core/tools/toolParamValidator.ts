@@ -55,10 +55,7 @@ function zodIssuesToValidationIssues(zodIssues: z.ZodIssue[]): ToolValidationIss
 		return {
 			field: issue.path.join(".") || "<root>",
 			reason: issue.message,
-			expected:
-				expected !== undefined && received !== undefined
-					? `${JSON.stringify(expected)}`
-					: undefined,
+			expected: expected !== undefined && received !== undefined ? `${JSON.stringify(expected)}` : undefined,
 		}
 	})
 }

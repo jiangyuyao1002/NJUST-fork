@@ -105,7 +105,10 @@ async function getFirstLevelDirectories(dirPath: string, ignoreInstance: ReturnT
 		}
 	} catch (err) {
 		logger.warn("ListFiles", `Could not read directory ${absolutePath}: ${err}`)
-		TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.CODE_INDEX_ERROR)
+		TelemetryService.reportError(
+			err instanceof Error ? err : new Error(String(err)),
+			TelemetryEventName.CODE_INDEX_ERROR,
+		)
 	}
 
 	return directories
@@ -346,7 +349,10 @@ async function createIgnoreInstance(dirPath: string): Promise<ReturnType<typeof 
 		} catch (err) {
 			// Continue if we can't read a .gitignore file
 			logger.warn("ListFiles", `Could not read .gitignore at ${gitignoreFile}: ${err}`)
-			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.CODE_INDEX_ERROR)
+			TelemetryService.reportError(
+				err instanceof Error ? err : new Error(String(err)),
+				TelemetryEventName.CODE_INDEX_ERROR,
+			)
 		}
 	}
 
@@ -371,7 +377,7 @@ async function findGitignoreFiles(startPath: string): Promise<string[]> {
 			await fs.promises.access(gitignorePath)
 			gitignoreFiles.push(gitignorePath)
 		} catch {
-			// .gitignore doesn't exist at this level, continue
+			// intentionally ignored: .gitignore doesn't exist at this level
 		}
 
 		// Move up one directory
@@ -499,7 +505,10 @@ async function listFilteredDirectories(
 		} catch (err) {
 			// Continue if we can't read a directory
 			logger.warn("ListFiles", `Could not read directory ${currentPath}: ${err}`)
-			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.CODE_INDEX_ERROR)
+			TelemetryService.reportError(
+				err instanceof Error ? err : new Error(String(err)),
+				TelemetryEventName.CODE_INDEX_ERROR,
+			)
 		}
 
 		return false // Limit not reached

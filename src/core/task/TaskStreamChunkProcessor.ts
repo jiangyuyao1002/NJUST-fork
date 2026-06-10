@@ -9,11 +9,7 @@ import { logger } from "../../shared/logger"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
 
-type FinalizeToolUse = (
-	task: TaskExecutorHost,
-	id: string,
-	finalToolUse: ToolUse | McpToolUse,
-) => ToolUse | McpToolUse
+type FinalizeToolUse = (task: TaskExecutorHost, id: string, finalToolUse: ToolUse | McpToolUse) => ToolUse | McpToolUse
 
 export interface ProcessTaskStreamChunkOptions {
 	task: TaskExecutorHost
@@ -30,11 +26,17 @@ export interface ProcessTaskStreamChunkOptions {
 function presentAssistantMessage(task: TaskExecutorHost): void {
 	void task.presentAssistantMessage().catch((error) => {
 		logger.error("presentAssistantMessage failed", error)
-		TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+		TelemetryService.reportError(
+			error instanceof Error ? error : new Error(String(error)),
+			TelemetryEventName.UTILITY_ERROR,
+		)
 	})
 }
 
-async function maybeEagerExecuteFinalTool(task: TaskExecutorHost, finalToolUse: ToolUse | McpToolUse): Promise<boolean> {
+async function maybeEagerExecuteFinalTool(
+	task: TaskExecutorHost,
+	finalToolUse: ToolUse | McpToolUse,
+): Promise<boolean> {
 	if (finalToolUse?.type !== "tool_use") {
 		return false
 	}
@@ -80,7 +82,7 @@ async function handleFinalToolCall(
 	const existingToolUse = task.assistantMessageContent[toolUseIndex]
 	if (existingToolUse && existingToolUse.type === "tool_use") {
 		existingToolUse.partial = false
-		;existingToolUse.id = id
+		existingToolUse.id = id
 	}
 
 	task.streamingToolCallIndices.delete(id)
@@ -152,7 +154,7 @@ export async function processTaskStreamChunk(options: ProcessTaskStreamChunkOpti
 						params: {},
 						partial: true,
 					}
-					;partialToolUse.id = event.id
+					partialToolUse.id = event.id
 
 					task.assistantMessageContent.push(partialToolUse)
 					task.userMessageContentReady = false
@@ -165,7 +167,7 @@ export async function processTaskStreamChunk(options: ProcessTaskStreamChunkOpti
 
 					const toolUseIndex = task.streamingToolCallIndices.get(event.id)
 					if (toolUseIndex !== undefined) {
-						;partialToolUse.id = event.id
+						partialToolUse.id = event.id
 						task.assistantMessageContent[toolUseIndex] = partialToolUse
 						presentAssistantMessage(task)
 					}

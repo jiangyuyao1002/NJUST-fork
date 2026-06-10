@@ -18,9 +18,11 @@ describe("GeminiHandler backend support", () => {
 			enableGrounding: true,
 		} as ApiHandlerOptions
 		const handler = new GeminiHandler(options)
-		const stub = vi.fn().mockReturnValue((async function* () {
-			yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
-		})())
+		const stub = vi.fn().mockReturnValue(
+			(async function* () {
+				yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
+			})(),
+		)
 		handler._client.models.generateContentStream = stub
 		await handler.createMessage("instr", [] as any).next()
 		const config = stub.mock.calls[0][0].config
@@ -186,9 +188,11 @@ describe("GeminiHandler backend support", () => {
 				geminiApiKey: "test-api-key",
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
-			const stub = vi.fn().mockReturnValue((async function* () {
-				yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
-			})())
+			const stub = vi.fn().mockReturnValue(
+				(async function* () {
+					yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
+				})(),
+			)
 			handler._client.models.generateContentStream = stub
 
 			await handler
@@ -214,9 +218,11 @@ describe("GeminiHandler backend support", () => {
 				geminiApiKey: "test-api-key",
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
-			const stub = vi.fn().mockReturnValue((async function* () {
-				yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
-			})())
+			const stub = vi.fn().mockReturnValue(
+				(async function* () {
+					yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
+				})(),
+			)
 			handler._client.models.generateContentStream = stub
 
 			await handler
@@ -240,9 +246,11 @@ describe("GeminiHandler backend support", () => {
 				geminiApiKey: "test-api-key",
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
-			const stub = vi.fn().mockReturnValue((async function* () {
-				yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
-			})())
+			const stub = vi.fn().mockReturnValue(
+				(async function* () {
+					yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
+				})(),
+			)
 			handler._client.models.generateContentStream = stub
 
 			await handler
@@ -266,9 +274,11 @@ describe("GeminiHandler backend support", () => {
 				geminiApiKey: "test-api-key",
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
-			const stub = vi.fn().mockReturnValue((async function* () {
-				yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
-			})())
+			const stub = vi.fn().mockReturnValue(
+				(async function* () {
+					yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
+				})(),
+			)
 			handler._client.models.generateContentStream = stub
 
 			await handler
@@ -292,9 +302,11 @@ describe("GeminiHandler backend support", () => {
 				geminiApiKey: "test-api-key",
 			} as ApiHandlerOptions
 			const handler = new GeminiHandler(options)
-			const stub = vi.fn().mockReturnValue((async function* () {
-				yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
-			})())
+			const stub = vi.fn().mockReturnValue(
+				(async function* () {
+					yield { candidates: [{ content: { parts: [{ text: "test" }] } }] }
+				})(),
+			)
 			handler._client.models.generateContentStream = stub
 
 			await handler

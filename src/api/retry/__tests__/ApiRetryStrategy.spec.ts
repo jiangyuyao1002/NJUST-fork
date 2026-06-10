@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import {
-	ApiRetryExecutor,
-	DEFAULT_API_RETRY_OPTIONS,
-	computeBackoffMs,
-	delayMs,
-} from "../ApiRetryStrategy"
+import { ApiRetryExecutor, DEFAULT_API_RETRY_OPTIONS, computeBackoffMs, delayMs } from "../ApiRetryStrategy"
 
 describe("computeBackoffMs", () => {
 	const opts = { maxAttempts: 4, baseDelayMs: 1000, maxDelayMs: 60_000, jitterRatio: 0 }
@@ -104,7 +99,11 @@ describe("ApiRetryExecutor", () => {
 
 	it("throws last error after maxAttempts exhausted", async () => {
 		const executor = new ApiRetryExecutor({ maxAttempts: 2, baseDelayMs: 0, maxDelayMs: 0, jitterRatio: 0 })
-		await expect(executor.execute(async () => { throw new Error("boom") })).rejects.toThrow("boom")
+		await expect(
+			executor.execute(async () => {
+				throw new Error("boom")
+			}),
+		).rejects.toThrow("boom")
 	})
 
 	it("stops when shouldRetry returns false", async () => {
@@ -112,7 +111,10 @@ describe("ApiRetryExecutor", () => {
 		let calls = 0
 		await expect(
 			executor.execute(
-				async () => { calls++; throw new Error("nope") },
+				async () => {
+					calls++
+					throw new Error("nope")
+				},
 				() => ({ retry: false }),
 			),
 		).rejects.toThrow("nope")
@@ -123,7 +125,10 @@ describe("ApiRetryExecutor", () => {
 		const executor = new ApiRetryExecutor({ maxAttempts: 3, baseDelayMs: 0, maxDelayMs: 0, jitterRatio: 0 })
 		let calls = 0
 		await expect(
-			executor.execute(async () => { calls++; throw new Error("fail") }),
+			executor.execute(async () => {
+				calls++
+				throw new Error("fail")
+			}),
 		).rejects.toThrow("fail")
 		expect(calls).toBe(3)
 	})
@@ -133,7 +138,11 @@ describe("ApiRetryExecutor", () => {
 		const onRetry = vi.fn()
 		let calls = 0
 		await executor.execute(
-			async () => { calls++; if (calls < 3) throw new Error("fail"); return "done" },
+			async () => {
+				calls++
+				if (calls < 3) throw new Error("fail")
+				return "done"
+			},
 			() => ({ retry: true }),
 			onRetry,
 		)
@@ -145,7 +154,10 @@ describe("ApiRetryExecutor", () => {
 		const executor = new ApiRetryExecutor({ maxAttempts: 1, baseDelayMs: 0, maxDelayMs: 0, jitterRatio: 0 })
 		let calls = 0
 		await expect(
-			executor.execute(async () => { calls++; throw new Error("once") }),
+			executor.execute(async () => {
+				calls++
+				throw new Error("once")
+			}),
 		).rejects.toThrow("once")
 		expect(calls).toBe(1)
 	})

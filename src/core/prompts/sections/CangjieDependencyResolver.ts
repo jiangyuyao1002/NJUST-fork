@@ -8,6 +8,7 @@ import { STDLIB_DOC_MAP as _STDLIB_DOC_MAP } from "../../../services/cangjie-lsp
 import { CangjieSymbolIndex, type SymbolEntry } from "../../../services/cangjie-lsp/CangjieSymbolIndex"
 import { extractCangjieImportPackagePrefixes } from "../../../services/cangjie-lsp/cangjieImportPaths"
 import { extractTypeMemberSummaries } from "../../../services/tree-sitter/cangjieParser"
+import { logger } from "../../../shared/logger"
 
 const STDLIB_DOC_MAP = _STDLIB_DOC_MAP
 
@@ -191,7 +192,8 @@ export function formatSymbolEntries(symbols: SymbolEntry[], cwd: string): string
 						lines.push(`    - 类型头/成员草稿:\n${indented}`)
 					}
 				}
-			} catch {
+			} catch (error) {
+				logger.debug("CangjieDependencyResolver", "dependency type extraction failed", error)
 				/* skip */
 			}
 		}

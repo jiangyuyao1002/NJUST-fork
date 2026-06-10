@@ -80,7 +80,7 @@ export async function openImage(dataUriOrPath: string, options?: { values?: { ac
 				try {
 					await vscode.workspace.fs.delete(vscode.Uri.file(tempFilePath))
 				} catch {
-					// Ignore cleanup errors
+					// intentionally ignored: temp file cleanup failure
 				}
 			}
 			return

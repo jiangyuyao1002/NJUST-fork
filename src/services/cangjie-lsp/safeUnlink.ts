@@ -9,6 +9,6 @@ export function safeUnlink(filePath: string): void {
 	try {
 		fs.unlinkSync(filePath)
 	} catch {
-		// Best-effort cleanup — file may not exist or be inaccessible
+		// intentionally ignored: best-effort cleanup, file may not exist
 	}
 }

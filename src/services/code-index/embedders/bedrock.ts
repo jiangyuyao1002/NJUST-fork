@@ -73,7 +73,8 @@ export class BedrockEmbedder implements IEmbedder {
 				const itemTokens = Math.ceil(text.length / 4)
 
 				if (itemTokens > MAX_ITEM_TOKENS) {
-					logger.warn("BedrockEmbedder",
+					logger.warn(
+						"BedrockEmbedder",
 						t("embeddings:textExceedsTokenLimit", {
 							index: i,
 							itemTokens,
@@ -150,7 +151,8 @@ export class BedrockEmbedder implements IEmbedder {
 				// Check if it's a rate limit error
 				if (errorName === "ThrottlingException" && hasMoreAttempts) {
 					const delayMs = INITIAL_DELAY_MS * Math.pow(2, attempts)
-					logger.warn("BedrockEmbedder",
+					logger.warn(
+						"BedrockEmbedder",
 						t("embeddings:rateLimitRetry", {
 							delayMs,
 							attempt: attempts + 1,
@@ -162,8 +164,16 @@ export class BedrockEmbedder implements IEmbedder {
 				}
 
 				// Log the error for debugging
-				logger.error("BedrockEmbedder", `Bedrock embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`, error)
-				try { TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR) } catch { /* best-effort */ }
+				logger.error(
+					"BedrockEmbedder",
+					`Bedrock embedder error (attempt ${attempts + 1}/${MAX_RETRIES}):`,
+					error,
+				)
+				try {
+					TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
+				} catch {
+					/* best-effort */
+				}
 
 				// Format and throw the error
 				throw formatEmbeddingError(error, MAX_RETRIES)

@@ -128,24 +128,23 @@ export async function parseSourceCodeDefinitionsForFile(
 
 		// Read file content
 		const fileContent = await fs.readFile(filePath, "utf8")
-	if (fileContent.length <= MAX_TREE_SITTER_PARSE_SIZE) {
+		if (fileContent.length <= MAX_TREE_SITTER_PARSE_SIZE) {
+			// Split the file content into individual lines
+			const lines = fileContent.split("\n")
 
-		// Split the file content into individual lines
-		const lines = fileContent.split("\n")
+			// Parse markdown content to get captures
+			const markdownCaptures = parseMarkdown(fileContent)
 
-		// Parse markdown content to get captures
-		const markdownCaptures = parseMarkdown(fileContent)
+			// Process the captures
+			const markdownDefinitions = processCaptures(markdownCaptures, lines, "markdown")
 
-		// Process the captures
-		const markdownDefinitions = processCaptures(markdownCaptures, lines, "markdown")
-
-		if (markdownDefinitions) {
-			return `# ${path.basename(filePath)}\n${markdownDefinitions}`
+			if (markdownDefinitions) {
+				return `# ${path.basename(filePath)}\n${markdownDefinitions}`
+			}
 		}
+		// File too large - skip parsing
+		return undefined
 	}
-	// File too large - skip parsing
-	return undefined
-}
 
 	// Special case for Cangjie files
 	if (ext === ".cj") {

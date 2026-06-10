@@ -485,7 +485,7 @@ export class SogouFreeSearchProvider implements WebSearchProvider {
 				})
 				cookieHeader = collectCookieHeaderFromResponse(warm)
 			} catch {
-				// Warm-up is best-effort; continue without cookies
+				// intentionally ignored: warm-up is best-effort
 			}
 
 			const params = new URLSearchParams({ query, ie: "utf8" })

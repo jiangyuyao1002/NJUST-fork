@@ -3,7 +3,9 @@ import { applyPatchTool } from "../ApplyPatchTool"
 
 describe("ApplyPatchTool schema", () => {
 	it("passes with valid input", () => {
-		const result = applyPatchTool.inputSchema.safeParse({ patch: "*** Begin Patch\n*** Update File: test.txt\n@@ -1,1 +1,1 @@\n-old\n+new\n*** End Patch" })
+		const result = applyPatchTool.inputSchema.safeParse({
+			patch: "*** Begin Patch\n*** Update File: test.txt\n@@ -1,1 +1,1 @@\n-old\n+new\n*** End Patch",
+		})
 		expect(result.success).toBe(true)
 	})
 

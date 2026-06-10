@@ -3,9 +3,8 @@ import { McpProtocolAdapter } from "../adapters/McpProtocolAdapter"
 import type { CloudAgentProfile } from "../types/profile"
 
 const { notificationHandlers, requestHandlers } = vi.hoisted(() => ({
-	 
 	notificationHandlers: {} as Record<string, (...args: any[]) => any>,
-	 
+
 	requestHandlers: {} as Record<string, (...args: any[]) => any>,
 }))
 
@@ -20,12 +19,10 @@ vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
 				content: [{ type: "text", text: JSON.stringify({ ok: true, text: "test result" }) }],
 			}),
 
-			 
 			setNotificationHandler: vi.fn(function (method: { method: string }, handler: (...args: any[]) => any) {
 				notificationHandlers[method.method] = handler
 			}),
 
-			 
 			setRequestHandler: vi.fn(function (method: { method: string }, handler: (...args: any[]) => any) {
 				requestHandlers[method.method] = handler
 			}),

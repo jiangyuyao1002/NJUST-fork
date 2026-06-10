@@ -510,7 +510,9 @@ export class CodeParser implements ICodeParser {
 					seenSegmentHashes,
 					startLine,
 				)
-				chunks.forEach((chunk) => { chunk.identifier = def.name })
+				chunks.forEach((chunk) => {
+					chunk.identifier = def.name
+				})
 				results.push(...chunks)
 			} else {
 				const contentPreview = sectionContent.slice(0, 100)
@@ -571,7 +573,10 @@ export class CodeParser implements ICodeParser {
 
 		if (needsChunking) {
 			const chunks = this._chunkTextByLines(lines, filePath, fileHash, type, seenSegmentHashes, startLine)
-			if (identifier) chunks.forEach((c) => { c.identifier = identifier })
+			if (identifier)
+				chunks.forEach((c) => {
+					c.identifier = identifier
+				})
 			return chunks
 		}
 
@@ -583,7 +588,18 @@ export class CodeParser implements ICodeParser {
 
 		if (!seenSegmentHashes.has(segmentHash)) {
 			seenSegmentHashes.add(segmentHash)
-			return [{ file_path: filePath, identifier, type, start_line: startLine, end_line: endLine, content, segmentHash, fileHash }]
+			return [
+				{
+					file_path: filePath,
+					identifier,
+					type,
+					start_line: startLine,
+					end_line: endLine,
+					content,
+					segmentHash,
+					fileHash,
+				},
+			]
 		}
 		return []
 	}

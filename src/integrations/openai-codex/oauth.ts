@@ -35,5 +35,5 @@ export const openAiCodexOAuthManager = {
 
 	async clearCredentials(): Promise<void> {
 		// Stub - no-op
-	}
+	},
 }

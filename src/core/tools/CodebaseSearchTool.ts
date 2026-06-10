@@ -24,8 +24,10 @@ export class CodebaseSearchTool extends BaseTool<"codebase_search"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Partial<{query: string; path?: string}>): boolean {
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
+	override isPartialArgsStable(partial: Partial<{ query: string; path?: string }>): boolean {
 		return typeof partial.query === "string" && partial.query.length > 0
 	}
 

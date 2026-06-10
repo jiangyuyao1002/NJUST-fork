@@ -67,11 +67,7 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 	// ── Execution ───────────────────────────────────────────────────────
 
 	// eslint-disable-next-line @typescript-eslint/require-await
-	override async execute(
-		params: { query: string },
-		_task: Task,
-		{ pushToolResult }: ToolCallbacks,
-	): Promise<void> {
+	override async execute(params: { query: string }, _task: Task, { pushToolResult }: ToolCallbacks): Promise<void> {
 		const { query } = params
 
 		if (!this.registry) {
@@ -93,13 +89,7 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 			.filter((k) => k.length > 0)
 
 		const matched = deferredTools.filter((tool) => {
-			const searchableText = [
-				tool.name,
-				tool.userFacingName(),
-				tool.searchHint ?? "",
-			]
-				.join(" ")
-				.toLowerCase()
+			const searchableText = [tool.name, tool.userFacingName(), tool.searchHint ?? ""].join(" ").toLowerCase()
 
 			return keywords.some((kw) => searchableText.includes(kw))
 		})
@@ -114,9 +104,7 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 
 		// Build a description block for each matched tool
 		const descriptions = matched.map((tool) => {
-			const lines: string[] = [
-				`## ${tool.userFacingName()} (${tool.name})`,
-			]
+			const lines: string[] = [`## ${tool.userFacingName()} (${tool.name})`]
 
 			if (tool.searchHint) {
 				lines.push(`Keywords: ${tool.searchHint}`)
@@ -128,10 +116,7 @@ class ToolSearchToolImpl extends BaseTool<"tool_search"> {
 			return lines.join("\n")
 		})
 
-		pushToolResult(
-			`Found ${matched.length} deferred tool(s) matching "${query}":\n\n` +
-				descriptions.join("\n\n"),
-		)
+		pushToolResult(`Found ${matched.length} deferred tool(s) matching "${query}":\n\n` + descriptions.join("\n\n"))
 	}
 }
 

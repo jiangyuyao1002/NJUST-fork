@@ -169,7 +169,7 @@ export class CangjieRefactoringProvider implements vscode.CodeActionProvider {
 					}
 				}
 			} catch {
-				// Skip unreadable files
+				// intentionally ignored: skip unreadable files
 			}
 		}
 

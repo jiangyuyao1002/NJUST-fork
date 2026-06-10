@@ -27,8 +27,10 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 		return true
 	}
 
-	override getEagerExecutionDecision() { return "eager" as const }
-	override isPartialArgsStable(partial: Partial<{path: string; recursive?: boolean}>): boolean {
+	override getEagerExecutionDecision() {
+		return "eager" as const
+	}
+	override isPartialArgsStable(partial: Partial<{ path: string; recursive?: boolean }>): boolean {
 		return typeof partial.path === "string"
 	}
 

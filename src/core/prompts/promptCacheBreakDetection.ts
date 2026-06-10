@@ -119,11 +119,7 @@ export class PromptCacheBreakDetector {
 	 * @param dynamicPart - The dynamic portion (after DYNAMIC_BOUNDARY)
 	 * @returns null if no change, or a CacheBreakEvent if cache will be invalidated
 	 */
-	check(
-		staticPart: string,
-		dynamicPart: string,
-		toolPayloads?: Record<string, string>,
-	): CacheBreakEvent | null {
+	check(staticPart: string, dynamicPart: string, toolPayloads?: Record<string, string>): CacheBreakEvent | null {
 		const normalizedStatic = normalizePromptContent(staticPart)
 		const normalizedDynamic = normalizePromptContent(dynamicPart)
 

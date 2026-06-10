@@ -118,6 +118,7 @@ function createHost(overrides: Record<string, unknown> = {}) {
 		consecutiveNoAssistantMessagesCount: 4,
 		persistentRetryHandler: { cancel: vi.fn() },
 		providerProfileChangeListener: vi.fn(),
+		modeHandler: { dispose: vi.fn(), providerProfileChangeListener: vi.fn() },
 		messageQueueStateChangedHandler: vi.fn(),
 		rooIgnoreController: { dispose: vi.fn() },
 		clineMessages: [],
@@ -263,8 +264,7 @@ describe("TaskLifecycleHandler", () => {
 		expect(clearMcpInstructionsDeltaMock).toHaveBeenCalledWith("task-1")
 		expect(deleteGeneratedCangjieTestFilesForTaskMock).toHaveBeenCalledWith("task-1")
 		expect(host.cancelCurrentRequest).toHaveBeenCalledTimes(1)
-		expect(host.provider.off).toHaveBeenCalled()
-		expect(host.providerProfileChangeListener).toBeUndefined()
+		expect(host.modeHandler.dispose).toHaveBeenCalled()
 		expect(host.messageQueueService.removeListener).toHaveBeenCalledWith("stateChanged", expect.any(Function))
 		expect(host.messageQueueService.dispose).toHaveBeenCalled()
 		expect(host.removeAllListeners).toHaveBeenCalled()

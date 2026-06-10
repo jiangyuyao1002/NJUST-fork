@@ -74,9 +74,7 @@ export type SessionStartHook = (context: LifecycleHookContext) => Promise<void>
 /**
  * Session end hook: triggered when a task/session completes or is aborted.
  */
-export type SessionEndHook = (
-	context: LifecycleHookContext & { aborted?: boolean },
-) => Promise<void>
+export type SessionEndHook = (context: LifecycleHookContext & { aborted?: boolean }) => Promise<void>
 
 /**
  * Setup hook: triggered during extension activation / system initialization.
@@ -119,9 +117,7 @@ export interface PostCompactHookContext extends LifecycleHookContext {
 	tokenCountAfter: number
 }
 
-export type PreCompactHook = (
-	context: PreCompactHookContext,
-) => Promise<{ allow: boolean; reason?: string }>
+export type PreCompactHook = (context: PreCompactHookContext) => Promise<{ allow: boolean; reason?: string }>
 
 export type PostCompactHook = (context: PostCompactHookContext) => Promise<void>
 

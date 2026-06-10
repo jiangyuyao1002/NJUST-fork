@@ -52,9 +52,7 @@ export class TaskListTool extends BaseTool<"task_list"> {
 			if (tasks.length === 0) {
 				pushToolResult("No tasks found matching the given filters.")
 			} else {
-				pushToolResult(
-					`Found ${tasks.length} task(s):\n${JSON.stringify(tasks, null, 2)}`,
-				)
+				pushToolResult(`Found ${tasks.length} task(s):\n${JSON.stringify(tasks, null, 2)}`)
 			}
 		} catch (error) {
 			await handleError("listing tasks", error as Error)

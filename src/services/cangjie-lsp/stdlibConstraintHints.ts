@@ -176,7 +176,7 @@ export function mergeStdlibConstraintHintsFromCorpus(
 			}
 		}
 	} catch {
-		/* refresh */
+		// intentionally ignored: cache refresh failure
 	}
 
 	const extracted = extractWhereConstraintsFromCorpus(corpusRoot)
@@ -184,7 +184,7 @@ export function mergeStdlibConstraintHintsFromCorpus(
 		fs.mkdirSync(globalStoragePath, { recursive: true })
 		fs.writeFileSync(cachePath, JSON.stringify({ corpusTag: tag, extracted }, null, 2), "utf-8")
 	} catch {
-		/* non-fatal */
+		// intentionally ignored: cache write failure is non-fatal
 	}
 	const value = { ...baseHints, ...extracted }
 	stdlibConstraintMemCache = {

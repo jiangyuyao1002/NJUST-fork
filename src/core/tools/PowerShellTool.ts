@@ -67,7 +67,6 @@ export class PowerShellTool extends BaseTool<"execute_command"> {
 		const { handleError, pushToolResult, askApproval } = callbacks
 
 		try {
-
 			// Wrap using -EncodedCommand (Base64) to prevent PowerShell metacharacter injection
 			const encoded = Buffer.from(command, "utf-8").toString("base64")
 			const psCommand = `powershell.exe -NoProfile -NonInteractive -EncodedCommand ${encoded}`
@@ -83,8 +82,8 @@ export class PowerShellTool extends BaseTool<"execute_command"> {
 			// The actual terminal execution is handled by the existing infrastructure
 			pushToolResult(
 				`PowerShell command prepared: ${psCommand}\n` +
-				`Note: PowerShell execution delegates to the execute_command infrastructure. ` +
-				`Use execute_command with the powershell.exe wrapper for actual execution.`
+					`Note: PowerShell execution delegates to the execute_command infrastructure. ` +
+					`Use execute_command with the powershell.exe wrapper for actual execution.`,
 			)
 		} catch (error) {
 			await handleError("executing PowerShell command", error as Error)

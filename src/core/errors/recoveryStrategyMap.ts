@@ -8,14 +8,14 @@ export type RecoveryAction =
 	| "immediate_retry"
 	| "timeout_degrade"
 	// === New recovery actions (Task 4.2) ===
-	| "strip_media_retry"         // Remove/compress large media then retry
-	| "overloaded_backoff"        // Exponential backoff for model overload (5s start, 120s max)
-	| "inject_tool_hint_retry"    // Retry with tool-use correction hint injected
-	| "content_policy_reject"     // No retry; notify user about policy rejection
-	| "partial_continue"          // Send "continue" to resume partial response
-	| "server_error_backoff"      // Exponential backoff with diagnostics logging
-	| "unknown_single_retry"      // Single retry attempt, then give up
-	| "model_fallback"            // Switch to fallback model (triggered after retries exhausted)
+	| "strip_media_retry" // Remove/compress large media then retry
+	| "overloaded_backoff" // Exponential backoff for model overload (5s start, 120s max)
+	| "inject_tool_hint_retry" // Retry with tool-use correction hint injected
+	| "content_policy_reject" // No retry; notify user about policy rejection
+	| "partial_continue" // Send "continue" to resume partial response
+	| "server_error_backoff" // Exponential backoff with diagnostics logging
+	| "unknown_single_retry" // Single retry attempt, then give up
+	| "model_fallback" // Switch to fallback model (triggered after retries exhausted)
 	| "none"
 
 /**

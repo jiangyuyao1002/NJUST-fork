@@ -14,6 +14,7 @@ import * as path from "path"
 
 import { type ApiMessage } from "../task-persistence"
 import type { TypedBlock } from "../assistant-message/types"
+import { logger } from "../../shared/logger"
 
 // ─── SessionMemorySummary: structured summary for cross-session persistence ───
 
@@ -380,10 +381,7 @@ export function generateSessionSummary(messages: ApiMessage[], taskId: string): 
  * Persist a session summary to disk.
  * Stored in the workspace's .njust-ai/session-memories/ directory.
  */
-export async function persistSessionMemory(
-	summary: SessionMemorySummary,
-	workspaceDir: string,
-): Promise<void> {
+export async function persistSessionMemory(summary: SessionMemorySummary, workspaceDir: string): Promise<void> {
 	const dir = path.join(workspaceDir, SESSION_MEMORIES_DIR)
 	await fs.mkdir(dir, { recursive: true })
 
@@ -420,7 +418,8 @@ async function pruneOldSessions(dir: string): Promise<void> {
 				await fs.unlink(path.join(dir, file))
 			}
 		}
-	} catch {
+	} catch (error) {
+		logger.debug("SessionMemoryCompact", "session memory pruning failed", error)
 		// Silently ignore pruning errors
 	}
 }
@@ -448,7 +447,8 @@ export async function loadSessionMemories(
 				const content = await fs.readFile(path.join(dir, file), "utf-8")
 				const parsed = JSON.parse(content) as SessionMemorySummary
 				memories.push(parsed)
-			} catch {
+			} catch (error) {
+				logger.debug("SessionMemoryCompact", "corrupted session memory file skipped", error)
 				// Skip corrupted files
 			}
 		}
@@ -463,10 +463,7 @@ export async function loadSessionMemories(
 /**
  * Format session memories for injection into system prompt.
  */
-export function formatSessionMemoriesForPrompt(
-	memories: SessionMemorySummary[],
-	tokenBudget: number,
-): string {
+export function formatSessionMemoriesForPrompt(memories: SessionMemorySummary[], tokenBudget: number): string {
 	if (memories.length === 0) return ""
 
 	const sections: string[] = []
@@ -511,9 +508,7 @@ export function formatSessionMemoriesForPrompt(
 			const minimal = [
 				`### Session: ${date} (${memory.sessionId.slice(0, 8)})`,
 				memory.summary,
-				memory.filesModified.length > 0
-					? `**Modified:** ${memory.filesModified.join(", ")}`
-					: "",
+				memory.filesModified.length > 0 ? `**Modified:** ${memory.filesModified.join(", ")}` : "",
 			]
 				.filter(Boolean)
 				.join("\n")

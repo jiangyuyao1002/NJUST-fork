@@ -116,7 +116,9 @@ describe("convertToZAiFormat", () => {
 			{ mergeToolResultText: true },
 		)
 
-		expect(result).toEqual([{ role: "tool", tool_call_id: "tool-1", content: "file content\n\nenvironment details" }])
+		expect(result).toEqual([
+			{ role: "tool", tool_call_id: "tool-1", content: "file content\n\nenvironment details" },
+		])
 	})
 
 	it("keeps text after tool_result as user message when merge disabled", () => {
@@ -138,7 +140,11 @@ describe("convertToZAiFormat", () => {
 
 	it("preserves top-level assistant reasoning_content", () => {
 		const result = convertToZAiFormat([
-			{ role: "assistant", content: "answer", reasoning_content: "thinking" } as Anthropic.Messages.MessageParam & {
+			{
+				role: "assistant",
+				content: "answer",
+				reasoning_content: "thinking",
+			} as Anthropic.Messages.MessageParam & {
 				reasoning_content: string
 			},
 		])
@@ -150,10 +156,7 @@ describe("convertToZAiFormat", () => {
 		const result = convertToZAiFormat([
 			{
 				role: "assistant",
-				content: [
-					{ type: "text", text: "one" },
-					{ type: "reasoning", text: "r1" } as any,
-				],
+				content: [{ type: "text", text: "one" }, { type: "reasoning", text: "r1" } as any],
 			},
 			{ role: "assistant", content: "two", reasoning_content: "r2" } as Anthropic.Messages.MessageParam & {
 				reasoning_content: string

@@ -44,7 +44,11 @@ export class McpHubFileWatcherManager {
 					try {
 						await restartConnection(name, source)
 					} catch (error) {
-						logger.error("McpHub", `Failed to restart server ${name} after change in ${changedPath}:`, error)
+						logger.error(
+							"McpHub",
+							`Failed to restart server ${name} after change in ${changedPath}:`,
+							error,
+						)
 						TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 					}
 				})

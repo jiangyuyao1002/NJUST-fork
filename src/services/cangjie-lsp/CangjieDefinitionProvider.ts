@@ -23,9 +23,12 @@ export class CangjieDefinitionProvider implements vscode.DefinitionProvider {
 		const defs = this.index.findDefinitions(word, document.uri)
 		if (defs.length === 0) return undefined
 
-		return defs.map((d) => new vscode.Location(
-			vscode.Uri.file(d.filePath),
-			new vscode.Range(d.startLine, 0, d.startLine, d.signature.length),
-		))
+		return defs.map(
+			(d) =>
+				new vscode.Location(
+					vscode.Uri.file(d.filePath),
+					new vscode.Range(d.startLine, 0, d.startLine, d.signature.length),
+				),
+		)
 	}
 }

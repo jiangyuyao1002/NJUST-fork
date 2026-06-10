@@ -40,7 +40,6 @@ export class AgentTool extends BaseTool<"agent"> {
 		const { askApproval, handleError, pushToolResult } = callbacks
 
 		try {
-
 			const host = task.providerRef.deref()
 
 			if (!host) {
@@ -65,8 +64,11 @@ export class AgentTool extends BaseTool<"agent"> {
 			task.consecutiveMistakeCount = 0
 
 			// Build the agent message with context about its type and constraints
-			const toolSetDescription = agentType !== "custom" ? AGENT_TYPE_TOOLS[agentType].join(", ") : "inherited from parent"
-			const maxTurnsNote = maxTurns ? `\n\nIMPORTANT: You have a maximum of ${maxTurns} conversation turns to complete this task. Be efficient and focused.` : ""
+			const toolSetDescription =
+				agentType !== "custom" ? AGENT_TYPE_TOOLS[agentType].join(", ") : "inherited from parent"
+			const maxTurnsNote = maxTurns
+				? `\n\nIMPORTANT: You have a maximum of ${maxTurns} conversation turns to complete this task. Be efficient and focused.`
+				: ""
 
 			const agentMessage = [
 				`[Sub-Agent Type: ${agentType}]`,
@@ -107,14 +109,21 @@ export class AgentTool extends BaseTool<"agent"> {
 				let settled = false
 				const timer = setInterval(() => {
 					if (settled) return
-					if ((child as Record<string, UnsafeAny>).taskCompleted || (child as Record<string, UnsafeAny>).abort) {
+					if (
+						(child as Record<string, UnsafeAny>).taskCompleted ||
+						(child as Record<string, UnsafeAny>).abort
+					) {
 						settled = true
 						clearInterval(timer)
 						resolve()
 					}
 				}, 200)
 				setTimeout(() => {
-					if (!settled) { settled = true; clearInterval(timer); resolve() }
+					if (!settled) {
+						settled = true
+						clearInterval(timer)
+						resolve()
+					}
 				}, 30_000)
 			})
 
@@ -126,12 +135,10 @@ export class AgentTool extends BaseTool<"agent"> {
 			if (winner === "backgrounded") {
 				pushToolResult(
 					`Sub-agent (${agentType}) spawned in background. ` +
-					`It will work independently and report when complete.`,
+						`It will work independently and report when complete.`,
 				)
 			} else {
-				pushToolResult(
-					`Sub-agent (${agentType}) completed with forked isolation.`,
-				)
+				pushToolResult(`Sub-agent (${agentType}) completed with forked isolation.`)
 			}
 			return
 		} catch (error) {

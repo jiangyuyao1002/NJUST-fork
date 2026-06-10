@@ -675,7 +675,7 @@ export class OpenAiCodexHandler extends BaseProvider implements SingleCompletion
 								yield { type: "text", text: parsed.content || parsed.text || parsed.message }
 							}
 						} catch {
-							// Not JSON, ignore
+							// intentionally ignored: non-JSON line in SSE stream
 						}
 					}
 				}

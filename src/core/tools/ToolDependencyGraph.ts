@@ -1,4 +1,3 @@
-
 /**
  * Directed acyclic graph of tool dependencies.
  *

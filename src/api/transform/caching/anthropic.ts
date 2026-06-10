@@ -2,7 +2,10 @@ import OpenAI from "openai"
 
 import type { CacheableTextPart } from "./types"
 
-export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.ChatCompletionMessageParam[]): OpenAI.Chat.ChatCompletionMessageParam[] {
+export function addCacheBreakpoints(
+	systemPrompt: string,
+	messages: OpenAI.Chat.ChatCompletionMessageParam[],
+): OpenAI.Chat.ChatCompletionMessageParam[] {
 	// Shallow clone to avoid mutating the caller's array.
 	const result = [...messages]
 
@@ -32,7 +35,9 @@ export function addCacheBreakpoints(systemPrompt: string, messages: OpenAI.Chat.
 				// at the end. But if it wasn't there, and the user added a
 				// image_url type message, it would pop a text part before
 				// it and then move it after to the end.
-				let lastTextPart = msg.content.filter((part) => part.type === "text").pop() as CacheableTextPart | undefined
+				let lastTextPart = msg.content.filter((part) => part.type === "text").pop() as
+					| CacheableTextPart
+					| undefined
 
 				if (!lastTextPart) {
 					lastTextPart = { type: "text", text: "..." }

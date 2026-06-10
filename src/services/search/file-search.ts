@@ -53,7 +53,7 @@ export async function executeRipgrep({
 
 					count++
 				} catch {
-					// Silently ignore errors processing individual paths.
+					// intentionally ignored: errors processing individual paths
 				}
 			} else {
 				rl.close()

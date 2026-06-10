@@ -148,7 +148,7 @@ describe("VertexHandler", () => {
 			})
 
 			const modelInfo = testHandler.getModel()
-			
+
 			expect(modelInfo.info.includedTools).toContain("edit")
 		})
 
@@ -160,9 +160,9 @@ describe("VertexHandler", () => {
 			})
 
 			const modelInfo = testHandler.getModel()
-			
+
 			const includedCount = modelInfo.info.includedTools!.filter((t: string) => t === "edit").length
-			
+
 			expect(includedCount).toBe(1)
 		})
 	})

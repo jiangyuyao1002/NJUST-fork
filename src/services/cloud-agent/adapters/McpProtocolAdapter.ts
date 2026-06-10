@@ -5,12 +5,7 @@ import type { CloudAgentProfile, AuthConfig as CloudAgentAuthConfig } from "../t
 import type { DeferredToolCall } from "../types"
 import { logger } from "../../../shared/logger"
 import { getErrorMessage } from "../../../shared/error-utils"
-import type {
-	IProtocolAdapter,
-	UniversalTaskRequest,
-	UniversalTaskResponse,
-	EndpointType,
-} from "./types"
+import type { IProtocolAdapter, UniversalTaskRequest, UniversalTaskResponse, EndpointType } from "./types"
 
 export const MCP_TOOLS = {
 	SUBMIT_TASK: "submit_task",
@@ -59,19 +54,13 @@ export class McpProtocolAdapter implements IProtocolAdapter {
 
 		const authHeaders = this.buildMcpAuthHeaders(profile.auth)
 
-		this.transport = new StreamableHTTPClientTransport(
-			new URL(`${profile.serverUrl}/mcp`),
-			{
-				requestInit: {
-					headers: authHeaders,
-				},
+		this.transport = new StreamableHTTPClientTransport(new URL(`${profile.serverUrl}/mcp`), {
+			requestInit: {
+				headers: authHeaders,
 			},
-		)
+		})
 
-		this.client = new Client(
-			{ name: "njust-ai", version: "1.0.0" },
-			{ capabilities: {} },
-		)
+		this.client = new Client({ name: "njust-ai", version: "1.0.0" }, { capabilities: {} })
 	}
 
 	/** MCP 握手；连接后自动注册回调 handler。 */
@@ -219,10 +208,7 @@ export class McpProtocolAdapter implements IProtocolAdapter {
 	// ─── MCP 工具调用 ──────────────────────────────────────────────
 
 	/** 调用 MCP 工具并返回解析后的通用响应。自动连接。 */
-	async callTool(
-		name: string,
-		args: Record<string, unknown>,
-	): Promise<UniversalTaskResponse> {
+	async callTool(name: string, args: Record<string, unknown>): Promise<UniversalTaskResponse> {
 		if (!this.connected) {
 			await this.connect()
 		}

@@ -44,9 +44,7 @@ export class TaskCreateTool extends BaseTool<"task_create"> {
 			const created: TaskBoardItem = await board.createTask(createParams)
 
 			task.consecutiveMistakeCount = 0
-			pushToolResult(
-				`Task created successfully:\n${JSON.stringify(created, null, 2)}`,
-			)
+			pushToolResult(`Task created successfully:\n${JSON.stringify(created, null, 2)}`)
 		} catch (error) {
 			await handleError("creating task", error as Error)
 		}

@@ -34,7 +34,10 @@ export interface BashAnalysisResult {
 // ── Pattern definitions ──────────────────────────────────────────────
 
 const FORBIDDEN_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
-	{ pattern: /\brm\s+(-[^\s]*)?-rf\s+\/(?:\s|$)/, reason: "rm -rf / — catastrophic recursive deletion of root filesystem" },
+	{
+		pattern: /\brm\s+(-[^\s]*)?-rf\s+\/(?:\s|$)/,
+		reason: "rm -rf / — catastrophic recursive deletion of root filesystem",
+	},
 	{ pattern: /\bsudo\s+rm\b/, reason: "sudo rm — privileged deletion" },
 	{ pattern: /\bdd\s+.*\bif=.*\bof=/, reason: "dd with if/of — raw disk write, potential data destruction" },
 	{ pattern: /:\(\)\{\s*:\|\s*:&\s*\}\s*;?\s*:/, reason: "Fork bomb detected" },
@@ -345,17 +348,12 @@ export class StaticPatternClassifier implements ClassifierStrategy {
 	readonly name = "static-pattern"
 	readonly confidence = "high" as const
 
-	classifySync(
-		toolName: string,
-		input: Record<string, unknown>,
-		_context: ClassifierContext,
-	): ClassifyResult {
+	classifySync(toolName: string, input: Record<string, unknown>, _context: ClassifierContext): ClassifyResult {
 		if (toolName === "execute_command" && typeof input.command === "string") {
 			const analysis = analyzeBashCommand(input.command)
 			return {
 				action: riskToAction(analysis.riskLevel),
-				reason:
-					analysis.reasons.length > 0 ? analysis.reasons.join("; ") : "No security risks detected",
+				reason: analysis.reasons.length > 0 ? analysis.reasons.join("; ") : "No security risks detected",
 				confidence: riskToConfidence(analysis.riskLevel),
 				metadata: {
 					riskLevel: analysis.riskLevel,

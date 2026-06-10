@@ -96,13 +96,9 @@ export class AgentSummaryService {
 			}
 		}
 
-		const recentTools = toolOps.length > 0
-			? `Recently used: ${toolOps.reverse().join(", ")}. `
-			: ""
+		const recentTools = toolOps.length > 0 ? `Recently used: ${toolOps.reverse().join(", ")}. ` : ""
 
-		const context = text.length > 0
-			? text.slice(0, 100)
-			: "Working..."
+		const context = text.length > 0 ? text.slice(0, 100) : "Working..."
 
 		return {
 			agentId: this.agentId,

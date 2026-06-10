@@ -19,6 +19,19 @@ class StartupProfiler {
 		candidate.durationMs = candidate.endedAt - candidate.startedAt
 	}
 
+	/**
+	 * Exception-safe wrapper: guarantees end() is called even if fn() throws.
+	 * Prefer this over manual start()/end() pairs.
+	 */
+	async measure<T>(name: string, fn: () => Promise<T>): Promise<T> {
+		this.start(name)
+		try {
+			return await fn()
+		} finally {
+			this.end(name)
+		}
+	}
+
 	summary(): StartupProfileEntry[] {
 		return this.entries.map((e) => ({ ...e }))
 	}

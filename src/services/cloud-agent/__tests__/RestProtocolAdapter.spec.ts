@@ -36,9 +36,11 @@ describe("RestProtocolAdapter", () => {
 
 		it("includes X-Device-Token for device-token auth when token exists", () => {
 			const adapter = new RestProtocolAdapter()
-			adapter.initialize(createMockProfile({
-				auth: { type: "device-token", deviceTokenSource: "global" },
-			}))
+			adapter.initialize(
+				createMockProfile({
+					auth: { type: "device-token", deviceTokenSource: "global" },
+				}),
+			)
 			const headers = adapter.buildAuthHeaders()
 			expect(headers["X-Device-Token"]).toBe("test-device-token")
 			expect(headers["X-API-Key"]).toBeUndefined()
@@ -47,9 +49,11 @@ describe("RestProtocolAdapter", () => {
 		it("omits X-Device-Token when deviceToken is empty (missing deviceToken scenario)", () => {
 			setDeviceToken("") // 模拟 device token 缺失
 			const adapter = new RestProtocolAdapter()
-			adapter.initialize(createMockProfile({
-				auth: { type: "device-token", deviceTokenSource: "global" },
-			}))
+			adapter.initialize(
+				createMockProfile({
+					auth: { type: "device-token", deviceTokenSource: "global" },
+				}),
+			)
 			const headers = adapter.buildAuthHeaders()
 			expect(headers["X-Device-Token"]).toBeUndefined()
 			expect(Object.keys(headers)).toHaveLength(0)
@@ -57,9 +61,11 @@ describe("RestProtocolAdapter", () => {
 
 		it("uses profile deviceToken when deviceTokenSource is 'profile'", () => {
 			const adapter = new RestProtocolAdapter()
-			adapter.initialize(createMockProfile({
-				auth: { type: "device-token", deviceTokenSource: "profile", deviceToken: "profile-specific-token" },
-			}))
+			adapter.initialize(
+				createMockProfile({
+					auth: { type: "device-token", deviceTokenSource: "profile", deviceToken: "profile-specific-token" },
+				}),
+			)
 			const headers = adapter.buildAuthHeaders()
 			expect(headers["X-Device-Token"]).toBe("profile-specific-token")
 		})
@@ -67,36 +73,44 @@ describe("RestProtocolAdapter", () => {
 		it("falls back to global deviceToken when profile deviceToken is empty", () => {
 			setDeviceToken("global-token")
 			const adapter = new RestProtocolAdapter()
-			adapter.initialize(createMockProfile({
-				auth: { type: "device-token", deviceTokenSource: "profile", deviceToken: "" },
-			}))
+			adapter.initialize(
+				createMockProfile({
+					auth: { type: "device-token", deviceTokenSource: "profile", deviceToken: "" },
+				}),
+			)
 			const headers = adapter.buildAuthHeaders()
 			expect(headers["X-Device-Token"]).toBe("global-token")
 		})
 
 		it("includes Authorization Bearer for bearer auth", () => {
 			const adapter = new RestProtocolAdapter()
-			adapter.initialize(createMockProfile({
-				auth: { type: "bearer", bearerToken: "my-bearer-token" },
-			}))
+			adapter.initialize(
+				createMockProfile({
+					auth: { type: "bearer", bearerToken: "my-bearer-token" },
+				}),
+			)
 			const headers = adapter.buildAuthHeaders()
 			expect(headers["Authorization"]).toBe("Bearer my-bearer-token")
 		})
 
 		it("includes Authorization Basic for basic auth", () => {
 			const adapter = new RestProtocolAdapter()
-			adapter.initialize(createMockProfile({
-				auth: { type: "basic", basicUsername: "user", basicPassword: "pass" },
-			}))
+			adapter.initialize(
+				createMockProfile({
+					auth: { type: "basic", basicUsername: "user", basicPassword: "pass" },
+				}),
+			)
 			const headers = adapter.buildAuthHeaders()
 			expect(headers["Authorization"]).toBe("Basic " + Buffer.from("user:pass").toString("base64"))
 		})
 
 		it("includes custom headers for custom auth", () => {
 			const adapter = new RestProtocolAdapter()
-			adapter.initialize(createMockProfile({
-				auth: { type: "custom", customHeaders: { "X-Custom": "value" } },
-			}))
+			adapter.initialize(
+				createMockProfile({
+					auth: { type: "custom", customHeaders: { "X-Custom": "value" } },
+				}),
+			)
 			const headers = adapter.buildAuthHeaders()
 			expect(headers["X-Custom"]).toBe("value")
 		})

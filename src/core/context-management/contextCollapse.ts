@@ -31,8 +31,7 @@ export function contextCollapseMessages(
 	while (tail[0] && tail[0].role !== head.role && tail.length > 1) {
 		tail = tail.slice(1)
 	}
-	const markerRole: "user" | "assistant" =
-		head.role === "user" ? "assistant" : "user"
+	const markerRole: "user" | "assistant" = head.role === "user" ? "assistant" : "user"
 	const collapsedRounds = Math.max(0, messages.length - 1 - tail.length)
 	const marker: ApiMessage = {
 		role: markerRole,

@@ -17,9 +17,7 @@ describe("addCacheBreakpoints (Anthropic)", () => {
 
 		const result = addCacheBreakpoints(systemPrompt, messages)
 
-		expect(result[0].content).toEqual([
-			{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
-		])
+		expect(result[0].content).toEqual([{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }])
 	})
 
 	it("should not add breakpoints to user messages if there are none", () => {
@@ -28,9 +26,7 @@ describe("addCacheBreakpoints (Anthropic)", () => {
 
 		const result = addCacheBreakpoints(systemPrompt, messages)
 
-		expect(result[0].content).toEqual([
-			{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
-		])
+		expect(result[0].content).toEqual([{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }])
 
 		expect(result.length).toBe(originalMessages.length)
 	})

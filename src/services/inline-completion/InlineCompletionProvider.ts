@@ -40,7 +40,7 @@ export async function debounceInlineDelay(
 	try {
 		await delayWithCancellation(ms, token)
 	} catch {
-		// vscode.CancellationError — caller checks token
+		// intentionally ignored: vscode.CancellationError, caller checks token
 	}
 }
 
@@ -140,9 +140,7 @@ export class InlineCompletionProvider implements vscode.InlineCompletionItemProv
 				text = await this.genericEngine.run(document, position, { maxLines, token })
 			}
 		} catch (error) {
-			this.outputChannel?.appendLine(
-				`[InlineCompletion] Request failed: ${getErrorMessage(error)}`,
-			)
+			this.outputChannel?.appendLine(`[InlineCompletion] Request failed: ${getErrorMessage(error)}`)
 			TelemetryService.reportError(error, TelemetryEventName.UTILITY_ERROR)
 			return null
 		}

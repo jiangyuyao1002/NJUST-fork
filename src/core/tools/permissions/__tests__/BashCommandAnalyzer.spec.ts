@@ -4,11 +4,7 @@ vi.mock("../../../../shared/logger", () => ({
 
 import { describe, expect, it, vi } from "vitest"
 
-import {
-	analyzeBashCommand,
-	BashCommandAnalyzer,
-	StaticPatternClassifier,
-} from "../BashCommandAnalyzer"
+import { analyzeBashCommand, BashCommandAnalyzer, StaticPatternClassifier } from "../BashCommandAnalyzer"
 import type { ClassifierContext } from "../ClassifierStrategy"
 
 // Shared context for classifier tests
@@ -308,11 +304,7 @@ describe("StaticPatternClassifier", () => {
 	// 11. execute_command + forbidden → deny
 	describe("classifySync: execute_command", () => {
 		it("returns deny for forbidden command", () => {
-			const result = classifier.classifySync(
-				"execute_command",
-				{ command: "rm -rf /" },
-				baseContext,
-			)
+			const result = classifier.classifySync("execute_command", { command: "rm -rf /" }, baseContext)
 			expect(result.action).toBe("deny")
 			expect(result.confidence).toBe(1.0)
 			expect(result.metadata?.riskLevel).toBe("forbidden")
@@ -320,22 +312,14 @@ describe("StaticPatternClassifier", () => {
 
 		// 12. execute_command + safe → allow
 		it("returns allow for safe command", () => {
-			const result = classifier.classifySync(
-				"execute_command",
-				{ command: "ls -la" },
-				baseContext,
-			)
+			const result = classifier.classifySync("execute_command", { command: "ls -la" }, baseContext)
 			expect(result.action).toBe("allow")
 			expect(result.confidence).toBe(0.5)
 			expect(result.metadata?.riskLevel).toBe("safe")
 		})
 
 		it("returns ask for dangerous command", () => {
-			const result = classifier.classifySync(
-				"execute_command",
-				{ command: "rm file.txt" },
-				baseContext,
-			)
+			const result = classifier.classifySync("execute_command", { command: "rm file.txt" }, baseContext)
 			expect(result.action).toBe("ask")
 			expect(result.confidence).toBe(0.9)
 			expect(result.metadata?.riskLevel).toBe("dangerous")
@@ -353,11 +337,7 @@ describe("StaticPatternClassifier", () => {
 		})
 
 		it("ignores non-string command input", () => {
-			const result = classifier.classifySync(
-				"execute_command",
-				{ command: 12345 },
-				baseContext,
-			)
+			const result = classifier.classifySync("execute_command", { command: 12345 }, baseContext)
 			// Falls through to default allow
 			expect(result.action).toBe("allow")
 			expect(result.confidence).toBe(0.3)
@@ -433,11 +413,7 @@ describe("StaticPatternClassifier", () => {
 
 		for (const { toolName, field, secretValue } of writeToolCases) {
 			it(`${toolName}: denies when ${field} contains secrets`, () => {
-				const result = classifier.classifySync(
-					toolName,
-					{ [field]: secretValue },
-					{ ...baseContext, toolName },
-				)
+				const result = classifier.classifySync(toolName, { [field]: secretValue }, { ...baseContext, toolName })
 				expect(result.action).toBe("deny")
 				expect(result.confidence).toBe(0.95)
 				expect(result.reason).toContain(`Secrets detected in ${toolName}`)
@@ -482,16 +458,8 @@ describe("StaticPatternClassifier", () => {
 	// async classify() delegates to classifySync()
 	describe("classify (async)", () => {
 		it("returns same result as classifySync", async () => {
-			const syncResult = classifier.classifySync(
-				"execute_command",
-				{ command: "ls" },
-				baseContext,
-			)
-			const asyncResult = await classifier.classify(
-				"execute_command",
-				{ command: "ls" },
-				baseContext,
-			)
+			const syncResult = classifier.classifySync("execute_command", { command: "ls" }, baseContext)
+			const asyncResult = await classifier.classify("execute_command", { command: "ls" }, baseContext)
 			expect(asyncResult).toEqual(syncResult)
 		})
 	})

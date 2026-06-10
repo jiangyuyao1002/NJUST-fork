@@ -41,10 +41,7 @@ export function mergeToolParamsForValidation(block: {
 		for (const [key, value] of Object.entries(na as Record<string, UnsafeAny>)) {
 			const currentValue = merged[key]
 			const shouldUseNativeStructuredValue =
-				typeof currentValue === "string" &&
-				value !== null &&
-				typeof value === "object" &&
-				!Array.isArray(value)
+				typeof currentValue === "string" && value !== null && typeof value === "object" && !Array.isArray(value)
 			if (currentValue !== undefined && currentValue !== "" && !shouldUseNativeStructuredValue) {
 				continue
 			}

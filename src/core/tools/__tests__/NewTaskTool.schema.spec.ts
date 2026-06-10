@@ -8,7 +8,11 @@ describe("NewTaskTool schema", () => {
 	})
 
 	it("passes with optional todos", () => {
-		const result = newTaskTool.inputSchema.safeParse({ mode: "code", message: "Do something", todos: "- [ ] task 1" })
+		const result = newTaskTool.inputSchema.safeParse({
+			mode: "code",
+			message: "Do something",
+			todos: "- [ ] task 1",
+		})
 		expect(result.success).toBe(true)
 	})
 

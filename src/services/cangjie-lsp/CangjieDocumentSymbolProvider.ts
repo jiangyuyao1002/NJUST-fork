@@ -28,13 +28,7 @@ function defToSymbol(def: CangjieDef, document: vscode.TextDocument): vscode.Doc
 	const selectionRange = new vscode.Range(startLine, 0, startLine, document.lineAt(startLine).text.length)
 	const kind = KIND_MAP[def.kind] ?? vscode.SymbolKind.Variable
 
-	return new vscode.DocumentSymbol(
-		def.name || def.kind,
-		def.kind,
-		kind,
-		range,
-		selectionRange,
-	)
+	return new vscode.DocumentSymbol(def.name || def.kind, def.kind, kind, range, selectionRange)
 }
 
 function isContainer(kind: CangjieDefKind): boolean {
@@ -75,10 +69,7 @@ function buildHierarchy(defs: CangjieDef[], document: vscode.TextDocument): vsco
 }
 
 export class CangjieDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
-	provideDocumentSymbols(
-		document: vscode.TextDocument,
-		_token: vscode.CancellationToken,
-	): vscode.DocumentSymbol[] {
+	provideDocumentSymbols(document: vscode.TextDocument, _token: vscode.CancellationToken): vscode.DocumentSymbol[] {
 		const content = document.getText()
 		const defs = parseCangjieDefinitions(content)
 

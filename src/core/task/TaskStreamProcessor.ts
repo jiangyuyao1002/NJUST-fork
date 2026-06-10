@@ -48,7 +48,10 @@ export class TaskStreamProcessor {
 			return await this.task.fileContextTracker.getFilesReadByRoo()
 		} catch (error) {
 			logger.error("TaskStreamProcessor", `Failed to get files read by Njust-AI:`, error)
-			TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+			TelemetryService.reportError(
+				error instanceof Error ? error : new Error(String(error)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 			return undefined
 		}
 	}
@@ -130,10 +133,11 @@ export class TaskStreamProcessor {
 			// Check persistent retry budget before proceeding
 			const retryCheck = this.persistentRetry.canRetry(errorCategory)
 			if (!retryCheck.allowed) {
-		logger.warn("TaskStreamProcessor",
-				`Persistent retry denied for '${errorCategory}' on task ${this.task.taskId}: ${retryCheck.reason}` +
-					(retryCheck.shouldFallback ? " → suggesting model fallback" : ""),
-			)
+				logger.warn(
+					"TaskStreamProcessor",
+					`Persistent retry denied for '${errorCategory}' on task ${this.task.taskId}: ${retryCheck.reason}` +
+						(retryCheck.shouldFallback ? " → suggesting model fallback" : ""),
+				)
 			}
 
 			const state = await this.task.providerRef.deref()?.getState()
@@ -161,9 +165,13 @@ export class TaskStreamProcessor {
 			if (error?.status === 429) {
 				const providerKey = this.task.apiConfiguration?.apiProvider ?? "default"
 				try {
-					const { TokenBucketRateLimiter } = await import("../../services/rate-limiter/TokenBucketRateLimiter")
+					const { TokenBucketRateLimiter } = await import(
+						"../../services/rate-limiter/TokenBucketRateLimiter"
+					)
 					TokenBucketRateLimiter.getInstance().drain(providerKey)
-				} catch { /* best-effort */ }
+				} catch {
+					/* best-effort */
+				}
 			}
 
 			// Prefer RetryInfo on 429 if present
@@ -209,7 +217,12 @@ export class TaskStreamProcessor {
 					throw new TaskAbortedError(this.task.taskId, this.task.instanceId)
 				}
 
-				await this.task.say("api_req_retry_delayed", `${headerText}<retry_timer>${i}</retry_timer>`, undefined, true)
+				await this.task.say(
+					"api_req_retry_delayed",
+					`${headerText}<retry_timer>${i}</retry_timer>`,
+					undefined,
+					true,
+				)
 				await delay(1000)
 			}
 
@@ -218,10 +231,11 @@ export class TaskStreamProcessor {
 			// Log persistent retry stats after each backoff for diagnostics
 			const stats = this.persistentRetry.getStats()
 			if (stats.totalRetries > 0) {
-		logger.info("TaskStreamProcessor",
-				`Persistent retry stats for task ${this.task.taskId}: total=${stats.totalRetries}, ` +
-					`exhausted=${stats.isExhausted}, category='${errorCategory}' count=${stats.records.get(errorCategory)?.count ?? 0}`,
-			)
+				logger.info(
+					"TaskStreamProcessor",
+					`Persistent retry stats for task ${this.task.taskId}: total=${stats.totalRetries}, ` +
+						`exhausted=${stats.isExhausted}, category='${errorCategory}' count=${stats.records.get(errorCategory)?.count ?? 0}`,
+				)
 			}
 		} catch (err) {
 			if (this.task.abort) {
@@ -229,7 +243,10 @@ export class TaskStreamProcessor {
 			}
 
 			logger.error("TaskStreamProcessor", "Exponential backoff failed:", err)
-			TelemetryService.reportError(err instanceof Error ? err : new Error(String(err)), TelemetryEventName.UTILITY_ERROR)
+			TelemetryService.reportError(
+				err instanceof Error ? err : new Error(String(err)),
+				TelemetryEventName.UTILITY_ERROR,
+			)
 		}
 	}
 
@@ -312,13 +329,16 @@ export class TaskStreamProcessor {
 		const currentProfileId = this.getCurrentProfileId(state)
 
 		// Log the context window error for debugging
-		logger.warn("TaskStreamProcessor",
+		logger.warn(
+			"TaskStreamProcessor",
 			`Context window exceeded for task ${this.task.taskId}, model ${this.task.api.getModel().id}. ` +
 				`Current tokens: ${contextTokens}, Context window: ${contextWindow}. ` +
 				`Forcing truncation to ${FORCED_CONTEXT_REDUCTION_PERCENT}% of current context.`,
 		)
 		// Send condenseTaskContextStarted to show in-progress indicator
-		await this.task.providerRef.deref()?.postMessageToWebview({ type: "condenseTaskContextStarted", text: this.task.taskId })
+		await this.task.providerRef
+			.deref()
+			?.postMessageToWebview({ type: "condenseTaskContextStarted", text: this.task.taskId })
 
 		// Build tools for condensing metadata (same tools used for normal API calls)
 		const provider = this.task.providerRef.deref()
@@ -426,11 +446,7 @@ export class TaskStreamProcessor {
 	 * Handles reasoning blocks (encrypted, plain text, reasoning_details) and
 	 * produces a sanitized message array.
 	 */
-	buildCleanConversationHistory(
-		messages: ApiMessage[],
-	): Array<
-		Anthropic.Messages.MessageParam | ReasoningBlock
-	> {
+	buildCleanConversationHistory(messages: ApiMessage[]): Array<Anthropic.Messages.MessageParam | ReasoningBlock> {
 		type ReasoningItemForRequest = {
 			type: "reasoning"
 			encrypted_content: string
@@ -494,9 +510,13 @@ export class TaskStreamProcessor {
 
 				// Embedded reasoning: encrypted (send) or plain text (skip)
 				const hasEncryptedReasoning =
-					first && (first as UnsafeAny as ReasoningBlock).type === "reasoning" && typeof (first as UnsafeAny as ReasoningBlock).encrypted_content === "string"
+					first &&
+					(first as UnsafeAny as ReasoningBlock).type === "reasoning" &&
+					typeof (first as UnsafeAny as ReasoningBlock).encrypted_content === "string"
 				const hasPlainTextReasoning =
-					first && (first as UnsafeAny as ReasoningBlock).type === "reasoning" && typeof (first as UnsafeAny as ReasoningBlock).text === "string"
+					first &&
+					(first as UnsafeAny as ReasoningBlock).type === "reasoning" &&
+					typeof (first as UnsafeAny as ReasoningBlock).text === "string"
 
 				if (hasEncryptedReasoning) {
 					const reasoningBlock = first as UnsafeAny as ReasoningBlock

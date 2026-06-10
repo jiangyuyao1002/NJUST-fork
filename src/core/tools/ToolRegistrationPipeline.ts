@@ -55,9 +55,7 @@ export function registerStaticTools(tools: readonly RegisteredTool[]): ToolRegis
 	}
 }
 
-export function registerConditionalTools(
-	tools: readonly ConditionalToolRegistration[],
-): ToolRegistrationMiddleware {
+export function registerConditionalTools(tools: readonly ConditionalToolRegistration[]): ToolRegistrationMiddleware {
 	return async (context, next) => {
 		for (const entry of tools) {
 			context.registry.registerConditional(entry.tool, entry.condition)

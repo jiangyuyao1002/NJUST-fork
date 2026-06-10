@@ -712,7 +712,7 @@ export class CangjieLspClient {
 					new Promise((_, reject) => setTimeout(() => reject(new Error("LSP stop timeout")), 5_000)),
 				])
 			} catch {
-				// Process cleaned up by VS Code on extension deactivation
+				// intentionally ignored: LSP stop timeout, process cleaned up by VS Code
 			}
 		}
 		this.client = undefined
@@ -720,7 +720,7 @@ export class CangjieLspClient {
 		try {
 			this._lspOutputChannel.dispose()
 		} catch {
-			// already disposed
+			// intentionally ignored: output channel already disposed
 		}
 	}
 
@@ -787,7 +787,7 @@ export class CangjieLspClient {
 				extra++
 			}
 		} catch {
-			/* ignore */
+			// intentionally ignored: stale diagnostic cleanup
 		}
 		return extra
 	}

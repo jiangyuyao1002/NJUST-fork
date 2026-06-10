@@ -12,16 +12,16 @@ describe("StreamingToolExecutor", () => {
 
 	it("defers unsafe tools", () => {
 		const ex = new StreamingToolExecutor(4)
-		expect(ex.shouldEagerExecute({ didRejectTool: false } as any, { name: "edit_file", partial: false } as any)).toBe(
-			"deferred",
-		)
+		expect(
+			ex.shouldEagerExecute({ didRejectTool: false } as any, { name: "edit_file", partial: false } as any),
+		).toBe("deferred")
 	})
 
 	it("defers when rejected", () => {
 		const ex = new StreamingToolExecutor(4)
-		expect(ex.shouldEagerExecute({ didRejectTool: true } as any, { name: "read_file", partial: false } as any)).toBe(
-			"deferred",
-		)
+		expect(
+			ex.shouldEagerExecute({ didRejectTool: true } as any, { name: "read_file", partial: false } as any),
+		).toBe("deferred")
 	})
 
 	it("defers partial read_file even when native args look stable", () => {

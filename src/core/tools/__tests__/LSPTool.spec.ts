@@ -30,8 +30,10 @@ vi.mock("@njust-ai/telemetry", () => ({
 }))
 
 // Mock the vscode module that getVscodeModule() dynamically imports
-const mockVscodeExecuteCommand = vi.fn()
-const mockVscodeOpenTextDocument = vi.fn()
+const { mockVscodeExecuteCommand, mockVscodeOpenTextDocument } = vi.hoisted(() => ({
+	mockVscodeExecuteCommand: vi.fn(),
+	mockVscodeOpenTextDocument: vi.fn(),
+}))
 
 vi.mock("vscode", () => ({
 	Uri: {

@@ -212,7 +212,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 				try {
 					await fs.chmod(filePath, 0o600)
 				} catch {
-					// chmod may fail on some filesystems; non-fatal
+					// intentionally ignored: chmod may fail on some filesystems
 				}
 			}
 		} catch (error) {

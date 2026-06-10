@@ -7,6 +7,7 @@ import { TelemetryService } from "@njust-ai/telemetry"
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import { getErrorMessage } from "../shared/error-utils"
 import { validateRegexPattern } from "../utils/safeRegex"
+import { logger } from "../shared/logger"
 
 interface ToolDefinition {
 	name: string
@@ -20,7 +21,8 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 	{
 		name: "njust_ai_readFile",
 		displayName: "Njust-AI: Read File",
-		description: "Read the contents of a file in the workspace. Returns the full text content of the specified file.",
+		description:
+			"Read the contents of a file in the workspace. Returns the full text content of the specified file.",
 		inputSchema: {
 			type: "object",
 			properties: {
@@ -95,7 +97,8 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
 	{
 		name: "njust_ai_listFiles",
 		displayName: "Njust-AI: List Files",
-		description: "List files and directories in the specified path. Returns a tree-like listing of the directory contents.",
+		description:
+			"List files and directories in the specified path. Returns a tree-like listing of the directory contents.",
 		inputSchema: {
 			type: "object",
 			properties: {
@@ -153,9 +156,7 @@ export function registerLMTools(
 			context.subscriptions.push(disposable)
 			outputChannel.appendLine(`[LMTools] Registered tool: ${def.name}`)
 		} catch (error) {
-			outputChannel.appendLine(
-				`[LMTools] Failed to register tool ${def.name}: ${getErrorMessage(error)}`,
-			)
+			outputChannel.appendLine(`[LMTools] Failed to register tool ${def.name}: ${getErrorMessage(error)}`)
 			TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
 		}
 	}
@@ -181,9 +182,7 @@ function createLMTool(
 				const message = getErrorMessage(error)
 				outputChannel.appendLine(`[LMTools] Error in ${def.name}: ${message}`)
 				TelemetryService.reportError(error, TelemetryEventName.EXTENSION_INIT_ERROR)
-				return new vscode.LanguageModelToolResult([
-					new vscode.LanguageModelTextPart(`Error: ${message}`),
-				])
+				return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(`Error: ${message}`)])
 			}
 		},
 
@@ -261,16 +260,15 @@ async function executeTool(
 						}
 						regex.lastIndex = 0
 					}
-				} catch {
+				} catch (error) {
+					logger.debug("RegisterLMTools", "file read failed during search", error)
 					// Skip unreadable files
 				}
 
 				if (results.length > 200) break
 			}
 
-			return results.length > 0
-				? results.join("\n")
-				: `No matches found for pattern: ${pattern}`
+			return results.length > 0 ? results.join("\n") : `No matches found for pattern: ${pattern}`
 		}
 
 		case "njust_ai_listFiles": {
@@ -283,10 +281,12 @@ async function executeTool(
 				500,
 			)
 
-			return files
-				.map((f) => vscode.workspace.asRelativePath(f))
-				.sort()
-				.join("\n") || "No files found"
+			return (
+				files
+					.map((f) => vscode.workspace.asRelativePath(f))
+					.sort()
+					.join("\n") || "No files found"
+			)
 		}
 
 		case "njust_ai_codebaseSearch": {

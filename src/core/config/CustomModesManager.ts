@@ -51,7 +51,6 @@ interface ImportResult {
 	error?: string
 }
 
-
 const DANGEROUS_PROMPT_PATTERN = /ignore\s+(all\s+)?previous\s+instructions/gi
 const MAX_PROMPT_LENGTH = 50000
 
@@ -231,11 +230,11 @@ export class CustomModesManager {
 
 			// Add source to each mode
 			return result.data.customModes.map((mode) => ({
-			...mode,
-			source,
-			roleDefinition: mode.roleDefinition ? sanitizeModeContent(mode.roleDefinition) : undefined,
-			customInstructions: mode.customInstructions ? sanitizeModeContent(mode.customInstructions) : undefined,
-		})) as UnsafeAny
+				...mode,
+				source,
+				roleDefinition: mode.roleDefinition ? sanitizeModeContent(mode.roleDefinition) : undefined,
+				customInstructions: mode.customInstructions ? sanitizeModeContent(mode.customInstructions) : undefined,
+			})) as UnsafeAny
 		} catch (error) {
 			// Only log if the error wasn't already handled in parseYamlSafely
 			if (!(error as Record<string, UnsafeAny>).alreadyHandled) {
@@ -434,7 +433,10 @@ export class CustomModesManager {
 					.map((err) => `${err.path.join(".")}: ${err.message}`)
 					.join(", ")
 				const errorMessage = `Invalid mode configuration: ${errorMessages}`
-				logger.error("CustomModesManager", "Mode validation failed:", { slug, errors: validationResult.error.errors })
+				logger.error("CustomModesManager", "Mode validation failed:", {
+					slug,
+					errors: validationResult.error.errors,
+				})
 				vscode.window.showErrorMessage(t("common:customModes.errors.updateFailed", { error: errorMessage }))
 				throw new Error(errorMessage)
 			}
@@ -446,7 +448,9 @@ export class CustomModesManager {
 				const workspaceFolders = vscode.workspace.workspaceFolders
 
 				if (!workspaceFolders || workspaceFolders.length === 0) {
-					logger.error("CustomModesManager", "Failed to update project mode: No workspace folder found", { slug })
+					logger.error("CustomModesManager", "Failed to update project mode: No workspace folder found", {
+						slug,
+					})
 					throw new Error(t("common:customModes.errors.noWorkspaceForProject"))
 				}
 
@@ -454,10 +458,14 @@ export class CustomModesManager {
 				targetPath = path.join(workspaceRoot, ROOMODES_FILENAME)
 				const exists = await fileExistsAtPath(targetPath)
 
-				logger.info("CustomModesManager", `${exists ? "Updating" : "Creating"} project mode in ${ROOMODES_FILENAME}`, {
-					slug,
-					workspace: workspaceRoot,
-				})
+				logger.info(
+					"CustomModesManager",
+					`${exists ? "Updating" : "Creating"} project mode in ${ROOMODES_FILENAME}`,
+					{
+						slug,
+						workspace: workspaceRoot,
+					},
+				)
 			} else {
 				targetPath = await this.getCustomModesFilePath()
 			}
@@ -720,7 +728,10 @@ export class CustomModesManager {
 				return false
 			}
 		} catch (error) {
-			logger.error("CustomModesManager", "Failed to check rules directory for mode:", { slug, error: getErrorMessage(error) })
+			logger.error("CustomModesManager", "Failed to check rules directory for mode:", {
+				slug,
+				error: getErrorMessage(error),
+			})
 			return false
 		}
 	}
@@ -756,7 +767,8 @@ export class CustomModesManager {
 							// Find the mode in .roomodes
 							mode = roomodesModes.find((m: UnsafeAny) => m.slug === slug)
 						}
-					} catch {
+					} catch (error) {
+						logger.debug("CustomModesManager", "failed to parse .roomodes", error)
 						// Continue to check built-in modes
 					}
 				}
@@ -816,7 +828,8 @@ export class CustomModesManager {
 						}
 					}
 				}
-			} catch {
+			} catch (error) {
+				logger.debug("CustomModesManager", "mode rules directory read failed", error)
 				// Directory doesn't exist, which is fine - mode might not have rules
 			}
 
@@ -886,7 +899,10 @@ export class CustomModesManager {
 			logger.info("CustomModesManager", `Removed existing ${source} rules folder for mode ${importMode.slug}`)
 		} catch {
 			// It's okay if the folder doesn't exist
-			logger.debug("CustomModesManager", `No existing ${source} rules folder to remove for mode ${importMode.slug}`)
+			logger.debug(
+				"CustomModesManager",
+				`No existing ${source} rules folder to remove for mode ${importMode.slug}`,
+			)
 		}
 
 		// Only proceed with file creation if there are rules files to import
@@ -912,7 +928,10 @@ export class CustomModesManager {
 				if (rulesMatch) {
 					// Strip the entire rules-* folder reference for backwards compatibility
 					cleanedRelativePath = normalizedRelativePath.substring(rulesMatch[0].length)
-					logger.info("CustomModesManager", `Detected old export format, stripping ${rulesMatch[0]} from path`)
+					logger.info(
+						"CustomModesManager",
+						`Detected old export format, stripping ${rulesMatch[0]} from path`,
+					)
 				}
 
 				// Use the rules folder path instead of base directory
@@ -980,7 +999,11 @@ export class CustomModesManager {
 				// Validate the mode configuration
 				const validationResult = modeConfigSchema.safeParse(modeConfig)
 				if (!validationResult.success) {
-					logger.error("CustomModesManager", `Invalid mode configuration for ${modeConfig.slug}:`, validationResult.error.errors)
+					logger.error(
+						"CustomModesManager",
+						`Invalid mode configuration for ${modeConfig.slug}:`,
+						validationResult.error.errors,
+					)
 					return {
 						success: false,
 						error: `Invalid mode configuration for ${modeConfig.slug}: ${validationResult.error.errors.map((e) => e.message).join(", ")}`,

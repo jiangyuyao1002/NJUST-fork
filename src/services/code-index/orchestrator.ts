@@ -113,7 +113,10 @@ export class CodeIndexOrchestrator {
 				this.stateManager.state !== "Error" &&
 				this.stateManager.state !== "Indexed")
 		) {
-			logger.warn("CodeIndexOrchestrator", `Start rejected: Already processing or in state ${this.stateManager.state}.`)
+			logger.warn(
+				"CodeIndexOrchestrator",
+				`Start rejected: Already processing or in state ${this.stateManager.state}.`,
+			)
 			return
 		}
 
@@ -143,7 +146,10 @@ export class CodeIndexOrchestrator {
 			if (hasExistingData && !collectionCreated) {
 				// Collection exists with data - run incremental scan to catch any new/changed files
 				// This handles files added while workspace was closed or Qdrant was inactive
-				logger.info("CodeIndexOrchestrator", "Collection already has indexed data. Running incremental scan for new/changed files...")
+				logger.info(
+					"CodeIndexOrchestrator",
+					"Collection already has indexed data. Running incremental scan for new/changed files...",
+				)
 				this.stateManager.setSystemState("Indexing", "Checking for new or modified files...")
 
 				// Mark as incomplete at the start of incremental scan
@@ -167,7 +173,11 @@ export class CodeIndexOrchestrator {
 				const result = await this.scanner.scanDirectory(
 					this.workspacePath,
 					(batchError: Error) => {
-						logger.error("CodeIndexOrchestrator", `Error during incremental scan batch: ${batchError.message}`, batchError)
+						logger.error(
+							"CodeIndexOrchestrator",
+							`Error during incremental scan batch: ${batchError.message}`,
+							batchError,
+						)
 						batchErrors.push(batchError)
 					},
 					handleBlocksIndexed,
@@ -188,7 +198,10 @@ export class CodeIndexOrchestrator {
 
 				// If new files were found and indexed, log the results
 				if (cumulativeBlocksFoundSoFar > 0) {
-					logger.info("CodeIndexOrchestrator", `Incremental scan completed: ${cumulativeBlocksIndexed} blocks indexed from new/changed files`)
+					logger.info(
+						"CodeIndexOrchestrator",
+						`Incremental scan completed: ${cumulativeBlocksIndexed} blocks indexed from new/changed files`,
+					)
 				} else {
 					logger.info("CodeIndexOrchestrator", "No new or changed files found")
 				}
@@ -223,7 +236,11 @@ export class CodeIndexOrchestrator {
 				const result = await this.scanner.scanDirectory(
 					this.workspacePath,
 					(batchError: Error) => {
-						logger.error("CodeIndexOrchestrator", `Error during initial scan batch: ${batchError.message}`, batchError)
+						logger.error(
+							"CodeIndexOrchestrator",
+							`Error during initial scan batch: ${batchError.message}`,
+							batchError,
+						)
 						batchErrors.push(batchError)
 					},
 					handleBlocksIndexed,
@@ -257,9 +274,10 @@ export class CodeIndexOrchestrator {
 				}
 
 				// Check for partial failures - if a significant portion of blocks failed
-				const failureRate = cumulativeBlocksFoundSoFar === 0
-					? 1 // Zero blocks found is total failure
-					: (cumulativeBlocksFoundSoFar - cumulativeBlocksIndexed) / cumulativeBlocksFoundSoFar
+				const failureRate =
+					cumulativeBlocksFoundSoFar === 0
+						? 1 // Zero blocks found is total failure
+						: (cumulativeBlocksFoundSoFar - cumulativeBlocksIndexed) / cumulativeBlocksFoundSoFar
 				if (batchErrors.length > 0 && failureRate > 0.1) {
 					// More than 10% of blocks failed to index
 					const firstError = batchErrors[0]!
@@ -305,10 +323,16 @@ export class CodeIndexOrchestrator {
 			if (indexingStarted) {
 				// Indexing started but failed mid-way - clear cache to avoid cache-Qdrant mismatch
 				await this.cacheManager.clearCacheFile()
-				logger.info("CodeIndexOrchestrator", "Indexing failed after starting. Clearing cache to avoid inconsistency.")
+				logger.info(
+					"CodeIndexOrchestrator",
+					"Indexing failed after starting. Clearing cache to avoid inconsistency.",
+				)
 			} else {
 				// Never connected to Qdrant - preserve cache for future incremental scan
-				logger.info("CodeIndexOrchestrator", "Failed to connect to Qdrant. Preserving cache for future incremental scan.")
+				logger.info(
+					"CodeIndexOrchestrator",
+					"Failed to connect to Qdrant. Preserving cache for future incremental scan.",
+				)
 			}
 
 			this.stateManager.setSystemState(

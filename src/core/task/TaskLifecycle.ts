@@ -53,7 +53,8 @@ export function cleanHistoryForResumption(messages: ClineMessage[]): ClineMessag
 			if (info.cost === undefined && info.cancelReason === undefined) {
 				result.splice(lastApiReqIndex, 1)
 			}
-		} catch {
+		} catch (error) {
+			logger.debug("TaskLifecycle", "api req info JSON parse failed", error)
 			// If we can't parse the JSON, leave it as-is
 		}
 	}
@@ -116,7 +117,10 @@ export function safeDispose(label: string, fn: () => void): void {
 		fn()
 	} catch (error) {
 		logger.error("TaskLifecycle", `Error during dispose (${label}):`, error)
-		TelemetryService.reportError(error instanceof Error ? error : new Error(String(error)), TelemetryEventName.UTILITY_ERROR)
+		TelemetryService.reportError(
+			error instanceof Error ? error : new Error(String(error)),
+			TelemetryEventName.UTILITY_ERROR,
+		)
 	}
 }
 

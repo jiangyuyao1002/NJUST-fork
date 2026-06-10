@@ -111,7 +111,7 @@ export async function getBinPath(vscodeAppRoot: string): Promise<string | undefi
 			return result
 		}
 	} catch {
-		// not found in PATH
+		// intentionally ignored: rg not found in PATH
 	}
 
 	return undefined

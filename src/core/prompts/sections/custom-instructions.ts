@@ -4,12 +4,7 @@ import type { SystemPromptSettings } from "../types"
 
 import { LANGUAGES } from "../../../shared/language"
 
-import {
-	loadModeRules,
-	loadGenericRules,
-	loadAgentRulesIfEnabled,
-	loadLearnedFixes,
-} from "../services/RuleFileManager"
+import { loadModeRules, loadGenericRules, loadAgentRulesIfEnabled, loadLearnedFixes } from "../services/RuleFileManager"
 
 export async function addCustomInstructions(
 	modeCustomInstructions: string,

@@ -40,10 +40,7 @@ import { logger } from "../../shared/logger"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TIMING } from "../../shared/constants"
 import { getErrorMessage } from "../../shared/error-utils"
-import {
-	appendErrorMessageToConnection,
-	connectToServerWithHub,
-} from "./McpHubConnection"
+import { appendErrorMessageToConnection, connectToServerWithHub } from "./McpHubConnection"
 import {
 	deleteServerWithHub,
 	readServerConfigFromFileWithHub,
@@ -167,7 +164,6 @@ export class McpHub implements IMcpHubService {
 	 */
 	public async unregisterClient(): Promise<void> {
 		this.refCount--
-
 
 		if (this.refCount <= 0) {
 			logger.info("McpHub", "Last client unregistered. Disposing hub.")
@@ -690,7 +686,10 @@ export class McpHub implements IMcpHubService {
 			: this.connections.filter((c) => c.type === "connected")
 
 		if (targets.length === 0) {
-			logger.warn("McpHub", `refreshTools: No connected server(s) found${serverName ? ` for "${serverName}"` : ""}`)
+			logger.warn(
+				"McpHub",
+				`refreshTools: No connected server(s) found${serverName ? ` for "${serverName}"` : ""}`,
+			)
 			return result
 		}
 
@@ -1021,7 +1020,10 @@ export class McpHub implements IMcpHubService {
 				TelemetryService.reportError(error, TelemetryEventName.MCP_ERROR)
 			}
 		} else {
-			logger.error("McpHub", "No target provider available (neither from getInstance nor providerRef) - cannot send mcpServers message to webview")
+			logger.error(
+				"McpHub",
+				"No target provider available (neither from getInstance nor providerRef) - cannot send mcpServers message to webview",
+			)
 		}
 	}
 
@@ -1127,8 +1129,8 @@ export class McpHub implements IMcpHubService {
 			} catch (serializeError) {
 				throw new Error(
 					`Cannot serialize tool arguments for "${toolName}" on server "${serverName}": ` +
-					`arguments contain non-JSON-safe values (circular references, functions, etc.). ` +
-					`Original error: ${(serializeError as Error).message}`,
+						`arguments contain non-JSON-safe values (circular references, functions, etc.). ` +
+						`Original error: ${(serializeError as Error).message}`,
 				)
 			}
 		}

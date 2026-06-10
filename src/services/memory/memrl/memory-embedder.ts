@@ -39,7 +39,7 @@ function resolveSetting(settingKey: string, envKey: string, def: string): string
 		const fromConfig = vscode.workspace.getConfiguration(Package.name).get<string>(settingKey)
 		if (fromConfig?.trim()) return fromConfig.trim()
 	} catch {
-		/* vscode API unavailable (e.g. unit test without mock) — fall through */
+		// intentionally ignored: vscode API unavailable (e.g. unit test without mock)
 	}
 	const fromEnv = process.env[envKey]
 	if (fromEnv?.trim()) return fromEnv.trim()

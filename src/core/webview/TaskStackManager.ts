@@ -92,25 +92,19 @@ export class TaskStackManager {
 					})
 				}
 			} catch (error) {
-				this.log(
-					`[onTaskAborted] Failed to rehydrate after streaming failure: ${
-						getErrorMessage(error)
-					}`,
-				)
+				this.log(`[onTaskAborted] Failed to rehydrate after streaming failure: ${getErrorMessage(error)}`)
 			}
 		}
 		const onTaskFocused = () => this.host.emit(NJUST_AIEventName.TaskFocused, instance.taskId)
 		const onTaskUnfocused = () => this.host.emit(NJUST_AIEventName.TaskUnfocused, instance.taskId)
 		const onTaskActive = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskActive, taskId)
-		const onTaskInteractive = (taskId: string) =>
-			this.host.emit(NJUST_AIEventName.TaskInteractive, taskId)
+		const onTaskInteractive = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskInteractive, taskId)
 		const onTaskResumable = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskResumable, taskId)
 		const onTaskIdle = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskIdle, taskId)
 		const onTaskPaused = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskPaused, taskId)
 		const onTaskUnpaused = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskUnpaused, taskId)
 		const onTaskSpawned = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskSpawned, taskId)
-		const onTaskUserMessage = (taskId: string) =>
-			this.host.emit(NJUST_AIEventName.TaskUserMessage, taskId)
+		const onTaskUserMessage = (taskId: string) => this.host.emit(NJUST_AIEventName.TaskUserMessage, taskId)
 		const onTaskTokenUsageUpdated = (taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage) =>
 			this.host.emit(NJUST_AIEventName.TaskTokenUsageUpdated, taskId, tokenUsage, toolUsage)
 
@@ -213,9 +207,9 @@ export class TaskStackManager {
 					}
 				} catch (err) {
 					this.log(
-						`[TaskStackManager#pop] Failed to repair parent metadata for ${parentTaskId} (non-fatal): ${
-							getErrorMessage(err)
-						}`,
+						`[TaskStackManager#pop] Failed to repair parent metadata for ${parentTaskId} (non-fatal): ${getErrorMessage(
+							err,
+						)}`,
 					)
 				}
 			}
@@ -233,9 +227,7 @@ export class TaskStackManager {
 			await oldTask.abortTask(true)
 		} catch (e) {
 			const msg = getErrorMessage(e)
-			this.log(
-				`[rehydrate] abortTask() failed for old task ${oldTask.taskId}.${oldTask.instanceId}: ${msg}`,
-			)
+			this.log(`[rehydrate] abortTask() failed for old task ${oldTask.taskId}.${oldTask.instanceId}: ${msg}`)
 		}
 		const cleanupFunctions = this.taskEventListeners.get(oldTask)
 		if (cleanupFunctions) {

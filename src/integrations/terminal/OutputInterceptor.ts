@@ -390,16 +390,18 @@ export class OutputInterceptor {
 			const files = await fs.promises.readdir(storageDir)
 			for (const file of files) {
 				if (file.startsWith("cmd-")) {
-					await fs.promises.unlink(path.join(storageDir, file)).catch(() => { /* best-effort cleanup */ })
+					await fs.promises.unlink(path.join(storageDir, file)).catch(() => {
+						/* best-effort cleanup */
+					})
 				}
 			}
 		} catch {
-			// Directory doesn't exist, nothing to clean
+			// intentionally ignored: directory doesn't exist, nothing to clean
 		}
 	}
 
 	/**
-	 * Remove artifact files that are NOT in the provided set of execution IDs.
+	 * Selective cleanup of command output artifacts.
 	 *
 	 * This is used for selective cleanup, preserving artifacts that are still
 	 * referenced in the conversation history while removing orphaned files.
@@ -420,11 +422,13 @@ export class OutputInterceptor {
 			for (const file of files) {
 				const match = file.match(/^cmd-(\d+)\.txt$/)
 				if (match && !executionIds.has(match[1]!)) {
-					await fs.promises.unlink(path.join(storageDir, file)).catch(() => { /* best-effort cleanup */ })
+					await fs.promises.unlink(path.join(storageDir, file)).catch(() => {
+						/* best-effort cleanup */
+					})
 				}
 			}
 		} catch {
-			// Directory doesn't exist, nothing to clean
+			// intentionally ignored: directory doesn't exist, nothing to clean
 		}
 	}
 }

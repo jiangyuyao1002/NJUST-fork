@@ -28,9 +28,7 @@ export class CjpmTaskProvider implements vscode.TaskProvider, vscode.Disposable 
 	private fileWatcher: vscode.FileSystemWatcher | undefined
 
 	constructor(private readonly outputChannel: vscode.OutputChannel) {
-		this.disposables.push(
-			vscode.tasks.registerTaskProvider(CJPM_TASK_TYPE, this),
-		)
+		this.disposables.push(vscode.tasks.registerTaskProvider(CJPM_TASK_TYPE, this))
 
 		this.fileWatcher = vscode.workspace.createFileSystemWatcher("**/cjpm.toml")
 		this.fileWatcher.onDidCreate(() => this.onCjpmTomlChanged())
@@ -75,13 +73,7 @@ export class CjpmTaskProvider implements vscode.TaskProvider, vscode.Disposable 
 		const folder = task.scope as vscode.WorkspaceFolder | undefined
 		if (!folder) return undefined
 
-		return this.createTask(
-			definition.command,
-			task.name,
-			folder,
-			undefined,
-			definition.args,
-		)
+		return this.createTask(definition.command, task.name, folder, undefined, definition.args)
 	}
 
 	private createTask(
@@ -106,14 +98,7 @@ export class CjpmTaskProvider implements vscode.TaskProvider, vscode.Disposable 
 			cwd: folder.uri.fsPath,
 		})
 
-		const task = new vscode.Task(
-			definition,
-			folder,
-			label,
-			CJPM_TASK_TYPE,
-			execution,
-			"$cjc",
-		)
+		const task = new vscode.Task(definition, folder, label, CJPM_TASK_TYPE, execution, "$cjc")
 
 		if (group) {
 			task.group = group

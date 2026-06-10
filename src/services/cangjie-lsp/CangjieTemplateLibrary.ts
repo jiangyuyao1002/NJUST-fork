@@ -266,7 +266,7 @@ export class CangjieTemplateLibrary {
 				this.templates.push(...parsed.templates)
 			}
 		} catch {
-			// Ignore malformed template files
+			// intentionally ignored: malformed template files
 		}
 	}
 

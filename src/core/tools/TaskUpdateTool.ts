@@ -45,9 +45,7 @@ export class TaskUpdateTool extends BaseTool<"task_update"> {
 			const updated = await board.updateTask(params.taskId, updates)
 
 			task.consecutiveMistakeCount = 0
-			pushToolResult(
-				`Task updated successfully:\n${JSON.stringify(updated, null, 2)}`,
-			)
+			pushToolResult(`Task updated successfully:\n${JSON.stringify(updated, null, 2)}`)
 		} catch (error) {
 			await handleError("updating task", error as Error)
 		}
