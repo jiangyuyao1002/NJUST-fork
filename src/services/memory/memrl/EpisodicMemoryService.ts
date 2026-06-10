@@ -2,7 +2,7 @@
  * EpisodicMemoryService
  *
  * Implements:
- *  - Persistent episodic memory (dual-write: .njust_ai + .roo)
+ *  - Persistent episodic memory (.njust_ai/memories/)
  *  - Two-Phase Retrieval (Phase A: cosine sim threshold, Phase B: z-score composite)
  *  - Monte Carlo Q-value update
  */
@@ -19,7 +19,6 @@ import {
 	LAMBDA,
 	LTM_DISTILL_INTERVAL,
 	MEMRL_PRIMARY_DIR,
-	MEMRL_ROO_DIR,
 	Q_INIT,
 	SIM_THRESHOLD,
 	TOP_K1,
@@ -67,10 +66,6 @@ export class EpisodicMemoryService {
 		return path.join(this.workspaceDir, MEMRL_PRIMARY_DIR, EPISODIC_FILE)
 	}
 
-	private get rooPath(): string {
-		return path.join(this.workspaceDir, MEMRL_ROO_DIR, EPISODIC_FILE)
-	}
-
 	async load(): Promise<void> {
 		if (this.loaded) return
 		const current = currentEmbedFingerprint()
@@ -99,10 +94,6 @@ export class EpisodicMemoryService {
 
 	private async persist(): Promise<void> {
 		await safeWriteJson(this.primaryPath, this.store)
-		// Dual-write mirror for acceptance criteria
-		await safeWriteJson(this.rooPath, this.store).catch(() => {
-			/* best-effort */
-		})
 	}
 
 	// ── Write ──────────────────────────────────────────────────────────────────
