@@ -16,6 +16,8 @@ on:
 jobs:
   # Build CLI for each platform.
   build:
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -377,6 +379,8 @@ jobs:
   summary:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: ${{ inputs.dry_run }}
 
     steps:

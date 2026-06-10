@@ -11,6 +11,8 @@ env:
 jobs:
   quality-gate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: >
         ( github.event_name == 'pull_request' &&
         github.event.pull_request.merged == true &&
