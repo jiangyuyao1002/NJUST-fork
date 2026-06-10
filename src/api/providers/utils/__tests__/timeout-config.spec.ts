@@ -101,4 +101,22 @@ describe("getApiRequestTimeout", () => {
 
 		expect(timeout).toBe(300000) // Should fall back to default since it's not a number
 	})
+
+	it("should return default timeout when vscode.workspace.getConfiguration throws", () => {
+		;(vscode.workspace.getConfiguration as any).mockImplementation(() => {
+			throw new Error("vscode not available")
+		})
+
+		const timeout = getApiRequestTimeout()
+
+		expect(timeout).toBe(300000)
+	})
+
+	it("should correctly convert fractional timeout values to milliseconds", () => {
+		mockGetConfig.mockReturnValue(1.5)
+
+		const timeout = getApiRequestTimeout()
+
+		expect(timeout).toBe(1500)
+	})
 })

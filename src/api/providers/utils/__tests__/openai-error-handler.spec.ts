@@ -185,4 +185,27 @@ describe("handleOpenAIError", () => {
 			expect(result.message).toContain("Network connectivity issue")
 		})
 	})
+
+	describe("metadata preservation for retry logic", () => {
+		it("should preserve retryAfter when present on the error", () => {
+			const error = new Error("Rate limited") as any
+			error.status = 429
+			error.retryAfter = 30
+
+			const result = handleOpenAIError(error, providerName)
+
+			expect((result as any).retryAfter).toBe(30)
+			expect((result as any).status).toBe(429)
+		})
+
+		it("should preserve headers when present on the error", () => {
+			const error = new Error("Rate limited") as any
+			error.status = 429
+			error.headers = { "retry-after": "10", "x-request-id": "abc-123" }
+
+			const result = handleOpenAIError(error, providerName)
+
+			expect((result as any).headers).toEqual(error.headers)
+		})
+	})
 })
