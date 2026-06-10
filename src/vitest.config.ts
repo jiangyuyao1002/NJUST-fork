@@ -2,7 +2,7 @@ import { defineConfig, defaultExclude } from "vitest/config"
 import path from "path"
 import { resolveVerbosity } from "./utils/vitest-verbosity"
 
-const { reporters, onConsoleLog } = resolveVerbosity()
+const { silent, reporters } = resolveVerbosity()
 
 export default defineConfig({
 	test: {
@@ -19,11 +19,10 @@ export default defineConfig({
 		],
 		watch: false,
 		reporters,
-		silent: false,
+		silent,
 		maxWorkers: process.env.CI ? 1 : undefined,
 		testTimeout: 30_000,
 		hookTimeout: 30_000,
-		onConsoleLog,
 		coverage: {
 			provider: "v8",
 			reporter: ["json", "html", "text-summary"],

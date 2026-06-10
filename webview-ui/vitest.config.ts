@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config"
 import path from "path"
 import { resolveVerbosity } from "../src/utils/vitest-verbosity"
 
-const { silent, reporters, onConsoleLog } = resolveVerbosity()
+const { silent, reporters } = resolveVerbosity()
 
 export default defineConfig({
 	test: {
@@ -14,7 +14,6 @@ export default defineConfig({
 		environment: "jsdom",
 		pool: "forks",
 		include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
-		onConsoleLog,
 		coverage: {
 			provider: "v8",
 			reporter: ["json", "html", "text-summary"],

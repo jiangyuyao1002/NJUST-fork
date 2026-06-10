@@ -1,4 +1,4 @@
-export function resolveVerbosity(argv = process.argv, _env = process.env) {
+export function resolveVerbosity(argv = process.argv) {
 	// Check if --no-silent flag is used (native vitest flag)
 	const cliNoSilent = argv.includes("--no-silent") || argv.includes("--silent=false")
 	const silent = !cliNoSilent // Silent by default
@@ -11,12 +11,5 @@ export function resolveVerbosity(argv = process.argv, _env = process.env) {
 	return {
 		silent,
 		reporters: ["dot", ...(wantsVerboseReporter ? ["verbose"] : [])],
-		onConsoleLog: (_log: string, type: string) => {
-			// When verbose, show everything
-			// When silent, allow errors/warnings and drop info/log/warn noise
-			if (!silent || type === "stderr") return
-
-			return false // Drop info/log/warn noise
-		},
 	}
 }
