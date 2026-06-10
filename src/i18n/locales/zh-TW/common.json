@@ -158,6 +158,7 @@
 			"cannot_read_source": "無法讀取來源檔案內容。",
 			"cjpm_not_found": "未找到 cjpm。請確認已安裝倉頡 SDK 並設定 CANGJIE_HOME。",
 			"invalid_identifier": "請輸入合法的倉頡識別字",
+			"invalid_target_path": "無效的目標路徑：{{path}}。路徑必須位於工作區內，且不能包含路徑穿越序列。",
 			"no_cjpm_workspace": "未找到 cjpm 工作區（缺少 cjpm.toml）。無法執行此命令。"
 		},
 		"cloud_agent": {
