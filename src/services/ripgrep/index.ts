@@ -169,8 +169,6 @@ async function execRipgrep(bin: string, args: string[]): Promise<string> {
 
 // Maximum regex length to prevent ReDoS via extremely long patterns
 const MAX_REGEX_LENGTH = 500
-// Maximum nested quantifier depth to catch pathological patterns like (a+)+b
-const MAX_NESTED_QUANTIFIERS = 3
 
 function isPotentiallyPathologicalRegex(pattern: string): { isSafe: boolean; reason?: string } {
 	if (pattern.length > MAX_REGEX_LENGTH) {
@@ -180,22 +178,43 @@ function isPotentiallyPathologicalRegex(pattern: string): { isSafe: boolean; rea
 		}
 	}
 
-	// Count nested quantifiers (e.g., (a+)+, (a*)*)
-	let depth = 0
-	let maxDepth = 0
-	for (const char of pattern) {
-		if (char === "(" || char === "[" || char === "{") {
-			depth++
-			maxDepth = Math.max(maxDepth, depth)
-		} else if (char === ")" || char === "]" || char === "}") {
-			depth--
+	// Detect actual nested quantifiers — the primary cause of catastrophic backtracking.
+	// Patterns like (a+)+, (a*)*, (a{n,m}){n,m} cause exponential time complexity.
+	const QUANTIFIER = /[+*?]|\{\d+(?:,\d*)?\}/
+	let inCharClass = false
+	for (let i = 0; i < pattern.length; i++) {
+		const ch = pattern[i]
+		if (ch === "\\" && i + 1 < pattern.length) {
+			i++
+			continue
+		}
+		if (inCharClass) {
+			if (ch === "]") {
+				inCharClass = false
+			}
+			continue
+		}
+		if (ch === "[") {
+			inCharClass = true
+			continue
+		}
+		if (ch === ")") {
+			// Check if followed by a quantifier → nested quantifier
+			const rest = pattern.slice(i + 1)
+			if (QUANTIFIER.test(rest.slice(0, 5))) {
+				return {
+					isSafe: false,
+					reason: "Regex pattern contains nested quantifiers (e.g., (x+)+) which can cause catastrophic backtracking. Please simplify your search pattern.",
+				}
+			}
 		}
 	}
 
-	if (maxDepth > MAX_NESTED_QUANTIFIERS) {
+	// Detect backreferences (\1 through \9) which can cause exponential matching
+	if (/\\[1-9]/.test(pattern)) {
 		return {
 			isSafe: false,
-			reason: `Regex pattern has too many nested quantifiers (depth ${maxDepth} > ${MAX_NESTED_QUANTIFIERS}). Please simplify your search pattern.`,
+			reason: "Regex pattern contains backreferences (\\1, \\2, etc.) which can cause slow matching. Please simplify your search pattern.",
 		}
 	}
 

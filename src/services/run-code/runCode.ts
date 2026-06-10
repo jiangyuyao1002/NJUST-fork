@@ -26,7 +26,7 @@ const isWin = process.platform === "win32"
  * These characters can break out of quoted strings or execute arbitrary commands.
  */
 function containsShellMetacharacters(p: string): boolean {
-	return /[\&\|\;\<\>\(\)\$\`\!\n\r]/.test(p)
+	return /[&|;<>()$`!\n\r]/.test(p)
 }
 
 /**
@@ -181,10 +181,13 @@ function buildCConfig(filePath: string): RunConfig {
 	const cFilesQuoted = cFiles.map(quotePath)
 	if (cFiles.length > 1) {
 		const out = exeName(base)
-		return { command: chain(`gcc ${cFilesQuoted.join(" ")} -o ${out}`, out), cwd: fileDir }
+		return { command: chain(`gcc ${cFilesQuoted.join(" ")} -o ${quotePath(out)}`, quotePath(out)), cwd: fileDir }
 	}
 	const out = exeName(base)
-	return { command: chain(`gcc ${quotePath(path.basename(filePath))} -o ${out}`, out), cwd: fileDir }
+	return {
+		command: chain(`gcc ${quotePath(path.basename(filePath))} -o ${quotePath(out)}`, quotePath(out)),
+		cwd: fileDir,
+	}
 }
 
 function buildCppConfig(filePath: string): RunConfig {
@@ -213,10 +216,16 @@ function buildCppConfig(filePath: string): RunConfig {
 	const cppFilesQuoted = cppFiles.map(quotePath)
 	if (cppFiles.length > 1) {
 		const out = exeName(base)
-		return { command: chain(`g++ ${cppFilesQuoted.join(" ")} -o ${out}`, out), cwd: fileDir }
+		return {
+			command: chain(`g++ ${cppFilesQuoted.join(" ")} -o ${quotePath(out)}`, quotePath(out)),
+			cwd: fileDir,
+		}
 	}
 	const out = exeName(base)
-	return { command: chain(`g++ ${quotePath(path.basename(filePath))} -o ${out}`, out), cwd: fileDir }
+	return {
+		command: chain(`g++ ${quotePath(path.basename(filePath))} -o ${quotePath(out)}`, quotePath(out)),
+		cwd: fileDir,
+	}
 }
 
 function buildJavaConfig(filePath: string): RunConfig {
@@ -239,10 +248,13 @@ function buildJavaConfig(filePath: string): RunConfig {
 	const javaFiles = listSourceFiles(fileDir, [".java"])
 	const javaFilesQuoted = javaFiles.map(quotePath)
 	if (javaFiles.length > 1) {
-		return { command: chain(`javac ${javaFilesQuoted.join(" ")}`, `java ${className}`), cwd: fileDir }
+		return { command: chain(`javac ${javaFilesQuoted.join(" ")}`, `java ${quotePath(className)}`), cwd: fileDir }
 	}
 
-	return { command: chain(`javac ${quotePath(path.basename(filePath))}`, `java ${className}`), cwd: fileDir }
+	return {
+		command: chain(`javac ${quotePath(path.basename(filePath))}`, `java ${quotePath(className)}`),
+		cwd: fileDir,
+	}
 }
 
 function buildGoConfig(filePath: string): RunConfig {
@@ -272,7 +284,7 @@ function buildRustConfig(filePath: string): RunConfig {
 
 	const base = path.basename(filePath, ".rs")
 	const out = exeName(base)
-	return { command: chain(`rustc ${quotePath(filePath)} -o ${out}`, out), cwd: fileDir }
+	return { command: chain(`rustc ${quotePath(filePath)} -o ${quotePath(out)}`, quotePath(out)), cwd: fileDir }
 }
 
 function buildMatlabConfig(filePath: string, _workDir: string): RunConfig | undefined {
@@ -312,11 +324,15 @@ function buildCangjieConfig(filePath: string): RunConfig {
 	const cjFilesQuoted = cjFiles.map(quotePath)
 	if (cjFiles.length > 1) {
 		const out = exeName(base)
-		return { command: chain(`${quotePath(cjc)} ${cjFilesQuoted.join(" ")} -o ${out}`, out), cwd: fileDir, env }
+		return {
+			command: chain(`${quotePath(cjc)} ${cjFilesQuoted.join(" ")} -o ${quotePath(out)}`, quotePath(out)),
+			cwd: fileDir,
+			env,
+		}
 	}
 	const out = exeName(base)
 	return {
-		command: chain(`${quotePath(cjc)} ${quotePath(path.basename(filePath))} -o ${out}`, out),
+		command: chain(`${quotePath(cjc)} ${quotePath(path.basename(filePath))} -o ${quotePath(out)}`, quotePath(out)),
 		cwd: fileDir,
 		env,
 	}
@@ -338,8 +354,8 @@ function buildKotlinConfig(filePath: string): RunConfig {
 	if (ktFiles.length > 1) {
 		return {
 			command: chain(
-				`kotlinc ${ktFilesQuoted.join(" ")} -include-runtime -d "${base}.jar"`,
-				`java -jar "${base}.jar"`,
+				`kotlinc ${ktFilesQuoted.join(" ")} -include-runtime -d ${quotePath(base + ".jar")}`,
+				`java -jar ${quotePath(base + ".jar")}`,
 			),
 			cwd: fileDir,
 		}
@@ -347,8 +363,8 @@ function buildKotlinConfig(filePath: string): RunConfig {
 
 	return {
 		command: chain(
-			`kotlinc ${quotePath(path.basename(filePath))} -include-runtime -d "${base}.jar"`,
-			`java -jar "${base}.jar"`,
+			`kotlinc ${quotePath(path.basename(filePath))} -include-runtime -d ${quotePath(base + ".jar")}`,
+			`java -jar ${quotePath(base + ".jar")}`,
 		),
 		cwd: fileDir,
 	}
@@ -373,7 +389,10 @@ function buildSwiftConfig(filePath: string): RunConfig {
 	if (swiftFiles.length > 1) {
 		const base = path.basename(filePath, ".swift")
 		const out = exeName(base)
-		return { command: chain(`swiftc ${swiftFilesQuoted.join(" ")} -o ${out}`, out), cwd: fileDir }
+		return {
+			command: chain(`swiftc ${swiftFilesQuoted.join(" ")} -o ${quotePath(out)}`, quotePath(out)),
+			cwd: fileDir,
+		}
 	}
 
 	return { command: `swift ${quotePath(filePath)}` }

@@ -87,8 +87,14 @@ export async function createRun({
 	try {
 		const isRunningInDocker = fs.existsSync("/.dockerenv")
 
+		// Validate run.id to prevent command injection (must be done before any string interpolation)
+		const runId = Number(run.id)
+		if (!Number.isInteger(runId) || runId <= 0) {
+			throw new Error(`Invalid run.id: expected positive integer, got ${String(run.id)}`)
+		}
+
 		const dockerArgs = [
-			`--name evals-controller-${run.id}`,
+			`--name evals-controller-${runId}`,
 			"--rm",
 			"--network evals_default",
 			"-v /var/run/docker.sock:/var/run/docker.sock",
@@ -96,23 +102,12 @@ export async function createRun({
 			"-e HOST_EXECUTION_METHOD=docker",
 		]
 
-		// Validate run.id to prevent command injection
-		const runId = Number(run.id)
-		if (!Number.isInteger(runId) || runId <= 0) {
-			throw new Error(`Invalid run.id: expected positive integer, got ${String(run.id)}`)
-		}
-
 		const cliArgs = ["--filter", "@njust-ai/evals", "cli", "--runId", String(runId)]
 
 		let childProcess
 		if (isRunningInDocker) {
-			const dockerRunArgs = [
-				...dockerArgs,
-				"evals-runner",
-				"sh",
-				"-c",
-				`pnpm ${cliArgs.map((arg) => `"${arg.replace(/"/g, '\\"')}"`).join(" ")}`,
-			]
+			// Use spawn argument array instead of sh -c to prevent command injection
+			const dockerRunArgs = [...dockerArgs, "evals-runner", "pnpm", ...cliArgs]
 			console.log("spawn -> docker run", dockerRunArgs.join(" "))
 			childProcess = spawn("docker", ["run", ...dockerRunArgs], {
 				detached: true,

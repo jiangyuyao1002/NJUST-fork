@@ -7,7 +7,9 @@
 		"sourceMap": true,
 		"useUnknownInCatchVariables": false,
 		"rootDir": "../..",
-		"outDir": "out"
+		"outDir": "out",
+		"declaration": false,
+		"declarationMap": false
 	},
 	"include": ["src"],
 	"exclude": [".vscode-test", "**/node_modules/**", "out"]

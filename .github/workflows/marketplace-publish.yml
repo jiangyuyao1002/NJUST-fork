@@ -5,6 +5,9 @@ on:
     types: [closed]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   GIT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
 

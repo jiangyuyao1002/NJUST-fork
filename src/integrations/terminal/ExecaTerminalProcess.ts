@@ -47,7 +47,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 
 		// Security: block commands with dangerous shell metacharacters that could
 		// bypass higher-level approval checks (BashCommandAnalyzer, PermissionRuleEngine).
-		const DANGEROUS_SHELL_CHARS = /[;&|]|\$\(|`|\$\{/g
+		const DANGEROUS_SHELL_CHARS = /[;&|]|\$\(|`|\$\{/
 		if (DANGEROUS_SHELL_CHARS.test(normalizedCommand)) {
 			logger.error(
 				"ExecaTerminalProcess",

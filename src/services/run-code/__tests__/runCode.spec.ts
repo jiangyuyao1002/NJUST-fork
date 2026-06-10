@@ -348,7 +348,7 @@ describe("runCode", () => {
 
 		await runActiveEditorCode(outputChannelMock)
 		expect(terminalMock.sendText).toHaveBeenCalledWith(
-			expect.stringContaining('javac "Main.java" "Helper.java" && java Main'),
+			expect.stringContaining('javac "Main.java" "Helper.java" && java "Main"'),
 		)
 	})
 

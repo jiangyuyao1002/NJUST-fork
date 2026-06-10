@@ -2,6 +2,7 @@ import * as crypto from "crypto"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
+import { execFileSync } from "child_process"
 import { EventEmitter } from "../classes/EventEmitter.js"
 import { ensureDirectoryExists } from "../utils/paths.js"
 import type { SecretStorage, SecretStorageChangeEvent } from "../types.js"
@@ -10,7 +11,6 @@ const ENCRYPTION_ALGORITHM = "aes-256-gcm"
 const KEY_LENGTH = 32
 const IV_LENGTH = 16
 const AUTH_TAG_LENGTH = 16
-const SALT = "njust-ai-secret-storage-v1"
 
 /** File name for the random master key (kept beside secrets.json). */
 const KEY_FILE_NAME = "secrets.key"
@@ -19,13 +19,17 @@ const KEY_FILE_NAME = "secrets.key"
  * File-based implementation of VSCode's SecretStorage interface
  *
  * Stores secrets in an encrypted file on disk using AES-256-GCM encryption.
- * The encryption key is derived from the machine ID (hostname + username) using scrypt.
+ * The encryption key is a randomly-generated master key persisted in a
+ * sidecar file (`secrets.key`) with restrictive permissions.
+ *
+ * On first launch after upgrading from the legacy machine-ID-derived key,
+ * existing secrets are transparently re-encrypted with the new random key.
  *
  * **Security Notes:**
  * - Secrets are encrypted at rest using AES-256-GCM
- * - Encryption key is derived from machine-specific identifiers
+ * - Master key is cryptographically random (32 bytes)
  * - File permissions are set restrictive (0600) on Unix-like systems
- * - On Windows, file ACLs depend on system defaults
+ * - On Windows, inheritance is disabled and only the current user retains access
  * - For production environments, consider using VS Code's native SecretStorage
  *   which integrates with the OS keychain
  *
@@ -62,12 +66,34 @@ export class FileSecretStorage implements SecretStorage {
 	}
 
 	/**
-	 * Load secrets from the encrypted JSON file
+	 * Load secrets from the encrypted JSON file.
+	 * Handles transparent migration from the legacy machine-ID-derived key.
 	 */
 	private loadFromFile(): void {
 		try {
 			if (fs.existsSync(this.filePath)) {
 				const encryptedContent = fs.readFileSync(this.filePath, "utf-8")
+				const keyFile = this.getKeyFilePath()
+
+				if (!fs.existsSync(keyFile)) {
+					// Migration path: no key file yet — try legacy key first
+					try {
+						const legacyKey = this.deriveLegacyKey()
+						const decrypted = this.decryptWithKey(encryptedContent, legacyKey)
+						this.secrets = JSON.parse(decrypted)
+						console.log(`Migrating secrets from legacy key to random key at ${keyFile}`)
+						// Set a new random key and re-encrypt
+						this.persistNewRandomKey()
+						this.saveToFile()
+						return
+					} catch {
+						console.warn(`Legacy key migration failed for ${this.filePath}, starting fresh`)
+						this.secrets = {}
+						this.persistNewRandomKey()
+						return
+					}
+				}
+
 				try {
 					const decryptedContent = this.decrypt(encryptedContent)
 					this.secrets = JSON.parse(decryptedContent)
@@ -158,20 +184,21 @@ export class FileSecretStorage implements SecretStorage {
 	}
 
 	/**
-	 * Generate a machine-specific identifier for encryption key derivation.
-	 * Uses hostname and username to create a unique identifier per machine/user.
+	 * Derive the legacy machine-ID-based encryption key (for migration only).
+	 * Uses hostname and username to create a unique identifier per machine/user,
+	 * then derives a key via scrypt.
 	 */
-	private getMachineId(): string {
+	private deriveLegacyKey(): Buffer {
+		let machineId: string
 		try {
 			const hostname = os.hostname() || "unknown-host"
 			const username = os.userInfo().username || "unknown-user"
 			const platform = process.platform || "unknown-platform"
-			return `${username}@${hostname}:${platform}`
+			machineId = `${username}@${hostname}:${platform}`
 		} catch {
-			// os.userInfo() can throw on Windows when running as a service
-			// account or in containerized environments without a real user.
-			return `unknown@${os.hostname() || "unknown-host"}:${process.platform || "unknown"}`
+			machineId = `unknown@${os.hostname() || "unknown-host"}:${process.platform || "unknown"}`
 		}
+		return crypto.scryptSync(machineId, "njust-ai-secret-storage-v1", KEY_LENGTH)
 	}
 
 	/**
@@ -182,6 +209,37 @@ export class FileSecretStorage implements SecretStorage {
 	}
 
 	/**
+	 * Generate a new random key, persist it to disk with restrictive
+	 * permissions, and cache it as the active encryption key.
+	 */
+	private persistNewRandomKey(): void {
+		const keyFile = this.getKeyFilePath()
+		this.encryptionKey = crypto.randomBytes(KEY_LENGTH)
+		try {
+			// Atomic write: write to temp file, then rename
+			const tmpFile = keyFile + ".tmp"
+			fs.writeFileSync(tmpFile, this.encryptionKey)
+			if (process.platform !== "win32") {
+				fs.chmodSync(tmpFile, 0o600)
+			}
+			fs.renameSync(tmpFile, keyFile)
+			// Windows: disable inheritance and grant access only to current user
+			if (process.platform === "win32") {
+				try {
+					execFileSync("icacls", [keyFile, "/inheritance:r", "/grant:r", `${os.userInfo().username}:(R,W)`], {
+						timeout: 5000,
+						windowsHide: true,
+					})
+				} catch {
+					console.warn(`Failed to set ACL on key file ${keyFile}; using default permissions`)
+				}
+			}
+		} catch (err) {
+			console.warn(`Failed to persist encryption key to ${keyFile}:`, err)
+		}
+	}
+
+	/**
 	 * Derive or load the encryption key.
 	 *
 	 * Prefer a randomly-generated master key persisted in a sidecar file
@@ -189,8 +247,8 @@ export class FileSecretStorage implements SecretStorage {
 	 * deriving the key solely from predictable machine identifiers
 	 * (hostname + username) which any local user can guess.
 	 *
-	 * Falls back to the legacy machine-ID-derived key when the key file
-	 * does not exist, so existing encrypted data can still be decrypted.
+	 * Legacy key migration is handled in loadFromFile(); by the time this
+	 * method is called during normal operation, the random key already exists.
 	 */
 	private getEncryptionKey(): Buffer {
 		if (!this.encryptionKey) {
@@ -202,19 +260,11 @@ export class FileSecretStorage implements SecretStorage {
 					throw new Error(`Invalid key file length: expected ${KEY_LENGTH}, got ${this.encryptionKey.length}`)
 				}
 			} else {
-				// Generate a new random key and persist it securely
-				this.encryptionKey = crypto.randomBytes(KEY_LENGTH)
-				try {
-					fs.writeFileSync(keyFile, this.encryptionKey)
-					if (process.platform !== "win32") {
-						fs.chmodSync(keyFile, 0o600)
-					}
-				} catch (err) {
-					console.warn(`Failed to persist encryption key to ${keyFile}:`, err)
-				}
+				// Fresh install — no secrets.json and no key file
+				this.persistNewRandomKey()
 			}
 		}
-		return this.encryptionKey
+		return this.encryptionKey!
 	}
 
 	/**
@@ -223,11 +273,7 @@ export class FileSecretStorage implements SecretStorage {
 	 */
 	private encrypt(plaintext: string): string {
 		const key = this.getEncryptionKey()
-		const iv = crypto.randomBytes(IV_LENGTH)
-		const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv)
-		const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
-		const authTag = cipher.getAuthTag()
-		return Buffer.concat([iv, authTag, encrypted]).toString("base64")
+		return this.encryptWithKey(plaintext, key)
 	}
 
 	/**
@@ -236,8 +282,22 @@ export class FileSecretStorage implements SecretStorage {
 	 * Throws if decryption fails (e.g., tampered data, wrong key).
 	 */
 	private decrypt(ciphertext: string): string {
+		const key = this.getEncryptionKey()
+		return this.decryptWithKey(ciphertext, key)
+	}
+
+	/** Encrypt with an explicit key buffer. */
+	private encryptWithKey(plaintext: string, key: Buffer): string {
+		const iv = crypto.randomBytes(IV_LENGTH)
+		const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv)
+		const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
+		const authTag = cipher.getAuthTag()
+		return Buffer.concat([iv, authTag, encrypted]).toString("base64")
+	}
+
+	/** Decrypt with an explicit key buffer. */
+	private decryptWithKey(ciphertext: string, key: Buffer): string {
 		try {
-			const key = this.getEncryptionKey()
 			const data = Buffer.from(ciphertext, "base64")
 			const iv = data.subarray(0, IV_LENGTH)
 			const authTag = data.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH)

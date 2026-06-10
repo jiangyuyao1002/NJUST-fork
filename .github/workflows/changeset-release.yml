@@ -6,6 +6,9 @@ on:
   pull_request:
     types: [closed, opened, labeled]
 
+permissions:
+  contents: read
+
 env:
   REPO_PATH: ${{ github.repository }}
   GIT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
@@ -121,12 +124,15 @@ jobs:
       # Verify PR only touches expected files (defense against actor spoofing)
       - name: Verify PR file changes
         if: contains(github.event.pull_request.labels.*.name, 'changelog-ready')
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           echo "Checking changed files..."
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
           echo "$CHANGED_FILES"
           
-          UNEXPECTED=$(echo "$CHANGED_FILES" | grep -vE '^(CHANGELOG\.md|package\.json|package-lock\.json|\.changeset/|src/package\.json)$' || true)
+          UNEXPECTED=$(echo "$CHANGED_FILES" | grep -vE '^(CHANGELOG\.md|(.+/)?package\.json|(.+/)?package-lock\.json|\.changeset/)$' || true)
           if [ -n "$UNEXPECTED" ]; then
             echo "ERROR: PR contains unexpected files:"
             echo "$UNEXPECTED"
