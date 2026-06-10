@@ -12,6 +12,9 @@ const IV_LENGTH = 16
 const AUTH_TAG_LENGTH = 16
 const SALT = "njust-ai-secret-storage-v1"
 
+/** File name for the random master key (kept beside secrets.json). */
+const KEY_FILE_NAME = "secrets.key"
+
 /**
  * File-based implementation of VSCode's SecretStorage interface
  *
@@ -172,13 +175,44 @@ export class FileSecretStorage implements SecretStorage {
 	}
 
 	/**
-	 * Derive an encryption key from the machine ID using scrypt.
-	 * The key is cached to avoid repeated derivation.
+	 * Return the path to the random master key file (kept beside secrets.json).
+	 */
+	private getKeyFilePath(): string {
+		return path.join(path.dirname(this.filePath), KEY_FILE_NAME)
+	}
+
+	/**
+	 * Derive or load the encryption key.
+	 *
+	 * Prefer a randomly-generated master key persisted in a sidecar file
+	 * (`secrets.key`) with 0600 permissions.  This avoids the weakness of
+	 * deriving the key solely from predictable machine identifiers
+	 * (hostname + username) which any local user can guess.
+	 *
+	 * Falls back to the legacy machine-ID-derived key when the key file
+	 * does not exist, so existing encrypted data can still be decrypted.
 	 */
 	private getEncryptionKey(): Buffer {
 		if (!this.encryptionKey) {
-			const machineId = this.getMachineId()
-			this.encryptionKey = crypto.scryptSync(machineId, SALT, KEY_LENGTH)
+			const keyFile = this.getKeyFilePath()
+			if (fs.existsSync(keyFile)) {
+				// Use persisted random key
+				this.encryptionKey = fs.readFileSync(keyFile)
+				if (this.encryptionKey.length !== KEY_LENGTH) {
+					throw new Error(`Invalid key file length: expected ${KEY_LENGTH}, got ${this.encryptionKey.length}`)
+				}
+			} else {
+				// Generate a new random key and persist it securely
+				this.encryptionKey = crypto.randomBytes(KEY_LENGTH)
+				try {
+					fs.writeFileSync(keyFile, this.encryptionKey)
+					if (process.platform !== "win32") {
+						fs.chmodSync(keyFile, 0o600)
+					}
+				} catch (err) {
+					console.warn(`Failed to persist encryption key to ${keyFile}:`, err)
+				}
+			}
 		}
 		return this.encryptionKey
 	}

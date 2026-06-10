@@ -96,18 +96,35 @@ export async function createRun({
 			"-e HOST_EXECUTION_METHOD=docker",
 		]
 
-		const cliCommand = `pnpm --filter @njust-ai/evals cli --runId ${run.id}`
+		// Validate run.id to prevent command injection
+		const runId = Number(run.id)
+		if (!Number.isInteger(runId) || runId <= 0) {
+			throw new Error(`Invalid run.id: expected positive integer, got ${String(run.id)}`)
+		}
 
-		const command = isRunningInDocker
-			? `docker run ${dockerArgs.join(" ")} evals-runner sh -c "${cliCommand}"`
-			: cliCommand
+		const cliArgs = ["--filter", "@njust-ai/evals", "cli", "--runId", String(runId)]
 
-		console.log("spawn ->", command)
-
-		const childProcess = spawn("sh", ["-c", command], {
-			detached: true,
-			stdio: ["ignore", "pipe", "pipe"],
-		})
+		let childProcess
+		if (isRunningInDocker) {
+			const dockerRunArgs = [
+				...dockerArgs,
+				"evals-runner",
+				"sh",
+				"-c",
+				`pnpm ${cliArgs.map((arg) => `"${arg.replace(/"/g, '\\"')}"`).join(" ")}`,
+			]
+			console.log("spawn -> docker run", dockerRunArgs.join(" "))
+			childProcess = spawn("docker", ["run", ...dockerRunArgs], {
+				detached: true,
+				stdio: ["ignore", "pipe", "pipe"],
+			})
+		} else {
+			console.log("spawn -> pnpm", cliArgs.join(" "))
+			childProcess = spawn("pnpm", cliArgs, {
+				detached: true,
+				stdio: ["ignore", "pipe", "pipe"],
+			})
+		}
 
 		const logStream = fs.createWriteStream("/tmp/Njust-AI-evals.log", { flags: "a" })
 

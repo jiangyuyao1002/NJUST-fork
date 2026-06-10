@@ -1,7 +1,6 @@
 import { EventEmitter } from "events"
 import fs from "fs/promises"
 import * as path from "path"
-import * as os from "os"
 
 import * as vscode from "vscode"
 import pWaitFor from "p-wait-for"
@@ -58,7 +57,10 @@ export class API extends EventEmitter<NJUST_AIEvents> implements NJUST_AIAPI {
 				logger.info("API", args.map(String).join(" "))
 			}
 
-			this.logfile = path.join(os.tmpdir(), "Njust-AI-messages.log")
+			// Use extension globalStorage instead of os.tmpdir() to avoid
+			// multi-user temp directory leakage (other users may read /tmp).
+			const storageDir = this.context.globalStorageUri.fsPath
+			this.logfile = path.join(storageDir, "api-messages.log")
 		} else {
 			this.log = () => {}
 		}
