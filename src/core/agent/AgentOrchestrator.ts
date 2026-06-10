@@ -60,6 +60,9 @@ export class AgentOrchestrator extends EventEmitter<OrchestratorEvents> {
 		private readonly outputChannel: AgentLogSink,
 	) {
 		super()
+		// Parallel task execution may register many listeners dynamically.
+		// Set a generous limit to avoid Node's default 10-listener warning.
+		this.setMaxListeners(50)
 		this.sharedContext = {
 			id: uuidv7(),
 			modifiedFiles: new Set(),
