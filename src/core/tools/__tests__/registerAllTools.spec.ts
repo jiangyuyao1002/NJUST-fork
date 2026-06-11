@@ -83,10 +83,7 @@ describe("registerAllTools", () => {
 		vi.doMock("../ReadCommandOutputTool", () => ({ readCommandOutputTool: makeMockTool("read_command_output") }))
 		vi.doMock("../WriteToFileTool", () => ({ writeToFileTool: makeMockTool("write_to_file") }))
 		vi.doMock("../EditTool", () => ({ editTool: makeMockTool("edit") }))
-		vi.doMock("../SearchReplaceTool", () => ({ searchReplaceTool: makeMockTool("search_replace") }))
-		vi.doMock("../EditFileTool", () => ({ editFileTool: makeMockTool("edit_file") }))
 		vi.doMock("../ApplyPatchTool", () => ({ applyPatchTool: makeMockTool("apply_patch") }))
-		vi.doMock("../ApplyDiffTool", () => ({ applyDiffTool: makeMockTool("apply_diff") }))
 		vi.doMock("../SearchFilesTool", () => ({ searchFilesTool: makeMockTool("search_files") }))
 		vi.doMock("../ExecuteCommandTool", () => ({ executeCommandTool: makeMockTool("execute_command") }))
 		vi.doMock("../UseMcpToolTool", () => ({ useMcpToolTool: makeMockTool("use_mcp_tool") }))
@@ -166,10 +163,7 @@ describe("registerAllTools", () => {
 			"brief",
 			"config",
 			"read_command_output",
-			"search_replace",
-			"edit_file",
 			"apply_patch",
-			"apply_diff",
 			"use_mcp_tool",
 			"access_mcp_resource",
 			"ask_followup_question",
@@ -197,8 +191,8 @@ describe("registerAllTools", () => {
 			expect(registeredNames).toContain(name)
 		}
 
-		// Should have registered exactly 40 static tools
-		expect(mockRegister).toHaveBeenCalledTimes(40)
+		// Should have registered exactly 37 static tools
+		expect(mockRegister).toHaveBeenCalledTimes(37)
 	})
 
 	it("registers conditional tools (WorktreeTool)", async () => {

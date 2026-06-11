@@ -1,6 +1,5 @@
 import EventEmitter from "events"
 
-import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 
 import type { McpServer } from "@njust-ai/types"
@@ -32,12 +31,8 @@ import { Package } from "../../shared/package"
 import { computePermissionMode, getMergedCommandLists } from "./ClineProviderState"
 import { Mode } from "../../shared/modes"
 import { EMBEDDING_MODEL_PROFILES } from "../../shared/embeddingModels"
-import { ProfileValidator } from "../../shared/ProfileValidator"
 
-import { Terminal } from "../../integrations/terminal/Terminal"
 import { DiffViewProvider } from "../../integrations/editor/DiffViewProvider"
-
-import { getTheme } from "../../integrations/theme/getTheme"
 import WorkspaceTracker from "../../integrations/workspace/WorkspaceTracker"
 
 import type { IMcpHubService } from "../../services/mcp/interfaces/IMcpHubService"
@@ -51,11 +46,7 @@ import type { IProfileStorageService } from "../../services/interfaces/IProfileS
 import type { ICangjiePromptServices } from "../../services/interfaces/ICangjiePromptServices"
 import { DefaultClineProviderServices } from "../../services/DefaultClineProviderServices"
 
-import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
 import { getWorkspacePath } from "../../utils/path"
-import { OrganizationAllowListViolationError } from "../../utils/errors"
-
-import { setPanel } from "../../activate/registerCommands"
 
 import { t } from "../../i18n"
 
@@ -88,6 +79,8 @@ import { WebviewContentProvider } from "./WebviewContentProvider"
 import { SettingsManager } from "./SettingsManager"
 import { TaskCoordinator } from "./TaskCoordinator"
 import { WebviewRouter } from "./WebviewRouter"
+import { ClineProviderTaskManagement } from "./ClineProviderTaskManagement"
+import { ClineProviderWebviewLifecycle } from "./ClineProviderWebviewLifecycle"
 import {
 	handleOpenRouterCallback as handleOpenRouterOAuth,
 	handleRequestyCallback as handleRequestyOAuth,
@@ -105,7 +98,6 @@ import {
 	getProviderProfileEntryWithProvider,
 	handleModeSwitchWithProvider,
 	hasProviderProfileEntryWithProvider,
-	restoreHistoryModeAndProfileWithProvider,
 	upsertProviderProfileWithProvider,
 } from "./ClineProviderModeSync"
 import {
@@ -171,6 +163,8 @@ export class ClineProvider
 	private readonly pendingEditManager: PendingEditManager
 	private readonly webviewContentProvider: WebviewContentProvider
 	private readonly bypassStatusBar: IBypassStatusBar
+	private readonly taskManagement: ClineProviderTaskManagement
+	private readonly webviewLifecycle: ClineProviderWebviewLifecycle
 
 	/**
 	 * Monotonically increasing sequence number for clineMessages state pushes.
@@ -349,6 +343,43 @@ export class ClineProvider
 			this.emit(NJUST_AIEventName.TaskCreated, instance)
 			this.stack.bindEventForwarders(instance)
 		}
+
+		this.taskManagement = new ClineProviderTaskManagement({
+			stack: this.stack,
+			taskHistory: this.taskHistory,
+			pendingEditManager: this.pendingEditManager,
+			customModesManager: this.customModesManager,
+			taskCreationCallback: (task) => this.taskCreationCallback(task),
+			provider: this,
+			getState: () => this.getState(),
+			setValues: (config) => this.setValues(config),
+			setProviderProfile: (name) => this.setProviderProfile(name),
+			getTaskWithId: (id) => this.getTaskWithId(id),
+			log: (msg) => this.log(msg),
+		})
+
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const self = this
+		this.webviewLifecycle = new ClineProviderWebviewLifecycle({
+			contextProxy: this.contextProxy,
+			webviewContentProvider: this.webviewContentProvider,
+			webviewDisposables: this.webviewDisposables,
+			disposables: this.disposables,
+			get view() {
+				return self.view
+			},
+			setView: (v) => {
+				self.view = v
+			},
+			getState: () => this.getState(),
+			postMessageToWebview: (msg) => this.postMessageToWebview(msg),
+			updateCodeIndexStatusSubscription: () => this.updateCodeIndexStatusSubscription(),
+			log: (msg) => this.log(msg),
+			dispose: () => this.dispose(),
+			clearCodeIndexManager: () => {
+				this.codeIndexManager = undefined
+			},
+		})
 	}
 
 	/**
@@ -423,12 +454,7 @@ export class ClineProvider
 	- https://github.com/microsoft/vscode-extension-samples/blob/main/webview-sample/src/extension.ts
 	*/
 	private clearWebviewResources() {
-		while (this.webviewDisposables.length) {
-			const x = this.webviewDisposables.pop()
-			if (x) {
-				x.dispose()
-			}
-		}
+		this.webviewLifecycle.clearWebviewResources()
 	}
 
 	async dispose() {
@@ -526,218 +552,16 @@ export class ClineProvider
 	}
 
 	async resolveWebviewView(webviewView: vscode.WebviewView | vscode.WebviewPanel) {
-		this.view = webviewView
-		const inTabMode = this.configureWebviewPanelMode(webviewView)
-
-		await this.initializeWebviewRuntimeState()
-		await this.configureWebviewContent(webviewView)
-		this.messageRouter.setWebviewMessageListener(webviewView.webview)
-		this.webviewDisposables.push(...this.messageRouter.getDisposables())
-		this.updateCodeIndexStatusSubscription()
-		this.attachWebviewLifecycleListeners(webviewView, inTabMode)
-
-		// If the extension is starting a new session, clear previous task state.
-		// But don't clear if there's already an active task (e.g., resumed via IPC/bridge).
-		const currentTask = this.getCurrentTask()
-		if (!currentTask || currentTask.abandoned || currentTask.abort) {
-			await this.stack.pop()
-		}
-	}
-
-	private configureWebviewPanelMode(webviewView: vscode.WebviewView | vscode.WebviewPanel): boolean {
-		const inTabMode = "onDidChangeViewState" in webviewView
-		if (inTabMode) {
-			setPanel(webviewView, "tab")
-		} else if ("onDidChangeVisibility" in webviewView) {
-			setPanel(webviewView, "sidebar")
-		}
-		return inTabMode
-	}
-
-	private async initializeWebviewRuntimeState(): Promise<void> {
-		const {
-			terminalShellIntegrationTimeout = Terminal.defaultShellIntegrationTimeout,
-			terminalShellIntegrationDisabled = false,
-			terminalCommandDelay = 0,
-			terminalZshClearEolMark = true,
-			terminalZshOhMy = false,
-			terminalZshP10k = false,
-			terminalPowershellCounter = false,
-			terminalZdotdir = false,
-			ttsEnabled,
-			ttsSpeed,
-		} = await this.getState()
-
-		Terminal.setShellIntegrationTimeout(terminalShellIntegrationTimeout)
-		Terminal.setShellIntegrationDisabled(terminalShellIntegrationDisabled)
-		Terminal.setCommandDelay(terminalCommandDelay)
-		Terminal.setTerminalZshClearEolMark(terminalZshClearEolMark)
-		Terminal.setTerminalZshOhMy(terminalZshOhMy)
-		Terminal.setTerminalZshP10k(terminalZshP10k)
-		Terminal.setPowershellCounter(terminalPowershellCounter)
-		Terminal.setTerminalZdotdir(terminalZdotdir)
-		setTtsEnabled(ttsEnabled ?? false)
-		setTtsSpeed(ttsSpeed ?? 1)
-
-		await this.contextProxy.setValue("enableWebSearch", false)
-	}
-
-	private async configureWebviewContent(webviewView: vscode.WebviewView | vscode.WebviewPanel): Promise<void> {
-		const resourceRoots = [this.contextProxy.extensionUri]
-		if (vscode.workspace.workspaceFolders) {
-			resourceRoots.push(...vscode.workspace.workspaceFolders.map((folder) => folder.uri))
-		}
-
-		webviewView.webview.options = { enableScripts: true, localResourceRoots: resourceRoots }
-		webviewView.webview.html =
-			this.contextProxy.extensionMode === vscode.ExtensionMode.Development
-				? await this.webviewContentProvider.getHMRHtmlContent(webviewView.webview)
-				: await this.webviewContentProvider.getHtmlContent(webviewView.webview)
-	}
-
-	private attachWebviewLifecycleListeners(
-		webviewView: vscode.WebviewView | vscode.WebviewPanel,
-		inTabMode: boolean,
-	): void {
-		const activeEditorSubscription = vscode.window.onDidChangeActiveTextEditor(() => {
-			this.updateCodeIndexStatusSubscription()
-		})
-		this.webviewDisposables.push(activeEditorSubscription)
-
-		if ("onDidChangeViewState" in webviewView) {
-			const viewStateDisposable = webviewView.onDidChangeViewState(() => {
-				if (this.view?.visible) {
-					void this.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
-				}
-			})
-			this.webviewDisposables.push(viewStateDisposable)
-		} else if ("onDidChangeVisibility" in webviewView) {
-			const visibilityDisposable = webviewView.onDidChangeVisibility(() => {
-				if (this.view?.visible) {
-					void this.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
-				}
-			})
-			this.webviewDisposables.push(visibilityDisposable)
-		}
-
-		webviewView.onDidDispose(
-			async () => {
-				if (inTabMode) {
-					this.log("Disposing ClineProvider instance for tab view")
-					await this.dispose()
-				} else {
-					this.log("Clearing webview resources for sidebar view")
-					this.clearWebviewResources()
-					this.codeIndexManager = undefined
-				}
-			},
-			null,
-			this.disposables,
+		await this.webviewLifecycle.resolveWebviewView(webviewView, this.messageRouter, this.stack, () =>
+			this.getCurrentTask(),
 		)
-
-		const configDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
-			if (e?.affectsConfiguration("workbench.colorTheme")) {
-				await this.postMessageToWebview({ type: "theme", text: JSON.stringify(await getTheme()) })
-			}
-		})
-		this.webviewDisposables.push(configDisposable)
 	}
 
 	public async createTaskWithHistoryItem(
 		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
 		options?: { startTask?: boolean },
 	) {
-		const isCliRuntime = process.env.NJUST_AI_CLI_RUNTIME === "1"
-		const skipProfileRestoreFromHistory = isCliRuntime
-		const isRehydratingCurrentTask = this.getCurrentTask()?.taskId === historyItem.id
-
-		if (!isRehydratingCurrentTask) {
-			await this.stack.pop()
-		}
-
-		await this.restoreHistoryModeAndProfile(historyItem, skipProfileRestoreFromHistory)
-
-		const task = await this.createTaskInstanceFromHistory(historyItem, options)
-
-		if (isRehydratingCurrentTask) {
-			await this.stack.rehydrate(task)
-		} else {
-			await this.stack.push(task)
-			this.log(
-				`[createTaskWithHistoryItem] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
-			)
-		}
-
-		await this.applyPendingEditIfPresent(task)
-		return task
-	}
-
-	private async restoreHistoryModeAndProfile(
-		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
-		skipProfileRestoreFromHistory: boolean,
-	): Promise<void> {
-		return restoreHistoryModeAndProfileWithProvider(this, historyItem, skipProfileRestoreFromHistory)
-	}
-
-	private async createTaskInstanceFromHistory(
-		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
-		options?: { startTask?: boolean },
-	): Promise<Task> {
-		const { apiConfiguration, enableCheckpoints, checkpointTimeout, experiments } = await this.getState()
-		return new Task({
-			host: this,
-			apiConfiguration,
-			enableCheckpoints,
-			checkpointTimeout,
-			consecutiveMistakeLimit: apiConfiguration.consecutiveMistakeLimit,
-			historyItem,
-			experiments,
-			rootTask: historyItem.rootTask,
-			parentTask: historyItem.parentTask,
-			taskNumber: historyItem.number,
-			workspacePath: historyItem.workspace,
-			onCreated: this.taskCreationCallback,
-			startTask: options?.startTask ?? true,
-			initialStatus: historyItem.status,
-		})
-	}
-
-	// eslint-disable-next-line @typescript-eslint/require-await
-	private async applyPendingEditIfPresent(task: Task): Promise<void> {
-		const operationId = `task-${task.taskId}`
-		const pendingEdit = this.pendingEditManager.get(operationId)
-		if (!pendingEdit) {
-			return
-		}
-
-		this.pendingEditManager.clear(operationId)
-		this.log(`[createTaskWithHistoryItem] Processing pending edit after checkpoint restoration`)
-		setTimeout(async () => {
-			try {
-				const { messageIndex, apiConversationHistoryIndex } = (() => {
-					const messageIndex = task.clineMessages.findIndex((msg) => msg.ts === pendingEdit.messageTs)
-					const apiConversationHistoryIndex = task.apiConversationHistory.findIndex(
-						(msg) => msg.ts === pendingEdit.messageTs,
-					)
-					return { messageIndex, apiConversationHistoryIndex }
-				})()
-				if (messageIndex !== -1) {
-					await task.overwriteClineMessages(task.clineMessages.slice(0, messageIndex))
-					if (apiConversationHistoryIndex !== -1) {
-						await task.overwriteApiConversationHistory(
-							task.apiConversationHistory.slice(0, apiConversationHistoryIndex),
-						)
-					}
-					await task.handleWebviewAskResponse(
-						"messageResponse",
-						pendingEdit.editedContent,
-						pendingEdit.images,
-					)
-				}
-			} catch (error) {
-				this.log(`[createTaskWithHistoryItem] Error processing pending edit: ${error}`)
-			}
-		}, 100)
+		return this.taskManagement.createTaskWithHistoryItem(historyItem, options)
 	}
 
 	public async postMessageToWebview(message: ExtensionMessage) {
@@ -1113,19 +937,19 @@ export class ClineProvider
 	 */
 
 	public getCurrentTask(): Task | undefined {
-		return this.taskCoordinator?.getCurrentTask() ?? this.stack.current
+		return this.taskCoordinator?.getCurrentTask() ?? this.taskManagement.getCurrentTask()
 	}
 
 	getTaskStackSize(): number {
-		return this.taskCoordinator?.getTaskStackSize() ?? this.stack.size
+		return this.taskCoordinator?.getTaskStackSize() ?? this.taskManagement.getTaskStackSize()
 	}
 
 	public getCurrentTaskStack(): string[] {
-		return this.taskCoordinator?.getCurrentTaskStack() ?? this.stack.taskIds
+		return this.taskCoordinator?.getCurrentTaskStack() ?? this.taskManagement.getCurrentTaskStack()
 	}
 
 	public getRecentTasks(): string[] {
-		return this.taskCoordinator?.getRecentTasks() ?? this.taskHistory.getRecentTasks()
+		return this.taskCoordinator?.getRecentTasks() ?? this.taskManagement.getRecentTasks()
 	}
 
 	// When initializing a new task, (not from history but from a tool command
@@ -1151,92 +975,7 @@ export class ClineProvider
 		options: CreateTaskOptions = {},
 		configuration: NJUST_AISettings = {},
 	): Promise<Task> {
-		if (configuration) {
-			await this.setValues(configuration)
-
-			if (configuration.allowedCommands) {
-				await vscode.workspace
-					.getConfiguration(Package.name)
-					.update("allowedCommands", configuration.allowedCommands, vscode.ConfigurationTarget.Global)
-			}
-
-			if (configuration.deniedCommands) {
-				await vscode.workspace
-					.getConfiguration(Package.name)
-					.update("deniedCommands", configuration.deniedCommands, vscode.ConfigurationTarget.Global)
-			}
-
-			if (configuration.commandExecutionTimeout !== undefined) {
-				await vscode.workspace
-					.getConfiguration(Package.name)
-					.update(
-						"commandExecutionTimeout",
-						configuration.commandExecutionTimeout,
-						vscode.ConfigurationTarget.Global,
-					)
-			}
-
-			if (configuration.currentApiConfigName) {
-				await this.setProviderProfile(configuration.currentApiConfigName)
-			}
-
-			// Register custom modes so the CustomModesManager knows about them.
-			// setValues writes to global state, but the manager overwrites that
-			// when it merges .roomodes + global settings on refresh.  Persisting
-			// via updateCustomMode ensures modes survive the merge cycle.
-			if (configuration.customModes?.length) {
-				for (const mode of configuration.customModes) {
-					await this.customModesManager.updateCustomMode(mode.slug, mode)
-				}
-			}
-		}
-
-		const { apiConfiguration, organizationAllowList, enableCheckpoints, checkpointTimeout, experiments } =
-			await this.getState()
-
-		// Single-open-task invariant: always enforce for user-initiated top-level tasks
-		if (!parentTask) {
-			try {
-				await this.stack.pop()
-			} catch (error) {
-				logger.warn("ClineProvider", "Stack pop failed", error)
-				TelemetryService.reportError(error, TelemetryEventName.WEBVIEW_ERROR)
-				// Non-fatal
-			}
-		}
-
-		if (!ProfileValidator.isProfileAllowed(apiConfiguration, organizationAllowList)) {
-			throw new OrganizationAllowListViolationError(t("common:errors.violated_organization_allowlist"))
-		}
-
-		const task = new Task({
-			host: this,
-			apiConfiguration,
-			enableCheckpoints,
-			checkpointTimeout,
-			consecutiveMistakeLimit: apiConfiguration.consecutiveMistakeLimit,
-			task: text,
-			images,
-			experiments,
-			rootTask: this.stack.root,
-			parentTask,
-			taskNumber: this.stack.size + 1,
-			onCreated: this.taskCreationCallback,
-			initialTodos: options.initialTodos,
-			// Ensure this task is present in stack before startTask() emits
-			// its initial state update, so state.currentTaskId is available ASAP.
-			startTask: false,
-			...options,
-		})
-
-		await this.stack.push(task)
-		task.start()
-
-		this.log(
-			`[createTask] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
-		)
-
-		return task
+		return this.taskManagement.createTaskInternal(text, images, parentTask, options, configuration)
 	}
 
 	public async cancelTask(): Promise<void> {
@@ -1244,99 +983,7 @@ export class ClineProvider
 	}
 
 	private async cancelTaskInternal(): Promise<void> {
-		const task = this.getCurrentTask()
-
-		if (!task) {
-			return
-		}
-
-		logger.info("ClineProvider", `cancelTask: cancelling task ${task.taskId}.${task.instanceId}`)
-
-		let historyItem: HistoryItem | undefined
-		try {
-			const history = await this.getTaskWithId(task.taskId)
-			historyItem = history.historyItem
-		} catch (error) {
-			// During task startup there is a short window where currentTask exists
-			// but task history has not been persisted yet. Cancelling should still
-			// abort safely; we just skip post-cancel rehydration in that case.
-			if (error instanceof Error && error.message === "Task not found") {
-				this.log(`[cancelTask] task history missing for ${task.taskId}; skipping rehydrate`)
-			} else {
-				throw error
-			}
-		}
-
-		// Preserve parent and root task information for history item.
-		const rootTask = task.rootTask
-		const parentTask = task.parentTask
-
-		// Mark this as a user-initiated cancellation so provider-only rehydration can occur
-		task.abortReason = "user_cancelled"
-
-		// Capture the current instance to detect if rehydrate already occurred elsewhere
-		const originalInstanceId = task.instanceId
-
-		// Immediately cancel the underlying HTTP request if one is in progress
-		// This ensures the stream fails quickly rather than waiting for network timeout
-		task.cancelCurrentRequest()
-
-		// Begin abort (non-blocking)
-		void task.abortTask()
-
-		// Immediately mark the original instance as abandoned to prevent any residual activity
-		task.abandoned = true
-
-		await pWaitFor(
-			() => {
-				const currentTask = this.getCurrentTask()
-				return (
-					currentTask === undefined ||
-					currentTask.isStreaming === false ||
-					currentTask.didFinishAbortingStream ||
-					// If only the first chunk is processed, then there's no
-					// need to wait for graceful abort (closes edits, browser,
-					// etc).
-					currentTask.isWaitingForFirstChunk
-				)
-			},
-			{
-				timeout: 3_000,
-			},
-		).catch(() => {
-			logger.error("ClineProvider", "cancelTask: Failed to abort task")
-			TelemetryService.reportError(
-				new Error("cancelTask: Failed to abort task"),
-				TelemetryEventName.WEBVIEW_ERROR,
-			)
-		})
-
-		// Defensive safeguard: if current instance already changed, skip rehydrate
-		const current = this.getCurrentTask()
-		if (current && current.instanceId !== originalInstanceId) {
-			this.log(
-				`[cancelTask] Skipping rehydrate: current instance ${current.instanceId} != original ${originalInstanceId}`,
-			)
-			return
-		}
-
-		// Final race check before rehydrate to avoid duplicate rehydration
-		{
-			const currentAfterCheck = this.getCurrentTask()
-			if (currentAfterCheck && currentAfterCheck.instanceId !== originalInstanceId) {
-				this.log(
-					`[cancelTask] Skipping rehydrate after final check: current instance ${currentAfterCheck.instanceId} != original ${originalInstanceId}`,
-				)
-				return
-			}
-		}
-
-		if (!historyItem) {
-			return
-		}
-
-		// Clears task again, so we need to abortTask manually above.
-		await this.createTaskWithHistoryItem({ ...historyItem, rootTask, parentTask })
+		return this.taskManagement.cancelTaskInternal()
 	}
 
 	// Clear the current task without treating it as a subtask.
@@ -1346,11 +993,7 @@ export class ClineProvider
 	}
 
 	private async clearTaskInternal(): Promise<void> {
-		if (this.stack.size > 0) {
-			const task = this.stack.current
-			logger.info("ClineProvider", `clearTask: clearing task ${task?.taskId}.${task?.instanceId}`)
-			await this.stack.pop()
-		}
+		return this.taskManagement.clearTaskInternal()
 	}
 
 	public resumeTask(taskId: string): void {

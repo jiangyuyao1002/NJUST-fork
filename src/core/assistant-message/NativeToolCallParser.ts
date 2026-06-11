@@ -207,22 +207,22 @@ export class NativeToolCallParser {
 	public static createPartialToolUse: typeof NativeToolCallFormatter.createPartialToolUse =
 		NativeToolCallFormatter.createPartialToolUse
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: clears all active streaming tool calls on the shared instance */
 	public static clearAllStreamingToolCalls(): void {
 		sharedInstance.clearAllStreamingToolCalls()
 	}
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: clears raw chunk state on the shared instance */
 	public static clearRawChunkState(): void {
 		sharedInstance.clearRawChunkState()
 	}
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: starts a streaming tool call on the shared instance */
 	public static startStreamingToolCall(id: string, name: string): void {
 		sharedInstance.startStreamingToolCall(id, name)
 	}
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: processes a raw chunk on the shared instance */
 	public static processRawChunk(chunk: {
 		index: number
 		id: string
@@ -232,26 +232,27 @@ export class NativeToolCallParser {
 		return sharedInstance.processRawChunk(chunk)
 	}
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: finalizes raw chunks on the shared instance */
 	public static finalizeRawChunks(): ToolCallStreamEvent[] {
 		return sharedInstance.finalizeRawChunks()
 	}
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+
+	/** Test helper: processes a streaming chunk on the shared instance */
 	public static processStreamingChunk(id: string, chunk: string): ToolUse | null {
 		return sharedInstance.processStreamingChunk(id, chunk)
 	}
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: finalizes a streaming tool call on the shared instance */
 	public static finalizeStreamingToolCall(id: string): ToolUse | McpToolUse | null {
 		return sharedInstance.finalizeStreamingToolCall(id)
 	}
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: checks if there are active streaming tool calls on the shared instance */
 	public static hasActiveStreamingToolCalls(): boolean {
 		return sharedInstance.hasActiveStreamingToolCalls()
 	}
 
-	/** @deprecated Use per-task instance via `new NativeToolCallParser()` */
+	/** Test helper: processes finish reason on the shared instance */
 	public static processFinishReason(finishReason: string | null | undefined): ToolCallStreamEvent[] {
 		return sharedInstance.processFinishReason(finishReason)
 	}

@@ -48,7 +48,6 @@ import { ApiStream } from "../../api/transform/stream"
 import { defaultToolCallParser } from "../assistant-message/ToolCallParserImpl"
 
 // shared
-import { findLastIndex } from "../../shared/array"
 import { combineApiRequests } from "../../shared/combineApiRequests"
 import { combineCommandSequences } from "../../shared/combineCommandSequences"
 import { getApiMetrics, hasTokenUsageChanged, hasToolUsageChanged } from "../../shared/getApiMetrics"
@@ -113,22 +112,6 @@ import { TaskExecutor, type TaskExecutorHost } from "./TaskExecutor"
 import { TaskLifecycleHandler, type TaskLifecycleHost } from "./TaskLifecycleHandler"
 import { TaskModeHandler } from "./TaskModeHandler"
 import { CangjieRuntimePolicy } from "./CangjieRuntimePolicy"
-
-import {
-	addToApiConversationHistoryWithTask,
-	addToClineMessagesWithTask,
-	findMessageByIdWithTask,
-	findMessageByTimestampWithTask,
-	flushPendingToolResultsToHistoryWithTask,
-	getSavedApiConversationHistoryWithTask,
-	getSavedClineMessagesWithTask,
-	overwriteApiConversationHistoryWithTask,
-	overwriteClineMessagesWithTask,
-	retrySaveApiConversationHistoryWithTask,
-	saveApiConversationHistoryWithTask,
-	saveClineMessagesWithTask,
-	updateClineMessageWithTask,
-} from "./TaskPersistence"
 
 export interface TaskOptions extends CreateTaskOptions {
 	host?: ITaskHost
@@ -731,82 +714,61 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// API Messages
 
 	private async getSavedApiConversationHistory(): Promise<ApiMessage[]> {
-		return getSavedApiConversationHistoryWithTask(this.msgMgr)
+		return this.msgMgr.getSavedApiConversationHistory()
 	}
 
 	async addToApiConversationHistory(message: Anthropic.MessageParam, reasoning?: string) {
-		return addToApiConversationHistoryWithTask(this.msgMgr, message, reasoning)
+		return this.msgMgr.addToApiConversationHistory(message, reasoning)
 	}
-
-	// NOTE: We intentionally do NOT mutate stored messages to merge consecutive user turns.
-	// For API requests, consecutive same-role messages are merged via mergeConsecutiveApiMessages()
-	// so rewind/edit behavior can still reference original message boundaries.
 
 	async overwriteApiConversationHistory(newHistory: ApiMessage[]) {
-		return overwriteApiConversationHistoryWithTask(this.msgMgr, newHistory)
+		return this.msgMgr.overwriteApiConversationHistory(newHistory)
 	}
 
-	/**
-	 * Flush any pending tool results to the API conversation history.
-	 *
-	 * This is critical when the task is about to be
-	 * delegated (e.g., via new_task). Before delegation, if other tools were
-	 * called in the same turn before new_task, their tool_result blocks are
-	 * accumulated in `userMessageContent` but haven't been saved to the API
-	 * history yet. If we don't flush them before the parent is disposed,
-	 * the API conversation will be incomplete and cause 400 errors when
-	 * the parent resumes (missing tool_result for tool_use blocks).
-	 *
-	 * NOTE: The assistant message is typically already in history by the time
-	 * tools execute (added in recursivelyMakeClineRequests after streaming completes).
-	 * So we usually only need to flush the pending user message with tool_results.
-	 */
 	public async flushPendingToolResultsToHistory(): Promise<boolean> {
-		return flushPendingToolResultsToHistoryWithTask(this.msgMgr)
+		return this.msgMgr.flushPendingToolResultsToHistory()
 	}
 
 	private async saveApiConversationHistory(): Promise<boolean> {
-		return saveApiConversationHistoryWithTask(this.msgMgr)
+		return this.msgMgr.saveApiConversationHistory()
 	}
 
-	/**
-	 * Public wrapper to retry saving the API conversation history.
-	 * Uses exponential backoff: up to 3 attempts with delays of 100 ms, 500 ms, 1500 ms.
-	 * Used by delegation flow when flushPendingToolResultsToHistory reports failure.
-	 */
 	public async retrySaveApiConversationHistory(): Promise<boolean> {
-		return retrySaveApiConversationHistoryWithTask(this.msgMgr)
+		return this.msgMgr.retrySaveApiConversationHistory()
 	}
 
 	// Cline Messages
 
 	private async getSavedClineMessages(): Promise<ClineMessage[]> {
-		return getSavedClineMessagesWithTask(this.msgMgr)
+		return this.msgMgr.getSavedClineMessages()
 	}
 
 	private async addToClineMessages(message: Omit<ClineMessage, "id"> & { id?: string }) {
-		return addToClineMessagesWithTask(this.msgMgr, message)
+		if (!message.id) {
+			message.id = uuidv7()
+		}
+		return this.msgMgr.addToClineMessages(message as ClineMessage)
 	}
 
 	public async overwriteClineMessages(newMessages: ClineMessage[]) {
-		return overwriteClineMessagesWithTask(this.msgMgr, newMessages)
+		return this.msgMgr.overwriteClineMessages(newMessages)
 	}
 
 	private async updateClineMessage(message: ClineMessage) {
-		return updateClineMessageWithTask(this.msgMgr, message)
+		return this.msgMgr.updateClineMessage(message)
 	}
 
 	private async saveClineMessages(): Promise<boolean> {
-		return saveClineMessagesWithTask(this.msgMgr)
+		return this.msgMgr.saveClineMessages()
 	}
 
 	/** @deprecated Prefer findMessageById for new code. */
 	private findMessageByTimestamp(ts: number): ClineMessage | undefined {
-		return findMessageByTimestampWithTask(this.msgMgr, ts)
+		return this.msgMgr.findMessageByTimestamp(ts)
 	}
 
 	private findMessageById(id: string): ClineMessage | undefined {
-		return findMessageByIdWithTask(this.msgMgr, id)
+		return this.msgMgr.findMessageById(id)
 	}
 
 	// Note that `partial` has three valid states true (partial message),
@@ -823,56 +785,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	handleWebviewAskResponse(askResponse: ClineAskResponse, text?: string, images?: string[]) {
-		// Clear any pending auto-approval timeout when user responds
-		this.cancelAutoApprovalTimeout()
-
-		this.askResponse = askResponse
-		this.askResponseText = text
-		this.askResponseImages = images
-
-		// Create a checkpoint whenever the user sends a message.
-		// Use allowEmpty=true to ensure a checkpoint is recorded even if there are no file changes.
-		// Suppress the checkpoint_saved chat row for this particular checkpoint to keep the timeline clean.
-		if (askResponse === "messageResponse") {
-			void this.checkpointSave(false, true).catch((e) => logger.error("Task", "checkpointSave failed", e))
-		}
-
-		// Mark the last follow-up question as answered
-		if (askResponse === "messageResponse" || askResponse === "yesButtonClicked") {
-			// Find the last unanswered follow-up message using findLastIndex
-			const lastFollowUpIndex = findLastIndex(
-				this.clineMessages,
-				(msg) => msg.type === "ask" && msg.ask === "followup" && !msg.isAnswered,
-			)
-
-			if (lastFollowUpIndex !== -1) {
-				// Mark this follow-up as answered
-				this.clineMessages[lastFollowUpIndex]!.isAnswered = true
-				// Save the updated messages
-				this.saveClineMessages().catch((error) => {
-					logger.error("Task", "Failed to save answered follow-up state:", error)
-					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
-				})
-			}
-		}
-
-		// Mark the last tool-approval ask as answered when user approves (or auto-approval)
-		if (askResponse === "yesButtonClicked") {
-			const lastToolAskIndex = findLastIndex(
-				this.clineMessages,
-				(msg) => msg.type === "ask" && msg.ask === "tool" && !msg.isAnswered,
-			)
-			if (lastToolAskIndex !== -1) {
-				this.clineMessages[lastToolAskIndex]!.isAnswered = true
-				void this.updateClineMessage(this.clineMessages[lastToolAskIndex]!).catch((error) => {
-					logger.warn("Task", "updateClineMessage failed", error)
-				})
-				this.saveClineMessages().catch((error) => {
-					logger.error("Task", "Failed to save answered tool-ask state:", error)
-					TelemetryService.reportError(error, TelemetryEventName.TASK_LIFECYCLE_ERROR)
-				})
-			}
-		}
+		this.askSayHandler.handleWebviewAskResponse(askResponse, text, images)
 	}
 
 	/**
@@ -898,13 +811,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.lastMessageTs = Date.now()
 	}
 
-	/**
-	 * Updates the API configuration and rebuilds the API handler.
-	 * Cancels any in-flight request and resets streaming/parser/token-cache state so
-	 * mixed dimensions cannot leak across profiles or models.
-	 *
-	 * @param newApiConfiguration - The new API configuration to use
-	 */
 	public updateApiConfiguration(newApiConfiguration: ProviderSettings): void {
 		this.cancelCurrentRequest()
 		try {
@@ -914,7 +820,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			logger.error("Task", "Failed to clear streaming tool call state:", err)
 		}
 		this.debouncedEmitTokenUsage.cancel()
+		this.resetStreamingState()
+		this.apiConfiguration = newApiConfiguration
+		const host = this.hostRef.deref()
+		this.api = buildApiHandler(this.apiConfiguration, undefined, {
+			toolCallParser: defaultToolCallParser,
+			storeSecret: host
+				? (key, value) => Promise.resolve(host.contextProxy.storeSecret(key as keyof SecretState, value))
+				: undefined,
+		})
+	}
 
+	private resetStreamingState(): void {
 		this.isWaitingForFirstChunk = false
 		this.isStreaming = false
 		this.currentStreamingContentIndex = 0
@@ -935,15 +852,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.tokenUsageSnapshotAt = undefined
 		this.toolUsageSnapshot = undefined
 		tokenCountCache.clear()
-
-		this.apiConfiguration = newApiConfiguration
-		const host = this.hostRef.deref()
-		this.api = buildApiHandler(this.apiConfiguration, undefined, {
-			toolCallParser: defaultToolCallParser,
-			storeSecret: host
-				? (key, value) => Promise.resolve(host.contextProxy.storeSecret(key as keyof SecretState, value))
-				: undefined,
-		})
 	}
 
 	public async submitUserMessage(
@@ -1205,35 +1113,35 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	// Cloud Agent orchestration delegated to CloudAgentOrchestrator
 
-	private async initiateCloudAgentLoop(userMessage: string, images?: string[]): Promise<void> {
-		const host = createCloudAgentHost(this as UnsafeAny as Parameters<typeof createCloudAgentHost>[0])
-		const { CloudAgentOrchestrator } = await import("./CloudAgentOrchestrator")
-		const orchestrator = new CloudAgentOrchestrator(host)
-
-		// MemRL: inject dependencies and retrieve hints before running
-		const memrlProvider = this.hostRef.deref()
-		const memoryManager = memrlProvider?.getMemoryManager(this.cwd)
-		const memrlIntent = userMessage.slice(0, 500) || this.taskId
-		this.memrlIntent = memrlIntent
+	private async initiateMemrlBeforeRun(intent: string): Promise<void> {
+		this.memrlIntent = intent
 		this.memrlPersisted = false
 		this.completionAttempted = false
+		const memoryManager = this.hostRef.deref()?.getMemoryManager(this.cwd)
 		if (memoryManager) {
 			memoryManager.updateDependencies(this.api)
 			try {
-				const { episodicHints, ltmRules } = await memoryManager.beforeRun(this.taskId, memrlIntent)
+				const { episodicHints, ltmRules } = await memoryManager.beforeRun(this.taskId, intent)
 				this.memrlEpisodicHints = episodicHints
 				this.memrlLtmRules = ltmRules
 				this.requestBuilder["systemPromptPartsCache"] = undefined
 			} catch (error) {
 				logger.debug("Task", "memrl beforeRun failed", error)
-				/* non-blocking */
 			}
 		}
+	}
+
+	private async initiateCloudAgentLoop(userMessage: string, images?: string[]): Promise<void> {
+		const host = createCloudAgentHost(this as UnsafeAny as Parameters<typeof createCloudAgentHost>[0])
+		const { CloudAgentOrchestrator } = await import("./CloudAgentOrchestrator")
+		const orchestrator = new CloudAgentOrchestrator(host)
+
+		const memrlIntent = userMessage.slice(0, 500) || this.taskId
+		await this.initiateMemrlBeforeRun(memrlIntent)
 
 		try {
 			await orchestrator.run(userMessage, images)
 		} finally {
-			// MemRL: persist episode (once) — fallback for abort/error.
 			this.persistMemrlEpisode()
 		}
 	}
@@ -1258,9 +1166,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			},
 		})
 
-		// MemRL: inject dependencies then retrieve episodic hints + LTM rules before the loop.
-		// Intent is extracted from userContent (apiConversationHistory is still empty here).
-		const memoryManager = provider?.getMemoryManager(this.cwd)
 		const memrlIntent =
 			userContent
 				.filter((b): b is { type: "text"; text: string } => b.type === "text" && "text" in b)
@@ -1268,22 +1173,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				.join(" ")
 				.trim()
 				.slice(0, 500) || this.taskId
-		this.memrlIntent = memrlIntent
-		this.memrlPersisted = false
-		this.completionAttempted = false
-		if (memoryManager) {
-			memoryManager.updateDependencies(this.api)
-			try {
-				const { episodicHints, ltmRules } = await memoryManager.beforeRun(this.taskId, memrlIntent)
-				this.memrlEpisodicHints = episodicHints
-				this.memrlLtmRules = ltmRules
-				// Invalidate the cached system prompt so the new hints are injected.
-				this.requestBuilder["systemPromptPartsCache"] = undefined
-			} catch (error) {
-				logger.debug("Task", "memrl beforeRun failed (retry)", error)
-				// Non-blocking: failures must not prevent task execution.
-			}
-		}
+		await this.initiateMemrlBeforeRun(memrlIntent)
 
 		let nextUserContent = userContent
 		let includeFileDetails = true

@@ -1765,8 +1765,9 @@ describe("Cline", () => {
 					startTask: false,
 				})
 
-				// Spy on handleWebviewAskResponse
-				const handleResponseSpy = vi.spyOn(task, "handleWebviewAskResponse")
+				// Spy on the internal askSayHandler's handleWebviewAskResponse
+				// @ts-expect-error - accessing private property for testing
+				const handleResponseSpy = vi.spyOn(task.askSayHandler, "handleWebviewAskResponse")
 
 				// Set up some existing messages to simulate an ongoing conversation
 				task.clineMessages = [
@@ -1795,8 +1796,8 @@ describe("Cline", () => {
 					startTask: false,
 				})
 
-				// Spy on handleWebviewAskResponse
-				const handleResponseSpy = vi.spyOn(task, "handleWebviewAskResponse")
+				// @ts-expect-error - accessing private property for testing
+				const handleResponseSpy = vi.spyOn(task.askSayHandler, "handleWebviewAskResponse")
 
 				// Call with empty text and no images
 				await task.submitUserMessage("", [])
@@ -1817,8 +1818,8 @@ describe("Cline", () => {
 					startTask: false,
 				})
 
-				// Spy on handleWebviewAskResponse
-				const handleResponseSpy = vi.spyOn(task, "handleWebviewAskResponse")
+				// @ts-expect-error - accessing private property for testing
+				const handleResponseSpy = vi.spyOn(task.askSayHandler, "handleWebviewAskResponse")
 
 				// Test with no messages (new task scenario)
 				task.clineMessages = []
@@ -1851,8 +1852,8 @@ describe("Cline", () => {
 					startTask: false,
 				})
 
-				// Spy on handleWebviewAskResponse
-				const handleResponseSpy = vi.spyOn(task, "handleWebviewAskResponse")
+				// @ts-expect-error - accessing private property for testing
+				const handleResponseSpy = vi.spyOn(task.askSayHandler, "handleWebviewAskResponse")
 
 				// Simulate weakref returning undefined
 				Object.defineProperty(task, "hostRef", {

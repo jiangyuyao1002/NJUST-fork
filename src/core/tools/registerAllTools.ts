@@ -23,10 +23,7 @@ import { readFileTool } from "./ReadFileTool"
 import { readCommandOutputTool } from "./ReadCommandOutputTool"
 import { writeToFileTool } from "./WriteToFileTool"
 import { editTool } from "./EditTool"
-import { searchReplaceTool } from "./SearchReplaceTool"
-import { editFileTool } from "./EditFileTool"
 import { applyPatchTool } from "./ApplyPatchTool"
-import { applyDiffTool } from "./ApplyDiffTool"
 import { searchFilesTool } from "./SearchFilesTool"
 import { executeCommandTool } from "./ExecuteCommandTool"
 import { useMcpToolTool } from "./UseMcpToolTool"
@@ -60,8 +57,6 @@ import { briefTool } from "./BriefTool"
 import { configTool } from "./ConfigTool"
 
 // Conditional tools
-// PowerShellTool deprecated — use execute_command with powershell.exe directly.
-// import { PowerShellTool } from "./PowerShellTool"
 import { WorktreeTool } from "./WorktreeTool"
 
 // Register all tools with the central registry
@@ -71,10 +66,7 @@ const allTools = [
 	readCommandOutputTool,
 	writeToFileTool,
 	editTool,
-	searchReplaceTool,
-	editFileTool,
 	applyPatchTool,
-	applyDiffTool,
 	searchFilesTool,
 	executeCommandTool,
 	useMcpToolTool,
@@ -108,11 +100,7 @@ const allTools = [
 	configTool,
 ] as const
 
-const conditionalTools = [
-	// PowerShellTool deprecated — use execute_command with powershell.exe directly.
-	// { tool: new PowerShellTool(), condition: () => PowerShellTool.isAvailable() },
-	{ tool: new WorktreeTool(), condition: () => WorktreeTool.isAvailable() },
-] as const
+const conditionalTools = [{ tool: new WorktreeTool(), condition: () => WorktreeTool.isAvailable() }] as const
 
 void createToolRegistrationPipeline(
 	registerStaticTools(allTools),

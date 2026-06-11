@@ -52,11 +52,6 @@ function createHost(overrides: Record<string, unknown> = {}) {
 			host.askResponse = "noButtonClicked"
 		}),
 		supersedePendingAsk: vi.fn(),
-		handleWebviewAskResponse: vi.fn(function (response, text, images) {
-			host.askResponse = response
-			host.askResponseText = text
-			host.askResponseImages = images
-		}),
 		formatResponse: {
 			toolError: (error: string) => `Error: ${error}`,
 			missingToolParameterError: (paramName: string) => `Missing ${paramName}`,
@@ -136,27 +131,28 @@ describe("TaskAskSayHandler", () => {
 	it("drains queued user messages for followup asks", async () => {
 		const host = createHost({ messageQueueService: createQueue([{ text: "answer", images: ["img"] }]) })
 		const handler = new TaskAskSayHandler(host)
+		const spy = vi.spyOn(handler, "handleWebviewAskResponse")
 
 		const result = await handler.ask("followup", "Q?", false)
 
-		expect(host.handleWebviewAskResponse).toHaveBeenCalledWith("messageResponse", "answer", ["img"])
+		expect(spy).toHaveBeenCalledWith("messageResponse", "answer", ["img"])
 		expect(result).toEqual({ response: "messageResponse", text: "answer", images: ["img"] })
 	})
 
 	it("drains queued user messages as approval for tool asks", async () => {
 		const host = createHost({ messageQueueService: createQueue([{ text: "approved" }]) })
 		const handler = new TaskAskSayHandler(host)
+		const spy = vi.spyOn(handler, "handleWebviewAskResponse")
 
 		const result = await handler.ask("tool", "run?", false)
 
-		expect(host.handleWebviewAskResponse).toHaveBeenCalledWith("yesButtonClicked", "approved", undefined)
+		expect(spy).toHaveBeenCalledWith("yesButtonClicked", "approved", undefined)
 		expect(result.response).toBe("yesButtonClicked")
 	})
 
 	it("does not drain queued messages for command_output asks", async () => {
 		const queue = createQueue([{ text: "keep" }])
 		const host = createHost({ messageQueueService: queue })
-		host.handleWebviewAskResponse = vi.fn()
 		pWaitForMock.mockImplementationOnce(async () => {
 			host.askResponse = "yesButtonClicked"
 		})
@@ -363,10 +359,11 @@ describe("TaskAskSayHandler", () => {
 			})
 
 			const handler = new TaskAskSayHandler(host)
+			const spy = vi.spyOn(handler, "handleWebviewAskResponse")
 			const result = await handler.ask("followup", "Q?", false)
 
 			expect(timeoutFn).toHaveBeenCalled()
-			expect(host.handleWebviewAskResponse).toHaveBeenCalledWith("messageResponse", "auto", ["img"])
+			expect(spy).toHaveBeenCalledWith("messageResponse", "auto", ["img"])
 			expect(result).toEqual({ response: "messageResponse", text: "auto", images: ["img"] })
 
 			vi.useRealTimers()

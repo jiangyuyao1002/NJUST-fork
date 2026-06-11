@@ -116,7 +116,7 @@ export class TaskAskSayHandler {
 		} else if (approval.decision === "timeout") {
 			this.host.autoApprovalTimeoutRef = setTimeout(() => {
 				const { askResponse, text, images } = approval.fn!()
-				this.host.handleWebviewAskResponse(askResponse, text, images)
+				this.handleWebviewAskResponse(askResponse, text, images)
 				this.host.autoApprovalTimeoutRef = undefined
 			}, approval.timeout) as NodeJS.Timeout
 			timeouts.push(this.host.autoApprovalTimeoutRef)
@@ -166,9 +166,9 @@ export class TaskAskSayHandler {
 			const message = this.host.messageQueueService.dequeueMessage()
 			if (message) {
 				if (type === "tool" || type === "command" || type === "use_mcp_server") {
-					this.host.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
+					this.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
 				} else {
-					this.host.handleWebviewAskResponse("messageResponse", message.text, message.images)
+					this.handleWebviewAskResponse("messageResponse", message.text, message.images)
 				}
 			}
 		}
@@ -182,9 +182,9 @@ export class TaskAskSayHandler {
 					const message = this.host.messageQueueService.dequeueMessage()
 					if (message) {
 						if (type === "tool" || type === "command" || type === "use_mcp_server") {
-							this.host.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
+							this.handleWebviewAskResponse("yesButtonClicked", message.text, message.images)
 						} else {
-							this.host.handleWebviewAskResponse("messageResponse", message.text, message.images)
+							this.handleWebviewAskResponse("messageResponse", message.text, message.images)
 						}
 					}
 				}
@@ -384,7 +384,7 @@ export class TaskAskSayHandler {
 				}
 
 				this.host.emit(NJUST_AIEventName.TaskUserMessage, this.host.taskId)
-				this.host.handleWebviewAskResponse("messageResponse", text, images)
+				this.handleWebviewAskResponse("messageResponse", text, images)
 			} else {
 				logger.error("TaskAskSayHandler", "submitUserMessage: Provider reference lost")
 			}

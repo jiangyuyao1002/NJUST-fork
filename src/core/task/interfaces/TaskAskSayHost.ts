@@ -77,7 +77,6 @@ export interface TaskAskSayHost {
 	approveAsk(opts?: { text?: string; images?: string[] }): void
 	denyAsk(opts?: { text?: string; images?: string[] }): void
 	supersedePendingAsk(): void
-	handleWebviewAskResponse(askResponse: ClineAskResponse, text?: string, images?: string[]): void
 	updateApiConfiguration(newApiConfiguration: UnsafeAny): void
 	formatResponse: {
 		toolError(error: string): string
