@@ -1,10 +1,13 @@
 import { z } from "zod"
 
+import path from "path"
+
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { getErrorMessage } from "../../shared/error-utils"
+import { isPathOutsideWorkspace } from "../../utils/pathUtils"
 
 interface NotebookEditParams {
 	path: string
@@ -58,7 +61,7 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 		const { pushToolResult, handleError } = callbacks
 
 		try {
-			const { path, action, cellIndex, content, cellType } = params
+			const { path: notebookPath, action, cellIndex, content, cellType } = params
 
 			// Try to use VS Code Notebook API
 			let vscode: typeof import("vscode")
@@ -74,7 +77,15 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 				return
 			}
 
-			const uri = vscode.Uri.file(path)
+			const fullPath = path.resolve(task.cwd, notebookPath)
+			if (isPathOutsideWorkspace(fullPath)) {
+				pushToolResult(
+					formatResponse.toolError(`Safety: cannot edit notebook outside workspace: ${notebookPath}`),
+				)
+				return
+			}
+
+			const uri = vscode.Uri.file(fullPath)
 
 			// Open the notebook document
 			let notebookDoc: import("vscode").NotebookDocument
@@ -82,7 +93,7 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 				notebookDoc = await vscode.workspace.openNotebookDocument(uri)
 			} catch (err) {
 				pushToolResult(
-					formatResponse.toolError(`Failed to open notebook at '${path}': ${getErrorMessage(err)}`),
+					formatResponse.toolError(`Failed to open notebook at '${notebookPath}': ${getErrorMessage(err)}`),
 				)
 				return
 			}
@@ -165,14 +176,14 @@ export class NotebookEditTool extends BaseTool<"notebook_edit"> {
 			switch (action) {
 				case "insert":
 					pushToolResult(
-						`Successfully inserted a ${cellType || "code"} cell at index ${cellIndex} in '${path}'.`,
+						`Successfully inserted a ${cellType || "code"} cell at index ${cellIndex} in '${notebookPath}'.`,
 					)
 					break
 				case "edit":
-					pushToolResult(`Successfully edited cell at index ${cellIndex} in '${path}'.`)
+					pushToolResult(`Successfully edited cell at index ${cellIndex} in '${notebookPath}'.`)
 					break
 				case "delete":
-					pushToolResult(`Successfully deleted cell at index ${cellIndex} in '${path}'.`)
+					pushToolResult(`Successfully deleted cell at index ${cellIndex} in '${notebookPath}'.`)
 					break
 			}
 		} catch (error) {

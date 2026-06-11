@@ -11,6 +11,7 @@ const {
 	notebookRangeMock,
 	workspaceEditMock,
 	getErrorMessageMock,
+	isPathOutsideWorkspaceMock,
 } = vi.hoisted(() => ({
 	toolErrorMock: vi.fn((msg: string) => `Error: ${msg}`),
 	openNotebookDocumentMock: vi.fn(),
@@ -24,6 +25,7 @@ const {
 		return { set: vi.fn() }
 	}),
 	getErrorMessageMock: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e))),
+	isPathOutsideWorkspaceMock: vi.fn().mockReturnValue(false),
 }))
 
 vi.mock("vscode", () => ({
@@ -49,6 +51,10 @@ vi.mock("vscode", () => ({
 
 vi.mock("../../../shared/error-utils", () => ({
 	getErrorMessage: getErrorMessageMock,
+}))
+
+vi.mock("../../../utils/pathUtils", () => ({
+	isPathOutsideWorkspace: isPathOutsideWorkspaceMock,
 }))
 
 vi.mock("../../prompts/responses", () => ({
@@ -338,6 +344,22 @@ describe("NotebookEditTool", () => {
 				"editing notebook",
 				expect.objectContaining({ message: "edit rejected" }),
 			)
+		})
+
+		it("rejects notebook paths outside workspace", async () => {
+			isPathOutsideWorkspaceMock.mockReturnValue(true)
+			const callbacks = createCallbacks()
+
+			await notebookEditTool.execute(
+				{ path: "/etc/passwd", action: "insert", cellIndex: 0, content: "code" },
+				createTask(),
+				callbacks as any,
+			)
+
+			expect(callbacks.pushToolResult).toHaveBeenCalledWith(
+				expect.stringContaining("cannot edit notebook outside workspace"),
+			)
+			expect(openNotebookDocumentMock).not.toHaveBeenCalled()
 		})
 	})
 })
