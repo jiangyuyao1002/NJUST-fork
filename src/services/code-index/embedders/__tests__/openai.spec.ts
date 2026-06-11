@@ -1,6 +1,7 @@
 import type { MockedClass, MockedFunction } from "vitest"
 import { OpenAI } from "openai"
 
+import { TEST_OPENAI_KEY } from "../../../../__tests__/testConstants"
 import { OpenAiEmbedder } from "../openai"
 import { MAX_ITEM_TOKENS, INITIAL_RETRY_DELAY_MS } from "../../constants"
 
@@ -74,11 +75,11 @@ describe("OpenAiEmbedder", () => {
 
 		it("should initialize with provided API key when key is supplied", () => {
 			const _embedderWithKey = new OpenAiEmbedder({
-				openAiNativeApiKey: "sk-test-123",
+				openAiNativeApiKey: TEST_OPENAI_KEY,
 				openAiEmbeddingModelId: "text-embedding-3-small",
 			})
 
-			expect(MockedOpenAI).toHaveBeenCalledWith({ apiKey: "sk-test-123" })
+			expect(MockedOpenAI).toHaveBeenCalledWith({ apiKey: TEST_OPENAI_KEY })
 		})
 
 		it("should use default model if not specified", () => {

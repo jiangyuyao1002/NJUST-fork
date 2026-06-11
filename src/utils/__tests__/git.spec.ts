@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest"
+import { TEST_GITHUB_PAT } from "../../__tests__/testConstants"
 
 import { ExecException } from "child_process"
 import * as fs from "fs"
@@ -783,7 +784,7 @@ describe("sanitizeGitUrl", () => {
 	})
 
 	it("should remove tokens from other URL formats", () => {
-		const url = "https://oauth2:ghp_abcdef1234567890abcdef1234567890abcdef@github.com/NJUST-AI/NJUST_AI.git"
+		const url = `https://oauth2:${TEST_GITHUB_PAT}@github.com/NJUST-AI/NJUST_AI.git`
 		const sanitized = sanitizeGitUrl(url)
 
 		expect(sanitized).toBe("https://github.com/NJUST-AI/NJUST_AI.git")

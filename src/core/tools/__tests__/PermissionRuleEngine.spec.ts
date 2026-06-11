@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { TEST_SK_DETECTION_VALUE } from "../../../__tests__/testConstants"
 
 vi.mock("fs/promises", () => ({
 	readFile: vi.fn(),
@@ -103,7 +104,7 @@ describe("PermissionRuleEngine", () => {
 			expect(
 				engine.evaluate(
 					"write_to_file",
-					{ path: "config.ts", content: "const apiKey = 'sk-1234567890abcdef'" },
+					{ path: "config.ts", content: `const apiKey = '${TEST_SK_DETECTION_VALUE}'` },
 					writeTool,
 				),
 			).toBe("deny")

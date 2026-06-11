@@ -1,6 +1,7 @@
 // npx vitest utils/__tests__/config.spec.ts
 
 import { describe, it, expect, beforeEach, afterAll } from "vitest"
+import { TEST_OPENAI_KEY } from "../../__tests__/testConstants"
 
 import { injectEnv, injectVariables } from "../config"
 import { logger } from "../../shared/logger"
@@ -246,14 +247,14 @@ describe("injectVariables", () => {
 			description: "${desc}",
 		}
 		const result = await injectVariables(config, {
-			key: "sk-1234567890abcdef",
+			key: TEST_OPENAI_KEY,
 			endpoint: "https://api.example.com",
 			port: "8080",
 			enabled: "true",
 			desc: "This is a description with special chars: @#$%^&*()",
 		})
 		expect(result).toEqual({
-			apiKey: "sk-1234567890abcdef",
+			apiKey: TEST_OPENAI_KEY,
 			url: "https://api.example.com",
 			port: "8080",
 			enabled: "true",

@@ -3,6 +3,11 @@ vi.mock("../../../../shared/logger", () => ({
 }))
 
 import { describe, expect, it, vi } from "vitest"
+import {
+	TEST_AWS_ACCESS_KEY,
+	TEST_SK_DETECTION_VALUE,
+	TEST_GITHUB_PAT_DETECTION_VALUE,
+} from "../../../../__tests__/testConstants"
 
 import { analyzeBashCommand, BashCommandAnalyzer, StaticPatternClassifier } from "../BashCommandAnalyzer"
 import type { ClassifierContext } from "../ClassifierStrategy"
@@ -361,7 +366,7 @@ describe("StaticPatternClassifier", () => {
 		it("returns deny for content with AWS access key", () => {
 			const result = classifier.classifySync(
 				"write_to_file",
-				{ content: "aws_access_key_id = AKIAIOSFODNN7EXAMPLE" },
+				{ content: `aws_access_key_id = ${TEST_AWS_ACCESS_KEY}` },
 				{ ...baseContext, toolName: "write_to_file" },
 			)
 			expect(result.action).toBe("deny")
@@ -371,7 +376,7 @@ describe("StaticPatternClassifier", () => {
 		it("returns deny for content with GitHub token", () => {
 			const result = classifier.classifySync(
 				"write_to_file",
-				{ content: "GITHUB_TOKEN=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij" },
+				{ content: `GITHUB_TOKEN=${TEST_GITHUB_PAT_DETECTION_VALUE}` },
 				{ ...baseContext, toolName: "write_to_file" },
 			)
 			expect(result.action).toBe("deny")
@@ -404,9 +409,9 @@ describe("StaticPatternClassifier", () => {
 	// 14b. Other write tools with secret content → deny
 	describe("classifySync: all write tools detect secrets", () => {
 		const writeToolCases: Array<{ toolName: string; field: string; secretValue: string }> = [
-			{ toolName: "edit_file", field: "new_string", secretValue: "AKIAIOSFODNN7EXAMPLE" },
-			{ toolName: "edit", field: "new_string", secretValue: "sk-abcdefghijklmnopqrstuvwxyz1234" },
-			{ toolName: "apply_diff", field: "diff", secretValue: "+ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij" },
+			{ toolName: "edit_file", field: "new_string", secretValue: TEST_AWS_ACCESS_KEY },
+			{ toolName: "edit", field: "new_string", secretValue: TEST_SK_DETECTION_VALUE },
+			{ toolName: "apply_diff", field: "diff", secretValue: `+${TEST_GITHUB_PAT_DETECTION_VALUE}` },
 			{ toolName: "search_replace", field: "new_string", secretValue: "-----BEGIN PRIVATE KEY-----" },
 			{ toolName: "apply_patch", field: "patch", secretValue: "+password = 'supersecretpassword1'" },
 		]
