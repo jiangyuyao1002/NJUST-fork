@@ -283,7 +283,7 @@ export abstract class BaseTool<TName extends ToolName> {
 	/**
 	 * Create an observable view of the tool input for UI/hooks/logging.
 	 *
-	 * The original input is never modified �?derived fields are computed
+	 * The original input is never modified — derived fields are computed
 	 * separately. This protects the prompt cache from invalidation when
 	 * preprocessInput() would otherwise mutate the cached representation.
 	 *
@@ -466,7 +466,7 @@ export abstract class BaseTool<TName extends ToolName> {
 				return
 			}
 
-			// Validation pipeline: Zod schema �?preprocessInput �?business logic
+			// Validation pipeline: Zod schema → preprocessInput → business logic
 			// Step 1: Zod schema validation (structural)
 			if (this.inputSchema) {
 				const validator = createToolValidator(this.inputSchema)
