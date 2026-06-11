@@ -43,8 +43,10 @@ export class TokenBucketRateLimiter {
 	// provider's pending timer.
 	private refillTimers = new Map<string, ReturnType<typeof setTimeout>>()
 	// Per-provider async mutex to prevent TOCTOU race conditions on token
-	// consumption across concurrent wait() / tryConsume() calls.
-	private locks = new Map<string, Promise<void>>()
+	// consumption across concurrent wait() calls.
+	// Each entry stores { promise, release } so reset() can resolve pending
+	// waiters instead of abandoning them (which would cause permanent hangs).
+	private locks = new Map<string, { promise: Promise<void>; release: () => void }>()
 
 	constructor(customConfigs?: Record<string, Partial<BucketConfig>>) {
 		this.configs = { ...DEFAULT_CONFIGS }
@@ -95,18 +97,18 @@ export class TokenBucketRateLimiter {
 		while (true) {
 			const existing = this.locks.get(provider)
 			if (!existing) break
-			await existing
+			await existing.promise
 		}
 
-		let release: () => void
+		let release!: () => void
 		const promise = new Promise<void>((resolve) => {
 			release = () => {
 				this.locks.delete(provider)
 				resolve()
 			}
 		})
-		this.locks.set(provider, promise)
-		return release!
+		this.locks.set(provider, { promise, release })
+		return release
 	}
 
 	private refill(bucket: BucketState, cfg: BucketConfig): void {
@@ -155,7 +157,11 @@ export class TokenBucketRateLimiter {
 				return 0
 			}
 
-			// Queue: estimate wait time from refill rate
+			// Queue: estimate wait time from refill rate.
+			// The lock is released AFTER enqueuing the waiter (in the finally
+			// block below). The waiter resolves later in scheduleRefill which
+			// acquires its own lock — this is intentional: the mutex protects
+			// bucket state (check + enqueue), not the asynchronous wait itself.
 			return new Promise<number>((resolve) => {
 				const createdAt = Date.now()
 				bucket.waiting.push({ resolve: () => resolve(Date.now() - createdAt), createdAt })
@@ -180,29 +186,43 @@ export class TokenBucketRateLimiter {
 			clearTimeout(existing)
 		}
 
-		const timer = setTimeout(async () => {
+		const timer = setTimeout(() => {
 			this.refillTimers.delete(provider)
 			const b = this.buckets.get(provider)
-			if (!b || b.waiting.length === 0) return
-
-			const release = await this.acquireLock(provider)
-			try {
-				this.refill(b, cfg)
-				while (b.tokens >= 1 && b.waiting.length > 0) {
-					const next = b.waiting.shift()
-					if (next) {
-						b.tokens -= 1
-						next.resolve()
+			if (!b || b.waiting.length === 0)
+				return // Wrap async work in an immediately-invoked async IIFE so that
+				// any exception is caught rather than becoming an unhandled
+				// rejection (setTimeout does not propagate async errors).
+			;(async () => {
+				const release = await this.acquireLock(provider)
+				const toResolve: Array<() => void> = []
+				try {
+					this.refill(b, cfg)
+					while (b.tokens >= 1 && b.waiting.length > 0) {
+						const next = b.waiting.shift()
+						if (next) {
+							b.tokens -= 1
+							toResolve.push(next.resolve)
+						}
 					}
+				} finally {
+					release()
 				}
-			} finally {
-				release()
-			}
 
-			// If still waiting, schedule next refill
-			if (b.waiting.length > 0) {
-				this.scheduleRefill(provider)
-			}
+				// Resolve waiters OUTSIDE the lock so that the .then() callbacks
+				// triggered by resolve() don't run while the lock is still held.
+				for (const fn of toResolve) {
+					fn()
+				}
+
+				// If still waiting, schedule next refill
+				if (b.waiting.length > 0) {
+					this.scheduleRefill(provider)
+				}
+			})().catch((err: unknown) => {
+				// eslint-disable-next-line no-console
+				console.error(`[TokenBucketRateLimiter] refill timer error for "${provider}":`, err)
+			})
 		}, waitMs)
 		this.refillTimers.set(provider, timer)
 	}
@@ -246,14 +266,19 @@ export class TokenBucketRateLimiter {
 		}
 	}
 
-	/** Reset all buckets (for testing). */
+	/** Reset all buckets (for testing / dispose). */
 	reset(): void {
 		this.buckets.clear()
 		for (const timer of this.refillTimers.values()) {
 			clearTimeout(timer)
 		}
 		this.refillTimers.clear()
-		// Release any pending locks to prevent deadlocks in tests.
+		// Resolve all pending locks to prevent waiters from hanging forever.
+		// After release the lock entry is deleted from the map, so we snapshot
+		// keys first to avoid concurrent modification.
+		for (const [, entry] of [...this.locks]) {
+			entry.release()
+		}
 		this.locks.clear()
 	}
 
