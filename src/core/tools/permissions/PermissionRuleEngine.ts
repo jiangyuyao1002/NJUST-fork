@@ -502,7 +502,8 @@ export class PermissionRuleEngine {
 					}
 				}
 			} catch (err) {
-				logger.warn("PermissionRuleEngine", `classifier ${classifier.name} error (ignored):`, err)
+				logger.error("PermissionRuleEngine", `classifier ${classifier.name} error (fail-closed):`, err)
+				return "deny"
 			}
 		}
 
@@ -551,7 +552,8 @@ export class PermissionRuleEngine {
 					}
 				}
 			} catch (err) {
-				logger.warn("PermissionRuleEngine", `classifier ${classifier.name} error (ignored):`, err)
+				logger.error("PermissionRuleEngine", `classifier ${classifier.name} error (fail-closed):`, err)
+				return "deny"
 			}
 		}
 
