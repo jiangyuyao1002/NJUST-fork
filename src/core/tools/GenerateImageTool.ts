@@ -161,6 +161,17 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 		const fullPath = path.resolve(task.cwd, relPath)
 		const isOutsideWorkspace = isPathOutsideWorkspace(fullPath)
 
+		if (isOutsideWorkspace) {
+			task.consecutiveMistakeCount++
+			task.recordToolError("generate_image")
+			pushToolResult(
+				formatResponse.toolError(
+					`Safety: cannot write to path outside workspace: ${getReadablePath(task.cwd, relPath)}`,
+				),
+			)
+			return
+		}
+
 		const sharedMessageProps = {
 			tool: "generateImage" as const,
 			path: getReadablePath(task.cwd, relPath),
