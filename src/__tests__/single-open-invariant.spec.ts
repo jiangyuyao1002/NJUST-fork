@@ -2,6 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { ClineProvider } from "../core/webview/ClineProvider"
+import { ClineProviderTaskManagement } from "../core/webview/ClineProviderTaskManagement"
 import { API } from "../extension/api"
 import * as ProfileValidatorMod from "../shared/ProfileValidator"
 import type { TaskStackManager } from "../core/webview/TaskStackManager"
@@ -81,6 +82,7 @@ describe("Single-open-task invariant", () => {
 		;(provider as any).taskCoordinator = {
 			createTask: (...args: any[]) => (ClineProvider.prototype as any).createTaskInternal.call(provider, ...args),
 		}
+		;(provider as any).taskManagement = new ClineProviderTaskManagement(provider as any)
 
 		await (ClineProvider.prototype as any).createTask.call(provider, "New task")
 
@@ -145,6 +147,17 @@ describe("Single-open-task invariant", () => {
 			}),
 			applyPendingEditIfPresent: vi.fn().mockResolvedValue(undefined),
 		} as unknown as ClineProvider
+
+		;(provider as any).taskManagement = new ClineProviderTaskManagement({
+			...(provider as any),
+			pendingEditManager: { get: vi.fn().mockReturnValue(undefined), clear: vi.fn() },
+			taskHistory: { getRecentTasks: vi.fn().mockReturnValue([]) },
+			taskCreationCallback: vi.fn(),
+			provider: provider,
+			setValues: vi.fn().mockResolvedValue(undefined),
+			setProviderProfile: vi.fn().mockResolvedValue(undefined),
+			getTaskWithId: vi.fn().mockResolvedValue({ historyItem: {} }),
+		})
 
 		const historyItem = {
 			id: "hist-1",
