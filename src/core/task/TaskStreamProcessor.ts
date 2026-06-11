@@ -168,7 +168,7 @@ export class TaskStreamProcessor {
 					const { TokenBucketRateLimiter } = await import(
 						"../../services/rate-limiter/TokenBucketRateLimiter"
 					)
-					TokenBucketRateLimiter.getInstance().drain(providerKey)
+					await TokenBucketRateLimiter.getInstance().drain(providerKey)
 				} catch {
 					/* best-effort */
 				}

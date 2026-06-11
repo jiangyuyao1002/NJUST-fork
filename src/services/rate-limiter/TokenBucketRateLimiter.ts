@@ -42,6 +42,9 @@ export class TokenBucketRateLimiter {
 	// caused a later-scheduled provider's timer to clearTimeout() an earlier
 	// provider's pending timer.
 	private refillTimers = new Map<string, ReturnType<typeof setTimeout>>()
+	// Per-provider async mutex to prevent TOCTOU race conditions on token
+	// consumption across concurrent wait() / tryConsume() calls.
+	private locks = new Map<string, Promise<void>>()
 
 	constructor(customConfigs?: Record<string, Partial<BucketConfig>>) {
 		this.configs = { ...DEFAULT_CONFIGS }
@@ -84,6 +87,28 @@ export class TokenBucketRateLimiter {
 		return bucket
 	}
 
+	/**
+	 * Acquire an async mutex for the given provider. Returns a release function
+	 * that MUST be called (preferably in a finally block) to avoid deadlocks.
+	 */
+	private async acquireLock(provider: string): Promise<() => void> {
+		while (true) {
+			const existing = this.locks.get(provider)
+			if (!existing) break
+			await existing
+		}
+
+		let release: () => void
+		const promise = new Promise<void>((resolve) => {
+			release = () => {
+				this.locks.delete(provider)
+				resolve()
+			}
+		})
+		this.locks.set(provider, promise)
+		return release!
+	}
+
 	private refill(bucket: BucketState, cfg: BucketConfig): void {
 		const now = Date.now()
 		const elapsed = (now - bucket.lastRefill) / 1000
@@ -95,6 +120,9 @@ export class TokenBucketRateLimiter {
 
 	/**
 	 * Try to consume a token. Returns true if allowed, false if rate limited.
+	 *
+	 * Note: This is a best-effort synchronous check. Under high concurrency,
+	 * use wait() for coordinated throttling.
 	 */
 	tryConsume(provider: string): boolean {
 		const cfg = this.getConfig(provider)
@@ -111,23 +139,31 @@ export class TokenBucketRateLimiter {
 	/**
 	 * Wait until a token is available. Resolves as soon as possible.
 	 * Returns the wait time in milliseconds (0 if no wait was needed).
+	 *
+	 * Uses a per-provider async mutex to prevent TOCTOU race conditions
+	 * where concurrent calls both see tokens >= 1 and decrement below zero.
 	 */
 	async wait(provider: string): Promise<number> {
-		const cfg = this.getConfig(provider)
-		const bucket = this.getBucket(provider)
-		this.refill(bucket, cfg)
+		const release = await this.acquireLock(provider)
+		try {
+			const cfg = this.getConfig(provider)
+			const bucket = this.getBucket(provider)
+			this.refill(bucket, cfg)
 
-		if (bucket.tokens >= 1) {
-			bucket.tokens -= 1
-			return 0
+			if (bucket.tokens >= 1) {
+				bucket.tokens -= 1
+				return 0
+			}
+
+			// Queue: estimate wait time from refill rate
+			return new Promise<number>((resolve) => {
+				const createdAt = Date.now()
+				bucket.waiting.push({ resolve: () => resolve(Date.now() - createdAt), createdAt })
+				this.scheduleRefill(provider)
+			})
+		} finally {
+			release()
 		}
-
-		// Queue: estimate wait time from refill rate
-		return new Promise<number>((resolve) => {
-			const createdAt = Date.now()
-			bucket.waiting.push({ resolve: () => resolve(Date.now() - createdAt), createdAt })
-			this.scheduleRefill(provider)
-		})
 	}
 
 	private scheduleRefill(provider: string): void {
@@ -144,18 +180,25 @@ export class TokenBucketRateLimiter {
 			clearTimeout(existing)
 		}
 
-		const timer = setTimeout(() => {
+		const timer = setTimeout(async () => {
 			this.refillTimers.delete(provider)
 			const b = this.buckets.get(provider)
 			if (!b || b.waiting.length === 0) return
-			this.refill(b, cfg)
-			while (b.tokens >= 1 && b.waiting.length > 0) {
-				const next = b.waiting.shift()
-				if (next) {
-					b.tokens -= 1
-					next.resolve()
+
+			const release = await this.acquireLock(provider)
+			try {
+				this.refill(b, cfg)
+				while (b.tokens >= 1 && b.waiting.length > 0) {
+					const next = b.waiting.shift()
+					if (next) {
+						b.tokens -= 1
+						next.resolve()
+					}
 				}
+			} finally {
+				release()
 			}
+
 			// If still waiting, schedule next refill
 			if (b.waiting.length > 0) {
 				this.scheduleRefill(provider)
@@ -168,10 +211,15 @@ export class TokenBucketRateLimiter {
 	 * Drain all tokens from a provider's bucket (back to zero).
 	 * Used after receiving a 429 to enforce the backoff.
 	 */
-	drain(provider: string): void {
-		const bucket = this.buckets.get(provider)
-		if (bucket) {
-			bucket.tokens = 0
+	async drain(provider: string): Promise<void> {
+		const release = await this.acquireLock(provider)
+		try {
+			const bucket = this.buckets.get(provider)
+			if (bucket) {
+				bucket.tokens = 0
+			}
+		} finally {
+			release()
 		}
 	}
 
@@ -205,6 +253,8 @@ export class TokenBucketRateLimiter {
 			clearTimeout(timer)
 		}
 		this.refillTimers.clear()
+		// Release any pending locks to prevent deadlocks in tests.
+		this.locks.clear()
 	}
 
 	/** Dispose the limiter and clear any pending timers. */
