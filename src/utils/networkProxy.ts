@@ -42,9 +42,6 @@ let outputChannel: vscode.OutputChannel | null = null
 let loggingEnabled = false
 let consoleLoggingEnabled = false
 
-let tlsVerificationOverridden = false
-let originalNodeTlsRejectUnauthorized: string | undefined
-
 function redactProxyUrl(proxyUrl: string | undefined): string {
 	if (!proxyUrl) {
 		return "(not set)"
@@ -74,42 +71,15 @@ function restoreGlobalFetchPatch(): void {
 	originalFetch = undefined
 }
 
-function restoreTlsVerificationOverride(): void {
-	if (!tlsVerificationOverridden) {
-		return
-	}
-
-	if (typeof originalNodeTlsRejectUnauthorized === "string") {
-		process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalNodeTlsRejectUnauthorized
-	} else {
-		delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
-	}
-
-	tlsVerificationOverridden = false
-	originalNodeTlsRejectUnauthorized = undefined
-}
-
 function applyTlsVerificationOverride(config: ProxyConfig): void {
-	// Only relevant in debug mode with an active proxy.
 	if (!config.isDebugMode || !config.enabled) {
-		restoreTlsVerificationOverride()
 		return
 	}
 
 	if (!config.tlsInsecure) {
-		restoreTlsVerificationOverride()
 		return
 	}
 
-	if (!tlsVerificationOverridden) {
-		originalNodeTlsRejectUnauthorized = process.env.NODE_TLS_REJECT_UNAUTHORIZED
-	}
-
-	// NOTE: We no longer globally disable TLS verification via NODE_TLS_REJECT_UNAUTHORIZED.
-	// Instead, per-agent rejectUnauthorized is used in configureUndiciProxy() for undici-based
-	// clients. For axios and other http/https-based clients, use the proxy's CA certificate
-	// or configure the specific client instance with httpsAgent.rejectUnauthorized=false.
-	// This avoids globally weakening TLS for ALL connections including API providers.
 	logger.warn(
 		"networkProxy",
 		"TLS insecure mode is enabled for the proxy. Per-agent TLS verification is used instead of global override.",
@@ -164,10 +134,7 @@ export async function initializeNetworkProxy(
 						void configureGlobalProxy(newConfig)
 						void configureUndiciProxy(newConfig)
 					} else {
-						// Proxy disabled - but we can't easily un-bootstrap global-agent or reset undici dispatcher safely.
-						// We *can* restore any global fetch patch immediately.
 						restoreGlobalFetchPatch()
-						restoreTlsVerificationOverride()
 						log("Debug proxy disabled. Restart VS Code to fully disable proxy routing.")
 					}
 				}
@@ -175,11 +142,9 @@ export async function initializeNetworkProxy(
 		)
 	}
 
-	// Ensure we restore any overrides when the extension unloads.
 	context.subscriptions.push({
 		dispose: () => {
 			restoreGlobalFetchPatch()
-			restoreTlsVerificationOverride()
 		},
 	})
 
