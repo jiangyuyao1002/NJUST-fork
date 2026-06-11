@@ -57,6 +57,8 @@ export interface UsageUpdate {
 	noCacheCostUSD?: number
 }
 
+const MAX_COST_RECORDS = 1000
+
 export class CostTracker {
 	private usageByModel: Map<string, ModelUsage> = new Map()
 	private costRecords: CostRecord[] = []
@@ -98,6 +100,9 @@ export class CostTracker {
 		}
 
 		this.costRecords.push(record)
+		if (this.costRecords.length > MAX_COST_RECORDS) {
+			this.costRecords = this.costRecords.slice(-MAX_COST_RECORDS)
+		}
 
 		// Also update the per-model aggregate
 		this.recordUsage(params.model, {
