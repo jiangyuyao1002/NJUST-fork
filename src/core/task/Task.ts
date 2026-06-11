@@ -363,7 +363,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// Native tool call streaming state (track which index each tool is at)
 	private streamingToolCallIndices: Map<string, number> = new Map()
 	readonly toolExecution = new ToolExecutionContext(
-		Math.max(1, Number(process.env.NJUST_AI_MAX_TOOL_CONCURRENCY ?? 10) || 10),
+		Math.min(50, Math.max(1, Number(process.env.NJUST_AI_MAX_TOOL_CONCURRENCY ?? 10) || 10)),
 	)
 	private requestCacheReadWindow: number[] = []
 	private requestInputTokensWindow: number[] = []
