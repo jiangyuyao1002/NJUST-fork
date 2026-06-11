@@ -30,7 +30,7 @@
 			"description": "Auto-merge patch updates for well-tested packages",
 			"matchUpdateTypes": ["patch"],
 			"automerge": true,
-			"matchPackagePatterns": ["^@njust-ai/", "^zod$", "^axios$"]
+			"matchPackagePatterns": ["^@njust-ai/", "^zod$"]
 		},
 		{
 			"description": "Group React and Radix UI updates",
