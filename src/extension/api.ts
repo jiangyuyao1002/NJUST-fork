@@ -324,6 +324,10 @@ export class API extends EventEmitter<NJUST_AIEvents> implements NJUST_AIAPI {
 			}
 
 			const cleanup = () => {
+				// Self-removal is safe: Node.js emits synchronously, so by the time
+				// cleanup() runs the current listener has already been dispatched.
+				// After removal no further events will reach these listeners, so
+				// cleanup() will not be called again.
 				for (const { event, listener } of listeners) {
 					task.off(event, listener)
 				}
