@@ -65,6 +65,7 @@ export class StdioTransportStrategy implements ITransportStrategy {
 		transport.onclose = async () => {
 			if (streamReconnectAttempts >= MAX_STREAM_RECONNECT) {
 				logger.error("McpHub", `stdio "${name}" reconnect exhausted after ${MAX_STREAM_RECONNECT} attempts`)
+				await callbacks.onReconnectExhausted?.(name)
 				await callbacks.onClose()
 				return
 			}

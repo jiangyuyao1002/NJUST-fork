@@ -6,6 +6,11 @@ export interface TransportCallbacks {
 	onError: (error: Error | unknown) => void | Promise<void>
 	onClose: () => void | Promise<void>
 	onStderr?: (data: Buffer) => void // stdio only
+	/**
+	 * Called when all reconnection attempts have been exhausted.
+	 * The transport will not attempt to reconnect again until manually restarted.
+	 */
+	onReconnectExhausted?: (name: string) => void | Promise<void>
 }
 
 export interface ITransportStrategy {

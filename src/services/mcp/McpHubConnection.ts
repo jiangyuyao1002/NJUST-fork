@@ -79,6 +79,28 @@ export async function connectToServerWithHub(
 				}
 				await hub.notifyWebviewOfServerChanges()
 			},
+			onReconnectExhausted: async (serverName) => {
+				const connection = hub.findConnection(serverName, source)
+				if (connection) {
+					connection.server.status = "disconnected"
+					appendErrorMessageToConnection(
+						connection,
+						`MCP server "${serverName}" disconnected after multiple reconnection attempts. Please check the server and restart it manually.`,
+						"error",
+					)
+				}
+				await hub.notifyWebviewOfServerChanges()
+				vscode.window
+					.showErrorMessage(
+						`MCP server "${serverName}" is disconnected after multiple reconnection attempts. Restart it from the MCP settings.`,
+						"Open MCP Settings",
+					)
+					.then((selection) => {
+						if (selection === "Open MCP Settings") {
+							vscode.commands.executeCommand("njust-ai.mcpSettings")
+						}
+					})
+			},
 			onStderr: (data) => {
 				const output = data.toString()
 				const connection = hub.findConnection(name, source)
