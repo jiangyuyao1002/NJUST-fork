@@ -13,7 +13,7 @@ export default defineConfig({
 		silent,
 		environment: "jsdom",
 		pool: "forks",
-		include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
+		include: ["src/**/*.spec.ts", "src/**/*.spec.tsx", "src/**/*.test.ts", "src/**/*.test.tsx"],
 		coverage: {
 			provider: "v8",
 			reporter: ["json", "html", "text-summary"],
@@ -35,8 +35,8 @@ export default defineConfig({
 			],
 			thresholds: {
 				lines: 55,
-				functions: 40,
-				branches: 45,
+				functions: 50,
+				branches: 47,
 				statements: 55,
 			},
 		},
