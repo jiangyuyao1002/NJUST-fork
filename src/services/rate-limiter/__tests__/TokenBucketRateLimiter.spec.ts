@@ -48,6 +48,8 @@ describe("TokenBucketRateLimiter", () => {
 			limiter.tryConsume("test")
 
 			const waitPromise = limiter.wait("test")
+			// Flush microtasks so acquireLock() resolves and the waiter is enqueued.
+			await vi.advanceTimersByTimeAsync(0)
 			expect(limiter.getStats("test")?.waiting).toBe(1)
 
 			await vi.advanceTimersByTimeAsync(1000)
@@ -62,6 +64,9 @@ describe("TokenBucketRateLimiter", () => {
 
 			const first = limiter.wait("test")
 			const second = limiter.wait("test")
+
+			// Flush microtasks so the first wait() acquires the lock and enqueues.
+			await vi.advanceTimersByTimeAsync(0)
 
 			await vi.advanceTimersByTimeAsync(1000)
 			await expect(first).resolves.toBe(1000)
@@ -123,6 +128,7 @@ describe("TokenBucketRateLimiter", () => {
 		limiter.tryConsume("test")
 
 		void limiter.wait("test")
+		await vi.advanceTimersByTimeAsync(0)
 		expect(vi.getTimerCount()).toBeGreaterThan(0)
 
 		limiter.reset()
@@ -135,6 +141,7 @@ describe("TokenBucketRateLimiter", () => {
 		limiter.tryConsume("test")
 
 		void limiter.wait("test")
+		await vi.advanceTimersByTimeAsync(0)
 		expect(vi.getTimerCount()).toBeGreaterThan(0)
 
 		limiter.dispose()
@@ -176,6 +183,7 @@ describe("TokenBucketRateLimiter", () => {
 
 			const alphaWait = limiter.wait("alpha")
 			const betaWait = limiter.wait("beta")
+			await vi.advanceTimersByTimeAsync(0)
 			expect(limiter.getStats("alpha")?.waiting).toBe(1)
 			expect(limiter.getStats("beta")?.waiting).toBe(1)
 
@@ -205,6 +213,7 @@ describe("TokenBucketRateLimiter", () => {
 			// Now wait on the fast provider — this schedules a second timer
 			// at a different delay. The slow provider's timer must survive.
 			const fastWait = limiter.wait("fast")
+			await vi.advanceTimersByTimeAsync(0)
 			expect(vi.getTimerCount()).toBe(2)
 
 			// Advance just enough for the fast provider to refill.
@@ -228,6 +237,7 @@ describe("TokenBucketRateLimiter", () => {
 			limiter.tryConsume("beta")
 			void limiter.wait("alpha")
 			void limiter.wait("beta")
+			await vi.advanceTimersByTimeAsync(0)
 			expect(vi.getTimerCount()).toBe(2)
 
 			limiter.reset()
