@@ -7,6 +7,7 @@ export class SubprocessTimeoutError extends Error {
 	constructor(timeout: number) {
 		super(`Subprocess timeout after ${timeout}ms`)
 		this.name = "SubprocessTimeoutError"
+		Object.setPrototypeOf(this, SubprocessTimeoutError.prototype)
 	}
 }
 

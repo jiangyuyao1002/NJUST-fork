@@ -136,6 +136,7 @@ export class FileSystemError extends Error {
 	constructor(message: string, code: string = "Unknown") {
 		super(message)
 		this.name = "FileSystemError"
+		Object.setPrototypeOf(this, FileSystemError.prototype)
 		this.code = code
 	}
 
