@@ -429,7 +429,7 @@ describe("VsCodeLmHandler", () => {
 			expect(model.info.contextWindow).toBe(4096)
 		})
 
-		it("should return fallback model info when no client exists", () => {
+		it("should return defined model info when client is cleared", () => {
 			// Clear the client first
 			handler["client"] = null
 			const model = handler.getModel()

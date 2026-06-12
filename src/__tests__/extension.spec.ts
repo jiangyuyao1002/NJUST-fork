@@ -1,6 +1,6 @@
 // npx vitest run __tests__/extension.spec.ts
 
-import { describe, test, expect, vi, beforeEach } from "vitest"
+import { describe, expect, vi, beforeEach, it } from "vitest"
 
 import type * as vscode from "vscode"
 import * as fsModule from "fs"
@@ -391,7 +391,7 @@ describe("extension.ts", () => {
 		} as unknown as vscode.ExtensionContext
 	})
 
-	test("does not call dotenvx.config when optional .env does not exist", async () => {
+	it("does not call dotenvx.config when optional .env does not exist", async () => {
 		vi.clearAllMocks()
 		vi.mocked(fsModule.existsSync).mockReturnValue(false)
 
@@ -400,7 +400,7 @@ describe("extension.ts", () => {
 		expect(dotenvxModule.config).not.toHaveBeenCalled()
 	})
 
-	test("calls dotenvx.config when optional .env exists", async () => {
+	it("calls dotenvx.config when optional .env exists", async () => {
 		vi.clearAllMocks()
 		vi.mocked(fsModule.existsSync).mockReturnValue(true)
 

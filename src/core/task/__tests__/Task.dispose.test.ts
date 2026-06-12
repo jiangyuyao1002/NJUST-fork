@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, expect, vi, beforeEach, afterEach, it } from "vitest"
 
 import { ProviderSettings } from "@njust-ai/types"
 
@@ -64,7 +64,7 @@ describe("Task dispose method", () => {
 		}
 	})
 
-	test("marks isDisposed and removes listeners", () => {
+	it("marks isDisposed and removes listeners", () => {
 		const listener1 = vi.fn(function () {})
 		;(task as any).on("TaskStarted", listener1)
 		expect(task.listenerCount("TaskStarted")).toBe(1)
@@ -77,7 +77,7 @@ describe("Task dispose method", () => {
 		expect(task.listenerCount("TaskStarted")).toBe(0)
 	})
 
-	test("does not throw when removeAllListeners throws", () => {
+	it("does not throw when removeAllListeners throws", () => {
 		task.removeAllListeners = vi.fn(function () {
 			throw new Error("Test error")
 		})
@@ -87,12 +87,12 @@ describe("Task dispose method", () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	test("sets isDisposed flag during dispose", () => {
+	it("sets isDisposed flag during dispose", () => {
 		task.dispose()
 		expect(task.isDisposed).toBe(true)
 	})
 
-	test("clears queued message timer through public dispose", () => {
+	it("clears queued message timer through public dispose", () => {
 		vi.useFakeTimers()
 		const callback = vi.fn()
 		const timer = setTimeout(callback, 1000)
@@ -106,7 +106,7 @@ describe("Task dispose method", () => {
 		vi.useRealTimers()
 	})
 
-	test("removes all listeners during dispose", () => {
+	it("removes all listeners during dispose", () => {
 		const listeners = {
 			TaskStarted: vi.fn(function () {}),
 			TaskAborted: vi.fn(function () {}),

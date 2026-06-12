@@ -54,7 +54,7 @@ describe.skipIf(!fs.existsSync(distPath))("dist assets", () => {
 			"tree-sitter-zig.wasm",
 		]
 
-		test.each(treeSitterFiles)("should have %s file", (filename) => {
+		it.each(treeSitterFiles)("should have %s file", (filename) => {
 			expect(fs.existsSync(path.join(distPath, filename))).toBe(true)
 		})
 	})

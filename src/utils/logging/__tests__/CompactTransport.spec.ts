@@ -1,6 +1,6 @@
 // npx vitest utils/logging/__tests__/CompactTransport.spec.ts
 
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, expect, vi, beforeEach, afterEach, it } from "vitest"
 
 import { CompactTransport } from "../CompactTransport"
 import fs from "fs"
@@ -58,7 +58,7 @@ describe("CompactTransport", () => {
 	})
 
 	describe("File Handling", () => {
-		test("creates new log file on initialization", () => {
+		it("creates new log file on initialization", () => {
 			const entry = {
 				t: Date.now(),
 				l: "info",
@@ -81,7 +81,7 @@ describe("CompactTransport", () => {
 			})
 		})
 
-		test("appends entries after initialization", () => {
+		it("appends entries after initialization", () => {
 			transport.write({
 				t: Date.now(),
 				l: "info",
@@ -102,7 +102,7 @@ describe("CompactTransport", () => {
 			expect(JSON.parse(lines[2])).toMatchObject({ m: "second" })
 		})
 
-		test("writes session end marker on close", () => {
+		it("writes session end marker on close", () => {
 			transport.write({
 				t: Date.now(),
 				l: "info",
@@ -123,7 +123,7 @@ describe("CompactTransport", () => {
 	})
 
 	describe("File System Edge Cases", () => {
-		test("handles file path with deep directories", () => {
+		it("handles file path with deep directories", () => {
 			const deepDir = path.join(testDir, "deep/nested/path")
 			const deepPath = path.join(deepDir, "test.log")
 			const deepTransport = new CompactTransport({
@@ -158,7 +158,7 @@ describe("CompactTransport", () => {
 			}
 		})
 
-		test("handles concurrent writes", async () => {
+		it("handles concurrent writes", async () => {
 			const entries = Array(100)
 				.fill(null)
 				.map((_, i) => ({
@@ -195,7 +195,7 @@ describe("CompactTransport", () => {
 			vi.useRealTimers()
 		})
 
-		test("converts absolute timestamps to deltas", () => {
+		it("converts absolute timestamps to deltas", () => {
 			const baseTime = Date.now() // Use current fake time
 			const transport = new CompactTransport({
 				level: "info",

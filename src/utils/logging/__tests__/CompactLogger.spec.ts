@@ -1,6 +1,6 @@
 // npx vitest utils/logging/__tests__/CompactLogger.spec.ts
 
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, expect, vi, beforeEach, afterEach, it } from "vitest"
 
 import { CompactLogger } from "../CompactLogger"
 import { MockTransport } from "./MockTransport"
@@ -23,7 +23,7 @@ describe("CompactLogger", () => {
 		const levels: LogLevel[] = ["debug", "info", "warn", "error", "fatal"]
 
 		levels.forEach((level) => {
-			test(`${level} level logs correctly`, () => {
+			it(`${level} level logs correctly`, () => {
 				const message = `test ${level} message`
 				;(logger[level] as (message: string) => void)(message)
 
@@ -38,7 +38,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Metadata Handling", () => {
-		test("logs with simple metadata", () => {
+		it("logs with simple metadata", () => {
 			const meta = { ctx: "test", userId: "123" }
 			logger.info("test message", meta)
 
@@ -49,7 +49,7 @@ describe("CompactLogger", () => {
 			})
 		})
 
-		test("handles undefined metadata", () => {
+		it("handles undefined metadata", () => {
 			logger.info("test message")
 
 			expect(transport.entries[0]).toMatchObject({
@@ -58,7 +58,7 @@ describe("CompactLogger", () => {
 			expect(transport.entries[0].d).toBeUndefined()
 		})
 
-		test("strips empty metadata", () => {
+		it("strips empty metadata", () => {
 			logger.info("test message", { ctx: "test" })
 
 			expect(transport.entries[0]).toMatchObject({
@@ -70,7 +70,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Error Handling", () => {
-		test("handles Error objects in error level", () => {
+		it("handles Error objects in error level", () => {
 			const error = new Error("test error")
 			logger.error(error)
 
@@ -88,7 +88,7 @@ describe("CompactLogger", () => {
 			})
 		})
 
-		test("handles Error objects in fatal level", () => {
+		it("handles Error objects in fatal level", () => {
 			const error = new Error("test fatal")
 			logger.fatal(error)
 
@@ -106,7 +106,7 @@ describe("CompactLogger", () => {
 			})
 		})
 
-		test("handles Error objects with custom metadata", () => {
+		it("handles Error objects with custom metadata", () => {
 			const error = new Error("test error")
 			const meta = { ctx: "custom", userId: "123" }
 			logger.error(error, meta)
@@ -128,7 +128,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Child Loggers", () => {
-		test("creates child logger with inherited metadata", () => {
+		it("creates child logger with inherited metadata", () => {
 			const parentMeta = { ctx: "parent", traceId: "123" }
 			const childMeta = { ctx: "child", userId: "456" }
 
@@ -147,7 +147,7 @@ describe("CompactLogger", () => {
 			})
 		})
 
-		test("child logger respects parent context when not overridden", () => {
+		it("child logger respects parent context when not overridden", () => {
 			const parentLogger = new CompactLogger(transport, { ctx: "parent" })
 			const childLogger = parentLogger.child({ userId: "123" })
 
@@ -162,7 +162,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Lifecycle", () => {
-		test("closes transport on logger close", () => {
+		it("closes transport on logger close", () => {
 			logger.close()
 			expect(transport.closed).toBe(true)
 		})
@@ -177,7 +177,7 @@ describe("CompactLogger", () => {
 			vi.useRealTimers()
 		})
 
-		test("generates increasing timestamps", () => {
+		it("generates increasing timestamps", () => {
 			const now = Date.now()
 			vi.setSystemTime(now)
 
@@ -190,7 +190,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Message Handling", () => {
-		test("handles empty string messages", () => {
+		it("handles empty string messages", () => {
 			logger.info("")
 			expect(transport.entries[0]).toMatchObject({
 				m: "",
@@ -200,7 +200,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Metadata Edge Cases", () => {
-		test("handles metadata with undefined values", () => {
+		it("handles metadata with undefined values", () => {
 			const meta = {
 				ctx: "test",
 				someField: undefined,
@@ -214,12 +214,12 @@ describe("CompactLogger", () => {
 			})
 		})
 
-		test("handles metadata with null values", () => {
+		it("handles metadata with null values", () => {
 			logger.info("test", { ctx: "test", nullField: null })
 			expect(transport.entries[0].d).toMatchObject({ nullField: null })
 		})
 
-		test("maintains metadata value types", () => {
+		it("maintains metadata value types", () => {
 			const meta = {
 				str: "string",
 				num: 123,
@@ -233,7 +233,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Child Logger Edge Cases", () => {
-		test("deeply nested child loggers maintain correct metadata inheritance", () => {
+		it("deeply nested child loggers maintain correct metadata inheritance", () => {
 			const root = new CompactLogger(transport, { ctx: "root", rootVal: 1 })
 			const child1 = root.child({ level1: "a" })
 			const child2 = child1.child({ level2: "b" })
@@ -251,7 +251,7 @@ describe("CompactLogger", () => {
 			})
 		})
 
-		test("child logger with empty metadata inherits parent metadata unchanged", () => {
+		it("child logger with empty metadata inherits parent metadata unchanged", () => {
 			const parent = new CompactLogger(transport, { ctx: "parent", data: "value" })
 			const child = parent.child({})
 
@@ -265,7 +265,7 @@ describe("CompactLogger", () => {
 	})
 
 	describe("Error Handling Edge Cases", () => {
-		test("handles custom error types", () => {
+		it("handles custom error types", () => {
 			class CustomError extends Error {
 				constructor(
 					message: string,
@@ -291,7 +291,7 @@ describe("CompactLogger", () => {
 			})
 		})
 
-		test("handles errors without stack traces", () => {
+		it("handles errors without stack traces", () => {
 			const error = new Error("test")
 			delete error.stack
 
@@ -316,7 +316,7 @@ describe("CompactLogger", () => {
 			vi.useRealTimers()
 		})
 
-		test("uses current timestamp for entries", () => {
+		it("uses current timestamp for entries", () => {
 			const baseTime = 1000000000000
 			vi.setSystemTime(baseTime)
 
@@ -324,7 +324,7 @@ describe("CompactLogger", () => {
 			expect(transport.entries[0].t).toBe(baseTime)
 		})
 
-		test("timestamps reflect time progression", () => {
+		it("timestamps reflect time progression", () => {
 			const baseTime = 1000000000000
 			vi.setSystemTime(baseTime)
 

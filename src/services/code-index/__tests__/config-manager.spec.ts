@@ -1544,7 +1544,7 @@ describe("CodeIndexConfigManager", () => {
 		})
 	})
 
-	describe("loadConfiguration", () => {
+	describe("loadConfiguration — extended", () => {
 		beforeEach(() => {
 			// Set default mock behaviors
 			mockedGetDefaultModelId.mockReturnValue("text-embedding-3-small")
@@ -1631,7 +1631,7 @@ describe("CodeIndexConfigManager", () => {
 		})
 	})
 
-	describe("isConfigured", () => {
+	describe("isConfigured — extended", () => {
 		it("should return true when OpenAI provider is properly configured", () => {
 			mockContextProxy.getGlobalState.mockReturnValue({
 				codebaseIndexEnabled: true,

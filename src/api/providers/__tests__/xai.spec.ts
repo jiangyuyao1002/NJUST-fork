@@ -1,7 +1,7 @@
 // npx vitest api/providers/__tests__/xai.spec.ts
 
 // Mock TelemetryService - must come before other imports
-import { describe, it, test, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 
 const mockCaptureException = vitest.hoisted(() => vitest.fn())
 vitest.mock("@njust-ai/telemetry", () => ({
@@ -75,7 +75,7 @@ describe("XAIHandler", () => {
 		expect(model.info).toEqual(xaiModels[xaiDefaultModelId])
 	})
 
-	test("should return specified model when valid model is provided", () => {
+	it("should return specified model when valid model is provided", () => {
 		const testModelId = "grok-3"
 		const handlerWithModel = new XAIHandler({ xaiApiKey: "test-api-key", apiModelId: testModelId })
 		const model = handlerWithModel.getModel()

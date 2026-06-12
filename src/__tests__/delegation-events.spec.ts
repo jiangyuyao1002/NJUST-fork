@@ -1,11 +1,11 @@
 // npx vitest run __tests__/delegation-events.spec.ts
 
-import { describe, test, expect } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { NJUST_AIEventName, NjustAiEventsSchema, taskEventSchema } from "@njust-ai/types"
 
 describe("delegation event schemas", () => {
-	test("NjustAiEventsSchema validates tuples", () => {
+	it("NjustAiEventsSchema validates tuples", () => {
 		expect(() =>
 			(NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegated].parse(["p", "c"]),
 		).not.toThrow()
@@ -24,7 +24,7 @@ describe("delegation event schemas", () => {
 		expect(() => (NjustAiEventsSchema.shape as any)[NJUST_AIEventName.TaskDelegationResumed].parse(["p"])).toThrow()
 	})
 
-	test("taskEventSchema discriminated union includes delegation events", () => {
+	it("taskEventSchema discriminated union includes delegation events", () => {
 		expect(() =>
 			taskEventSchema.parse({
 				eventName: NJUST_AIEventName.TaskDelegated,

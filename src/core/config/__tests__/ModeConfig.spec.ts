@@ -1,6 +1,6 @@
 // npx vitest src/core/config/__tests__/ModeConfig.spec.ts
 
-import { describe, it, test, expect } from "vitest"
+import { describe, it, expect } from "vitest"
 
 import { ZodError } from "zod"
 
@@ -12,7 +12,7 @@ function validateCustomMode(mode: unknown): asserts mode is ModeConfig {
 
 describe("CustomModeSchema", () => {
 	describe("validateCustomMode", () => {
-		test("accepts valid mode configuration", () => {
+		it("accepts valid mode configuration", () => {
 			const validMode = {
 				slug: "test",
 				name: "Test Mode",
@@ -23,7 +23,7 @@ describe("CustomModeSchema", () => {
 			expect(() => validateCustomMode(validMode)).not.toThrow()
 		})
 
-		test("accepts mode with multiple groups", () => {
+		it("accepts mode with multiple groups", () => {
 			const validMode = {
 				slug: "test",
 				name: "Test Mode",
@@ -34,7 +34,7 @@ describe("CustomModeSchema", () => {
 			expect(() => validateCustomMode(validMode)).not.toThrow()
 		})
 
-		test("accepts mode with optional customInstructions", () => {
+		it("accepts mode with optional customInstructions", () => {
 			const validMode = {
 				slug: "test",
 				name: "Test Mode",
@@ -46,7 +46,7 @@ describe("CustomModeSchema", () => {
 			expect(() => validateCustomMode(validMode)).not.toThrow()
 		})
 
-		test("rejects missing required fields", () => {
+		it("rejects missing required fields", () => {
 			const invalidModes = [
 				{}, // All fields missing
 				{ name: "Test" }, // Missing most fields
@@ -61,7 +61,7 @@ describe("CustomModeSchema", () => {
 			})
 		})
 
-		test("rejects invalid slug format", () => {
+		it("rejects invalid slug format", () => {
 			const invalidMode = {
 				slug: "not@a@valid@slug",
 				name: "Test Mode",
@@ -73,7 +73,7 @@ describe("CustomModeSchema", () => {
 			expect(() => validateCustomMode(invalidMode)).toThrow("Slug must contain only letters numbers and dashes")
 		})
 
-		test("rejects empty strings in required fields", () => {
+		it("rejects empty strings in required fields", () => {
 			const emptyNameMode = {
 				slug: "123e4567-e89b-12d3-a456-426614174000",
 				name: "",
@@ -92,7 +92,7 @@ describe("CustomModeSchema", () => {
 			expect(() => validateCustomMode(emptyRoleMode)).toThrow("Role definition is required")
 		})
 
-		test("rejects invalid group configurations", () => {
+		it("rejects invalid group configurations", () => {
 			const invalidGroupMode = {
 				slug: "123e4567-e89b-12d3-a456-426614174000",
 				name: "Test Mode",
@@ -103,12 +103,12 @@ describe("CustomModeSchema", () => {
 			expect(() => validateCustomMode(invalidGroupMode)).toThrow(ZodError)
 		})
 
-		test("handles null and undefined gracefully", () => {
+		it("handles null and undefined gracefully", () => {
 			expect(() => validateCustomMode(null)).toThrow(ZodError)
 			expect(() => validateCustomMode(undefined)).toThrow(ZodError)
 		})
 
-		test("rejects non-object inputs", () => {
+		it("rejects non-object inputs", () => {
 			const invalidInputs = [42, "string", true, [], () => {}]
 
 			invalidInputs.forEach((input) => {
@@ -181,7 +181,7 @@ describe("CustomModeSchema", () => {
 	}
 
 	describe("group format validation", () => {
-		test("accepts single group", () => {
+		it("accepts single group", () => {
 			const mode = {
 				...validBaseMode,
 				groups: ["read"] as const,
@@ -190,7 +190,7 @@ describe("CustomModeSchema", () => {
 			expect(() => modeConfigSchema.parse(mode)).not.toThrow()
 		})
 
-		test("accepts multiple groups", () => {
+		it("accepts multiple groups", () => {
 			const mode = {
 				...validBaseMode,
 				groups: ["read", "edit"] as const,
@@ -199,7 +199,7 @@ describe("CustomModeSchema", () => {
 			expect(() => modeConfigSchema.parse(mode)).not.toThrow()
 		})
 
-		test("accepts all available groups", () => {
+		it("accepts all available groups", () => {
 			const mode = {
 				...validBaseMode,
 				groups: ["read", "edit", "command", "mcp"] as const,
@@ -208,7 +208,7 @@ describe("CustomModeSchema", () => {
 			expect(() => modeConfigSchema.parse(mode)).not.toThrow()
 		})
 
-		test("rejects non-array group format", () => {
+		it("rejects non-array group format", () => {
 			const mode = {
 				...validBaseMode,
 				groups: "not-an-array" as any,
@@ -217,7 +217,7 @@ describe("CustomModeSchema", () => {
 			expect(() => modeConfigSchema.parse(mode)).toThrow()
 		})
 
-		test("rejects invalid group names", () => {
+		it("rejects invalid group names", () => {
 			const mode = {
 				...validBaseMode,
 				groups: ["invalid_group"] as any,
@@ -226,7 +226,7 @@ describe("CustomModeSchema", () => {
 			expect(() => modeConfigSchema.parse(mode)).toThrow()
 		})
 
-		test("rejects duplicate groups", () => {
+		it("rejects duplicate groups", () => {
 			const mode = {
 				...validBaseMode,
 				groups: ["read", "read"] as any,
@@ -235,7 +235,7 @@ describe("CustomModeSchema", () => {
 			expect(() => modeConfigSchema.parse(mode)).toThrow("Duplicate groups are not allowed")
 		})
 
-		test("rejects null or undefined groups", () => {
+		it("rejects null or undefined groups", () => {
 			const modeWithNull = {
 				...validBaseMode,
 				groups: null as any,

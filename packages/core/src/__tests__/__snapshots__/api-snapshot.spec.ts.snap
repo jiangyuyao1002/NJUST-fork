@@ -61,6 +61,7 @@ exports[`packages/core public API snapshot > namespace exports contain expected 
   "GlobalFileNames",
   "LANGUAGES",
   "LIMITS",
+  "NamedError",
   "ProfileValidator",
   "TIMING",
   "TOOL_ALIASES",

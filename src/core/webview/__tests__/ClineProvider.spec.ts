@@ -1,6 +1,6 @@
 // pnpm --filter njust-ai test core/webview/__tests__/ClineProvider.spec.ts
 
-import { describe, it, test, expect, vi, beforeEach, beforeAll, afterAll } from "vitest"
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest"
 import Anthropic from "@anthropic-ai/sdk"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -536,7 +536,7 @@ describe("ClineProvider", () => {
 		})
 	})
 
-	test("constructor initializes correctly", () => {
+	it("constructor initializes correctly", () => {
 		expect(provider).toBeInstanceOf(ClineProvider)
 		// Since getVisibleInstance returns the last instance where view.visible is true
 		// @ts-expect-error - accessing private property for testing
@@ -544,7 +544,7 @@ describe("ClineProvider", () => {
 		expect(ClineProvider.getVisibleInstance()).toBe(provider)
 	})
 
-	test("resolveWebviewView sets up webview correctly", async () => {
+	it("resolveWebviewView sets up webview correctly", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
 		expect(mockWebviewView.webview.options).toEqual({
@@ -555,7 +555,7 @@ describe("ClineProvider", () => {
 		expect(mockWebviewView.webview.html).toContain("<!DOCTYPE html>")
 	})
 
-	test("resolveWebviewView sets up webview correctly in development mode even if local server is not running", async () => {
+	it("resolveWebviewView sets up webview correctly in development mode even if local server is not running", async () => {
 		provider = new ClineProvider(
 			{ ...mockContext, extensionMode: vscode.ExtensionMode.Development },
 			mockOutputChannel,
@@ -587,7 +587,7 @@ describe("ClineProvider", () => {
 		expect(scriptSrcMatch![0]).toContain("'wasm-unsafe-eval'")
 	})
 
-	test("postMessageToWebview sends message to webview", async () => {
+	it("postMessageToWebview sends message to webview", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
 		const mockState: ExtensionState = {
@@ -654,7 +654,7 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).toHaveBeenCalledWith(message)
 	})
 
-	test("postMessageToWebview does not throw when webview is disposed", async () => {
+	it("postMessageToWebview does not throw when webview is disposed", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
 		// Simulate postMessage throwing after webview disposal
@@ -666,7 +666,7 @@ describe("ClineProvider", () => {
 		await expect(provider.postMessageToWebview(message)).resolves.toBeUndefined()
 	})
 
-	test("postMessageToWebview skips postMessage after dispose", async () => {
+	it("postMessageToWebview skips postMessage after dispose", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
 		await provider.dispose()
@@ -678,7 +678,7 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).not.toHaveBeenCalled()
 	})
 
-	test("dispose is idempotent — second call is a no-op", async () => {
+	it("dispose is idempotent — second call is a no-op", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
 		await provider.dispose()
@@ -691,7 +691,7 @@ describe("ClineProvider", () => {
 		expect(disposeCalls).toHaveLength(1)
 	})
 
-	test("handles webviewDidLaunch message", async () => {
+	it("handles webviewDidLaunch message", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
 		// Get the message handler from onDidReceiveMessage
@@ -704,7 +704,7 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).toHaveBeenCalled()
 	})
 
-	test("clearTask aborts current task", async () => {
+	it("clearTask aborts current task", async () => {
 		// Setup Cline instance with auto-mock from the top of the file
 		const mockCline = new Task(defaultTaskOptions) // Create a new mocked instance
 
@@ -732,7 +732,7 @@ describe("ClineProvider", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		test("calls clearTask (delegation handled via metadata)", async () => {
+		it("calls clearTask (delegation handled via metadata)", async () => {
 			// Setup a single task without parent
 			const mockCline = new Task(defaultTaskOptions)
 
@@ -754,7 +754,7 @@ describe("ClineProvider", () => {
 			expect(postStateToWebviewSpy).toHaveBeenCalled()
 		})
 
-		test("calls clearTask even with parent task (delegation via metadata)", async () => {
+		it("calls clearTask even with parent task (delegation via metadata)", async () => {
 			// Setup parent and child tasks
 			const parentTask = new Task(defaultTaskOptions)
 			const childTask = new Task(defaultTaskOptions)
@@ -782,7 +782,7 @@ describe("ClineProvider", () => {
 			expect(postStateToWebviewSpy).toHaveBeenCalled()
 		})
 
-		test("handles case when no current task exists", async () => {
+		it("handles case when no current task exists", async () => {
 			// Don't add any tasks to the stack
 
 			// Mock the provider methods
@@ -800,7 +800,7 @@ describe("ClineProvider", () => {
 			expect(postStateToWebviewSpy).toHaveBeenCalled()
 		})
 
-		test("correctly identifies task scenario for issue #4602", async () => {
+		it("correctly identifies task scenario for issue #4602", async () => {
 			// This test validates the fix for issue #4602
 			// where canceling during API retry correctly uses clearTask
 
@@ -826,7 +826,7 @@ describe("ClineProvider", () => {
 		})
 	})
 
-	test("stack.push adds multiple Cline instances to the stack", async () => {
+	it("stack.push adds multiple Cline instances to the stack", async () => {
 		// Setup Cline instance with auto-mock from the top of the file
 		const mockCline1 = new Task(defaultTaskOptions) // Create a new mocked instance
 		const mockCline2 = new Task(defaultTaskOptions) // Create a new mocked instance
@@ -844,7 +844,7 @@ describe("ClineProvider", () => {
 		expect(provider.getCurrentTask()).toBe(mockCline2)
 	})
 
-	test("getState returns correct initial state", async () => {
+	it("getState returns correct initial state", async () => {
 		const state = await provider.getState()
 
 		expect(state).toHaveProperty("apiConfiguration")
@@ -859,14 +859,14 @@ describe("ClineProvider", () => {
 		expect(state).toHaveProperty("writeDelayMs")
 	})
 
-	test("language is set to VSCode language", async () => {
+	it("language is set to VSCode language", async () => {
 		;(vscode.env as any).language = "zh-CN"
 
 		const state = await provider.getState()
 		expect(state.language).toBe("zh-CN")
 	})
 
-	test("writeDelayMs defaults to 400ms", async () => {
+	it("writeDelayMs defaults to 400ms", async () => {
 		// Mock globalState.get to return undefined for writeDelayMs
 		;(mockContext.globalState.get as any).mockImplementation((key: string) =>
 			key === "writeDelayMs" ? undefined : null,
@@ -876,7 +876,7 @@ describe("ClineProvider", () => {
 		expect(state.writeDelayMs).toBe(400)
 	})
 
-	test("handles writeDelayMs message", async () => {
+	it("handles writeDelayMs message", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -887,7 +887,7 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).toHaveBeenCalled()
 	})
 
-	test("updates sound utility when sound setting changes", async () => {
+	it("updates sound utility when sound setting changes", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
 		// Get the message handler from onDidReceiveMessage
@@ -917,7 +917,7 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).toHaveBeenCalled()
 	})
 
-	test("autoCondenseContext defaults to true", async () => {
+	it("autoCondenseContext defaults to true", async () => {
 		// Mock globalState.get to return undefined for autoCondenseContext
 		;(mockContext.globalState.get as any).mockImplementation((key: string) =>
 			key === "autoCondenseContext" ? undefined : null,
@@ -926,7 +926,7 @@ describe("ClineProvider", () => {
 		expect(state.autoCondenseContext).toBe(true)
 	})
 
-	test("handles autoCondenseContext message", async () => {
+	it("handles autoCondenseContext message", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 		await messageHandler({ type: "updateSettings", updatedSettings: { autoCondenseContext: false } })
@@ -935,7 +935,7 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).toHaveBeenCalled()
 	})
 
-	test("autoCondenseContextPercent defaults to 70", async () => {
+	it("autoCondenseContextPercent defaults to 70", async () => {
 		// Mock globalState.get to return undefined for autoCondenseContextPercent
 		;(mockContext.globalState.get as any).mockImplementation((key: string) =>
 			key === "autoCondenseContextPercent" ? undefined : null,
@@ -945,7 +945,7 @@ describe("ClineProvider", () => {
 		expect(state.autoCondenseContextPercent).toBe(70)
 	})
 
-	test("handles autoCondenseContextPercent message", async () => {
+	it("handles autoCondenseContextPercent message", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1053,7 +1053,7 @@ describe("ClineProvider", () => {
 		expect(provider.providerSettingsManager.activateProfile).toHaveBeenCalledWith({ id: "config-id-123" })
 	})
 
-	test("handles showRooIgnoredFiles setting", async () => {
+	it("handles showRooIgnoredFiles setting", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1073,7 +1073,7 @@ describe("ClineProvider", () => {
 		expect((await provider.getState()).showRooIgnoredFiles).toBe(false)
 	})
 
-	test("handles updatePrompt message correctly", async () => {
+	it("handles updatePrompt message correctly", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1118,7 +1118,7 @@ describe("ClineProvider", () => {
 		)
 	})
 
-	test("customModePrompts defaults to empty object", async () => {
+	it("customModePrompts defaults to empty object", async () => {
 		// Mock globalState.get to return undefined for customModePrompts
 		;(mockContext.globalState.get as any).mockImplementation(function (key: string) {
 			if (key === "customModePrompts") {
@@ -1131,7 +1131,7 @@ describe("ClineProvider", () => {
 		expect(state.customModePrompts).toEqual({})
 	})
 
-	test("handles maxWorkspaceFiles message", async () => {
+	it("handles maxWorkspaceFiles message", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1142,7 +1142,7 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).toHaveBeenCalled()
 	})
 
-	test("handles mode-specific custom instructions updates", async () => {
+	it("handles mode-specific custom instructions updates", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1220,7 +1220,7 @@ describe("ClineProvider", () => {
 		expect(provider.providerSettingsManager.setModeConfig).toHaveBeenCalledWith("code", "test-id")
 	})
 
-	test("file content includes line numbers", async () => {
+	it("file content includes line numbers", async () => {
 		const { extractTextFromFile } = await import("../../../integrations/misc/extract-text")
 		const result = await extractTextFromFile("test.js")
 		expect(result).toBe("1 | const x = 1;\n2 | const y = 2;\n3 | const z = 3;")
@@ -1231,7 +1231,7 @@ describe("ClineProvider", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		test("handles deletion with confirmation dialog", async () => {
+		it("handles deletion with confirmation dialog", async () => {
 			// Setup mock messages
 			const mockMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback" }, // User message 1
@@ -1297,7 +1297,7 @@ describe("ClineProvider", () => {
 			expect((provider as any).createTaskWithHistoryItem).not.toHaveBeenCalled()
 		})
 
-		test("handles case when no current task exists", async () => {
+		it("handles case when no current task exists", async () => {
 			// Clear the cline stack
 			// Stack is managed by TaskStackManager; no manual array reset needed
 
@@ -1319,7 +1319,7 @@ describe("ClineProvider", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		test("handles edit with confirmation dialog", async () => {
+		it("handles edit with confirmation dialog", async () => {
 			// Setup mock messages
 			const mockMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback" }, // User message 1
@@ -1416,7 +1416,7 @@ describe("ClineProvider", () => {
 			return mockCalls[0][0]
 		}
 
-		test("handles mcpEnabled setting correctly", async () => {
+		it("handles mcpEnabled setting correctly", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 			const handler = getMessageHandler()
 			expect(typeof handler).toBe("function")
@@ -1467,7 +1467,7 @@ describe("ClineProvider", () => {
 			)
 		})
 
-		test("handles errors gracefully", async () => {
+		it("handles errors gracefully", async () => {
 			// Mock SYSTEM_PROMPT to throw an error
 			const { SYSTEM_PROMPT } = await import("../../prompts/system")
 			vi.mocked(SYSTEM_PROMPT).mockRejectedValueOnce(new Error("Test error"))
@@ -1478,7 +1478,7 @@ describe("ClineProvider", () => {
 			expect(vscode.window.showErrorMessage).toHaveBeenCalledWith("errors.get_system_prompt")
 		})
 
-		test("uses code mode custom instructions", async () => {
+		it("uses code mode custom instructions", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 
 			// Mock getState to return custom instructions for code mode
@@ -1507,7 +1507,7 @@ describe("ClineProvider", () => {
 			)
 		})
 
-		test("uses correct mode-specific instructions when mode is specified", async () => {
+		it("uses correct mode-specific instructions when mode is specified", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 
 			// Mock getState to return architect mode instructions
@@ -1574,7 +1574,7 @@ describe("ClineProvider", () => {
 			expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "state" }))
 		})
 
-		test("saves current config when switching to mode without config", async () => {
+		it("saves current config when switching to mode without config", async () => {
 			;(provider as any).providerSettingsManager = {
 				getModeConfigId: vi.fn().mockResolvedValue(undefined),
 				listConfig: vi
@@ -1606,7 +1606,7 @@ describe("ClineProvider", () => {
 	})
 
 	describe("createTaskWithHistoryItem mode validation", () => {
-		test("validates and falls back to default mode when restored mode no longer exists", async () => {
+		it("validates and falls back to default mode when restored mode no longer exists", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 
 			// Mock custom modes that don't include the saved mode
@@ -1672,7 +1672,7 @@ describe("ClineProvider", () => {
 			expect(historyItem.mode).toBe("code")
 		})
 
-		test("preserves mode when it exists in custom modes", async () => {
+		it("preserves mode when it exists in custom modes", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 
 			// Mock custom modes that include the saved mode
@@ -1739,7 +1739,7 @@ describe("ClineProvider", () => {
 			expect(historyItem.mode).toBe("custom-mode")
 		})
 
-		test("preserves mode when it exists in built-in modes", async () => {
+		it("preserves mode when it exists in built-in modes", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 
 			// Mock no custom modes
@@ -1786,7 +1786,7 @@ describe("ClineProvider", () => {
 			expect(historyItem.mode).toBe("architect")
 		})
 
-		test("handles history items without mode property", async () => {
+		it("handles history items without mode property", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 
 			// Mock provider settings manager
@@ -1814,7 +1814,7 @@ describe("ClineProvider", () => {
 			expect(mockContext.globalState.update).not.toHaveBeenCalledWith("mode", expect.any(String))
 		})
 
-		test("continues with task restoration even if mode config loading fails", async () => {
+		it("continues with task restoration even if mode config loading fails", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 
 			// Mock custom modes
@@ -1868,7 +1868,7 @@ describe("ClineProvider", () => {
 	})
 
 	describe("updateCustomMode", () => {
-		test("updates both file and state when updating custom mode", async () => {
+		it("updates both file and state when updating custom mode", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 			const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1930,7 +1930,7 @@ describe("ClineProvider", () => {
 	})
 
 	describe("upsertApiConfiguration", () => {
-		test("handles error in upsertApiConfiguration gracefully", async () => {
+		it("handles error in upsertApiConfiguration gracefully", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 			const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1961,7 +1961,7 @@ describe("ClineProvider", () => {
 			expect(vscode.window.showErrorMessage).toHaveBeenCalledWith("errors.create_api_config")
 		})
 
-		test("handles successful upsertApiConfiguration", async () => {
+		it("handles successful upsertApiConfiguration", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 			const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -1998,7 +1998,7 @@ describe("ClineProvider", () => {
 			expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "state" }))
 		})
 
-		test("handles buildApiHandler error in updateApiConfiguration", async () => {
+		it("handles buildApiHandler error in updateApiConfiguration", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 			const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2045,7 +2045,7 @@ describe("ClineProvider", () => {
 			expect(mockContext.globalState.update).toHaveBeenCalledWith("currentApiConfigName", "test-config")
 		})
 
-		test("handles successful saveApiConfiguration", async () => {
+		it("handles successful saveApiConfiguration", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 			const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2144,7 +2144,7 @@ describe("Project MCP Settings", () => {
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))
 	})
 
-	test("handles openProjectMcpSettings message", async () => {
+	it("handles openProjectMcpSettings message", async () => {
 		// Mock workspace folders first
 		;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: "/test/workspace" } }]
 
@@ -2190,7 +2190,7 @@ describe("Project MCP Settings", () => {
 		expect(openFileSpy).toHaveBeenCalledWith(path.join(".njust_ai", "mcp.json"))
 	})
 
-	test("handles openProjectMcpSettings when workspace is not open", async () => {
+	it("handles openProjectMcpSettings when workspace is not open", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2204,7 +2204,7 @@ describe("Project MCP Settings", () => {
 		expect(vscode.window.showErrorMessage).toHaveBeenCalledWith("errors.no_workspace")
 	})
 
-	test("handles openProjectMcpSettings file creation error", async () => {
+	it("handles openProjectMcpSettings file creation error", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2260,24 +2260,24 @@ describe("ContextProxy integration", () => {
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", mockContextProxy)
 	})
 
-	test("updateGlobalState uses contextProxy", async () => {
+	it("updateGlobalState uses contextProxy", async () => {
 		await provider.setValue("currentApiConfigName", "testValue")
 		expect(mockContextProxy.updateGlobalState).toHaveBeenCalledWith("currentApiConfigName", "testValue")
 	})
 
-	test("getGlobalState uses contextProxy", async () => {
+	it("getGlobalState uses contextProxy", async () => {
 		mockContextProxy.updateGlobalState("currentApiConfigName", "testValue")
 		const result = await provider.getValue("currentApiConfigName")
 		expect(mockContextProxy.getGlobalState).toHaveBeenCalledWith("currentApiConfigName")
 		expect(result).toBe("testValue")
 	})
 
-	test("storeSecret uses contextProxy", async () => {
+	it("storeSecret uses contextProxy", async () => {
 		await provider.setValue("apiKey", "test-secret")
 		expect(mockContextProxy.storeSecret).toHaveBeenCalledWith("apiKey", "test-secret")
 	})
 
-	test("contextProxy methods are available", () => {
+	it("contextProxy methods are available", () => {
 		// Verify the contextProxy has all the required methods
 		expect(mockContextProxy.getGlobalState).toBeDefined()
 		expect(mockContextProxy.updateGlobalState).toBeDefined()
@@ -2345,7 +2345,7 @@ describe("getTelemetryProperties", () => {
 		}
 	})
 
-	test("includes basic properties in telemetry", async () => {
+	it("includes basic properties in telemetry", async () => {
 		const properties = await provider.getTelemetryProperties()
 
 		expect(properties).toHaveProperty("vscodeVersion")
@@ -2353,7 +2353,7 @@ describe("getTelemetryProperties", () => {
 		expect(properties).toHaveProperty("appVersion", "1.0.0")
 	})
 
-	test("includes model ID from current Cline instance if available", async () => {
+	it("includes model ID from current Cline instance if available", async () => {
 		// Add mock Cline to stack
 		await provider.stack.push(mockCline as any)
 
@@ -2362,7 +2362,7 @@ describe("getTelemetryProperties", () => {
 		expect(properties).toHaveProperty("modelId", "claude-sonnet-4-20250514")
 	})
 
-	test("getTelemetryProperties does not include cloudIsAuthenticated (cloud stripped)", async () => {
+	it("getTelemetryProperties does not include cloudIsAuthenticated (cloud stripped)", async () => {
 		const properties = await provider.getTelemetryProperties()
 		expect(properties).not.toHaveProperty("cloudIsAuthenticated")
 	})
@@ -2444,7 +2444,7 @@ describe("ClineProvider - Router Models", () => {
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))
 	})
 
-	test("handles requestRouterModels with successful responses", async () => {
+	it("handles requestRouterModels with successful responses", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2529,7 +2529,7 @@ describe("ClineProvider - Router Models", () => {
 		})
 	})
 
-	test("handles requestRouterModels with individual provider failures", async () => {
+	it("handles requestRouterModels with individual provider failures", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2607,7 +2607,7 @@ describe("ClineProvider - Router Models", () => {
 		})
 	})
 
-	test("handles requestRouterModels with LiteLLM values from message", async () => {
+	it("handles requestRouterModels with LiteLLM values from message", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2642,7 +2642,7 @@ describe("ClineProvider - Router Models", () => {
 		})
 	})
 
-	test("skips LiteLLM when neither config nor message values are provided", async () => {
+	it("skips LiteLLM when neither config nor message values are provided", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2703,7 +2703,7 @@ describe("ClineProvider - Router Models", () => {
 		})
 	})
 
-	test("handles requestLmStudioModels with proper response", async () => {
+	it("handles requestLmStudioModels with proper response", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
@@ -2834,7 +2834,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		test("handles editing messages containing images", async () => {
+		it("handles editing messages containing images", async () => {
 			const mockMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback", text: "Original message" },
 				{
@@ -2892,7 +2892,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			expect(mockCline.submitUserMessage).toHaveBeenCalledWith("Edited message with preserved images", [])
 		})
 
-		test("handles editing messages with file attachments", async () => {
+		it("handles editing messages with file attachments", async () => {
 			const mockMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback", text: "Original message" },
 				{
@@ -2952,7 +2952,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		test("handles network timeout during edit submission", async () => {
+		it("handles network timeout during edit submission", async () => {
 			const mockCline = new Task(defaultTaskOptions)
 			mockCline.clineMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback", text: "Original message", value: 2000 },
@@ -2994,7 +2994,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			expect(mockCline.overwriteClineMessages).toHaveBeenCalled()
 		})
 
-		test("handles connection drops during edit operation", async () => {
+		it("handles connection drops during edit operation", async () => {
 			const mockCline = new Task(defaultTaskOptions)
 			mockCline.clineMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback", text: "Original message", value: 2000 },
@@ -3044,7 +3044,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		test("handles race conditions with simultaneous edits", async () => {
+		it("handles race conditions with simultaneous edits", async () => {
 			const mockCline = new Task(defaultTaskOptions)
 			mockCline.clineMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback", text: "Message 1", value: 2000 },
@@ -3110,7 +3110,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		test("handles edit permission failures", async () => {
+		it("handles edit permission failures", async () => {
 			// Mock no current cline (simulating permission failure)
 			vi.spyOn(provider, "getCurrentTask").mockReturnValue(undefined)
 
@@ -3126,7 +3126,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			expect(vscode.window.showInformationMessage).not.toHaveBeenCalled()
 		})
 
-		test("handles authorization failures during edit", async () => {
+		it("handles authorization failures during edit", async () => {
 			const mockCline = new Task(defaultTaskOptions)
 			mockCline.clineMessages = [
 				{ ts: 1000, type: "say", say: "user_feedback", text: "Original message", value: 2000 },
@@ -3165,7 +3165,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				await provider.resolveWebviewView(mockWebviewView)
 			})
 
-			test("handles malformed edit requests", async () => {
+			it("handles malformed edit requests", async () => {
 				const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
 				// Test with missing value
@@ -3191,7 +3191,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				expect(vscode.window.showInformationMessage).not.toHaveBeenCalled()
 			})
 
-			test("handles invalid message formats", async () => {
+			it("handles invalid message formats", async () => {
 				const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as any).mock.calls[0][0]
 
 				// Test with null message - should throw error
@@ -3212,7 +3212,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				expect(vscode.window.showInformationMessage).not.toHaveBeenCalled()
 			})
 
-			test("handles invalid timestamp values", async () => {
+			it("handles invalid timestamp values", async () => {
 				;(vscode.window.showInformationMessage as any) = vi.fn()
 
 				const mockCline = new Task(defaultTaskOptions)
@@ -3249,7 +3249,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				await provider.resolveWebviewView(mockWebviewView)
 			})
 
-			test("handles edit operations on deleted messages", async () => {
+			it("handles edit operations on deleted messages", async () => {
 				const mockCline = new Task(defaultTaskOptions)
 				mockCline.clineMessages = [
 					{ ts: 1000, type: "say", say: "user_feedback", text: "Existing message" },
@@ -3294,7 +3294,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				expect(mockCline.handleWebviewAskResponse).not.toHaveBeenCalled()
 			})
 
-			test("handles delete operations on non-existent messages", async () => {
+			it("handles delete operations on non-existent messages", async () => {
 				const mockCline = new Task(defaultTaskOptions)
 				mockCline.clineMessages = [
 					{ ts: 1000, type: "say", say: "user_feedback", text: "Existing message" },
@@ -3337,7 +3337,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				await provider.resolveWebviewView(mockWebviewView)
 			})
 
-			test("validates proper cleanup during failed edit operations", async () => {
+			it("validates proper cleanup during failed edit operations", async () => {
 				const mockCline = new Task(defaultTaskOptions)
 				mockCline.clineMessages = [
 					{ ts: 1000, type: "say", say: "user_feedback", text: "Original message", value: 2000 },
@@ -3384,7 +3384,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				expect(vscode.window.showErrorMessage).toHaveBeenCalledWith("errors.message.error_editing_message")
 			})
 
-			test("validates proper cleanup during failed delete operations", async () => {
+			it("validates proper cleanup during failed delete operations", async () => {
 				const mockCline = new Task(defaultTaskOptions)
 				mockCline.clineMessages = [
 					{ ts: 1000, type: "say", say: "user_feedback", text: "Message to delete" },
@@ -3431,7 +3431,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				await provider.resolveWebviewView(mockWebviewView)
 			})
 
-			test("handles editing messages with large text content", async () => {
+			it("handles editing messages with large text content", async () => {
 				// Create a large message (10KB of text)
 				const largeText = "A".repeat(10000)
 				const mockMessages = [
@@ -3476,7 +3476,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				expect(mockCline.submitUserMessage).toHaveBeenCalledWith(largeEditedContent, [])
 			})
 
-			test("handles deleting messages with large payloads", async () => {
+			it("handles deleting messages with large payloads", async () => {
 				// Create messages with large payloads
 				const largeText = "X".repeat(50000)
 				const mockMessages = [
@@ -3524,7 +3524,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 
 			// Note: Error messaging test removed as the implementation may not have proper error handling in place
 
-			test("provides user feedback for successful operations", async () => {
+			it("provides user feedback for successful operations", async () => {
 				const mockCline = new Task(defaultTaskOptions)
 				mockCline.clineMessages = [
 					{ ts: 1000, type: "say", say: "user_feedback", text: "Message to delete" },
@@ -3560,7 +3560,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				expect(vscode.window.showErrorMessage).not.toHaveBeenCalled()
 			})
 
-			test("handles user cancellation gracefully", async () => {
+			it("handles user cancellation gracefully", async () => {
 				// Test cancellation by not sending confirmation
 
 				const mockCline = new Task(defaultTaskOptions)
@@ -3597,7 +3597,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				await provider.resolveWebviewView(mockWebviewView)
 			})
 
-			test("handles messages with identical timestamps", async () => {
+			it("handles messages with identical timestamps", async () => {
 				const mockCline = new Task(defaultTaskOptions)
 				mockCline.clineMessages = [
 					{ ts: 1000, type: "say", say: "user_feedback", text: "Message 1" },
@@ -3632,7 +3632,7 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 				expect(mockCline.overwriteClineMessages).toHaveBeenCalled()
 			})
 
-			test("handles messages with future timestamps", async () => {
+			it("handles messages with future timestamps", async () => {
 				const futureTimestamp = Date.now() + 100000 // Future timestamp
 				const mockCline = new Task(defaultTaskOptions)
 				mockCline.clineMessages = [

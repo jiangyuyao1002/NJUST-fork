@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { type ModelInfo, type ProviderSettings } from "@njust-ai/types"
 import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "@njust-ai/core/providers"
@@ -12,7 +12,7 @@ describe("getModelMaxOutputTokens", () => {
 		supportsPromptCache: true,
 	}
 
-	test("should return model maxTokens when maxTokens is within 20% of context window", () => {
+	it("should return model maxTokens when maxTokens is within 20% of context window", () => {
 		const settings: ProviderSettings = {
 			apiProvider: "anthropic",
 		}
@@ -28,7 +28,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(8192)
 	})
 
-	test("should handle reasoning budget models correctly", () => {
+	it("should handle reasoning budget models correctly", () => {
 		const reasoningModel: ModelInfo = {
 			...mockModel,
 			supportsReasoningBudget: true,
@@ -50,7 +50,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(32000)
 	})
 
-	test("should return default of 8192 when maxTokens is undefined", () => {
+	it("should return default of 8192 when maxTokens is undefined", () => {
 		const modelWithoutMaxTokens: ModelInfo = {
 			contextWindow: 100000,
 			supportsPromptCache: true,
@@ -65,7 +65,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(8192)
 	})
 
-	test("should return ANTHROPIC_DEFAULT_MAX_TOKENS for Anthropic models that support reasoning budget but aren't using it", () => {
+	it("should return ANTHROPIC_DEFAULT_MAX_TOKENS for Anthropic models that support reasoning budget but aren't using it", () => {
 		const anthropicModelId = "claude-sonnet-4-20250514"
 		const model: ModelInfo = {
 			contextWindow: 200_000,
@@ -83,7 +83,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(ANTHROPIC_DEFAULT_MAX_TOKENS) // Should be 8192, not 64_000
 	})
 
-	test("should return model.maxTokens for non-Anthropic models that support reasoning budget but aren't using it", () => {
+	it("should return model.maxTokens for non-Anthropic models that support reasoning budget but aren't using it", () => {
 		const geminiModelId = "gemini-2.5-flash-preview-04-17"
 		const model: ModelInfo = {
 			contextWindow: 1_048_576,
@@ -101,7 +101,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(65_535) // Should use model.maxTokens since it's within 20% threshold
 	})
 
-	test("should clamp maxTokens to 20% of context window when maxTokens exceeds threshold", () => {
+	it("should clamp maxTokens to 20% of context window when maxTokens exceeds threshold", () => {
 		const model: ModelInfo = {
 			contextWindow: 100_000,
 			supportsPromptCache: false,
@@ -122,7 +122,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(20_000)
 	})
 
-	test("should clamp maxTokens to 20% of context window for Anthropic models when maxTokens exceeds threshold", () => {
+	it("should clamp maxTokens to 20% of context window for Anthropic models when maxTokens exceeds threshold", () => {
 		const model: ModelInfo = {
 			contextWindow: 100_000,
 			supportsPromptCache: true,
@@ -142,7 +142,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(20_000)
 	})
 
-	test("should use model.maxTokens when exactly at 20% threshold", () => {
+	it("should use model.maxTokens when exactly at 20% threshold", () => {
 		const model: ModelInfo = {
 			contextWindow: 100_000,
 			supportsPromptCache: false,
@@ -162,7 +162,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(result).toBe(20_000) // Should use model.maxTokens since it's exactly at 20%
 	})
 
-	test("should bypass 20% cap for GPT-5 models and use exact configured max tokens", () => {
+	it("should bypass 20% cap for GPT-5 models and use exact configured max tokens", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: false,
@@ -188,7 +188,7 @@ describe("getModelMaxOutputTokens", () => {
 		})
 	})
 
-	test("should still apply 20% cap to non-GPT-5 models", () => {
+	it("should still apply 20% cap to non-GPT-5 models", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: false,
@@ -214,7 +214,7 @@ describe("getModelMaxOutputTokens", () => {
 		})
 	})
 
-	test("should handle GPT-5 models with various max token configurations", () => {
+	it("should handle GPT-5 models with various max token configurations", () => {
 		const testCases = [
 			{
 				maxTokens: 128_000,
@@ -251,7 +251,7 @@ describe("getModelMaxOutputTokens", () => {
 		})
 	})
 
-	test("should return modelMaxTokens from settings when reasoning budget is required", () => {
+	it("should return modelMaxTokens from settings when reasoning budget is required", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -266,7 +266,7 @@ describe("getModelMaxOutputTokens", () => {
 		expect(getModelMaxOutputTokens({ modelId: "test", model, settings })).toBe(4000)
 	})
 
-	test("should return default 16_384 for reasoning budget models when modelMaxTokens not provided", () => {
+	it("should return default 16_384 for reasoning budget models when modelMaxTokens not provided", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -281,7 +281,7 @@ describe("getModelMaxOutputTokens", () => {
 })
 
 describe("shouldUseReasoningBudget", () => {
-	test("should return true when model has requiredReasoningBudget", () => {
+	it("should return true when model has requiredReasoningBudget", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -294,7 +294,7 @@ describe("shouldUseReasoningBudget", () => {
 		expect(shouldUseReasoningBudget({ model, settings: { enableReasoningEffort: false } })).toBe(true)
 	})
 
-	test("should return true when model supports reasoning budget and settings enable reasoning effort", () => {
+	it("should return true when model supports reasoning budget and settings enable reasoning effort", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -308,7 +308,7 @@ describe("shouldUseReasoningBudget", () => {
 		expect(shouldUseReasoningBudget({ model, settings })).toBe(true)
 	})
 
-	test("should return false when model supports reasoning budget but settings don't enable reasoning effort", () => {
+	it("should return false when model supports reasoning budget but settings don't enable reasoning effort", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -324,7 +324,7 @@ describe("shouldUseReasoningBudget", () => {
 		expect(shouldUseReasoningBudget({ model })).toBe(false)
 	})
 
-	test("should return false when model doesn't support reasoning budget", () => {
+	it("should return false when model doesn't support reasoning budget", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -340,7 +340,7 @@ describe("shouldUseReasoningBudget", () => {
 })
 
 describe("shouldUseReasoningEffort", () => {
-	test("should return true when model has reasoningEffort property", () => {
+	it("should return true when model has reasoningEffort property", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -352,7 +352,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model, settings: { reasoningEffort: undefined } })).toBe(true)
 	})
 
-	test("should return false when enableReasoningEffort is false, even if reasoningEffort is set", () => {
+	it("should return false when enableReasoningEffort is false, even if reasoningEffort is set", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -367,7 +367,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model, settings })).toBe(false)
 	})
 
-	test("should return false when enableReasoningEffort is false, even if model has reasoningEffort property", () => {
+	it("should return false when enableReasoningEffort is false, even if model has reasoningEffort property", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -381,7 +381,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model, settings })).toBe(false)
 	})
 
-	test("should return true when model supports reasoning effort and settings provide reasoning effort", () => {
+	it("should return true when model supports reasoning effort and settings provide reasoning effort", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -395,7 +395,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model, settings })).toBe(true)
 	})
 
-	test("should return false when model supports reasoning effort but settings don't provide reasoning effort", () => {
+	it("should return false when model supports reasoning effort but settings don't provide reasoning effort", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -411,7 +411,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model })).toBe(false)
 	})
 
-	test("should return false when model doesn't support reasoning effort and has no default", () => {
+	it("should return false when model doesn't support reasoning effort and has no default", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -425,7 +425,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model })).toBe(false)
 	})
 
-	test("should handle different reasoning effort values", () => {
+	it("should handle different reasoning effort values", () => {
 		const model: ModelInfo = {
 			contextWindow: 200_000,
 			supportsPromptCache: true,
@@ -442,7 +442,7 @@ describe("shouldUseReasoningEffort", () => {
 	})
 
 	// New cases for extended capability surface
-	test("array capability includes 'disable' with selection 'disable' -> false", () => {
+	it("array capability includes 'disable' with selection 'disable' -> false", () => {
 		const model: ModelInfo = {
 			contextWindow: 100_000,
 			supportsPromptCache: true,
@@ -452,7 +452,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model, settings })).toBe(false)
 	})
 
-	test("array capability includes 'none' with settings.reasoningEffort='none' -> true", () => {
+	it("array capability includes 'none' with settings.reasoningEffort='none' -> true", () => {
 		const model: ModelInfo = {
 			contextWindow: 100_000,
 			supportsPromptCache: true,
@@ -462,7 +462,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model, settings })).toBe(true)
 	})
 
-	test("array capability includes 'minimal' with settings.reasoningEffort='minimal' -> true", () => {
+	it("array capability includes 'minimal' with settings.reasoningEffort='minimal' -> true", () => {
 		const model: ModelInfo = {
 			contextWindow: 100_000,
 			supportsPromptCache: true,
@@ -472,7 +472,7 @@ describe("shouldUseReasoningEffort", () => {
 		expect(shouldUseReasoningEffort({ model, settings })).toBe(true)
 	})
 
-	test("boolean true with 'none' and 'minimal' -> true", () => {
+	it("boolean true with 'none' and 'minimal' -> true", () => {
 		const model: ModelInfo = {
 			contextWindow: 100_000,
 			supportsPromptCache: true,

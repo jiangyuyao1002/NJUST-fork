@@ -1,6 +1,6 @@
 // npx vitest core/webview/__tests__/ClineProvider.apiHandlerRebuild.spec.ts
 
-import { describe, test, expect, vi, beforeEach } from "vitest"
+import { describe, expect, vi, beforeEach, it } from "vitest"
 
 import * as vscode from "vscode"
 
@@ -278,7 +278,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 	})
 
 	describe("upsertProviderProfile", () => {
-		test("calls updateApiConfiguration when provider/model unchanged but profile settings changed (explicit save)", async () => {
+		it("calls updateApiConfiguration when provider/model unchanged but profile settings changed (explicit save)", async () => {
 			// Create a task with the current config
 			const mockTask = new Task({
 				...defaultTaskOptions,
@@ -324,7 +324,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 			expect((mockTask as any).apiConfiguration.modelTemperature).toBe(0.7)
 		})
 
-		test("calls updateApiConfiguration when provider changes", async () => {
+		it("calls updateApiConfiguration when provider changes", async () => {
 			const mockTask = new Task({
 				...defaultTaskOptions,
 				apiConfiguration: {
@@ -360,7 +360,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 			)
 		})
 
-		test("calls updateApiConfiguration when model changes", async () => {
+		it("calls updateApiConfiguration when model changes", async () => {
 			const mockTask = new Task({
 				...defaultTaskOptions,
 				apiConfiguration: {
@@ -396,7 +396,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 			)
 		})
 
-		test("does nothing when no task is running", async () => {
+		it("does nothing when no task is running", async () => {
 			// Don't add any task to stack
 			buildApiHandlerMock.mockClear()
 
@@ -415,7 +415,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 	})
 
 	describe("activateProviderProfile", () => {
-		test("calls updateApiConfiguration when provider/model unchanged but settings differ (explicit profile switch)", async () => {
+		it("calls updateApiConfiguration when provider/model unchanged but settings differ (explicit profile switch)", async () => {
 			const mockTask = new Task({
 				...defaultTaskOptions,
 				apiConfiguration: {
@@ -458,7 +458,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 			expect((mockTask as any).apiConfiguration.rateLimitSeconds).toBe(7)
 		})
 
-		test("calls updateApiConfiguration when provider changes and syncs task.apiConfiguration", async () => {
+		it("calls updateApiConfiguration when provider changes and syncs task.apiConfiguration", async () => {
 			const mockTask = new Task({
 				...defaultTaskOptions,
 				apiConfiguration: {
@@ -497,7 +497,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 			expect((mockTask as any).apiConfiguration.apiModelId).toBe("claude-3-5-sonnet-20241022")
 		})
 
-		test("calls updateApiConfiguration when model changes and syncs task.apiConfiguration", async () => {
+		it("calls updateApiConfiguration when model changes and syncs task.apiConfiguration", async () => {
 			const mockTask = new Task({
 				...defaultTaskOptions,
 				apiConfiguration: {
@@ -538,7 +538,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 	})
 
 	describe("profile switching sequence", () => {
-		test("A -> B -> A updates task.apiConfiguration each time", async () => {
+		it("A -> B -> A updates task.apiConfiguration each time", async () => {
 			const mockTask = new Task({
 				...defaultTaskOptions,
 				apiConfiguration: {
@@ -586,7 +586,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 	})
 
 	describe("getModelId helper", () => {
-		test("correctly extracts model ID from different provider configurations", () => {
+		it("correctly extracts model ID from different provider configurations", () => {
 			expect(getModelId({ apiProvider: "openrouter", openRouterModelId: "openai/gpt-4" })).toBe("openai/gpt-4")
 			expect(getModelId({ apiProvider: "anthropic", apiModelId: "claude-3-5-sonnet-20241022" })).toBe(
 				"claude-3-5-sonnet-20241022",
@@ -597,7 +597,7 @@ describe("ClineProvider - API Handler Rebuild Guard", () => {
 			)
 		})
 
-		test("returns undefined when no model ID is present", () => {
+		it("returns undefined when no model ID is present", () => {
 			expect(getModelId({ apiProvider: "anthropic" })).toBeUndefined()
 			expect(getModelId({})).toBeUndefined()
 		})

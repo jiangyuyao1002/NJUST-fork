@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, expect, vi, beforeEach, afterEach, it } from "vitest"
 
 import type * as _actualFsPromises from "fs/promises"
 import * as fsSyncActual from "fs"
@@ -103,7 +103,7 @@ describe("safeWriteJson", () => {
 	// Success Scenarios
 	// Note: Since we pre-create the file in beforeEach, this test will overwrite it.
 	// If "creation from non-existence" is critical and locking prevents it, safeWriteJson or locking strategy needs review.
-	test("should successfully write a new file (overwriting initial content from beforeEach)", async () => {
+	it("should successfully write a new file (overwriting initial content from beforeEach)", async () => {
 		const data = { message: "Hello, new world!" }
 
 		await safeWriteJson(currentTestFilePath, data)
@@ -112,7 +112,7 @@ describe("safeWriteJson", () => {
 		expect(content).toEqual(data)
 	})
 
-	test("should successfully overwrite an existing file", async () => {
+	it("should successfully overwrite an existing file", async () => {
 		const initialData = { message: "Initial content" }
 		const newData = { message: "Updated content" }
 
@@ -126,7 +126,7 @@ describe("safeWriteJson", () => {
 	})
 
 	// Failure Scenarios
-	test("should handle failure when writing to tempNewFilePath", async () => {
+	it("should handle failure when writing to tempNewFilePath", async () => {
 		// currentTestFilePath exists due to beforeEach, allowing lock acquisition.
 		const data = { message: "test write failure" }
 
@@ -156,7 +156,7 @@ describe("safeWriteJson", () => {
 		expect(content).toEqual({ initial: "content" })
 	})
 
-	test("should handle failure when renaming filePath to tempBackupFilePath (filePath exists)", async () => {
+	it("should handle failure when renaming filePath to tempBackupFilePath (filePath exists)", async () => {
 		const initialData = { message: "Initial content, should remain" }
 		const newData = { message: "New content, should not be written" }
 
@@ -177,7 +177,7 @@ describe("safeWriteJson", () => {
 		expect(content).toEqual(initialData)
 	})
 
-	test("should handle failure when renaming tempNewFilePath to filePath (filePath exists, backup succeeded)", async () => {
+	it("should handle failure when renaming tempNewFilePath to filePath (filePath exists, backup succeeded)", async () => {
 		const initialData = { message: "Initial content, should be restored" }
 		const newData = { message: "New content" }
 
@@ -215,7 +215,7 @@ describe("safeWriteJson", () => {
 	})
 
 	// Tests for directory creation functionality
-	test("should create parent directory if it doesn't exist", async () => {
+	it("should create parent directory if it doesn't exist", async () => {
 		// Create a path in a non-existent subdirectory of the temp dir
 		const subDir = path.join(tempDir, "new-subdir")
 		const filePath = path.join(subDir, "file.json")
@@ -235,7 +235,7 @@ describe("safeWriteJson", () => {
 		expect(content).toEqual(data)
 	})
 
-	test("should handle multi-level directory creation", async () => {
+	it("should handle multi-level directory creation", async () => {
 		// Create a new non-existent subdirectory path with multiple levels
 		const deepDir = path.join(tempDir, "level1", "level2", "level3")
 		const filePath = path.join(deepDir, "deep-file.json")
@@ -257,7 +257,7 @@ describe("safeWriteJson", () => {
 		expect(content).toEqual(data)
 	})
 
-	test("should handle directory creation permission errors", async () => {
+	it("should handle directory creation permission errors", async () => {
 		// Mock mkdir to simulate a permission error
 		const mkdirSpy = vi.spyOn(fs, "mkdir")
 		mkdirSpy.mockImplementationOnce(async () => {
@@ -277,7 +277,7 @@ describe("safeWriteJson", () => {
 		await expect(fs.access(subDir)).rejects.toThrow()
 	})
 
-	test("should successfully write to a non-existent file in an existing directory", async () => {
+	it("should successfully write to a non-existent file in an existing directory", async () => {
 		// Create directory but not the file
 		const subDir = path.join(tempDir, "existing-dir")
 		await fs.mkdir(subDir)
@@ -296,7 +296,7 @@ describe("safeWriteJson", () => {
 		expect(content).toEqual(data)
 	})
 
-	test("should handle failure when deleting tempBackupFilePath (filePath exists, all renames succeed)", async () => {
+	it("should handle failure when deleting tempBackupFilePath (filePath exists, all renames succeed)", async () => {
 		const initialData = { message: "Initial content" }
 		const newData = { message: "Successfully written new content" }
 
@@ -319,7 +319,7 @@ describe("safeWriteJson", () => {
 	})
 
 	// Test for logger error suppression during backup deletion
-	test("should suppress logger.error when backup deletion fails", async () => {
+	it("should suppress logger.error when backup deletion fails", async () => {
 		const initialData = { message: "Initial" }
 		const newData = { message: "New" }
 
@@ -347,7 +347,7 @@ describe("safeWriteJson", () => {
 	})
 
 	// The expected error message might need to change if the mock behaves differently.
-	test("should handle failure when renaming tempNewFilePath to filePath (filePath initially exists)", async () => {
+	it("should handle failure when renaming tempNewFilePath to filePath (filePath initially exists)", async () => {
 		// currentTestFilePath exists due to beforeEach.
 		const initialData = { message: "Initial content" }
 		const newData = { message: "New content" }
@@ -379,7 +379,7 @@ describe("safeWriteJson", () => {
 		expect(content).toEqual(initialData)
 	})
 
-	test("should throw an error if an inter-process lock is already held for the filePath", async () => {
+	it("should throw an error if an inter-process lock is already held for the filePath", async () => {
 		vi.resetModules() // Clear module cache to ensure fresh imports for this test
 
 		const data = { message: "test lock failure" }
@@ -402,7 +402,7 @@ describe("safeWriteJson", () => {
 		await fs.unlink(lockTestFilePath).catch(() => {}) // Ignore errors if file doesn't exist
 		vi.unmock("proper-lockfile") // Ensure the mock is removed after this test
 	})
-	test("should release lock even if an error occurs mid-operation", async () => {
+	it("should release lock even if an error occurs mid-operation", async () => {
 		const data = { message: "test lock release on error" }
 
 		// Mock createWriteStream to throw an error
@@ -431,7 +431,7 @@ describe("safeWriteJson", () => {
 		await expect(safeWriteJson(currentTestFilePath, data)).resolves.toBeUndefined()
 	})
 
-	test("should handle fs.access error that is not ENOENT", async () => {
+	it("should handle fs.access error that is not ENOENT", async () => {
 		const data = { message: "access error test" }
 		const accessSpy = vi.spyOn(fs, "access").mockImplementationOnce(async () => {
 			const error = new Error("EACCES: permission denied") as any
@@ -449,7 +449,7 @@ describe("safeWriteJson", () => {
 	})
 
 	// Test for rollback failure scenario
-	test("should log error and re-throw original if rollback fails", async () => {
+	it("should log error and re-throw original if rollback fails", async () => {
 		const initialData = { message: "Initial, should be lost if rollback fails" }
 		const newData = { message: "New content" }
 

@@ -462,7 +462,7 @@ describe("CangjieSymbolIndex", () => {
 		})
 	})
 
-	describe("findSymbolsByPrefix", () => {
+	describe("findSymbolsByPrefix — additional cases", () => {
 		it("returns empty array for short prefix", () => {
 			const index = new CangjieSymbolIndex()
 			const result = index.findSymbolsByPrefix("x")
