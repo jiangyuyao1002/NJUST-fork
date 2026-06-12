@@ -95,6 +95,8 @@ export default [
 			"@typescript-eslint/no-explicit-any": "off",
 			"no-console": "off",
 			"vitest/no-focused-tests": "error",
+			"vitest/no-identical-title": "error",
+			"vitest/consistent-test-it": ["error", { fn: "it" }],
 		},
 	},
 	{

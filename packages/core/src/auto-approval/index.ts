@@ -123,7 +123,8 @@ export async function checkAutoApproval({
 				} else {
 					return { decision: "ask" }
 				}
-			} catch {
+			} catch (err) {
+				logger.debug("AutoApproval", "followup JSON parse failed, falling back to ask", err)
 				return { decision: "ask" }
 			}
 		} else {
@@ -146,7 +147,8 @@ export async function checkAutoApproval({
 			} else if (mcpServerUse.type === "access_mcp_resource") {
 				return state.alwaysAllowMcp === true ? { decision: "approve" } : { decision: "ask" }
 			}
-		} catch {
+		} catch (err) {
+			logger.debug("AutoApproval", "MCP use JSON parse failed, falling back to ask", err)
 			return { decision: "ask" }
 		}
 
