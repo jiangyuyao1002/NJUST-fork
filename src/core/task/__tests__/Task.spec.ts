@@ -1595,6 +1595,7 @@ describe("Cline", () => {
 			let mockApiConfig: any
 
 			beforeEach(() => {
+				vi.useFakeTimers()
 				vi.clearAllMocks()
 
 				mockApiConfig = {
@@ -1649,7 +1650,7 @@ describe("Cline", () => {
 				expect(task.diffStrategy).toBeInstanceOf(MultiSearchReplaceDiffStrategy)
 
 				// Wait for async strategy update
-				await new Promise((resolve) => setTimeout(resolve, 10))
+				await vi.advanceTimersByTimeAsync(10)
 
 				// Should still be MultiSearchReplaceDiffStrategy
 				expect(task.diffStrategy).toBeInstanceOf(MultiSearchReplaceDiffStrategy)
@@ -2152,6 +2153,14 @@ describe("Cline", () => {
 })
 
 describe("Queued message processing after condense", () => {
+	beforeEach(() => {
+		vi.useFakeTimers()
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
 	function createProvider(): any {
 		const storageUri = { fsPath: path.join(os.tmpdir(), "test-storage") }
 		const ctx = {
@@ -2218,7 +2227,7 @@ describe("Queued message processing after condense", () => {
 
 		// processQueuedMessages schedules submitUserMessage via setTimeout(0);
 		// wait briefly to let it fire and the mocked promise resolve.
-		await new Promise((r) => setTimeout(r, 50))
+		await vi.advanceTimersByTimeAsync(50)
 
 		expect(submitSpy).toHaveBeenCalledWith("queued text", ["img1.png"])
 		expect(task.messageQueueService.isEmpty()).toBe(true)
@@ -2253,7 +2262,7 @@ describe("Queued message processing after condense", () => {
 		// Condense in task A should only drain A's queue.
 		// processQueuedMessages uses setTimeout(0); wait briefly to let it fire.
 		await taskA.condenseContext()
-		await new Promise((r) => setTimeout(r, 50))
+		await vi.advanceTimersByTimeAsync(50)
 
 		expect(spyA).toHaveBeenCalledWith("A message", undefined)
 		expect(spyB).not.toHaveBeenCalled()
@@ -2261,7 +2270,7 @@ describe("Queued message processing after condense", () => {
 
 		// Now condense in task B should drain B's queue
 		await taskB.condenseContext()
-		await new Promise((r) => setTimeout(r, 50))
+		await vi.advanceTimersByTimeAsync(50)
 
 		expect(spyB).toHaveBeenCalledWith("B message", undefined)
 		expect(taskB.messageQueueService.isEmpty()).toBe(true)

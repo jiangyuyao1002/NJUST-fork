@@ -23,7 +23,7 @@ export default defineConfig({
 		maxWorkers: process.env.CI ? 1 : undefined,
 		testTimeout: 30_000,
 		hookTimeout: 30_000,
-		retry: 2,
+		retry: 0,
 		coverage: {
 			provider: "v8",
 			reporter: ["json", "html", "text-summary"],

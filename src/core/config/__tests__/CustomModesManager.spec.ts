@@ -645,6 +645,14 @@ describe("CustomModesManager", () => {
 	})
 
 	describe("File Operations", () => {
+		beforeEach(() => {
+			vi.useFakeTimers()
+		})
+
+		afterEach(() => {
+			vi.useRealTimers()
+		})
+
 		it("creates settings directory if it doesn't exist", async () => {
 			const settingsPath = path.join(mockStoragePath, "settings", GlobalFileNames.customModes)
 			await manager.getCustomModesFilePath()
@@ -697,7 +705,7 @@ describe("CustomModesManager", () => {
 				const testManager = new CustomModesManager(mockContext, mockOnUpdate)
 
 				// Wait a bit for the async watchCustomModesFiles to complete
-				await new Promise((resolve) => setTimeout(resolve, 10))
+				await vi.advanceTimersByTimeAsync(10)
 
 				// Verify createFileSystemWatcher was called
 				expect(createFileSystemWatcherMock).toHaveBeenCalled()

@@ -168,6 +168,14 @@ describe("CangjieLspStatusBar", () => {
 	// ── detectSdkVersion ────────────────────────────────────────────
 
 	describe("detectSdkVersion", () => {
+		beforeEach(() => {
+			vi.useFakeTimers()
+		})
+
+		afterEach(() => {
+			vi.useRealTimers()
+		})
+
 		it("sets sdkVersion when cjc --version succeeds", async () => {
 			mockResolveCangjieToolPath.mockReturnValue("/usr/bin/cjc")
 			mockExecFile.mockResolvedValueOnce({ stdout: "cjc 1.5.0\n", stderr: "" })
@@ -192,7 +200,7 @@ describe("CangjieLspStatusBar", () => {
 		it("returns early when cjcPath is undefined", async () => {
 			mockResolveCangjieToolPath.mockReturnValue(undefined)
 			const sb = new CangjieLspStatusBar(mockLspClient, mockLspOutput, mockBuildOutput)
-			await new Promise((r) => setTimeout(r, 50))
+			await vi.advanceTimersByTimeAsync(50)
 			expect((sb as any).sdkVersion).toBeUndefined()
 			expect(mockExecFile).not.toHaveBeenCalled()
 			sb.dispose()
@@ -202,7 +210,7 @@ describe("CangjieLspStatusBar", () => {
 			mockResolveCangjieToolPath.mockReturnValue("/usr/bin/cjc")
 			mockExecFile.mockRejectedValueOnce(new Error("timeout"))
 			const sb = new CangjieLspStatusBar(mockLspClient, mockLspOutput, mockBuildOutput)
-			await new Promise((r) => setTimeout(r, 50))
+			await vi.advanceTimersByTimeAsync(50)
 			expect((sb as any).sdkVersion).toBeUndefined()
 			sb.dispose()
 		})

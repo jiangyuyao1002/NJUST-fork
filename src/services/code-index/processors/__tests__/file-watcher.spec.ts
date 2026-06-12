@@ -145,6 +145,14 @@ describe("FileWatcher", () => {
 	})
 
 	describe("file filtering", () => {
+		beforeEach(() => {
+			vi.useFakeTimers()
+		})
+
+		afterEach(() => {
+			vi.useRealTimers()
+		})
+
 		it("should ignore files in hidden directories on create events", async () => {
 			// Initialize the file watcher
 			await fileWatcher.initialize()
@@ -175,7 +183,7 @@ describe("FileWatcher", () => {
 			}
 
 			// Wait for batch processing
-			await new Promise((resolve) => setTimeout(resolve, 600))
+			await vi.advanceTimersByTimeAsync(600)
 
 			// Check that files in hidden directories were not processed
 			expect(processedFiles).not.toContain("src/.next/static/file.js")
@@ -211,7 +219,7 @@ describe("FileWatcher", () => {
 			}
 
 			// Wait for batch processing
-			await new Promise((resolve) => setTimeout(resolve, 600))
+			await vi.advanceTimersByTimeAsync(600)
 
 			// Check that files in hidden directories were not processed
 			expect(processedFiles).not.toContain(".vscode/settings.json")
@@ -242,7 +250,7 @@ describe("FileWatcher", () => {
 			}
 
 			// Wait for batch processing
-			await new Promise((resolve) => setTimeout(resolve, 600))
+			await vi.advanceTimersByTimeAsync(600)
 
 			// Check that files in hidden directories were not processed
 			expect(deletedFiles).not.toContain(".git/objects/abc123")
@@ -278,7 +286,7 @@ describe("FileWatcher", () => {
 			}
 
 			// Wait for batch processing
-			await new Promise((resolve) => setTimeout(resolve, 600))
+			await vi.advanceTimersByTimeAsync(600)
 
 			// Check that files in hidden directories were not processed
 			expect(processedFiles).not.toContain("src/.hidden/components/Button.tsx")

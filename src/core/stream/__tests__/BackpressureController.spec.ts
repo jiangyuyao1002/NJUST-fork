@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { BackpressureController } from "../BackpressureController"
 
 async function* items<T>(vals: T[]): AsyncGenerator<T> {
@@ -58,16 +58,18 @@ describe("BackpressureController", () => {
 	})
 
 	it("tracks buffer size", async () => {
+		vi.useFakeTimers()
 		async function* slow(): AsyncGenerator<number> {
 			for (let i = 0; i < 5; i++) {
 				yield i
 			}
 		}
 		const ctrl = new BackpressureController(slow(), 100, 10)
-		await new Promise((r) => setTimeout(r, 50))
+		await vi.advanceTimersByTimeAsync(50)
 		expect(ctrl.bufferSize).toBeGreaterThanOrEqual(0)
 		for await (const _ of ctrl) {
 			break
 		}
+		vi.useRealTimers()
 	})
 })

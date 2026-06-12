@@ -279,6 +279,7 @@ describe("ClineProvider Task History Synchronization", () => {
 	let taskHistoryState: HistoryItem[]
 
 	beforeEach(async () => {
+		vi.useFakeTimers()
 		vi.clearAllMocks()
 
 		if (!TelemetryService.hasInstance()) {
@@ -361,7 +362,7 @@ describe("ClineProvider Task History Synchronization", () => {
 
 		// Wait for the async TaskHistoryStore initialization to complete
 		// (fire-and-forget from the constructor; microtasks need to flush)
-		await new Promise((resolve) => setTimeout(resolve, 10))
+		await vi.advanceTimersByTimeAsync(10)
 
 		// Mock the custom modes manager
 		;(provider as any).customModesManager = {
@@ -378,6 +379,10 @@ describe("ClineProvider Task History Synchronization", () => {
 			readResource: vi.fn().mockResolvedValue({ contents: [] }),
 			getAllServers: vi.fn().mockReturnValue([]),
 		})
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 
 	// Helper to create valid HistoryItem with required fields

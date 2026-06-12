@@ -511,27 +511,32 @@ describe("RooIgnoreController", () => {
 		 * Tests behavior when .rooignore is deleted
 		 */
 		it("should reset when .rooignore is deleted", async () => {
-			// Setup initial state with .rooignore
-			mockFileExists.mockResolvedValue(true)
-			mockReadFile.mockResolvedValue("node_modules")
-			await controller.initialize()
-			await new Promise((r) => setTimeout(r, 0))
+			vi.useFakeTimers()
+			try {
+				// Setup initial state with .rooignore
+				mockFileExists.mockResolvedValue(true)
+				mockReadFile.mockResolvedValue("node_modules")
+				await controller.initialize()
+				await vi.advanceTimersByTimeAsync(0)
 
-			// Verify initial state
-			expect(controller.validateAccess("node_modules/package.json")).toBe(false)
+				// Verify initial state
+				expect(controller.validateAccess("node_modules/package.json")).toBe(false)
 
-			// Simulate file deletion
-			mockFileExists.mockResolvedValue(false)
+				// Simulate file deletion
+				mockFileExists.mockResolvedValue(false)
 
-			// Find and trigger the onDelete handler
-			const onDeleteHandler = mockWatcher.onDidDelete.mock.calls[0][0]
-			await onDeleteHandler()
+				// Find and trigger the onDelete handler
+				const onDeleteHandler = mockWatcher.onDidDelete.mock.calls[0][0]
+				await onDeleteHandler()
 
-			// Verify content was reset
-			expect(controller.rooIgnoreContent).toBeUndefined()
+				// Verify content was reset
+				expect(controller.rooIgnoreContent).toBeUndefined()
 
-			// Verify access validation changed
-			expect(controller.validateAccess("node_modules/package.json")).toBe(true)
+				// Verify access validation changed
+				expect(controller.validateAccess("node_modules/package.json")).toBe(true)
+			} finally {
+				vi.useRealTimers()
+			}
 		})
 	})
 })

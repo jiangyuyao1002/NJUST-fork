@@ -729,6 +729,14 @@ describe("processTaskStreamChunk", () => {
 	// ── presentAssistantMessage error handling ──────────────────────────
 
 	describe("presentAssistantMessage error handling", () => {
+		beforeEach(() => {
+			vi.useFakeTimers()
+		})
+
+		afterEach(() => {
+			vi.useRealTimers()
+		})
+
 		it("catches errors from presentAssistantMessage and logs them", async () => {
 			const { TelemetryService } = await import("@njust-ai/telemetry")
 			const error = new Error("present failed")
@@ -745,7 +753,7 @@ describe("processTaskStreamChunk", () => {
 			await processTaskStreamChunk(opts)
 
 			// Give the fire-and-forget promise time to resolve
-			await new Promise((r) => setTimeout(r, 10))
+			await vi.advanceTimersByTimeAsync(10)
 
 			const { logger } = await import("../../../shared/logger")
 			expect(logger.error).toHaveBeenCalledWith("presentAssistantMessage failed", error)

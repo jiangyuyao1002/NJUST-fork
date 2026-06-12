@@ -104,6 +104,7 @@ describe("McpHub", () => {
 	const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform")
 
 	beforeEach(() => {
+		vi.useFakeTimers()
 		vi.clearAllMocks()
 
 		// Mock console.error to suppress error messages during tests
@@ -179,6 +180,7 @@ describe("McpHub", () => {
 	})
 
 	afterEach(() => {
+		vi.useRealTimers()
 		// Restore original console methods
 		console.error = originalConsoleError
 		// Restore original platform
@@ -236,7 +238,7 @@ describe("McpHub", () => {
 
 			// Create McpHub and let it initialize
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Find the connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "union-test-server")
@@ -268,7 +270,7 @@ describe("McpHub", () => {
 
 			// Create McpHub and let it initialize
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Find the connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "disabled-union-server")
@@ -297,7 +299,7 @@ describe("McpHub", () => {
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
 
 			// Wait for initialization
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Clear any connections that might have been created
 			mcpHub.connections = []
@@ -408,7 +410,7 @@ describe("McpHub", () => {
 			)
 
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Verify watcher was created
 			expect(chokidar.watch).toHaveBeenCalledWith(["/path/to/watch"], expect.any(Object))
@@ -485,7 +487,7 @@ describe("McpHub", () => {
 			)
 
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Verify watchers were created
 			expect(chokidar.watch).toHaveBeenCalled()
@@ -519,7 +521,7 @@ describe("McpHub", () => {
 			vi.mocked(chokidar.watch).mockClear()
 
 			const _mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Verify no watcher was created for disabled server
 			expect(chokidar.watch).not.toHaveBeenCalled()
@@ -543,7 +545,7 @@ describe("McpHub", () => {
 			)
 
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Find the connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "mcp-disabled-server")
@@ -569,7 +571,7 @@ describe("McpHub", () => {
 			)
 
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Find the connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "server-disabled-server")
@@ -596,7 +598,7 @@ describe("McpHub", () => {
 			)
 
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Find the connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "both-reasons-server")
@@ -627,7 +629,7 @@ describe("McpHub", () => {
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
 
 			// Wait for initialization
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// The server should be created as a disconnected connection with null client/transport
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "null-safety-server")
@@ -697,7 +699,7 @@ describe("McpHub", () => {
 			)
 
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Get the connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "type-check-server")
@@ -715,7 +717,7 @@ describe("McpHub", () => {
 
 		it("should handle missing connections safely", async () => {
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Try operations on non-existent server
 			await expect(mcpHub.callTool("non-existent-server", "test-tool", {})).rejects.toThrow(
@@ -773,7 +775,7 @@ describe("McpHub", () => {
 			)
 
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Delete the connection
 			await mcpHub.deleteConnection("delete-safety-server")
@@ -1396,7 +1398,7 @@ describe("McpHub", () => {
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
 
 			// Wait for initialization
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// The server should be created as a disconnected connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "disabled-server")
@@ -1427,7 +1429,7 @@ describe("McpHub", () => {
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
 
 			// Wait for initialization
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// The server should be created as a disconnected connection
 			const connection = mcpHub.connections.find((conn) => conn.server.name === "disabled-server")
@@ -1809,7 +1811,7 @@ describe("McpHub", () => {
 
 			// Create McpHub and let it initialize with MCP enabled
 			const mcpHub = new McpHub(mockProvider as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Verify server is connected
 			const connectedServer = mcpHub.connections.find((conn) => conn.server.name === "toggle-test-server")
@@ -1870,7 +1872,7 @@ describe("McpHub", () => {
 			const mcpHub = new McpHub(disabledMockProvider as unknown as IMcpHubClient)
 
 			// Wait for initialization
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Find the disabled-test-server
 			const disabledServer = mcpHub.connections.find((conn) => conn.server.name === "disabled-test-server")
@@ -1945,7 +1947,7 @@ describe("McpHub", () => {
 			const mcpHub = new McpHub(enabledMockProvider as unknown as IMcpHubClient)
 
 			// Wait for initialization
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Find the enabled-test-server
 			const enabledServer = mcpHub.connections.find((conn) => conn.server.name === "enabled-test-server")
@@ -1987,7 +1989,7 @@ describe("McpHub", () => {
 
 			// Create McpHub with disabled MCP
 			const mcpHub = new McpHub(disabledMockProvider as unknown as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Clear previous calls
 			vi.clearAllMocks()
@@ -2033,7 +2035,7 @@ describe("McpHub", () => {
 
 			// Create McpHub with disabled MCP
 			const mcpHub = new McpHub(disabledMockProvider as unknown as IMcpHubClient)
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await vi.advanceTimersByTimeAsync(100)
 
 			// Set isConnecting to false to ensure it's properly reset
 			mcpHub.isConnecting = false

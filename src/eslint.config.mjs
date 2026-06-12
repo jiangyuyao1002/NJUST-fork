@@ -1,4 +1,5 @@
 import { config } from "@njust-ai/config-eslint/base-strict"
+import vitest from "@vitest/eslint-plugin"
 
 /** @type {import("eslint").Linter.Config} */
 export default [
@@ -25,7 +26,10 @@ export default [
 			],
 			"@typescript-eslint/no-explicit-any": ["error", { ignoreRestArgs: true }],
 			"@typescript-eslint/no-require-imports": "warn",
-			"@typescript-eslint/ban-ts-comment": ["warn", { "ts-expect-error": false, "ts-ignore": true, "ts-nocheck": true }],
+			"@typescript-eslint/ban-ts-comment": [
+				"warn",
+				{ "ts-expect-error": false, "ts-ignore": true, "ts-nocheck": true },
+			],
 			"no-console": "error",
 			"@typescript-eslint/no-floating-promises": "error",
 			"@typescript-eslint/require-await": "warn",
@@ -83,10 +87,14 @@ export default [
 	},
 	{
 		files: ["**/__tests__/**", "**/*.spec.ts", "**/*.test.ts", "**/__mocks__/**"],
+		plugins: {
+			vitest,
+		},
 		rules: {
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"no-console": "off",
+			"vitest/no-focused-tests": "error",
 		},
 	},
 	{

@@ -399,8 +399,13 @@ describe("CangjieLspClient construction & state", () => {
 
 describe("CangjieLspClient start()", () => {
 	beforeEach(() => {
+		vi.useFakeTimers()
 		resetMocks()
 		setupConfig()
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 
 	it("sets stopped when LSP is disabled", async () => {
@@ -447,7 +452,7 @@ describe("CangjieLspClient start()", () => {
 		}
 		mockOpenDocCallbacks.forEach((cb) => cb(doc))
 		// Wait for async doStart
-		await new Promise((r) => setTimeout(r, 10))
+		await vi.advanceTimersByTimeAsync(10)
 		expect(client.state).toBe("running")
 	})
 

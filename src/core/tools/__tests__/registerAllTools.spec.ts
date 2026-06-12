@@ -12,6 +12,7 @@ const { mockRegister, mockRegisterConditional, mockSetToolRegistry, mockPipeline
 
 describe("registerAllTools", () => {
 	beforeEach(() => {
+		vi.useFakeTimers()
 		vi.resetModules()
 		vi.clearAllMocks()
 
@@ -132,7 +133,7 @@ describe("registerAllTools", () => {
 	it("invokes createToolRegistrationPipeline with 3 middlewares", async () => {
 		await import("../registerAllTools")
 		// Wait for the void async pipeline to settle
-		await new Promise((resolve) => setTimeout(resolve, 100))
+		await vi.advanceTimersByTimeAsync(100)
 
 		expect(mockPipeline).toHaveBeenCalledTimes(1)
 		// 3 middlewares: registerStaticTools, wireToolSearchRegistry, registerConditionalTools
@@ -141,7 +142,7 @@ describe("registerAllTools", () => {
 
 	it("registers all static tools through the registry", async () => {
 		await import("../registerAllTools")
-		await new Promise((resolve) => setTimeout(resolve, 100))
+		await vi.advanceTimersByTimeAsync(100)
 
 		// Count tools in the allTools array of registerAllTools.ts: 40 tools
 		expect(mockRegister).toHaveBeenCalled()
@@ -197,7 +198,7 @@ describe("registerAllTools", () => {
 
 	it("registers conditional tools (WorktreeTool)", async () => {
 		await import("../registerAllTools")
-		await new Promise((resolve) => setTimeout(resolve, 100))
+		await vi.advanceTimersByTimeAsync(100)
 
 		expect(mockRegisterConditional).toHaveBeenCalledTimes(1)
 		expect(mockRegisterConditional).toHaveBeenCalledWith(
@@ -208,8 +209,12 @@ describe("registerAllTools", () => {
 
 	it("wires tool search to the registry", async () => {
 		await import("../registerAllTools")
-		await new Promise((resolve) => setTimeout(resolve, 100))
+		await vi.advanceTimersByTimeAsync(100)
 
 		expect(mockSetToolRegistry).toHaveBeenCalled()
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 })

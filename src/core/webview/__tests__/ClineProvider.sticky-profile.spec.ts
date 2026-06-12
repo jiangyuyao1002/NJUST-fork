@@ -243,6 +243,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 	let originalRooCliRuntimeEnv: string | undefined
 
 	beforeEach(async () => {
+		vi.useFakeTimers()
 		vi.clearAllMocks()
 		taskIdCounter = 0
 		originalRooCliRuntimeEnv = process.env.NJUST_AI_CLI_RUNTIME
@@ -327,7 +328,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))
 
 		// Wait for the async TaskHistoryStore initialization to complete
-		await new Promise((resolve) => setTimeout(resolve, 10))
+		await vi.advanceTimersByTimeAsync(10)
 
 		// Mock getMcpHub method
 		provider.getMcpHub = vi.fn().mockReturnValue({
@@ -340,6 +341,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 	})
 
 	afterEach(() => {
+		vi.useRealTimers()
 		if (originalRooCliRuntimeEnv === undefined) {
 			delete process.env.NJUST_AI_CLI_RUNTIME
 		} else {

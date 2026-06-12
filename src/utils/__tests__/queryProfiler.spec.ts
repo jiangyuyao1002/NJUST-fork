@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { globalQueryProfiler } from "../queryProfiler"
 
 describe("queryProfiler", () => {
 	it("computes TTFT and E2E on finish", async () => {
+		vi.useFakeTimers()
 		const requestId = `req-${Date.now()}`
 		globalQueryProfiler.start({
 			requestId,
@@ -12,9 +13,9 @@ describe("queryProfiler", () => {
 			startedAt: Date.now(),
 		})
 
-		await new Promise((r) => setTimeout(r, 5))
+		await vi.advanceTimersByTimeAsync(5)
 		globalQueryProfiler.markFirstToken(requestId)
-		await new Promise((r) => setTimeout(r, 5))
+		await vi.advanceTimersByTimeAsync(5)
 		const result = globalQueryProfiler.finish(requestId)
 
 		expect(result).toBeDefined()
@@ -22,6 +23,7 @@ describe("queryProfiler", () => {
 		expect(result!.ttftMs).toBeTypeOf("number")
 		expect(result!.e2eMs).toBeTypeOf("number")
 		expect(result!.e2eMs!).toBeGreaterThanOrEqual(result!.ttftMs!)
+		vi.useRealTimers()
 	})
 
 	it("returns undefined for unknown request id", () => {

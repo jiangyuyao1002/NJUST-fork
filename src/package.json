@@ -126,6 +126,7 @@
 		"@vscode/vsce": "^3.3.2",
 		"ai": "^6.0.75",
 		"esbuild-wasm": "^0.25.0",
+		"@vitest/eslint-plugin": "^1.6.20",
 		"execa": "^9.5.2",
 		"glob": "^11.1.0",
 		"mkdirp": "^3.0.1",
@@ -135,6 +136,7 @@
 		"rimraf": "^6.0.1",
 		"tsup": "^8.4.0",
 		"tsx": "^4.19.3",
+		"typescript": "~5.8.3",
 		"vitest": "^4.1.8",
 		"zod-to-ts": "^1.2.0"
 	},

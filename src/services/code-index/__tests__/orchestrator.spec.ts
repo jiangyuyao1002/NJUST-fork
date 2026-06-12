@@ -65,6 +65,7 @@ describe("CodeIndexOrchestrator - error path cleanup gating", () => {
 	let fileWatcher: any
 
 	beforeEach(() => {
+		vi.useFakeTimers()
 		vi.clearAllMocks()
 
 		configManager = {
@@ -108,6 +109,10 @@ describe("CodeIndexOrchestrator - error path cleanup gating", () => {
 			onDidFinishBatchProcessing: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 			dispose: vi.fn(),
 		}
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 
 	it("should not call clearCollection() or clear cache when initialize() fails (indexing not started)", async () => {
@@ -178,6 +183,7 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 	let fileWatcher: any
 
 	beforeEach(() => {
+		vi.useFakeTimers()
 		vi.clearAllMocks()
 
 		configManager = {
@@ -256,7 +262,7 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 		const indexingPromise = orchestrator.startIndexing()
 
 		// Give it a tick to begin
-		await new Promise((resolve) => setTimeout(resolve, 10))
+		await vi.advanceTimersByTimeAsync(10)
 
 		// Stop indexing
 		orchestrator.stopIndexing()
@@ -300,7 +306,7 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 		)
 
 		const indexingPromise = orchestrator.startIndexing()
-		await new Promise((resolve) => setTimeout(resolve, 10))
+		await vi.advanceTimersByTimeAsync(10)
 
 		orchestrator.stopIndexing()
 		await indexingPromise
@@ -342,7 +348,7 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 		)
 
 		const indexingPromise = orchestrator.startIndexing()
-		await new Promise((resolve) => setTimeout(resolve, 10))
+		await vi.advanceTimersByTimeAsync(10)
 
 		orchestrator.stopIndexing()
 		await indexingPromise
@@ -351,5 +357,9 @@ describe("CodeIndexOrchestrator - stopIndexing", () => {
 		expect(cacheManager.clearCacheFile).not.toHaveBeenCalled()
 		// Collection should NOT be cleared on user-initiated stop
 		expect(vectorStore.clearCollection).not.toHaveBeenCalled()
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 })

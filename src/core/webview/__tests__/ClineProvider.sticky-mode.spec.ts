@@ -247,6 +247,7 @@ describe("ClineProvider - Sticky Mode", () => {
 	let mockPostMessage: any
 
 	beforeEach(async () => {
+		vi.useFakeTimers()
 		vi.clearAllMocks()
 
 		if (!TelemetryService.hasInstance()) {
@@ -328,7 +329,7 @@ describe("ClineProvider - Sticky Mode", () => {
 		provider = new ClineProvider(mockContext, mockOutputChannel, "sidebar", new ContextProxy(mockContext))
 
 		// Wait for the async TaskHistoryStore initialization to complete
-		await new Promise((resolve) => setTimeout(resolve, 10))
+		await vi.advanceTimersByTimeAsync(10)
 
 		// Mock getMcpHub method
 		provider.getMcpHub = vi.fn().mockReturnValue({
@@ -338,6 +339,10 @@ describe("ClineProvider - Sticky Mode", () => {
 			readResource: vi.fn().mockResolvedValue({ contents: [] }),
 			getAllServers: vi.fn().mockReturnValue([]),
 		})
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 
 	describe("handleModeSwitch", () => {
@@ -967,7 +972,7 @@ describe("ClineProvider - Sticky Mode", () => {
 				emit: vi.fn(),
 				saveClineMessages: vi.fn(async function () {
 					// Simulate slow save
-					await new Promise((resolve) => setTimeout(resolve, 100))
+					await vi.advanceTimersByTimeAsync(100)
 				}),
 				clineMessages: [],
 				apiConversationHistory: [],
@@ -1289,7 +1294,7 @@ describe("ClineProvider - Sticky Mode", () => {
 
 			// Mock getTaskWithId to be slow
 			vi.spyOn(provider, "getTaskWithId").mockImplementation(async function () {
-				await new Promise((resolve) => setTimeout(resolve, 100))
+				await vi.advanceTimersByTimeAsync(100)
 				return {
 					historyItem,
 					taskDirPath: "/test/path",

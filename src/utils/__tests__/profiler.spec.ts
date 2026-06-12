@@ -1,12 +1,13 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { startupProfiler } from "../profiler"
 
 describe("startupProfiler", () => {
 	it("records start/end duration", async () => {
+		vi.useFakeTimers()
 		const name = `activate-${Date.now()}`
 		startupProfiler.start(name)
-		await new Promise((r) => setTimeout(r, 3))
+		await vi.advanceTimersByTimeAsync(3)
 		startupProfiler.end(name)
 
 		const summary = startupProfiler.summary()
@@ -16,12 +17,14 @@ describe("startupProfiler", () => {
 		expect(entry!.endedAt).toBeTypeOf("number")
 		expect(entry!.durationMs).toBeTypeOf("number")
 		expect(entry!.durationMs!).toBeGreaterThanOrEqual(0)
+		vi.useRealTimers()
 	})
 
 	it("measure() records duration and returns result", async () => {
+		vi.useFakeTimers()
 		const name = `measure-ok-${Date.now()}`
 		const result = await startupProfiler.measure(name, async () => {
-			await new Promise((r) => setTimeout(r, 3))
+			await vi.advanceTimersByTimeAsync(3)
 			return 42
 		})
 
@@ -30,6 +33,7 @@ describe("startupProfiler", () => {
 		const entry = startupProfiler.summary().find((e) => e.name === name)
 		expect(entry).toBeDefined()
 		expect(entry!.durationMs).toBeGreaterThanOrEqual(0)
+		vi.useRealTimers()
 	})
 
 	it("measure() calls end() even when fn() throws", async () => {
