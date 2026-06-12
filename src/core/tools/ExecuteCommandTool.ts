@@ -41,7 +41,9 @@ function _isHighRiskShellCommand(command: string): boolean {
 	return riskLevel === "forbidden" || riskLevel === "dangerous"
 }
 
-class ShellIntegrationError extends Error {}
+import { NamedError } from "@njust-ai/core/shared"
+
+class ShellIntegrationError extends NamedError {}
 
 interface ExecuteCommandParams {
 	command: string

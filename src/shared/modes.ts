@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 
+import { NamedError } from "@njust-ai/core/shared"
 import { logger } from "./logger"
 import {
 	type GroupEntry,
@@ -138,13 +139,12 @@ export function getModeSelection(mode: string, promptComponent?: PromptComponent
 }
 
 // Custom error class for file restrictions
-export class FileRestrictionError extends Error {
+export class FileRestrictionError extends NamedError {
 	constructor(mode: string, pattern: string, description: string | undefined, filePath: string, tool?: string) {
 		const toolInfo = tool ? `Tool '${tool}' in mode '${mode}'` : `This mode (${mode})`
 		super(
 			`${toolInfo} can only edit files matching pattern: ${pattern}${description ? ` (${description})` : ""}. Got: ${filePath}`,
 		)
-		this.name = "FileRestrictionError"
 	}
 }
 

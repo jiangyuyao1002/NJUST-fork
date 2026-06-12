@@ -5,11 +5,10 @@
  * It occurs when multiple asks are sent in rapid succession and an older
  * ask is invalidated by a newer one (e.g., during streaming updates).
  */
-export class AskIgnoredError extends Error {
+import { NamedError } from "@njust-ai/core/shared"
+
+export class AskIgnoredError extends NamedError {
 	constructor(reason?: string) {
 		super(reason ? `Ask ignored: ${reason}` : "Ask ignored")
-		this.name = "AskIgnoredError"
-		// Maintains proper prototype chain for instanceof checks
-		Object.setPrototypeOf(this, AskIgnoredError.prototype)
 	}
 }

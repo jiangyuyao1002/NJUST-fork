@@ -11,18 +11,13 @@ export type { MentionSuggestion, GitMentionSuggestion } from "./context-mentions
 export { getErrorMessage, getErrorStack, wrapAsError, hasMessage } from "./error-utils.js"
 export { GlobalFileNames } from "./globalFileNames.js"
 export { logger, invalidateDebugCache } from "./logger.js"
+export { NamedError } from "./NamedError.js"
 export { DEFAULT_MODE_SLUG } from "./mode-constants.js"
 export type { SkillMetadata, SkillContent } from "./skills.js"
 export { supportPrompt, createPrompt } from "./support-prompt.js"
 export type { SupportPromptType, CustomSupportPrompts } from "./support-prompt.js"
 export { getLatestTodo } from "./todo.js"
-export {
-	toolParamNames,
-	TOOL_DISPLAY_NAMES,
-	TOOL_GROUPS,
-	ALWAYS_AVAILABLE_TOOLS,
-	TOOL_ALIASES,
-} from "./tools.js"
+export { toolParamNames, TOOL_DISPLAY_NAMES, TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS, TOOL_ALIASES } from "./tools.js"
 export type {
 	ToolResponse,
 	ToolResult,

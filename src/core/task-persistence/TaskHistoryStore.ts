@@ -276,8 +276,9 @@ export class TaskHistoryStore {
 			let dirEntries: string[]
 			try {
 				dirEntries = await fs.readdir(tasksDir)
-			} catch {
-				return // tasks dir doesn't exist yet
+			} catch (err) {
+				logger.debug("TaskHistoryStore", "tasks dir read failed", err)
+				return
 			}
 
 			// Filter out the index file and hidden files
@@ -332,7 +333,8 @@ export class TaskHistoryStore {
 			} else {
 				this.cache.delete(taskId)
 			}
-		} catch {
+		} catch (err) {
+			logger.debug("TaskHistoryStore", "invalidate re-read failed", err)
 			this.cache.delete(taskId)
 		}
 	}
@@ -368,7 +370,8 @@ export class TaskHistoryStore {
 
 			try {
 				await fs.access(taskDir)
-			} catch {
+			} catch (err) {
+				logger.debug("TaskHistoryStore", "task dir access failed during migration", err)
 				// Task directory doesn't exist; skip this entry as it's orphaned in globalState
 				continue
 			}
@@ -378,7 +381,8 @@ export class TaskHistoryStore {
 			try {
 				await fs.access(filePath)
 				// File already exists, skip (don't overwrite existing per-task files)
-			} catch {
+			} catch (err) {
+				logger.debug("TaskHistoryStore", "history_item.json access failed during migration", err)
 				// File doesn't exist, write it
 				await safeWriteJson(filePath, item)
 				this.cache.set(item.id, item)
@@ -511,7 +515,8 @@ export class TaskHistoryStore {
 			const raw = await fs.readFile(filePath, "utf8")
 			const item: HistoryItem = JSON.parse(raw)
 			return item.id ? item : null
-		} catch {
+		} catch (err) {
+			logger.debug("TaskHistoryStore", "task file read failed", err)
 			return null
 		}
 	}
@@ -654,7 +659,8 @@ export class TaskHistoryStore {
 			const walPath = await this.getWalPath()
 			await fs.access(walPath)
 			return true
-		} catch {
+		} catch (err) {
+			logger.debug("TaskHistoryStore", "WAL marker check failed", err)
 			return false
 		}
 	}

@@ -38,7 +38,8 @@ function resolveSetting(settingKey: string, envKey: string, def: string): string
 	try {
 		const fromConfig = vscode.workspace.getConfiguration(Package.name).get<string>(settingKey)
 		if (fromConfig?.trim()) return fromConfig.trim()
-	} catch {
+	} catch (err) {
+		logger.debug("MemRL", "vscode config read failed (API unavailable)", err)
 		// intentionally ignored: vscode API unavailable (e.g. unit test without mock)
 	}
 	const fromEnv = process.env[envKey]

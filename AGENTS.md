@@ -42,6 +42,37 @@ This file provides guidance to agents when working with code in this repository.
 
 - **Compile 反馈闭环**：MCP 模式下 `compile` 同样通过 `callTool(MCP_TOOLS.COMPILE)` 调用。`parseCompileResponse()` 默认 `success: false`（安全失败，不静默吞错）。其余 compile 反馈循环逻辑与 REST 相同。
 
+## 日志系统使用规范
+
+本仓库有两个日志系统，使用场景不同：
+
+### System A: `logger` (`@njust-ai/core/shared`)
+
+**默认选择。** 用于所有业务代码、service、工具、任务执行路径。
+
+**四个级别：** `logger.error(scope, msg, err)` / `logger.warn` / `logger.info` / `logger.debug`。Scope 参数固定为模块名称。
+
+**规则：**
+
+- 不要静默吞错——每个 `catch` 至少调用 `logger.debug`
+- 不要用 `console.*` 代替（ESLint `no-console` 会拦截）
+
+### System B: `CompactLogger` (`src/utils/logging/CompactLogger.ts`)
+
+**专用系统。** 用于日志压缩存储到磁盘文件，不用于日常业务日志。仅在激活性能分析、LSP 诊断等特定场景使用。
+
+**不要用于：** 一般 catch 日志（用 System A）、错误遥测（用 `TelemetryService`）、用户可见消息（用 `task.say()`）。
+
+### 选择速查
+
+| 场景             | 用哪个                                |
+| ---------------- | ------------------------------------- |
+| catch 块记录错误 | `logger.debug("Scope", "ctx", err)`   |
+| 非致命恢复       | `logger.warn("Scope", "msg", err)`    |
+| 致命错误         | `logger.error("Scope", "msg", err)`   |
+| 写入文件离线诊断 | `CompactLogger`                       |
+| PostHog 遥测     | `TelemetryService.captureException()` |
+
 ## 通用约束
 
 - **删除文件前必须用户确认**：Agent 在执行任何 `git rm`、手动删除文件、或通过代码逻辑删除用户工作区文件的操作前，**必须先向用户展示待删除文件列表并获得明确确认**（如用户回复 "确认删除" 或选择 "是"）。禁止在未经用户许可的情况下静默删除任何文件。此约束适用于代码提交、重构、清理等所有场景。

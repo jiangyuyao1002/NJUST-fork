@@ -9,6 +9,7 @@
 
 import * as fs from "fs/promises"
 import * as path from "path"
+import { logger } from "@njust-ai/core/shared"
 import { SESSION_MEMORIES_DIR } from "../../core/condense/sessionMemoryCompact"
 
 export type MemoryType = "session" | "user_feedback" | "project" | "reference"
@@ -50,20 +51,20 @@ export async function loadMemories(workspaceDir: string, type?: MemoryType): Pro
 				const ttl = MEMORY_TTL[parsed.type] ?? MEMORY_TTL.session
 				if (Date.now() - parsed.timestamp > ttl) {
 					// Remove expired file silently
-					fs.unlink(path.join(dir, file)).catch(() => {
-						/* best-effort cleanup */
+					fs.unlink(path.join(dir, file)).catch((err) => {
+						logger.debug("MemoryStore", `failed to unlink expired file: ${file}`, err)
 					})
 					continue
 				}
 				entries.push(parsed)
-			} catch {
-				// intentionally ignored: skip corrupted files
+			} catch (err) {
+				logger.debug("MemoryStore", `skipped corrupted memory file: ${file}`, err)
 			}
 		}
 
 		return entries.sort((a, b) => b.timestamp - a.timestamp)
-	} catch {
-		// intentionally ignored: memory directory read failure
+	} catch (err) {
+		logger.debug("MemoryStore", "memory directory read failure", err)
 		return []
 	}
 }
@@ -101,13 +102,13 @@ export async function pruneExpiredMemories(workspaceDir: string): Promise<number
 					await fs.unlink(path.join(dir, file))
 					removed++
 				}
-			} catch {
-				// intentionally ignored: skip corrupted files
+			} catch (err) {
+				logger.debug("MemoryStore", `skipped corrupted file during prune: ${file}`, err)
 			}
 		}
 		return removed
-	} catch {
-		// intentionally ignored: memory cleanup failure
+	} catch (err) {
+		logger.debug("MemoryStore", "memory directory read failure during prune", err)
 		return 0
 	}
 }

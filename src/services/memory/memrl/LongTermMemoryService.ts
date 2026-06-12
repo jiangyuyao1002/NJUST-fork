@@ -78,7 +78,8 @@ export class LongTermMemoryService {
 				)
 				this.store = { rules: [], embedFingerprint: current }
 			}
-		} catch {
+		} catch (err) {
+			logger.debug("MemRL", "cold start or failed to read LTM store", err)
 			this.store = { rules: [], embedFingerprint: current }
 		}
 		this.store.embedFingerprint = current
@@ -157,8 +158,8 @@ Focus on high-Q episodes (Q ≥ 0.6) as positive examples.`
 			}
 
 			await this.persist()
-		} catch {
-			// intentionally ignored: distillation is best-effort
+		} catch (err) {
+			logger.debug("MemRL", "distillation failed (best-effort)", err)
 		}
 	}
 

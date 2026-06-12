@@ -15,6 +15,8 @@
  * HunkLine := (" " | "-" | "+") text NEWLINE
  */
 
+import { NamedError } from "@njust-ai/core/shared"
+
 const BEGIN_PATCH_MARKER = "*** Begin Patch"
 const END_PATCH_MARKER = "*** End Patch"
 const ADD_FILE_MARKER = "*** Add File: "
@@ -28,13 +30,12 @@ const EMPTY_CHANGE_CONTEXT_MARKER = "@@"
 /**
  * Represents an error during patch parsing.
  */
-export class ParseError extends Error {
+export class ParseError extends NamedError {
 	constructor(
 		message: string,
 		public lineNumber?: number,
 	) {
 		super(lineNumber !== undefined ? `Line ${lineNumber}: ${message}` : message)
-		this.name = "ParseError"
 	}
 }
 

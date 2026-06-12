@@ -84,7 +84,8 @@ export class EpisodicMemoryService {
 				)
 				this.store = { entries: [], totalWrites: 0, embedFingerprint: current }
 			}
-		} catch {
+		} catch (err) {
+			logger.debug("MemRL", "cold start or failed to read episodic store", err)
 			// Cold start — empty store is fine
 			this.store = { entries: [], totalWrites: 0, embedFingerprint: current }
 		}

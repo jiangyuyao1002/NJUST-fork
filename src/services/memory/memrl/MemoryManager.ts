@@ -82,14 +82,20 @@ export class MemoryManager {
 		}
 
 		const [episodicEntries, ltmCards] = await Promise.all([
-			this.episodic.retrieve(intent).catch((): EpisodicEntry[] => []),
-			this.ltm.retrieve(intent).catch((): RuleCard[] => []),
+			this.episodic.retrieve(intent).catch((err) => {
+				logger.debug("MemoryManager", "episodic retrieve failed", err)
+				return []
+			}),
+			this.ltm.retrieve(intent).catch((err) => {
+				logger.debug("MemoryManager", "LTM retrieve failed", err)
+				return []
+			}),
 		])
 
 		// Mark LTM rules as used
 		if (ltmCards.length > 0) {
 			this.ltm.markUsed(ltmCards.map((r) => r.id)).catch(() => {
-				/* best-effort */
+				logger.debug("MemoryManager", "markUsed failed (best-effort)")
 			})
 		}
 
@@ -127,8 +133,8 @@ export class MemoryManager {
 		if (!this.episodic || !this.ltm) return
 		const recent = this.episodic.getRecent(LTM_DISTILL_BATCH)
 		// Fire-and-forget LLM distillation
-		this.ltm.distill(recent).catch(() => {
-			/* silent */
+		this.ltm.distill(recent).catch((err) => {
+			logger.debug("MemoryManager", "distillation trigger failed", err)
 		})
 	}
 

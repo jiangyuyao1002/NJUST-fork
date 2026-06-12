@@ -7,6 +7,7 @@ import { combineApiRequests } from "../../shared/combineApiRequests"
 import { combineCommandSequences } from "../../shared/combineCommandSequences"
 import { getApiMetrics } from "../../shared/getApiMetrics"
 import { findLastIndex } from "../../shared/array"
+import { logger } from "../../shared/logger"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { t } from "../../i18n"
 
@@ -84,7 +85,8 @@ export async function taskMetadata({
 			try {
 				taskDirSize = await getFolderSize.loose(taskDir)
 				taskSizeCache.set<number>(taskDir, taskDirSize)
-			} catch {
+			} catch (err) {
+				logger.debug("taskMetadata", "folder size fetch failed", err)
 				taskDirSize = 0
 			}
 		} else {

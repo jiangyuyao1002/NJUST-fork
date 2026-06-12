@@ -5,14 +5,14 @@
 
 import type { Hunk, UpdateFileChunk } from "./parser"
 import { seekSequence } from "./seek-sequence"
+import { NamedError } from "@njust-ai/core/shared"
 
 /**
  * Error during patch application.
  */
-export class ApplyPatchError extends Error {
+export class ApplyPatchError extends NamedError {
 	constructor(message: string) {
 		super(message)
-		this.name = "ApplyPatchError"
 	}
 }
 

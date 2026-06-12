@@ -7,10 +7,12 @@
  * Inspired by Claude Code's classifyToolError() pattern.
  */
 
+import { NamedError } from "@njust-ai/core/shared"
+
 /**
  * Base error class for all tool-related errors.
  */
-export class ToolError extends Error {
+export class ToolError extends NamedError {
 	constructor(
 		public readonly toolName: string,
 		message: string,
@@ -18,7 +20,6 @@ export class ToolError extends Error {
 		public readonly telemetrySafe?: string,
 	) {
 		super(message)
-		this.name = "ToolError"
 	}
 }
 
@@ -28,7 +29,6 @@ export class ToolError extends Error {
 export class ValidationError extends ToolError {
 	constructor(toolName: string, message: string, telemetrySafe?: string) {
 		super(toolName, message, telemetrySafe ?? `Validation failed for tool '${toolName}'`)
-		this.name = "ValidationError"
 	}
 }
 
@@ -38,7 +38,6 @@ export class ValidationError extends ToolError {
 export class PermissionError extends ToolError {
 	constructor(toolName: string, message?: string) {
 		super(toolName, message ?? `Permission denied for tool '${toolName}'`, `Permission denied: ${toolName}`)
-		this.name = "PermissionError"
 	}
 }
 
@@ -53,7 +52,6 @@ export class RetryableError extends ToolError {
 		public readonly originalError?: Error,
 	) {
 		super(toolName, message, `Retryable error in tool '${toolName}'`)
-		this.name = "RetryableError"
 	}
 
 	/**
@@ -104,6 +102,5 @@ export class RetryableError extends ToolError {
 export class AbortError extends ToolError {
 	constructor(toolName: string, message?: string) {
 		super(toolName, message ?? `Tool '${toolName}' was aborted`, `Aborted: ${toolName}`)
-		this.name = "AbortError"
 	}
 }

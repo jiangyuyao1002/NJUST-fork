@@ -7,6 +7,7 @@
  */
 
 import type { IEmbedder } from "../../code-index/interfaces/embedder"
+import { logger } from "../../../shared/logger"
 
 export class MemoryEmbeddingAdapter {
 	constructor(private readonly embedder: IEmbedder) {}
@@ -19,7 +20,8 @@ export class MemoryEmbeddingAdapter {
 		try {
 			const resp = await this.embedder.createEmbeddings([text])
 			return resp.embeddings[0] ?? []
-		} catch {
+		} catch (err) {
+			logger.debug("MemRL", "embed single text failed", err)
 			return []
 		}
 	}
@@ -32,7 +34,8 @@ export class MemoryEmbeddingAdapter {
 		try {
 			const resp = await this.embedder.createEmbeddings(texts)
 			return resp.embeddings
-		} catch {
+		} catch (err) {
+			logger.debug("MemRL", "embed batch failed", err)
 			return texts.map(() => [])
 		}
 	}

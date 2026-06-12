@@ -1,3 +1,4 @@
+import { NamedError } from "@njust-ai/core/shared"
 import { Anthropic } from "@anthropic-ai/sdk"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { findLastIndex } from "../../shared/array"
@@ -6,14 +7,13 @@ import { findLastIndex } from "../../shared/array"
  * Custom error class for tool result ID mismatches.
  * Used for structured error tracking via PostHog.
  */
-export class ToolResultIdMismatchError extends Error {
+export class ToolResultIdMismatchError extends NamedError {
 	constructor(
 		message: string,
 		public readonly toolResultIds: string[],
 		public readonly toolUseIds: string[],
 	) {
 		super(message)
-		this.name = "ToolResultIdMismatchError"
 	}
 }
 
@@ -22,14 +22,13 @@ export class ToolResultIdMismatchError extends Error {
  * Used for structured error tracking via PostHog when tool_use blocks
  * don't have corresponding tool_result blocks.
  */
-export class MissingToolResultError extends Error {
+export class MissingToolResultError extends NamedError {
 	constructor(
 		message: string,
 		public readonly missingToolUseIds: string[],
 		public readonly existingToolResultIds: string[],
 	) {
 		super(message)
-		this.name = "MissingToolResultError"
 	}
 }
 

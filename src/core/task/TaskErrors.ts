@@ -1,31 +1,27 @@
-export class TaskAbortedError extends Error {
+import { NamedError } from "@njust-ai/core/shared"
+
+export class TaskAbortedError extends NamedError {
 	public readonly taskId: string
 	public readonly instanceId: string
 
 	constructor(taskId: string, instanceId: string) {
 		super(`task ${taskId}.${instanceId} aborted`)
-		this.name = "TaskAbortedError"
 		this.taskId = taskId
 		this.instanceId = instanceId
-		Object.setPrototypeOf(this, TaskAbortedError.prototype)
 	}
 }
 
-export class TaskRetryExhaustedError extends Error {
+export class TaskRetryExhaustedError extends NamedError {
 	public readonly retryAttempts: number
 
 	constructor(taskId: string, retryAttempts: number) {
 		super(`[Task#${taskId}] Unattended retry limit reached (${retryAttempts}).`)
-		this.name = "TaskRetryExhaustedError"
 		this.retryAttempts = retryAttempts
-		Object.setPrototypeOf(this, TaskRetryExhaustedError.prototype)
 	}
 }
 
-export class TaskAutoApprovalError extends Error {
+export class TaskAutoApprovalError extends NamedError {
 	constructor(message: string) {
 		super(message)
-		this.name = "TaskAutoApprovalError"
-		Object.setPrototypeOf(this, TaskAutoApprovalError.prototype)
 	}
 }
