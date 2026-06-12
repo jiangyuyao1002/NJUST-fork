@@ -226,7 +226,7 @@ describe("PermissionRuleEngine - Extended", () => {
 	// ── 3. Classifier chain edge cases ─────────────────────────────
 
 	describe("classifier chain edge cases", () => {
-		it("silently ignores classifier that throws in sync path", () => {
+		it("fail-closed denies when classifier throws in sync path", () => {
 			const throwingClassifier: ClassifierStrategy = {
 				name: "thrower",
 				confidence: "high",
@@ -239,15 +239,15 @@ describe("PermissionRuleEngine - Extended", () => {
 			engine.registerClassifier(throwingClassifier)
 			engine.setClassifierConfig({ enabledClassifiers: ["thrower"] })
 
-			expect(engine.evaluate("read_file", {}, readOnly)).toBe("allow")
-			expect(logger.warn).toHaveBeenCalledWith(
+			expect(engine.evaluate("read_file", {}, readOnly)).toBe("deny")
+			expect(logger.error).toHaveBeenCalledWith(
 				"PermissionRuleEngine",
 				expect.stringContaining("thrower"),
 				expect.any(Error),
 			)
 		})
 
-		it("silently ignores classifier that rejects in async path", async () => {
+		it("fail-closed denies when classifier rejects in async path", async () => {
 			const rejectingClassifier: ClassifierStrategy = {
 				name: "rejector",
 				confidence: "high",
@@ -257,8 +257,8 @@ describe("PermissionRuleEngine - Extended", () => {
 			engine.registerClassifier(rejectingClassifier)
 			engine.setClassifierConfig({ enabledClassifiers: ["rejector"] })
 
-			await expect(engine.evaluateAsync("read_file", {}, readOnly)).resolves.toBe("allow")
-			expect(logger.warn).toHaveBeenCalledWith(
+			await expect(engine.evaluateAsync("read_file", {}, readOnly)).resolves.toBe("deny")
+			expect(logger.error).toHaveBeenCalledWith(
 				"PermissionRuleEngine",
 				expect.stringContaining("rejector"),
 				expect.any(Error),
