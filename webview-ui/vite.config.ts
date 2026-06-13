@@ -187,9 +187,9 @@ export default defineConfig(({ mode }) => {
 		},
 		define,
 		optimizeDeps: {
+			esbuildOptions: { target: "esnext" },
 			include: [
 				"mermaid",
-				"dagre", // Explicitly include dagre for pre-bundling
 				// Add other known large mermaid dependencies if identified
 			],
 			exclude: ["@vscode/codicons", "vscode-oniguruma", "shiki"],
