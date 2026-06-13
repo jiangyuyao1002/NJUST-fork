@@ -7,7 +7,7 @@ import {
 	prioritizeTools,
 } from "../ToolExecutionOrchestrator"
 
-const flushMicrotasks = () => new Promise((resolve) => setTimeout(resolve, 0))
+const flushMicrotasks = () => Promise.resolve()
 
 describe("classifyToolCategory", () => {
 	it("treats checkpointed tools as writes", () => {

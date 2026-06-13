@@ -23,6 +23,7 @@ describe("AuditLogger", () => {
 				fs.rmSync(tmpDir, { recursive: true, force: true })
 				break
 			} catch {
+				// [intentional] Windows file lock release wait
 				if (attempt < 2) await new Promise((r) => setTimeout(r, 100))
 			}
 		}

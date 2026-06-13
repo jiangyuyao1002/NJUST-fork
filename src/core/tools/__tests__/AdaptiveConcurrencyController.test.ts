@@ -21,7 +21,7 @@ describe("AdaptiveConcurrencyController", () => {
 				await c.acquire("read")
 				active++
 				maxActive = Math.max(maxActive, active)
-				await new Promise((r) => setTimeout(r, 10))
+				await new Promise((r) => setTimeout(r, 1))
 				active--
 				c.release("read")
 			}),
@@ -66,7 +66,7 @@ describe("executor integration", () => {
 				const statusBefore = controller.getStatus()[category].active
 				if (category === "read") maxRead = Math.max(maxRead, statusBefore)
 				else maxWrite = Math.max(maxWrite, statusBefore)
-				await new Promise((r) => setTimeout(r, 5))
+				await new Promise((r) => setTimeout(r, 1))
 			},
 			{
 				itemCategories: new Map([
@@ -89,7 +89,7 @@ describe("executor integration", () => {
 			["r1", "w1", "r2"],
 			async (item, idx) => {
 				events.push(`start-${item}`)
-				await new Promise((r) => setTimeout(r, idx === 1 ? 15 : 5))
+				await new Promise((r) => setTimeout(r, idx === 1 ? 2 : 1))
 				events.push(`end-${item}`)
 			},
 			{

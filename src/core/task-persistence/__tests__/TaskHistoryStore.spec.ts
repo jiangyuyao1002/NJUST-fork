@@ -397,10 +397,7 @@ describe("TaskHistoryStore", () => {
 			await store.initialize()
 
 			await store.upsert(makeHistoryItem({ id: "dispose-task" }))
-			store.dispose()
-
-			// Give the flush a moment to complete
-			await new Promise((resolve) => setTimeout(resolve, 100))
+			await store.disposeAsync()
 
 			const indexPath = path.join(tmpDir, "tasks", GlobalFileNames.historyIndex)
 			const raw = await fs.readFile(indexPath, "utf8")

@@ -1,3 +1,4 @@
+import { v7 as uuidv7 } from "uuid"
 import { ExtensionContext } from "vscode"
 import { z, ZodError } from "zod"
 import deepEqual from "fast-deep-equal"
@@ -188,7 +189,7 @@ export class ProviderSettingsManager {
 	}
 
 	public generateId() {
-		return Math.random().toString(36).substring(2, 15)
+		return uuidv7()
 	}
 
 	// Synchronize readConfig/writeConfig operations to avoid data loss.

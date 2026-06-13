@@ -135,7 +135,7 @@ export class TaskHistoryStore {
 			this.fsWatcher = null
 		}
 
-		// Synchronously flush the index (best-effort)
+		// Fire-and-forget flush (best-effort)
 		this.flushIndex().catch((err) => {
 			logger.error("TaskHistoryStore", "Error flushing index on dispose:", err)
 			TelemetryService.reportError(
@@ -143,6 +143,31 @@ export class TaskHistoryStore {
 				TelemetryEventName.UTILITY_ERROR,
 			)
 		})
+	}
+
+	/**
+	 * Dispose and await the final index flush.
+	 * Use this when the caller needs to guarantee persistence before shutdown.
+	 */
+	async disposeAsync(): Promise<void> {
+		this.disposed = true
+
+		if (this.indexWriteTimer) {
+			clearTimeout(this.indexWriteTimer)
+			this.indexWriteTimer = null
+		}
+
+		if (this.reconcileTimer) {
+			clearTimeout(this.reconcileTimer)
+			this.reconcileTimer = null
+		}
+
+		if (this.fsWatcher) {
+			this.fsWatcher.close()
+			this.fsWatcher = null
+		}
+
+		await this.flushIndex()
 	}
 
 	// ────────────────────────────── Reads ──────────────────────────────

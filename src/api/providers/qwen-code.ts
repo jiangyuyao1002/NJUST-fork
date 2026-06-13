@@ -88,7 +88,7 @@ export class QwenCodeHandler extends BaseProvider implements SingleCompletionHan
 			// Create the client instance with dummy key initially
 			// The API key will be updated dynamically via ensureAuthenticated
 			this.client = new OpenAI({
-				apiKey: "dummy-key-will-be-replaced",
+				apiKey: "",
 				baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
 				timeout: getApiRequestTimeout(),
 			})

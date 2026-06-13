@@ -14,7 +14,7 @@ export default [
 		rules: {
 			"no-regex-spaces": "warn",
 			"no-useless-escape": "warn",
-			"no-empty": ["error", { allowEmptyCatch: true }],
+			"no-empty": ["error", { allowEmptyCatch: false }],
 			"prefer-const": "error",
 			"@typescript-eslint/no-unused-vars": [
 				"error",
@@ -28,7 +28,7 @@ export default [
 			"@typescript-eslint/no-require-imports": "warn",
 			"@typescript-eslint/ban-ts-comment": [
 				"warn",
-				{ "ts-expect-error": false, "ts-ignore": true, "ts-nocheck": true },
+				{ "ts-expect-error": "allow-with-description", "ts-ignore": true, "ts-nocheck": true },
 			],
 			"no-console": "error",
 			"@typescript-eslint/no-floating-promises": "error",

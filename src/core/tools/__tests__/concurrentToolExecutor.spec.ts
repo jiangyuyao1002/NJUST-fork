@@ -28,7 +28,7 @@ describe("ConcurrentToolExecutor", () => {
 					}
 
 					await Promise.race([
-						new Promise<void>((resolve) => setTimeout(resolve, 30)),
+						new Promise<void>((resolve) => setTimeout(resolve, 5)),
 						new Promise<void>((resolve) => {
 							if (ctx.signal.aborted) {
 								observedAbortSignal = true

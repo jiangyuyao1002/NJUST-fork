@@ -16,6 +16,7 @@ import { RepoPerTaskCheckpointService } from "../RepoPerTaskCheckpointService"
 
 const tmpDir = path.join(os.tmpdir(), "CheckpointService")
 
+// [intentional] Windows file lock release wait
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const removeTempDir = async (dir: string) => {
