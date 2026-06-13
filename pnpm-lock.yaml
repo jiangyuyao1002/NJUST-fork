@@ -834,6 +834,10 @@ importers:
         version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@20.17.57)(@vitest/coverage-v8@4.1.8)(@vitest/ui@4.1.8)(jsdom@26.1.0)(vite@6.4.2(@types/node@20.17.57)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.19.4)(yaml@2.9.0))
 
   packages/vscode-shim:
+    dependencies:
+      '@njust-ai/types':
+        specifier: workspace:^
+        version: link:../types
     devDependencies:
       '@njust-ai/config-eslint':
         specifier: workspace:^

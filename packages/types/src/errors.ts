@@ -1,3 +1,5 @@
+import { NamedError } from "./NamedError.js"
+
 /**
  * ApiProviderError
  *
@@ -5,7 +7,7 @@
  * raw API errors. Preserves metadata (status, errorDetails, code) for retry logic
  * and UI display. Tests use instanceof ApiProviderError to verify error handling.
  */
-export class ApiProviderError extends Error {
+export class ApiProviderError extends NamedError {
 	status?: number
 	errorDetails?: unknown
 	code?: string
@@ -16,8 +18,6 @@ export class ApiProviderError extends Error {
 
 	constructor(message: string, options?: { cause?: unknown }) {
 		super(message, options)
-		this.name = "ApiProviderError"
-		Object.setPrototypeOf(this, ApiProviderError.prototype)
 	}
 }
 
@@ -28,10 +28,8 @@ export class ApiProviderError extends Error {
  * calls). TelemetryService.captureConsecutiveMistakeError captures these for
  * analytics. PresentAssistantMessage and related code may check for this type.
  */
-export class ConsecutiveMistakeError extends Error {
+export class ConsecutiveMistakeError extends NamedError {
 	constructor(message: string, options?: { cause?: unknown }) {
 		super(message, options)
-		this.name = "ConsecutiveMistakeError"
-		Object.setPrototypeOf(this, ConsecutiveMistakeError.prototype)
 	}
 }

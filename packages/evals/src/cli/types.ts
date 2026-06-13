@@ -1,13 +1,12 @@
+import { NamedError } from "@njust-ai/types"
 import { type TaskEvent } from "@njust-ai/types"
 
 import type { Run, Task } from "../db/index"
 import { Logger } from "./utils"
 
-export class SubprocessTimeoutError extends Error {
+export class SubprocessTimeoutError extends NamedError {
 	constructor(timeout: number) {
 		super(`Subprocess timeout after ${timeout}ms`)
-		this.name = "SubprocessTimeoutError"
-		Object.setPrototypeOf(this, SubprocessTimeoutError.prototype)
 	}
 }
 

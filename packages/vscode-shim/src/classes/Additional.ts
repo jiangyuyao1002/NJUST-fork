@@ -5,6 +5,7 @@
  */
 
 import { Range } from "./Range.js"
+import { NamedError } from "@njust-ai/types"
 import type { IUri, IRange, IPosition, DiagnosticSeverity, DiagnosticTag } from "../types.js"
 
 /**
@@ -130,13 +131,11 @@ export class LanguageModelToolResultPart {
 /**
  * File system error with specific error codes
  */
-export class FileSystemError extends Error {
+export class FileSystemError extends NamedError {
 	public code: string
 
 	constructor(message: string, code: string = "Unknown") {
 		super(message)
-		this.name = "FileSystemError"
-		Object.setPrototypeOf(this, FileSystemError.prototype)
 		this.code = code
 	}
 

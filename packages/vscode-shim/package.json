@@ -11,7 +11,9 @@
 		"test": "vitest run",
 		"clean": "rimraf .turbo"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"@njust-ai/types": "workspace:^"
+	},
 	"devDependencies": {
 		"@njust-ai/config-eslint": "workspace:^",
 		"@njust-ai/config-typescript": "workspace:^",

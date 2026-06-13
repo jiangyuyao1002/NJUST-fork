@@ -34,3 +34,4 @@ export * from "./vscode.js"
 export * from "./njust-ai-config-dir.js"
 
 export { DEFAULT_CLOUD_AGENT_URL } from "./constants.js"
+export { NamedError } from "./NamedError.js"
