@@ -11,7 +11,7 @@ import { convertToOpenAiMessages } from "../transform/openai-format"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { DEFAULT_HEADERS } from "./constants"
 import { BaseProvider } from "./base-provider"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import { calculateApiCostOpenAI, resolveOpenAiUsageForCost } from "../../shared/cost"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 
@@ -110,7 +110,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 		try {
 			return this.client.chat.completions.create(params, requestOptions)
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 	}
 
@@ -273,7 +273,7 @@ export abstract class BaseOpenAiCompatibleProvider<ModelName extends string>
 
 			return response.choices?.[0]?.message.content || ""
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 	}
 

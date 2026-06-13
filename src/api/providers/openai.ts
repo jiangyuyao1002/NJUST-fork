@@ -26,7 +26,7 @@ import { DEFAULT_HEADERS } from "./constants"
 import { requireApiKey } from "../interfaces/api-key-validator"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { getApiRequestTimeout } from "./utils/timeout-config"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 
 const openAiModelsResponseSchema = z.object({
 	data: z.array(z.unknown()),
@@ -195,7 +195,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 					...(metadata?.signal ? { signal: metadata.signal } : {}),
 				})
 			} catch (error) {
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 
 			const matcher = new TagMatcher(
@@ -263,7 +263,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 					...(metadata?.signal ? { signal: metadata.signal } : {}),
 				})
 			} catch (error) {
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 
 			const message = response.choices?.[0]?.message
@@ -334,7 +334,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 					isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
 				)
 			} catch (error) {
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 
 			return response.choices?.[0]?.message.content || ""
@@ -390,7 +390,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 					...(metadata?.signal ? { signal: metadata.signal } : {}),
 				})
 			} catch (error) {
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 
 			yield* this.handleStreamResponse(stream)
@@ -424,7 +424,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 					...(metadata?.signal ? { signal: metadata.signal } : {}),
 				})
 			} catch (error) {
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 
 			const message = response.choices?.[0]?.message

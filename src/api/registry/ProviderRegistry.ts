@@ -4,6 +4,7 @@ import type { ApiHandler } from "../types"
 import type { ApiHandlerOptions } from "../../shared/api"
 import type { IToolCallParser } from "../interfaces/IToolCallParser"
 import { wrapApiHandler } from "../retry/ApiRetryWrapper"
+import { logger } from "../../shared/logger"
 
 export type ProviderId = NonNullable<ProviderSettings["apiProvider"]>
 
@@ -110,6 +111,7 @@ export class ProviderRegistry {
 		const id = apiProvider ?? "anthropic"
 		const factory = this.factories.get(id as ProviderId)
 		if (!factory) {
+			logger.warn("ProviderRegistry", `API provider "${id}" is not registered`)
 			throw new Error(`API provider "${id}" is not registered`)
 		}
 		const handler = factory(options)

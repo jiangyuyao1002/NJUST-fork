@@ -16,7 +16,7 @@ import { DEFAULT_HEADERS } from "./constants"
 import { getModels } from "./fetchers/modelCache"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { requireApiKey } from "../interfaces/api-key-validator"
 import { getApiRequestTimeout } from "./utils/timeout-config"
@@ -167,7 +167,7 @@ export class UnboundHandler extends BaseProvider implements SingleCompletionHand
 		try {
 			stream = await this.client.chat.completions.create(completionParams)
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 		let lastUsage: UnsafeAny = undefined
 
@@ -221,7 +221,7 @@ export class UnboundHandler extends BaseProvider implements SingleCompletionHand
 		try {
 			response = await this.client.chat.completions.create(completionParams)
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 		return response.choices[0]?.message.content || ""
 	}

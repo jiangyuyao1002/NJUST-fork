@@ -5,7 +5,6 @@ import removeMd from "remove-markdown"
 import useSound from "use-sound"
 import { LRUCache } from "lru-cache"
 
-
 import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { appendImages } from "@src/utils/imageUtils"
 import { getCostBreakdownIfNeeded } from "@src/utils/costFormatting"
@@ -282,7 +281,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// basically as long as a task is active, the conversation history will be persisted
 		if (lastMessage) {
 			switch (lastMessage.type) {
-				case "ask":
+				case "ask": {
 					// Reset user response flag when a new ask arrives to allow auto-approval
 					userRespondedRef.current = false
 					const isPartial = lastMessage.partial === true
@@ -314,7 +313,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setPrimaryButtonText(undefined)
 							setSecondaryButtonText(undefined)
 							break
-						case "tool":
+						case "tool": {
 							setSendingDisabled(isPartial)
 							setClineAsk("tool")
 							setEnableButtons(!isPartial)
@@ -369,6 +368,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 									break
 							}
 							break
+						}
 						case "command":
 							setSendingDisabled(isPartial)
 							setClineAsk("command")
@@ -402,7 +402,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setPrimaryButtonText(t("chat:startNewTask.title"))
 							setSecondaryButtonText(undefined)
 							break
-						case "resume_task":
+						case "resume_task": {
 							setSendingDisabled(false)
 							setClineAsk("resume_task")
 							setEnableButtons(true)
@@ -424,6 +424,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							}
 							setDidClickCancel(false) // special case where we reset the cancel button state
 							break
+						}
 						case "resume_completed_task":
 							setSendingDisabled(false)
 							setClineAsk("resume_completed_task")
@@ -434,6 +435,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							break
 					}
 					break
+				}
 				case "say":
 					// Don't want to reset since there could be a "say" after
 					// an "ask" while ask is waiting for response.
@@ -782,7 +784,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked" })
 					}
 					break
-				case "resume_task":
+				case "resume_task": {
 					// For completed subtasks (tasks with a parentTaskId and a completion_result),
 					// start a new task instead of resuming since the subtask is done
 					const isCompletedSubtaskForClick =
@@ -809,6 +811,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						}
 					}
 					break
+				}
 				case "completion_result":
 				case "resume_completed_task":
 					// Waiting for feedback, but we can just present a new task button
@@ -997,10 +1000,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					}
 					break
 				default:
-					if (
-						import.meta.env.DEV &&
-						!EXTENSION_MESSAGES_HANDLED_ELSEWHERE.has(message.type)
-					) {
+					if (import.meta.env.DEV && !EXTENSION_MESSAGES_HANDLED_ELSEWHERE.has(message.type)) {
 						console.warn("[ChatView] Unhandled extension message type:", message.type, message)
 					}
 					break
@@ -1096,7 +1096,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				case "api_req_deleted":
 					return false
 				case "api_req_retry_delayed":
-				case "api_req_rate_limit_wait":
+				case "api_req_rate_limit_wait": {
 					const last1 = modifiedMessages.at(-1)
 					const last2 = modifiedMessages.at(-2)
 					if (last1?.ask === "resume_task" && last2 === message) {
@@ -1105,6 +1105,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						return false
 					}
 					break
+				}
 				case "text":
 					if ((message.text ?? "") === "" && (message.images?.length ?? 0) === 0) return false
 					break
@@ -1676,7 +1677,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 			{task && (
 				<>
-					<div className="grow flex" ref={scrollContainerRef}>
+					<div
+						className="grow flex"
+						ref={scrollContainerRef}
+						role="log"
+						aria-live="polite"
+						aria-label="Chat messages">
 						<Virtuoso
 							ref={virtuosoRef}
 							key={task.ts}

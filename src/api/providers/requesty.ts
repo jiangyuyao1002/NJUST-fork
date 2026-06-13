@@ -17,7 +17,7 @@ import { getModels } from "./fetchers/modelCache"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { toRequestyServiceUrl } from "../../shared/utils/requesty"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { requireApiKey } from "../interfaces/api-key-validator"
 import { getApiRequestTimeout } from "./utils/timeout-config"
@@ -174,7 +174,7 @@ export class RequestyHandler extends BaseProvider implements SingleCompletionHan
 			// With streaming params type, SDK returns an async iterable stream
 			stream = await this.client.chat.completions.create(completionParams)
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 		let lastUsage: UnsafeAny = undefined
 
@@ -228,7 +228,7 @@ export class RequestyHandler extends BaseProvider implements SingleCompletionHan
 		try {
 			response = await this.client.chat.completions.create(completionParams)
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 		return response.choices[0]?.message.content || ""
 	}

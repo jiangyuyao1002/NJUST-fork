@@ -32,7 +32,7 @@ import { getModelEndpoints } from "./fetchers/modelEndpointCache"
 import { DEFAULT_HEADERS } from "./constants"
 import { BaseProvider } from "./base-provider"
 import type { ApiHandlerCreateMessageMetadata, SingleCompletionHandler } from "../types"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import { generateImageWithProvider, ImageGenerationResult } from "./utils/image-generation"
 import { applyRouterToolPreferences } from "./utils/router-tool-preferences"
 import { globalCostTracker } from "../../utils/costTracker"
@@ -379,10 +379,10 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 				const parsedError = extractErrorFromMetadataRaw(rawString)
 				void (parsedError || openRouterError.error?.message || "Unknown error")
 
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			} else {
 				// Fallback for non-OpenRouter errors
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 		}
 
@@ -637,10 +637,10 @@ export class OpenRouterHandler extends BaseProvider implements SingleCompletionH
 				const parsedError = extractErrorFromMetadataRaw(rawString)
 				void (parsedError || openRouterError.error?.message || "Unknown error")
 
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			} else {
 				// Fallback for non-OpenRouter errors
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 		}
 

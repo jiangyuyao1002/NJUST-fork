@@ -19,7 +19,7 @@ import { getModelParams } from "../transform/model-params"
 import { convertToR1Format } from "../transform/r1-format"
 
 import { OpenAiHandler } from "./openai"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import type { ApiHandlerCreateMessageMetadata } from "../types"
 import { requireApiKey } from "../interfaces/api-key-validator"
 
@@ -121,7 +121,7 @@ export class DoubaoHandler extends OpenAiHandler {
 				...(metadata?.signal ? { signal: metadata.signal } : {}),
 			})
 		} catch (error) {
-			throw handleOpenAIError(error, "Doubao")
+			throw handleProviderError(error, "Doubao")
 		}
 
 		let lastUsage

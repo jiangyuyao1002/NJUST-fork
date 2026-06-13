@@ -11,7 +11,7 @@ import {
 import { getModelQueryPrefix } from "../../../shared/embeddingModels"
 import { t } from "../../../i18n"
 import { withValidationErrorHandling, formatEmbeddingError, HttpError } from "../shared/validation-helpers"
-import { handleOpenAIError } from "../../../api/providers/utils/openai-error-handler"
+import { handleProviderError } from "../../../api/providers/utils/error-handler"
 import { logger } from "../../../shared/logger"
 import { TelemetryService } from "@njust-ai/telemetry"
 import { TelemetryEventName } from "@njust-ai/types"
@@ -54,7 +54,7 @@ export class OpenAiEmbedder extends OpenAiNativeHandler implements IEmbedder {
 			this.embeddingsClient = new OpenAI({ apiKey })
 		} catch (error) {
 			// Use the error handler to transform ByteString conversion errors
-			throw handleOpenAIError(error, "OpenAI")
+			throw handleProviderError(error, "OpenAI")
 		}
 
 		this.defaultModelId = options.openAiEmbeddingModelId || "text-embedding-3-small"

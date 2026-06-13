@@ -1,4 +1,4 @@
-import { exec } from "child_process"
+import { execFile } from "child_process"
 
 export interface ProcessInfo {
 	PID: string
@@ -32,7 +32,7 @@ function getWindowsProcessTree(pid: number, callback: (err: Error | null, childr
 	const cmd =
 		"Get-CimInstance -ClassName Win32_Process | Select-Object Name, ProcessId, ParentProcessId | ConvertTo-Csv -NoTypeInformation"
 
-	exec(`powershell -Command "${cmd}"`, (error, stdout) => {
+	execFile("powershell", ["-Command", cmd], (error, stdout) => {
 		if (error) {
 			return callback(error, [])
 		}
@@ -75,7 +75,7 @@ function getWindowsProcessTree(pid: number, callback: (err: Error | null, childr
 }
 
 function getUnixProcessTree(pid: number, callback: (err: Error | null, children: ProcessInfo[]) => void): void {
-	exec("ps -A -o ppid,pid,stat,comm", (error, stdout) => {
+	execFile("ps", ["-A", "-o", "ppid,pid,stat,comm"], (error, stdout) => {
 		if (error) {
 			return callback(error, [])
 		}

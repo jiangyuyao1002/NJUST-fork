@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
-import { execSync } from "child_process"
+import { execFileSync } from "child_process"
 
 import { Package } from "../../shared/package"
 
@@ -21,9 +21,13 @@ export interface MatlabRuntime {
 const isWin = process.platform === "win32"
 
 function tryWhich(cmd: string): string | undefined {
+	// Whitelist: only allow safe command names (alphanumeric, +, -, _, .)
+	if (!/^[a-zA-Z0-9_+.\-]+$/.test(cmd)) {
+		return undefined
+	}
 	try {
 		if (isWin) {
-			const out = execSync(`where ${cmd}`, {
+			const out = execFileSync("where", [cmd], {
 				encoding: "utf-8",
 				windowsHide: true,
 				stdio: ["pipe", "pipe", "ignore"],
@@ -34,7 +38,7 @@ function tryWhich(cmd: string): string | undefined {
 				return p
 			}
 		} else {
-			const out = execSync(`which ${cmd}`, { encoding: "utf-8" }).trim()
+			const out = execFileSync("which", [cmd], { encoding: "utf-8" }).trim()
 			if (out && fs.existsSync(out)) {
 				return out
 			}

@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach } from "vitest"
 
 import { AnthropicHandler } from "../anthropic"
 import { ApiHandlerOptions } from "../../../shared/api"
-import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from "../../../core/prompts/system"
+import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from "../../../shared/api-constants"
 
 // Mock TelemetryService
 vitest.mock("@njust-ai/telemetry", () => ({

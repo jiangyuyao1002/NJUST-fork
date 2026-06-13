@@ -42,7 +42,10 @@ import { getMultiFileContextSection } from "./sections/multi-file-context"
 import { estimatePromptTokens, trimSectionsByBudget, derivePromptTokenBudget } from "./tokenBudget"
 import type { SectionBudget } from "./tokenBudget"
 
-export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY = "\n\n====\n\nSYSTEM_PROMPT_DYNAMIC_BOUNDARY\n\n====\n\n"
+// Re-export from shared layer for backward compatibility.
+// The canonical definition lives in src/shared/api-constants.ts.
+export { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from "../../shared/api-constants"
+import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from "../../shared/api-constants"
 
 /**
  * Scale Cangjie dynamic context token budget based on the active model's context window.

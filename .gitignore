@@ -62,6 +62,8 @@ logs
 
 # Vite development
 .vite-port
+webview-ui/vite-err.txt
+webview-ui/vite-out.txt
 
 # Turborepo
 .turbo

@@ -32,6 +32,7 @@
 		"check:inheritance": "node scripts/check-inheritance.mjs",
 		"report:activation-perf": "node scripts/report-activation-perf.mjs",
 		"check-secrets": "node scripts/check-secrets.mjs --staged",
+		"check:any-gate": "node scripts/check-any-gate.mjs",
 		"evals": "node scripts/ensure-dev-env.mjs && dotenvx run -f packages/evals/.env.development packages/evals/.env.local -- docker compose -f packages/evals/docker-compose.yml --profile server --profile runner up --build --scale runner=0",
 		"npm:publish:types": "pnpm --filter @njust-ai/types npm:publish"
 	},

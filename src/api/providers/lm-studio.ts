@@ -18,7 +18,7 @@ import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
 import { getModelsFromCache } from "./fetchers/modelCache"
 import { getApiRequestTimeout } from "./utils/timeout-config"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 
 const lmStudioModelsResponseSchema = z.object({
 	data: z.array(z.unknown()),
@@ -125,7 +125,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 			try {
 				results = await this.client.chat.completions.create(params)
 			} catch (error) {
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 
 			const matcher = new TagMatcher(
@@ -229,7 +229,7 @@ export class LmStudioHandler extends BaseProvider implements SingleCompletionHan
 			try {
 				response = await this.client.chat.completions.create(params)
 			} catch (error) {
-				throw handleOpenAIError(error, this.providerName)
+				throw handleProviderError(error, this.providerName)
 			}
 			return response.choices[0]?.message.content || ""
 		} catch (err) {

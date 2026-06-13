@@ -17,7 +17,7 @@ import { getRooReasoning } from "../transform/reasoning"
 import type { ApiHandlerCreateMessageMetadata } from "../types"
 import { BaseOpenAiCompatibleProvider } from "./base-openai-compatible-provider"
 import { getModels, getModelsFromCache } from "../providers/fetchers/modelCache"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import { generateImageWithProvider, generateImageWithImagesApi, ImageGenerationResult } from "./utils/image-generation"
 import { t } from "../../i18n"
 import { getErrorMessage } from "../../shared/error-utils"
@@ -115,7 +115,7 @@ export class RooHandler extends BaseOpenAiCompatibleProvider<string> {
 			this.client.apiKey = this.options.rooApiKey ?? getSessionToken()
 			return this.client.chat.completions.create(rooParams, requestOptions)
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 	}
 

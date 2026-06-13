@@ -26,7 +26,9 @@ Object.entries(localeFiles).forEach(([path, module]) => {
 	}
 })
 
-console.log("Dynamically loaded translations:", Object.keys(translations))
+if (import.meta.env.DEV) {
+	console.log("Dynamically loaded translations:", Object.keys(translations))
+}
 
 // Initialize i18next for React
 // This will be initialized with the VSCode language in TranslationProvider

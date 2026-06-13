@@ -16,7 +16,7 @@ import { getModelParams } from "../transform/model-params"
 import { convertToR1Format } from "../transform/r1-format"
 
 import { OpenAiHandler } from "./openai"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import type { ApiHandlerCreateMessageMetadata } from "../types"
 
 // Custom interface for DeepSeek params to support thinking mode
@@ -116,7 +116,7 @@ export class DeepSeekHandler extends OpenAiHandler {
 				...(metadata?.signal ? { signal: metadata.signal } : {}),
 			})
 		} catch (error) {
-			throw handleOpenAIError(error, "DeepSeek")
+			throw handleProviderError(error, "DeepSeek")
 		}
 
 		let lastUsage

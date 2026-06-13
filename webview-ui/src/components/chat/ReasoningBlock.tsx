@@ -53,13 +53,12 @@ export const ReasoningBlock = ({ content, isStreaming, isLast }: ReasoningBlockP
 						? "ca-reasoning-header"
 						: "chat-reasoning-card__header flex items-center justify-between cursor-pointer select-none",
 				)}
-				onClick={handleToggle}>
+				onClick={handleToggle}
+				aria-expanded={!isCollapsed}
+				aria-label="Toggle reasoning block">
 				<div className="flex items-center gap-2">
 					<Lightbulb className="w-4 text-vscode-textLink-foreground" />
-					<span
-						className={cn(
-							isCloudAgentUi ? "ca-reasoning-title" : "chat-assistant-card__header-label",
-						)}>
+					<span className={cn(isCloudAgentUi ? "ca-reasoning-title" : "chat-assistant-card__header-label")}>
 						{t("chat:reasoning.thinking")}
 					</span>
 					{elapsed > 0 && (
@@ -81,9 +80,7 @@ export const ReasoningBlock = ({ content, isStreaming, isLast }: ReasoningBlockP
 			{(content?.trim()?.length ?? 0) > 0 && !isCollapsed && (
 				<div
 					ref={contentRef}
-					className={cn(
-						isCloudAgentUi ? "ca-reasoning-body" : "chat-reasoning-card__body break-words",
-					)}>
+					className={cn(isCloudAgentUi ? "ca-reasoning-body" : "chat-reasoning-card__body break-words")}>
 					<MarkdownBlock markdown={content} />
 				</div>
 			)}

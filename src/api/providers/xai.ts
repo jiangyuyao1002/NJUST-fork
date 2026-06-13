@@ -12,7 +12,7 @@ import { getModelParams } from "../transform/model-params"
 import { DEFAULT_HEADERS } from "./constants"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../types"
-import { handleOpenAIError } from "./utils/openai-error-handler"
+import { handleProviderError } from "./utils/error-handler"
 import { requireApiKey } from "../interfaces/api-key-validator"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 
@@ -94,7 +94,7 @@ export class XAIHandler extends BaseProvider implements SingleCompletionHandler 
 		try {
 			stream = await this.client.chat.completions.create(requestOptions)
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 
 		for await (const chunk of stream) {
@@ -177,7 +177,7 @@ export class XAIHandler extends BaseProvider implements SingleCompletionHandler 
 
 			return response.choices[0]?.message.content || ""
 		} catch (error) {
-			throw handleOpenAIError(error, this.providerName)
+			throw handleProviderError(error, this.providerName)
 		}
 	}
 }

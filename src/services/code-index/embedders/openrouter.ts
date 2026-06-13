@@ -10,7 +10,7 @@ import { getDefaultModelId, getModelQueryPrefix } from "../../../shared/embeddin
 import { t } from "../../../i18n"
 import { withValidationErrorHandling, HttpError, formatEmbeddingError } from "../shared/validation-helpers"
 import { Mutex } from "async-mutex"
-import { handleOpenAIError } from "../../../api/providers/utils/openai-error-handler"
+import { handleProviderError } from "../../../api/providers/utils/error-handler"
 import { logger } from "../../../shared/logger"
 
 // Default provider name when no specific provider is selected
@@ -81,7 +81,7 @@ export class OpenRouterEmbedder implements IEmbedder {
 			})
 		} catch (error) {
 			// Use the error handler to transform ByteString conversion errors
-			throw handleOpenAIError(error, "OpenRouter")
+			throw handleProviderError(error, "OpenRouter")
 		}
 
 		this.defaultModelId = modelId || getDefaultModelId("openrouter")
