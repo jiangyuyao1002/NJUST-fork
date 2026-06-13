@@ -368,9 +368,9 @@ describe("COMMAND_CHAIN_RE regex security", () => {
 		try {
 			const wc = path.join(tempDir, "workspace")
 			await fs.mkdir(wc, { recursive: true })
-			await expect(
-				execCommand(wc, { command: "echo a && echo b" }),
-			).rejects.toThrow("Command contains shell chaining operators")
+			await expect(execCommand(wc, { command: "echo a && echo b" })).rejects.toThrow(
+				"Command contains shell chaining operators",
+			)
 		} finally {
 			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
 		}
@@ -381,9 +381,9 @@ describe("COMMAND_CHAIN_RE regex security", () => {
 		try {
 			const wc = path.join(tempDir, "workspace")
 			await fs.mkdir(wc, { recursive: true })
-			await expect(
-				execCommand(wc, { command: "echo a || echo b" }),
-			).rejects.toThrow("Command contains shell chaining operators")
+			await expect(execCommand(wc, { command: "echo a || echo b" })).rejects.toThrow(
+				"Command contains shell chaining operators",
+			)
 		} finally {
 			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
 		}
@@ -394,9 +394,9 @@ describe("COMMAND_CHAIN_RE regex security", () => {
 		try {
 			const wc = path.join(tempDir, "workspace")
 			await fs.mkdir(wc, { recursive: true })
-			await expect(
-				execCommand(wc, { command: "echo a ; echo b" }),
-			).rejects.toThrow("Command contains shell chaining operators")
+			await expect(execCommand(wc, { command: "echo a ; echo b" })).rejects.toThrow(
+				"Command contains shell chaining operators",
+			)
 		} finally {
 			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
 		}
@@ -407,9 +407,9 @@ describe("COMMAND_CHAIN_RE regex security", () => {
 		try {
 			const wc = path.join(tempDir, "workspace")
 			await fs.mkdir(wc, { recursive: true })
-			await expect(
-				execCommand(wc, { command: "echo a | wc" }),
-			).rejects.toThrow("Command contains shell chaining operators")
+			await expect(execCommand(wc, { command: "echo a | wc" })).rejects.toThrow(
+				"Command contains shell chaining operators",
+			)
 		} finally {
 			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
 		}
@@ -420,9 +420,9 @@ describe("COMMAND_CHAIN_RE regex security", () => {
 		try {
 			const wc = path.join(tempDir, "workspace")
 			await fs.mkdir(wc, { recursive: true })
-			await expect(
-				execCommand(wc, { command: "echo a\necho b" }),
-			).rejects.toThrow("Command contains shell chaining operators")
+			await expect(execCommand(wc, { command: "echo a\necho b" })).rejects.toThrow(
+				"Command contains shell chaining operators",
+			)
 		} finally {
 			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
 		}
@@ -433,9 +433,7 @@ describe("COMMAND_CHAIN_RE regex security", () => {
 		try {
 			const wc = path.join(tempDir, "workspace")
 			await fs.mkdir(wc, { recursive: true })
-			await expect(
-				execCommand(wc, { command: "echo a\necho b" }, ["echo"]),
-			).rejects.toThrow()
+			await expect(execCommand(wc, { command: "echo a\necho b" }, ["echo"])).rejects.toThrow()
 		} finally {
 			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
 		}

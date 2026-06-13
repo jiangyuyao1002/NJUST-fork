@@ -40,7 +40,9 @@ vi.mock("path", () => ({
 vi.mock("vscode", () => ({
 	TabInputText: class TabInputText {
 		uri: any
-		constructor(uri: any) { this.uri = uri }
+		constructor(uri: any) {
+			this.uri = uri
+		}
 	},
 	workspace: {
 		applyEdit: vi.fn(),
@@ -567,15 +569,14 @@ describe("DiffViewProvider > open method > workspace boundary", () => {
 	})
 
 	it("throws when path is outside workspace", async () => {
-		await expect(
-			diffViewProvider.open("../outside/test.md"),
-		).rejects.toThrow("DiffViewProvider.open: path outside workspace")
+		await expect(diffViewProvider.open("../outside/test.md")).rejects.toThrow(
+			"DiffViewProvider.open: path outside workspace",
+		)
 	})
 
 	it("throws when path contains escaping segments", async () => {
-		await expect(
-			diffViewProvider.open("safe/../../outside/test.md"),
-		).rejects.toThrow("DiffViewProvider.open: path outside workspace")
+		await expect(diffViewProvider.open("safe/../../outside/test.md")).rejects.toThrow(
+			"DiffViewProvider.open: path outside workspace",
+		)
 	})
-
 })

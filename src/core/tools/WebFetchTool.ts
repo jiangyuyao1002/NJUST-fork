@@ -122,10 +122,7 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 				})
 
 				// Check for 3xx redirect
-				if (
-					response.status >= 300 && response.status < 400 &&
-					redirectCount < MAX_REDIRECTS
-				) {
+				if (response.status >= 300 && response.status < 400 && redirectCount < MAX_REDIRECTS) {
 					const location = response.headers?.location as string | undefined
 					if (!location) break
 

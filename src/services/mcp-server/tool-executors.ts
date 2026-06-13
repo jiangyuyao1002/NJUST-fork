@@ -235,7 +235,7 @@ export async function execCommand(
 				if (subCommands.length === 0 || COMMAND_CHAIN_RE.test(params.command)) {
 					throw new Error(`Command requires explicit approval: ${params.command}`)
 				}
-				const firstToken = extractFirstCommandToken(subCommands[0])
+				const firstToken = extractFirstCommandToken(subCommands[0]!)
 				const normalizedHome = path.normalize(cangjieHome) + path.sep
 				const normalizedToken = path.normalize(firstToken)
 				const isSdkCommand =
