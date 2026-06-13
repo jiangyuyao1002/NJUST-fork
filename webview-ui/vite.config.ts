@@ -104,6 +104,7 @@ export default defineConfig(({ mode }) => {
 			},
 		},
 		build: {
+			target: "esnext",
 			outDir,
 			emptyOutDir: true,
 			reportCompressedSize: false,
