@@ -6,6 +6,7 @@ import { TelemetryService } from "@njust-ai/telemetry"
 
 import type { ClineProvider } from "../core/webview/ClineProvider"
 import { getErrorMessage } from "../shared/error-utils"
+import { isPathOutsideWorkspace } from "../utils/pathUtils"
 import { validateRegexPattern } from "../utils/safeRegex"
 import { logger } from "../shared/logger"
 
@@ -303,6 +304,14 @@ async function executeTool(
 
 function resolveFilePath(cwd: string, relativePath: string): string {
 	if (!relativePath) return cwd
-	if (path.isAbsolute(relativePath)) return relativePath
-	return path.join(cwd, relativePath)
+	const resolved = path.isAbsolute(relativePath) ? relativePath : path.join(cwd, relativePath)
+	const absolutePath = path.resolve(resolved)
+
+	// Prevent path traversal: reject paths that escape the workspace boundary.
+	// Uses realpath resolution to detect symlink-based escapes.
+	if (isPathOutsideWorkspace(absolutePath)) {
+		throw new Error(`Access denied: path is outside workspace — ${relativePath}`)
+	}
+
+	return absolutePath
 }

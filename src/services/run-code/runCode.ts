@@ -26,7 +26,7 @@ const isWin = process.platform === "win32"
  * These characters can break out of quoted strings or execute arbitrary commands.
  */
 function containsShellMetacharacters(p: string): boolean {
-	return /[&|;<>()$`!\n\r]/.test(p)
+	return /[&|;<>()$`!"\n\r]/.test(p)
 }
 
 /**
@@ -291,6 +291,15 @@ function buildMatlabConfig(filePath: string, _workDir: string): RunConfig | unde
 	const ext = path.extname(filePath).toLowerCase()
 	if (ext === ".mlx") {
 		void vscode.window.showWarningMessage(t("errors.run_code.matlab_live_script_unsupported"))
+		return undefined
+	}
+	// Reject file paths with shell metacharacters to prevent command injection
+	// when the path is interpolated into an Octave/MATLAB shell command.
+	if (containsShellMetacharacters(filePath)) {
+		void vscode.window.showErrorMessage(
+			`File path contains shell metacharacters and cannot be safely executed: ${filePath}. ` +
+				`Please rename the file to remove special characters like &, |, ;, <, >, $, \`, !, ".`,
+		)
 		return undefined
 	}
 	const c = buildMatlabRunConfig(filePath)

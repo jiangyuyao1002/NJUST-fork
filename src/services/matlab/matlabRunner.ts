@@ -57,6 +57,12 @@ export function buildMatlabRunConfig(filePath: string): MatlabRunConfig | null {
 		return null
 	}
 
+	// Reject file paths with shell metacharacters to prevent command injection
+	// when the path is interpolated into an Octave/MATLAB shell command string.
+	if (/[&|;<>()$`!"\n\r]/.test(filePath)) {
+		return null
+	}
+
 	const rt = resolveMatlabRuntime()
 	if (!rt) {
 		return null

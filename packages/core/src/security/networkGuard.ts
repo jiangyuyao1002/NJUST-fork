@@ -97,30 +97,33 @@ export async function assertSafeOutboundUrl(url: string): Promise<URL> {
 
 export async function guardedFetch(url: string, init?: RequestInit): Promise<Response> {
 	const parsed = await assertSafeOutboundUrl(url)
-	const firstResolution = await dns.lookup(parsed.hostname, { all: true, verbatim: true })
-	if (!firstResolution.length) {
-		throw new Error(`Could not resolve host before request: ${parsed.hostname}`)
+
+	// IP pinning: resolve once, then connect directly to the verified IP.
+	// This prevents DNS rebinding attacks where a second resolution returns
+	// a different (potentially internal) address. We set the Host header so
+	// the server can still route correctly with the pinned IP.
+	if (net.isIP(parsed.hostname) !== 0) {
+		// Already an IP literal — public-IP check was done in assertSafeOutboundUrl
+		return fetch(parsed.toString(), init)
 	}
-	for (const entry of firstResolution) {
+
+	const resolved = await dns.lookup(parsed.hostname, { all: true, verbatim: true })
+	if (!resolved.length) {
+		throw new Error(`Could not resolve host: ${parsed.hostname}`)
+	}
+	for (const entry of resolved) {
 		assertPublicIp(entry.address)
 	}
 
-	const response = await fetch(parsed.toString(), init)
+	// Pin to the first resolved public IP
+	const pinnedIp = resolved[0]!.address
+	const ipUrl = new URL(parsed.toString())
+	ipUrl.hostname = net.isIP(pinnedIp) === 6 ? `[${pinnedIp}]` : pinnedIp
 
-	const secondResolution = await dns.lookup(parsed.hostname, { all: true, verbatim: true })
-	if (!secondResolution.length) {
-		throw new Error(`Could not resolve host after request: ${parsed.hostname}`)
-	}
-	for (const entry of secondResolution) {
-		assertPublicIp(entry.address)
-	}
-
-	const beforeSet = new Set(firstResolution.map((e) => e.address))
-	const afterSet = new Set(secondResolution.map((e) => e.address))
-	const changed = beforeSet.size !== afterSet.size || [...beforeSet].some((ip) => !afterSet.has(ip))
-	if (changed) {
-		throw new Error(`Potential DNS rebinding detected for host: ${parsed.hostname}`)
+	const headers = new Headers(init?.headers)
+	if (!headers.has("Host")) {
+		headers.set("Host", parsed.hostname)
 	}
 
-	return response
+	return fetch(ipUrl.toString(), { ...init, headers })
 }

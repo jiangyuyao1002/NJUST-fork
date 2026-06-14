@@ -144,18 +144,15 @@ describe("webFetchTool", () => {
 		expect(callbacks.pushToolResult).toHaveBeenCalledWith("Hello")
 	})
 
-	it("blocks dns rebinding after the request", async () => {
-		dnsLookupMock
-			.mockResolvedValueOnce([{ address: "93.184.216.34" }])
-			.mockResolvedValueOnce([{ address: "93.184.216.35" }])
+	it("pins to resolved IP to prevent DNS rebinding", async () => {
+		dnsLookupMock.mockResolvedValueOnce([{ address: "93.184.216.34" }])
 		const callbacks = createCallbacks()
 
 		await webFetchTool.execute({ url: "https://example.com" }, {} as any, callbacks as any)
 
-		expect(callbacks.handleError).toHaveBeenCalledWith(
-			"web fetch",
-			expect.objectContaining({ message: expect.stringContaining("DNS rebinding") }),
-		)
+		// IP pinning: one DNS call, no post-request comparison needed
+		expect(dnsLookupMock).toHaveBeenCalledTimes(1)
+		expect(callbacks.pushToolResult).toHaveBeenCalledWith("Hello")
 	})
 
 	it("formats axios errors as tool errors", async () => {

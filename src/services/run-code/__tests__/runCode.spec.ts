@@ -539,18 +539,17 @@ describe("runCode", () => {
 		}
 	})
 
-	it("handles file paths with quotes safely", async () => {
+	it("rejects file paths with double quotes to prevent injection", async () => {
 		const quotedPath = 'D:\\repo\\src\\script"with"quotes.py'
 		setEditor(quotedPath, "python")
 		vi.mocked(fs.existsSync).mockReturnValue(false)
 
 		await runActiveEditorCode(outputChannelMock)
-		const sentCommand = terminalMock.sendText.mock.calls[0][0]
-		// The inner quotes should be escaped
-		expect(sentCommand).toContain('\\"')
-		// Should not have unbalanced quotes
-		const quoteCount = (sentCommand.match(/"/g) || []).length
-		expect(quoteCount % 2).toBe(0)
+		// Double quotes are now treated as shell metacharacters and rejected outright,
+		// rather than escaped. This is a defense-in-depth measure.
+		expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(expect.stringContaining("shell metacharacters"))
+		// Terminal should NOT be created/used for paths with double quotes
+		expect(terminalMock.sendText).not.toHaveBeenCalled()
 	})
 
 	it("builds LaTeX command using latexmk", async () => {

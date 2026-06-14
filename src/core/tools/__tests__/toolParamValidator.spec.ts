@@ -23,6 +23,7 @@ describe("validateToolParams", () => {
 		["web_fetch", { url: "https://example.com" }],
 		["ask_followup_question", { question: "Continue?" }],
 		["attempt_completion", { result: "done" }],
+		["generate_image", { path: "output.png", prompt: "a sunset" }],
 	] as const)("accepts valid %s params", (toolName, params) => {
 		expect(validateToolParams(toolName, params)).toEqual({ valid: true })
 	})
@@ -47,6 +48,8 @@ describe("validateToolParams", () => {
 		["web_fetch", { url: "not-a-url" }, "url: url must be a valid URL"],
 		["ask_followup_question", { question: "" }, "question: question must not be empty"],
 		["attempt_completion", { result: "" }, "result: result must not be empty"],
+		["generate_image", { prompt: "test" }, "path"],
+		["generate_image", { path: "", prompt: "test" }, "path must not be empty"],
 	] as const)("rejects invalid %s params", (toolName, params, errorPart) => {
 		const result = validateToolParams(toolName, params)
 

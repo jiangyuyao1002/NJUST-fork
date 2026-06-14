@@ -71,6 +71,7 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 
 			let parsedUrl: URL
 			let hostname: string
+			let pinnedIp: string | undefined
 			try {
 				parsedUrl = await assertSafeOutboundUrl(url)
 				hostname = parsedUrl.hostname
@@ -79,18 +80,19 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 				return
 			}
 
-			// Capture pre-request DNS resolution for rebinding detection
-			let preRequestIPs: Set<string> | undefined
+			// IP pinning: resolve hostname once, then connect directly to the
+			// verified IP with a Host header. This eliminates the DNS rebinding
+			// window that exists with pre/post comparison.
 			if (!isIPAddress(hostname)) {
-				const preLookup = await dns.lookup(hostname, { all: true, verbatim: true })
-				if (!preLookup.length) {
+				const resolved = await dns.lookup(hostname, { all: true, verbatim: true })
+				if (!resolved.length) {
 					pushToolResult(formatResponse.toolError(`Could not resolve host: ${hostname}`))
 					return
 				}
-				for (const entry of preLookup) {
+				for (const entry of resolved) {
 					assertPublicIp(entry.address)
 				}
-				preRequestIPs = new Set(preLookup.map((e) => e.address))
+				pinnedIp = resolved[0]!.address
 			}
 
 			const approved = await askApproval("tool", JSON.stringify({ tool: "web_fetch", url, format }))
@@ -101,23 +103,36 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 
 			await reportProgress?.({ icon: "globe", text: `Fetching ${url}` })
 
-			// Manual redirect loop with SSRF guard at each step
+			// Manual redirect loop with SSRF guard + IP pinning at each step
 			const MAX_REDIRECTS = 5
 			let currentUrl = url
+			let currentHostname = hostname
+			let currentPinnedIp = pinnedIp
 			let redirectCount = 0
 			let response
 
 			while (true) {
+				// If IP pinning is active, replace the hostname in the URL
+				// with the pinned IP and set the Host header.
+				const requestUrl = currentUrl
+				const requestHeaders: Record<string, string> = {
+					"User-Agent": "Mozilla/5.0 (compatible; NjustAi/1.0; +https://github.com/JunjieChen0/Njust-AI)",
+					Accept: format === "json" ? "application/json" : "text/html,application/xhtml+xml,*/*",
+				}
+				if (currentPinnedIp) {
+					const ipUrl = new URL(currentUrl)
+					ipUrl.hostname = net.isIP(currentPinnedIp) === 6 ? `[${currentPinnedIp}]` : currentPinnedIp
+					currentUrl = ipUrl.toString()
+					requestHeaders["Host"] = currentHostname
+				}
+
 				response = await axios.get(currentUrl, {
 					timeout: MAX_TIMEOUT_MS,
 					maxRedirects: 0,
 					maxContentLength: MAX_BODY_BYTES,
 					maxBodyLength: MAX_BODY_BYTES,
 					responseType: format === "json" ? "json" : "text",
-					headers: {
-						"User-Agent": "Mozilla/5.0 (compatible; NjustAi/1.0; +https://github.com/JunjieChen0/Njust-AI)",
-						Accept: format === "json" ? "application/json" : "text/html,application/xhtml+xml,*/*",
-					},
+					headers: requestHeaders,
 					validateStatus: (status) => status < 400,
 				})
 
@@ -126,31 +141,30 @@ class WebFetchToolImpl extends BaseTool<"web_fetch"> {
 					const location = response.headers?.location as string | undefined
 					if (!location) break
 
-					// Resolve relative URL and SSRF-guard each redirect target
-					const redirectUrl = new URL(location, currentUrl).href
+					// Resolve relative URL using the original URL, then SSRF-guard
+					const redirectUrl = new URL(location, requestUrl).href
 					await assertSafeOutboundUrl(redirectUrl)
+
+					const redirectParsed = new URL(redirectUrl)
+					// If redirecting to a different host, resolve it
+					if (redirectParsed.hostname !== currentHostname) {
+						currentHostname = redirectParsed.hostname
+						currentPinnedIp = undefined
+						if (!isIPAddress(redirectParsed.hostname)) {
+							const redirectIps = await dns.lookup(redirectParsed.hostname, { all: true, verbatim: true })
+							if (redirectIps.length) {
+								for (const entry of redirectIps) assertPublicIp(entry.address)
+								currentPinnedIp = redirectIps[0]!.address
+							}
+						}
+					}
+					// Same host — reuse the pinned IP
 
 					currentUrl = redirectUrl
 					redirectCount++
 					continue
 				}
 				break
-			}
-
-			// DNS rebinding check: compare pre-request and post-request IPs
-			if (preRequestIPs && preRequestIPs.size > 0) {
-				const postLookup = await dns.lookup(hostname, { all: true, verbatim: true })
-				if (!postLookup.length) {
-					throw new Error(`DNS resolution lost after request for host: ${hostname}`)
-				}
-				for (const entry of postLookup) {
-					assertPublicIp(entry.address)
-				}
-				const postIPs = new Set(postLookup.map((e) => e.address))
-				const changed = preRequestIPs.size !== postIPs.size || [...preRequestIPs].some((ip) => !postIPs.has(ip))
-				if (changed) {
-					throw new Error(`Potential DNS rebinding detected for host: ${hostname} — request blocked.`)
-				}
 			}
 
 			let result: string

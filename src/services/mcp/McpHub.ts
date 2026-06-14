@@ -137,10 +137,10 @@ export class McpHub implements IMcpHubService {
 			TelemetryService.reportError(err, TelemetryEventName.MCP_ERROR)
 		})
 		this.setupWorkspaceFoldersWatcher()
-		this.initializationPromise = Promise.all([
-			this.initializeGlobalMcpServers(),
-			this.initializeProjectMcpServers(),
-		]).then(() => {})
+		// Only global MCP servers are auto-started. Project-level MCP servers
+		// (.njust_ai/mcp.json) require explicit user action — prevents malicious
+		// workspace configs from spawning subprocesses on open.
+		this.initializationPromise = this.initializeGlobalMcpServers()
 	}
 
 	/**
@@ -463,6 +463,21 @@ export class McpHub implements IMcpHubService {
 				return
 			}
 
+			// For project-level MCP config, require user confirmation before auto-starting
+			// any subprocesses — prevents malicious .njust_ai/mcp.json from spawning processes
+			// when a workspace is first opened.
+			if (source === "project") {
+				const workspacePath = this.providerRef.deref()?.cwd ?? getWorkspacePath()
+				if (!(await this.isWorkspaceTrustedForMcp(workspacePath))) {
+					const trusted = await this.promptUserToTrustMcpServers()
+					if (!trusted) {
+						logger.info("McpHub", "User declined to start project MCP servers — skipping auto-start")
+						return
+					}
+					await this.trustWorkspaceForMcp(workspacePath)
+				}
+			}
+
 			const content = await fs.readFile(configPath, "utf-8")
 			const config = JSON.parse(content)
 			const result = McpSettingsSchema.safeParse(config)
@@ -524,6 +539,77 @@ export class McpHub implements IMcpHubService {
 	// Initialize project-level MCP servers
 	private async initializeProjectMcpServers(): Promise<void> {
 		await this.initializeMcpServers("project")
+	}
+
+	// ── Workspace trust for project MCP ────────────────────────────
+
+	/**
+	 * Path to the file that tracks which workspaces the user has trusted
+	 * for auto-starting project-level MCP servers.
+	 */
+	private async getTrustedWorkspacesFilePath(): Promise<string> {
+		const provider = this.providerRef.deref()
+		if (!provider) {
+			throw new Error("Provider not available")
+		}
+		const dir = await provider.ensureMcpServersDirectoryExists()
+		return path.join(dir, "trusted_workspaces.json")
+	}
+
+	/**
+	 * Returns true if the user has previously confirmed that MCP servers
+	 * in this workspace may be auto-started.
+	 */
+	private async isWorkspaceTrustedForMcp(workspacePath: string): Promise<boolean> {
+		try {
+			const filePath = await this.getTrustedWorkspacesFilePath()
+			const content = await fs.readFile(filePath, "utf-8")
+			const data = JSON.parse(content) as { trustedWorkspaces?: string[] }
+			return (data.trustedWorkspaces ?? []).some(
+				(p: string) => path.normalize(p) === path.normalize(workspacePath),
+			)
+		} catch {
+			return false
+		}
+	}
+
+	/**
+	 * Records that the user has trusted this workspace for project-level MCP auto-start.
+	 */
+	private async trustWorkspaceForMcp(workspacePath: string): Promise<void> {
+		const filePath = await this.getTrustedWorkspacesFilePath()
+		let data: { trustedWorkspaces: string[] }
+		try {
+			const content = await fs.readFile(filePath, "utf-8")
+			data = JSON.parse(content) as { trustedWorkspaces: string[] }
+			if (!Array.isArray(data.trustedWorkspaces)) {
+				data.trustedWorkspaces = []
+			}
+		} catch {
+			data = { trustedWorkspaces: [] }
+		}
+		const normalized = path.normalize(workspacePath)
+		if (!data.trustedWorkspaces.some((p) => path.normalize(p) === normalized)) {
+			data.trustedWorkspaces.push(normalized)
+		}
+		await fs.mkdir(path.dirname(filePath), { recursive: true })
+		await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8")
+	}
+
+	/**
+	 * Shows a warning dialog asking the user whether to enable project-level MCP servers.
+	 * Returns true if the user accepted.
+	 */
+	private async promptUserToTrustMcpServers(): Promise<boolean> {
+		const YES = "Enable MCP Servers"
+		const NO = "Skip"
+		const choice = await vscode.window.showWarningMessage(
+			"This workspace contains a .njust_ai/mcp.json file with MCP server configurations. These servers will start automatically and run shell commands. Do you want to enable them?",
+			{ modal: true },
+			YES,
+			NO,
+		)
+		return choice === YES
 	}
 
 	/**

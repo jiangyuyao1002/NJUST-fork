@@ -439,3 +439,93 @@ describe("COMMAND_CHAIN_RE regex security", () => {
 		}
 	}, 10000)
 })
+
+describe("COMMAND_INJECTION_RE — unconditional $(subshell) / backtick rejection", () => {
+	// Same pattern as tool-executors.ts COMMAND_INJECTION_RE
+	const RE = /\$\(|`/
+
+	it("catches $(command) substitution", () => {
+		expect(RE.test("cjpm --version $(echo pwned)")).toBe(true)
+	})
+
+	it("catches backtick substitution", () => {
+		expect(RE.test("echo `whoami`")).toBe(true)
+	})
+
+	it("catches $() even when first token is in cangjie SDK path", () => {
+		expect(RE.test("/opt/cangjie/bin/cjpm build $(id)")).toBe(true)
+	})
+
+	it("does not flag safe command", () => {
+		expect(RE.test("echo hello world")).toBe(false)
+	})
+
+	it("does not flag cangjie command without substitution", () => {
+		expect(RE.test("cjpm --version")).toBe(false)
+	})
+
+	it("rejects $(...) in execCommand unconditionally (P1-4)", async () => {
+		const tempDir = await mkdtemp(path.join(tmpdir(), "test-inj-"))
+		try {
+			const wc = path.join(tempDir, "workspace")
+			await fs.mkdir(wc, { recursive: true })
+			await expect(execCommand(wc, { command: "cjpm --version $(echo pwned)" })).rejects.toThrow(
+				"Command injection detected in MCP context",
+			)
+		} finally {
+			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
+		}
+	}, 10000)
+
+	it("rejects backticks in execCommand unconditionally (P1-4)", async () => {
+		const tempDir = await mkdtemp(path.join(tmpdir(), "test-inj-"))
+		try {
+			const wc = path.join(tempDir, "workspace")
+			await fs.mkdir(wc, { recursive: true })
+			await expect(execCommand(wc, { command: "echo `whoami`" })).rejects.toThrow(
+				"Command injection detected in MCP context",
+			)
+		} finally {
+			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
+		}
+	}, 10000)
+
+	it("rejects $() even with cangjie SDK path as first token (P1-4)", async () => {
+		const tempDir = await mkdtemp(path.join(tmpdir(), "test-inj-"))
+		try {
+			const wc = path.join(tempDir, "workspace")
+			await fs.mkdir(wc, { recursive: true })
+			await expect(execCommand(wc, { command: "/opt/cangjie/bin/cjpm build $(id)" })).rejects.toThrow(
+				"Command injection detected in MCP context",
+			)
+		} finally {
+			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
+		}
+	}, 10000)
+
+	it("rejects $() even when command is in allowedCommands (P1-4)", async () => {
+		const tempDir = await mkdtemp(path.join(tmpdir(), "test-inj-"))
+		try {
+			const wc = path.join(tempDir, "workspace")
+			await fs.mkdir(wc, { recursive: true })
+			await expect(execCommand(wc, { command: "cjpm build $(id)" }, ["cjpm", "echo"])).rejects.toThrow(
+				"Command injection detected in MCP context",
+			)
+		} finally {
+			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
+		}
+	}, 10000)
+
+	it("rejects $() even with wildcard allowedCommands (P1-4)", async () => {
+		const tempDir = await mkdtemp(path.join(tmpdir(), "test-inj-"))
+		try {
+			const wc = path.join(tempDir, "workspace")
+			await fs.mkdir(wc, { recursive: true })
+			await expect(execCommand(wc, { command: "npm --version $(whoami)" }, ["*"])).rejects.toThrow(
+				"Command injection detected in MCP context",
+			)
+		} finally {
+			await rm(tempDir, { recursive: true, force: true }).catch(() => {})
+		}
+	}, 10000)
+})

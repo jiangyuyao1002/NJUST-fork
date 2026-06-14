@@ -213,6 +213,7 @@ const toolSchemas = {
 	}),
 
 	generate_image: z.object({
+		path: z.string().min(1, "path must not be empty"),
 		prompt: z.string().min(1, "prompt must not be empty"),
 		model: z.string().optional(),
 		size: z.string().optional(),

@@ -20,10 +20,56 @@ import type { IProtocolAdapterFactory } from "./adapters/IProtocolAdapterFactory
 import type { IProtocolAdapter, McpCallbackHandler, UniversalTaskResponse } from "./adapters/types"
 import { MCP_TOOLS } from "./adapters/McpProtocolAdapter"
 import { normalizeServerUrl } from "./urlUtils"
+import { assertSafeOutboundUrl } from "../../core/security/networkGuard"
 import { t } from "../../i18n"
 
 /** Maximum response body size (50 MB) before rejecting to avoid loading pathological payloads into memory. */
 const MAX_RESPONSE_BODY_BYTES = 50 * 1024 * 1024
+
+/**
+ * Read a Response body in streaming chunks, enforcing a hard byte limit.
+ *
+ * Unlike `resp.text()` which buffers the entire body in memory (potentially
+ * unbounded when `Transfer-Encoding: chunked` is used without Content-Length),
+ * this reads via the Streams API and throws as soon as the limit is exceeded.
+ */
+async function readResponseBodyWithLimit(resp: Response, maxBytes: number): Promise<string> {
+	if (!resp.body) {
+		return resp.text()
+	}
+
+	const reader = resp.body.getReader()
+	const chunks: Uint8Array[] = []
+	let totalBytes = 0
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read()
+			if (done) break
+
+			totalBytes += value.byteLength
+			if (totalBytes > maxBytes) {
+				// Cancel the stream to stop receiving further chunks
+				await reader.cancel().catch(() => {})
+				throw new Error(`Cloud Agent: response body exceeds limit (${(maxBytes / 1024 / 1024).toFixed(1)} MB)`)
+			}
+
+			chunks.push(value)
+		}
+	} finally {
+		// Best-effort release the reader lock
+		reader.releaseLock?.()
+	}
+
+	// Concatenate chunks and decode
+	const combined = new Uint8Array(totalBytes)
+	let offset = 0
+	for (const chunk of chunks) {
+		combined.set(chunk, offset)
+		offset += chunk.byteLength
+	}
+	return new TextDecoder().decode(combined)
+}
 
 const CLOUD_AGENT_RETRY_OPTIONS: Partial<ApiRetryOptions> = {
 	maxAttempts: 3,
@@ -102,9 +148,21 @@ export class CloudAgentClient {
 			...(runId?.trim() ? { run_id: runId.trim() } : {}),
 		})
 		try {
+			const abortUrl = `${base}${tempAdapter.getEndpoint("deferredAbort")}`
+
+			// DNS rebinding protection (skip for localhost where rebinding is impossible)
+			const abortParsed = new URL(abortUrl)
+			const isLocalAbort =
+				abortParsed.hostname === "localhost" ||
+				abortParsed.hostname === "127.0.0.1" ||
+				abortParsed.hostname === "[::1]"
+			if (!isLocalAbort) {
+				await assertSafeOutboundUrl(abortUrl)
+			}
+
 			let resp: Response
 			try {
-				resp = await fetch(`${base}${tempAdapter.getEndpoint("deferredAbort")}`, {
+				resp = await fetch(abortUrl, {
 					method: "POST",
 					headers,
 					body,
@@ -118,7 +176,7 @@ export class CloudAgentClient {
 				return
 			}
 			if (!resp.ok) {
-				const t = await resp.text().catch(() => "")
+				const t = await readResponseBodyWithLimit(resp, 100 * 1024).catch(() => "")
 				logger.warn("CloudAgentClient", `deferred/abort HTTP ${resp.status}: ${t.slice(0, 300)}`)
 			}
 		} catch (e) {
@@ -216,18 +274,36 @@ export class CloudAgentClient {
 		}
 	}
 
-	private async parseUniversalResponse(resp: Response): Promise<UniversalTaskResponse> {
-		// Pre-check Content-Length to reject pathologically large bodies before loading into memory.
-		const contentLength = resp.headers.get("content-length")
-		if (contentLength) {
-			const len = Number(contentLength)
-			if (Number.isFinite(len) && len > MAX_RESPONSE_BODY_BYTES) {
-				throw new Error(
-					`Cloud Agent: response body too large (${(len / 1024 / 1024).toFixed(1)} MB exceeds ${MAX_RESPONSE_BODY_BYTES / 1024 / 1024} MB limit)`,
-				)
-			}
+	/**
+	 * DNS-rebinding-safe fetch. Validates the target URL resolves to a public IP
+	 * before and after the request to detect DNS rebinding attacks.
+	 * Skips the DNS check for localhost/loopback connections since they cannot
+	 * be affected by DNS rebinding.
+	 */
+	private async safeFetch(url: string, init?: RequestInit): Promise<Response> {
+		const parsed = new URL(url)
+		const isLocal =
+			parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]"
+		if (!isLocal) {
+			await assertSafeOutboundUrl(url)
 		}
-		const text = await resp.text()
+		let resp: Response
+		try {
+			resp = await fetch(url, init)
+		} catch (e) {
+			throw enrichFetchError(e)
+		}
+		if (!isLocal) {
+			// Post-request DNS check to detect rebinding
+			await assertSafeOutboundUrl(url)
+		}
+		return resp
+	}
+
+	private async parseUniversalResponse(resp: Response): Promise<UniversalTaskResponse> {
+		// Use streaming read with hard byte limit to protect against unbounded
+		// chunked responses that lack a Content-Length header.
+		const text = await readResponseBodyWithLimit(resp, MAX_RESPONSE_BODY_BYTES)
 		let parsed: unknown
 		try {
 			parsed = JSON.parse(text)
@@ -281,7 +357,7 @@ export class CloudAgentClient {
 				try {
 					let resp: Response
 					try {
-						resp = await fetch(`${this.serverUrl}${endpoint}`, {
+						resp = await this.safeFetch(`${this.serverUrl}${endpoint}`, {
 							method: "GET",
 							...(signal ? { signal } : {}),
 							headers: this.buildHeaders(),
@@ -290,7 +366,7 @@ export class CloudAgentClient {
 						throw enrichFetchError(e)
 					}
 					if (!resp.ok) {
-						const errText = await resp.text()
+						const errText = await readResponseBodyWithLimit(resp, 100 * 1024)
 						const slice = errText.slice(0, 300)
 						const err = new Error(
 							`Cloud Agent health check failed: HTTP ${resp.status}: ${slice}${apiKeyHintFor401(resp.status, slice)}`,
@@ -350,7 +426,7 @@ export class CloudAgentClient {
 					let resp: Response
 					try {
 						try {
-							resp = await fetch(`${this.serverUrl}${endpoint}`, {
+							resp = await this.safeFetch(`${this.serverUrl}${endpoint}`, {
 								method: "POST",
 								headers: this.buildHeaders(),
 								body: JSON.stringify(body),
@@ -364,7 +440,7 @@ export class CloudAgentClient {
 					}
 
 					if (!resp.ok) {
-						const errText = await resp.text()
+						const errText = await readResponseBodyWithLimit(resp, 100 * 1024)
 						const slice = errText.slice(0, 500)
 						const err = new Error(
 							`Cloud Agent error (HTTP ${resp.status}): ${slice}${apiKeyHintFor401(resp.status, slice)}`,
@@ -436,7 +512,7 @@ export class CloudAgentClient {
 				let resp: Response
 				try {
 					try {
-						resp = await fetch(`${this.serverUrl}${endpoint}`, {
+						resp = await this.safeFetch(`${this.serverUrl}${endpoint}`, {
 							method: "POST",
 							headers: this.buildHeaders(),
 							body: JSON.stringify(body),
@@ -450,7 +526,7 @@ export class CloudAgentClient {
 				}
 
 				if (!resp.ok) {
-					const errText = await resp.text()
+					const errText = await readResponseBodyWithLimit(resp, 100 * 1024)
 					const slice = errText.slice(0, 500)
 					const err = new Error(
 						`Cloud Agent compile error (HTTP ${resp.status}): ${slice}${apiKeyHintFor401(resp.status, slice)}`,
@@ -459,16 +535,8 @@ export class CloudAgentClient {
 					throw err
 				}
 
-				const clHeader = resp.headers.get("content-length")
-				if (clHeader) {
-					const clLen = Number(clHeader)
-					if (Number.isFinite(clLen) && clLen > MAX_RESPONSE_BODY_BYTES) {
-						throw new Error(
-							`Cloud Agent: compile response body too large (${(clLen / 1024 / 1024).toFixed(1)} MB exceeds ${MAX_RESPONSE_BODY_BYTES / 1024 / 1024} MB limit)`,
-						)
-					}
-				}
-				const text = await resp.text()
+				// Use streaming read with hard byte limit (same as parseUniversalResponse)
+				const text = await readResponseBodyWithLimit(resp, MAX_RESPONSE_BODY_BYTES)
 				let data: CloudCompileResponse
 				try {
 					data = JSON.parse(text) as CloudCompileResponse
@@ -496,7 +564,7 @@ export class CloudAgentClient {
 				let resp: Response
 				try {
 					try {
-						resp = await fetch(`${this.serverUrl}${endpoint}`, {
+						resp = await this.safeFetch(`${this.serverUrl}${endpoint}`, {
 							method: "POST",
 							headers: this.buildHeaders(),
 							body: JSON.stringify(body),
@@ -510,7 +578,7 @@ export class CloudAgentClient {
 				}
 
 				if (!resp.ok) {
-					const errText = await resp.text()
+					const errText = await readResponseBodyWithLimit(resp, 100 * 1024)
 					const slice = errText.slice(0, 500)
 					const err = new Error(
 						`Cloud Agent deferred error (HTTP ${resp.status}): ${slice}${apiKeyHintFor401(resp.status, slice)}`,

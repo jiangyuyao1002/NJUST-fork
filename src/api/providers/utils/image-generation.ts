@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { guardedFetch } from "../../../core/security/networkGuard"
 import { t } from "../../../i18n"
 
 const apiErrorResponseSchema = z
@@ -86,7 +87,7 @@ export async function generateImageWithProvider(options: ImageGenerationOptions)
 	const { baseURL, authToken, model, prompt, inputImage } = options
 
 	try {
-		const response = await fetch(`${baseURL}/chat/completions`, {
+		const response = await guardedFetch(`${baseURL}/chat/completions`, {
 			method: "POST",
 			headers: {
 				Authorization: `Bearer ${authToken}`,
@@ -250,7 +251,7 @@ export async function generateImageWithImagesApi(options: ImagesApiOptions): Pro
 			body: JSON.stringify(requestBody),
 		}
 
-		const response = await fetch(url, fetchOptions)
+		const response = await guardedFetch(url, fetchOptions)
 
 		if (!response.ok) {
 			const errorText = await response.text()

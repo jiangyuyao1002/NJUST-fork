@@ -29,6 +29,13 @@ function extractFirstCommandToken(command: string): string {
 const COMMAND_CHAIN_RE = /(?:^|\s)(?:&&|\|\||[;&|])(?:\s|$)|[\r\n]/
 
 /**
+ * Hard defense against command injection via subshell and command substitution.
+ * Catches $(), backtick-based substitution, and other shell injection primitives.
+ * This check is unconditional — it runs regardless of allowlist/denylist/cangjie SDK path.
+ */
+const COMMAND_INJECTION_RE = /\$\(|`/
+
+/**
  * Resolves the real path of a file, handling non-existent files by
  * finding the nearest existing parent directory and resolving symlinks.
  */
@@ -213,6 +220,15 @@ export async function execCommand(
 		execCwd = await ensureWithinWorkspace(workspaceCwd, resolvedCwd)
 	}
 
+	// Unconditional command injection guard: reject $() and backtick-based
+	// command substitution regardless of allowlist, denylist, or cangjie SDK
+	// path checks. This is the first line of defense.
+	if (COMMAND_INJECTION_RE.test(params.command)) {
+		throw new Error(
+			`Command injection detected in MCP context: command substitution via $() or backticks is not allowed`,
+		)
+	}
+
 	// Use the full command decision logic that properly handles:
 	// - Command chaining (&&, ||, ;, |, &)
 	// - Longest prefix match for allow/deny lists
@@ -252,14 +268,12 @@ export async function execCommand(
 	}
 
 	// Run the same security analysis used by the interactive execute_command tool.
-	// Forbidden patterns (e.g. rm -rf /, mkfs, fork bombs) are rejected outright.
-	// Dangerous patterns are allowed but flagged in the result.
+	// In MCP context, both forbidden AND dangerous patterns are rejected —
+	// there is no interactive user to confirm the risk.
 	const safetyCheck = checkCommandSafety(params.command)
-	if (safetyCheck.riskLevel === "forbidden") {
-		throw new Error(`Command blocked for safety: ${safetyCheck.reasons.join("; ")}`)
+	if (safetyCheck.riskLevel === "forbidden" || safetyCheck.riskLevel === "dangerous") {
+		throw new Error(`Command blocked for safety (${safetyCheck.riskLevel}): ${safetyCheck.reasons.join("; ")}`)
 	}
-	const safetyWarning =
-		safetyCheck.riskLevel === "dangerous" ? `\n[Safety warning] ${safetyCheck.reasons.join("; ")}` : ""
 
 	// Hard defense: reject command chains even if previous checks were bypassed
 	if (COMMAND_CHAIN_RE.test(params.command)) {
@@ -300,7 +314,6 @@ export async function execCommand(
 			clearTimeout(timer)
 			const output = [
 				`Exit code: ${code ?? "unknown"}`,
-				safetyWarning,
 				stdout ? `\nSTDOUT:\n${stdout}` : "",
 				stderr ? `\nSTDERR:\n${stderr}` : "",
 			].join("")

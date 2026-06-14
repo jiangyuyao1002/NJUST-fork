@@ -69,6 +69,22 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 		if (inputImagePath) {
 			const inputImageFullPath = path.resolve(task.cwd, inputImagePath)
 
+			// Reject input images outside workspace to prevent exfiltration of
+			// arbitrary files (e.g. /etc/passwd, ~/.ssh/id_rsa) via image generation APIs.
+			if (isPathOutsideWorkspace(inputImageFullPath)) {
+				await task.say(
+					"error",
+					`Input image path is outside the workspace: ${getReadablePath(task.cwd, inputImagePath)}`,
+				)
+				task.didToolFailInCurrentTurn = true
+				pushToolResult(
+					formatResponse.toolError(
+						`Access denied: input image path is outside workspace — ${getReadablePath(task.cwd, inputImagePath)}`,
+					),
+				)
+				return
+			}
+
 			const inputImageExists = await fileExistsAtPath(inputImageFullPath)
 			if (!inputImageExists) {
 				await task.say("error", `Input image not found: ${getReadablePath(task.cwd, inputImagePath)}`)
