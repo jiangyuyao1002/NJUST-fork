@@ -12,6 +12,13 @@ vi.mock("../../../i18n", () => ({
 	},
 }))
 
+// Mock guardedFetch to bypass DNS resolution during testing.
+// The implementation now uses guardedFetch (which does IP pinning),
+// so we redirect it to the global mock fetch for controlled test responses.
+vi.mock("../../../../core/security/networkGuard", () => ({
+	guardedFetch: vi.fn((url: string, init?: RequestInit) => global.fetch(url, init)),
+}))
+
 // Mock fetch globally
 global.fetch = vi.fn()
 global.FormData = class {
